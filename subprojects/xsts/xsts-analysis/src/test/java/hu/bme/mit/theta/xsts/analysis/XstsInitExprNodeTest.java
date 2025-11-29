@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector;

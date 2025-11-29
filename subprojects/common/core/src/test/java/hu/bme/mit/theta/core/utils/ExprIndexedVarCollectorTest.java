@@ -38,14 +38,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExprIndexedVarCollectorTest {
 
     private static final VarDecl<BoolType> VA = Var("a", Bool());
@@ -56,14 +52,9 @@ public class ExprIndexedVarCollectorTest {
     private static final IndexedConstDecl<BoolType> A2 = VA.getConstDecl(2);
     private static final IndexedConstDecl<IntType> B0 = VB.getConstDecl(0);
     private static final IndexedConstDecl<IntType> B1 = VB.getConstDecl(1);
-
-    @Parameter(value = 0)
     public Expr<Type> expr;
-
-    @Parameter(value = 1)
     public Map<Integer, Set<VarDecl<?>>> expectedVars;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -76,18 +67,25 @@ public class ExprIndexedVarCollectorTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<Type> expr, Map<Integer, Set<VarDecl<?>>> expectedVars) {
+        initExprIndexedVarCollectorTest(expr, expectedVars);
         final IndexedVars actualVars = ExprUtils.getVarsIndexed(expr);
 
-        Assert.assertEquals(expectedVars.keySet(), actualVars.getNonEmptyIndexes());
+        Assertions.assertEquals(expectedVars.keySet(), actualVars.getNonEmptyIndexes());
 
         for (final Entry<Integer, Set<VarDecl<?>>> entry : expectedVars.entrySet()) {
-            Assert.assertEquals(entry.getValue(), actualVars.getVars(entry.getKey()));
+            Assertions.assertEquals(entry.getValue(), actualVars.getVars(entry.getKey()));
         }
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
                 actualVars.getAllVars());
+    }
+
+    public void initExprIndexedVarCollectorTest(Expr<Type> expr, Map<Integer, Set<VarDecl<?>>> expectedVars) {
+        this.expr = expr;
+        this.expectedVars = expectedVars;
     }
 }

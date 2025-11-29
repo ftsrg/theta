@@ -20,9 +20,7 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -54,10 +52,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public final class SmtLibSolverTest {
@@ -68,7 +66,7 @@ public final class SmtLibSolverTest {
     private static final String SOLVER = "cvc5";
     private static final String VERSION = "1.0.2";
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
@@ -85,14 +83,14 @@ public final class SmtLibSolverTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void destroy() throws SmtLibSolverInstallerException {
         if (solverInstalled) solverManager.uninstall(SOLVER, VERSION);
     }
 
-    @Before
+    @BeforeEach
     public void before() {
-        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
     }
 
     @Test

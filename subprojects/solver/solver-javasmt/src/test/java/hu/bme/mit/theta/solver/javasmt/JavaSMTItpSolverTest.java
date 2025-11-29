@@ -31,7 +31,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.OsHelper;
@@ -50,21 +50,14 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 
-@RunWith(Parameterized.class)
 public final class JavaSMTItpSolverTest {
-    @Parameter(0)
     public Solvers solver;
-
-    @Parameter(1)
     public ItpSolver itpSolver;
 
     Expr<IntType> a;
@@ -75,7 +68,6 @@ public final class JavaSMTItpSolverTest {
     Expr<FuncType<IntType, IntType>> f;
     Expr<FuncType<IntType, IntType>> g;
 
-    @Parameters(name = "solver: {0}")
     public static Collection<?> operations() {
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
             return List.of(
@@ -108,7 +100,7 @@ public final class JavaSMTItpSolverTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void initialize() {
         final ConstDecl<IntType> ad = Const("a", Int());
         final ConstDecl<IntType> bd = Const("b", Int());
@@ -127,8 +119,10 @@ public final class JavaSMTItpSolverTest {
         g = gd.getRef();
     }
 
-    @Test
-    public void testBinaryInterpolation() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBinaryInterpolation(Solvers solver, ItpSolver itpSolver) {
+        initJavaSMTItpSolverTest(solver, itpSolver);
         final ItpMarker A = itpSolver.createMarker();
         final ItpMarker B = itpSolver.createMarker();
         final ItpPattern pattern = itpSolver.createBinPattern(A, B);
@@ -139,16 +133,18 @@ public final class JavaSMTItpSolverTest {
         itpSolver.add(B, Neq(c, d));
 
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
         final Interpolant itp = itpSolver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
         System.out.println("----------");
-        Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
+        Assertions.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
     }
 
-    @Test
-    public void testSequenceInterpolation() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testSequenceInterpolation(Solvers solver, ItpSolver itpSolver) {
+        initJavaSMTItpSolverTest(solver, itpSolver);
         final ItpMarker I1 = itpSolver.createMarker();
         final ItpMarker I2 = itpSolver.createMarker();
         final ItpMarker I3 = itpSolver.createMarker();
@@ -163,7 +159,7 @@ public final class JavaSMTItpSolverTest {
         itpSolver.add(I5, Eq(b, c));
 
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
         final Interpolant itp = itpSolver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -174,8 +170,10 @@ public final class JavaSMTItpSolverTest {
         System.out.println("----------");
     }
 
-    @Test
-    public void testTreeInterpolation() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testTreeInterpolation(Solvers solver, ItpSolver itpSolver) {
+        initJavaSMTItpSolverTest(solver, itpSolver);
         assumeFalse(solver == Solvers.CVC5);
 
         final ItpMarker I1 = itpSolver.createMarker();
@@ -193,7 +191,7 @@ public final class JavaSMTItpSolverTest {
         itpSolver.add(I5, Eq(b, c));
 
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
         final Interpolant itp = itpSolver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -204,8 +202,10 @@ public final class JavaSMTItpSolverTest {
         System.out.println("----------");
     }
 
-    @Test
-    public void testLIA() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testLIA(Solvers solver, ItpSolver itpSolver) {
+        initJavaSMTItpSolverTest(solver, itpSolver);
         assumeFalse(solver == Solvers.CVC5);
 
         final ItpMarker A = itpSolver.createMarker();
@@ -216,15 +216,17 @@ public final class JavaSMTItpSolverTest {
         itpSolver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
 
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
         final Interpolant itp = itpSolver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
         System.out.println("----------");
     }
 
-    @Test
-    public void testQuantifiers() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testQuantifiers(Solvers solver, ItpSolver itpSolver) {
+        initJavaSMTItpSolverTest(solver, itpSolver);
         assumeFalse(solver == Solvers.SMTINTERPOL);
         assumeFalse(solver == Solvers.CVC5);
 
@@ -249,15 +251,17 @@ public final class JavaSMTItpSolverTest {
         itpSolver.add(B, App(q, i));
 
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
         final Interpolant itp = itpSolver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
         System.out.println("----------");
     }
 
-    @Test
-    public void testPushPop() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testPushPop(Solvers solver, ItpSolver itpSolver) {
+        initJavaSMTItpSolverTest(solver, itpSolver);
         final ItpMarker A = itpSolver.createMarker();
         final ItpMarker B = itpSolver.createMarker();
         final ItpPattern pattern = itpSolver.createBinPattern(A, B);
@@ -269,16 +273,22 @@ public final class JavaSMTItpSolverTest {
 
         itpSolver.add(A, Neq(a, c));
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
 
         itpSolver.pop();
 
         itpSolver.add(B, Neq(a, c));
         itpSolver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, itpSolver.getStatus());
         final Interpolant itp = itpSolver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
         System.out.println("----------");
+    }
+
+    public void initJavaSMTItpSolverTest(Solvers solver, ItpSolver itpSolver) {
+        this.solver = solver;
+        this.itpSolver = itpSolver;
+        this.initialize();
     }
 }

@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt.buildKIND;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
@@ -39,23 +39,14 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class XstsAbstractBoundedCheckerTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public String propPath;
-
-    @Parameterized.Parameter(value = 2)
     public boolean safe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -216,8 +207,10 @@ public class XstsAbstractBoundedCheckerTest {
                 });
     }
 
-    @Test
-    public void runTest() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
+    public void runTest(String filePath, String propPath, boolean safe) throws Exception {
+        initXstsAbstractBoundedCheckerTest(filePath, propPath, safe);
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
@@ -255,5 +248,11 @@ public class XstsAbstractBoundedCheckerTest {
         } else {
             assertTrue(status.isUnsafe());
         }
+    }
+
+    public void initXstsAbstractBoundedCheckerTest(String filePath, String propPath, boolean safe) {
+        this.filePath = filePath;
+        this.propPath = propPath;
+        this.safe = safe;
     }
 }

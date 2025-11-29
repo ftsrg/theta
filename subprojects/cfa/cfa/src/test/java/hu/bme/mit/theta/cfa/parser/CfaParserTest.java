@@ -22,25 +22,18 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class CfaParserTest {
-
-    @Parameter(0)
     public String filepath;
 
     private Reader reader;
     private CfaParser parser;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -48,23 +41,30 @@ public final class CfaParserTest {
                 });
     }
 
-    @Before
+    @BeforeEach
     public void before() throws FileNotFoundException {
         reader = new FileReader(filepath);
         parser = new CfaParser(reader);
     }
 
-    @After
+    @AfterEach
     public void after() throws IOException {
         reader.close();
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String filepath) throws FileNotFoundException {
+        initCfaParserTest(filepath);
         // Act
         final CFA cfa = parser.cfa();
-        Assert.assertEquals(1, cfa.getVars().size());
-        Assert.assertEquals(6, cfa.getLocs().size());
-        Assert.assertEquals(6, cfa.getEdges().size());
+        Assertions.assertEquals(1, cfa.getVars().size());
+        Assertions.assertEquals(6, cfa.getLocs().size());
+        Assertions.assertEquals(6, cfa.getEdges().size());
+    }
+
+    public void initCfaParserTest(String filepath) throws FileNotFoundException {
+        this.filepath = filepath;
+        this.before();
     }
 }

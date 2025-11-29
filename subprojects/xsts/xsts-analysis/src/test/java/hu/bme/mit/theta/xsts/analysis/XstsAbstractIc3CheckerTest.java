@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
@@ -39,23 +39,14 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class XstsAbstractIc3CheckerTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public String propPath;
-
-    @Parameterized.Parameter(value = 2)
     public boolean safe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -259,8 +250,10 @@ public class XstsAbstractIc3CheckerTest {
                 });
     }
 
-    @Test
-    public void runTest() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
+    public void runTest(String filePath, String propPath, boolean safe) throws Exception {
+        initXstsAbstractIc3CheckerTest(filePath, propPath, safe);
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
@@ -294,5 +287,11 @@ public class XstsAbstractIc3CheckerTest {
         } else {
             assertTrue(status.isUnsafe());
         }
+    }
+
+    public void initXstsAbstractIc3CheckerTest(String filePath, String propPath, boolean safe) {
+        this.filePath = filePath;
+        this.propPath = propPath;
+        this.safe = safe;
     }
 }

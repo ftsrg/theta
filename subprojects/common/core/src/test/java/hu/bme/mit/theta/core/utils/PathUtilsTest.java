@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PathUtilsTest {
@@ -44,28 +44,28 @@ public class PathUtilsTest {
 
     @Test
     public void testUnfold() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(x1.getRef(), Add(y0.getRef(), Int(1))),
                 PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 0));
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(x2.getRef(), Add(y1.getRef(), Int(1))),
                 PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 1));
     }
 
     @Test
     public void testUnfoldReversed() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(x0.getRef(), Add(x1.getRef(), Int(1))),
                 PathUtils.unfoldReverse(
                         Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))),
                         VarIndexingFactory.indexing(0)));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(x0.getRef(), Add(x2.getRef(), Int(1))),
                 PathUtils.unfoldReverse(
                         Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))),
                         VarIndexingFactory.indexing(0)));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(x0.getRef(), Add(x2.getRef(), x1.getRef())),
                 PathUtils.unfoldReverse(
                         Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Prime(vx.getRef()))),
@@ -74,15 +74,15 @@ public class PathUtilsTest {
 
     @Test
     public void testFold() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
                 PathUtils.foldin(Eq(x1.getRef(), Add(y0.getRef(), Int(1))), 0));
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(Prime(vx.getRef(), 2), Add(Prime(vy.getRef()), Int(1))),
                 PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 0));
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
                 PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 1));
     }
@@ -97,12 +97,12 @@ public class PathUtilsTest {
                         .build();
 
         final Valuation extr0 = PathUtils.extractValuation(valuation, 1);
-        Assert.assertEquals(2, extr0.getDecls().size());
-        Assert.assertEquals(Int(1), extr0.eval(vx).get());
-        Assert.assertEquals(Int(3), extr0.eval(vy).get());
+        Assertions.assertEquals(2, extr0.getDecls().size());
+        Assertions.assertEquals(Int(1), extr0.eval(vx).get());
+        Assertions.assertEquals(Int(3), extr0.eval(vy).get());
 
         final Valuation extr1 = PathUtils.extractValuation(valuation, 1, ImmutableSet.of(vx, vz));
-        Assert.assertEquals(1, extr1.getDecls().size());
-        Assert.assertEquals(Int(1), extr1.eval(vx).get());
+        Assertions.assertEquals(1, extr1.getDecls().size());
+        Assertions.assertEquals(Int(1), extr1.eval(vx).get());
     }
 }

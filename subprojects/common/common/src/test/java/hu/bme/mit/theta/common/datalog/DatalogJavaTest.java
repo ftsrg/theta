@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.common.datalog;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;

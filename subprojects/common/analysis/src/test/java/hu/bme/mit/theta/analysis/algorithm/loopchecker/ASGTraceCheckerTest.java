@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.function.Predicate;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ASGTraceCheckerTest {
@@ -89,7 +89,7 @@ public class ASGTraceCheckerTest {
                             ExprTraceStatus<ItpRefutation> status =
                                     strat.check(
                                             trace, solverFactory, xsts.getInitFormula(), logger);
-                            Assert.assertTrue(status.isInfeasible());
+                            Assertions.assertTrue(status.isInfeasible());
                         });
     }
 }

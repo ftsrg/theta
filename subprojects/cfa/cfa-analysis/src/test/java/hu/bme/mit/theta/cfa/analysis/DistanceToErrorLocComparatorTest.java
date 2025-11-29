@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import java.util.Map;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class DistanceToErrorLocComparatorTest {
@@ -50,10 +50,10 @@ public class DistanceToErrorLocComparatorTest {
         final Map<Loc, Integer> distancesToError =
                 DistToErrComparator.calculateDistancesToError(cfa, cfa.getErrorLoc().get());
 
-        Assert.assertEquals(0, (int) distancesToError.get(locErr));
-        Assert.assertEquals(2, (int) distancesToError.get(loc0));
-        Assert.assertEquals(1, (int) distancesToError.get(loc1));
-        Assert.assertEquals(1, (int) distancesToError.get(loc2));
-        Assert.assertFalse(distancesToError.containsKey(locFinal));
+        Assertions.assertEquals(0, (int) distancesToError.get(locErr));
+        Assertions.assertEquals(2, (int) distancesToError.get(loc0));
+        Assertions.assertEquals(1, (int) distancesToError.get(loc1));
+        Assertions.assertEquals(1, (int) distancesToError.get(loc2));
+        Assertions.assertFalse(distancesToError.containsKey(locFinal));
     }
 }

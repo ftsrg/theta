@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.solver.smtlib;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -33,31 +30,23 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
 
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
     private static final String SOLVER = "z3";
     private static final String VERSION = "4.11.2";
-
-    @Parameterized.Parameter(0)
     public Class<?> exprType;
-
-    @Parameterized.Parameter(1)
     public Expr<?> expected;
-
-    @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
@@ -71,14 +60,13 @@ public class SmtLibSolverBVTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void destroy() throws SmtLibSolverInstallerException {
         if (solverInstalled) {
             solverManager.uninstall(SOLVER, VERSION);
         }
     }
 
-    @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return Stream.concat(
                         BvTestUtils.BasicOperations().stream(),
@@ -88,9 +76,11 @@ public class SmtLibSolverBVTest {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    @Test
-    public void testOperationEquals() throws Exception {
-        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expr: {0}, expected: {1}, actual: {2}")
+    public void testOperationEquals(Class<?> exprType, Expr<?> expected, Expr<?> actual) throws Exception {
+        initSmtLibSolverBVTest(exprType, expected, actual);
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
 
         // Sanity check
         assertNotNull(exprType);
@@ -99,19 +89,19 @@ public class SmtLibSolverBVTest {
 
         // Type checks
         assertTrue(
+                exprType.isInstance(actual),
                 "The type of actual is "
                         + actual.getClass().getName()
                         + " instead of "
-                        + exprType.getName(),
-                exprType.isInstance(actual));
+                        + exprType.getName());
         assertEquals(
+                expected.getType(),
+                actual.getType(),
                 "The type of expected ("
                         + expected.getType()
                         + ") must match the type of actual ("
                         + actual.getType()
-                        + ")",
-                expected.getType(),
-                actual.getType());
+                        + ")");
 
         // Equality check
         try (final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
@@ -122,5 +112,11 @@ public class SmtLibSolverBVTest {
             SolverStatus status = solver.check();
             assertTrue(status.isSat());
         }
+    }
+
+    public void initSmtLibSolverBVTest(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        this.exprType = exprType;
+        this.expected = expected;
+        this.actual = actual;
     }
 }

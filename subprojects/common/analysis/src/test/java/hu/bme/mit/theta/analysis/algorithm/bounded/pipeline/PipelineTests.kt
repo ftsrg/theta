@@ -38,8 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class PipelineTests {
@@ -72,7 +71,7 @@ class PipelineTests {
     val checker = checkerFactory(expression)
 
     val safetyResult: SafetyResult<*, *> = checker.check()
-    Assert.assertTrue(safetyResult.isUnsafe())
+    Assertions.assertTrue(safetyResult.isUnsafe())
 
     val pipeline =
       MonolithicExprPassPipelineChecker(
@@ -83,14 +82,14 @@ class PipelineTests {
     pipeline.insertLastPass(ReverseMEPass())
     val pipelineResult = pipeline.check()
 
-    Assert.assertTrue(safetyResult.isUnsafe())
+    Assertions.assertTrue(safetyResult.isUnsafe())
     val regularCex = safetyResult.asUnsafe().cex
     val pipelineCex = pipelineResult.asUnsafe().cex
-    Assert.assertEquals(regularCex.length(), pipelineCex.length())
+    Assertions.assertEquals(regularCex.length(), pipelineCex.length())
     val states = (regularCex as Trace<*, *>).states
     val pipelineStates = (pipelineCex as Trace<*, *>).states
     for (i in states.indices) {
-      Assert.assertEquals(states[i], pipelineStates[i])
+      Assertions.assertEquals(states[i], pipelineStates[i])
     }
   }
 
@@ -122,6 +121,6 @@ class PipelineTests {
     pipeline.insertLastPass(TraceChangeCheckMEPass())
     pipeline.insertPass(BoundMEPass(6), 2)
     val pipelineResult = pipeline.check()
-    Assert.assertTrue(pipelineResult.isSafe())
+    Assertions.assertTrue(pipelineResult.isSafe())
   }
 }

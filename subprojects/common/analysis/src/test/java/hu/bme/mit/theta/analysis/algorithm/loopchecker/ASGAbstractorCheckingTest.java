@@ -52,26 +52,15 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
-public class ASGAbstractorCheckingTest {
-
-    @Parameterized.Parameter public String fileName;
-
-    @Parameterized.Parameter(1)
+public class ASGAbstractorCheckingTest { public String fileName;
     public String propFileName;
-
-    @Parameterized.Parameter(2)
     public String acceptingLocationName;
-
-    @Parameterized.Parameter(3)
     public boolean isLassoPresent;
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -87,8 +76,10 @@ public class ASGAbstractorCheckingTest {
                 });
     }
 
-    @Test
-    public void test() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String fileName, String propFileName, String acceptingLocationName, boolean isLassoPresent) throws IOException {
+        initASGAbstractorCheckingTest(fileName, propFileName, acceptingLocationName, isLassoPresent);
         if (propFileName.isBlank() && !acceptingLocationName.isBlank()) testWithCfa();
         if (!propFileName.isBlank() && acceptingLocationName.isBlank()) testWithXsts();
     }
@@ -122,7 +113,7 @@ public class ASGAbstractorCheckingTest {
                         new ConsoleLogger(Logger.Level.DETAIL));
         ASG<XstsState<ExplState>, XstsAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
-        Assert.assertEquals(isLassoPresent, result.isUnsafe());
+        Assertions.assertEquals(isLassoPresent, result.isUnsafe());
     }
 
     private void testWithCfa() throws IOException {
@@ -149,6 +140,13 @@ public class ASGAbstractorCheckingTest {
                         new ConsoleLogger(Logger.Level.DETAIL));
         ASG<CfaState<ExplState>, CfaAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
-        Assert.assertEquals(isLassoPresent, result.isUnsafe());
+        Assertions.assertEquals(isLassoPresent, result.isUnsafe());
+    }
+
+    public void initASGAbstractorCheckingTest(String fileName, String propFileName, String acceptingLocationName, boolean isLassoPresent) {
+        this.fileName = fileName;
+        this.propFileName = propFileName;
+        this.acceptingLocationName = acceptingLocationName;
+        this.isLassoPresent = isLassoPresent;
     }
 }

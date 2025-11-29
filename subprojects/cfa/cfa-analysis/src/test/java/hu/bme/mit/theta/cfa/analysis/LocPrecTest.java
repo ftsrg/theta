@@ -24,7 +24,7 @@ import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import java.util.Collection;
 import java.util.Set;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class LocPrecTest {
@@ -48,9 +48,9 @@ public class LocPrecTest {
         final GlobalCfaPrec<PrecStub> r2 = cp.refine(p2);
         final GlobalCfaPrec<PrecStub> r3 = r2.refine(p2);
 
-        Assert.assertSame(cp, r1);
-        Assert.assertNotSame(r1, r2);
-        Assert.assertSame(r2, r3);
+        Assertions.assertSame(cp, r1);
+        Assertions.assertNotSame(r1, r2);
+        Assertions.assertSame(r2, r3);
     }
 
     @Test
@@ -59,9 +59,9 @@ public class LocPrecTest {
         final GlobalCfaPrec<PrecStub> cp2 = GlobalCfaPrec.create(p1);
         final GlobalCfaPrec<PrecStub> cp3 = GlobalCfaPrec.create(p2);
 
-        Assert.assertEquals(cp1, cp2);
-        Assert.assertNotEquals(cp1, cp3);
-        Assert.assertNotEquals(cp2, cp3);
+        Assertions.assertEquals(cp1, cp2);
+        Assertions.assertNotEquals(cp1, cp3);
+        Assertions.assertNotEquals(cp2, cp3);
     }
 
     @Test
@@ -71,18 +71,18 @@ public class LocPrecTest {
         final Loc l1 = builder.createLoc("L1");
         final Loc l2 = builder.createLoc("L2");
 
-        Assert.assertEquals(p0, gp.getPrec(l1));
-        Assert.assertEquals(p0, gp.getPrec(l2));
+        Assertions.assertEquals(p0, gp.getPrec(l1));
+        Assertions.assertEquals(p0, gp.getPrec(l2));
 
         final LocalCfaPrec<PrecStub> r1 = gp.refine(l1, p1);
 
-        Assert.assertEquals(p1, r1.getPrec(l1));
-        Assert.assertEquals(p0, r1.getPrec(l2));
+        Assertions.assertEquals(p1, r1.getPrec(l1));
+        Assertions.assertEquals(p0, r1.getPrec(l2));
 
         final LocalCfaPrec<PrecStub> r2 = r1.refine(l2, p2);
 
-        Assert.assertEquals(p1, r2.getPrec(l1));
-        Assert.assertEquals(p2, r2.getPrec(l2));
+        Assertions.assertEquals(p1, r2.getPrec(l1));
+        Assertions.assertEquals(p2, r2.getPrec(l2));
     }
 
     @Test
@@ -91,9 +91,9 @@ public class LocPrecTest {
         final LocalCfaPrec<PrecStub> gp1 = LocalCfaPrec.create(p0);
         final LocalCfaPrec<PrecStub> gp2 = LocalCfaPrec.create(p1);
 
-        Assert.assertEquals(gp0, gp1);
-        Assert.assertNotEquals(gp0, gp2);
-        Assert.assertNotEquals(gp1, gp2);
+        Assertions.assertEquals(gp0, gp1);
+        Assertions.assertNotEquals(gp0, gp2);
+        Assertions.assertNotEquals(gp1, gp2);
 
         final Builder builder = CFA.builder();
         final Loc l1 = builder.createLoc("L1");
@@ -102,12 +102,12 @@ public class LocPrecTest {
         final LocalCfaPrec<PrecStub> gp0r0 = gp0.refine(l1, p1);
         final LocalCfaPrec<PrecStub> gp1r0 = gp1.refine(l1, p1);
 
-        Assert.assertEquals(gp0r0, gp1r0);
+        Assertions.assertEquals(gp0r0, gp1r0);
 
         final LocalCfaPrec<PrecStub> gp0r1 = gp0r0.refine(l2, p1);
         final LocalCfaPrec<PrecStub> gp1r1 = gp1r0.refine(l2, p2);
 
-        Assert.assertNotEquals(gp0r1, gp1r1);
+        Assertions.assertNotEquals(gp0r1, gp1r1);
     }
 
     @Test
@@ -119,6 +119,6 @@ public class LocPrecTest {
         final LocalCfaPrec<PrecStub> refined = original.refine(l1, p1);
         final LocalCfaPrec<PrecStub> refinedBack = refined.refine(l1, p0);
 
-        Assert.assertEquals(original, refinedBack);
+        Assertions.assertEquals(original, refinedBack);
     }
 }

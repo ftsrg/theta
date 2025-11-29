@@ -36,20 +36,19 @@ import hu.bme.mit.theta.sts.aiger.AigerParser
 import hu.bme.mit.theta.sts.aiger.AigerToSts
 import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker
 import hu.bme.mit.theta.sts.dsl.StsDslManager
+import org.junit.jupiter.api.Assertions
+
 import java.io.FileInputStream
 import java.io.IOException
-import org.junit.Assert
-import org.junit.Test
-import org.junit.jupiter.api.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
 
-@RunWith(Parameterized::class)
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+
 class StsAbstractMonolithicTest(private val filePath: String, private val expectedResult: Boolean) {
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters(name = "{index}: {0}, {1}")
     fun data(): Collection<Array<Any>> {
       return listOf(
 
@@ -98,7 +97,7 @@ class StsAbstractMonolithicTest(private val filePath: String, private val expect
 
     val checker = StsPipelineChecker(sts, checkerBuilderFunction, passes, logger = logger)
 
-    Assert.assertEquals(expectedResult, checker.check().isSafe())
+    Assertions.assertEquals(expectedResult, checker.check().isSafe())
   }
 
   //    @Test
@@ -143,9 +142,10 @@ class StsAbstractMonolithicTest(private val filePath: String, private val expect
   //                        logger)
   //        );
   //    }
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   @Throws(IOException::class)
-  fun testMdd() {
+  fun testMdd(filePath: String, expectedResult: Boolean) {
     val logger: Logger = ConsoleLogger(Logger.Level.VERBOSE)
     val solverFactory = Z3LegacySolverFactory.getInstance()
 

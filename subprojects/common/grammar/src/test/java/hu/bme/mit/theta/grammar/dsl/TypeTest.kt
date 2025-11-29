@@ -24,23 +24,15 @@ import hu.bme.mit.theta.core.type.functype.FuncExprs.Func
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
-import org.junit.Assert
-import org.junit.Test
-import org.junit.jupiter.api.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class TypeTest {
-
-  @Parameterized.Parameter(0) lateinit var memory: Type
-
-  @Parameterized.Parameter(1) lateinit var serialized: String
 
   companion object {
 
     @JvmStatic
-    @Parameterized.Parameters
     fun data(): Collection<Array<Any>> {
       return listOf(
         arrayOf(Int(), "Int"),
@@ -55,18 +47,21 @@ class TypeTest {
     }
   }
 
-  @Test
-  fun testSerialize() {
-    Assert.assertEquals(serialized, memory.toString())
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testSerialize(memory: Type, serialized: String) {
+    Assertions.assertEquals(serialized, memory.toString())
   }
 
-  @Test
-  fun testDeserialize() {
-    Assert.assertEquals(TypeWrapper(serialized).instantiate(), memory)
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testDeserialize(memory: Type, serialized: String) {
+    Assertions.assertEquals(TypeWrapper(serialized).instantiate(), memory)
   }
 
-  @Test
-  fun testRoundTrip() {
-    Assert.assertEquals(TypeWrapper(memory.toString()).instantiate(), memory)
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testRoundTrip(memory: Type, serialized: String) {
+    Assertions.assertEquals(TypeWrapper(memory.toString()).instantiate(), memory)
   }
 }

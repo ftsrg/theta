@@ -17,9 +17,8 @@ package hu.bme.mit.theta.solver.eldarica;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -33,21 +32,15 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import java.util.Collection;
 import java.util.function.Predicate;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class EldaricaTransformerTest {
-
-    @Parameter(0)
     public Expr<?> expr;
 
     private static Solver helperSolver = Z3SolverFactory.getInstance().createSolver();
 
-    @Parameters(name = "expr: {0}")
     public static Collection<?> operations() {
         return ExpressionUtils.AllExpressions().values().stream()
                 .map(object -> new Object[] {object})
@@ -64,17 +57,19 @@ public class EldaricaTransformerTest {
         return expr.getOps().stream().anyMatch((op) -> hasExpr(op, pred));
     }
 
-    @Test
-    public void testRoundtripTransformer() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expr: {0}")
+    public void testRoundtripTransformer(Expr<?> expr) {
+        initEldaricaTransformerTest(expr);
         // Sanity check
         assertNotNull(expr);
         assumeFalse(hasType(expr, type -> type instanceof FpType || type instanceof RatType));
         assumeFalse(
                 hasExpr(
                         expr,
-                        expr ->
-                                expr instanceof BvRotateLeftExpr
-                                        || expr instanceof BvRotateRightExpr));
+                        e ->
+                                e instanceof BvRotateLeftExpr
+                                        || e instanceof BvRotateRightExpr));
 
         final EldaricaSymbolTable javaSMTSymbolTable = new EldaricaSymbolTable();
         final EldaricaTransformationManager manager =
@@ -92,27 +87,31 @@ public class EldaricaTransformerTest {
         }
 
         try {
-            Assert.assertEquals(expTerm.toString(), expr, expExpr);
+            Assertions.assertEquals(expr, expExpr, expTerm.toString());
         } catch (AssertionError e) {
             System.err.printf("Not equal syntactically: %s -> %s -> %s%n", expr, expTerm, expExpr);
             try (final var wpp = new WithPushPop(helperSolver)) {
                 helperSolver.add(Eq(expr, expExpr));
-                Assert.assertTrue(
-                        "(= %s %s) is unsat\n".formatted(expr, expExpr),
-                        helperSolver.check().isSat());
+                Assertions.assertTrue(
+                        helperSolver.check().isSat(),
+                        "(= %s %s) is unsat\n".formatted(expr, expExpr));
             }
             try (final var wpp = new WithPushPop(helperSolver)) {
                 helperSolver.add(Not(Eq(expr, expExpr)));
-                Assert.assertTrue(
+                Assertions.assertTrue(
+                        helperSolver.check().isUnsat(),
                         "(not (= %s %s)) is sat with model %s\n"
                                 .formatted(
                                         expr,
                                         expExpr,
                                         helperSolver.check().isSat()
                                                 ? helperSolver.getModel()
-                                                : ""),
-                        helperSolver.check().isUnsat());
+                                                : ""));
             }
         }
+    }
+
+    public void initEldaricaTransformerTest(Expr<?> expr) {
+        this.expr = expr;
     }
 }

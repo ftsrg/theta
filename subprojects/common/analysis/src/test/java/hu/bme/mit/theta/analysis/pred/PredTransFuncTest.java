@@ -35,7 +35,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PredTransFuncTest {
@@ -52,7 +52,7 @@ public class PredTransFuncTest {
         final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
         final PredState state = PredState.of(Lt(x.getRef(), Int(5)));
         final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
-        Assert.assertEquals(2, transFunc.getSuccStates(state, action, prec).size());
+        Assertions.assertEquals(2, transFunc.getSuccStates(state, action, prec).size());
     }
 
     @Test
@@ -61,7 +61,7 @@ public class PredTransFuncTest {
         final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
         final PredState state = PredState.of(Lt(x.getRef(), Int(4)));
         final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
-        Assert.assertEquals(1, transFunc.getSuccStates(state, action, prec).size());
+        Assertions.assertEquals(1, transFunc.getSuccStates(state, action, prec).size());
     }
 
     @Test
@@ -71,7 +71,7 @@ public class PredTransFuncTest {
                 PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
         final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
         final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
-        Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
+        Assertions.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
     }
 
     @Test
@@ -82,8 +82,8 @@ public class PredTransFuncTest {
         final ExprAction action = new BasicStmtAction(Stmts.Assume(Eq(Int(0), x.getRef())));
         final Collection<? extends PredState> succStates =
                 transFunc.getSuccStates(state, action, prec);
-        Assert.assertEquals(1, succStates.size());
-        Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
+        Assertions.assertEquals(1, succStates.size());
+        Assertions.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
     }
 
     private static final class BasicStmtAction extends StmtAction {

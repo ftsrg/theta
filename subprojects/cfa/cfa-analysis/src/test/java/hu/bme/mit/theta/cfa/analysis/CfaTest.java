@@ -42,34 +42,19 @@ import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class CfaTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public CfaConfigBuilder.Domain domain;
-
-    @Parameterized.Parameter(value = 2)
     public CfaConfigBuilder.Refinement refinement;
-
-    @Parameterized.Parameter(value = 3)
     public boolean isSafe;
-
-    @Parameterized.Parameter(value = 4)
     public int cexLength;
-
-    @Parameterized.Parameter(value = 5)
     public String solver;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -190,8 +175,10 @@ public class CfaTest {
                 });
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+    public void test(String filePath, CfaConfigBuilder.Domain domain, CfaConfigBuilder.Refinement refinement, boolean isSafe, int cexLength, String solver) throws Exception {
+        initCfaTest(filePath, domain, refinement, isSafe, cexLength, solver);
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             SolverManager.registerSolverManager(
@@ -202,7 +189,7 @@ public class CfaTest {
         try {
             solverFactory = SolverManager.resolveSolverFactory(solver);
         } catch (Exception e) {
-            Assume.assumeNoException(e);
+            Assumptions.assumeFalse(true, e::toString);
             return;
         }
 
@@ -212,16 +199,25 @@ public class CfaTest {
                     new CfaConfigBuilder(domain, refinement, solverFactory)
                             .build(cfa, cfa.getErrorLoc().get());
             SafetyResult<?, ?> result = config.check();
-            Assert.assertEquals(isSafe, result.isSafe());
+            Assertions.assertEquals(isSafe, result.isSafe());
             if (result.isUnsafe()) {
                 Trace<CfaState<ExplState>, CfaAction> trace =
                         CfaTraceConcretizer.concretize(
                                 (Trace<CfaState<?>, CfaAction>) result.asUnsafe().getCex(),
                                 solverFactory);
-                Assert.assertEquals(cexLength, trace.length());
+                Assertions.assertEquals(cexLength, trace.length());
             }
         } finally {
             SolverManager.closeAll();
         }
+    }
+
+    public void initCfaTest(String filePath, CfaConfigBuilder.Domain domain, CfaConfigBuilder.Refinement refinement, boolean isSafe, int cexLength, String solver) {
+        this.filePath = filePath;
+        this.domain = domain;
+        this.refinement = refinement;
+        this.isSafe = isSafe;
+        this.cexLength = cexLength;
+        this.solver = solver;
     }
 }

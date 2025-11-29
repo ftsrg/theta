@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Collections;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PredPrecTest {
@@ -45,9 +45,9 @@ public class PredPrecTest {
         final PredPrec r2 = p1.join(p2);
         final PredPrec r3 = p1.join(r2);
 
-        Assert.assertSame(p1, r1);
-        Assert.assertNotSame(p1, r2);
-        Assert.assertSame(r2, r3);
+        Assertions.assertSame(p1, r1);
+        Assertions.assertNotSame(p1, r2);
+        Assertions.assertSame(r2, r3);
     }
 
     @Test
@@ -56,8 +56,8 @@ public class PredPrecTest {
         final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
         final PredPrec p2 = PredPrec.of(Collections.singleton(pred));
 
-        Assert.assertNotEquals(p0, p1);
-        Assert.assertNotEquals(p0, p2);
-        Assert.assertEquals(p1, p2);
+        Assertions.assertNotEquals(p0, p1);
+        Assertions.assertNotEquals(p0, p2);
+        Assertions.assertEquals(p1, p2);
     }
 }

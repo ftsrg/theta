@@ -51,11 +51,11 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import java.io.IOException;
 import java.nio.file.Path;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public final class SmtLibItpSolverTest {
@@ -66,7 +66,7 @@ public final class SmtLibItpSolverTest {
     private static final String SOLVER = "z3";
     private static final String VERSION = "4.5.0";
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
@@ -83,7 +83,7 @@ public final class SmtLibItpSolverTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void destroy() throws SmtLibSolverInstallerException {
         if (solverInstalled) {
             solverManager.uninstall(SOLVER, VERSION);
@@ -100,9 +100,9 @@ public final class SmtLibItpSolverTest {
     Expr<FuncType<IntType, IntType>> f;
     Expr<FuncType<IntType, IntType>> g;
 
-    @Before
+    @BeforeEach
     public void initialize() {
-        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
 
         solver = solverFactory.createItpSolver();
 
@@ -135,12 +135,12 @@ public final class SmtLibItpSolverTest {
         solver.add(B, Neq(c, d));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
         System.out.println("----------");
-        Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
+        Assertions.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
     }
 
     @Test
@@ -159,7 +159,7 @@ public final class SmtLibItpSolverTest {
         solver.add(I5, Eq(b, c));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -187,7 +187,7 @@ public final class SmtLibItpSolverTest {
         solver.add(I5, Eq(b, c));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -210,7 +210,7 @@ public final class SmtLibItpSolverTest {
         solver.add(B, Neq(App(g, c), App(g, d)));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
@@ -227,7 +227,7 @@ public final class SmtLibItpSolverTest {
         solver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
@@ -257,7 +257,7 @@ public final class SmtLibItpSolverTest {
         solver.add(B, App(q, i));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
@@ -277,13 +277,13 @@ public final class SmtLibItpSolverTest {
 
         solver.add(A, Neq(a, c));
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 
         solver.pop();
 
         solver.add(B, Neq(a, c));
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));

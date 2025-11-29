@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker;
@@ -37,31 +37,20 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class XstsHornTest {
 
     private static final Path SMTLIB_HOME = SmtLibSolverManager.HOME;
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public String propPath;
-
-    @Parameterized.Parameter(value = 2)
     public boolean safe;
-
-    @Parameterized.Parameter(value = 3)
     public String solverString;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -538,12 +527,12 @@ public class XstsHornTest {
                 });
     }
 
-    @Before
+    @BeforeEach
     public void installSolver() {
         if (solverString.contains("Z3") || solverString.contains("JavaSMT")) {
             return;
         }
-        Assume.assumeTrue(
+        Assumptions.assumeTrue(
                 OsHelper.getOs()
                         == OsHelper.OperatingSystem
                                 .LINUX); // chc solvers are only properly on linux
@@ -564,9 +553,11 @@ public class XstsHornTest {
         }
     }
 
-    @Test
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
     @Timeout(value = 10_000, unit = TimeUnit.MILLISECONDS)
-    public void test() throws Exception {
+    public void test(String filePath, String propPath, boolean safe, String solverString) throws Exception {
+        initXstsHornTest(filePath, propPath, safe, solverString);
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(
                 hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
@@ -578,7 +569,7 @@ public class XstsHornTest {
         try {
             solverFactory = SolverManager.resolveSolverFactory(solverString);
         } catch (Exception e) {
-            Assume.assumeNoException(e);
+            Assumptions.assumeFalse(true, e::toString);
             return;
         }
 
@@ -603,5 +594,13 @@ public class XstsHornTest {
         } finally {
             SolverManager.closeAll();
         }
+    }
+
+    public void initXstsHornTest(String filePath, String propPath, boolean safe, String solverString) {
+        this.filePath = filePath;
+        this.propPath = propPath;
+        this.safe = safe;
+        this.solverString = solverString;
+        this.installSolver();
     }
 }

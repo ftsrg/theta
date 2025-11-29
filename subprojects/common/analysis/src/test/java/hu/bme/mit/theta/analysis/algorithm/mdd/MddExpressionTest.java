@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;

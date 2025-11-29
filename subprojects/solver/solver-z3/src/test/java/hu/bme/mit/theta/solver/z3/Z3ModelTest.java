@@ -19,7 +19,7 @@ import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public final class Z3ModelTest {
@@ -41,8 +41,8 @@ public final class Z3ModelTest {
         solver.check();
         final Model model = solver.getModel();
 
-        Assert.assertTrue(model.getConstInterp(a).isTrue());
-        Assert.assertNull(model.getConstInterp(b));
+        Assertions.assertTrue(model.getConstInterp(a).isTrue());
+        Assertions.assertNull(model.getConstInterp(b));
 
         context.close();
     }

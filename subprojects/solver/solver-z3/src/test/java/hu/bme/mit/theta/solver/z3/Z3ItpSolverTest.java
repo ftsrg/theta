@@ -49,8 +49,8 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.math.BigInteger;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public final class Z3ItpSolverTest {
@@ -69,7 +69,7 @@ public final class Z3ItpSolverTest {
     Expr<BvType> cBV;
     Expr<BvType> dBV;
 
-    @Before
+    @BeforeEach
     public void initialize() {
         solver = Z3SolverFactory.getInstance().createItpSolver();
 
@@ -112,12 +112,12 @@ public final class Z3ItpSolverTest {
         solver.add(B, Neq(c, d));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
         System.out.println("----------");
-        Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
+        Assertions.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
     }
 
     @Test
@@ -136,7 +136,7 @@ public final class Z3ItpSolverTest {
         solver.add(I5, Eq(b, c));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -164,7 +164,7 @@ public final class Z3ItpSolverTest {
         solver.add(I5, Eq(b, c));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -187,7 +187,7 @@ public final class Z3ItpSolverTest {
         solver.add(B, Neq(App(g, c), App(g, d)));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
@@ -204,7 +204,7 @@ public final class Z3ItpSolverTest {
         solver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
@@ -232,7 +232,7 @@ public final class Z3ItpSolverTest {
         solver.add(I5, BvExprs.Eq(bBV, cBV));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(I1));
@@ -266,7 +266,7 @@ public final class Z3ItpSolverTest {
         solver.add(B, App(q, i));
 
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));
@@ -286,13 +286,13 @@ public final class Z3ItpSolverTest {
 
         solver.add(A, Neq(a, c));
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 
         solver.pop();
 
         solver.add(B, Neq(a, c));
         solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
         System.out.println(itp.eval(A));

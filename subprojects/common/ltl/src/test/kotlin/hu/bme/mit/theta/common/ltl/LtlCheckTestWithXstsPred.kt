@@ -31,12 +31,10 @@ import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import hu.bme.mit.theta.xsts.passes.XstsNormalizerPass
 import java.io.FileInputStream
 import junit.framework.TestCase.fail
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class LtlCheckTestWithXstsPred(
   private val xstsName: String,
   private val ltlExpr: String,
@@ -106,15 +104,21 @@ class LtlCheckTestWithXstsPred(
       )
 
     @JvmStatic
-    @Parameterized.Parameters(name = "{3}-{4}: {0}")
     fun params() =
       listOf(LoopCheckerSearchStrategy.GDFS, LoopCheckerSearchStrategy.NDFS).flatMap { search ->
         ASGTraceCheckerStrategy.entries.flatMap { ref -> data().map { arrayOf(*it, search, ref) } }
       }
   }
 
-  @Test
-  fun test() {
+  @ParameterizedTest
+  @MethodSource("params")
+  fun test(
+    xstsName: String,
+    ltlExpr: String,
+    result: Boolean,
+    searchStrategy: LoopCheckerSearchStrategy,
+    refinerStrategy: ASGTraceCheckerStrategy,
+  ) {
     var xstsI: XSTS?
     FileInputStream("src/test/resources/xsts/$xstsName.xsts").use { inputStream ->
       xstsI = XstsDslManager.createXsts(inputStream)
@@ -152,6 +156,6 @@ class LtlCheckTestWithXstsPred(
       )
 
     val safetyResult = checker.check(initPrec, initPrec)
-    Assert.assertEquals(result, safetyResult.isSafe)
+    Assertions.assertEquals(result, safetyResult.isSafe)
   }
 }

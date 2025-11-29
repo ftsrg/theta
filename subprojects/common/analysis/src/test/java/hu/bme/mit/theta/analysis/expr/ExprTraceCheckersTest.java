@@ -22,8 +22,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,14 +46,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public final class ExprTraceCheckersTest {
 
     private Collection<ExprTraceChecker<?>> traceCheckers;
 
-    @Before
+    @BeforeEach
     public void before() {
         final ItpSolver itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
         final UCSolver ucSolver = Z3LegacySolverFactory.getInstance().createUCSolver();

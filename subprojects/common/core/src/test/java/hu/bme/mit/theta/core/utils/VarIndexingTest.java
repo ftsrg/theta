@@ -17,7 +17,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import hu.bme.mit.theta.core.decl.VarDecl;

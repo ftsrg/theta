@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PredOrdTest {
@@ -41,37 +41,37 @@ public class PredOrdTest {
 
     @Test
     public void testBottom() {
-        Assert.assertTrue(sb.isBottom());
-        Assert.assertFalse(s1.isBottom());
-        Assert.assertFalse(s2.isBottom());
-        Assert.assertFalse(s3.isBottom());
-        Assert.assertFalse(st.isBottom());
+        Assertions.assertTrue(sb.isBottom());
+        Assertions.assertFalse(s1.isBottom());
+        Assertions.assertFalse(s2.isBottom());
+        Assertions.assertFalse(s3.isBottom());
+        Assertions.assertFalse(st.isBottom());
     }
 
     @Test
     public void testLeq() {
-        Assert.assertTrue(ord.isLeq(sb, sb));
-        Assert.assertTrue(ord.isLeq(sb, s1));
-        Assert.assertTrue(ord.isLeq(sb, s2));
-        Assert.assertTrue(ord.isLeq(sb, s3));
-        Assert.assertTrue(ord.isLeq(sb, st));
+        Assertions.assertTrue(ord.isLeq(sb, sb));
+        Assertions.assertTrue(ord.isLeq(sb, s1));
+        Assertions.assertTrue(ord.isLeq(sb, s2));
+        Assertions.assertTrue(ord.isLeq(sb, s3));
+        Assertions.assertTrue(ord.isLeq(sb, st));
 
-        Assert.assertFalse(ord.isLeq(s1, sb));
-        Assert.assertTrue(ord.isLeq(s1, s1));
-        Assert.assertTrue(ord.isLeq(s1, s2));
-        Assert.assertFalse(ord.isLeq(s1, s3));
-        Assert.assertTrue(ord.isLeq(s1, st));
+        Assertions.assertFalse(ord.isLeq(s1, sb));
+        Assertions.assertTrue(ord.isLeq(s1, s1));
+        Assertions.assertTrue(ord.isLeq(s1, s2));
+        Assertions.assertFalse(ord.isLeq(s1, s3));
+        Assertions.assertTrue(ord.isLeq(s1, st));
 
-        Assert.assertFalse(ord.isLeq(s2, sb));
-        Assert.assertFalse(ord.isLeq(s2, s1));
-        Assert.assertTrue(ord.isLeq(s2, s2));
-        Assert.assertFalse(ord.isLeq(s2, s3));
-        Assert.assertTrue(ord.isLeq(s2, st));
+        Assertions.assertFalse(ord.isLeq(s2, sb));
+        Assertions.assertFalse(ord.isLeq(s2, s1));
+        Assertions.assertTrue(ord.isLeq(s2, s2));
+        Assertions.assertFalse(ord.isLeq(s2, s3));
+        Assertions.assertTrue(ord.isLeq(s2, st));
 
-        Assert.assertFalse(ord.isLeq(st, sb));
-        Assert.assertFalse(ord.isLeq(st, s1));
-        Assert.assertFalse(ord.isLeq(st, s2));
-        Assert.assertFalse(ord.isLeq(st, s3));
-        Assert.assertTrue(ord.isLeq(st, st));
+        Assertions.assertFalse(ord.isLeq(st, sb));
+        Assertions.assertFalse(ord.isLeq(st, s1));
+        Assertions.assertFalse(ord.isLeq(st, s2));
+        Assertions.assertFalse(ord.isLeq(st, s3));
+        Assertions.assertTrue(ord.isLeq(st, st));
     }
 }

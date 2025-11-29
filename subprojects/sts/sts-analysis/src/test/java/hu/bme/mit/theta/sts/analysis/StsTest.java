@@ -34,27 +34,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class StsTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public StsConfigBuilder.Domain domain;
-
-    @Parameterized.Parameter(value = 2)
     public StsConfigBuilder.Refinement refinement;
-
-    @Parameterized.Parameter(value = 3)
     public boolean isSafe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -75,8 +64,10 @@ public class StsTest {
                 });
     }
 
-    @Test
-    public void test() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+    public void test(String filePath, StsConfigBuilder.Domain domain, StsConfigBuilder.Refinement refinement, boolean isSafe) throws IOException {
+        initStsTest(filePath, domain, refinement, isSafe);
         STS sts = null;
         if (filePath.endsWith("aag")) {
             sts = AigerToSts.createSts(AigerParser.parse(filePath));
@@ -90,6 +81,13 @@ public class StsTest {
         StsConfig<? extends State, ? extends Action, ? extends Prec> config =
                 new StsConfigBuilder(domain, refinement, Z3LegacySolverFactory.getInstance())
                         .build(sts);
-        Assert.assertEquals(isSafe, config.check().isSafe());
+        Assertions.assertEquals(isSafe, config.check().isSafe());
+    }
+
+    public void initStsTest(String filePath, StsConfigBuilder.Domain domain, StsConfigBuilder.Refinement refinement, boolean isSafe) {
+        this.filePath = filePath;
+        this.domain = domain;
+        this.refinement = refinement;
+        this.isSafe = isSafe;
     }
 }

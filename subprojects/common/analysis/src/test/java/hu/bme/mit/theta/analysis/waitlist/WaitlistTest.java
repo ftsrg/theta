@@ -16,9 +16,7 @@
 package hu.bme.mit.theta.analysis.waitlist;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;

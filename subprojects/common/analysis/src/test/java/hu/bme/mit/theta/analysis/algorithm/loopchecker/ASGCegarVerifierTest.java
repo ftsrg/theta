@@ -61,13 +61,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ASGCegarVerifierTest {
 
     private static Solver abstractionSolver;
@@ -75,26 +73,17 @@ public class ASGCegarVerifierTest {
     private static SolverFactory solverFactory;
     private static Logger logger;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
         solverFactory = Z3LegacySolverFactory.getInstance();
         logger = new ConsoleLogger(Logger.Level.INFO);
-    }
-
-    @Parameterized.Parameter public String fileName;
-
-    @Parameterized.Parameter(1)
+    } public String fileName;
     public String propFileName;
-
-    @Parameterized.Parameter(2)
     public String acceptingLocationName;
-
-    @Parameterized.Parameter(3)
     public boolean result;
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -111,8 +100,10 @@ public class ASGCegarVerifierTest {
                 });
     }
 
-    @Test
-    public void test() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String fileName, String propFileName, String acceptingLocationName, boolean result) throws IOException {
+        initASGCegarVerifierTest(fileName, propFileName, acceptingLocationName, result);
         if (propFileName.isBlank() && !acceptingLocationName.isBlank()) testWithCfa();
         if (!propFileName.isBlank() && acceptingLocationName.isBlank()) testWithXsts();
     }
@@ -186,7 +177,7 @@ public class ASGCegarVerifierTest {
 
                                                 final PredPrec precision = PredPrec.of();
                                                 var result = verifier.check(precision);
-                                                Assert.assertEquals(this.result, result.isUnsafe());
+                                                Assertions.assertEquals(this.result, result.isUnsafe());
                                             }));
     }
 
@@ -252,7 +243,14 @@ public class ASGCegarVerifierTest {
                                                 final GlobalCfaPrec<PredPrec> prec =
                                                         GlobalCfaPrec.create(PredPrec.of());
                                                 var res = verifier.check(prec);
-                                                Assert.assertEquals(result, res.isUnsafe());
+                                                Assertions.assertEquals(result, res.isUnsafe());
                                             }));
+    }
+
+    public void initASGCegarVerifierTest(String fileName, String propFileName, String acceptingLocationName, boolean result) {
+        this.fileName = fileName;
+        this.propFileName = propFileName;
+        this.acceptingLocationName = acceptingLocationName;
+        this.result = result;
     }
 }

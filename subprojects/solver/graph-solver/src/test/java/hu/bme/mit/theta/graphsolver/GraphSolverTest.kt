@@ -29,7 +29,7 @@ import java.util.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.junit.runners.Parameterized
+ 
 
 class GraphSolverTest<T> {
 
@@ -104,7 +104,6 @@ class GraphSolverTest<T> {
         ),
       )
 
-    @Parameterized.Parameters
     @JvmStatic
     fun data(): Collection<Array<Any>> {
       return Arrays.asList(

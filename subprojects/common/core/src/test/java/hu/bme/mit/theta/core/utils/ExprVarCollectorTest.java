@@ -27,7 +27,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -38,13 +38,9 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExprVarCollectorTest {
 
     private static final VarDecl<BoolType> VA = Var("a", Bool());
@@ -56,14 +52,9 @@ public class ExprVarCollectorTest {
     private static final Expr<IntType> B = VB.getRef();
     private static final Expr<RatType> C = VC.getRef();
     private static final Expr<BoolType> D = VD.getRef();
-
-    @Parameter(value = 0)
     public Expr<Type> expr;
-
-    @Parameter(value = 1)
     public Set<VarDecl<?>> expectedVars;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -74,9 +65,16 @@ public class ExprVarCollectorTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<Type> expr, Set<VarDecl<?>> expectedVars) {
+        initExprVarCollectorTest(expr, expectedVars);
         final Set<VarDecl<?>> vars = ExprUtils.getVars(expr);
         assertEquals(expectedVars, vars);
+    }
+
+    public void initExprVarCollectorTest(Expr<Type> expr, Set<VarDecl<?>> expectedVars) {
+        this.expr = expr;
+        this.expectedVars = expectedVars;
     }
 }

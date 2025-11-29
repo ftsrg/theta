@@ -33,16 +33,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class XtaAnalysisTest {
 
-    @Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -54,12 +49,12 @@ public final class XtaAnalysisTest {
                     {"/broadcast.xta"},
                 });
     }
-
-    @Parameter(0)
     public String filepath;
 
-    @Test
-    public void test() throws FileNotFoundException, IOException {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void test(String filepath) throws FileNotFoundException, IOException {
+        initXtaAnalysisTest(filepath);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
@@ -78,5 +73,9 @@ public final class XtaAnalysisTest {
         System.out.println(
                 GraphvizWriter.getInstance()
                         .writeString(ArgVisualizer.getDefault().visualize(arg)));
+    }
+
+    public void initXtaAnalysisTest(String filepath) {
+        this.filepath = filepath;
     }
 }

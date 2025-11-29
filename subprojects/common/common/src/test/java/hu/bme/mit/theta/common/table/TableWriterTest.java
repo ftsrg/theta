@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class TableWriterTest {
@@ -41,6 +41,6 @@ public class TableWriterTest {
         final String expected =
                 "X11Y,X12Y" + nl + "X2Y," + nl + "X31Y,X32Y" + nl + "X41Y,X42Y" + nl;
 
-        Assert.assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 }

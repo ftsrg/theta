@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.arg;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;

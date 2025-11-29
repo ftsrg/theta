@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Optional;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ExplStateTest {
@@ -43,30 +43,30 @@ public class ExplStateTest {
         final ExplState s2 = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
         final ExplState b = ExplState.bottom();
 
-        Assert.assertSame(t1, t2);
-        Assert.assertSame(t1, t3);
-        Assert.assertSame(t2, t3);
+        Assertions.assertSame(t1, t2);
+        Assertions.assertSame(t1, t3);
+        Assertions.assertSame(t2, t3);
 
-        Assert.assertNotSame(s1, t1);
-        Assert.assertEquals(s1, s2);
+        Assertions.assertNotSame(s1, t1);
+        Assertions.assertEquals(s1, s2);
 
-        Assert.assertNotEquals(t1, b);
-        Assert.assertNotEquals(t2, b);
+        Assertions.assertNotEquals(t1, b);
+        Assertions.assertNotEquals(t2, b);
     }
 
     @Test
     public void testEval() {
         final ExplState s1 = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
 
-        Assert.assertEquals(Optional.of(Int(1)), s1.eval(x));
-        Assert.assertEquals(Optional.empty(), s1.eval(y));
+        Assertions.assertEquals(Optional.of(Int(1)), s1.eval(x));
+        Assertions.assertEquals(Optional.empty(), s1.eval(y));
     }
 
     @Test
     public void testToExpr() {
-        Assert.assertEquals(True(), ExplState.top().toExpr());
-        Assert.assertEquals(False(), ExplState.bottom().toExpr());
-        Assert.assertEquals(
+        Assertions.assertEquals(True(), ExplState.top().toExpr());
+        Assertions.assertEquals(False(), ExplState.bottom().toExpr());
+        Assertions.assertEquals(
                 And(Eq(x.getRef(), Int(1)), Eq(y.getRef(), Int(2))),
                 ExplState.of(ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build())
                         .toExpr());

@@ -19,7 +19,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -27,13 +27,9 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class SubstitutionApplyTest {
 
     private static final VarDecl<IntType> VA = Var("a", Int());
@@ -41,17 +37,10 @@ public class SubstitutionApplyTest {
 
     private static final Expr<IntType> A = VA.getRef();
     private static final Expr<IntType> B = VB.getRef();
-
-    @Parameter(value = 0)
     public Expr<Type> expr;
-
-    @Parameter(value = 1)
     public Substitution sub;
-
-    @Parameter(value = 2)
     public Expr<Type> expected;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -74,8 +63,16 @@ public class SubstitutionApplyTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<Type> expr, Substitution sub, Expr<Type> expected) {
+        initSubstitutionApplyTest(expr, sub, expected);
         assertEquals(expected, sub.apply(expr));
+    }
+
+    public void initSubstitutionApplyTest(Expr<Type> expr, Substitution sub, Expr<Type> expected) {
+        this.expr = expr;
+        this.sub = sub;
+        this.expected = expected;
     }
 }

@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.Collection;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ExplSplittersTest {
@@ -37,24 +37,24 @@ public class ExplSplittersTest {
     @Test
     public void testWhole() {
         final Collection<Expr<BoolType>> exprs = ExprSplitters.whole().apply(expr);
-        Assert.assertEquals(1, exprs.size());
-        Assert.assertEquals(expr, exprs.iterator().next());
+        Assertions.assertEquals(1, exprs.size());
+        Assertions.assertEquals(expr, exprs.iterator().next());
     }
 
     @Test
     public void testConjuncts() {
         final Collection<Expr<BoolType>> exprs = ExprSplitters.conjuncts().apply(expr);
-        Assert.assertEquals(2, exprs.size());
-        Assert.assertTrue(exprs.contains(Not(x)));
-        Assert.assertTrue(exprs.contains(Or(Not(y), z)));
+        Assertions.assertEquals(2, exprs.size());
+        Assertions.assertTrue(exprs.contains(Not(x)));
+        Assertions.assertTrue(exprs.contains(Or(Not(y), z)));
     }
 
     @Test
     public void testAtoms() {
         final Collection<Expr<BoolType>> exprs = ExprSplitters.atoms().apply(expr);
-        Assert.assertEquals(3, exprs.size());
-        Assert.assertTrue(exprs.contains(x));
-        Assert.assertTrue(exprs.contains(y));
-        Assert.assertTrue(exprs.contains(z));
+        Assertions.assertEquals(3, exprs.size());
+        Assertions.assertTrue(exprs.contains(x));
+        Assertions.assertTrue(exprs.contains(y));
+        Assertions.assertTrue(exprs.contains(z));
     }
 }

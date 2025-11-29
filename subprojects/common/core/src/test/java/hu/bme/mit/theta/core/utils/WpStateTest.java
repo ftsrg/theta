@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -29,13 +29,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class WpStateTest {
 
     private static final VarDecl<IntType> VX = Var("x", Int());
@@ -52,17 +48,10 @@ public final class WpStateTest {
 
     private static final Stmt ASSIGN_X_1 = Assign(VX, Int(1));
     private static final Stmt ASSIGN_Y_X = Assign(VY, X);
-
-    @Parameter(0)
     public Expr<BoolType> expr;
-
-    @Parameter(1)
     public Stmt stmt;
-
-    @Parameter(2)
     public Expr<BoolType> expectedWp;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -79,8 +68,10 @@ public final class WpStateTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<BoolType> expr, Stmt stmt, Expr<BoolType> expectedWp) {
+        initWpStateTest(expr, stmt, expectedWp);
         // Arrange
         final WpState state = WpState.of(expr);
 
@@ -90,5 +81,11 @@ public final class WpStateTest {
 
         // Assert
         assertEquals(expectedWp, actualWp);
+    }
+
+    public void initWpStateTest(Expr<BoolType> expr, Stmt stmt, Expr<BoolType> expectedWp) {
+        this.expr = expr;
+        this.stmt = stmt;
+        this.expectedWp = expectedWp;
     }
 }

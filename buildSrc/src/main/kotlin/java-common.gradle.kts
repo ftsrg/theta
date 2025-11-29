@@ -33,7 +33,6 @@ dependencies {
     implementation(Deps.guava)
     implementation(Deps.gson)
     implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
-  testImplementation("junit:junit:4.13")
 
     testImplementation(Deps.junit5)
     testImplementation(Deps.junit5param)

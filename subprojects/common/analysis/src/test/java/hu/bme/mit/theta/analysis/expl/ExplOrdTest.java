@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ExplOrdTest {
@@ -41,56 +41,56 @@ public class ExplOrdTest {
 
     @Test
     public void testBottom() {
-        Assert.assertFalse(st.isBottom());
-        Assert.assertFalse(s1.isBottom());
-        Assert.assertFalse(s2.isBottom());
-        Assert.assertFalse(s3.isBottom());
-        Assert.assertFalse(s4.isBottom());
-        Assert.assertTrue(sb.isBottom());
+        Assertions.assertFalse(st.isBottom());
+        Assertions.assertFalse(s1.isBottom());
+        Assertions.assertFalse(s2.isBottom());
+        Assertions.assertFalse(s3.isBottom());
+        Assertions.assertFalse(s4.isBottom());
+        Assertions.assertTrue(sb.isBottom());
     }
 
     @Test
     public void testLeq() {
-        Assert.assertTrue(ord.isLeq(st, st));
-        Assert.assertTrue(ord.isLeq(s1, st));
-        Assert.assertTrue(ord.isLeq(s2, st));
-        Assert.assertTrue(ord.isLeq(s3, st));
-        Assert.assertTrue(ord.isLeq(s4, st));
-        Assert.assertTrue(ord.isLeq(sb, st));
+        Assertions.assertTrue(ord.isLeq(st, st));
+        Assertions.assertTrue(ord.isLeq(s1, st));
+        Assertions.assertTrue(ord.isLeq(s2, st));
+        Assertions.assertTrue(ord.isLeq(s3, st));
+        Assertions.assertTrue(ord.isLeq(s4, st));
+        Assertions.assertTrue(ord.isLeq(sb, st));
 
-        Assert.assertFalse(ord.isLeq(st, s1));
-        Assert.assertTrue(ord.isLeq(s1, s1));
-        Assert.assertFalse(ord.isLeq(s2, s1));
-        Assert.assertFalse(ord.isLeq(s3, s1));
-        Assert.assertTrue(ord.isLeq(s4, s1));
-        Assert.assertTrue(ord.isLeq(sb, s1));
+        Assertions.assertFalse(ord.isLeq(st, s1));
+        Assertions.assertTrue(ord.isLeq(s1, s1));
+        Assertions.assertFalse(ord.isLeq(s2, s1));
+        Assertions.assertFalse(ord.isLeq(s3, s1));
+        Assertions.assertTrue(ord.isLeq(s4, s1));
+        Assertions.assertTrue(ord.isLeq(sb, s1));
 
-        Assert.assertFalse(ord.isLeq(st, s2));
-        Assert.assertFalse(ord.isLeq(s1, s2));
-        Assert.assertTrue(ord.isLeq(s2, s2));
-        Assert.assertFalse(ord.isLeq(s3, s2));
-        Assert.assertFalse(ord.isLeq(s4, s2));
-        Assert.assertTrue(ord.isLeq(sb, s2));
+        Assertions.assertFalse(ord.isLeq(st, s2));
+        Assertions.assertFalse(ord.isLeq(s1, s2));
+        Assertions.assertTrue(ord.isLeq(s2, s2));
+        Assertions.assertFalse(ord.isLeq(s3, s2));
+        Assertions.assertFalse(ord.isLeq(s4, s2));
+        Assertions.assertTrue(ord.isLeq(sb, s2));
 
-        Assert.assertFalse(ord.isLeq(st, s3));
-        Assert.assertFalse(ord.isLeq(s1, s3));
-        Assert.assertFalse(ord.isLeq(s2, s3));
-        Assert.assertTrue(ord.isLeq(s3, s3));
-        Assert.assertTrue(ord.isLeq(s4, s3));
-        Assert.assertTrue(ord.isLeq(sb, s3));
+        Assertions.assertFalse(ord.isLeq(st, s3));
+        Assertions.assertFalse(ord.isLeq(s1, s3));
+        Assertions.assertFalse(ord.isLeq(s2, s3));
+        Assertions.assertTrue(ord.isLeq(s3, s3));
+        Assertions.assertTrue(ord.isLeq(s4, s3));
+        Assertions.assertTrue(ord.isLeq(sb, s3));
 
-        Assert.assertFalse(ord.isLeq(st, s4));
-        Assert.assertFalse(ord.isLeq(s1, s4));
-        Assert.assertFalse(ord.isLeq(s2, s4));
-        Assert.assertFalse(ord.isLeq(s3, s4));
-        Assert.assertTrue(ord.isLeq(s4, s4));
-        Assert.assertTrue(ord.isLeq(sb, s4));
+        Assertions.assertFalse(ord.isLeq(st, s4));
+        Assertions.assertFalse(ord.isLeq(s1, s4));
+        Assertions.assertFalse(ord.isLeq(s2, s4));
+        Assertions.assertFalse(ord.isLeq(s3, s4));
+        Assertions.assertTrue(ord.isLeq(s4, s4));
+        Assertions.assertTrue(ord.isLeq(sb, s4));
 
-        Assert.assertFalse(ord.isLeq(st, sb));
-        Assert.assertFalse(ord.isLeq(s1, sb));
-        Assert.assertFalse(ord.isLeq(s2, sb));
-        Assert.assertFalse(ord.isLeq(s3, sb));
-        Assert.assertFalse(ord.isLeq(s4, sb));
-        Assert.assertTrue(ord.isLeq(sb, sb));
+        Assertions.assertFalse(ord.isLeq(st, sb));
+        Assertions.assertFalse(ord.isLeq(s1, sb));
+        Assertions.assertFalse(ord.isLeq(s2, sb));
+        Assertions.assertFalse(ord.isLeq(s3, sb));
+        Assertions.assertFalse(ord.isLeq(s4, sb));
+        Assertions.assertTrue(ord.isLeq(sb, sb));
     }
 }

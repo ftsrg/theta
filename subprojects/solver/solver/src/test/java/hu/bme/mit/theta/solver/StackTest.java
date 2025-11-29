@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.solver;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class StackTest {
@@ -30,60 +30,60 @@ public class StackTest {
         assertEquals(0, stack.toCollection().size());
         stack.push();
         assertEquals(0, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
         stack.add("A");
         assertEquals(1, stack.toCollection().size());
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 new String[] {
                     "A",
                 },
                 stack.toCollection().toArray());
         stack.add("B");
         assertEquals(2, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
         stack.push();
         assertEquals(2, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
         stack.add("C");
         assertEquals(3, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B", "C"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B", "C"}, stack.toCollection().toArray());
         stack.add("D");
         assertEquals(4, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B", "C", "D"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B", "C", "D"}, stack.toCollection().toArray());
         stack.pop();
         assertEquals(2, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
         stack.pop();
         assertEquals(0, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
     }
 
     @Test
     public void testPop2() {
         final Stack<String> stack = new StackImpl<>();
         assertEquals(0, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
         stack.push();
         assertEquals(0, stack.toCollection().size());
         stack.add("A");
         assertEquals(1, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A"}, stack.toCollection().toArray());
         stack.push();
         assertEquals(1, stack.toCollection().size());
         stack.add("B");
         assertEquals(2, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
         stack.push();
         assertEquals(2, stack.toCollection().size());
         stack.add("C");
         assertEquals(3, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A", "B", "C"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A", "B", "C"}, stack.toCollection().toArray());
         stack.pop(2);
         assertEquals(1, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {"A"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {"A"}, stack.toCollection().toArray());
         stack.pop();
         assertEquals(0, stack.toCollection().size());
-        Assert.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
     }
 
     @Test

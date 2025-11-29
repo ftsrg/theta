@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.SolverUtils;
 import java.util.stream.Stream;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class SolverUtilsTest {
@@ -46,6 +46,6 @@ public class SolverUtilsTest {
         final Stream<Valuation> models = SolverUtils.models(factory, expr);
 
         // Act
-        models.limit(5).forEach(m -> Assert.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
+        models.limit(5).forEach(m -> Assertions.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
     }
 }

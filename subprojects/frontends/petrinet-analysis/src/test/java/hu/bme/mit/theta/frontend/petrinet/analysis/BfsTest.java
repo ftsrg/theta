@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.GraphvizSerializer;
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;

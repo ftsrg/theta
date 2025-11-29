@@ -26,8 +26,9 @@ import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+
 
 class XcfaDslTest {
 
@@ -97,7 +98,7 @@ class XcfaDslTest {
           NullLogger.getInstance(),
         )
       val safetyResult = checker.check()
-      Assert.assertTrue(safetyResult.isSafe)
+      Assertions.assertTrue(safetyResult.isSafe)
     }
     run {
       val xcfa = getAsyncXcfa()
@@ -111,7 +112,7 @@ class XcfaDslTest {
           NullLogger.getInstance(),
         )
       val safetyResult = checker.check()
-      Assert.assertTrue(safetyResult.isUnsafe)
+      Assertions.assertTrue(safetyResult.isUnsafe)
     }
   }
 }
