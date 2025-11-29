@@ -10,7 +10,7 @@ The submitted version can be found under the `COMMIT_ID` commit in the [GitHub r
 
 Minimal necessary packages for Ubuntu 24.04 LTS:
 
-* openjdk-17-jre-headless
+* openjdk-21-jre-headless
 * libgomp1
 * libmpfr-dev
 

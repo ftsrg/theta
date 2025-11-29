@@ -11,7 +11,7 @@ jobs:
   check-version:
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
+      - name: Set java home to java 21
         run: |
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository

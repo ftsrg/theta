@@ -168,7 +168,7 @@ jobs:
     if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
+      - name: Set java home to java 21
         run: |
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository
@@ -226,7 +226,7 @@ jobs:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
+      - name: Set java home to java 21
         run: |
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository
@@ -263,7 +263,7 @@ jobs:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
+      - name: Set java home to java 21
         run: |
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository

@@ -17,7 +17,7 @@ This project contains an executable tool (command line) for running analyses on 
       appear under _build/libs/_ with the name _theta-xta-cli-\<VERSION\>-all.jar_, you can simply
       rename it to _theta-xta-cli.jar_.
     * Alternatively, you can use our docker image (see below).
-2. Running the tool requires Java (JRE) 17.
+2. Running the tool requires Java (JRE) 21.
 3. The tool also requires the [Z3 SMT solver libraries](../../../doc/Build.md) to be available
    on `PATH`.
 4. The tool can be executed with `java -jar theta-xta-cli.jar [ARGUMENTS]`.

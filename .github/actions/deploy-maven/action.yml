@@ -18,7 +18,7 @@ runs:
     - uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
       with:
         distribution: temurin
-        java-version: 17
+        java-version: 21
     - name: Publish to Maven Staging
       uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       env:

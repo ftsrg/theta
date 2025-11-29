@@ -28,7 +28,7 @@ dependencies {
 tasks {
     withType<KotlinCompile>() {
         kotlinOptions {
-            jvmTarget = "17"
+            jvmTarget = "21"
             freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
         }
     }

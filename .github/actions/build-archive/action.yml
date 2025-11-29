@@ -48,11 +48,11 @@ runs:
       run: |
         mv jar/xcfa/xcfa-cli/build/libs/*-all.jar ${{ inputs.name }}/${{ inputs.name }}/theta.jar
         mv jar/solver/solver-smtlib-cli/build/libs/*-all.jar ${{ inputs.name }}/${{ inputs.name }}/theta-smtlib.jar
-    - name: Setup java 17
+    - name: Setup java 21
       uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
       with:
         distribution: temurin
-        java-version: 17
+        java-version: 21
     - name: Install solvers
       shell: bash
       run: |
