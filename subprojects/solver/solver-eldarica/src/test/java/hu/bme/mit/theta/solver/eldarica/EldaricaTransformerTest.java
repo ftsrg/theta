@@ -17,8 +17,8 @@ package hu.bme.mit.theta.solver.eldarica;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -67,9 +67,7 @@ public class EldaricaTransformerTest {
         assumeFalse(
                 hasExpr(
                         expr,
-                        e ->
-                                e instanceof BvRotateLeftExpr
-                                        || e instanceof BvRotateRightExpr));
+                        e -> e instanceof BvRotateLeftExpr || e instanceof BvRotateRightExpr));
 
         final EldaricaSymbolTable javaSMTSymbolTable = new EldaricaSymbolTable();
         final EldaricaTransformationManager manager =

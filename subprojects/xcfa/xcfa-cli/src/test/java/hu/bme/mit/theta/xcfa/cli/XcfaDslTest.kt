@@ -29,7 +29,6 @@ import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-
 class XcfaDslTest {
 
   private fun getSyncXcfa() =

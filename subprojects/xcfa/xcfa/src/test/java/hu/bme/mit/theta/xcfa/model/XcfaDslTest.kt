@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.model.ParamDirection.*
 import org.junit.jupiter.api.Test
 
-
 class XcfaDslTest {
 
   private fun getXcfa() =

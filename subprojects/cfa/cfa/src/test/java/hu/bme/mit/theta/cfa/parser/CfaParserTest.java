@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.cfa.parser;
 
 import hu.bme.mit.theta.cfa.CFA;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -29,10 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public final class CfaParserTest {
-    public String filepath;
-
-    private Reader reader;
-    private CfaParser parser;
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -42,29 +37,20 @@ public final class CfaParserTest {
     }
 
     @BeforeEach
-    public void before() throws FileNotFoundException {
-        reader = new FileReader(filepath);
-        parser = new CfaParser(reader);
-    }
+    public void before() {}
 
     @AfterEach
-    public void after() throws IOException {
-        reader.close();
-    }
+    public void after() {}
 
     @MethodSource("data")
     @ParameterizedTest
-    public void test(String filepath) throws FileNotFoundException {
-        initCfaParserTest(filepath);
-        // Act
-        final CFA cfa = parser.cfa();
-        Assertions.assertEquals(1, cfa.getVars().size());
-        Assertions.assertEquals(6, cfa.getLocs().size());
-        Assertions.assertEquals(6, cfa.getEdges().size());
-    }
-
-    public void initCfaParserTest(String filepath) throws FileNotFoundException {
-        this.filepath = filepath;
-        this.before();
+    public void test(String filepath) throws IOException {
+        try (Reader reader = new FileReader(filepath)) {
+            CfaParser parser = new CfaParser(reader);
+            final CFA cfa = parser.cfa();
+            Assertions.assertEquals(1, cfa.getVars().size());
+            Assertions.assertEquals(6, cfa.getLocs().size());
+            Assertions.assertEquals(6, cfa.getEdges().size());
+        }
     }
 }

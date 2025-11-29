@@ -52,7 +52,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -108,7 +107,6 @@ public final class CoreParserTest {
                 });
     }
 
-    @BeforeEach
     public void before() {
         final Reader reader = new StringReader(string);
         parser = new CoreParser(reader);

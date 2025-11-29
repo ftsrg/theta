@@ -56,7 +56,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class ASGAbstractorCheckingTest { public String fileName;
+public class ASGAbstractorCheckingTest {
+    public String fileName;
     public String propFileName;
     public String acceptingLocationName;
     public boolean isLassoPresent;
@@ -78,8 +79,14 @@ public class ASGAbstractorCheckingTest { public String fileName;
 
     @MethodSource("data")
     @ParameterizedTest
-    public void test(String fileName, String propFileName, String acceptingLocationName, boolean isLassoPresent) throws IOException {
-        initASGAbstractorCheckingTest(fileName, propFileName, acceptingLocationName, isLassoPresent);
+    public void test(
+            String fileName,
+            String propFileName,
+            String acceptingLocationName,
+            boolean isLassoPresent)
+            throws IOException {
+        initASGAbstractorCheckingTest(
+                fileName, propFileName, acceptingLocationName, isLassoPresent);
         if (propFileName.isBlank() && !acceptingLocationName.isBlank()) testWithCfa();
         if (!propFileName.isBlank() && acceptingLocationName.isBlank()) testWithXsts();
     }
@@ -143,7 +150,11 @@ public class ASGAbstractorCheckingTest { public String fileName;
         Assertions.assertEquals(isLassoPresent, result.isUnsafe());
     }
 
-    public void initASGAbstractorCheckingTest(String fileName, String propFileName, String acceptingLocationName, boolean isLassoPresent) {
+    public void initASGAbstractorCheckingTest(
+            String fileName,
+            String propFileName,
+            String acceptingLocationName,
+            boolean isLassoPresent) {
         this.fileName = fileName;
         this.propFileName = propFileName;
         this.acceptingLocationName = acceptingLocationName;

@@ -32,7 +32,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.jupiter.api.Assertions.*;
 
-import ap.parser.ApInput.Absyn.Arg;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.common.Tuple2;
@@ -73,31 +72,28 @@ public final class JavaSMTSolverTest {
     public static Collection<Arguments> operations() {
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
             return Arrays.asList(
-                Arguments.of(
-                    Solvers.Z3,
-                    JavaSMTSolverFactory.create(Solvers.Z3, new String[] {}).createSolver()
-    ),
-                Arguments.of(
-                    Solvers.CVC5,
-                    JavaSMTSolverFactory.create(Solvers.CVC5, new String[] {})
-                            .createSolver()
-    ),
-                Arguments.of(
-                    Solvers.PRINCESS,
-                    JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
-                            .createSolver()
-    ));
+                    Arguments.of(
+                            Solvers.Z3,
+                            JavaSMTSolverFactory.create(Solvers.Z3, new String[] {})
+                                    .createSolver()),
+                    Arguments.of(
+                            Solvers.CVC5,
+                            JavaSMTSolverFactory.create(Solvers.CVC5, new String[] {})
+                                    .createSolver()),
+                    Arguments.of(
+                            Solvers.PRINCESS,
+                            JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
+                                    .createSolver()));
         } else {
             return Arrays.asList(
-                Arguments.of(
-                    Solvers.Z3,
-                    JavaSMTSolverFactory.create(Solvers.Z3, new String[] {}).createSolver()
-                ),
-                Arguments.of(
-                    Solvers.PRINCESS,
-                    JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
-                            .createSolver()
-                ));
+                    Arguments.of(
+                            Solvers.Z3,
+                            JavaSMTSolverFactory.create(Solvers.Z3, new String[] {})
+                                    .createSolver()),
+                    Arguments.of(
+                            Solvers.PRINCESS,
+                            JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
+                                    .createSolver()));
         }
     }
 

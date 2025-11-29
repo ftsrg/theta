@@ -139,21 +139,39 @@ public class MddCheckerTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
-    public void testBfs(Expr<BoolType> initExpr, Expr<BoolType> tranExpr, Expr<BoolType> propExpr, boolean safe, Long stateSpaceSize) throws Exception {
+    public void testBfs(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize)
+            throws Exception {
         initMddCheckerTest(initExpr, tranExpr, propExpr, safe, stateSpaceSize);
         testWithIterationStrategy(MddChecker.IterationStrategy.BFS);
     }
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
-    public void testSat(Expr<BoolType> initExpr, Expr<BoolType> tranExpr, Expr<BoolType> propExpr, boolean safe, Long stateSpaceSize) throws Exception {
+    public void testSat(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize)
+            throws Exception {
         initMddCheckerTest(initExpr, tranExpr, propExpr, safe, stateSpaceSize);
         testWithIterationStrategy(MddChecker.IterationStrategy.SAT);
     }
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
-    public void testGsat(Expr<BoolType> initExpr, Expr<BoolType> tranExpr, Expr<BoolType> propExpr, boolean safe, Long stateSpaceSize) throws Exception {
+    public void testGsat(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize)
+            throws Exception {
         initMddCheckerTest(initExpr, tranExpr, propExpr, safe, stateSpaceSize);
         testWithIterationStrategy(MddChecker.IterationStrategy.GSAT);
     }
@@ -181,7 +199,12 @@ public class MddCheckerTest {
         }
     }
 
-    public void initMddCheckerTest(Expr<BoolType> initExpr, Expr<BoolType> tranExpr, Expr<BoolType> propExpr, boolean safe, Long stateSpaceSize) {
+    public void initMddCheckerTest(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize) {
         this.initExpr = initExpr;
         this.tranExpr = tranExpr;
         this.propExpr = propExpr;

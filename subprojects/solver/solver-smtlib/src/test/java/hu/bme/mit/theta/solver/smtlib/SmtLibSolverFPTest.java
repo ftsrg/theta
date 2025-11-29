@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -83,7 +83,8 @@ public class SmtLibSolverFPTest {
 
     @MethodSource("operations")
     @ParameterizedTest(name = "expr: {0}, expected: {1}, actual: {2}")
-    public void testOperationEquals(Class<?> exprType, Expr<?> expected, Expr<?> actual) throws Exception {
+    public void testOperationEquals(Class<?> exprType, Expr<?> expected, Expr<?> actual)
+            throws Exception {
         initSmtLibSolverFPTest(exprType, expected, actual);
         Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
 

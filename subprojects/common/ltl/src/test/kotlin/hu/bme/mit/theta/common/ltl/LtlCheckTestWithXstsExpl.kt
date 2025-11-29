@@ -34,16 +34,11 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import hu.bme.mit.theta.xsts.passes.XstsNormalizerPass
 import java.io.FileInputStream
-import junit.framework.TestCase.fail
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-class LtlCheckTestWithXstsExpl(
-  private val xstsName: String,
-  private val ltlExpr: String,
-  private val result: Boolean,
-) {
+class LtlCheckTestWithXstsExpl {
 
   private val solverFactory = Z3LegacySolverFactory.getInstance()
   private val logger: Logger = ConsoleLogger(Logger.Level.VERBOSE)
@@ -69,7 +64,7 @@ class LtlCheckTestWithXstsExpl(
     FileInputStream(String.format("src/test/resources/xsts/%s.xsts", xstsName)).use { inputStream ->
       xstsI = XstsDslManager.createXsts(inputStream)
     }
-    if (xstsI == null) fail("Couldn't read xsts $xstsName")
+    if (xstsI == null) Assertions.fail<Unit>("Couldn't read xsts $xstsName")
     val xsts = XstsNormalizerPass.transform(xstsI!!)
     val configBuilder: XstsConfigBuilder.ExplStrategy =
       XstsConfigBuilder(

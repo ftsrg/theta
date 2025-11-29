@@ -47,7 +47,8 @@ public class SmtLibParserTest {
         Assertions.assertTrue(general.isSpecific());
 
         Assertions.assertTrue(general.asSpecific().isGetUnsatCoreResponse());
-        Assertions.assertEquals(0, general.asSpecific().asGetUnsatCoreResponse().getLabels().size());
+        Assertions.assertEquals(
+                0, general.asSpecific().asGetUnsatCoreResponse().getLabels().size());
 
         Assertions.assertTrue(general.asSpecific().isGetModelResponse());
         Assertions.assertEquals(0, general.asSpecific().asGetModelResponse().getModel().size());

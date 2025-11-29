@@ -25,7 +25,6 @@ import hu.bme.mit.theta.xcfa.model.ParamDirection.*
 import hu.bme.mit.theta.xcfa.toC
 import org.junit.jupiter.api.Test
 
-
 class XcfaSerializationTest {
 
   private fun getXcfa() =

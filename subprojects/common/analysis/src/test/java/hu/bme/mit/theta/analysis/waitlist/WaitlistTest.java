@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.waitlist;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.NoSuchElementException;
@@ -163,26 +162,32 @@ public class WaitlistTest {
 
     @Test
     public void testLifoException() {
-        assertThrows(NoSuchElementException.class, () -> {
-            final Waitlist<String> waitlist = LifoWaitlist.create();
-            waitlist.remove();
-        });
+        assertThrows(
+                NoSuchElementException.class,
+                () -> {
+                    final Waitlist<String> waitlist = LifoWaitlist.create();
+                    waitlist.remove();
+                });
     }
 
     @Test
     public void testFifoException() {
-        assertThrows(NoSuchElementException.class, () -> {
-            final Waitlist<String> waitlist = FifoWaitlist.create();
-            waitlist.remove();
-        });
+        assertThrows(
+                NoSuchElementException.class,
+                () -> {
+                    final Waitlist<String> waitlist = FifoWaitlist.create();
+                    waitlist.remove();
+                });
     }
 
     @Test
     public void testPriorityException() {
-        assertThrows(NoSuchElementException.class, () -> {
-            final Waitlist<String> waitlist = PriorityWaitlist.create();
-            waitlist.remove();
-        });
+        assertThrows(
+                NoSuchElementException.class,
+                () -> {
+                    final Waitlist<String> waitlist = PriorityWaitlist.create();
+                    waitlist.remove();
+                });
     }
 
     @Test

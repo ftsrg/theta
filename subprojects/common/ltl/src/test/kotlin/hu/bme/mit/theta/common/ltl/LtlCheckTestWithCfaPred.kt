@@ -32,18 +32,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import java.io.FileInputStream
-import junit.framework.TestCase.fail
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-class LtlCheckTestWithCfaPred(
-  private val cfaName: String,
-  private val ltlExpr: String,
-  private val result: Boolean,
-  private val searchStrategy: LoopCheckerSearchStrategy,
-  private val refinerStrategy: ASGTraceCheckerStrategy,
-) {
+class LtlCheckTestWithCfaPred {
 
   private val itpSolverFactory = Z3LegacySolverFactory.getInstance()
   private val abstractionSolver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
@@ -93,7 +86,7 @@ class LtlCheckTestWithCfaPred(
     FileInputStream(String.format("src/test/resources/cfa/%s.cfa", cfaName)).use { inputStream ->
       cfaI = CfaDslManager.createCfa(inputStream)
     }
-    if (cfaI == null) fail("Couldn't read cfa $cfaName")
+    if (cfaI == null) Assertions.fail<Unit>("Couldn't read cfa $cfaName")
     val cfa = cfaI!!
     val configBuilder =
       CfaConfigBuilder(
@@ -130,6 +123,9 @@ class LtlCheckTestWithCfaPred(
         nextSideFunction = NextSideFunctions.Alternating(),
       )
 
-    Assertions.assertEquals(result, checker.check(configBuilder.createInitPrec(), dataInitPrec).isSafe)
+    Assertions.assertEquals(
+      result,
+      checker.check(configBuilder.createInitPrec(), dataInitPrec).isSafe,
+    )
   }
 }

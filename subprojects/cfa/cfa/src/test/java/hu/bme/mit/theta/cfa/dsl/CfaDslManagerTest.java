@@ -47,7 +47,8 @@ public final class CfaDslManagerTest {
 
     @MethodSource("data")
     @ParameterizedTest()
-    public void test(String filepath, int varCount, int locCount, int edgeCount, int stmtCount) throws IOException {
+    public void test(String filepath, int varCount, int locCount, int edgeCount, int stmtCount)
+            throws IOException {
         initCfaDslManagerTest(filepath, varCount, locCount, edgeCount, stmtCount);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final CFA cfa = CfaDslManager.createCfa(inputStream);
@@ -57,7 +58,8 @@ public final class CfaDslManagerTest {
         Assertions.assertEquals(stmtCount, cfa.getEdges().stream().map(e -> e.getStmt()).count());
     }
 
-    public void initCfaDslManagerTest(String filepath, int varCount, int locCount, int edgeCount, int stmtCount) {
+    public void initCfaDslManagerTest(
+            String filepath, int varCount, int locCount, int edgeCount, int stmtCount) {
         this.filepath = filepath;
         this.varCount = varCount;
         this.locCount = locCount;

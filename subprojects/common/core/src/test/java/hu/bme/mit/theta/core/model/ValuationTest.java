@@ -47,7 +47,8 @@ public class ValuationTest {
     @Test
     public void testMultiary() {
         final Valuation val = ImmutableValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
-        Assertions.assertEquals(val.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
+        Assertions.assertEquals(
+                val.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
     }
 
     @Test

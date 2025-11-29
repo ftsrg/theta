@@ -40,7 +40,8 @@ public class StsDslTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void test(String filepath, String propertyName, int varCount) throws FileNotFoundException, IOException {
+    public void test(String filepath, String propertyName, int varCount)
+            throws FileNotFoundException, IOException {
         initStsDslTest(filepath, propertyName, varCount);
         final InputStream inputStream = StsDslTest.class.getResourceAsStream(filepath);
         final StsSpec spec = StsDslManager.createStsSpec(inputStream);

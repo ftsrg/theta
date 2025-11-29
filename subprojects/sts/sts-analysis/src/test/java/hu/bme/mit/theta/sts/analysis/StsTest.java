@@ -66,7 +66,12 @@ public class StsTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
-    public void test(String filePath, StsConfigBuilder.Domain domain, StsConfigBuilder.Refinement refinement, boolean isSafe) throws IOException {
+    public void test(
+            String filePath,
+            StsConfigBuilder.Domain domain,
+            StsConfigBuilder.Refinement refinement,
+            boolean isSafe)
+            throws IOException {
         initStsTest(filePath, domain, refinement, isSafe);
         STS sts = null;
         if (filePath.endsWith("aag")) {
@@ -84,7 +89,11 @@ public class StsTest {
         Assertions.assertEquals(isSafe, config.check().isSafe());
     }
 
-    public void initStsTest(String filePath, StsConfigBuilder.Domain domain, StsConfigBuilder.Refinement refinement, boolean isSafe) {
+    public void initStsTest(
+            String filePath,
+            StsConfigBuilder.Domain domain,
+            StsConfigBuilder.Refinement refinement,
+            boolean isSafe) {
         this.filePath = filePath;
         this.domain = domain;
         this.refinement = refinement;

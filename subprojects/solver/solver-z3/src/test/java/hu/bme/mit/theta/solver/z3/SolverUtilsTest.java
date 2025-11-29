@@ -46,6 +46,7 @@ public class SolverUtilsTest {
         final Stream<Valuation> models = SolverUtils.models(factory, expr);
 
         // Act
-        models.limit(5).forEach(m -> Assertions.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
+        models.limit(5)
+                .forEach(m -> Assertions.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
     }
 }

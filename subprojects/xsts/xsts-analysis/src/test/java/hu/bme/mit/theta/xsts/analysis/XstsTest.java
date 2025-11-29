@@ -583,7 +583,9 @@ public class XstsTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
-    public void test(String filePath, String propPath, boolean safe, XstsConfigBuilder.Domain domain) throws Exception {
+    public void test(
+            String filePath, String propPath, boolean safe, XstsConfigBuilder.Domain domain)
+            throws Exception {
         initXstsTest(filePath, propPath, safe, domain);
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(
@@ -633,7 +635,8 @@ public class XstsTest {
         }
     }
 
-    public void initXstsTest(String filePath, String propPath, boolean safe, XstsConfigBuilder.Domain domain) {
+    public void initXstsTest(
+            String filePath, String propPath, boolean safe, XstsConfigBuilder.Domain domain) {
         this.filePath = filePath;
         this.propPath = propPath;
         this.safe = safe;

@@ -84,7 +84,8 @@ public class ExprIndexedVarCollectorTest {
                 actualVars.getAllVars());
     }
 
-    public void initExprIndexedVarCollectorTest(Expr<Type> expr, Map<Integer, Set<VarDecl<?>>> expectedVars) {
+    public void initExprIndexedVarCollectorTest(
+            Expr<Type> expr, Map<Integer, Set<VarDecl<?>>> expectedVars) {
         this.expr = expr;
         this.expectedVars = expectedVars;
     }
