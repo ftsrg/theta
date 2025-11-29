@@ -49,21 +49,16 @@ jobs:
   test-benchexec:
     strategy:
       matrix:
-        rundef:
-          - SV-COMP25_unreach-call
-          - SV-COMP25_no-data-race
-          - SV-COMP25_valid-memcleanup
-          - SV-COMP25_valid-memsafety
-          - SV-COMP25_no-overflow
-          - SV-COMP25_termination
-        portfolio: [COMPLEX, EMERGENT, HORN]
         include:
           - tool: Theta_SV-COMP
-            portfolio: COMPLEX
+            config: "--svcomp --portfolio STABLE --loglevel RESULT"
+            name: Theta_Portfolio_STABLE
           - tool: EmergenTheta_SV-COMP
-            portfolio: EMERGENT
+            config: "--svcomp --portfolio EMERGENT --loglevel RESULT"
+            name: Theta_Portfolio_EMERGENT
           - tool: Thorn_SV-COMP
-            portfolio: HORN
+            config: "--svcomp --portfolio HORN --loglevel RESULT"
+            name: Thorn_Portfolio_HORN
     runs-on: ubuntu-24.04
     needs: create-archives
     steps:
@@ -72,11 +67,11 @@ jobs:
       - name: Run benchexec
         uses: ./.github/actions/benchexec-test
         with:
-          rundef: ${{ matrix.rundef }}
-          portfolio: ${{ matrix.portfolio }}
+          name: ${{ matrix.name }}
+          config_options: ${{ matrix.config }}
           tool: ${{ matrix.tool }}
-          xml: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 'theta.xml' || 'theta-short.xml' }}
-          timeout: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 3600 || 900 }}
+          input_type: c
+          timeout: ${{ contains(github.event.pull_request.labels.*.name, 'long_test') && 3600 || 300 }}
   
   collect-results:
     needs: test-benchexec

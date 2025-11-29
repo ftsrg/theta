@@ -1,0 +1,19 @@
+format_version: '2.0'
+
+input_files: 'chl-node-subst.wvr.c'
+
+properties:
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: true
+  - property_file: ../properties/valid-memsafety.prp
+    expected_verdict: true
+  - property_file: ../properties/no-overflow.prp
+    expected_verdict: true
+  - property_file: ../properties/no-data-race.prp
+    expected_verdict: true
+  - property_file: ../properties/coverage-branches.prp
+
+options:
+  language: C
+  data_model: ILP32
+
