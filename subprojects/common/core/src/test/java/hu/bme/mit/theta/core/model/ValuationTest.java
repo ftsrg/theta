@@ -24,7 +24,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ValuationTest {
 

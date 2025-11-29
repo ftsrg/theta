@@ -29,7 +29,7 @@ import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
 import java.io.File;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class SimpleSaturationTest {
     public static String reverseString(String str) {

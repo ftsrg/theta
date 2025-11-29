@@ -37,6 +37,7 @@ import java.io.IOException
 import java.io.SequenceInputStream
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class MultiAlternating3Test {
 

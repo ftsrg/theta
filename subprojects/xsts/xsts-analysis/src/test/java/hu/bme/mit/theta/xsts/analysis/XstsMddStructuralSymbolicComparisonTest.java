@@ -39,7 +39,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 

@@ -36,9 +36,11 @@ import java.io.SequenceInputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -562,7 +564,8 @@ public class XstsHornTest {
         }
     }
 
-    @Test(timeout = 10_000)
+    @Test
+    @Timeout(value = 10_000, unit = TimeUnit.MILLISECONDS)
     public void test() throws Exception {
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(

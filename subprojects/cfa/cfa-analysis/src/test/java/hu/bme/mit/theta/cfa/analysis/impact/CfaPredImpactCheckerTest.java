@@ -38,7 +38,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class CfaPredImpactCheckerTest {
 

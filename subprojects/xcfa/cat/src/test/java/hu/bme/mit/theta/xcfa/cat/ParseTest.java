@@ -27,7 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 

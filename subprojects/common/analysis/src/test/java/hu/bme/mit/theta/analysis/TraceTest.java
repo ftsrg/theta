@@ -20,7 +20,7 @@ import static com.google.common.collect.ImmutableList.of;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TraceTest {
 

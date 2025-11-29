@@ -17,7 +17,7 @@ package hu.bme.mit.theta.solver;
 
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class WithPushPopTest {
 

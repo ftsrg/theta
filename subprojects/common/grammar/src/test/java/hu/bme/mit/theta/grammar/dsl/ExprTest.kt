@@ -46,6 +46,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils.simplify
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import org.junit.Assert
 import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 

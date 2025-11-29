@@ -29,7 +29,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.SolverUtils;
 import java.util.stream.Stream;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SolverUtilsTest {
 

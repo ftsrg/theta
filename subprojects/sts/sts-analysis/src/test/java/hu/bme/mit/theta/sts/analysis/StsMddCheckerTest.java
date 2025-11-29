@@ -36,7 +36,7 @@ import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 

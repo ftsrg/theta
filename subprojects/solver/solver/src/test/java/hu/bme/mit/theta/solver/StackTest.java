@@ -16,10 +16,11 @@
 package hu.bme.mit.theta.solver;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StackTest {
 
@@ -85,26 +86,30 @@ public class StackTest {
         Assert.assertArrayEquals(new String[] {}, stack.toCollection().toArray());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testTooManyPop() {
-        final Stack<String> stack = new StackImpl<>();
+        assertThrows(IllegalArgumentException.class, () -> {
+            final Stack<String> stack = new StackImpl<>();
 
-        stack.push();
-        stack.push();
-        stack.pop();
-        stack.pop();
-        stack.pop();
+            stack.push();
+            stack.push();
+            stack.pop();
+            stack.pop();
+            stack.pop();
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testClear() {
-        final Stack<String> stack = new StackImpl<>();
+        assertThrows(IllegalArgumentException.class, () -> {
+            final Stack<String> stack = new StackImpl<>();
 
-        stack.push();
-        stack.push();
-        stack.clear();
-        stack.push();
-        stack.pop();
-        stack.pop();
+            stack.push();
+            stack.push();
+            stack.clear();
+            stack.push();
+            stack.pop();
+            stack.pop();
+        });
     }
 }

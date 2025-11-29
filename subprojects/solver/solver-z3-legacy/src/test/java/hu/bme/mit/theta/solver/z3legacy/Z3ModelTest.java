@@ -20,7 +20,7 @@ import com.microsoft.z3legacy.Context;
 import com.microsoft.z3legacy.Model;
 import com.microsoft.z3legacy.Solver;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class Z3ModelTest {
 

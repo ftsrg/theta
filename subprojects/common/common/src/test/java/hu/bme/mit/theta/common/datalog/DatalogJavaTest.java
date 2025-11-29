@@ -22,7 +22,7 @@ import hu.bme.mit.theta.common.TupleN;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /*
  * Tests initial and incremental deduction with Datalog
