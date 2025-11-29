@@ -1,3 +1,6 @@
+import java.util.Locale
+import java.util.Locale.getDefault
+
 /*
  *  Copyright 2025 Budapest University of Technology and Economics
  *
@@ -21,10 +24,17 @@ plugins {
 
 open class MavenArtifactExtension(project: Project) {
 
-    var artifactId: String = project.name
-    var name: String = project.name.split("-").joinToString(" ", transform = String::capitalize)
+  private val capitalize: ((String) -> CharSequence) = {
+    it.replaceFirstChar {
+      if (it.isLowerCase()) it.titlecase(
+        getDefault()
+      ) else it.toString()
+    }
+  }
+  var artifactId: String = project.name
+    var name: String = project.name.split("-").joinToString(" ", transform = capitalize)
     var description: String = project.name.split("-").let {
-        it.subList(1, it.size).joinToString(" ", transform = String::capitalize)
+        it.subList(1, it.size).joinToString(" ", transform = capitalize)
     } + " subproject in the Theta model checking framework"
     var url: String = "https://theta.mit.bme.hu/"
     var licenseName: String = "The Apache License, Version 2.0"

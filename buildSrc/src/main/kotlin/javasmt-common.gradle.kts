@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+import java.net.URI
 import java.net.URL
 import java.nio.file.Files
 import java.security.MessageDigest
@@ -54,7 +55,7 @@ tasks.register("downloadJavaSmtLibs") {
 
             println("Fetching from: $artifactUrl")
 
-            val html = URL(artifactUrl).readText()
+            val html = URI.create(artifactUrl).toURL().readText()
             val regex = Regex("href=\"([^\"]*?-$archSuffix\\.(${extensions.joinToString("|")}))\"")
 
             var matches = regex.findAll(html).map { it.groupValues[1] }.toSet()
@@ -71,9 +72,9 @@ tasks.register("downloadJavaSmtLibs") {
             }
 
             matches.forEach { fileName ->
-                val fileUrl = URL("$artifactUrl$fileName")
+                val fileUrl = URI.create("$artifactUrl$fileName").toURL()
 
-                val md5url = URL("$artifactUrl$fileName.md5")
+                val md5url = URI.create("$artifactUrl$fileName.md5").toURL()
 
                 // Strip prefix and -arch suffix
                 val cleanName = fileName
