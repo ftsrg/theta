@@ -38,6 +38,7 @@ dependencies {
     testImplementation(Deps.junit5)
     testImplementation(Deps.junit5param)
     testImplementation(Deps.junit5engine)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${project.findProperty("launcherVersion")}")
     testImplementation(Deps.Mockito.core)
     testImplementation(Deps.Mockito.extension)
 }
@@ -57,6 +58,7 @@ tasks {
         environment["DYLD_LIBRARY_PATH"] = libPath
         systemProperty("java.library.path", libPath)
         enableAssertions = true
+        failOnNoDiscoveredTests=false
     }
 
     named<JacocoReport>("jacocoTestReport") {

@@ -71,7 +71,7 @@ sonar {
 evaluationDependsOnChildren()
 
 tasks {
-    val jacocoRootReport by creating(JacocoReport::class) {
+    val jacocoRootReport by registering(JacocoReport::class) {
         group = "verification"
         description = "Generates merged code coverage report for all test tasks."
 
@@ -96,7 +96,7 @@ tasks {
     }
 
     // Dummy test task for generating coverage report after ./gradlew test and ./gradlew check.
-    val test by creating {
+    val test by registering {
         finalizedBy(jacocoRootReport)
     }
 
