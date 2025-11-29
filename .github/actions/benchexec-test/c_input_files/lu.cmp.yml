@@ -1,0 +1,12 @@
+format_version: '2.0'
+
+# old file name: lu.cmp_true-unreach-call.c
+input_files: 'lu.cmp.c'
+
+properties:
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: true
+
+options:
+  language: C
+  data_model: ILP32

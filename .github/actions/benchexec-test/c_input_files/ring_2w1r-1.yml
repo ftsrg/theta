@@ -1,0 +1,18 @@
+format_version: '2.0'
+
+# old file name: ring_2w1r_true-unreach-call.i
+input_files: 'ring_2w1r-1.i'
+
+properties:
+  # - property_file: ../properties/unreach-call.prp
+  #   expected_verdict: true
+  # - property_file: ../properties/valid-memsafety.prp
+  #   expected_verdict: true
+  # - property_file: ../properties/no-overflow.prp
+  #   expected_verdict: true
+  - property_file: ../properties/no-data-race.prp
+    expected_verdict: false
+
+options:
+  language: C
+  data_model: ILP32

@@ -1,0 +1,18 @@
+format_version: '2.0'
+
+# old file name: char_generic_nvram_nvram_unlocked_ioctl_write_nvram_true-unreach-call.i
+input_files: 'char_generic_nvram_nvram_unlocked_ioctl_write_nvram.i'
+
+properties:
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: true
+  - property_file: ../properties/valid-memsafety.prp
+    expected_verdict: true
+  - property_file: ../properties/no-overflow.prp
+    expected_verdict: true
+  - property_file: ../properties/no-data-race.prp
+    expected_verdict: true
+
+options:
+  language: C
+  data_model: ILP32

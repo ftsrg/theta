@@ -1,0 +1,16 @@
+format_version: '2.0'
+
+# old file name: stateful_check_false-unreach-call_false-termination.c
+input_files: 'stateful_check.c'
+
+properties:
+  - property_file: ../properties/no-overflow.prp
+    expected_verdict: true
+  - property_file: ../properties/termination.prp
+    expected_verdict: false
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: false
+
+options:
+  language: C
+  data_model: ILP32
