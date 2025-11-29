@@ -24,6 +24,8 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
@@ -31,6 +33,10 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
+import hu.bme.mit.theta.core.decl.Decls.Param
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -230,6 +236,31 @@ private fun writeArgAsProof(resultFolder: File, safetyResult: SafetyResult<*, *>
   }
 }
 
+private fun tryConcretizePredState(state: PredState): Set<ExprState> {
+  val factory = getSolver("Z3:new", false)
+  val solver = factory.createSolver()
+  solver.use {
+    val expr = And(state.preds)
+    val params =
+      ExprUtils.getVars(expr)
+        .filter { it.name.replace("::", "").contains(":") }
+        .associateWith { Param(it.name, it.type) }
+    solver.add(PathUtils.unfold(Exists(params.values, ExprUtils.changeDecls(expr, params)), 0))
+    var cnt = 15 // hardcoded max enum
+    val states = mutableSetOf<ExprState>()
+    while (cnt > 0) {
+      cnt--
+      if (solver.check().isSat) {
+        states.add(ExplState.of(solver.model))
+        solver.add(Not(solver.model.toExpr()))
+      } else {
+        return states
+      }
+    }
+    return states
+  }
+}
+
 private fun writeArgAsLocInvs(
   resultFolder: File,
   locationInvariants: LocationInvariants,
@@ -241,7 +272,14 @@ private fun writeArgAsLocInvs(
     for ((location, invariants) in locationInvariants.partitions) {
       invFile.appendText("${location}:\n")
       for (inv in invariants) {
-        invFile.appendText("  ${inv.toString().replace(System.lineSeparator(), " ")}\n")
+        val concretizedInv =
+          when (inv) {
+            is PredState -> tryConcretizePredState(inv)
+            else -> setOf(inv)
+          }
+        for (cinv in concretizedInv) {
+          invFile.appendText("  ${cinv.toString().replace(System.lineSeparator(), " ")}\n")
+        }
       }
     }
   } catch (e: Exception) {
