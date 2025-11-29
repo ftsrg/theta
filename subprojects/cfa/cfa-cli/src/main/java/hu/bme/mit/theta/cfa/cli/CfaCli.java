@@ -17,9 +17,9 @@ package hu.bme.mit.theta.cfa.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.jcommander.jcommander.JCommander;
-import org.jcommander.jcommander.Parameter;
-import org.jcommander.jcommander.ParameterException;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
