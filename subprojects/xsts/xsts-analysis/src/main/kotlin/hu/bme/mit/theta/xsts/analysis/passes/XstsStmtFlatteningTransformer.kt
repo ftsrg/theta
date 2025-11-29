@@ -86,8 +86,16 @@ object XstsStmtFlatteningTransformer {
       }
 
       is IfStmt -> {
-        flattenStmts(SequenceStmt.of(listOf(AssumeStmt.of(stmt.cond), stmt.then)), maxDepth, currentDepth + 1) +
-          flattenStmts(SequenceStmt.of(listOf(AssumeStmt.of(Not(stmt.cond)), stmt.elze)), maxDepth, currentDepth + 1)
+        flattenStmts(
+          SequenceStmt.of(listOf(AssumeStmt.of(stmt.cond), stmt.then)),
+          maxDepth,
+          currentDepth + 1,
+        ) +
+          flattenStmts(
+            SequenceStmt.of(listOf(AssumeStmt.of(Not(stmt.cond)), stmt.elze)),
+            maxDepth,
+            currentDepth + 1,
+          )
       }
 
       else -> {

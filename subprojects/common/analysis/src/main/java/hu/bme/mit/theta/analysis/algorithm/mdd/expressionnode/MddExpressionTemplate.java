@@ -48,7 +48,8 @@ public class MddExpressionTemplate implements MddNode.Template {
 
     private static Solver lazySolver;
 
-    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache = new UnaryOperationCache();
+    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
+            new UnaryOperationCache();
 
     private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
         Boolean cached = satCache.getOrNull(expr);
@@ -84,7 +85,10 @@ public class MddExpressionTemplate implements MddNode.Template {
     }
 
     public static MddExpressionTemplate of(
-        Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool, boolean transExpr) {
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
         return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false);
     }
 
@@ -116,7 +120,8 @@ public class MddExpressionTemplate implements MddNode.Template {
         //        }
 
         // Check if terminal 0
-        if (!knownSat && (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool))) {
+        if (!knownSat
+                && (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool))) {
             return null;
         }
 

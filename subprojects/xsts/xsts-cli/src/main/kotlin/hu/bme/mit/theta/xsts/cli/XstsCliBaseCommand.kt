@@ -98,9 +98,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     val concreteTrace =
       XstsTraceConcretizerUtil.concretize(trace, SolverManager.resolveSolverFactory(solver), xsts)
     val outputFile: File = outputOptions.cexfile!!
-    outputFile.parentFile?.let { parent ->
-      if (!parent.exists()) parent.mkdirs()
-    }
+    outputFile.parentFile?.let { parent -> if (!parent.exists()) parent.mkdirs() }
     PrintWriter(outputFile).use { printWriter -> printWriter.write(concreteTrace.toString()) }
   }
 }
