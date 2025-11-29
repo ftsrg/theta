@@ -40,7 +40,6 @@ fun getOperandRef(operand: Btor2Node, negated: Boolean = false): Expr<BvType> {
 }
 
 abstract class Btor2Operation(id: UInt, sort: Btor2Sort) : Btor2Node(id, sort) {
-  // Ebben volt egy negálás de hát szinte felesleges
   abstract fun getStmt(): Stmt
 }
 
@@ -79,7 +78,7 @@ data class Btor2UnaryOperation(
   }
 
   fun valueByBits(): List<Expr<BvType>> {
-    throw NotImplementedError("reduce perations not implemented in Theta.")
+    throw NotImplementedError("Reduce operations not implemented in Theta.")
   }
 }
 

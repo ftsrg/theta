@@ -28,176 +28,216 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.Btor2Passes
 
 object Btor2XcfaBuilder {
-  private var i: Int = 1
 
-  fun btor2xcfa(parseContext: ParseContext, uniqueWarningLogger: UniqueWarningLogger): XCFA {
-    check(Btor2Circuit.properties.isNotEmpty(), { "Circuit has no error property" })
-    check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
+    private var i: Int = 1
 
-    // would be nice to check that no operand node (i.e. right side node) is later than it's operation node (i.e. left side)
-    // but I think we parse it in the right order, so it's the circuit's fault if the above does not hold
-    val ops = Btor2Circuit.ops.values.toList()
-    val nodes = Btor2Circuit.nodes.values.toList()
+    fun btor2xcfa(parseContext: ParseContext, uniqueWarningLogger: UniqueWarningLogger): XCFA {
+        check(Btor2Circuit.properties.isNotEmpty(), { "Circuit has no error property" })
+        // check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
 
-    val xcfaBuilder = XcfaBuilder("Btor2XCFA")
-    parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
+        // would be nice to check that no operand node (i.e. right side node) is later than it's operation node (i.e. left side)
+        // but I think we parse it in the right order, so it's the circuit's fault if the above does not hold
+        val ops = Btor2Circuit.ops.values.toList()
+        val nodes = Btor2Circuit.nodes.values.toList()
 
-    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(parseContext, uniqueWarningLogger))
-    xcfaBuilder.addEntryPoint(procBuilder, emptyList())
-    procBuilder.createInitLoc()
+        val xcfaBuilder = XcfaBuilder("Btor2XCFA")
+        parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
 
-    Btor2Circuit.nodes.forEach() {
-      it.value.getVar()?.let { varDecl -> procBuilder.addVar(varDecl) }
-    }
+        val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(parseContext, uniqueWarningLogger))
+        xcfaBuilder.addEntryPoint(procBuilder, emptyList())
+        procBuilder.createInitLoc()
 
-    var lastLoc = procBuilder.initLoc
-    var newLoc = nextLoc(false, false, false)
+        Btor2Circuit.nodes.forEach() {
+            it.value.getVar()?.let { varDecl -> procBuilder.addVar(varDecl) }
+        }
 
-    // add values to constants
-    val constEdge =
-      XcfaEdge(
-        lastLoc,
-        newLoc,
-        SequenceLabel(
-          Btor2Circuit.constants.values
-            .map {
-              AssignStmtLabel(
-                it.getVar()!!.ref,
-                BvLitExpr.of(it.value),
-                metadata = EmptyMetaData,
-              )
-            }
-            .toList()
-        ),
-        EmptyMetaData,
-      )
-    procBuilder.addEdge(constEdge)
-    i++
-    lastLoc = newLoc
+        var lastLoc = procBuilder.initLoc
+        var newLoc = nextLoc(false, false, false)
 
-    // Initializations
-    newLoc = nextLoc(false, false, false)
-    procBuilder.addLoc(newLoc)
-    val stateInitMap : MutableMap<Btor2State, Btor2Init?> = mutableMapOf()
-    for(init in Btor2Circuit.states.values.filter { it is Btor2Init }) {
-      stateInitMap[init.state!!] = (init as Btor2Init)
-    }
+        // add values to constants
+        val constEdge =
+            XcfaEdge(
+                lastLoc,
+                newLoc,
+                SequenceLabel(
+                    Btor2Circuit.constants.values
+                        .map {
+                            AssignStmtLabel(
+                                it.getVar()!!.ref,
+                                BvLitExpr.of(it.value),
+                                metadata = EmptyMetaData,
+                            )
+                        }
+                        .toList()
+                ),
+                EmptyMetaData,
+            )
+        procBuilder.addEdge(constEdge)
+        i++
+        lastLoc = newLoc
 
-    val edge =
-      XcfaEdge(
-        lastLoc,
-        newLoc,
-        SequenceLabel(
-          Btor2Circuit.states.values
-            .filter {
-              it is Btor2State
-            }
-            .map {
-              StmtLabel(
-                if(it in stateInitMap.keys) {
-                    stateInitMap[it]!!.getStmt()
-                } else {
-                  HavocStmt.of(it.getVar())
-                },
-                metadata = EmptyMetaData
-              )
+        // Initializations
+        newLoc = nextLoc(false, false, false)
+        procBuilder.addLoc(newLoc)
+        val stateInitMap: MutableMap<Btor2State, Btor2Init?> = mutableMapOf()
+        for (init in Btor2Circuit.states.values.filter { it is Btor2Init }) {
+            stateInitMap[init.state!!] = (init as Btor2Init)
+        }
 
-            }
-            .toList()
-        ),
-        EmptyMetaData,
-      )
-    procBuilder.addEdge(edge)
-    lastLoc = newLoc
-    val loopHeadLoc = newLoc
+        val edge =
+            XcfaEdge(
+                lastLoc,
+                newLoc,
+                SequenceLabel(
+                    Btor2Circuit.states.values
+                        .filter {
+                            it is Btor2State
+                        }
+                        .map {
+                            StmtLabel(
+                                if (it in stateInitMap.keys) {
+                                    stateInitMap[it]!!.getStmt()
+                                } else {
+                                    HavocStmt.of(it.getVar())
+                                },
+                                metadata = EmptyMetaData
+                            )
 
-    // Havoc initial value of input variables
-    if (
-      Btor2Circuit.states.values
-        .filter { it is Btor2Input }
-        .isNotEmpty()
-    ) {
-      newLoc = nextLoc(false, false, false)
-      procBuilder.addLoc(newLoc)
-      val edge =
-        XcfaEdge(
-          lastLoc,
-          newLoc,
-          SequenceLabel(
+                        }
+                        .toList()
+                ),
+                EmptyMetaData,
+            )
+        procBuilder.addEdge(edge)
+        lastLoc = newLoc
+        val loopHeadLoc = newLoc
+
+        // Havoc initial value of input variables
+        if (
             Btor2Circuit.states.values
-              .filter {
-                it is Btor2Input
-              }
-              .map { StmtLabel(it.getStmt(), metadata = EmptyMetaData) }
-              .toList()
-          ),
-          EmptyMetaData,
+                .filter { it is Btor2Input }
+                .isNotEmpty()
+        ) {
+            newLoc = nextLoc(false, false, false)
+            procBuilder.addLoc(newLoc)
+            val edge =
+                XcfaEdge(
+                    lastLoc,
+                    newLoc,
+                    SequenceLabel(
+                        Btor2Circuit.states.values
+                            .filter {
+                                it is Btor2Input
+                            }
+                            .map { StmtLabel(it.getStmt(), metadata = EmptyMetaData) }
+                            .toList()
+                    ),
+                    EmptyMetaData,
+                )
+            procBuilder.addEdge(edge)
+            lastLoc = newLoc
+        }
+
+        // Add operations
+        Btor2Circuit.ops.forEach() {
+            val loc = nextLoc(false, false, false)
+
+            procBuilder.addLoc(loc)
+
+            val edge = XcfaEdge(lastLoc, loc, StmtLabel(it.value.getStmt()), EmptyMetaData)
+            procBuilder.addEdge(edge)
+            lastLoc = loc
+            if (Btor2Circuit.properties.values.any { property ->
+                    property.operand.nid == it.value.nid
+                }) {
+                procBuilder.createErrorLoc()
+                val badProperty = Btor2Circuit.properties.values.find { property ->
+                    property.operand.nid == it.value.nid
+                }
+                procBuilder.addEdge(
+                    XcfaEdge(
+                        lastLoc,
+                        procBuilder.errorLoc.get(),
+                        StmtLabel(AssumeStmt.of(badProperty!!.getExpr())),
+                        EmptyMetaData,
+                    )
+                )
+                newLoc = nextLoc(false, false, false)
+                procBuilder.addEdge(
+                    XcfaEdge(
+                        lastLoc,
+                        newLoc,
+                        StmtLabel(AssumeStmt.of(BoolExprs.Not(badProperty!!.getExpr()))),
+                        EmptyMetaData,
+                    )
+                )
+                lastLoc = newLoc
+            }
+        }
+        /*
+        procBuilder.createErrorLoc()
+        // Add properties
+        procBuilder.addEdge(
+            XcfaEdge(
+                lastLoc,
+                procBuilder.errorLoc.get(),
+                SequenceLabel(
+                    Btor2Circuit.properties.values
+                        .filter {
+                          it is Btor2Bad
+                        }
+                        .map { StmtLabel(AssumeStmt.of(it.getExpr())) }
+                        .toList()
+                ),
+            EmptyMetaData,
+          )
         )
-      procBuilder.addEdge(edge)
-      lastLoc = newLoc
+
+        newLoc = nextLoc(false, false, false)
+        procBuilder.addEdge(
+            XcfaEdge(
+                lastLoc,
+                newLoc,
+                SequenceLabel(
+                    Btor2Circuit.properties.values
+                        .filter {
+                          it is Btor2Bad
+                        }
+                        .map { StmtLabel(AssumeStmt.of(BoolExprs.Not(it.getExpr()))) }
+                        .toList()
+                ),
+                EmptyMetaData,
+            )
+        )
+        lastLoc = newLoc
+      */
+        // Close circuit (update state values with nexts, havoc otherwise)
+        var nexts =
+            Btor2Circuit.states.values.filter { it is Btor2Next }.toList()
+        var statesWithNext = nexts.map { (it as Btor2Next).state }.toSet()
+        var statesWithoutNext = Btor2Circuit.states.values.filter { it is Btor2State }.filter {
+            !statesWithNext.contains(it)
+        }.toList()
+
+        nexts.forEach {
+            newLoc = nextLoc(false, false, false)
+            procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.getStmt()), EmptyMetaData))
+            lastLoc = newLoc
+        }
+
+        statesWithoutNext.forEach {
+            newLoc = nextLoc(false, false, false)
+            procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(it.getVar()!!)), EmptyMetaData))
+            lastLoc = newLoc
+        }
+
+        procBuilder.addEdge(XcfaEdge(lastLoc, loopHeadLoc, metadata = EmptyMetaData))
+        return xcfaBuilder.build()
     }
 
-
-
-    // Add operations
-    Btor2Circuit.ops.forEach() {
-      val loc = nextLoc(false, false, false)
-
-      procBuilder.addLoc(loc)
-
-      val edge = XcfaEdge(lastLoc, loc, StmtLabel(it.value.getStmt()), EmptyMetaData)
-      procBuilder.addEdge(edge)
-      lastLoc = loc
+    private fun nextLoc(initial: Boolean, final: Boolean, error: Boolean): XcfaLocation {
+        val loc = XcfaLocation("l${i}", initial, final, error, EmptyMetaData)
+        i++
+        return loc
     }
-    procBuilder.createErrorLoc()
-
-    // Add Property
-    val bad = Btor2Circuit.properties.values.first()
-
-    procBuilder.addEdge(
-      XcfaEdge(
-        lastLoc,
-        procBuilder.errorLoc.get(),
-        StmtLabel(AssumeStmt.of(bad.getExpr())),
-        EmptyMetaData,
-      )
-    )
-    newLoc = nextLoc(false, false, false)
-    procBuilder.addEdge(
-      XcfaEdge(
-        lastLoc,
-        newLoc,
-        StmtLabel(AssumeStmt.of(BoolExprs.Not(bad.getExpr()))),
-        EmptyMetaData,
-      )
-    )
-    lastLoc = newLoc
-
-    // Close circuit (update state values with nexts, havoc otherwise)
-    var nexts =
-      Btor2Circuit.states.values.filter { it is Btor2Next }.toList()
-    var statesWithNext = nexts.map { (it as Btor2Next).state }.toSet()
-    var statesWithoutNext = Btor2Circuit.states.values.filter { it is Btor2State }.filter { !statesWithNext.contains(it) }.toList()
-
-    nexts.forEach {
-      newLoc = nextLoc(false, false, false)
-      procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.getStmt()), EmptyMetaData))
-      lastLoc = newLoc
-    }
-
-    statesWithoutNext.forEach {
-      newLoc = nextLoc(false, false, false)
-      procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(it.getVar()!!)), EmptyMetaData))
-      lastLoc = newLoc
-    }
-
-    procBuilder.addEdge(XcfaEdge(lastLoc, loopHeadLoc, metadata = EmptyMetaData))
-    return xcfaBuilder.build()
-  }
-
-  private fun nextLoc(initial: Boolean, final: Boolean, error: Boolean): XcfaLocation {
-    val loc = XcfaLocation("l${i}", initial, final, error, EmptyMetaData)
-    i++
-    return loc
-  }
 }
