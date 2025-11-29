@@ -177,7 +177,14 @@ public class CfaTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
-    public void test(String filePath, CfaConfigBuilder.Domain domain, CfaConfigBuilder.Refinement refinement, boolean isSafe, int cexLength, String solver) throws Exception {
+    public void test(
+            String filePath,
+            CfaConfigBuilder.Domain domain,
+            CfaConfigBuilder.Refinement refinement,
+            boolean isSafe,
+            int cexLength,
+            String solver)
+            throws Exception {
         initCfaTest(filePath, domain, refinement, isSafe, cexLength, solver);
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
@@ -212,7 +219,13 @@ public class CfaTest {
         }
     }
 
-    public void initCfaTest(String filePath, CfaConfigBuilder.Domain domain, CfaConfigBuilder.Refinement refinement, boolean isSafe, int cexLength, String solver) {
+    public void initCfaTest(
+            String filePath,
+            CfaConfigBuilder.Domain domain,
+            CfaConfigBuilder.Refinement refinement,
+            boolean isSafe,
+            int cexLength,
+            String solver) {
         this.filePath = filePath;
         this.domain = domain;
         this.refinement = refinement;

@@ -52,7 +52,8 @@ public class ParseTest {
 
     @MethodSource("data")
     @ParameterizedTest()
-    public void test(String filepath, int constraintNumber, Set<String> allowedPrimitives) throws IOException {
+    public void test(String filepath, int constraintNumber, Set<String> allowedPrimitives)
+            throws IOException {
         initParseTest(filepath, constraintNumber, allowedPrimitives);
         try {
             final Collection<GraphConstraint> mcm =
@@ -84,7 +85,8 @@ public class ParseTest {
         }
     }
 
-    public void initParseTest(String filepath, int constraintNumber, Set<String> allowedPrimitives) {
+    public void initParseTest(
+            String filepath, int constraintNumber, Set<String> allowedPrimitives) {
         this.filepath = filepath;
         this.constraintNumber = constraintNumber;
         this.allowedPrimitives = allowedPrimitives;

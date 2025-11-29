@@ -79,7 +79,9 @@ public class ASGCegarVerifierTest {
         itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
         solverFactory = Z3LegacySolverFactory.getInstance();
         logger = new ConsoleLogger(Logger.Level.INFO);
-    } public String fileName;
+    }
+
+    public String fileName;
     public String propFileName;
     public String acceptingLocationName;
     public boolean result;
@@ -102,7 +104,9 @@ public class ASGCegarVerifierTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void test(String fileName, String propFileName, String acceptingLocationName, boolean result) throws IOException {
+    public void test(
+            String fileName, String propFileName, String acceptingLocationName, boolean result)
+            throws IOException {
         initASGCegarVerifierTest(fileName, propFileName, acceptingLocationName, result);
         if (propFileName.isBlank() && !acceptingLocationName.isBlank()) testWithCfa();
         if (!propFileName.isBlank() && acceptingLocationName.isBlank()) testWithXsts();
@@ -133,52 +137,56 @@ public class ASGCegarVerifierTest {
         LoopCheckerSearchStrategy.getEntries()
                 .forEach(
                         lStrat ->
-                            ASGTraceCheckerStrategy.getEntries()
-                                    .forEach(
-                                            strat -> {
-                                                var abstractor =
-                                                        new ASGAbstractor<>(
-                                                                analysis, lts, target, lStrat,
-                                                                logger);
-                                                final Refiner<
-                                                                PredPrec,
-                                                                ASG<
-                                                                        XstsState<PredState>,
-                                                                        XstsAction>,
-                                                                ASGTrace<
-                                                                        XstsState<PredState>,
-                                                                        XstsAction>>
-                                                        refiner =
-                                                                new SingleASGTraceRefiner<>(
-                                                                        strat,
-                                                                        solverFactory,
-                                                                        JoiningPrecRefiner.create(
-                                                                                new ItpRefToPredPrec(
-                                                                                        ExprSplitters
-                                                                                                .atoms())),
-                                                                        logger,
-                                                                        xsts.getInitFormula());
-                                                final CegarChecker<
-                                                                PredPrec,
-                                                                ASG<
-                                                                        XstsState<PredState>,
-                                                                        XstsAction>,
-                                                                ASGTrace<
-                                                                        XstsState<PredState>,
-                                                                        XstsAction>>
-                                                        verifier =
-                                                                CegarChecker.create(
-                                                                        abstractor,
-                                                                        refiner,
-                                                                        logger,
-                                                                        new AsgVisualizer<>(
-                                                                                Objects::toString,
-                                                                                Objects::toString));
+                                ASGTraceCheckerStrategy.getEntries()
+                                        .forEach(
+                                                strat -> {
+                                                    var abstractor =
+                                                            new ASGAbstractor<>(
+                                                                    analysis, lts, target, lStrat,
+                                                                    logger);
+                                                    final Refiner<
+                                                                    PredPrec,
+                                                                    ASG<
+                                                                            XstsState<PredState>,
+                                                                            XstsAction>,
+                                                                    ASGTrace<
+                                                                            XstsState<PredState>,
+                                                                            XstsAction>>
+                                                            refiner =
+                                                                    new SingleASGTraceRefiner<>(
+                                                                            strat,
+                                                                            solverFactory,
+                                                                            JoiningPrecRefiner
+                                                                                    .create(
+                                                                                            new ItpRefToPredPrec(
+                                                                                                    ExprSplitters
+                                                                                                            .atoms())),
+                                                                            logger,
+                                                                            xsts.getInitFormula());
+                                                    final CegarChecker<
+                                                                    PredPrec,
+                                                                    ASG<
+                                                                            XstsState<PredState>,
+                                                                            XstsAction>,
+                                                                    ASGTrace<
+                                                                            XstsState<PredState>,
+                                                                            XstsAction>>
+                                                            verifier =
+                                                                    CegarChecker.create(
+                                                                            abstractor,
+                                                                            refiner,
+                                                                            logger,
+                                                                            new AsgVisualizer<>(
+                                                                                    Objects
+                                                                                            ::toString,
+                                                                                    Objects
+                                                                                            ::toString));
 
-                                                final PredPrec precision = PredPrec.of();
-                                                var result = verifier.check(precision);
-                                                Assertions.assertEquals(this.result, result.isUnsafe());
-                                            }));
+                                                    final PredPrec precision = PredPrec.of();
+                                                    var result = verifier.check(precision);
+                                                    Assertions.assertEquals(
+                                                            this.result, result.isUnsafe());
+                                                }));
     }
 
     private void testWithCfa() throws IOException {
@@ -204,50 +212,58 @@ public class ASGCegarVerifierTest {
         LoopCheckerSearchStrategy.getEntries()
                 .forEach(
                         lStrat ->
-                            ASGTraceCheckerStrategy.getEntries()
-                                    .forEach(
-                                            strat -> {
-                                                var abstractor =
-                                                        new ASGAbstractor<>(
-                                                                analysis, lts, target, lStrat,
-                                                                logger);
-                                                final Refiner<
-                                                                CfaPrec<PredPrec>,
-                                                                ASG<CfaState<PredState>, CfaAction>,
-                                                                ASGTrace<
-                                                                        CfaState<PredState>,
-                                                                        CfaAction>>
-                                                        refiner =
-                                                                new SingleASGTraceRefiner<>(
-                                                                        strat,
-                                                                        solverFactory,
-                                                                        JoiningPrecRefiner.create(
-                                                                                cfaRefToPrec),
-                                                                        logger,
-                                                                        True());
-                                                final CegarChecker<
-                                                                CfaPrec<PredPrec>,
-                                                                ASG<CfaState<PredState>, CfaAction>,
-                                                                ASGTrace<
-                                                                        CfaState<PredState>,
-                                                                        CfaAction>>
-                                                        verifier =
-                                                                CegarChecker.create(
-                                                                        abstractor,
-                                                                        refiner,
-                                                                        logger,
-                                                                        new AsgVisualizer<>(
-                                                                                Objects::toString,
-                                                                                Objects::toString));
+                                ASGTraceCheckerStrategy.getEntries()
+                                        .forEach(
+                                                strat -> {
+                                                    var abstractor =
+                                                            new ASGAbstractor<>(
+                                                                    analysis, lts, target, lStrat,
+                                                                    logger);
+                                                    final Refiner<
+                                                                    CfaPrec<PredPrec>,
+                                                                    ASG<
+                                                                            CfaState<PredState>,
+                                                                            CfaAction>,
+                                                                    ASGTrace<
+                                                                            CfaState<PredState>,
+                                                                            CfaAction>>
+                                                            refiner =
+                                                                    new SingleASGTraceRefiner<>(
+                                                                            strat,
+                                                                            solverFactory,
+                                                                            JoiningPrecRefiner
+                                                                                    .create(
+                                                                                            cfaRefToPrec),
+                                                                            logger,
+                                                                            True());
+                                                    final CegarChecker<
+                                                                    CfaPrec<PredPrec>,
+                                                                    ASG<
+                                                                            CfaState<PredState>,
+                                                                            CfaAction>,
+                                                                    ASGTrace<
+                                                                            CfaState<PredState>,
+                                                                            CfaAction>>
+                                                            verifier =
+                                                                    CegarChecker.create(
+                                                                            abstractor,
+                                                                            refiner,
+                                                                            logger,
+                                                                            new AsgVisualizer<>(
+                                                                                    Objects
+                                                                                            ::toString,
+                                                                                    Objects
+                                                                                            ::toString));
 
-                                                final GlobalCfaPrec<PredPrec> prec =
-                                                        GlobalCfaPrec.create(PredPrec.of());
-                                                var res = verifier.check(prec);
-                                                Assertions.assertEquals(result, res.isUnsafe());
-                                            }));
+                                                    final GlobalCfaPrec<PredPrec> prec =
+                                                            GlobalCfaPrec.create(PredPrec.of());
+                                                    var res = verifier.check(prec);
+                                                    Assertions.assertEquals(result, res.isUnsafe());
+                                                }));
     }
 
-    public void initASGCegarVerifierTest(String fileName, String propFileName, String acceptingLocationName, boolean result) {
+    public void initASGCegarVerifierTest(
+            String fileName, String propFileName, String acceptingLocationName, boolean result) {
         this.fileName = fileName;
         this.propFileName = propFileName;
         this.acceptingLocationName = acceptingLocationName;

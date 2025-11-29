@@ -25,11 +25,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntType
+import java.util.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-
-import java.util.*
 
 class VarCollectorStmtVisitorTest {
 

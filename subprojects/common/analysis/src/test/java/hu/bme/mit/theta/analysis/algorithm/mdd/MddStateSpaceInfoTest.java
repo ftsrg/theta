@@ -117,7 +117,8 @@ public class MddStateSpaceInfoTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
-    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize) throws Exception {
+    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize)
+            throws Exception {
 
         initMddStateSpaceInfoTest(varOrder, stateSpaceExpr, expectedSize);
 
@@ -158,7 +159,8 @@ public class MddStateSpaceInfoTest {
         }
     }
 
-    public void initMddStateSpaceInfoTest(List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize) {
+    public void initMddStateSpaceInfoTest(
+            List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize) {
         this.varOrder = varOrder;
         this.stateSpaceExpr = stateSpaceExpr;
         this.expectedSize = expectedSize;

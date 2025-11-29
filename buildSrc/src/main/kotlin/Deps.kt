@@ -106,4 +106,6 @@ object Deps {
     val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
+
+  val hawtjni = "org.fusesource.hawtjni:hawtjni-runtime:${Versions.hawtjni}"
 }

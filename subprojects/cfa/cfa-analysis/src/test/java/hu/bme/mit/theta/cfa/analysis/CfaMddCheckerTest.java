@@ -34,8 +34,8 @@ import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 

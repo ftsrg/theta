@@ -28,14 +28,17 @@ public class XstsEnumSemanticsTest {
 
     @Test
     public void test() throws IOException {
-        assertThrows(ClassCastException.class, () -> {
-
-            try (InputStream inputStream =
-                    new SequenceInputStream(
-                            new FileInputStream("src/test/resources/model/literals_bad.xsts"),
-                            new FileInputStream("src/test/resources/property/literals.prop"))) {
-                XstsDslManager.createXsts(inputStream);
-            }
-        });
+        assertThrows(
+                ClassCastException.class,
+                () -> {
+                    try (InputStream inputStream =
+                            new SequenceInputStream(
+                                    new FileInputStream(
+                                            "src/test/resources/model/literals_bad.xsts"),
+                                    new FileInputStream(
+                                            "src/test/resources/property/literals.prop"))) {
+                        XstsDslManager.createXsts(inputStream);
+                    }
+                });
     }
 }

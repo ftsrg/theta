@@ -103,7 +103,12 @@ public final class StmtApplierTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void test(Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, boolean approximate, ApplyResult expectedResult, Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries) {
+    public void test(
+            Stmt stmt,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries,
+            boolean approximate,
+            ApplyResult expectedResult,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries) {
         initStmtApplierTest(stmt, initialEntries, approximate, expectedResult, finalEntries);
         // Arrange
         final MutableValuation val = new MutableValuation();
@@ -123,7 +128,12 @@ public final class StmtApplierTest {
         }
     }
 
-    public void initStmtApplierTest(Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, boolean approximate, ApplyResult expectedResult, Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries) {
+    public void initStmtApplierTest(
+            Stmt stmt,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries,
+            boolean approximate,
+            ApplyResult expectedResult,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries) {
         this.stmt = stmt;
         this.initialEntries = initialEntries;
         this.approximate = approximate;

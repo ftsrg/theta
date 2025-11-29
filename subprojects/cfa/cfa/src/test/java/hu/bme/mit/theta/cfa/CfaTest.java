@@ -28,27 +28,31 @@ public class CfaTest {
 
     @Test
     public void testDuplicateLocationName() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            CFA.Builder builder = CFA.builder();
-            builder.createLoc("A");
-            builder.createLoc("B");
-            builder.createLoc("A");
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    CFA.Builder builder = CFA.builder();
+                    builder.createLoc("A");
+                    builder.createLoc("B");
+                    builder.createLoc("A");
+                });
     }
 
     @Test
     public void testDuplicateVarName() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            CFA.Builder builder = CFA.builder();
-            VarDecl<IntType> v1 = Decls.Var("x", IntExprs.Int());
-            VarDecl<IntType> v2 = Decls.Var("x", IntExprs.Int());
-            CFA.Loc init = builder.createLoc();
-            CFA.Loc loc1 = builder.createLoc();
-            CFA.Loc loc2 = builder.createLoc();
-            builder.createEdge(init, loc1, Stmts.Havoc(v1));
-            builder.createEdge(init, loc2, Stmts.Havoc(v2));
-            builder.setInitLoc(init);
-            builder.build();
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    CFA.Builder builder = CFA.builder();
+                    VarDecl<IntType> v1 = Decls.Var("x", IntExprs.Int());
+                    VarDecl<IntType> v2 = Decls.Var("x", IntExprs.Int());
+                    CFA.Loc init = builder.createLoc();
+                    CFA.Loc loc1 = builder.createLoc();
+                    CFA.Loc loc2 = builder.createLoc();
+                    builder.createEdge(init, loc1, Stmts.Havoc(v1));
+                    builder.createEdge(init, loc2, Stmts.Havoc(v2));
+                    builder.setInitLoc(init);
+                    builder.build();
+                });
     }
 }

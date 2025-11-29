@@ -435,7 +435,6 @@ public class EvaluationTest {
 
     @Test
     public void testException() {
-        assertThrows(RuntimeException.class, () ->
-            evaluate(Add(a, Int(1))));
+        assertThrows(RuntimeException.class, () -> evaluate(Add(a, Int(1))));
     }
 }

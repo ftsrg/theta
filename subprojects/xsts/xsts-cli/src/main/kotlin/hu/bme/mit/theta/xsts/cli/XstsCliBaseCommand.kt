@@ -45,6 +45,7 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
   CliktCommand(name = name) {
 
   override fun help(c: Context) = help
+
   override val printHelpOnEmptyArgs = true
 
   init {

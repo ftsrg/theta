@@ -211,13 +211,15 @@ public final class Z3SolverTest {
 
     @Test
     public void testResetStack() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            solver.push();
-            solver.push();
-            solver.pop();
-            solver.reset();
-            solver.pop();
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    solver.push();
+                    solver.push();
+                    solver.pop();
+                    solver.reset();
+                    solver.pop();
+                });
     }
 
     @Test

@@ -67,8 +67,14 @@ public class VarIndexingTest {
 
     @Test
     public void testIncNegException() {
-        assertThrows(IllegalArgumentException.class, () ->
-            VarIndexingFactory.basicIndexingBuilder(1).inc(x, -1).inc(z, -1).inc(x, -1).build());
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        VarIndexingFactory.basicIndexingBuilder(1)
+                                .inc(x, -1)
+                                .inc(z, -1)
+                                .inc(x, -1)
+                                .build());
     }
 
     @Test
@@ -114,20 +120,25 @@ public class VarIndexingTest {
 
     @Test
     public void testSubException() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).inc(x).build();
-            final VarIndexing indexes2 =
-                    VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x).build();
-            indexes1.sub(indexes2);
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    final VarIndexing indexes1 =
+                            VarIndexingFactory.indexingBuilder(1).inc(x).build();
+                    final VarIndexing indexes2 =
+                            VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x).build();
+                    indexes1.sub(indexes2);
+                });
     }
 
     @Test
     public void testSubException2() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).build();
-            final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(2).build();
-            indexes1.sub(indexes2);
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).build();
+                    final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(2).build();
+                    indexes1.sub(indexes2);
+                });
     }
 }

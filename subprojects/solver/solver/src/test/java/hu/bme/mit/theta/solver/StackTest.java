@@ -49,7 +49,8 @@ public class StackTest {
         Assertions.assertArrayEquals(new String[] {"A", "B", "C"}, stack.toCollection().toArray());
         stack.add("D");
         assertEquals(4, stack.toCollection().size());
-        Assertions.assertArrayEquals(new String[] {"A", "B", "C", "D"}, stack.toCollection().toArray());
+        Assertions.assertArrayEquals(
+                new String[] {"A", "B", "C", "D"}, stack.toCollection().toArray());
         stack.pop();
         assertEquals(2, stack.toCollection().size());
         Assertions.assertArrayEquals(new String[] {"A", "B"}, stack.toCollection().toArray());
@@ -88,28 +89,32 @@ public class StackTest {
 
     @Test
     public void testTooManyPop() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            final Stack<String> stack = new StackImpl<>();
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    final Stack<String> stack = new StackImpl<>();
 
-            stack.push();
-            stack.push();
-            stack.pop();
-            stack.pop();
-            stack.pop();
-        });
+                    stack.push();
+                    stack.push();
+                    stack.pop();
+                    stack.pop();
+                    stack.pop();
+                });
     }
 
     @Test
     public void testClear() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            final Stack<String> stack = new StackImpl<>();
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    final Stack<String> stack = new StackImpl<>();
 
-            stack.push();
-            stack.push();
-            stack.clear();
-            stack.push();
-            stack.pop();
-            stack.pop();
-        });
+                    stack.push();
+                    stack.push();
+                    stack.clear();
+                    stack.push();
+                    stack.pop();
+                    stack.pop();
+                });
     }
 }

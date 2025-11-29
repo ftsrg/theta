@@ -100,7 +100,12 @@ public class LitmusTest {
         //        mcmChecker.check(ExplPrec.empty());
     }
 
-    public void initLitmusTest(String filepath, int globalsNum, int threadNum, List<Integer> instructionPerThread, String mcmFilename) {
+    public void initLitmusTest(
+            String filepath,
+            int globalsNum,
+            int threadNum,
+            List<Integer> instructionPerThread,
+            String mcmFilename) {
         this.filepath = filepath;
         this.globalsNum = globalsNum;
         this.threadNum = threadNum;

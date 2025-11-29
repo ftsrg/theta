@@ -45,9 +45,10 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.ExprUtils.simplify
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+
+class ExprTest {
 
   companion object {
 

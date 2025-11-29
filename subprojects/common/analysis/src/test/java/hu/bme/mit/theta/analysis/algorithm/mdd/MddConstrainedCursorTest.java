@@ -122,9 +122,15 @@ public class MddConstrainedCursorTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
-    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> constraintExpr, Expr<BoolType> transExpr, Integer topLevelCursorExpectedSize) throws Exception {
+    public void test(
+            List<VarDecl<?>> varOrder,
+            Expr<BoolType> constraintExpr,
+            Expr<BoolType> transExpr,
+            Integer topLevelCursorExpectedSize)
+            throws Exception {
 
-        initMddConstrainedCursorTest(varOrder, constraintExpr, transExpr, topLevelCursorExpectedSize);
+        initMddConstrainedCursorTest(
+                varOrder, constraintExpr, transExpr, topLevelCursorExpectedSize);
 
         try (final SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddGraph<Expr> mddGraph =
@@ -181,7 +187,11 @@ public class MddConstrainedCursorTest {
         }
     }
 
-    public void initMddConstrainedCursorTest(List<VarDecl<?>> varOrder, Expr<BoolType> constraintExpr, Expr<BoolType> transExpr, Integer topLevelCursorExpectedSize) {
+    public void initMddConstrainedCursorTest(
+            List<VarDecl<?>> varOrder,
+            Expr<BoolType> constraintExpr,
+            Expr<BoolType> transExpr,
+            Integer topLevelCursorExpectedSize) {
         this.varOrder = varOrder;
         this.constraintExpr = constraintExpr;
         this.transExpr = transExpr;

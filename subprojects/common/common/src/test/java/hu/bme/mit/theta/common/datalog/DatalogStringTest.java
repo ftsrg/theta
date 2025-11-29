@@ -26,7 +26,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public final class DatalogStringTest { public String name;
+public final class DatalogStringTest {
+    public String name;
 
     public static Collection<Object[]> data() {
         return Arrays.asList(

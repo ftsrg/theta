@@ -265,7 +265,12 @@ public class MddRelProdTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
-    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> stateExpr, Expr<BoolType> transExpr, Long expectedSize) throws Exception {
+    public void test(
+            List<VarDecl<?>> varOrder,
+            Expr<BoolType> stateExpr,
+            Expr<BoolType> transExpr,
+            Long expectedSize)
+            throws Exception {
 
         initMddRelProdTest(varOrder, stateExpr, transExpr, expectedSize);
 
@@ -321,7 +326,11 @@ public class MddRelProdTest {
         }
     }
 
-    public void initMddRelProdTest(List<VarDecl<?>> varOrder, Expr<BoolType> stateExpr, Expr<BoolType> transExpr, Long expectedSize) {
+    public void initMddRelProdTest(
+            List<VarDecl<?>> varOrder,
+            Expr<BoolType> stateExpr,
+            Expr<BoolType> transExpr,
+            Long expectedSize) {
         this.varOrder = varOrder;
         this.stateExpr = stateExpr;
         this.transExpr = transExpr;

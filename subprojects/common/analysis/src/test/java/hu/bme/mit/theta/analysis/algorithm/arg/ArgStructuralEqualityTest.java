@@ -49,8 +49,10 @@ public class ArgStructuralEqualityTest {
         var arg3 = createArg(false);
 
         Assertions.assertNotEquals(arg1, arg2, "Reference-based equality");
-        Assertions.assertTrue(ArgStructuralEquality.equals(arg1, arg2), "Structural equality (true)");
-        Assertions.assertFalse(ArgStructuralEquality.equals(arg1, arg3), "Structural equality (false)");
+        Assertions.assertTrue(
+                ArgStructuralEquality.equals(arg1, arg2), "Structural equality (true)");
+        Assertions.assertFalse(
+                ArgStructuralEquality.equals(arg1, arg3), "Structural equality (false)");
     }
 
     @Test

@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -86,7 +85,6 @@ public final class LazyXtaCheckerTest {
         return result;
     }
 
-    @BeforeEach
     public void initialize() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
@@ -95,7 +93,8 @@ public final class LazyXtaCheckerTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "model: {0}, discrete: {1}, clock: {2}")
-    public void test(String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy) throws IOException {
+    public void test(String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
+            throws IOException {
         initLazyXtaCheckerTest(filepath, dataStrategy, clockStrategy);
         // Act
         final SafetyResult<
@@ -110,7 +109,9 @@ public final class LazyXtaCheckerTest {
         assertTrue(argCheckResult);
     }
 
-    public void initLazyXtaCheckerTest(String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy) throws IOException {
+    public void initLazyXtaCheckerTest(
+            String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
+            throws IOException {
         this.filepath = filepath;
         this.dataStrategy = dataStrategy;
         this.clockStrategy = clockStrategy;

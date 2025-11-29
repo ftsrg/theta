@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.functype.FuncExprs.Func
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
-import org.junit.jupiter.api Assertions
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 

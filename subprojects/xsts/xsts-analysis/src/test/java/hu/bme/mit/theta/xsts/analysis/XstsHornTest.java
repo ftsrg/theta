@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -527,7 +526,6 @@ public class XstsHornTest {
                 });
     }
 
-    @BeforeEach
     public void installSolver() {
         if (solverString.contains("Z3") || solverString.contains("JavaSMT")) {
             return;
@@ -556,7 +554,8 @@ public class XstsHornTest {
     @MethodSource("data")
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
     @Timeout(value = 10_000, unit = TimeUnit.MILLISECONDS)
-    public void test(String filePath, String propPath, boolean safe, String solverString) throws Exception {
+    public void test(String filePath, String propPath, boolean safe, String solverString)
+            throws Exception {
         initXstsHornTest(filePath, propPath, safe, solverString);
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(
@@ -596,7 +595,8 @@ public class XstsHornTest {
         }
     }
 
-    public void initXstsHornTest(String filePath, String propPath, boolean safe, String solverString) {
+    public void initXstsHornTest(
+            String filePath, String propPath, boolean safe, String solverString) {
         this.filePath = filePath;
         this.propPath = propPath;
         this.safe = safe;

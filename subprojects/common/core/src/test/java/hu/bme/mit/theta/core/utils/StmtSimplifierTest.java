@@ -137,7 +137,8 @@ public final class StmtSimplifierTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void test(Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, Stmt expectedStmt) {
+    public void test(
+            Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, Stmt expectedStmt) {
         initStmtSimplifierTest(stmt, initialEntries, expectedStmt);
         // Arrange
         final MutableValuation val = new MutableValuation();
@@ -152,7 +153,8 @@ public final class StmtSimplifierTest {
         assertEquals(expectedStmt, actualStmt);
     }
 
-    public void initStmtSimplifierTest(Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, Stmt expectedStmt) {
+    public void initStmtSimplifierTest(
+            Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, Stmt expectedStmt) {
         this.stmt = stmt;
         this.initialEntries = initialEntries;
         this.expectedStmt = expectedStmt;

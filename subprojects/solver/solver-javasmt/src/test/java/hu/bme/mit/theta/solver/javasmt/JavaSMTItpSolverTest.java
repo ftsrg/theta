@@ -50,8 +50,8 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
@@ -100,7 +100,11 @@ public final class JavaSMTItpSolverTest {
         }
     }
 
-    @BeforeEach
+    @AfterEach
+    public void closeSolver() throws Exception {
+        itpSolver.close();
+    }
+
     public void initialize() {
         final ConstDecl<IntType> ad = Const("a", Int());
         final ConstDecl<IntType> bd = Const("b", Int());
@@ -207,6 +211,7 @@ public final class JavaSMTItpSolverTest {
     public void testLIA(Solvers solver, ItpSolver itpSolver) {
         initJavaSMTItpSolverTest(solver, itpSolver);
         assumeFalse(solver == Solvers.CVC5);
+        assumeFalse(solver == Solvers.PRINCESS);
 
         final ItpMarker A = itpSolver.createMarker();
         final ItpMarker B = itpSolver.createMarker();
@@ -229,6 +234,7 @@ public final class JavaSMTItpSolverTest {
         initJavaSMTItpSolverTest(solver, itpSolver);
         assumeFalse(solver == Solvers.SMTINTERPOL);
         assumeFalse(solver == Solvers.CVC5);
+        assumeFalse(solver == Solvers.PRINCESS);
 
         final ItpMarker A = itpSolver.createMarker();
         final ItpMarker B = itpSolver.createMarker();

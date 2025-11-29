@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -39,7 +38,6 @@ public final class RatLitExprTest {
 
     public RatLitExpr expectedFrac;
 
-    @BeforeEach
     public void initialize() {
         // Arrange
         number = Rat(num, denom);
@@ -61,8 +59,22 @@ public final class RatLitExprTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void testFloor(int num, int denom, int expectedfloor, int expectedCeil, int expectedSign, int expectedFracNum, int expectedFracDenom) {
-        initRatLitExprTest(num, denom, expectedfloor, expectedCeil, expectedSign, expectedFracNum, expectedFracDenom);
+    public void testFloor(
+            int num,
+            int denom,
+            int expectedfloor,
+            int expectedCeil,
+            int expectedSign,
+            int expectedFracNum,
+            int expectedFracDenom) {
+        initRatLitExprTest(
+                num,
+                denom,
+                expectedfloor,
+                expectedCeil,
+                expectedSign,
+                expectedFracNum,
+                expectedFracDenom);
         // Act
         final var actualFloor = number.floor();
         // Assert
@@ -71,8 +83,22 @@ public final class RatLitExprTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void testCeil(int num, int denom, int expectedfloor, int expectedCeil, int expectedSign, int expectedFracNum, int expectedFracDenom) {
-        initRatLitExprTest(num, denom, expectedfloor, expectedCeil, expectedSign, expectedFracNum, expectedFracDenom);
+    public void testCeil(
+            int num,
+            int denom,
+            int expectedfloor,
+            int expectedCeil,
+            int expectedSign,
+            int expectedFracNum,
+            int expectedFracDenom) {
+        initRatLitExprTest(
+                num,
+                denom,
+                expectedfloor,
+                expectedCeil,
+                expectedSign,
+                expectedFracNum,
+                expectedFracDenom);
         // Act
         final var actualCeil = number.ceil();
         // Assert
@@ -81,8 +107,22 @@ public final class RatLitExprTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void testSign(int num, int denom, int expectedfloor, int expectedCeil, int expectedSign, int expectedFracNum, int expectedFracDenom) {
-        initRatLitExprTest(num, denom, expectedfloor, expectedCeil, expectedSign, expectedFracNum, expectedFracDenom);
+    public void testSign(
+            int num,
+            int denom,
+            int expectedfloor,
+            int expectedCeil,
+            int expectedSign,
+            int expectedFracNum,
+            int expectedFracDenom) {
+        initRatLitExprTest(
+                num,
+                denom,
+                expectedfloor,
+                expectedCeil,
+                expectedSign,
+                expectedFracNum,
+                expectedFracDenom);
         // Act
         final long actualSign = number.sign();
         // Assert
@@ -91,15 +131,36 @@ public final class RatLitExprTest {
 
     @MethodSource("data")
     @ParameterizedTest
-    public void testFrac(int num, int denom, int expectedfloor, int expectedCeil, int expectedSign, int expectedFracNum, int expectedFracDenom) {
-        initRatLitExprTest(num, denom, expectedfloor, expectedCeil, expectedSign, expectedFracNum, expectedFracDenom);
+    public void testFrac(
+            int num,
+            int denom,
+            int expectedfloor,
+            int expectedCeil,
+            int expectedSign,
+            int expectedFracNum,
+            int expectedFracDenom) {
+        initRatLitExprTest(
+                num,
+                denom,
+                expectedfloor,
+                expectedCeil,
+                expectedSign,
+                expectedFracNum,
+                expectedFracDenom);
         // Act
         final RatLitExpr actualFrac = number.frac();
         // Assert
         assertEquals(expectedFrac, actualFrac);
     }
 
-    public void initRatLitExprTest(int num, int denom, int expectedfloor, int expectedCeil, int expectedSign, int expectedFracNum, int expectedFracDenom) {
+    public void initRatLitExprTest(
+            int num,
+            int denom,
+            int expectedfloor,
+            int expectedCeil,
+            int expectedSign,
+            int expectedFracNum,
+            int expectedFracDenom) {
         this.num = num;
         this.denom = denom;
         this.expectedfloor = expectedfloor;

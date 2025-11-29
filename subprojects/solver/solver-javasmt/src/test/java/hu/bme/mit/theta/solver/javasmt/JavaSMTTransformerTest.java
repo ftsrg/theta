@@ -16,10 +16,9 @@
 package hu.bme.mit.theta.solver.javasmt;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-import ap.parser.ApInput.Absyn.Arg;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
@@ -70,7 +69,8 @@ public class JavaSMTTransformerTest {
                                 .collect(Collectors.toSet()),
                         solvers)
                 .stream()
-                .map(objects -> Arguments.of(objects.get(0), objects.get(1))).toList();
+                .map(objects -> Arguments.of(objects.get(0), objects.get(1)))
+                .toList();
     }
 
     private static boolean hasType(Expr<?> expr, Predicate<Type> pred) {
@@ -164,8 +164,7 @@ public class JavaSMTTransformerTest {
                     s.push();
                     s.add(eq.apply(expr, expExpr));
                     Assertions.assertTrue(
-                            s.check().isSat(),
-                            "(= %s %s) is unsat\n".formatted(expr, expExpr));
+                            s.check().isSat(), "(= %s %s) is unsat\n".formatted(expr, expExpr));
                     s.pop();
                     s.push();
                     s.add(Not(eq.apply(expr, expExpr)));
@@ -173,9 +172,7 @@ public class JavaSMTTransformerTest {
                             s.check().isUnsat(),
                             "(not (= %s %s)) is sat with model %s\n"
                                     .formatted(
-                                            expr,
-                                            expExpr,
-                                            s.check().isSat() ? s.getModel() : ""));
+                                            expr, expExpr, s.check().isSat() ? s.getModel() : ""));
                     s.pop();
                 }
             }
