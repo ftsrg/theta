@@ -129,8 +129,7 @@ data class Btor2Next(
   }
 
   override fun getStmt(): Stmt {
-    return if (negated) AssignStmt.of(state.getVar(), BvNotExpr.create(value.getExpr()))
-    else AssignStmt.of(state.getVar(), value.getExpr() as Expr<BvType>)
+    return AssignStmt.of(state.getVar(), getOperandRef(value, negated))
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {

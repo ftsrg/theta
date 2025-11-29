@@ -191,6 +191,7 @@ private fun parseC(
       }
     }
   logger.write(Logger.Level.RESULT, "Arithmetic: ${parseContext.arithmeticTraits}\n")
+  //logger.write(Logger.Level.MAINSTEP, xcfaFromC.toDot())
   return xcfaFromC
 }
 
@@ -253,6 +254,6 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder.btor2xcfa(parseContext, uniqueWarningLogger)
-  logger.write(Logger.Level.MAINSTEP, "XCFA built successfully")
+  //logger.write(Logger.Level.MAINSTEP, xcfa.toDot())
   return xcfa
 }

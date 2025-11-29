@@ -127,10 +127,11 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
         final var downloadUrl =
                 URI.create(
                         String.format(
-                                "https://mathsat.fbk.eu/download.php?file=mathsat-%s-%s.%s",
+                                "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
                                 version,
                                 archStr,
-                                OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
+                                OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz")
+                );
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
 
