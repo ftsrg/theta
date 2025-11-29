@@ -1,0 +1,195 @@
+- entry_type: 'violation_sequence'
+  metadata:
+    format_version: '2.1'
+    uuid: '84d8e8f1-1132-4298-8120-eb8861f4ec85'
+    creation_time: '2025-11-26T19:32:36Z'
+    producer:
+      name: 'Theta'
+      version: 'no version found'
+    task:
+      input_files:
+      - 'test_locks_14-2.c'
+      input_file_hashes:
+        '/home/solarowl/Repositories/sv-comp/sv-benchmarks/c/locks/test_locks_14-2.c': '75f53c568c86c59ddc62d2fd150ff0a5ed9b51ea17cada3ff1a95dec57d9167c'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'LP64'
+      language: 'C'
+  content:
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 55
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 88
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 92
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 96
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 100
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 104
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 108
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 112
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 116
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 120
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 124
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 128
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 132
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 136
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 140
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 146
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 151
+          column: 9
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'target'
+        location:
+          file_name: 'test_locks_14-2.c'
+          line: 219
+          column: 11
+        action: 'follow'

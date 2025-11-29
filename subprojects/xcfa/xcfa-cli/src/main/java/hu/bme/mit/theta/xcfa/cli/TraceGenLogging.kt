@@ -46,6 +46,7 @@ internal fun postTraceGenerationLogging(
   logger: Logger,
   uniqueLogger: Logger,
 ) {
+  config.outputConfig.enabled = OutputLevel.ALL
   val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
 
   /*
@@ -76,6 +77,8 @@ internal fun postTraceGenerationLogging(
     for (abstractTrace in result.summary.sourceTraces) {
       try {
         // TODO no concrete summary implemented for XCFA yet, only traces
+        // TODO also, if I add a --witness for tracegen, I don't get back the function returns in
+        // the output witness, they are not the same (why? outdated concretization? idk)
         val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
           concretizeTrace(abstractTrace.toTrace(), config, parseContext)
 

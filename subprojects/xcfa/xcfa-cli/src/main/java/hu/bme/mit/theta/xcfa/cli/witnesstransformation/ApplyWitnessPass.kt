@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getExpressionFromC
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -41,7 +42,11 @@ import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.LinkedList
 import kotlin.jvm.optionals.getOrNull
 
-class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
+class ApplyWitnessPass(
+  val parseContext: ParseContext,
+  val witness: YamlWitness,
+  val logger: Logger,
+) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (builder.parent.getInitProcedures().none { it.first.equals(builder) }) {
       return builder
@@ -88,7 +93,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           when (wp.waypoint.type) {
             WaypointType.ASSUMPTION -> {
               val constraint = wp.waypoint.constraint!!
-              check(constraint.format!! == Format.C_EXPRESSION || constraint.format!! == Format.EXT_C_EXPRESSION) { "Not handled: $constraint" }
+              check(
+                constraint.format!! == Format.C_EXPRESSION ||
+                  constraint.format!! == Format.EXT_C_EXPRESSION
+              ) {
+                "Not handled: $constraint"
+              }
               getExpressionFromC(
                 constraint.value,
                 parseContext,
@@ -118,7 +128,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
                 if (cNameOpt.isPresent) {
                   val constraint = wp.waypoint.constraint!!
-                  check(constraint.format!! == Format.C_EXPRESSION || constraint.format!! == Format.EXT_C_EXPRESSION) { "Not handled: $constraint" }
+                  check(
+                    constraint.format!! == Format.C_EXPRESSION ||
+                      constraint.format!! == Format.EXT_C_EXPRESSION
+                  ) {
+                    "Not handled: $constraint"
+                  }
                   getExpressionFromC(
                     constraint.value.replace("\\result", cNameOpt.get() as String),
                     parseContext,
@@ -181,7 +196,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 }
               }
             }
-            WaypointType.FUNCTION_ENTER,
+            WaypointType.FUNCTION_ENTER -> {
+              logger.mainStep("Waypoint of type ${wp.waypoint.type} ignored for validation")
+              True()
+            }
             WaypointType.TARGET -> {
               // no-op now
               True()

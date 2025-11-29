@@ -74,7 +74,7 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
         )
         XcfaProperty(
           iP.inputProperty,
-          WitnessInfo(witness, { p: ParseContext -> ApplyWitnessPass(p, witness) }),
+          WitnessInfo(witness, { p: ParseContext -> ApplyWitnessPass(p, witness, logger) }),
         )
       } ?: iP
     }
