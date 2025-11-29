@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.xta.cli;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
+import org.jcommander.jcommander.JCommander;
+import org.jcommander.jcommander.Parameter;
+import org.jcommander.jcommander.ParameterException;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;

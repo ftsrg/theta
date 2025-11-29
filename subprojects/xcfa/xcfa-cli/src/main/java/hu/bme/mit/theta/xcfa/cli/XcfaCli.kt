@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import com.beust.jcommander.JCommander
-import com.beust.jcommander.Parameter
-import com.beust.jcommander.ParameterException
+import org.jcommander.jcommander.JCommander
+import org.jcommander.jcommander.Parameter
+import org.jcommander.jcommander.ParameterException
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import hu.bme.mit.theta.common.CliUtils
