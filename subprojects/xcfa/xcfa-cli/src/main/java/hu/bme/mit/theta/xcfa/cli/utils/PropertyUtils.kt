@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
-import com.beust.jcommander.IStringConverter
-import com.beust.jcommander.ParameterException
+import org.jcommander.jcommander.IStringConverter
+import org.jcommander.jcommander.ParameterException
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection

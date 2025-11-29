@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.params
 
-import com.beust.jcommander.ParameterException
+import org.jcommander.jcommander.ParameterException
 
 fun rule(name: String, fatal: Boolean = true, test: () -> Boolean) {
   if (test()) {

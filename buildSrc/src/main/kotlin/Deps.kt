@@ -60,7 +60,7 @@ object Deps {
     )
     val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
-    val jcommander = "com.beust:jcommander:${Versions.jcommander}"
+    val jcommander = "org.jcommander:jcommander:${Versions.jcommander}"
 
     val pnmlCore = "fr.lip6.pnml:fr.lip6.pnml.framework.coremodel:${Versions.pnmlFramework}"
     val pnmlPtnet = "fr.lip6.pnml:fr.lip6.pnml.framework.ptnet:${Versions.pnmlFramework}"
@@ -78,14 +78,11 @@ object Deps {
 
     val axiomApi = "org.apache.ws.commons.axiom:axiom-api:${Versions.axiom}"
     val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
-    val jing = "com.thaiopensource:jing:${Versions.jing}"
+    val jing = "org.relaxng:jing:${Versions.jing}"
 
     val delta = "lib/hu.bme.mit.delta-0.0.1-all.jar"
-    val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
 
     val hoaf = "lib/jhoafparser-1.1.1.jar"
-
-    val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
 
     val junit4 = "junit:junit:${Versions.junit4}"
     val junit4engine = "org.junit.vintage:junit-vintage-engine"
@@ -107,8 +104,6 @@ object Deps {
     }
 
     val clikt = "com.github.ajalt.clikt:clikt:${Versions.clikt}"
-
-    val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
 }
