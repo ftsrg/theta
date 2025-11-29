@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.params
 
-import org.jcommander.jcommander.Parameter
+import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy

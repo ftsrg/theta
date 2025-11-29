@@ -33,9 +33,8 @@ dependencies {
     implementation(Deps.guava)
     implementation(Deps.gson)
     implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
-    implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
-    testImplementation(Deps.junit4)
-    testImplementation(Deps.junit4engine)
+  testImplementation("junit:junit:4.13")
+
     testImplementation(Deps.junit5)
     testImplementation(Deps.junit5param)
     testImplementation(Deps.junit5engine)

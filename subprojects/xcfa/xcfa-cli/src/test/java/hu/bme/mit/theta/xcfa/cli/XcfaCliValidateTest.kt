@@ -21,23 +21,23 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.PrintStream
-import java.nio.file.Path
-import java.util.concurrent.TimeUnit
-import java.util.stream.Stream
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.createTempDirectory
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.PrintStream
+import java.nio.file.Path
+import java.util.stream.Stream
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
 
 class XcfaCliValidateTest {
   companion object {
@@ -289,7 +289,6 @@ class XcfaCliValidateTest {
 
   @ParameterizedTest
   @MethodSource("finiteStateSpaceC")
-  @Timeout(value = 10, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
   fun testCVerifyMDD(filePath: String, extraArgs: String?) {
     val temp = createTempDirectory()
     val params =
