@@ -45,12 +45,12 @@ open class MavenArtifactExtension(project: Project) {
 
 val artifactConfig = extensions.create<MavenArtifactExtension>("maven-artifact", project)
 
-val javadocJar by tasks.creating(Jar::class) {
+val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
     from(tasks.withType(Javadoc::class.java).getByName("javadoc"))
 }
 
-val sourcesJar by tasks.creating(Jar::class) {
+val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
     from(sourceSets.main.get().allSource)
 }

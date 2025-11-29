@@ -39,7 +39,7 @@ dependencies {
     compileOnly(gradleKotlinDsl())
     implementation(kotlin("gradle-plugin", kotlinVersion))
     implementation(kotlin("serialization", kotlinVersion))
-    implementation(gradlePlugin("com.github.johnrengelman.shadow", shadowVersion))
+    implementation(gradlePlugin("com.gradleup.shadow", shadowVersion))
     implementation(gradlePlugin("com.diffplug.spotless", spotlessVersion))
 }
 
@@ -86,12 +86,7 @@ fun generateVersionsSource(): String {
 }
 
 tasks {
-    withType<KotlinCompile>() {
-        kotlinOptions {
-            jvmTarget = "21"
-        }
-    }
-    val generateVersions by creating {
+    val generateVersions by registering {
         description = "Updates Versions.kt from project properties."
         group = "build"
         outputs.dirs(generatedVersionsKotlinSrcDir)
