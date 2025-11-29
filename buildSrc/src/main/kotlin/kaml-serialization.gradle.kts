@@ -19,5 +19,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 dependencies {
-    //implementation(Deps.kaml)
+    val implementation by configurations
+    implementation(Deps.kaml)
 }

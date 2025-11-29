@@ -84,8 +84,6 @@ object Deps {
 
     val hoaf = "lib/jhoafparser-1.1.1.jar"
 
-    val junit4 = "junit:junit:${Versions.junit4}"
-    val junit4engine = "org.junit.vintage:junit-vintage-engine"
     val junit5 = "org.junit.jupiter:junit-jupiter-api:${Versions.junit}"
     val junit5param = "org.junit.jupiter:junit-jupiter-params:${Versions.junit}"
     val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
@@ -104,6 +102,8 @@ object Deps {
     }
 
     val clikt = "com.github.ajalt.clikt:clikt:${Versions.clikt}"
+
+    val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
 }

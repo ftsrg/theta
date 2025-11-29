@@ -24,4 +24,5 @@ dependencies {
     implementation(project(":theta-common"))
     testFixturesImplementation(project(":theta-common"))
     testFixturesImplementation(Deps.guava)
+  testFixturesImplementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
 }
