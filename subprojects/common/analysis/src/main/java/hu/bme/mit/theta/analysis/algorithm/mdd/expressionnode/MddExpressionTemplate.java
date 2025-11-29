@@ -21,10 +21,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -33,8 +30,10 @@ import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ExprSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -50,13 +49,20 @@ public class MddExpressionTemplate implements MddNode.Template {
 
     private static Solver lazySolver;
 
+    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache = new UnaryOperationCache();
+
     private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
+        Boolean cached = satCache.getOrNull(expr);
+        if (cached != null) {
+            return cached;
+        }
         if (lazySolver == null) lazySolver = solverPool.requestSolver();
         boolean res;
         try (var wpp = new WithPushPop(lazySolver)) {
             lazySolver.add(expr);
             res = lazySolver.check().isSat();
         }
+        satCache.addToCache(expr, res);
         return res;
     }
 
