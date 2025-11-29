@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Optional;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SubstitutionTest {
 

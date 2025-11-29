@@ -51,7 +51,7 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import java.math.BigInteger;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class Z3ItpSolverTest {
 

@@ -36,7 +36,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MddExpressionTest {
 

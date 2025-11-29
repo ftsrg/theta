@@ -30,7 +30,7 @@ import hu.bme.mit.theta.solver.utils.SolverUtils;
 import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;

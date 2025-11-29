@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import java.util.Collection;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class LocPrecTest {
 

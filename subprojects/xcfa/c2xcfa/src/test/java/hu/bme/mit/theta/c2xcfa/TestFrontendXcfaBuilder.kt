@@ -21,6 +21,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import java.io.IOException
 import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 

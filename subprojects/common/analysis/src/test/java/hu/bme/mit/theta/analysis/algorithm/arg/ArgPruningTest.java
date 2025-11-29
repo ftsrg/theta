@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ArgPruningTest {
 

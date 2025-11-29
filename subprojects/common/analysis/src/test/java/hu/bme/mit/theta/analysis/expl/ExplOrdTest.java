@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ExplOrdTest {
 

@@ -32,7 +32,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.*;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class XstsInitExprNodeTest {
 

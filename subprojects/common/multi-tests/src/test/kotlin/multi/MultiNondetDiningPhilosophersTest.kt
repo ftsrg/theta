@@ -43,6 +43,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import java.io.FileInputStream
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class MultiNondetDiningPhilosophersTest {
 

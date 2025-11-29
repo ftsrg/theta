@@ -33,6 +33,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -59,7 +60,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class Z3SolverTest {
 
@@ -211,13 +212,15 @@ public final class Z3SolverTest {
         assertTrue(status.isSat());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testResetStack() {
-        solver.push();
-        solver.push();
-        solver.pop();
-        solver.reset();
-        solver.pop();
+        assertThrows(IllegalArgumentException.class, () -> {
+            solver.push();
+            solver.push();
+            solver.pop();
+            solver.reset();
+            solver.pop();
+        });
     }
 
     @Test

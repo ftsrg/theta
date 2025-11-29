@@ -34,7 +34,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import java.util.Collection;
 import java.util.function.Predicate;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;

@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import org.junit.Assert
 import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class PipelineTests {
 

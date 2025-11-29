@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.xml.sax.SAXException;

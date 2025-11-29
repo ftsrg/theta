@@ -28,7 +28,7 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;

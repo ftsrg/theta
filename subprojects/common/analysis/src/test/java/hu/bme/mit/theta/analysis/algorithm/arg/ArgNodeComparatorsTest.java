@@ -31,7 +31,7 @@ import hu.bme.mit.theta.analysis.stubs.StateStub;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ArgNodeComparatorsTest {
 

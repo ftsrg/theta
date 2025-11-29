@@ -47,7 +47,7 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class Z3ItpSolverTest {
 

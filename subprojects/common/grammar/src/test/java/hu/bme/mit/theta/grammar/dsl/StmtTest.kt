@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import org.junit.Assert
 import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 

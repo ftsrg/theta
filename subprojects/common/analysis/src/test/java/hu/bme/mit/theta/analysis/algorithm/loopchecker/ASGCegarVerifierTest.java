@@ -63,7 +63,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -141,7 +141,7 @@ public class ASGCegarVerifierTest {
         logger.write(Logger.Level.MAINSTEP, "Verifying %s%n", xsts.getProp());
         LoopCheckerSearchStrategy.getEntries()
                 .forEach(
-                        lStrat -> {
+                        lStrat ->
                             ASGTraceCheckerStrategy.getEntries()
                                     .forEach(
                                             strat -> {
@@ -187,8 +187,7 @@ public class ASGCegarVerifierTest {
                                                 final PredPrec precision = PredPrec.of();
                                                 var result = verifier.check(precision);
                                                 Assert.assertEquals(this.result, result.isUnsafe());
-                                            });
-                        });
+                                            }));
     }
 
     private void testWithCfa() throws IOException {
@@ -213,7 +212,7 @@ public class ASGCegarVerifierTest {
                 new RefutationToGlobalCfaPrec<>(refToPrec, cfa.getInitLoc());
         LoopCheckerSearchStrategy.getEntries()
                 .forEach(
-                        lStrat -> {
+                        lStrat ->
                             ASGTraceCheckerStrategy.getEntries()
                                     .forEach(
                                             strat -> {
@@ -254,7 +253,6 @@ public class ASGCegarVerifierTest {
                                                         GlobalCfaPrec.create(PredPrec.of());
                                                 var res = verifier.check(prec);
                                                 Assert.assertEquals(result, res.isUnsafe());
-                                            });
-                        });
+                                            }));
     }
 }
