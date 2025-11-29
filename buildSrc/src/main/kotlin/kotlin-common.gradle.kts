@@ -26,6 +26,10 @@ dependencies {
     implementation(Deps.Mockito.kotlin)
 }
 
+kotlin{
+  jvmToolchain(Versions.java.toInt())
+}
+
 // Check if "antlr-common" plugin is applied and if the "generateGrammarSource" task is available
 // If yes, add a task dependency from "compileKotlin" to "generateGrammarSource"
 project.plugins.withType<AntlrPlugin> {
