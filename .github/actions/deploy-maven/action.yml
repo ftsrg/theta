@@ -20,7 +20,7 @@ runs:
         distribution: temurin
         java-version: 21
     - name: Publish to Maven Staging
-      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
+      uses: .github/actions/cache-build
       env:
         OSSRH_PASSWORD: ${{ inputs.OSSRH_PASSWORD }}
         OSSRH_USERNAME: ${{ inputs.OSSRH_USERNAME }}
@@ -30,7 +30,7 @@ runs:
       with:
         arguments: publish -x test
     - name: Close staging and publish release
-      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
+      uses: .github/actions/cache-build
       env:
         OSSRH_PASSWORD: ${{ inputs.OSSRH_PASSWORD }}
         OSSRH_USERNAME: ${{ inputs.OSSRH_USERNAME }}
