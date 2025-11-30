@@ -33,7 +33,7 @@ jobs:
           comment_tag: 'copyright'
           mode: 'recreate'
           message: |
-            :exclamation: Please run `./gradlew spotlessApply` on your branch to fix copyright headers.
+            :exclamation: Please run `./gradlew applyCopyright` on your branch to fix copyright headers.
 
       - name: Delete Comment
         if: github.event_name == 'pull_request'
