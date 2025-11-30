@@ -1,23 +1,18 @@
 name: 'Deploy docs'
-description: 'Deploying docs to /wiki'
+description: 'Deploying docs to /wiki via Gradle task'
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    - uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e
+    - name: Setup java 21
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
       with:
-        python-version: 3.x
-    - run: pip install mkdocs-material
-      shell: bash
-    - run: pip install python-markdown-math
-      shell: bash
-    - run: pip install mkdocs
-      shell: bash
-    - run: pip install mkdocs-awesome-pages-plugin
-      shell: bash
-    - run: mkdocs build --site-dir wiki
-      shell: bash
-      working-directory: doc/wiki
+        distribution: temurin
+        java-version: 21
+    - name: Build docs using Gradle
+      uses: ./.github/actions/cache-build
+      with:
+        arguments: buildDocs
     - uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       with:

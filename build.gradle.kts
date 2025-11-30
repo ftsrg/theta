@@ -21,20 +21,12 @@ plugins {
     id("io.codearte.nexus-staging") version "0.30.0" apply true
     id("org.sonarqube") version "4.2.1.3168"
     id("javasmt-common")
-  id("org.openrewrite.rewrite") version("latest.release")
-}
-
-dependencies {
-  rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.22.0")
-}
-
-
-rewrite {
-  activeRecipe("org.openrewrite.java.testing.mockito.MockitoJUnitRunnerToExtension")
-  setExportDatatables(true)
+    id("release-info")
 }
 
 subprojects {
+    apply(plugin = "copyright-check")
+    
     tasks.matching { it.name == "test" }.configureEach {
         dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
     }

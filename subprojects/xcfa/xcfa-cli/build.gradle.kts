@@ -18,6 +18,7 @@ plugins {
     id("kotlin-common")
     id("kaml-serialization")
     id("cli-tool")
+    id("archive-packaging")
 }
 
 dependencies {
@@ -53,4 +54,28 @@ dependencies {
 
 application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
+}
+
+archivePackaging {
+    variant {
+        toolName = "Theta"
+        portfolio = "STABLE"
+        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+    }
+    variant {
+        toolName = "EmergenTheta"
+        portfolio = "EMERGENT"
+        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+    }
+    variant {
+        toolName = "Thorn"
+        portfolio = "HORN"
+        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+    }
+    variant {
+        toolName = "ThetaCHC"
+        portfolio = "CHC-COMP"
+        scriptName = "chc"
+        solvers = listOf("cvc5:1.0.8", "mathsat:5.6.10")
+    }
 }
