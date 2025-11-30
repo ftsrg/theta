@@ -1,2 +1,0 @@
-# Deprecated: Inlined into platform build workflows.
-# Build now uses `cache-build` with `build -x test` directly.

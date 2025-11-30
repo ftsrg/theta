@@ -57,13 +57,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - tool: Theta_SV-COMP
+          - tool: Theta-artifact
             config: "--svcomp --portfolio STABLE --loglevel RESULT"
             name: Theta_Portfolio_STABLE
-          - tool: EmergenTheta_SV-COMP
+          - tool: EmergenTheta-artifact
             config: "--svcomp --portfolio EMERGENT --loglevel RESULT"
             name: Theta_Portfolio_EMERGENT
-          - tool: Thorn_SV-COMP
+          - tool: Thorn-artifact
             config: "--svcomp --portfolio HORN --loglevel RESULT"
             name: Thorn_Portfolio_HORN
     runs-on: ubuntu-24.04
@@ -102,20 +102,15 @@ jobs:
     needs: [build, create-spec-transformation]
     strategy:
       matrix:
-        tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
         include:
-          - tool: Theta
-            script: theta-start.sh
-            portfolio: STABLE
-          - tool: EmergenTheta
-            script: theta-start.sh
-            portfolio: EMERGENT
-          - tool: Thorn
-            script: theta-start.sh
-            portfolio: HORN
-          - tool: ThetaCHC
-            script: chc
-            portfolio: CHC-COMP
+          - toolName: Theta
+            gradleTask: buildArchive
+          - toolName: EmergenTheta
+            gradleTask: buildArchiveEmergenTheta
+          - toolName: Thorn
+            gradleTask: buildArchiveThorn
+          - toolName: ThetaCHC
+            gradleTask: buildArchiveThetaCHC
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -128,7 +123,13 @@ jobs:
         uses: ./.github/actions/cache-build
         with:
           arguments: |
-            :theta-xcfa-cli:${{ (matrix.tool == 'EmergenTheta' && 'buildArchiveEmergenTheta') || (matrix.tool == 'Thorn' && 'buildArchiveThorn') || (matrix.tool == 'ThetaCHC' && 'buildArchiveThetaCHC') || 'buildArchive' }}
+            :theta-xcfa-cli:${{ matrix.gradleTask }}
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
+        with:
+          name: ${{ matrix.toolName }}-archive
+          path: subprojects/xcfa/xcfa-cli/build/distributions/${{ matrix.toolName }}-archive.zip
+          if-no-files-found: error
 
 
   javadoc:

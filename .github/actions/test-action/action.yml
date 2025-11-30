@@ -1,2 +1,0 @@
-# Deprecated: Inlined into platform test workflows.
-# Tests now use `cache-build` with `test` directly.

@@ -1,2 +1,0 @@
-# Deprecated: Inlined into workflow `check-formatting.yml`.
-# Use Gradle task `spotlessCheck` directly.

@@ -1,2 +1,0 @@
-# Deprecated: Inlined into `linux-build-test-deploy.yml` javadoc job.
-# Javadoc generation and deployment handled directly in workflow.

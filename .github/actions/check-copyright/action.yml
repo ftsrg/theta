@@ -1,4 +1,0 @@
-# Deprecated: Inlined into workflow `check-copyright.yml`.
-# This composite action is no longer used and kept as a stub to avoid
-# breaking references on historical workflow runs.
-# The Gradle task `checkCopyright` is invoked directly in the workflow.

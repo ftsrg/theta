@@ -27,6 +27,8 @@ open class ArchivePackagingVariant {
 	var readmeTemplate: File? = null            // optional override
 	var scriptSource: File? = null              // optional override
 	var taskName: String? = null                // custom task name (else buildArchive<toolName> or buildArchive)
+	var smoketestSource: File? = null           // optional smoketest path (omit if null/missing)
+	var inputSource: File? = null               // optional input.c path (omit if null/missing)
 }
 
 open class ArchivePackagingExtension {
@@ -61,9 +63,7 @@ afterEvaluate {
 		rootProject.projectOrNull(":theta-solver-smtlib-cli")?.tasks?.findByName("shadowJar")
 	} else null
 
-	val readmeDefault = rootProject.file(".github/actions/build-archive/README.md")
-	val smoketestFile = rootProject.file(".github/actions/build-archive/smoketest.sh")
-	val inputCFile = rootProject.file(".github/actions/build-archive/input.c")
+	// Default resource files removed: only explicitly configured files are included.
 	val defaultScriptDir = rootProject.file("scripts")
 
 	packagingExt.variants.forEachIndexed { idx, v ->
@@ -89,13 +89,15 @@ afterEvaluate {
 			if (downloadLibs != null) dependsOn(downloadLibs)
 			dependsOn(mainShadow)
 			if (v.includeSolverCli && solverCliShadow != null) dependsOn(solverCliShadow)
-			archiveFileName.set("${v.toolName}.zip")
+			archiveFileName.set("${v.toolName}-archive.zip")
 			destinationDirectory.set(layout.buildDirectory.dir("distributions"))
 
 			val commit = commitHash()
 			val versionStr = project.version.toString()
 			val scriptSourceFile = v.scriptSource ?: defaultScriptDir.resolve(v.scriptName)
-			val readmeTemplate = v.readmeTemplate ?: readmeDefault
+			val readmeTemplate = v.readmeTemplate
+			val smoketestFile = v.smoketestSource
+			val inputCFile = v.inputSource
 
 			into(v.toolName) {
 				// native libs
@@ -111,8 +113,8 @@ afterEvaluate {
 				} else {
 					logger.warn("archive-packaging: script ${scriptSourceFile.path} not found for ${v.toolName}")
 				}
-				// templated README
-				if (readmeTemplate.exists()) {
+				// templated README (include only if explicitly set and exists)
+				if (readmeTemplate != null && readmeTemplate.exists()) {
 					from(readmeTemplate) {
 						filter { line ->
 							line.replace("TOOL_NAME", v.toolName)
@@ -123,9 +125,9 @@ afterEvaluate {
 						rename { "README.md" }
 					}
 				}
-				// smoketest + input (optional)
-				if (smoketestFile.exists()) from(smoketestFile)
-				if (inputCFile.exists()) from(inputCFile)
+				// smoketest + input (include only if explicitly set and exists)
+				if (smoketestFile != null && smoketestFile.exists()) from(smoketestFile)
+				if (inputCFile != null && inputCFile.exists()) from(inputCFile)
 				// main jar
 				from(mainShadow) { rename { "theta.jar" } }
 				// solver cli jar
