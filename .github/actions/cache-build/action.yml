@@ -11,7 +11,10 @@ runs:
       run: |
         git fetch origin      
     - name: build gradle
-      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
+      uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v2.5.1
       with:
-        arguments: ${{ inputs.arguments }} --info --stacktrace # --max-workers 2 --no-daemon
-      
+        add-job-summary-as-pr-comment: 'on-failure'
+        cache-encryption-key: "mT489CT3NPkLtnWbYOrrrg==" # static key for caching, never important to keep secret
+    - name: Run gradle wrapper with arguments
+      shell: bash
+      run: ./gradlew ${{ inputs.arguments }} --info --stacktrace --configuration-cache
