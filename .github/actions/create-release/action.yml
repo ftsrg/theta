@@ -9,22 +9,26 @@ runs:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         fetch-depth: 0
-    - name: Creating versions
-      id: 'value'
+    - name: Setup java 21
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: temurin
+        java-version: 21
+    - name: Compute release info via Gradle
+      uses: ./.github/actions/cache-build
+      with:
+        arguments: computeReleaseInfo
+      env:
+        RELEASE_MESSAGE: ${{ inputs.message }}
+    - name: Export release outputs
+      id: value
       shell: bash
       run: |
-        export version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )
-        export lasttag=$(git describe --abbrev=0 --tags)
-        echo Last tag: $lasttag
-        export subprojects=$(git diff $lasttag --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
-        echo Modified subprojects: $subprojects
-        export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n$subprojects")
-        echo Message: $message
-        echo "version=$version" >> $GITHUB_OUTPUT
-        echo "tagname=v$version" >> $GITHUB_OUTPUT
+        echo "version=$(cat build/release-info/version.txt)" >> $GITHUB_OUTPUT
+        echo "tagname=$(cat build/release-info/tagname.txt)" >> $GITHUB_OUTPUT
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "message<<$EOF" >> $GITHUB_OUTPUT
-        echo "$message" >> $GITHUB_OUTPUT
+        cat build/release-info/message.txt >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash

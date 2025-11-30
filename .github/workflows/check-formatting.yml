@@ -16,13 +16,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Setup java 21
+      - name: Setup Java 21
         uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
           distribution: temurin
           java-version: 21
-      - name: Checking formatting
-        uses: ./.github/actions/check-formatting
+      - name: Run Gradle formatting check
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: spotlessCheck
       - name: Comment
         if: failure() && github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
