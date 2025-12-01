@@ -11,6 +11,6 @@ runs:
       run: |
         git fetch origin      
     - name: build gradle
-      uses: burrunan/gradle-cache-action@rel/3.0.1
+      uses: burrunan/gradle-cache-action@4a07779efc8120348ea6dfd35314bc30a586eb0f #rel/3.0.1
       with:
         arguments: ${{ inputs.arguments }} --info --stacktrace --build-cache
