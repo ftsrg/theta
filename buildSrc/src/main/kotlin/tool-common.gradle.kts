@@ -37,7 +37,7 @@ val shadowJar = tasks.withType<ShadowJar> {
     manifest {
         attributes["Implementation-Version"] = archiveVersion
     }
-    isZip64 = false
+    isZip64 = true
     entryCompression = ZipEntryCompression.DEFLATED
 }
 
