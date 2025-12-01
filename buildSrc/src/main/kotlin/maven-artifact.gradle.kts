@@ -58,84 +58,79 @@ val sourcesJar by tasks.registering(Jar::class) {
 // Check if "antlr-common" plugin is applied and if the "generateGrammarSource" task is available
 // If yes, add a task dependency from "sourcesJar" to "generateGrammarSource"
 project.plugins.withType<AntlrPlugin> {
-    val generateGrammarTask = tasks.findByName("generateGrammarSource")
-    if (generateGrammarTask != null) {
-        project.tasks.named("sourcesJar") { dependsOn(generateGrammarTask) }
+    tasks.findByName("generateGrammarSource")?.let { genTask ->
+        tasks.named("sourcesJar") { dependsOn(genTask) }
     }
 }
 
-tasks {
-    publishing {
-        publications {
-            create<MavenPublication>("mavenJava") {
-                artifactId = artifactConfig.artifactId
-                from(components["java"])
-                artifact(sourcesJar)
-                artifact(javadocJar)
-                versionMapping {
-                    usage("java-api") {
-                        fromResolutionOf("runtimeClasspath")
-                    }
-                    usage("java-runtime") {
-                        fromResolutionResult()
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifactId = artifactConfig.artifactId
+            from(components["java"])
+            artifact(sourcesJar)
+            artifact(javadocJar)
+            versionMapping {
+                usage("java-api") { fromResolutionOf("runtimeClasspath") }
+                usage("java-runtime") { fromResolutionResult() }
+            }
+            pom {
+                name.set(artifactConfig.name)
+                description.set(artifactConfig.description)
+                url.set(artifactConfig.url)
+                licenses {
+                    license {
+                        name.set(artifactConfig.licenseName)
+                        url.set(artifactConfig.licenseUrl)
                     }
                 }
-                pom {
-                    name.set(artifactConfig.name)
-                    description.set(artifactConfig.description)
-                    url.set(artifactConfig.url)
-                    licenses {
-                        license {
-                            name.set(artifactConfig.licenseName)
-                            url.set(artifactConfig.licenseUrl)
-                        }
-                    }
-                    developers {
-                        val contribFile = project.rootProject.rootDir.toPath()
-                            .resolve("CONTRIBUTORS.md").toFile()
-                        if (contribFile.exists()) {
-                            contribFile.readLines().forEach { line ->
-                                "\\* \\[(.*)]\\((.*)\\)".toRegex().matchEntire(line)
-                                    ?.let { matchResult ->
-                                        val (parsedName, parsedUrl) = matchResult.destructured
-                                        developer {
-                                            name.set(parsedName)
-                                            url.set(parsedUrl)
-                                        }
-                                    }
+                developers {
+                    val contribFile = project.rootProject.rootDir.toPath().resolve("CONTRIBUTORS.md").toFile()
+                    if (contribFile.exists()) {
+                        contribFile.readLines().forEach { line ->
+                            "\\* \\[([^]]+)]\\(([^)]+)\\)".toRegex().matchEntire(line)?.let { m ->
+                                val (parsedName, parsedUrl) = m.destructured
+                                developer {
+                                    name.set(parsedName)
+                                    url.set(parsedUrl)
+                                }
                             }
                         }
                     }
-                    scm {
-                        connection.set(artifactConfig.connection)
-                        developerConnection.set(artifactConfig.developerConnection)
-                        url.set(artifactConfig.url)
-                    }
+                }
+                scm {
+                    connection.set(artifactConfig.connection)
+                    developerConnection.set(artifactConfig.developerConnection)
+                    url.set(artifactConfig.url)
                 }
             }
         }
-        repositories {
-            maven {
-                val releasesRepoUrl = uri(
-                    "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                val snapshotsRepoUrl = uri(
-                    "https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                url = if (version.toString()
-                        .endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                credentials {
-                    username = System.getenv("OSSRH_USERNAME")
-                    password = System.getenv("OSSRH_PASSWORD")
-                }
+    }
+    repositories {
+        maven {
+            name = "OSSRH"
+            val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+            credentials {
+                // Support both username/password and token-based credentials
+                username = System.getenv("OSSRH_USERNAME") ?: System.getenv("OSSRH_TOKEN_USERNAME")
+                password = System.getenv("OSSRH_PASSWORD") ?: System.getenv("OSSRH_TOKEN_PASSWORD")
             }
         }
     }
 }
 
 signing {
-    val key = System.getenv("PGP_KEY")
-    val pwd = System.getenv("PGP_PWD")
-    useInMemoryPgpKeys(key, pwd)
-    sign(publishing.publications["mavenJava"])
+    // Prefer Gradle properties if provided; fallback to environment variables
+    val key = (project.findProperty("signingKey") as String?) ?: System.getenv("PGP_KEY")
+    val pwd = (project.findProperty("signingPassword") as String?) ?: System.getenv("PGP_PWD")
+    if (!key.isNullOrBlank() && !pwd.isNullOrBlank()) {
+        useInMemoryPgpKeys(key, pwd)
+        sign(publishing.publications)
+    } else {
+        logger.warn("Signing keys not provided; publications will not be signed.")
+    }
 }
 
 tasks.javadoc {

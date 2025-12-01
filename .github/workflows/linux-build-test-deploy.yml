@@ -30,7 +30,7 @@ jobs:
       - name: Gradle build (no tests)
         uses: ./.github/actions/cache-build
         with:
-          arguments: build -x test
+          arguments: build -x test --configuration-cache
       - name: Upload JARs
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:
@@ -231,20 +231,28 @@ jobs:
           token: ${{secrets.zenodo_token}}
 
   deploy-maven:
-    # needs: test-linux
+    needs: test-linux
     if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Create and publish maven release 
-        uses: ./.github/actions/deploy-maven
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          distribution: temurin
+          java-version: 21
+      - name: Publish to Maven Central
+        uses: ./.github/actions/cache-build
+        env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_TOKEN_USERNAME }}
+          OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_PASSWORD }}
           PGP_KEY: ${{ secrets.PGP_KEY }}
-          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
           PGP_PWD: ${{ secrets.PGP_PWD }}
+        with:
+          arguments: publish
   
   test-docker:
     strategy:
