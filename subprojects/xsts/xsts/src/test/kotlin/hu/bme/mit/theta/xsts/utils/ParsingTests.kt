@@ -30,13 +30,13 @@ class ParsingTests {
   companion object {
     @JvmStatic
     fun `Correct XSTS models should parse`(): Stream<File> {
-      val correctDirectory = File("src/test/resources/correct-models")
+      val correctDirectory = File("src/test/resources/valid-models")
       return correctDirectory.listFiles()?.asSequence()?.asStream() ?: Stream.of()
     }
 
     @JvmStatic
     fun `Incorrect XSTS models should fail to parse`(): Stream<File> {
-      val incorrectDirectory = File("src/test/resources/incorrect-models")
+      val incorrectDirectory = File("src/test/resources/syntaxerror-models")
       return incorrectDirectory.listFiles()?.asSequence()?.asStream() ?: Stream.of()
     }
   }
