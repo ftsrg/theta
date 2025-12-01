@@ -131,7 +131,6 @@ library {
             *jniConfigFlags(),
             *llvmConfigFlags("--cxxflags")))
         if (!taskEnabled) {
-            println("CppCompile is enabled: $taskEnabled")
             enabled = false
         }
     }
@@ -142,7 +141,6 @@ library {
             *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
             "-ldl"))
         if (!taskEnabled) {
-            println("LinkSharedLibrary is enabled: $taskEnabled")
             enabled = false
         }
     }
