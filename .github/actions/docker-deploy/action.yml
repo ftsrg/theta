@@ -35,7 +35,7 @@ runs:
         echo "path=./docker/${{ inputs.project }}.Dockerfile" >> $GITHUB_OUTPUT
     - name: Assemble Shadow JAR
       shell: bash
-      run: ./gradlew clean ${{ inputs.project }}:shadowJar
+      run: ./gradlew clean ${{ inputs.project }}:prepareDockerDistribution
     - name: Build and push to DockerHub
       uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825
       with:
