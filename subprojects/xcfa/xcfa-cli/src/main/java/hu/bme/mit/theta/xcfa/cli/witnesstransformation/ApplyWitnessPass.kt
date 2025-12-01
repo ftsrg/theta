@@ -43,9 +43,109 @@ import kotlin.jvm.optionals.getOrNull
 
 class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (parseContext.multiThreading) {
+      throw UnsupportedOperationException(
+        "Yaml violation witnesses have no semantics for multi-threaded programs."
+      )
+    }
     if (builder.parent.getInitProcedures().none { it.first.equals(builder) }) {
       return builder
     }
+
+    return if (witness.entryType == EntryType.VIOLATION) {
+      applyViolationWitness(builder)
+    } else {
+      applyCorrectnessWitness(builder)
+    }
+  }
+
+  private fun applyCorrectnessWitness(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val statementToEdge = getStatementToEdge(builder)
+    val edgeToLabels =
+      mutableMapOf<
+        XcfaEdge,
+        MutableMap<XcfaLabel, MutableSet<Expr<BoolType>>>,
+      >() // on which edges, which labels must have these new assumptions beforehand.
+    for (item in witness.content) {
+      item.invariant?.let {
+        val inv =
+          getExpressionFromC(
+            it.value,
+            parseContext,
+            false,
+            false,
+            NullLogger.getInstance(),
+            builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+          )
+        val loc = it.location
+        val labelsOnEdges =
+          statementToEdge
+            .filter { (statement, _, _) ->
+              statement.lineNumberStart == loc.line &&
+                (loc.column?.let { statement.colNumberStart + 1 == it } ?: true)
+            }
+            .map { (_, label, edge) -> Pair(label, edge) }
+        for ((label, edge) in labelsOnEdges) {
+          edgeToLabels
+            .computeIfAbsent(edge) { mutableMapOf() }
+            .computeIfAbsent(label) { mutableSetOf() }
+            .add(inv)
+        }
+      }
+    }
+
+    for ((edge, labels) in edgeToLabels) {
+      builder.removeEdge(edge)
+      val oldLabels = edge.getFlatLabels()
+      val labelCollector = mutableListOf<XcfaLabel>()
+      var i = 0
+      var nextSource = edge.source
+      builder.createErrorLoc()
+
+      fun flush(last: Boolean = false) {
+        if (labelCollector.isNotEmpty()) {
+          val anonymLoc =
+            if (last) edge.target
+            else XcfaLocation("__tmp" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData)
+          builder.addEdge(
+            XcfaEdge(
+              nextSource,
+              anonymLoc,
+              label = SequenceLabel(labelCollector),
+              metadata = EmptyMetaData,
+            )
+          )
+          nextSource = anonymLoc
+          labelCollector.clear()
+        }
+      }
+      for ((label, assumptions) in labels) {
+        while (i < oldLabels.indexOf(label)) {
+          labelCollector.add(oldLabels[i])
+          ++i
+        }
+        flush()
+        builder.addEdge(
+          XcfaEdge(
+            nextSource,
+            builder.errorLoc.get(),
+            SequenceLabel(listOf(StmtLabel(AssumeStmt.of(And(assumptions))))),
+            metadata = EmptyMetaData,
+          )
+        )
+        labelCollector.add(StmtLabel(AssumeStmt.of(Not(And(assumptions)))))
+      }
+      while (i < oldLabels.size) {
+        labelCollector.add(oldLabels[i])
+        ++i
+      }
+      flush(true)
+    }
+
+    return builder
+  }
+
+  private fun applyViolationWitness(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val segments = witness.content.map { c -> c.segment }.filterNotNull().iterator()
     val segmentCount = witness.content.map { c -> c.segment }.filterNotNull().count()
 
@@ -88,7 +188,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           when (wp.waypoint.type) {
             WaypointType.ASSUMPTION -> {
               val constraint = wp.waypoint.constraint!!
-              check(constraint.format!! == Format.C_EXPRESSION || constraint.format!! == Format.EXT_C_EXPRESSION) { "Not handled: $constraint" }
+              check(
+                constraint.format!! == Format.C_EXPRESSION ||
+                  constraint.format!! == Format.EXT_C_EXPRESSION
+              ) {
+                "Not handled: $constraint"
+              }
               getExpressionFromC(
                 constraint.value,
                 parseContext,
@@ -98,6 +203,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
               )
             }
+
             WaypointType
               .FUNCTION_RETURN -> { // TODO: deduplicate with below code for statement search
               val vars =
@@ -118,7 +224,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
                 if (cNameOpt.isPresent) {
                   val constraint = wp.waypoint.constraint!!
-                  check(constraint.format!! == Format.C_EXPRESSION || constraint.format!! == Format.EXT_C_EXPRESSION) { "Not handled: $constraint" }
+                  check(
+                    constraint.format!! == Format.C_EXPRESSION ||
+                      constraint.format!! == Format.EXT_C_EXPRESSION
+                  ) {
+                    "Not handled: $constraint"
+                  }
                   getExpressionFromC(
                     constraint.value.replace("\\result", cNameOpt.get() as String),
                     parseContext,
@@ -132,6 +243,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 }
               }
             }
+
             WaypointType.BRANCHING -> {
               val branching =
                 statementToEdge
@@ -149,6 +261,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                       is CFor,
                       is CIf,
                       is CDoWhile -> it
+
                       else -> error("Branching not on iteration/branching statement.")
                     }
                   }
@@ -173,19 +286,23 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 "true" -> {
                   guardAssume.first { it.first == ChoiceType.MAIN_PATH }.second.cond
                 }
+
                 "false" -> {
                   guardAssume.first { it.first == ChoiceType.ALTERNATIVE_PATH }.second.cond
                 }
+
                 else -> {
                   error("Unknown value for branching: ${wp.waypoint.constraint?.value}")
                 }
               }
             }
+
             WaypointType.FUNCTION_ENTER,
             WaypointType.TARGET -> {
               // no-op now
               True()
             }
+
             else -> {
               error("Not handled: ${wp.waypoint.type}")
             }

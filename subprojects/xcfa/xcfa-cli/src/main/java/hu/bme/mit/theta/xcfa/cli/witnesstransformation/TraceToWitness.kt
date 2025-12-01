@@ -71,7 +71,7 @@ fun traceToWitness(
     val node =
       WitnessNode(
         id = "N${newStates.size}",
-        entry = false,
+        entry = i == 0,
         sink = false,
         violation =
           isError.test( // this is a hack so that a simple explstate can become a ptrstate
