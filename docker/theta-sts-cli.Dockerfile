@@ -9,4 +9,4 @@ ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/"
 
 ADD subprojects/sts/sts-cli/build/libs/theta-sts-cli-*-all.jar /theta-sts-cli.jar
 
-ENTRYPOINT ["java", "-jar", "theta-sts-cli.jar"]
+ENTRYPOINT ["java", "-jar", "/theta-sts-cli.jar"]
