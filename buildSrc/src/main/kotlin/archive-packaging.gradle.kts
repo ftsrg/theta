@@ -130,7 +130,7 @@ afterEvaluate {
 								"java", "-jar", smtlibJarFile.absolutePath,
 								"--home", solversDir.absolutePath,
 								"install", solver,
-w							).redirectErrorStream(true).start()
+							).redirectErrorStream(true).start()
 							
 							val output = process.inputStream.bufferedReader().readText()
 							val exitCode = process.waitFor()
