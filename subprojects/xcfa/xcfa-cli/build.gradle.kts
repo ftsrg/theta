@@ -76,7 +76,7 @@ archivePackaging {
     variant {
         toolName = "Thorn"
         portfolio = "HORN"
-        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+        solvers = listOf("z3:4.15.3", "eldarica:2.2", "golem:0.9.0")
         readmeTemplate = file("src/main/resources/archive-packaging/README.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
