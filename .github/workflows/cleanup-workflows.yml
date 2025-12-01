@@ -19,28 +19,12 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y jq gh
 
-      - name: Authenticate gh CLI
-        env:
-          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # prefer a PAT in ACTIONS_PAT (recommended for org/repos where GITHUB_TOKEN can't delete runs)
-          if [ -n "${ACTIONS_PAT:-}" ]; then
-            echo "$ACTIONS_PAT" | gh auth login --with-token
-          elif [ -n "${GITHUB_TOKEN:-}" ]; then
-            # no need to log in
-            exit 0
-            #echo "$GITHUB_TOKEN" | gh auth login --with-token
-          else
-            echo "Error: set secrets.ACTIONS_PAT or rely on default GITHUB_TOKEN" >&2
-            exit 1
-          fi
-
       - name: Delete workflow runs older than 60 days (using gh)
         env:
           DAYS: "60"                       # threshold in days (change to 60 for two months)
           REPO: ${{ github.repository }}   # owner/repo
-          DRY_RUN: "false"                 # set "true" to preview without deleting
+          DRY_RUN: "false"                 # set "true" to preview without deletingenv:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
