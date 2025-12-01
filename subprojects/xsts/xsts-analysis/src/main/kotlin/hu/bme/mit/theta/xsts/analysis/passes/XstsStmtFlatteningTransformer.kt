@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xsts.analysis.passes
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xsts.XSTS
 
@@ -85,8 +86,16 @@ object XstsStmtFlatteningTransformer {
       }
 
       is IfStmt -> {
-        flattenStmts(stmt.then, maxDepth, currentDepth + 1) +
-          flattenStmts(stmt.elze, maxDepth, currentDepth + 1)
+        flattenStmts(
+          SequenceStmt.of(listOf(AssumeStmt.of(stmt.cond), stmt.then)),
+          maxDepth,
+          currentDepth + 1,
+        ) +
+          flattenStmts(
+            SequenceStmt.of(listOf(AssumeStmt.of(Not(stmt.cond)), stmt.elze)),
+            maxDepth,
+            currentDepth + 1,
+          )
       }
 
       else -> {
