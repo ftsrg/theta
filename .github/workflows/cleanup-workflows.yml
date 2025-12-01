@@ -1,0 +1,72 @@
+name: Cleanup old workflow runs (gh CLI)
+
+on:
+  schedule:
+    # weekly on Sunday 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies (gh, jq)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq gh
+
+      - name: Authenticate gh CLI
+        env:
+          ACTIONS_PAT: ${{ secrets.ACTIONS_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # prefer a PAT in ACTIONS_PAT (recommended for org/repos where GITHUB_TOKEN can't delete runs)
+          if [ -n "${ACTIONS_PAT:-}" ]; then
+            echo "$ACTIONS_PAT" | gh auth login --with-token
+          elif [ -n "${GITHUB_TOKEN:-}" ]; then
+            echo "$GITHUB_TOKEN" | gh auth login --with-token
+          else
+            echo "Error: set secrets.ACTIONS_PAT or rely on default GITHUB_TOKEN" >&2
+            exit 1
+          fi
+
+      - name: Delete workflow runs older than 60 days (using gh)
+        env:
+          DAYS: "60"                       # threshold in days (change to 60 for two months)
+          REPO: ${{ github.repository }}   # owner/repo
+          DRY_RUN: "false"                 # set "true" to preview without deleting
+        run: |
+          set -euo pipefail
+
+          owner_repo="$REPO"
+          days="$DAYS"
+          dry_run="${DRY_RUN,,}"   # lower-case
+
+          # cutoff in ISO8601 (UTC). GNU date is available on ubuntu-latest runner.
+          cutoff=$(date -u -d "${days} days ago" +%Y-%m-%dT%H:%M:%SZ)
+          echo "Repository: $owner_repo"
+          echo "Cutoff (delete if created before): $cutoff (older than $days days)"
+          echo "Dry run: $dry_run"
+
+          per_page=100
+
+          # Use gh api pagination to stream all runs; output TSV lines with id, name, html_url, created_at
+          echo "Fetching workflow runs and filtering by created_at < $cutoff ..."
+          gh api "repos/${owner_repo}/actions/runs?per_page=${per_page}" --paginate \
+            --jq '.workflow_runs[] | select(.created_at < "'$cutoff'") | [.id, (.name // "" ), (.html_url // "" ), .created_at] | @tsv' \
+            | while IFS=$'\t' read -r run_id run_name run_url run_created; do
+                echo "Found old run: id=$run_id created=$run_created name=\"$run_name\" url=$run_url"
+                if [ "$dry_run" = "true" ] || [ "$dry_run" = "1" ]; then
+                  echo "  -> dry-run: would delete run $run_id"
+                else
+                  echo "  -> deleting run $run_id ..."
+                  # use gh api to delete the run
+                  status=$(gh api -X DELETE "repos/${owner_repo}/actions/runs/${run_id}" -q '.[0]' 2>/dev/null || true)
+                  # gh api returns no body for 204, so capture HTTP status via curl fallback if deletion fails to indicate status
+                  if [ -z "$status" ]; then
+                    # we assume success if exit code was 0; check with a direct curl for status code if you want
+                    echo "  -> dele
