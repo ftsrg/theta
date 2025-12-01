@@ -40,16 +40,6 @@ open class ArchivePackagingExtension {
 
 val packagingExt = extensions.create<ArchivePackagingExtension>("archivePackaging")
 
-// Utility to obtain current commit hash
-fun commitHash(): String = try {
-	val p = ProcessBuilder("git", "rev-parse", "HEAD")
-		.redirectOutput(ProcessBuilder.Redirect.PIPE)
-		.redirectError(ProcessBuilder.Redirect.PIPE)
-		.start()
-	p.waitFor()
-	p.inputStream.bufferedReader().readText().trim().ifBlank { "unknown" }
-} catch (_: Exception) { "unknown" }
-
 afterEvaluate {
 	if (packagingExt.variants.isEmpty()) return@afterEvaluate
 
@@ -92,7 +82,6 @@ afterEvaluate {
 			archiveFileName.set("${v.toolName}-archive.zip")
 			destinationDirectory.set(layout.buildDirectory.dir("distributions"))
 
-			val commit = commitHash()
 			val versionStr = project.version.toString()
 			val scriptSourceFile = v.scriptSource ?: defaultScriptDir.resolve(v.scriptName)
 			val readmeTemplate = v.readmeTemplate
@@ -120,7 +109,7 @@ afterEvaluate {
 							line.replace("TOOL_NAME", v.toolName)
 								.replace("INPUT_FLAG", "--portfolio ${v.portfolio}")
 								.replace("SCRIPTNAME", v.scriptName)
-								.replace("COMMIT_ID", commit)
+								.replace("VERSION", version.toString())
 						}
 						rename { "README.md" }
 					}

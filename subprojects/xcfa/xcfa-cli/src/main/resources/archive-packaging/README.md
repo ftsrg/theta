@@ -6,7 +6,7 @@ Theta can both serve as a model checking backend, and also includes ready-to-use
 
 ## Submitted version
 
-The submitted version can be found under the `COMMIT_ID` commit in the [GitHub repository](https://github.com/ftsrg/theta/commit/COMMIT_ID).
+The submitted version can be found under the `VERSION` tag in the [GitHub repository](https://github.com/ftsrg/theta/releases/tag/VERSION).
 
 Minimal necessary packages for Ubuntu 24.04 LTS:
 
