@@ -62,7 +62,6 @@ class InputOptions :
   fun isPnml() = model.path.endsWith("pnml")
 
   fun loadXsts(): XSTS {
-    if(flattenDepth != 0) throw UnsupportedOperationException("XSTS flattening is incorrect, don't use it for now! (--flatten-depth must be 0)")
     val propertyStream =
       if (property != null) property
       else
