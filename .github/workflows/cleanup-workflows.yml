@@ -56,19 +56,34 @@ jobs:
 
           per_page=100
 
-          # Use gh api pagination to stream all runs; output TSV lines with id, name, html_url, created_at
           echo "Fetching workflow runs and filtering by created_at < $cutoff ..."
-          gh api "repos/${owner_repo}/actions/runs?per_page=${per_page}" --paginate \
-            --jq '.workflow_runs[] | select(.created_at < "'$cutoff'") | [.id, (.name // "" ), (.html_url // "" ), .created_at] | @tsv' \
-            | while IFS=$'\t' read -r run_id run_name run_url run_created; do
+
+          # Use gh api to stream each workflow_run as JSON, then let jq (with --arg) compare timestamps.
+          # This avoids complex quoting and is robust to special characters.
+          gh api "repos/${owner_repo}/actions/runs?per_page=${per_page}" --paginate --jq '.workflow_runs[]' \
+            | jq -c --arg cutoff "$cutoff" 'select(.created_at < $cutoff)' \
+            | while IFS= read -r run_json; do
+                # Extract fields reliably using jq again
+                run_id=$(jq -r '.id' <<<"$run_json")
+                run_name=$(jq -r '.name // ""' <<<"$run_json")
+                run_url=$(jq -r '.html_url // ""' <<<"$run_json")
+                run_created=$(jq -r '.created_at' <<<"$run_json")
+
                 echo "Found old run: id=$run_id created=$run_created name=\"$run_name\" url=$run_url"
+
                 if [ "$dry_run" = "true" ] || [ "$dry_run" = "1" ]; then
                   echo "  -> dry-run: would delete run $run_id"
                 else
                   echo "  -> deleting run $run_id ..."
-                  # use gh api to delete the run
-                  status=$(gh api -X DELETE "repos/${owner_repo}/actions/runs/${run_id}" -q '.[0]' 2>/dev/null || true)
-                  # gh api returns no body for 204, so capture HTTP status via curl fallback if deletion fails to indicate status
-                  if [ -z "$status" ]; then
-                    # we assume success if exit code was 0; check with a direct curl for status code if you want
-                    echo "  -> dele
+                  # Delete via gh api. Check exit code for success (204 -> success).
+                  if gh api -X DELETE "repos/${owner_repo}/actions/runs/${run_id}"; then
+                    echo "  -> deleted $run_id"
+                  else
+                    echo "  -> failed to delete $run_id"
+                    # Optional: inspect headers / Retry-After, or backoff here
+                  fi
+                  sleep 0.2
+                fi
+              done
+
+          echo "Done."
