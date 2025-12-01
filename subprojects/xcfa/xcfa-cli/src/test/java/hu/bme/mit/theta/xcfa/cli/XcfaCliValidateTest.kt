@@ -21,15 +21,6 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -42,7 +33,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
