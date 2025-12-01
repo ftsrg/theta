@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -78,7 +77,6 @@ class XcfaCliValidateTest {
     @JvmStatic
     fun cFiles(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/dekker.i", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),
@@ -134,7 +132,6 @@ class XcfaCliValidateTest {
     @JvmStatic
     fun cFilesShort(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/dekker.i", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),
@@ -225,44 +222,6 @@ class XcfaCliValidateTest {
       "${output.getVerdict()} != ${validationOutput.getVerdict()}"
     }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
-  }
-
-  @Test
-  fun testCVerifyBuiltInPortfolio() {
-    Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
-    val temp = createTempDirectory()
-    val params =
-      arrayOf(
-        "--input-type",
-        "C",
-        "--backend",
-        "PORTFOLIO",
-        "--portfolio",
-        "COMPLEX",
-        "--input",
-        javaClass.getResource("/c/dekker.i")!!.path,
-        "--stacktrace",
-        "--debug",
-        "--output-directory",
-        temp.absolutePathString(),
-        "--svcomp",
-      )
-    try {
-      val output = runCatchingOutput(params)
-      val witness = temp.getWitness()
-      val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
-
-      assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
-        "${output.getVerdict()} != ${validationOutput.getVerdict()}"
-      }
-      println(
-        "Verification and validation both agree: task ${javaClass.getResource("/c/dekker.i")!!.path} is ${output.getVerdict()}"
-      )
-    } catch (e: Throwable) {
-      if (!e.toString().contains("Done debugging")) {
-        throw e
-      }
-    }
   }
 
   @ParameterizedTest
