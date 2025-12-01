@@ -28,7 +28,9 @@ jobs:
           if [ -n "${ACTIONS_PAT:-}" ]; then
             echo "$ACTIONS_PAT" | gh auth login --with-token
           elif [ -n "${GITHUB_TOKEN:-}" ]; then
-            echo "$GITHUB_TOKEN" | gh auth login --with-token
+            # no need to log in
+            exit 0
+            #echo "$GITHUB_TOKEN" | gh auth login --with-token
           else
             echo "Error: set secrets.ACTIONS_PAT or rely on default GITHUB_TOKEN" >&2
             exit 1
