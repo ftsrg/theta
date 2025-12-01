@@ -57,13 +57,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - tool: Theta-artifact
+          - tool: Theta-archive
             config: "--svcomp --portfolio STABLE --loglevel RESULT"
             name: Theta_Portfolio_STABLE
-          - tool: EmergenTheta-artifact
+          - tool: EmergenTheta-archive
             config: "--svcomp --portfolio EMERGENT --loglevel RESULT"
             name: Theta_Portfolio_EMERGENT
-          - tool: Thorn-artifact
+          - tool: Thorn-archive
             config: "--svcomp --portfolio HORN --loglevel RESULT"
             name: Thorn_Portfolio_HORN
     runs-on: ubuntu-24.04
