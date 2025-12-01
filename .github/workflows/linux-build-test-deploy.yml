@@ -140,7 +140,7 @@ jobs:
         with:
           arguments: aggregateJavadoc
       - name: Deploy Javadoc
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
         with:
           branch: gh-pages
@@ -191,12 +191,12 @@ jobs:
 
   deploy-release:
     needs: [test-linux, create-archives]
-    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 21
         run: |
-          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_21_X64)" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Create release and deploy JARs
@@ -206,7 +206,7 @@ jobs:
 
   deploy-zenodo:
     needs: [create-archives]
-    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
@@ -232,7 +232,6 @@ jobs:
 
   deploy-maven:
     needs: test-linux
-    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
@@ -242,7 +241,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Publish to Maven Central (Dry Run)
+        if: github.event.inputs.message != '' && (github.ref != 'refs/heads/master' || github.event_name == 'pull_request')
+        uses: ./.github/actions/cache-build
+        env:
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_PWD: ${{ secrets.PGP_PWD }}
+        with:
+          arguments: publishToMavenLocal
       - name: Publish to Maven Central
+        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: ./.github/actions/cache-build
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
@@ -291,7 +299,6 @@ jobs:
   
   deploy-docker:
     needs: [test-linux, test-docker]
-    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
@@ -307,11 +314,13 @@ jobs:
         run: |
           echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
       - name: docker-login
+        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: ./.github/actions/docker-login
         with:
           username: ${{secrets.DOCKER_USERNAME}}
           token: ${{secrets.DOCKER_TOKEN}}
       - name: docker-login-ghcr
+        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: ./.github/actions/docker-login
         with:
           registry: ghcr.io
@@ -324,8 +333,9 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           user-dockerhub: ftsrg
           user-ghcr: ftsrg
-          push: true
+          push: ${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
       - name: Docker Hub Description update
+        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -351,7 +361,7 @@ jobs:
           arguments: buildDocs
       - name: Deploy docs
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         with:
           branch: gh-pages
           folder: doc/wiki/wiki
