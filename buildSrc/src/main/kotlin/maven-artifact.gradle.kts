@@ -129,7 +129,7 @@ signing {
         useInMemoryPgpKeys(key, pwd)
         sign(publishing.publications)
     } else {
-        logger.warn("Signing keys not provided; publications will not be signed.")
+        // logger.warn("Signing keys not provided; publications will not be signed.")
     }
 }
 
