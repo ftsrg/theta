@@ -42,19 +42,19 @@ runs:
         path: jar/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: Theta-artifact
+        name: Theta-archive
         path: upload/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: EmergenTheta-artifact
+        name: EmergenTheta-archive
         path: upload/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: Thorn-artifact
+        name: Thorn-archive
         path: upload/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: ThetaCHC-artifact
+        name: ThetaCHC-archive
         path: upload/
     - run: for i in $(find jar -name "*-all.jar"); do mv -v $i upload/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
       shell: bash
