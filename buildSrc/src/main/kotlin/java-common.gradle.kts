@@ -25,6 +25,12 @@ plugins {
     id("com.diffplug.spotless")
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 dependencies {
     val implementation: Configuration by configurations
     val testImplementation: Configuration by configurations
@@ -102,7 +108,7 @@ spotless {
     ratchetFrom("origin/master")
 
     isEnforceCheck = false
-    
+
     val year = "\$YEAR" // you can't escape $ in raw strings..
     val licenseHeader = """            /*
              *  Copyright $year Budapest University of Technology and Economics
@@ -124,7 +130,7 @@ spotless {
     java {
         importOrder("java|javax", "hu.bme.", "")
         removeUnusedImports()
-        googleJavaFormat("1.24.0").aosp().reflowLongStrings()
+        googleJavaFormat("1.25.2").aosp().reflowLongStrings()
         formatAnnotations()
 
         licenseHeader(licenseHeader)
