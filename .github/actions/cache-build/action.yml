@@ -18,4 +18,4 @@ runs:
         cache-encryption-key: "mT489CT3NPkLtnWbYOrrrg==" # static key for caching, never important to keep secret
     - name: Run gradle wrapper with arguments
       shell: bash
-      run: ./gradlew ${{ inputs.arguments }} --info --stacktrace --build-cache
+      run: ./gradlew ${{ inputs.arguments }} --info --stacktrace --build-cache --configuration-cache
