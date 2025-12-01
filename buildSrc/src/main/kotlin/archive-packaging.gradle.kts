@@ -17,8 +17,9 @@
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.register
+import java.io.Serializable
 
-open class ArchivePackagingVariant {
+open class ArchivePackagingVariant : Serializable {
 	var toolName: String = ""
 	var portfolio: String = ""
 	var scriptName: String = "theta-start.sh"
@@ -43,73 +44,92 @@ val packagingExt = extensions.create<ArchivePackagingExtension>("archivePackagin
 afterEvaluate {
 	if (packagingExt.variants.isEmpty()) return@afterEvaluate
 
-	val downloadLibs = rootProject.tasks.findByName("downloadJavaSmtLibs")
-	val mainShadow = tasks.findByName("shadowJar")
-	if (mainShadow == null) {
-		logger.warn("archive-packaging: shadowJar task missing in ${project.path}, skipping variant task registration")
-		return@afterEvaluate
-	}
-	val solverCliShadow = if (packagingExt.variants.any { it.includeSolverCli }) {
-		rootProject.projectOrNull(":theta-solver-smtlib-cli")?.tasks?.findByName("shadowJar")
-	} else null
-
-	// Default resource files removed: only explicitly configured files are included.
-	val defaultScriptDir = rootProject.file("scripts")
+	// Capture everything from rootProject at configuration time
+	val rootProjectDir = rootProject.projectDir
+	val defaultScriptDir = File(rootProjectDir, "scripts")
+	val hasSolverCli = packagingExt.variants.any { it.includeSolverCli } && 
+		rootProject.subprojects.any { it.path == ":theta-solver-smtlib-cli" }
+	
+	val downloadLibsProvider = rootProject.tasks.named("downloadJavaSmtLibs")
+	val mainShadowProvider = tasks.named("shadowJar")
 
 	packagingExt.variants.forEachIndexed { idx, v ->
 		require(v.toolName.isNotBlank()) { "archivePackaging variant toolName must be set" }
 		val taskName = v.taskName ?: run {
 			if (v.toolName == "Theta") "buildArchive" else "buildArchive${v.toolName}"
 		}
-		val existing = tasks.findByName(taskName)
-		val reg = if (existing != null && existing is Zip) {
-			existing as Zip
-		} else if (existing != null) {
-			logger.warn("archive-packaging: task $taskName exists but is not Zip, skipping configuration")
-			return@forEachIndexed
+		
+		// Copy variant properties to avoid capturing script objects
+		val toolName = v.toolName
+		val portfolio = v.portfolio
+		val scriptName = v.scriptName
+		val solvers = v.solvers.toList()
+		val includeSolverCli = v.includeSolverCli
+		val versionStr = project.version.toString()
+		val scriptSourceFile = v.scriptSource ?: defaultScriptDir.resolve(v.scriptName)
+		val readmeTemplate = v.readmeTemplate
+		val smoketestFile = v.smoketestSource
+		val inputCFile = v.inputSource
+		
+		// Capture layout directories at configuration time
+		val buildDirProvider = layout.buildDirectory
+		val distributionsDir = buildDirProvider.dir("distributions")
+		val emptySolversDir = buildDirProvider.dir("empty-solvers")
+		val solversDirPath = buildDirProvider.dir("solvers-$toolName")
+		
+		// Capture smtlib jar path if needed, without holding provider reference
+		val smtlibJarPath = if (includeSolverCli && hasSolverCli) {
+			// Resolve the task lazily via provider using Gradle API
+			providers.provider {
+				try {
+					gradle.rootProject.tasks.findByPath(":theta-solver-smtlib-cli:shadowJar")?.let { task ->
+						(task as org.gradle.jvm.tasks.Jar).archiveFile.get().asFile.absolutePath
+					}
+				} catch (e: Exception) {
+					null
+				}
+			}
 		} else {
-			tasks.register<Zip>(taskName).get()
+			providers.provider { null }
 		}
-
-		(reg as Zip).apply {
+		
+		// Use task provider instead of realizing task
+		tasks.register<Zip>(taskName) {
 			group = "distribution"
-			description = "Create ${v.toolName} SV-COMP binary archive"
+			description = "Create $toolName SV-COMP binary archive"
 
-			// Dependencies
-			if (downloadLibs != null) dependsOn(downloadLibs)
-			dependsOn(mainShadow)
-			if (v.includeSolverCli && solverCliShadow != null) dependsOn(solverCliShadow)
-			archiveFileName.set("${v.toolName}-archive.zip")
-			destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+			// Dependencies using providers
+			dependsOn(downloadLibsProvider)
+			dependsOn(mainShadowProvider)
+			if (includeSolverCli && hasSolverCli) {
+				dependsOn(":theta-solver-smtlib-cli:shadowJar")
+			}
+			
+			archiveFileName.set("$toolName-archive.zip")
+			destinationDirectory.set(distributionsDir)
 
-			val versionStr = project.version.toString()
-			val scriptSourceFile = v.scriptSource ?: defaultScriptDir.resolve(v.scriptName)
-			val readmeTemplate = v.readmeTemplate
-			val smoketestFile = v.smoketestSource
-			val inputCFile = v.inputSource
-
-			into(v.toolName) {
+			into(toolName) {
 				// native libs
-				from(rootProject.file("lib")) { into("lib") }
+				from(File(rootProjectDir, "lib")) { into("lib") }
 				// license/meta
-				from(rootProject.file("CONTRIBUTORS.md"))
-				from(rootProject.file("LICENSE"))
-				from(rootProject.file("lib/README.md")) { rename { "LIB_LICENSES.md" } }
-				from(rootProject.file("README.md")) { rename { "GENERAL_README.md" } }
+				from(File(rootProjectDir, "CONTRIBUTORS.md"))
+				from(File(rootProjectDir, "LICENSE"))
+				from(File(rootProjectDir, "lib/README.md")) { rename { "LIB_LICENSES.md" } }
+				from(File(rootProjectDir, "README.md")) { rename { "GENERAL_README.md" } }
 				// script
 				if (scriptSourceFile.exists()) {
-					from(scriptSourceFile) { rename { v.scriptName } }
+					from(scriptSourceFile) { rename { scriptName } }
 				} else {
-					logger.warn("archive-packaging: script ${scriptSourceFile.path} not found for ${v.toolName}")
+					println("archive-packaging: script ${scriptSourceFile.path} not found for $toolName")
 				}
 				// templated README (include only if explicitly set and exists)
 				if (readmeTemplate != null && readmeTemplate.exists()) {
 					from(readmeTemplate) {
 						filter { line ->
-							line.replace("TOOL_NAME", v.toolName)
-								.replace("INPUT_FLAG", "--portfolio ${v.portfolio}")
-								.replace("SCRIPTNAME", v.scriptName)
-								.replace("VERSION", version.toString())
+							line.replace("TOOL_NAME", toolName)
+								.replace("INPUT_FLAG", "--portfolio $portfolio")
+								.replace("SCRIPTNAME", scriptName)
+								.replace("VERSION", versionStr)
 						}
 						rename { "README.md" }
 					}
@@ -117,21 +137,69 @@ afterEvaluate {
 				// smoketest + input (include only if explicitly set and exists)
 				if (smoketestFile != null && smoketestFile.exists()) from(smoketestFile)
 				if (inputCFile != null && inputCFile.exists()) from(inputCFile)
-				// main jar
-				from(mainShadow) { rename { "theta.jar" } }
-				// solver cli jar
-				if (v.includeSolverCli && solverCliShadow != null) {
-					from(solverCliShadow) { rename { "theta-smtlib.jar" } }
+				// main jar - use provider
+				from(mainShadowProvider.map { (it as org.gradle.jvm.tasks.Jar).archiveFile }) { 
+					rename { "theta.jar" } 
 				}
-				// empty solvers dir
-				from(layout.buildDirectory.dir("empty-solvers")) { into("solvers") }
+				// solver cli jar - use provider
+				if (includeSolverCli && hasSolverCli) {
+					from(providers.provider {
+						gradle.rootProject.tasks.findByPath(":theta-solver-smtlib-cli:shadowJar")?.let { task ->
+							(task as org.gradle.jvm.tasks.Jar).archiveFile.get()
+						}
+					}) { 
+						rename { "theta-smtlib.jar" } 
+					}
+				}
+				// solvers directory with installed solvers
+				if (solvers.isNotEmpty()) {
+					from(solversDirPath) { into("solvers") }
+				} else {
+					from(emptySolversDir) { into("solvers") }
+				}
 			}
 
-			doFirst { layout.buildDirectory.dir("empty-solvers").get().asFile.mkdirs() }
+			doFirst {
+				emptySolversDir.get().asFile.mkdirs()
+				
+				val smtlibJar = smtlibJarPath.orNull
+				if (solvers.isNotEmpty() && smtlibJar != null) {
+					val solversDir = solversDirPath.get().asFile
+					solversDir.mkdirs()
+					
+					// Get the actual jar path
+					val smtlibJarFile = File(smtlibJar)
+					
+					if (!smtlibJarFile.exists()) {
+						println("archive-packaging: ${smtlibJarFile.path} does not exist, skipping solver installation")
+						return@doFirst
+					}
+					
+					solvers.forEach { solver ->
+						println("Installing solver: $solver into ${solversDir.path}")
+						try {
+							val process = ProcessBuilder(
+								"java", "-jar", smtlibJarFile.absolutePath,
+								"--home", solversDir.absolutePath,
+								"--solver", solver,
+								"--install"
+							).redirectErrorStream(true).start()
+							
+							val output = process.inputStream.bufferedReader().readText()
+							val exitCode = process.waitFor()
+							
+							if (exitCode != 0) {
+								println("Failed to install solver $solver (exit code: $exitCode)")
+								println(output)
+							} else {
+								println("Successfully installed: $solver")
+							}
+						} catch (e: Exception) {
+							println("Error installing solver $solver: ${e.message}")
+						}
+					}
+				}
+			}
 		}
 	}
 }
-
-// Helper to safely access project if it exists (rootProject.project() throws if missing)
-fun Project.projectOrNull(path: String): Project? = try { rootProject.project(path) } catch (_: Exception) { null }
-
