@@ -22,28 +22,9 @@ open class DocsBuilderExtension {
 
 val extension = extensions.create<DocsBuilderExtension>("docsBuilder")
 
-val installMkdocsDependencies by tasks.registering(Exec::class) {
-    group = "documentation"
-    description = "Install mkdocs and required dependencies"
-    
-    doFirst {
-        if (!commandExists("pip")) {
-            throw GradleException("pip is not installed. Please install Python and pip first.")
-        }
-    }
-    
-    commandLine("sh", "-c", """
-        pip install mkdocs mkdocs-material python-markdown-math mkdocs-awesome-pages-plugin
-    """.trimIndent())
-    
-    isIgnoreExitValue = true
-}
-
 val buildDocs by tasks.registering(Exec::class) {
     group = "documentation"
     description = "Build documentation using mkdocs"
-    
-    dependsOn(installMkdocsDependencies)
     
     workingDir(rootProject.file(extension.sourceDir))
     
@@ -54,7 +35,7 @@ val buildDocs by tasks.registering(Exec::class) {
     
     doFirst {
         if (!commandExists("mkdocs")) {
-            throw GradleException("mkdocs is not installed. Run 'installMkdocsDependencies' task first or install manually.")
+            throw GradleException("mkdocs is not installed. Run 'pip install mkdocs mkdocs-material python-markdown-math mkdocs-awesome-pages-plugin' (or equivalent) manually.")
         }
     }
 }
