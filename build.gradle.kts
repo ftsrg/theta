@@ -22,6 +22,7 @@ plugins {
     id("org.sonarqube") version "4.2.1.3168"
     id("javasmt-common")
     id("release-info")
+    id("docs-builder")
 }
 
 subprojects {

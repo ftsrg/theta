@@ -329,5 +329,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build docs via Gradle
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: buildDocs
       - name: Deploy docs
-        uses: ./.github/actions/deploy-docs
+        uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        with:
+          branch: gh-pages
+          folder: doc/wiki/wiki
+          target-folder: wiki
+          single-commit: true
