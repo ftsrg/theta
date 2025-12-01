@@ -334,6 +334,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Install dependencies
+        run: |
+          pip install --break-system-packages mkdocs mkdocs-material python-markdown-math mkdocs-awesome-pages-plugin
       - name: Build docs via Gradle
         uses: ./.github/actions/cache-build
         with:
