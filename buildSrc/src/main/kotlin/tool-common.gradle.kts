@@ -36,7 +36,10 @@ val shadowJar = tasks.withType<ShadowJar> {
     manifest {
         attributes["Implementation-Version"] = archiveVersion
     }
-    isZip64 = true
+    isZip64 = false
+    entryCompression = org.gradle.api.tasks.bundling.ZipEntryCompression.DEFLATED
+    minimize(null)
+    mergeServiceFiles = false
 }
 
 tasks.register("prepareDockerDistribution") {
