@@ -1,0 +1,9 @@
+
+var x : boolean
+
+trans {
+}
+
+init {}
+
+env {}
