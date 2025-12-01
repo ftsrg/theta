@@ -74,7 +74,6 @@ afterEvaluate {
 		// Capture layout directories at configuration time
 		val buildDirProvider = layout.buildDirectory
 		val distributionsDir = buildDirProvider.dir("distributions")
-		val emptySolversDir = buildDirProvider.dir("empty-solvers")
 		val solversDirPath = buildDirProvider.dir("solvers-$toolName")
 		
 		// Capture smtlib jar path if needed, without holding provider reference
@@ -93,6 +92,66 @@ afterEvaluate {
 			providers.provider { null }
 		}
 		
+		// Create solver installation task if needed
+		val installSolversTaskName = "installSolvers${toolName}"
+		if (solvers.isNotEmpty()) {
+			tasks.register(installSolversTaskName) {
+				group = "distribution"
+				description = "Install solvers for $toolName archive"
+				
+				// Depend on smtlib-cli jar
+				if (includeSolverCli && hasSolverCli) {
+					dependsOn(":theta-solver-smtlib-cli:shadowJar")
+				}
+				
+				// Declare outputs
+				outputs.dir(solversDirPath)
+				
+				doLast {
+					val smtlibJar = smtlibJarPath.orNull
+					if (smtlibJar == null) {
+						println("archive-packaging: smtlib jar not available, skipping solver installation")
+						return@doLast
+					}
+					
+					val solversDir = solversDirPath.get().asFile
+					solversDir.mkdirs()
+					
+					val smtlibJarFile = File(smtlibJar)
+					if (!smtlibJarFile.exists()) {
+						println("archive-packaging: ${smtlibJarFile.path} does not exist, skipping solver installation")
+						return@doLast
+					}
+					
+					solvers.forEach { solver ->
+						println("Installing solver: $solver into ${solversDir.path}")
+						try {
+							val process = ProcessBuilder(
+								"java", "-jar", smtlibJarFile.absolutePath,
+								"--home", solversDir.absolutePath,
+								"install", solver,
+w							).redirectErrorStream(true).start()
+							
+							val output = process.inputStream.bufferedReader().readText()
+							val exitCode = process.waitFor()
+							
+							if (exitCode != 0) {
+								println("Failed to install solver $solver (exit code: $exitCode)")
+								println(output)
+							} else {
+								println("Successfully installed: $solver")
+								if (output.isNotBlank()) {
+									println(output)
+								}
+							}
+						} catch (e: Exception) {
+							println("Error installing solver $solver: ${e.message}")
+						}
+					}
+				}
+			}
+		}
+		
 		// Use task provider instead of realizing task
 		tasks.register<Zip>(taskName) {
 			group = "distribution"
@@ -104,10 +163,14 @@ afterEvaluate {
 			if (includeSolverCli && hasSolverCli) {
 				dependsOn(":theta-solver-smtlib-cli:shadowJar")
 			}
+			// Depend on solver installation task if it exists
+			if (solvers.isNotEmpty()) {
+				dependsOn(installSolversTaskName)
+			}
 			
 			archiveFileName.set("$toolName-archive.zip")
 			destinationDirectory.set(distributionsDir)
-
+			
 			into(toolName) {
 				// native libs
 				from(File(rootProjectDir, "lib")) { into("lib") }
@@ -118,7 +181,13 @@ afterEvaluate {
 				from(File(rootProjectDir, "README.md")) { rename { "GENERAL_README.md" } }
 				// script
 				if (scriptSourceFile.exists()) {
-					from(scriptSourceFile) { rename { scriptName } }
+					from(scriptSourceFile) { 
+						filter { line ->
+							line.replace("TOOL_NAME", toolName)
+								.replace("TOOL_VERSION", versionStr)
+						}
+						rename { scriptName } 
+					}
 				} else {
 					println("archive-packaging: script ${scriptSourceFile.path} not found for $toolName")
 				}
@@ -129,7 +198,7 @@ afterEvaluate {
 							line.replace("TOOL_NAME", toolName)
 								.replace("INPUT_FLAG", "--portfolio $portfolio")
 								.replace("SCRIPTNAME", scriptName)
-								.replace("VERSION", versionStr)
+								.replace("TOOL_VERSION", versionStr)
 						}
 						rename { "README.md" }
 					}
@@ -151,54 +220,14 @@ afterEvaluate {
 						rename { "theta-smtlib.jar" } 
 					}
 				}
-				// solvers directory with installed solvers
-				if (solvers.isNotEmpty()) {
-					from(solversDirPath) { into("solvers") }
-				} else {
-					from(emptySolversDir) { into("solvers") }
-				}
-			}
+				// solvers directory - always include, will be empty or populated
+        if (solvers.isNotEmpty()) {
 
-			doFirst {
-				emptySolversDir.get().asFile.mkdirs()
-				
-				val smtlibJar = smtlibJarPath.orNull
-				if (solvers.isNotEmpty() && smtlibJar != null) {
-					val solversDir = solversDirPath.get().asFile
-					solversDir.mkdirs()
-					
-					// Get the actual jar path
-					val smtlibJarFile = File(smtlibJar)
-					
-					if (!smtlibJarFile.exists()) {
-						println("archive-packaging: ${smtlibJarFile.path} does not exist, skipping solver installation")
-						return@doFirst
-					}
-					
-					solvers.forEach { solver ->
-						println("Installing solver: $solver into ${solversDir.path}")
-						try {
-							val process = ProcessBuilder(
-								"java", "-jar", smtlibJarFile.absolutePath,
-								"--home", solversDir.absolutePath,
-								"--solver", solver,
-								"--install"
-							).redirectErrorStream(true).start()
-							
-							val output = process.inputStream.bufferedReader().readText()
-							val exitCode = process.waitFor()
-							
-							if (exitCode != 0) {
-								println("Failed to install solver $solver (exit code: $exitCode)")
-								println(output)
-							} else {
-								println("Successfully installed: $solver")
-							}
-						} catch (e: Exception) {
-							println("Error installing solver $solver: ${e.message}")
-						}
-					}
-				}
+          from(solversDirPath) {
+            into("solvers")
+          }
+
+        }
 			}
 		}
 	}
