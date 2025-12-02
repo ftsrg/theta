@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
@@ -43,6 +44,21 @@ class VarContext(val builder: XcfaBuilder, private val local: Boolean) {
         varDecl,
         ExpressionWrapper(SimpleScope(SymbolTable()), initValue).instantiate(Env()) as LitExpr<*>,
         local,
+      )
+    )
+    return varDecl
+  }
+
+  fun global(name: String, type: Type, initValue: String?, atomic: Boolean): VarDecl<Type> {
+    val varDecl = Var(name, type)
+    builder.addVar(
+      XcfaGlobalVar(
+        varDecl,
+        initValue?.let {
+          ExpressionWrapper(SimpleScope(SymbolTable()), it).instantiate(Env()) as LitExpr<*>
+        },
+        local,
+        atomic,
       )
     )
     return varDecl
@@ -143,6 +159,19 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     infix fun VarDecl<*>.assign(to: Expr<*>): SequenceLabel {
       val rhs: Expr<Type> = to as Expr<Type>
       val label = StmtLabel(Assign(this as VarDecl<Type>, rhs))
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    infix fun String.memassign(to: String): SequenceLabel {
+      val lhs: Dereference<Type, Type, Type> =
+        this@XcfaProcedureBuilderContext.builder.parse(this) as Dereference<Type, Type, Type>
+      val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
+      return lhs memassign rhs
+    }
+
+    infix fun Dereference<*, *, *>.memassign(to: Expr<*>): SequenceLabel {
+      val label = StmtLabel(MemoryAssign(this as Dereference<Type, Type, Type>, to as Expr<Type>))
       labelList.add(label)
       return SequenceLabel(labelList)
     }
@@ -274,8 +303,28 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
       return SequenceLabel(labelList)
     }
 
-    fun fence(vararg content: String): SequenceLabel {
-      val label = FenceLabel(content.toSet(), EmptyMetaData)
+    fun atomic_begin(): SequenceLabel {
+      val label = AtomicBeginLabel()
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun atomic_end(): SequenceLabel {
+      val label = AtomicEndLabel()
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun mutex_lock(handle: String): SequenceLabel {
+      val mutex = this@XcfaProcedureBuilderContext.builder.lookup(handle)
+      val label = MutexLockLabel(mutex)
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun mutex_unlock(handle: String): SequenceLabel {
+      val mutex = this@XcfaProcedureBuilderContext.builder.lookup(handle)
+      val label = MutexUnlockLabel(mutex)
       labelList.add(label)
       return SequenceLabel(labelList)
     }
@@ -292,11 +341,9 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
   }
 
   infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> SequenceLabel) -> XcfaEdge {
-    val loc1 = locationLut.getOrElse(this) { XcfaLocation(this, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(this, loc1)
+    val loc1 = locationLut.getOrPut(this) { XcfaLocation(this, metadata = EmptyMetaData) }
     builder.addLoc(loc1)
-    val loc2 = locationLut.getOrElse(to) { XcfaLocation(to, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(to, loc2)
+    val loc2 = locationLut.getOrPut(to) { XcfaLocation(to, metadata = EmptyMetaData) }
     builder.addLoc(loc2)
     return { lambda ->
       val edge = XcfaEdge(loc1, loc2, lambda(SequenceLabelContext()), EmptyMetaData)

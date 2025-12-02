@@ -18,7 +18,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.*
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -33,7 +33,7 @@ fun portfolio(
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: UniqueWarningLogger,
+  uniqueLogger: Logger,
 ): STM {
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
@@ -62,8 +62,8 @@ fun portfolio(
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
-              porRandomSeed = -1,
+              por = POR.NOPOR,
+              porSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
               abstractorConfig =
@@ -88,14 +88,12 @@ fun portfolio(
         OutputConfig(
           versionInfo = false,
           resultFolder = Paths.get("./").toFile(), // cwd
-          cOutputConfig = COutputConfig(disable = true),
           witnessConfig =
             WitnessConfig(
-              disable = false,
+              enabled = WitnessLevel.ALL,
               concretizerSolver = "Z3",
               validateConcretizerSolver = false,
             ),
-          argConfig = ArgConfig(disable = true),
         ),
       debugConfig = portfolioConfig.debugConfig,
     )
@@ -105,11 +103,12 @@ fun portfolio(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE)
             ConeOfInfluenceMode.NO_COI
           else ConeOfInfluenceMode.COI,
-        porLevel =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
+        por =
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE) POR.SPOR
+          else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
       )
     baseConfig =

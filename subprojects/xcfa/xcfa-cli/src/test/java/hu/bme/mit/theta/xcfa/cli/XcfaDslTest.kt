@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
-import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
+import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
@@ -89,7 +89,7 @@ class XcfaDslTest {
     run {
       val xcfa = getSyncXcfa()
       val checker =
-        getChecker(
+        getSafetyChecker(
           xcfa,
           emptySet(),
           config,
@@ -103,7 +103,7 @@ class XcfaDslTest {
     run {
       val xcfa = getAsyncXcfa()
       val checker =
-        getChecker(
+        getSafetyChecker(
           xcfa,
           emptySet(),
           config,

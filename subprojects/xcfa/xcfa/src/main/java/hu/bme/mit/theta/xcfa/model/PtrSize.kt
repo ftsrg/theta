@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 
 fun XcfaBuilder.getPtrSizeVar(): VarDecl<ArrayType<*, *>> =
   getVars().find { it.wrappedVar.name == "__theta_ptr_size" }!!.wrappedVar
@@ -36,6 +36,11 @@ fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*
   val sizeCast = if (type.smtType is IntType) size else type.castTo(size)
   val write = ArrayWriteExpr.create<Type, Type>(arr.ref, baseCast, sizeCast)
   return AssignStmtLabel(arr, write)
+}
+
+fun XcfaBuilder.deallocate(parseContext: ParseContext, base: Expr<*>): StmtLabel {
+  val type = Fitsall(null, parseContext)
+  return allocate(parseContext, base, type.getValue("-1"))
 }
 
 fun XcfaBuilder.allocateUnit(parseContext: ParseContext, base: Expr<*>): StmtLabel {

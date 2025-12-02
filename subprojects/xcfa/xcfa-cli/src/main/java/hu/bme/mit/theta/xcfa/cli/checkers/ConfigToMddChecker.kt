@@ -15,66 +15,87 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
-import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
-import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
-import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
-import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.cli.params.MddConfig
+import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 fun getMddChecker(
   xcfa: XCFA,
-  mcm: MCM,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<MddProof, MddCex, UnitPrec> {
+): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
   val mddConfig = config.backendConfig.specConfig as MddConfig
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
-
-  val monolithicExpr =
-    xcfa
-      .toMonolithicExpr(parseContext, initValues = true)
-      .let {
-        if (config.inputConfig.property == ErrorDetection.TERMINATION)
-          it.copy(propExpr = True()).createMonolithicL2S()
-        else it
-      }
-      .let {
-        if (mddConfig.cegar) {
-          TODO("MDD cannot return traces, and thus, --cegar won't work yet.")
-        } else it
-      }
-      .let { if (mddConfig.reversed) it.createReversed() else it }
 
   val stmts =
     xcfa.procedures
       .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
       .toSet()
-  val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts, 20)
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
-  return MddChecker.create<ExprAction>(
-    monolithicExpr,
-    variableOrder,
-    solverPool,
+  val baseChecker = { monolithicExpr: MonolithicExpr ->
+    MddChecker(
+      monolithicExpr,
+      solverPool,
+      logger,
+      iterationStrategy,
+      //      variableOrdering =
+      //        orderVarsFromRandomStartingPoints(
+      //          monolithicExpr.vars,
+      //          stmts
+      //            .map {
+      //              object : Event<VarDecl<*>> {
+      //                override fun getAffectedVars(): List<VarDecl<*>> =
+      //                  StmtUtils.getWrittenVars(it).toList()
+      //              }
+      //            }
+      //            .toList(),
+      //          20,
+      //        ),
+    )
+  }
+  val passes = mutableListOf<MonolithicExprPass<MddProof>>()
+
+  if (mddConfig.cegar) {
+    passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(refinementSolverFactory)))
+  }
+  if (mddConfig.reversed) {
+    passes.add(ReverseMEPass())
+  }
+
+  return XcfaPipelineChecker(
+    xcfa,
+    config.inputConfig.property,
+    parseContext,
+    baseChecker,
+    passes,
     logger,
-    iterationStrategy,
+    config.outputConfig.acceptUnreliableSafe,
+    true,
   )
 }

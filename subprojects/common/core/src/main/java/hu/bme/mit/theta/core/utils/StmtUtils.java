@@ -54,6 +54,30 @@ public final class StmtUtils {
     }
 
     /**
+     * Get variables written in a statement
+     *
+     * @param stmt Statement
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getWrittenVars(final Stmt stmt) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmt.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars);
+        return vars;
+    }
+
+    /**
+     * Get variables written by statements
+     *
+     * @param stmts Statements
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getWrittenVars(final Iterable<? extends Stmt> stmts) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmts.forEach(s -> s.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars));
+        return vars;
+    }
+
+    /**
      * Unfold a statement into expressions with a given indexing
      *
      * @param stmt Statement

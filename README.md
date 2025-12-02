@@ -13,6 +13,11 @@
 [![](https://img.shields.io/docker/v/ftsrg/theta-xta-cli?label=xta&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xta-cli/)
 [![](https://img.shields.io/docker/v/ftsrg/theta-sts-cli?label=sts&logo=docker)](https://hub.docker.com/r/ftsrg/theta-sts-cli/)
 
+[![](https://img.shields.io/badge/-Theta-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.13958141)
+[![](https://img.shields.io/badge/-EmergenTheta-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.13958195)
+[![](https://img.shields.io/badge/-Thorn-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.13958280)
+[![](https://img.shields.io/badge/-ThetaCHC-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.15537026)
+
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)

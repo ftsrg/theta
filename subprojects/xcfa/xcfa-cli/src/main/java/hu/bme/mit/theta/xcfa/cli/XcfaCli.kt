@@ -22,15 +22,17 @@ import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.exitProcess
 import hu.bme.mit.theta.xcfa.cli.utils.getGson
 import java.io.File
 import java.io.FileReader
-import kotlin.system.exitProcess
 
 class XcfaCli(private val args: Array<String>) {
 
@@ -58,18 +60,19 @@ class XcfaCli(private val args: Array<String>) {
         config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
       }
       if (svcomp) {
-        remainingFlags.addAll(
-          listOf(
-            "--enable-output",
-            "--disable-xcfa-serialization",
-            "--disable-arg-generation",
-            "--disable-chc-serialization",
-            "--disable-c-serialization",
-            "--only-svcomp-witness",
-          )
-        )
-        if (!remainingFlags.contains("--backend")) {
+        remainingFlags.addAll(listOf("--witness-generation", "SVCOMP"))
+        if ("--backend" !in remainingFlags) {
           remainingFlags.addAll(listOf("--backend", "PORTFOLIO"))
+        }
+        if ("--loglevel" !in remainingFlags) {
+          remainingFlags.addAll(listOf("--loglevel", "BENCHMARK"))
+        } else {
+          val index = remainingFlags.indexOfFirst { it == "--loglevel" }
+          if (remainingFlags.getOrNull(index + 1) == "RESULT") {
+            println("Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.")
+            remainingFlags.removeAt(index + 1)
+            remainingFlags.add(index + 1, "BENCHMARK")
+          }
         }
       }
       while (remainingFlags.isNotEmpty()) {
@@ -88,15 +91,15 @@ class XcfaCli(private val args: Array<String>) {
       println("Invalid parameters, details:")
       ex.printStackTrace()
       ex.usage()
-      exitProcess(ExitCodes.INVALID_PARAM.code)
+      exitProcess("--debug" in args, ex, ExitCodes.INVALID_PARAM.code)
     } catch (ex: JsonIOException) {
       println("There was a problem reading from ${configFile}:")
       ex.printStackTrace()
-      exitProcess(ExitCodes.INVALID_PARAM.code)
+      exitProcess("--debug" in args, ex, ExitCodes.INVALID_PARAM.code)
     } catch (ex: JsonSyntaxException) {
       println("There was a problem parsing ${configFile}:")
       ex.printStackTrace()
-      exitProcess(ExitCodes.INVALID_PARAM.code)
+      exitProcess("--debug" in args, ex, ExitCodes.INVALID_PARAM.code)
     }
 
     if (help) {
@@ -114,7 +117,12 @@ class XcfaCli(private val args: Array<String>) {
       return
     }
 
-    val logger = ConsoleLogger(config.debugConfig.logLevel)
+    val logger =
+      if (config.debugConfig.logLevel == Logger.Level.DISABLE) {
+        NullLogger.getInstance()
+      } else {
+        ConsoleLogger(config.debugConfig.logLevel)
+      }
     val uniqueLogger = UniqueWarningLogger(logger)
 
     runConfig(config, logger, uniqueLogger, false)

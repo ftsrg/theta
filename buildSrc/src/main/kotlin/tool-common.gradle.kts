@@ -32,9 +32,14 @@ tasks {
     named("runShadow", JavaExec::class).configure { setupEnvironment() }
 }
 
-tasks.withType<ShadowJar>() {
+val shadowJar = tasks.withType<ShadowJar> {
     manifest {
         attributes["Implementation-Version"] = archiveVersion
     }
     isZip64 = true
+}
+
+tasks.register("prepareDockerDistribution") {
+    dependsOn(shadowJar)
+    dependsOn(rootProject.tasks["downloadJavaSmtLibs"])
 }

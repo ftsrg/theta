@@ -128,6 +128,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
+                    "astNodes": [],
                     "sourceText": "*(unsigned int*)param \u003c\u003d 110"
                   }
                 },
@@ -157,6 +158,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
+                    "astNodes": [],
                     "sourceText": "*(unsigned int*)param \u003c\u003d 110"
                   }
                 },
@@ -234,6 +236,7 @@
                     "colNumberStop": 18,
                     "offsetStart": 128,
                     "offsetEnd": 142,
+                    "astNodes": [],
                     "sourceText": "float f \u003d 0.3f;"
                   }
                 },
@@ -250,6 +253,7 @@
                     "colNumberStop": 25,
                     "offsetStart": 148,
                     "offsetEnd": 169,
+                    "astNodes": [],
                     "sourceText": "unsigned int all \u003d -1;"
                   }
                 },
@@ -266,6 +270,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 175,
                     "offsetEnd": 193,
+                    "astNodes": [],
                     "sourceText": "check_geq_110(\u0026all)"
                   }
                 },
@@ -295,6 +300,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
+                    "astNodes": [],
                     "sourceText": "*(unsigned int*)param \u003c\u003d 110"
                   }
                 },
@@ -311,6 +317,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 175,
                     "offsetEnd": 193,
+                    "astNodes": [],
                     "sourceText": "check_geq_110(\u0026all)"
                   }
                 },
@@ -340,6 +347,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
+                    "astNodes": [],
                     "sourceText": "*(unsigned int*)param \u003c\u003d 110"
                   }
                 },

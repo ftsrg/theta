@@ -24,11 +24,11 @@ include(
     "common/ltl",
     "common/ltl-cli",
 
-    "frontends/c-frontend",
     "frontends/btor2-frontend",
-    "frontends/petrinet-frontend/petrinet-model",
-    "frontends/petrinet-frontend/petrinet-analysis",
-    "frontends/petrinet-frontend/petrinet-xsts",
+    "frontends/c-frontend",
+    "frontends/petrinet-model",
+    "frontends/petrinet-analysis",
+    "frontends/petrinet-xsts",
     "frontends/chc-frontend",
     "frontends/llvm",
 
@@ -59,6 +59,7 @@ include(
     "xsts/xsts-cli",
 
     "solver/solver",
+    "solver/solver-eldarica",
     "solver/solver-z3",
     "solver/solver-z3-legacy",
     "solver/solver-javasmt",

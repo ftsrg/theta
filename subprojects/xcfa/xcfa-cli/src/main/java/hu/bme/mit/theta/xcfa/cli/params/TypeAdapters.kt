@@ -104,6 +104,7 @@ class SpecBackendConfigTypeAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<B
     writer.name("solverHome").value(value.solverHome)
     writer.name("timeoutMs").value(value.timeoutMs)
     writer.name("inProcess").value(value.inProcess)
+    writer.name("parseInProcess").value(value.parseInProcess)
     writer.name("specConfig")
     if (value.specConfig != null) {
       writer.beginObject()
@@ -131,6 +132,7 @@ class SpecBackendConfigTypeAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<B
         "solverHome" -> instance.solverHome = reader.nextString()
         "timeoutMs" -> instance.timeoutMs = reader.nextLong()
         "inProcess" -> instance.inProcess = reader.nextBoolean()
+        "parseInProcess" -> instance.parseInProcess = reader.nextBoolean()
         "specConfig" -> instance.specConfig = readSpecConfig(reader)
         else -> reader.skipValue()
       }

@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ToInt;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 
 import hu.bme.mit.theta.common.Utils;
@@ -26,6 +27,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.math.BigInteger;
 
 public class BvType
@@ -66,9 +68,8 @@ public class BvType
         return size;
     }
 
-    public Boolean getSigned() {
-        checkState(signed != null);
-        return signed;
+    public boolean getSigned() {
+        return signed != null && signed;
     }
 
     @Override
@@ -133,7 +134,10 @@ public class BvType
     public <TargetType extends Type> Expr<TargetType> Cast(Expr<BvType> op, TargetType type) {
         if (type instanceof FpType && signed != null) {
             //noinspection unchecked
-            return (Expr<TargetType>) FromBv(FpRoundingMode.RTZ, op, (FpType) type, signed);
+            return (Expr<TargetType>)
+                    FromBv(FpRoundingMode.getDefaultRoundingMode(), op, (FpType) type, signed);
+        } else if (type instanceof IntType) {
+            return (Expr<TargetType>) ToInt(op);
         }
         throw new ClassCastException("Bv cannot be cast to " + type);
     }

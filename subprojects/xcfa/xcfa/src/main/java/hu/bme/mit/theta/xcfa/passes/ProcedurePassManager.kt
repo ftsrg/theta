@@ -17,13 +17,20 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
 
   constructor(vararg passes: List<ProcedurePass>) : this(passes.toList())
+
+  operator fun plus(other: ProcedurePassManager): ProcedurePassManager =
+    ProcedurePassManager(this.passes + other.passes)
+
+  operator fun plus(passes: List<ProcedurePass>): ProcedurePassManager =
+    ProcedurePassManager(this.passes + listOf(passes))
 }
 
-class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -33,8 +40,8 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
       // handling intrinsics
-      ErrorLocationPass(checkOverflow),
-      FinalLocationPass(checkOverflow),
+      ErrorLocationPass(property),
+      FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(),
@@ -42,32 +49,96 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
       // optimizing
-      SimplifyExprsPass(parseContext),
+      SimplifyExprsPass(parseContext, property),
       LoopUnrollPass(),
-      SimplifyExprsPass(parseContext),
       EmptyEdgeRemovalPass(),
-      UnusedLocRemovalPass(),
     ),
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
+      NondetFunctionPass(),
+    ),
+    listOf(
+      // Clean up procedures after inlining
+      InlinedProcedureRemovalPass()
+    ),
+    listOf(
       EmptyEdgeRemovalPass(),
+      SimplifyExprsPass(parseContext, property),
+      UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
     listOf(
       // handling remaining function calls
-      MemsafetyPass(parseContext),
+      MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      NondetFunctionPass(),
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
+      EliminateSelfLoops(),
+      HavocPromotionAndRange(parseContext),
+    ),
+    property.witness?.let {
+      listOf( // witness
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
+        EliminateSelfLoops(),
+        property.witness.witnessPass(parseContext),
+        LbePass(parseContext),
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
+        SimplifyExprsPass(parseContext),
+      )
+    } ?: emptyList(),
+    listOf(DataRaceToReachabilityPass(property)),
+    listOf(OverflowDetectionPass(property, parseContext)),
+    listOf(
+      // Final cleanup
+      UnusedVarPass(uniqueWarningLogger, property),
+      EmptyEdgeRemovalPass(),
+      UnusedLocRemovalPass(),
+    ),
+  )
+
+class NontermValidationPasses(
+  property: XcfaProperty,
+  parseContext: ParseContext,
+  uniqueWarningLogger: Logger,
+) :
+  ProcedurePassManager(
+    listOf(
+      // formatting
+      NormalizePass(),
+      DeterministicPass(),
+      // removing redundant elements
+      UnusedLocRemovalPass(),
+      // handling intrinsics
+      ErrorLocationPass(property),
+      FinalLocationPass(property),
+      SvCompIntrinsicsPass(),
+      FpFunctionsToExprsPass(parseContext),
+      CLibraryFunctionsPass(),
+    ),
+    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
+    listOf(
+      // optimizing
+      UnusedLocRemovalPass()
+    ),
+    listOf(
+      // trying to inline procedures
+      InlineProceduresPass(parseContext),
+      EliminateSelfLoops(),
+    ),
+    listOf(
+      // handling remaining function calls
+      MemsafetyPass(property, parseContext),
+      NoSideEffectPass(parseContext),
+      NondetFunctionPass(),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger),
-      EmptyEdgeRemovalPass(),
+      UnusedVarPass(uniqueWarningLogger, property),
       UnusedLocRemovalPass(),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
@@ -87,29 +158,19 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     ),
     listOf(
       // trying to inline procedures
-      InlineProceduresPass(parseContext),
+      //      InlineProceduresPass(parseContext),
       RemoveDeadEnds(parseContext),
-      EliminateSelfLoops(),
+      //      EliminateSelfLoops(),
       // handling remaining function calls
-      LbePass(parseContext),
-      NormalizePass(), // needed after lbe, TODO
-      DeterministicPass(), // needed after lbe, TODO
+      //      LbePass(parseContext),
+      //      NormalizePass(), // needed after lbe, TODO
+      //      DeterministicPass(), // needed after lbe, TODO
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
     ),
   )
 
 class LitmusPasses : ProcedurePassManager()
-
-class OcExtraPasses :
-  ProcedurePassManager(
-    listOf(
-      AssumeFalseRemovalPass(),
-      MutexToVarPass(),
-      AtomicReadsOneWritePass(),
-      LoopUnrollPass(2), // force loop unroll for BMC
-    )
-  )
 
 class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(

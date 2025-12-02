@@ -15,86 +15,142 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.common.logging.*
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.cli.XcfaCliPortfolioTest.Companion.Portfolios.emergentPortfolio
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.*
 import hu.bme.mit.theta.xcfa.model.XCFA
-import java.util.stream.Stream
+import hu.bme.mit.theta.xcfa.model.procedure
+import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 class XcfaCliPortfolioTest {
   companion object {
+    private object Portfolios {
+      val complexPortfolio =
+        {
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }
+
+      val emergentPortfolio =
+        {
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }
+
+      val hornPortfolio =
+        {
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          hornPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }
+    }
+
+    private object Programs {
+      val basic = XCFA("", setOf()) to ParseContext()
+
+      val multithread =
+        xcfa("") {
+          val proc1 = procedure("f") { init to final }
+          val main =
+            procedure("main") {
+              val thr1 = "thr1" type Int()
+              (init to "L0") { thr1.start(proc1) }
+              ("L0" to final) { thr1.join() }
+            }
+          main.start()
+        } to ParseContext().apply { multiThreading = true }
+
+      val pointer =
+        xcfa("") {
+          val main =
+            procedure("main") {
+              val x = "x" type Int()
+              (init to final) { x.assign("(deref 1 0 Int)") }
+            }
+          main.start()
+        } to ParseContext()
+
+      val float =
+        XCFA("", setOf()) to ParseContext().apply { addArithmeticTrait(ArithmeticTrait.FLOAT) }
+
+      val arr =
+        XCFA("", setOf()) to ParseContext().apply { addArithmeticTrait(ArithmeticTrait.ARR) }
+
+      val bitwise =
+        XCFA("", setOf()) to ParseContext().apply { addArithmeticTrait(ArithmeticTrait.BITWISE) }
+
+      val nonlin =
+        XCFA("", setOf()) to ParseContext().apply { addArithmeticTrait(ArithmeticTrait.NONLIN_INT) }
+    }
+
+    private val defaultCheck = { stm: STM?, e: Exception? ->
+      Assertions.assertNotNull(stm)
+      Assertions.assertNull(e)
+      val vis = stm!!.visualize()
+      System.err.println(vis)
+      Assertions.assertTrue(vis.isNotEmpty())
+    }
+
+    private val unsupportedCheck = { stm: STM?, e: Exception? ->
+      Assertions.assertNull(stm)
+      Assertions.assertNotNull(e)
+      Assertions.assertTrue(e is UnsupportedOperationException)
+    }
 
     @JvmStatic
-    fun portfolios(): Stream<Arguments> {
-      return Stream.of(
-        Arguments.of({
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: UniqueWarningLogger ->
-          complexPortfolio23(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }),
-        Arguments.of({
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: UniqueWarningLogger ->
-          complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }),
-        Arguments.of({
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: UniqueWarningLogger ->
-          complexPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }),
-        Arguments.of({
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: UniqueWarningLogger ->
-          boundedPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }),
-        Arguments.of({
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: UniqueWarningLogger ->
-          boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }),
-        Arguments.of({
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: UniqueWarningLogger ->
-          hornPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }),
+    fun data(): Collection<Array<Any>> =
+      listOf(
+        arrayOf(Portfolios.complexPortfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.float, unsupportedCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.nonlin, defaultCheck),
       )
-    }
   }
 
   @ParameterizedTest
-  @MethodSource("portfolios")
+  @MethodSource("data")
   fun testPortfolio(
     portfolio:
       (
@@ -103,21 +159,25 @@ class XcfaCliPortfolioTest {
         parseContext: ParseContext,
         portfolioConfig: XcfaConfig<*, *>,
         logger: Logger,
-        uniqueLogger: UniqueWarningLogger,
-      ) -> STM
+        uniqueLogger: Logger,
+      ) -> STM,
+    program: Pair<XCFA, ParseContext>,
+    check: (STM?, Exception?) -> Unit,
   ) {
-    val stm =
-      portfolio(
-        XCFA("name", setOf()),
-        emptySet(),
-        ParseContext(),
-        XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
-        NullLogger.getInstance(),
-        UniqueWarningLogger(NullLogger.getInstance())
-      )
-
-    val vis = stm.visualize()
-    System.err.println(vis)
-    Assertions.assertTrue(vis.isNotEmpty())
+    val (stm, exception) =
+      try {
+        portfolio(
+          program.first,
+          emptySet(),
+          program.second,
+          XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
+          NullLogger.getInstance(),
+          NullLogger.getInstance(),
+        ) to null
+      } catch (e: Exception) {
+        System.err.println(e.stackTraceToString())
+        null to e
+      }
+    check(stm, exception)
   }
 }

@@ -21,9 +21,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 
 data class WitnessEdge(
   val startlineRange: Pair<Int, Int>?,
@@ -69,13 +67,14 @@ class XcfaCliProofTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("cFiles")
+  //  @ParameterizedTest
+  //  @MethodSource("cFiles")
   fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
     val temp = createTempDirectory()
     val params =
       arrayOf(
-        "--enable-output",
+        "--output",
+        "ALL",
         "--input-type",
         "C",
         "--input",

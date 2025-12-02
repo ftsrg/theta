@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.type.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
@@ -53,6 +54,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.ccha
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 private const val arraySize = 10
 
@@ -65,6 +67,7 @@ fun XCFA.toC(
   """         
     extern void abort();
     extern unsigned short __VERIFIER_nondet_ushort();
+    extern char __VERIFIER_nondet_char();
     extern short __VERIFIER_nondet_short();
     extern int __VERIFIER_nondet_int();
     extern _Bool __VERIFIER_nondet__Bool();
@@ -288,6 +291,7 @@ private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
     is MemoryAssignStmt<*, *, *> ->
       "${stmt.deref.toC(parseContext)} = ${stmt.expr.toC(parseContext)};"
     is AssumeStmt -> "if(!${stmt.cond.toC(parseContext)}) abort();"
+    is SkipStmt -> ""
     else -> TODO("Not yet supported: $stmt")
   }
 

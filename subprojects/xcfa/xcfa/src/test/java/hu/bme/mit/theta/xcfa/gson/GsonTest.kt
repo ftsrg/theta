@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
@@ -76,6 +77,7 @@ class GsonTest {
     gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(ParseContext::class.java, ParseContextAdapter { gson })
+    gsonBuilder.registerTypeHierarchyAdapter(CStatement::class.java, CStatementAdapter())
     gsonBuilder.registerTypeHierarchyAdapter(
       FrontendMetadata::class.java,
       FrontendMetadataAdapter { gson },

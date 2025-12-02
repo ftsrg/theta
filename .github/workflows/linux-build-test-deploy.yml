@@ -56,12 +56,12 @@ jobs:
           - SV-COMP25_valid-memsafety
           - SV-COMP25_no-overflow
           - SV-COMP25_termination
-        portfolio: [CEGAR, BOUNDED, HORN]
+        portfolio: [COMPLEX, EMERGENT, HORN]
         include:
           - tool: Theta_SV-COMP
-            portfolio: CEGAR
+            portfolio: COMPLEX
           - tool: EmergenTheta_SV-COMP
-            portfolio: BOUNDED
+            portfolio: EMERGENT
           - tool: Thorn_SV-COMP
             portfolio: HORN
     runs-on: ubuntu-24.04
@@ -100,14 +100,20 @@ jobs:
     needs: [build, create-spec-transformation]
     strategy:
       matrix:
-        tool: [Theta, EmergenTheta, Thorn]
+        tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
         include:
           - tool: Theta
+            script: theta-start.sh
             portfolio: STABLE
           - tool: EmergenTheta
+            script: theta-start.sh
             portfolio: EMERGENT
           - tool: Thorn
+            script: theta-start.sh
             portfolio: HORN
+          - tool: ThetaCHC
+            script: chc
+            portfolio: CHC-COMP
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -115,6 +121,7 @@ jobs:
         uses: ./.github/actions/build-archive
         with:
           name: ${{matrix.tool}}
+          script: ${{matrix.script}}
           inputflag: "--portfolio ${{matrix.portfolio}}"
 
 
@@ -175,6 +182,32 @@ jobs:
         uses: ./.github/actions/create-release
         with:
           message: ${{ inputs.message }}
+
+  deploy-zenodo:
+    needs: [create-archives]
+    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
+        include:
+          - tool: Theta
+            record: 14194483
+          - tool: EmergenTheta
+            record: 15536866
+          - tool: Thorn
+            record: 14194485
+          - tool: ThetaCHC
+            record: 15537027
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Create zenodo release and deploy tools
+        uses: ./.github/actions/zenodo-release
+        with:
+          tool: ${{matrix.tool}}
+          prevrecord: ${{matrix.record}}
+          token: ${{secrets.zenodo_token}}
 
   deploy-maven:
     # needs: test-linux

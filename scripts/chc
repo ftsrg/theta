@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+scriptdir=$(dirname "$(realpath "$0")")
+IN=$1
+
+export VERIFIER_NAME=TOOL_NAME
+export VERIFIER_VERSION=TOOL_VERSION
+
+if [ "$1" == "--version" ]; then
+    LD_LIBRARY_PATH=$scriptdir/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar --version || echo $VERIFIER_VERSION
+    exit
+fi
+
+JAVA_VERSION=17
+JAVA_FALLBACK_PATH="/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64/bin/:/usr/lib/jvm/java-$JAVA_VERSION-openjdk/bin/:/usr/lib/jvm/java-$JAVA_VERSION/bin/"
+grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || export PATH="$JAVA_FALLBACK_PATH":$PATH
+grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || {
+    echo "Could not set up openjdk-$JAVA_VERSION. Is the JRE/JDK installed?"
+    exit 1
+}
+
+args="--backend PORTFOLIO --portfolio CHC-COMP --loglevel RESULT --input-type CHC --parse-in-process ${@:2}"
+
+echo "; LD_LIBRARY_PATH=\"$scriptdir\"/lib java -Xss120m -Xmx14210m -jar \"$scriptdir\"/theta.jar $args --input \"$IN\" --smt-home \"$scriptdir\"/solvers"
+LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers 2>&1 | tee "$(basename "$1")".log >/dev/null
+if [[ -f "chc-answer.smt2" ]]; then
+  cat "chc-answer.smt2"
+else
+  grep -q "(SafetyResult Unsafe" "$(basename "$1")".log -l && echo "unsat"
+  grep -q "(SafetyResult Safe" "$(basename "$1")".log -l && echo "sat"
+fi
+
+echo "; ======================== EXECUTION LOGS ========================"
+while read -r line; do
+  echo "; $line"
+done < "$(basename "$1")".log

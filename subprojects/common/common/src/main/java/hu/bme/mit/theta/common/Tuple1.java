@@ -36,6 +36,10 @@ public final class Tuple1<T1> extends Tuple {
         return result;
     }
 
+    public T1 component1() {
+        return get1();
+    }
+
     public <R> R unpackTo(final Function<? super T1, R> function) {
         checkNotNull(function);
         return function.apply(get1());

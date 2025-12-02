@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
@@ -38,10 +37,6 @@ class BoundedTest {
 
     private var unsafeMonolithicExpr: MonolithicExpr? = null
     private var safeMonolithicExpr: MonolithicExpr? = null
-    private val valToState = { valuation: Valuation -> ExprStateStub(valuation.toExpr()) }
-    private val biValToAction = { valuation: Valuation?, valuation2: Valuation? ->
-      ExprActionStub(emptyList())
-    }
 
     init {
       val x = Decls.Var("x", Int())
@@ -69,14 +64,12 @@ class BoundedTest {
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
     val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
-    val checker: BoundedChecker<*, *> =
+    val checker: BoundedChecker =
       BoundedChecker(
         monolithicExpr = unsafeMonolithicExpr!!,
         bmcSolver = solver,
         itpSolver = itpSolver,
         indSolver = indSolver,
-        valToState = valToState,
-        biValToAction = biValToAction,
         logger = ConsoleLogger(Logger.Level.VERBOSE),
       )
     val safetyResult: SafetyResult<*, *> = checker.check()
@@ -88,14 +81,12 @@ class BoundedTest {
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
     val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
-    val checker: BoundedChecker<*, *> =
+    val checker: BoundedChecker =
       BoundedChecker(
         monolithicExpr = safeMonolithicExpr!!,
         bmcSolver = solver,
         itpSolver = itpSolver,
         indSolver = indSolver,
-        valToState = valToState,
-        biValToAction = biValToAction,
         logger = ConsoleLogger(Logger.Level.VERBOSE),
       )
     val safetyResult: SafetyResult<*, *> = checker.check()

@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -48,41 +50,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
@@ -152,9 +120,12 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
@@ -250,6 +221,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(BvAddExpr.class, this::transformBvAdd)
                 .addCase(BvSubExpr.class, this::transformBvSub)
                 .addCase(BvPosExpr.class, this::transformBvPos)
+                .addCase(BvToIntExpr.class, this::transformBvToInt)
                 .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
                 .addCase(BvNegExpr.class, this::transformBvNeg)
                 .addCase(BvMulExpr.class, this::transformBvMul)
@@ -419,29 +391,44 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformExists(final ExistsExpr expr) {
         env.push();
-        final String[] paramTerms = transformParamDecls(expr.getParamDecls());
-        final String opTerm = toTerm(expr.getOp());
+        final var newParams = escapeParams(expr.getParamDecls());
+        final String[] paramTerms = transformParamDecls(newParams.values().stream().toList());
+        final String opTerm = toTerm(ExprUtils.changeDecls(expr.getOp(), newParams));
         final String result =
                 String.format("(exists (%s) %s)", String.join(" ", paramTerms), opTerm);
         env.pop();
         return result;
     }
 
+    @NotNull private static Map<? extends ParamDecl<?>, ? extends ParamDecl<?>> escapeParams(
+            Collection<ParamDecl<?>> paramDecls) {
+        return paramDecls.stream()
+                .map(
+                        paramDecl ->
+                                Map.entry(
+                                        paramDecl,
+                                        Param(
+                                                encodeSymbol(paramDecl.getName()),
+                                                paramDecl.getType())))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     protected String transformForall(final ForallExpr expr) {
         env.push();
-        final String[] paramTerms = transformParamDecls(expr.getParamDecls());
-        final String opTerm = toTerm(expr.getOp());
+        final var newParams = escapeParams(expr.getParamDecls());
+        final String[] paramTerms = transformParamDecls(newParams.values().stream().toList());
+        final String opTerm = toTerm(ExprUtils.changeDecls(expr.getOp(), newParams));
         final String result =
                 String.format("(forall (%s) %s)", String.join(" ", paramTerms), opTerm);
         env.pop();
         return result;
     }
 
-    private String[] transformParamDecls(final List<ParamDecl<?>> paramDecls) {
+    private String[] transformParamDecls(final List<? extends ParamDecl<?>> paramDecls) {
         final String[] paramTerms = new String[paramDecls.size()];
         int i = 0;
         for (final ParamDecl<?> paramDecl : paramDecls) {
-            final String paramSymbol = transformParamDecl(paramDecl);
+            String paramSymbol = transformParamDecl(paramDecl);
             paramTerms[i] = paramSymbol;
             env.define(DeclSymbol.of(paramDecl), paramDecl.getName());
             i++;
@@ -715,6 +702,14 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformBvPos(final BvPosExpr expr) {
         return toTerm(expr.getOp());
+    }
+
+    protected String transformBvToInt(final BvToIntExpr expr) {
+        if (expr.isSigned()) {
+            return String.format("(sbv_to_int %s)", toTerm(expr.getOp()));
+        } else {
+            return String.format("(ubv_to_int %s)", toTerm(expr.getOp()));
+        }
     }
 
     protected String transformBvSignChange(final BvSignChangeExpr expr) {

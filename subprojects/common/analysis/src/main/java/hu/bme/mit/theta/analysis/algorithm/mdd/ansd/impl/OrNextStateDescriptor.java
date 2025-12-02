@@ -180,6 +180,7 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+        // TODO flatmap to handle hierarchical splitting
         return Optional.of(operands);
     }
 

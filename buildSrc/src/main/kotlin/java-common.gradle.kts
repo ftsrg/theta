@@ -13,6 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     java
     id("jacoco-common")
@@ -23,12 +28,11 @@ plugins {
 dependencies {
     val implementation: Configuration by configurations
     val testImplementation: Configuration by configurations
-    val libPath: String by rootProject.extra
 
     implementation(Deps.Kotlin.stdlib)
     implementation(Deps.guava)
     implementation(Deps.gson)
-    implementation(fileTree(mapOf("dir" to libPath, "include" to listOf("*.jar"))))
+    implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
     implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
     testImplementation(Deps.junit4)
     testImplementation(Deps.junit4engine)
@@ -51,11 +55,37 @@ tasks {
     withType<Test>() {
         environment["PATH"] = execPath
         environment["LD_LIBRARY_PATH"] = libPath
+        environment["DYLD_LIBRARY_PATH"] = libPath
+        systemProperty("java.library.path", libPath)
         enableAssertions = true
     }
 
-    named("jacocoTestReport") {
+    named<JacocoReport>("jacocoTestReport") {
         dependsOn(named("test"))
+        
+        // Include source and class directories from all subprojects to capture cross-project coverage
+        // Exclude generated sources (build/generated-src) and generated packages with .dsl.gen suffix
+        rootProject.subprojects.forEach { subproject ->
+            subproject.plugins.withType<JavaPlugin> {
+                val sourceSets = subproject.extensions.getByType<SourceSetContainer>()
+                additionalSourceDirs.from(sourceSets.getByName("main").allSource.srcDirs.filter {
+                    !it.path.contains("build/generated-src")
+                })
+                additionalClassDirs.from(files(sourceSets.getByName("main").output).asFileTree.matching {
+                    exclude("**/dsl/gen/**")
+                })
+            }
+        }
+        
+        // Also exclude from the main source and class directories
+        sourceDirectories.setFrom(files(sourceDirectories.files.filter {
+            !it.path.contains("build/generated-src")
+        }))
+        classDirectories.setFrom(files(classDirectories.files.map {
+            fileTree(it) {
+                exclude("**/dsl/gen/**")
+            }
+        }))
     }
 
     withType<Test> {

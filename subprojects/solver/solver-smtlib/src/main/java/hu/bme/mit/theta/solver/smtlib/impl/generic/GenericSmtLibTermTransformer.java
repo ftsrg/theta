@@ -44,6 +44,7 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Spec_constantContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SymbolContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.TermContext;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
@@ -68,6 +69,7 @@ import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -272,6 +274,15 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("hyper-res", expectedFunc("hyper-res"));
                         put("asserted", expectedFunc("asserted"));
                         put("mp", expectedFunc("mp"));
+
+                        put(
+                                "deref",
+                                exprTernaryOperator(
+                                        (expr, expr2, expr3) ->
+                                                Dereference.of(
+                                                        (Expr<Type>) expr,
+                                                        (Expr<Type>) expr2,
+                                                        (Type) expr3)));
                     }
                 };
     }
@@ -347,7 +358,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         final var funcDef = parser.function_def();
         final List<ParamDecl<? extends Type>> paramDecls =
                 funcDef.sorted_var().stream()
-                        .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
+                        .map(sv -> Param(getSymbol(sv.symbol()), transformSort(sv.sort())))
                         .collect(toList());
 
         final var vars = new StackImpl<ParamDecl<?>>();
@@ -424,7 +435,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
         final List<ParamDecl<? extends Type>> paramDecls =
                 ctx.sorted_var().stream()
-                        .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
+                        .map(
+                                sv ->
+                                        Param(
+                                                encodeSymbol(getSymbol(sv.symbol())),
+                                                transformSort(sv.sort())))
                         .collect(toList());
 
         pushParams(paramDecls, vars);
@@ -501,7 +516,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var funName = ctx.qual_identifier().identifier().symbol().getText();
+        final var funName = getSymbol(ctx.qual_identifier().identifier().symbol());
 
         final var funParams = ctx.qual_identifier().identifier().index();
         final var funAppParams = ctx.term();
@@ -568,7 +583,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         final var paramDefs = new ArrayList<Expr<? extends Type>>();
         for (final var bnd : ctx.var_binding()) {
             final var def = transformTerm(bnd.term(), model, vars);
-            final var decl = Param(bnd.symbol().getText(), def.getType());
+            final var decl = Param(getSymbol(bnd.symbol()), def.getType());
 
             paramDecls.add(decl);
             paramDefs.add(def);
@@ -593,7 +608,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
         final List<ParamDecl<? extends Type>> paramDecls =
                 ctx.sorted_var().stream()
-                        .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
+                        .map(sv -> Param(getSymbol(sv.symbol()), transformSort(sv.sort())))
                         .collect(toList());
 
         pushParams(paramDecls, vars);
@@ -611,7 +626,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
         final List<ParamDecl<? extends Type>> paramDecls =
                 ctx.sorted_var().stream()
-                        .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
+                        .map(sv -> Param(getSymbol(sv.symbol()), transformSort(sv.sort())))
                         .collect(toList());
 
         pushParams(paramDecls, vars);
@@ -627,27 +642,27 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        if (ctx.symbol().getText().equals("as-array")) {
+        if (getSymbol(ctx.symbol()).equals("as-array")) {
             final var name = ctx.index().get(0).getText();
             final var funcLit = (FuncLitExpr<?, ?>) toFuncLitExpr(model.getTerm(name), model);
             return funcLit.getResult();
-        } else if (ctx.symbol().getText().startsWith("bv")) {
-            final var value = ctx.symbol().getText().substring(2);
+        } else if (getSymbol(ctx.symbol()).startsWith("bv")) {
+            final var value = getSymbol(ctx.symbol()).substring(2);
             final var bvSize = Integer.parseInt(ctx.index().get(0).getText());
             return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(value), bvSize);
-        } else if (ctx.symbol().getText().equals("+oo")) {
+        } else if (getSymbol(ctx.symbol()).equals("+oo")) {
             final var eb = Integer.parseInt(ctx.index().get(0).getText());
             final var sb = Integer.parseInt(ctx.index().get(1).getText());
             return FpExprs.PositiveInfinity(FpExprs.FpType(eb, sb));
-        } else if (ctx.symbol().getText().equals("-oo")) {
+        } else if (getSymbol(ctx.symbol()).equals("-oo")) {
             final var eb = Integer.parseInt(ctx.index().get(0).getText());
             final var sb = Integer.parseInt(ctx.index().get(1).getText());
             return FpExprs.NegativeInfinity(FpExprs.FpType(eb, sb));
-        } else if (ctx.symbol().getText().equals("+zero")) {
+        } else if (getSymbol(ctx.symbol()).equals("+zero")) {
             final var eb = Integer.parseInt(ctx.index().get(0).getText());
             final var sb = Integer.parseInt(ctx.index().get(1).getText());
             return FpExprs.PositiveZero(FpExprs.FpType(eb, sb));
-        } else if (ctx.symbol().getText().equals("-zero")) {
+        } else if (getSymbol(ctx.symbol()).equals("-zero")) {
             final var eb = Integer.parseInt(ctx.index().get(0).getText());
             final var sb = Integer.parseInt(ctx.index().get(1).getText());
             return FpExprs.NegativeZero(FpExprs.FpType(eb, sb));
@@ -661,7 +676,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var value = ctx.getText();
+        final var value = encodeSymbol(getSymbol(ctx));
         switch (value) {
             case "true":
                 return BoolExprs.True();
@@ -728,7 +743,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Type transformSort(final SortContext ctx) {
-        final var name = ctx.identifier().symbol().getText();
+        final var name = getSymbol(ctx.identifier().symbol());
         switch (name) {
             case "Bool":
                 return Bool();
@@ -772,7 +787,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     private OperatorCreatorFunction expectedFunc(String funcName) {
         return (params, ops, model, vars) -> {
             var opCnt = ops.size();
-            var name = funcName + opCnt;
+            var name = encodeSymbol(funcName + opCnt);
             if (!symbolTable.definesSymbol(name)) {
                 Type type = Bool();
                 var prefix = "(declare-fun " + name + " (";
@@ -995,6 +1010,16 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             default:
                 throw new SmtLibSolverException("");
         }
+    }
+
+    static String getSymbol(SymbolContext symbol) {
+        final var str = symbol.getText();
+        if (symbol.quotedSymbol() != null) {
+            assert str.charAt(0) == '|' && str.charAt(str.length() - 1) == '|'
+                    : "Quoted symbol not quoted.";
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 
     private interface OperatorCreatorFunction

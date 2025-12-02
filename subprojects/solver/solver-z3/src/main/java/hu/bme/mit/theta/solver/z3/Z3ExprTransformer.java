@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 import com.google.common.cache.Cache;
@@ -34,6 +36,7 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.*;
@@ -141,6 +144,7 @@ final class Z3ExprTransformer {
                         .addCase(BvAddExpr.class, this::transformBvAdd)
                         .addCase(BvSubExpr.class, this::transformBvSub)
                         .addCase(BvPosExpr.class, this::transformBvPos)
+                        .addCase(BvToIntExpr.class, this::transformBvToInt)
                         .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
                         .addCase(BvNegExpr.class, this::transformBvNeg)
                         .addCase(BvMulExpr.class, this::transformBvMul)
@@ -209,6 +213,10 @@ final class Z3ExprTransformer {
                         .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
                         .addCase(ArrayLitExpr.class, this::transformArrayLit)
                         .addCase(ArrayInitExpr.class, this::transformArrayInit)
+
+                        // Dereference
+
+                        .addCase(Dereference.class, this::transformDereference)
 
                         // Enums
 
@@ -620,6 +628,10 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformBvPos(final BvPosExpr expr) {
         return toTerm(expr.getOp());
+    }
+
+    private com.microsoft.z3.Expr transformBvToInt(final BvToIntExpr expr) {
+        return context.mkBV2Int(toTerm(expr.getOp()), expr.isSigned());
     }
 
     private com.microsoft.z3.Expr transformBvSignChange(final BvSignChangeExpr expr) {
@@ -1065,6 +1077,24 @@ final class Z3ExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
+    }
+
+    private com.microsoft.z3.Expr transformDereference(final Dereference<?, ?, ?> expr) {
+        checkState(
+                expr.getUniquenessIdx().isPresent(),
+                "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        final var sort = transformer.toSort(expr.getArray().getType());
+        final var constSort = transformer.toSort(Int());
+        final var func =
+                context.mkFuncDecl(
+                        "deref",
+                        new Sort[] {sort, sort, constSort},
+                        transformer.toSort(expr.getType()));
+        return context.mkApp(
+                func,
+                toTerm(expr.getArray()),
+                toTerm(expr.getOffset()),
+                toTerm(expr.getUniquenessIdx().get()));
     }
 
     private com.microsoft.z3.Expr transformEnumLit(final EnumLitExpr expr) {

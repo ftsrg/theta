@@ -22,6 +22,8 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec
+import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
@@ -64,7 +66,7 @@ val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType
       is SequenceStmt -> stmts.flatMap { it.dereferencesWithAccessTypes }
       is HavocStmt<*> -> listOf()
       is SkipStmt -> listOf()
-      is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
+      is NonDetStmt -> listOf()
       is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
       is IfStmt -> error("IfStmt do not have a clearly defined sequence")
       else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")
@@ -116,7 +118,7 @@ fun Stmt.uniqueDereferences(
       is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen, lookup) })
       is HavocStmt<*> -> this
       is SkipStmt -> this
-      is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
+      is NonDetStmt -> this
       is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
       is IfStmt -> error("IfStmt do not have a clearly defined sequence")
       else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")
@@ -208,6 +210,9 @@ fun <S : ExprState> S.patch(writeTriples: WriteTriples): S =
   when (this) {
     is PredState -> PredState.of(preds.map { it.patch(writeTriples) }) as S
     is ExplState -> this
+    is Prod2State<*, *> ->
+      this.with1((this.state1 as ExprState).patch(writeTriples))
+        .with2((this.state2 as ExprState).patch(writeTriples)) as S
     is PtrState<*> ->
       (this as PtrState<ExprState>).copy(innerState = innerState.patch(writeTriples)) as S
     else -> error("State $this is not supported")
@@ -217,6 +222,8 @@ fun <P : Prec> P.patch(writeTriples: WriteTriples): P =
   when (this) {
     is PredPrec -> PredPrec.of(preds.map { it.patch(writeTriples) }) as P
     is ExplPrec -> this
+    is Prod2Prec<*, *> ->
+      Prod2Prec.of(this.prec1.patch(writeTriples), this.prec2.patch(writeTriples)) as P
     else -> error("Prec $this is not supported")
   }
 
@@ -231,6 +238,7 @@ fun <P : Prec> P.repatch(): P =
   when (this) {
     is PredPrec -> PredPrec.of(preds.map { it.repatch() }) as P
     is ExplPrec -> this
+    is Prod2Prec<*, *> -> Prod2Prec.of(this.prec1.repatch(), this.prec2.repatch()) as P
     else -> error("Prec $this is not supported")
   }
 
@@ -238,6 +246,14 @@ fun <S : ExprState> S.repatch(): S =
   when (this) {
     is PredState -> PredState.of(preds.map(Expr<BoolType>::repatch)) as S
     is ExplState -> this
+    is Prod2State<*, *> ->
+      if (this.isBottom1) {
+        this.with1((this.state1 as ExprState).repatch()) as S
+      } else if (this.isBottom2) {
+        this.with2((this.state2 as ExprState).repatch()) as S
+      } else
+        this.with1((this.state1 as ExprState).repatch()).with2((this.state2 as ExprState).repatch())
+          as S
     else -> error("State $this is not supported")
   }
 

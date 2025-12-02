@@ -25,11 +25,11 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import java.util.List;
 
-final class PrimeCounter {
+public final class PrimeCounter {
 
     private PrimeCounter() {}
 
-    static VarIndexing countPrimes(final Expr<?> expr) {
+    public static VarIndexing countPrimes(final Expr<?> expr) {
         return collectPrimes(expr, 0).build();
     }
 

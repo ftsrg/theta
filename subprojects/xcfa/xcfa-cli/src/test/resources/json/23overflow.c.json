@@ -52,6 +52,7 @@
               "colNumberStop": 0,
               "offsetStart": 56,
               "offsetEnd": 151,
+              "astNodes": [],
               "sourceText": "int main() {\n    int i \u003d __VERIFIER_nondet_int();\n    i \u003d i * 2;\n    if(i \u003d\u003d 1) reach_error();\n}"
             }
           }
@@ -70,6 +71,7 @@
               "colNumberStop": 0,
               "offsetStart": 56,
               "offsetEnd": 151,
+              "astNodes": [],
               "sourceText": "int main() {\n    int i \u003d __VERIFIER_nondet_int();\n    i \u003d i * 2;\n    if(i \u003d\u003d 1) reach_error();\n}"
             }
           }
@@ -82,6 +84,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -119,6 +122,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 125,
                     "offsetEnd": 149,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 1) reach_error();"
                   }
                 },
@@ -135,6 +139,7 @@
               "colNumberStop": 28,
               "offsetStart": 56,
               "offsetEnd": 151,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 1) reach_error();if(i \u003d\u003d 1) reach_error();int main() {\n    int i \u003d __VERIFIER_nondet_int();\n    i \u003d i * 2;\n    if(i \u003d\u003d 1) reach_error();\n}"
             }
           }
@@ -160,6 +165,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 125,
                     "offsetEnd": 149,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 1) reach_error();"
                   }
                 },
@@ -176,6 +182,7 @@
               "colNumberStop": 28,
               "offsetStart": 125,
               "offsetEnd": 149,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 1) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -201,6 +208,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 73,
                     "offsetEnd": 104,
+                    "astNodes": [],
                     "sourceText": "int i \u003d __VERIFIER_nondet_int();"
                   }
                 },
@@ -217,6 +225,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 73,
                     "offsetEnd": 104,
+                    "astNodes": [],
                     "sourceText": "int i \u003d __VERIFIER_nondet_int();"
                   }
                 },
@@ -227,6 +236,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -243,6 +253,7 @@
               "colNumberStop": 35,
               "offsetStart": 0,
               "offsetEnd": 151,
+              "astNodes": [],
               "sourceText": "int main() {\n    int i \u003d __VERIFIER_nondet_int();\n    i \u003d i * 2;\n    if(i \u003d\u003d 1) reach_error();\n}int i \u003d __VERIFIER_nondet_int();\n    i \u003d i * 2;\n    if(i \u003d\u003d 1) reach_error();int i \u003d __VERIFIER_nondet_int();int i \u003d __VERIFIER_nondet_int();int i \u003d __VERIFIER_nondet_int();int i \u003d __VERIFIER_nondet_int();int i \u003d __VERIFIER_nondet_int();int i \u003d __VERIFIER_nondet_int();i \u003d i * 2;i \u003d i * 2;i \u003d i * 2;if(i \u003d\u003d 1) reach_error();if(i \u003d\u003d 1) reach_error();if(i \u003d\u003d 1) reach_error();"
             }
           }

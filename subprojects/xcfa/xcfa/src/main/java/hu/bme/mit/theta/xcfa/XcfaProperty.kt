@@ -1,0 +1,73 @@
+/*
+ *  Copyright 2025 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa
+
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
+
+data class WitnessInfo(val witness: YamlWitness, val witnessPass: (ParseContext) -> ProcedurePass)
+
+/**
+ * Represents the property to be verified on an XCFA model.
+ *
+ * The `inputProperty` is the original property specified by the user. The `verifiedProperty` is the
+ * (potentially transformed) property being verified on the model.
+ *
+ * Verifying the `verifiedProperty` on the model should yield equivalent results to verifying the
+ * `inputProperty` on the original input task.
+ *
+ * Witness (information) is added in case Theta is used as a validator.
+ */
+class XcfaProperty(val inputProperty: ErrorDetection, val witness: WitnessInfo? = null) {
+  var verifiedProperty: ErrorDetection = inputProperty
+    private set
+
+  fun transformSpecification(newProperty: ErrorDetection) {
+    verifiedProperty = newProperty
+  }
+
+  fun copy(): XcfaProperty =
+    XcfaProperty(inputProperty, witness).also { it.verifiedProperty = this.verifiedProperty }
+}
+
+// Unit: Safe
+enum class ErrorDetection(val ltl: (Any) -> String) {
+  ERROR_LOCATION({ _: Any -> "CHECK( init(main()), LTL(G ! call(reach_error())) )" }),
+  DATA_RACE({ _: Any -> "CHECK( init(main()), LTL(G ! data-race) )" }),
+  OVERFLOW({ _: Any -> "CHECK( init(main()), LTL(G ! overflow) )" }),
+  MEMSAFETY({ param: Any ->
+    when (param) {
+      MemSafetyType.VALID_FREE -> "CHECK( init(main()), LTL(G valid-free) )"
+      MemSafetyType.VALID_DEREF -> "CHECK( init(main()), LTL(G valid-deref) )"
+      MemSafetyType.VALID_MEMTRACK -> "CHECK( init(main()), LTL(G valid-memtrack) )"
+      Unit ->
+        "CHECK( init(main()), LTL(G valid-free) )\nCHECK( init(main()), LTL(G valid-deref) )\nCHECK( init(main()), LTL(G valid-memtrack) )"
+      else -> throw IllegalArgumentException("Invalid parameter type")
+    }
+  }),
+  MEMCLEANUP({ _: Any -> "CHECK( init(main()), LTL(G valid-memcleanup) )" }),
+  NO_ERROR({ _: Any -> "NONE" }),
+  TERMINATION({ _: Any -> "CHECK( init(main()), LTL(F end) )" });
+
+  companion object {
+    enum class MemSafetyType {
+      VALID_FREE,
+      VALID_DEREF,
+      VALID_MEMTRACK,
+    }
+  }
+}

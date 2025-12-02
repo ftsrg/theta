@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -46,10 +47,7 @@ import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import org.kframework.mpfr.BigFloat;
 
 public final class ExprSimplifier {
@@ -147,6 +145,7 @@ public final class ExprSimplifier {
                     .addCase(BvAddExpr.class, this::simplifyBvAdd)
                     .addCase(BvSubExpr.class, this::simplifyBvSub)
                     .addCase(BvPosExpr.class, this::simplifyBvPos)
+                    .addCase(BvToIntExpr.class, this::simplifyBvToInt)
                     .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
                     .addCase(BvNegExpr.class, this::simplifyBvNeg)
                     .addCase(BvMulExpr.class, this::simplifyBvMul)
@@ -418,7 +417,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyAnd(final AndExpr expr, final Valuation val) {
-        final List<Expr<BoolType>> ops = new ArrayList<>();
+        final Set<Expr<BoolType>> ops = Containers.createSet();
 
         if (expr.getOps().isEmpty()) {
             return True();
@@ -448,7 +447,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
-        final List<Expr<BoolType>> ops = new ArrayList<>();
+        final Set<Expr<BoolType>> ops = Containers.createSet();
 
         if (expr.getOps().isEmpty()) {
             return True();
@@ -915,6 +914,17 @@ public final class ExprSimplifier {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
 
+        // special case for C: (= (ite expr 1 0) 0) ==> not(expr)
+        if (rightOp instanceof IntLitExpr litExpr
+                && litExpr.getValue().intValue() == 0
+                && leftOp instanceof IteExpr<IntType> ite
+                && ite.getThen() instanceof IntLitExpr then
+                && then.getValue().intValue() == 1
+                && ite.getElse() instanceof IntLitExpr elze
+                && elze.getValue().intValue() == 0) {
+            return Not(ite.getCond());
+        }
+
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             return Bool(leftOp.equals(rightOp));
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
@@ -929,6 +939,17 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyIntNeq(final IntNeqExpr expr, final Valuation val) {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        // special case for C: (\= (ite expr 1 0) 0) ==> expr
+        if (rightOp instanceof IntLitExpr litExpr
+                && litExpr.getValue().intValue() == 0
+                && leftOp instanceof IteExpr<IntType> ite
+                && ite.getThen() instanceof IntLitExpr then
+                && then.getValue().intValue() == 1
+                && ite.getElse() instanceof IntLitExpr elze
+                && elze.getValue().intValue() == 0) {
+            return ite.getCond();
+        }
 
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             return Bool(!leftOp.equals(rightOp));
@@ -1099,7 +1120,7 @@ public final class ExprSimplifier {
         if (bitvec instanceof BvLitExpr) {
             return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
         } else {
-            return expr;
+            return BvExtractExpr.of(bitvec, expr.getFrom(), expr.getUntil());
         }
     }
 
@@ -1109,7 +1130,7 @@ public final class ExprSimplifier {
         if (bitvec instanceof BvLitExpr) {
             return ((BvLitExpr) bitvec).zext(expr.getExtendType());
         } else {
-            return expr;
+            return BvZExtExpr.of(bitvec, expr.getExtendType());
         }
     }
 
@@ -1119,7 +1140,7 @@ public final class ExprSimplifier {
         if (bitvec instanceof BvLitExpr) {
             return ((BvLitExpr) bitvec).sext(expr.getExtendType());
         } else {
-            return expr;
+            return BvSExtExpr.of(bitvec, expr.getExtendType());
         }
     }
 
@@ -1180,6 +1201,18 @@ public final class ExprSimplifier {
 
     private Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
         return simplify(expr.getOp(), val);
+    }
+
+    private Expr<IntType> simplifyBvToInt(final BvToIntExpr expr, final Valuation val) {
+        final var op = simplify(expr.getOp(), val);
+        if (op instanceof BvLitExpr opVal) {
+            if (expr.isSigned()) {
+                return IntLitExpr.of(BvUtils.signedBvLitExprToBigInteger(opVal));
+            } else {
+                return IntLitExpr.of(BvUtils.neutralBvLitExprToBigInteger(opVal));
+            }
+        }
+        return expr.with(op);
     }
 
     private Expr<BvType> simplifyBvSignChange(final BvSignChangeExpr expr, final Valuation val) {
@@ -1544,6 +1577,17 @@ public final class ExprSimplifier {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
+        // special case for C: (= (ite expr 1 0) 0) ==> not(expr)
+        if (rightOp instanceof BvLitExpr litExpr
+                && BvUtils.neutralBvLitExprToBigInteger(litExpr).equals(BigInteger.ZERO)
+                && leftOp instanceof IteExpr<BvType> ite
+                && ite.getThen() instanceof BvLitExpr then
+                && BvUtils.neutralBvLitExprToBigInteger(then).equals(BigInteger.ONE)
+                && ite.getElse() instanceof BvLitExpr elze
+                && BvUtils.neutralBvLitExprToBigInteger(elze).equals(BigInteger.ZERO)) {
+            return Not(ite.getCond());
+        }
+
         if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
             return Bool(leftOp.equals(rightOp));
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
@@ -1558,6 +1602,17 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyBvNeq(final BvNeqExpr expr, final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        // special case for C: (\= (ite expr 1 0) 0) ==> expr
+        if (rightOp instanceof BvLitExpr litExpr
+                && BvUtils.neutralBvLitExprToBigInteger(litExpr).equals(BigInteger.ZERO)
+                && leftOp instanceof IteExpr<BvType> ite
+                && ite.getThen() instanceof BvLitExpr then
+                && BvUtils.neutralBvLitExprToBigInteger(then).equals(BigInteger.ONE)
+                && ite.getElse() instanceof BvLitExpr elze
+                && BvUtils.neutralBvLitExprToBigInteger(elze).equals(BigInteger.ZERO)) {
+            return ite.getCond();
+        }
 
         if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
             return Bool(!leftOp.equals(rightOp));

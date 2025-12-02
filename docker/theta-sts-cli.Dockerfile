@@ -1,16 +1,12 @@
-FROM openjdk:17.0.2-slim
+FROM eclipse-temurin:21-jre
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libgomp1 libmpfr-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir theta
-COPY . theta
-WORKDIR /theta
-RUN ./gradlew clean && \
-    ./gradlew theta-sts-cli:build && \
-    mv subprojects/sts/sts-cli/build/libs/theta-sts-cli-*-all.jar /theta-sts-cli.jar
-WORKDIR /
+ADD lib/ lib/
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/"
 
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
+ADD subprojects/sts/sts-cli/build/libs/theta-sts-cli-*-all.jar /theta-sts-cli.jar
+
 ENTRYPOINT ["java", "-jar", "theta-sts-cli.jar"]

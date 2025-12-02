@@ -148,8 +148,8 @@ public class ExprSimplifierTest {
     public void testAnd() {
         assertEquals(x, simplify(And(True(), x, True())));
         assertEquals(False(), simplify(And(True(), x, False())));
-        assertEquals(And(x, y, z), simplify(And(x, And(y, z))));
-        assertEquals(And(x, z), simplify(And(x, And(True(), z))));
+        assertEquals(x, simplify(And(x, And(x, x))));
+        assertEquals(x, simplify(And(x, And(True(), x))));
         assertEquals(False(), simplify(And(x, And(False(), z))));
         assertEquals(True(), simplify(And(True(), True())));
     }
@@ -158,9 +158,9 @@ public class ExprSimplifierTest {
     public void testOr() {
         assertEquals(x, simplify(Or(False(), x, False())));
         assertEquals(True(), simplify(Or(False(), x, True())));
-        assertEquals(Or(x, y, z), simplify(Or(x, Or(y, z))));
+        assertEquals(x, simplify(Or(x, Or(x, x))));
         assertEquals(True(), simplify(Or(x, Or(True(), z))));
-        assertEquals(Or(x, z), simplify(Or(x, Or(False(), z))));
+        assertEquals(x, simplify(Or(x, Or(False(), x))));
     }
 
     // Rational

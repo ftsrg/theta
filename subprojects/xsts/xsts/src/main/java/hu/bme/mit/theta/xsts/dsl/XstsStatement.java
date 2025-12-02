@@ -136,7 +136,7 @@ public class XstsStatement {
                             "Type of " + var + " is incompatilbe with " + expr);
                 }
             } catch (Exception e) {
-                throw new ParseException(ctx, e.getMessage());
+                throw new ParseException(ctx, e.getMessage(), e);
             }
         }
 

@@ -35,14 +35,18 @@ fun getOcChecker(
   val ocConfig = config.backendConfig.specConfig as OcConfig
   val ocChecker =
     XcfaOcChecker(
-      xcfa,
-      ocConfig.decisionProcedure,
-      logger,
-      ocConfig.inputConflictClauseFile,
-      ocConfig.outputConflictClauses,
-      ocConfig.nonPermissiveValidation,
-      ocConfig.autoConflict,
-      config.outputConfig.acceptUnreliableSafe,
+      xcfa = xcfa,
+      property = config.inputConfig.property.verifiedProperty,
+      decisionProcedure = ocConfig.decisionProcedure,
+      smtSolver = ocConfig.smtSolver,
+      logger = logger,
+      conflictInput = ocConfig.inputConflictClauseFile,
+      outputConflictClauses = ocConfig.outputConflictClauses,
+      nonPermissiveValidation = ocConfig.nonPermissiveValidation,
+      autoConflictConfig = ocConfig.autoConflict,
+      autoConflictBound = ocConfig.autoConflictBound,
+      memoryModel = ocConfig.memoryConsistencyModel,
+      acceptUnreliableSafe = config.outputConfig.acceptUnreliableSafe,
     )
   return SafetyChecker { ocChecker.check() }
 }

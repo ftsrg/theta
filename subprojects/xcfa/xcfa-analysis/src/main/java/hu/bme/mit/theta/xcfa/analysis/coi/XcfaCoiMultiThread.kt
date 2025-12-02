@@ -17,14 +17,14 @@ package hu.bme.mit.theta.xcfa.analysis.coi
 
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
-import hu.bme.mit.theta.xcfa.pointsTo
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isWritten
+import hu.bme.mit.theta.xcfa.utils.pointsTo
 
 class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 

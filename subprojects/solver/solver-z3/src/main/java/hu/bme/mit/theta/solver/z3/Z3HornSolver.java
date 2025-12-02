@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import com.google.common.collect.Lists;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Z3Exception;
@@ -64,7 +65,8 @@ final class Z3HornSolver extends Z3Solver implements HornSolver {
                 paramValues.stream().map(expr1 -> (Type) expr1.getType()).toList();
 
         final var funcType =
-                paramTypes.stream().reduce(Bool(), (res, param) -> FuncType.of(param, res));
+                Lists.reverse(paramTypes).stream()
+                        .reduce(Bool(), (res, param) -> FuncType.of(param, res));
         final var decl = Const(name, funcType);
         Expr<?> func = decl.getRef();
         for (Expr<?> paramValue : paramValues) {

@@ -23,7 +23,6 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 
 abstract class Btor2Stateful(id: UInt, sort: Btor2Sort, state: Btor2State?, value: Btor2Node?) :

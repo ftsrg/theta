@@ -52,7 +52,6 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
-import kotlin.Unit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,7 +111,7 @@ public class ASGAbstractorCheckingTest {
         final Predicate<XstsState<ExplState>> statePredicate =
                 new XstsStatePredicate<>(new ExplStatePredicate(xsts.getProp(), abstractionSolver));
         final AcceptancePredicate<XstsState<ExplState>, XstsAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<>(statePredicate::test);
         final ExplPrec precision = new XstsAllVarsInitPrec().createExpl(xsts);
         var abstractor =
                 new ASGAbstractor<>(
@@ -140,7 +139,7 @@ public class ASGAbstractorCheckingTest {
         Predicate<CfaState<ExplState>> statePredicate =
                 cfaState -> cfaState.getLoc().getName().equals(acceptingLocationName);
         AcceptancePredicate<CfaState<ExplState>, CfaAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<>(statePredicate::test);
         ASGAbstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor =
                 new ASGAbstractor<>(
                         analysis,

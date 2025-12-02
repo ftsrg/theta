@@ -23,8 +23,9 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.frontend.stdlib.MacroExprsKt.fromName;
+import static hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType.getSmallestCommonType;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
 import hu.bme.mit.theta.common.Tuple2;
@@ -48,6 +49,7 @@ import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
@@ -67,7 +69,9 @@ import java.util.stream.Collectors;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
-public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
+// FunctionVisitor may be null, e.g., when parsing a simple C expression.
+
+public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     protected final List<CStatement> preStatements = new ArrayList<>();
     protected final List<CStatement> postStatements = new ArrayList<>();
     protected final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
@@ -110,7 +114,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return varDecl;
             }
         }
-        throw new RuntimeException("No such variable: " + name);
+        return null;
     }
 
     public List<CStatement> getPostStatements() {
@@ -178,8 +182,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
                             .map(
@@ -210,8 +213,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
                             .map(
@@ -242,8 +244,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
                             .map(
@@ -273,7 +274,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else leftOp = expr;
                 rightOp = ctx.relationalExpression(i + 1).accept(this);
                 CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(
+                        getSmallestCommonType(
                                 List.of(
                                         CComplexType.getType(leftOp, parseContext),
                                         CComplexType.getType(rightOp, parseContext)),
@@ -310,7 +311,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else leftOp = expr;
                 rightOp = ctx.shiftExpression(i + 1).accept(this);
                 CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(
+                        getSmallestCommonType(
                                 List.of(
                                         CComplexType.getType(leftOp, parseContext),
                                         CComplexType.getType(rightOp, parseContext)),
@@ -355,7 +356,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             //noinspection unchecked
             Expr<BvType> expr = (Expr<BvType>) accept;
             CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(
+                    getSmallestCommonType(
                             List.of(CComplexType.getType(accept, parseContext)), parseContext);
             checkState(smallestCommonType.getSmtType() instanceof BvType);
             for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
@@ -400,8 +401,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<?>> collect = new ArrayList<>();
             for (int i = 0; i < exprs.size(); i++) {
                 parseContext
@@ -435,7 +435,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else leftOp = expr;
                 rightOp = ctx.castExpression(i + 1).accept(this);
                 CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(
+                        getSmallestCommonType(
                                 List.of(
                                         CComplexType.getType(leftOp, parseContext),
                                         CComplexType.getType(rightOp, parseContext)),
@@ -584,7 +584,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             if (type.isPresent()) {
                 LitExpr<?> value =
                         CComplexType.getSignedInt(parseContext)
-                                .getValue("" + type.get().width() / 8);
+                                .getValue("" + Math.max(type.get().width() / 8, 1));
                 return value;
             } else {
                 uniqueWarningLogger.write(
@@ -631,66 +631,61 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             CExpr cexpr = new CExpr(wrappedExpr, parseContext);
             CAssignment cAssignment = new CAssignment(ret, cexpr, "=", parseContext);
             preStatements.add(cAssignment);
-            functionVisitor.recordMetadata(ctx, cAssignment);
-            functionVisitor.recordMetadata(ctx, cexpr);
+            if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
+            if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
         }
         return ret;
     }
 
     @Override
     public Expr<?> visitUnaryExpressionCast(CParser.UnaryExpressionCastContext ctx) {
-        Expr<?> accept = ctx.castExpression().accept(this);
-        CComplexType type;
+        Expr<?> originalOperand = ctx.castExpression().accept(this);
+        CComplexType type = CComplexType.getType(originalOperand, parseContext);
+        type = getSmallestCommonType(List.of(type), parseContext);
+        Expr<?> promotedOperand = type.castTo(originalOperand);
+        parseContext.getMetadata().create(promotedOperand, "cType", type);
         switch (ctx.unaryOperator().getText()) {
             case "-":
                 {
-                    Expr<?> negExpr = AbstractExprs.Neg(accept);
-                    type = CComplexType.getType(accept, parseContext);
-                    parseContext.getMetadata().create(negExpr, "cType", type);
-                    negExpr = type.castTo(negExpr);
+                    Expr<?> negExpr = AbstractExprs.Neg(promotedOperand);
                     parseContext.getMetadata().create(negExpr, "cType", type);
                     return negExpr;
                 }
             case "+":
-                return accept; // no need to update type, it remains the same
+                return promotedOperand; // no need to update type, it remains the same
             case "!":
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                accept =
+                promotedOperand =
                         Ite(
                                 Eq(
-                                        accept,
-                                        CComplexType.getType(accept, parseContext).getNullValue()),
+                                        promotedOperand,
+                                        CComplexType.getType(promotedOperand, parseContext)
+                                                .getNullValue()),
                                 signedInt.getUnitValue(),
                                 signedInt.getNullValue());
-                parseContext.getMetadata().create(accept, "cType", signedInt);
-                return accept;
+                parseContext.getMetadata().create(promotedOperand, "cType", signedInt);
+                return promotedOperand;
             case "~":
-                type = CComplexType.getType(accept, parseContext);
-                CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(List.of(type), parseContext);
-                checkState(accept.getType() instanceof BvType);
-                accept = smallestCommonType.castTo(accept);
                 //noinspection unchecked
-                Expr<?> expr = BvExprs.Not((Expr<BvType>) accept);
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
-                expr = smallestCommonType.castTo(expr);
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
+                Expr<?> expr = BvExprs.Not(cast(promotedOperand, BvType.of(type.width())));
+                parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":
-                final Expr<?> localAccept = accept;
                 checkState(
-                        localAccept instanceof RefExpr<?>
-                                && ((RefExpr<?>) localAccept).getDecl() instanceof VarDecl,
+                        originalOperand instanceof RefExpr<?>
+                                && ((RefExpr<?>) originalOperand).getDecl() instanceof VarDecl,
                         "Referencing non-variable expressions is not allowed!");
-                return reference((RefExpr<?>) localAccept);
+                return reference((RefExpr<?>) originalOperand);
             case "*":
-                type = CComplexType.getType(accept, parseContext);
+                type = CComplexType.getType(originalOperand, parseContext);
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
                 else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
                 return dereference(
-                        accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), type);
+                        originalOperand,
+                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
+                        type);
         }
-        return accept;
+        return originalOperand;
     }
 
     @SuppressWarnings("unchecked")
@@ -742,12 +737,18 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
-        final var variable = getVar(ctx.Identifier().getText());
-        if (atomicVars.contains(variable)) {
-            preStatements.add(new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
-            postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
+        final var name = ctx.Identifier().getText();
+        final var variable = getVar(name);
+        if (variable == null) {
+            // no variable found, we try some macros..
+            final var ret = fromName(name, parseContext);
+            if (ret != null) {
+                return ret;
+            }
+            throw new RuntimeException("No such variable or macro: " + name);
+        } else {
+            return variable.getRef();
         }
-        return variable.getRef();
     }
 
     @Override
@@ -792,6 +793,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
         } else {
 
+            boolean negativeIsUnaryMinus = false;
+
             boolean isLongLong = text.endsWith("l");
             if (isLongLong) text = text.substring(0, text.length() - 1);
             boolean isUnsigned = text.endsWith("u");
@@ -814,15 +817,27 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 bigInteger = BigInteger.valueOf((int) text.charAt(1));
             } else {
                 bigInteger = new BigInteger(text, 10);
+                negativeIsUnaryMinus = true; // -10 is -(10)
             }
 
+            final var size = bigInteger.bitLength();
+
+            CComplexType unsignedLongLong = CComplexType.getUnsignedLongLong(parseContext);
+            CComplexType signedLongLong = CComplexType.getSignedLongLong(parseContext);
+            CComplexType unsignedLong = CComplexType.getUnsignedLong(parseContext);
+            CComplexType signedLong = CComplexType.getSignedLong(parseContext);
+            CComplexType unsignedInt = CComplexType.getUnsignedInt(parseContext);
+            CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+
             CComplexType type;
-            if (isLongLong && isUnsigned) type = CComplexType.getUnsignedLongLong(parseContext);
-            else if (isLongLong) type = CComplexType.getSignedLongLong(parseContext);
-            else if (isLong && isUnsigned) type = CComplexType.getUnsignedLong(parseContext);
-            else if (isLong) type = CComplexType.getSignedLong(parseContext);
-            else if (isUnsigned) type = CComplexType.getUnsignedInt(parseContext);
-            else type = CComplexType.getSignedInt(parseContext);
+            if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
+            else if (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus)
+                type = signedLongLong;
+            else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
+            else if (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus)
+                type = signedLong;
+            else if (isUnsigned) type = unsignedInt;
+            else type = signedInt;
 
             LitExpr<?> litExpr =
                     parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
@@ -840,9 +855,37 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionBraceExpression(
             CParser.PrimaryExpressionBraceExpressionContext ctx) {
-        CStatement statement = ctx.expression().accept(functionVisitor);
-        preStatements.add(statement);
-        return statement.getExpression();
+        if (functionVisitor != null) {
+            CStatement statement = ctx.expression().accept(functionVisitor);
+            preStatements.add(statement);
+            return statement.getExpression();
+        } else {
+            return getConstExpr(ctx);
+        }
+    }
+
+    @Override
+    public Expr<?> visitPrimaryExpressionCompoundStatement(
+            PrimaryExpressionCompoundStatementContext ctx) {
+        uniqueWarningLogger.info("Primary expression compound statement");
+        return null;
+    }
+
+    @Override
+    public Expr<?> visitPrimaryExpressionTypeInitializer(
+            PrimaryExpressionTypeInitializerContext ctx) {
+        uniqueWarningLogger.info("Primary expression type initializer");
+        return null;
+    }
+
+    private Expr<?> getConstExpr(PrimaryExpressionBraceExpressionContext ctx) {
+        var assignments = ctx.expression().assignmentExpression();
+        var assignment = assignments.get(assignments.size() - 1);
+        if (assignment instanceof AssignmentExpressionConditionalExpressionContext cond) {
+            return cond.conditionalExpression().logicalOrExpression().accept(this);
+        } else {
+            throw new RuntimeException("Assignments not supported without a function visitor.");
+        }
     }
 
     @Override
@@ -860,7 +903,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         return ret;
     }
 
-    class PostfixVisitor extends CBaseVisitor<Function<Expr<?>, Expr<?>>> {
+    class PostfixVisitor extends IncludeHandlingCBaseVisitor<Function<Expr<?>, Expr<?>>> {
         @Override
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBrackets(
                 PostfixExpressionBracketsContext ctx) {
@@ -892,22 +935,31 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBraces(
                 PostfixExpressionBracesContext ctx) {
             return (expr) -> {
-                checkState(expr instanceof RefExpr<?>, "Only variables are callable now.");
+                checkState(
+                        expr instanceof RefExpr<?>
+                                && functions.containsKey(
+                                        (VarDecl<?>) ((RefExpr<?>) expr).getDecl()),
+                        "Only variable-backed functions are callable.");
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
-                List<CStatement> arguments =
-                        exprList == null
-                                ? List.of()
-                                : exprList.assignmentExpression().stream()
-                                        .map(
-                                                assignmentExpressionContext ->
-                                                        assignmentExpressionContext.accept(
-                                                                functionVisitor))
-                                        .collect(Collectors.toList());
+                List<CStatement> arguments;
+                if (exprList == null) arguments = List.of();
+                else {
+                    List<CStatement> list = new ArrayList<>();
+                    for (AssignmentExpressionContext assignmentExpressionContext :
+                            exprList.assignmentExpression()) {
+                        if (functionVisitor == null)
+                            throw new RuntimeException(
+                                    "Cannot parse function calls without a function visitor.");
+                        CStatement accept = assignmentExpressionContext.accept(functionVisitor);
+                        list.add(accept);
+                    }
+                    arguments = list;
+                }
                 CCall cCall =
                         new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
                 if (cCall.getFunctionId().contains("pthread")) parseContext.setMultiThreading(true);
                 preStatements.add(cCall);
-                functionVisitor.recordMetadata(ctx, cCall);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cCall);
                 return cCall.getRet().getRef();
             };
         }
@@ -965,7 +1017,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                                         ((CStruct) structTypeErased).getFieldsAsMap().keySet()));
                 primary =
                         Exprs.Dereference(
-                                cast(primary, primary.getType()),
+                                Exprs.Dereference(
+                                        cast(primary, primary.getType()),
+                                        type.getNullValue(),
+                                        type.getSmtType()),
                                 cast(idxExpr, primary.getType()),
                                 embeddedType.getSmtType());
                 parseContext.getMetadata().create(primary, "cType", embeddedType);
@@ -988,8 +1043,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
-                functionVisitor.recordMetadata(ctx, cAssignment);
-                functionVisitor.recordMetadata(ctx, cexpr);
+                if (primary instanceof RefExpr
+                        && atomicVars.contains(((RefExpr<?>) primary).getDecl())) {
+                    preStatements.add(
+                            new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
+                    postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
+                }
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 return primary;
             };
         }
@@ -1009,8 +1070,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
-                functionVisitor.recordMetadata(ctx, cAssignment);
-                functionVisitor.recordMetadata(ctx, cexpr);
+                if (primary instanceof RefExpr
+                        && atomicVars.contains(((RefExpr<?>) primary).getDecl())) {
+                    preStatements.add(
+                            new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
+                    postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
+                }
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 return expr;
             };
         }

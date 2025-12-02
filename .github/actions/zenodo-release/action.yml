@@ -1,0 +1,39 @@
+name: 'Create zenodo release'
+description: 'Create release and deploy to zenodo'
+inputs:
+    tool:
+        required: true
+    prevrecord:
+        required: true
+    token:
+        required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        fetch-depth: 0
+    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
+      with:
+        name: ${{inputs.tool}}_SV-COMP
+        path: upload/
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Python dependencies
+      run: pip install -r ${{github.action_path}}/requirements.txt
+      shell: bash
+
+    - name: Create Zenodo release
+      run: |
+        python3 ${{github.action_path}}/zenodo_release.py \
+          --token '${{inputs.token}}' \
+          --record-id '${{inputs.prevrecord}}' \
+          --tool '${{inputs.tool}}' \
+          --file 'upload/${{inputs.tool}}.zip' \
+          --metadata '${{github.action_path}}/metadata.json' \
+          --cleanup-drafts
+      shell: bash

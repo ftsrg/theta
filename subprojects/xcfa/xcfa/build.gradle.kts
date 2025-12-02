@@ -15,6 +15,7 @@
  */
 plugins {
     id("kotlin-common")
+    id("kaml-serialization")
 }
 
 dependencies {

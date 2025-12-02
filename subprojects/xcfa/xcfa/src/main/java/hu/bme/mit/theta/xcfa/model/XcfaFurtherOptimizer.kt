@@ -40,6 +40,7 @@ fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
             .toMutableSet(),
         metaData = mutableMapOf(),
         unsafeUnrollUsed = unsafeUnrollUsed,
+        prop = prop,
       )
       .also { proc ->
         proc.copyMetaLocs(

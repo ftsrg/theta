@@ -38,9 +38,23 @@ public final class XstsTraceConcretizerUtil {
     private XstsTraceConcretizerUtil() {}
 
     public static XstsStateSequence concretize(
-            final Trace<XstsState<?>, XstsAction> trace,
-            SolverFactory solverFactory,
-            final XSTS xsts) {
+            Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
+
+        if (trace.getState(0).isInitialized()) {
+            var states = new ArrayList<XstsState<?>>();
+            var actions = new ArrayList<XstsAction>();
+            states.add(0, XstsState.of(ExplState.top(), true, false));
+            actions.add(0, XstsAction.create(xsts.getInit()));
+            for (var i = 0; i < trace.getStates().size(); i++) {
+                states.add(trace.getState(i));
+                if (i < trace.getStates().size() - 1) {
+                    actions.add(XstsAction.create(xsts.getEnv()));
+                    states.add(XstsState.of(ExplState.top(), true, true));
+                    actions.add(XstsAction.create(xsts.getTran()));
+                }
+            }
+            trace = Trace.of(states, actions);
+        }
 
         final VarFilter varFilter = VarFilter.of(xsts);
         final ExprTraceChecker<ItpRefutation> checker =

@@ -22,41 +22,49 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
-
-  override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
-  private var relations: Array<Array<Reason?>>? = null
+class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
+  override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
+  private var relations: GlobalRelation? = null
 
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     var modifiableRels = rfs.values.flatten() // modifiable relation vars
     val flatEvents = events.values.flatMap { it.values.flatten() }
-    val initialRels = Array(flatEvents.size) { Array<Reason?>(flatEvents.size) { null } }
-    pos.forEach { setAndClose(initialRels, it) }
     val decisionStack = Stack<OcAssignment<E>>()
-    decisionStack.push(OcAssignment(initialRels)) // not really a decision point (initial)
+    decisionStack.push(OcAssignment(getInitialRels(ppos))) // not really a decision point (initial)
     var finalWsCheck = false
 
     dpllLoop@ while (solver.check().isSat) { // DPLL loop
       val valuation = solver.model.toMap()
-      val changedRels =
-        modifiableRels.filter { rel ->
-          val value = rel.enabled(valuation)
-          decisionStack.popUntil({ it.relation == rel }, value) && value == true
+
+      val disabledRels = modifiableRels.filter { it.enabled(valuation) != true }
+      val disabledEvents = flatEvents.filter { it.enabled(solver.model) != true }
+      val firstDisabled =
+        decisionStack.indexOfFirst { d ->
+          d.relation?.let { it in disabledRels } == true ||
+            d.event?.let { it in disabledEvents } == true
         }
-      val changedEnabledEvents =
+      if (firstDisabled >= 0) {
+        while (decisionStack.size > firstDisabled) decisionStack.pop()
+      }
+
+      val enabledRels =
+        modifiableRels.filter { rel ->
+          rel.enabled(valuation) == true && decisionStack.none { it.relation == rel }
+        }
+      val enabledEvents =
         flatEvents.filter { ev ->
-          val enabled = ev.enabled(solver.model)
           if (ev.type != EventType.WRITE || !rfs.containsKey(ev.const.varDecl)) return@filter false
-          decisionStack.popUntil({ it.event == ev }, enabled) && enabled == true
+          ev.enabled(solver.model) == true && decisionStack.none { it.event == ev }
         }
 
       // propagate
-      for (rel in changedRels) {
+      for (rel in enabledRels) {
         val assignment = OcAssignment(decisionStack.peek().rels, rel)
         decisionStack.push(assignment)
         val reason0 = setAndClose(assignment.rels, rel)
@@ -65,8 +73,8 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
         when (rel.type) {
           RelationType.RF -> {
             val writes =
-              events[rel.from.const.varDecl]!!.values.flatten().filter {
-                it.type == EventType.WRITE && it.enabled == true
+              events[rel.from.const.varDecl]!!.values.flatten().filter { w ->
+                w.type == EventType.WRITE && decisionStack.any { it.event == w }
               }
             for (w in writes) {
               val reason = derive(assignment.rels, rel, w)
@@ -89,10 +97,11 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
         }
       }
 
-      for (w in changedEnabledEvents) {
+      for (w in enabledEvents) {
         val decision = OcAssignment(decisionStack.peek().rels, w)
         decisionStack.push(decision)
-        for (rf in rfs[w.const.varDecl]!!.filter { it.enabled == true }) {
+        for (rf in
+          rfs[w.const.varDecl]!!.filter { rf -> decisionStack.any { it.relation == rf } }) {
           val reason = derive(decision.rels, rf, w)
           if (propagate(reason)) continue@dpllLoop
         }
@@ -114,24 +123,12 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
     return solver.status
   }
 
-  override fun getRelations(): Array<Array<Reason?>>? = relations?.copy()
+  override fun getHappensBefore(): GlobalRelation? = relations?.copy()
 
   override fun propagate(reason: Reason?): Boolean {
     reason ?: return false
     propagated.add(reason)
     solver.add(BoolExprs.Not(reason.expr))
-    return true
-  }
-
-  /**
-   * Returns true if obj is not on the stack (in other words, if the value of obj is changed in the
-   * new model)
-   */
-  private fun <T> Stack<T>.popUntil(obj: (T) -> Boolean, value: Boolean?): Boolean {
-    val index = indexOfFirst(obj)
-    if (index == -1) return true
-    if (value == true) return false
-    while (size > index) pop()
     return true
   }
 }

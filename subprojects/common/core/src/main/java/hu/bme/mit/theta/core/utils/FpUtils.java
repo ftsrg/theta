@@ -73,7 +73,8 @@ public final class FpUtils {
         } else {
             final var minExponent = -(1L << (type.getExponent() - 1)) + 2;
             final var maxExponent = (1L << (type.getExponent() - 1)) - 1;
-            final var round = bigFloat.round(getMathContext(type, FpRoundingMode.RNE));
+            final var round =
+                    bigFloat.round(getMathContext(type, FpRoundingMode.getDefaultRoundingMode()));
 
             final var exponent =
                     BigInteger.valueOf(round.exponent(minExponent, maxExponent))
@@ -121,5 +122,10 @@ public final class FpUtils {
                 new BigFloat(
                         value, new BinaryMathContext(type.getSignificand(), type.getExponent())),
                 type);
+    }
+
+    public static BigInteger round(final BigFloat value, final FpRoundingMode roundingMode) {
+        RoundingMode r = FpUtils.getMathContextRoundingMode(roundingMode);
+        return value.toBigInteger(r);
     }
 }

@@ -22,12 +22,13 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.*
@@ -46,7 +47,7 @@ fun getPortfolioChecker(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
-  uniqueLogger: UniqueWarningLogger,
+  uniqueLogger: Logger,
 ): SafetyChecker<
   ARG<XcfaState<PtrState<*>>, XcfaAction>,
   Trace<XcfaState<PtrState<*>>, XcfaAction>,
@@ -54,28 +55,29 @@ fun getPortfolioChecker(
 > = SafetyChecker { _ ->
   val sw = Stopwatch.createStarted()
   val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
+  val chcModels =
+    if (config.frontendConfig.inputType == InputType.CHC)
+      (config.frontendConfig.specConfig as CHCFrontendConfig).model
+    else false
 
   val portfolioStm =
     when (portfolioName) {
       "STABLE",
-      "CEGAR",
-      "COMPLEX",
-      "COMPLEX25" -> complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "COMPLEX" -> complex26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "EMERGENT",
-      "BOUNDED",
-      "BOUNDED25" -> boundedPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "CHC-COMP" ->
+        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
       "CHC",
-      "HORN",
-      "HORN25" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "MULTITHREAD" -> multithreadPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       else -> {
         if (File(portfolioName).exists()) {
@@ -94,12 +96,11 @@ fun getPortfolioChecker(
       }
     }
 
-  val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
+  val result =
+    portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
-  logger.write(
-    Logger.Level.RESULT,
-    "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
-  )
+  logger.result("Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
+  logger.benchmark("success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<

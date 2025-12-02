@@ -15,44 +15,79 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
+import com.beust.jcommander.IStringConverter
+import com.beust.jcommander.ParameterException
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.*
+import hu.bme.mit.theta.xcfa.WitnessInfo
+import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.exitProcess
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
+import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
+import java.io.FileNotFoundException
+import kotlinx.serialization.builtins.ListSerializer
 
-fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection =
-  config.inputConfig.propertyFile?.run {
-    val propertyFile = config.inputConfig.propertyFile!!
-    when {
-      propertyFile.name.endsWith("unreach-call.prp") -> {
-        ErrorDetection.ERROR_LOCATION
+fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
+  (config.inputConfig.propertyFile
+      ?.run {
+        val propertyFile = config.inputConfig.propertyFile!!
+        when {
+          propertyFile.name.endsWith("unreach-call.prp") -> ERROR_LOCATION
+          propertyFile.name.endsWith("no-data-race.prp") -> DATA_RACE
+          propertyFile.name.endsWith("no-overflow.prp") -> OVERFLOW
+          propertyFile.name.endsWith("valid-memsafety.prp") -> MEMSAFETY
+          propertyFile.name.endsWith("valid-memcleanup.prp") -> MEMCLEANUP
+          propertyFile.name.endsWith("termination.prp") -> TERMINATION
+
+          else -> {
+            logger.write(
+              Logger.Level.INFO,
+              "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
+            )
+            NO_ERROR
+          }
+        }
       }
-
-      propertyFile.name.endsWith("no-data-race.prp") -> {
-        ErrorDetection.DATA_RACE
-      }
-
-      propertyFile.name.endsWith("no-overflow.prp") -> {
-        ErrorDetection.OVERFLOW
-      }
-
-      propertyFile.name.endsWith("valid-memsafety.prp") -> {
-        ErrorDetection.MEMSAFETY
-      }
-
-      propertyFile.name.endsWith("valid-memcleanup.prp") -> {
-        ErrorDetection.MEMCLEANUP
-      }
-
-      propertyFile.name.endsWith("termination.prp") -> {
-        ErrorDetection.TERMINATION
-      }
-
-      else -> {
-        logger.write(
-          Logger.Level.INFO,
-          "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
+      ?.let { XcfaProperty(it) } ?: config.inputConfig.property)
+    .let { iP ->
+      config.inputConfig.witness?.let {
+        logger.info("Applying witness $it")
+        if (!it.exists()) {
+          exitProcess(
+            config.debugConfig.debug,
+            FileNotFoundException(),
+            ExitCodes.INVALID_PARAM.code,
+          )
+        }
+        val witness =
+          WitnessYamlConfig.decodeFromString(
+              ListSerializer(YamlWitness.serializer()),
+              it.readText(),
+            )[0]
+        logger.mainStep(
+          "Applying ${witness.entryType} witness $witness with size ${witness.content.size}"
         )
-        ErrorDetection.NO_ERROR
-      }
+        XcfaProperty(
+          iP.inputProperty,
+          WitnessInfo(witness, { p: ParseContext -> ApplyWitnessPass(p, witness) }),
+        )
+      } ?: iP
     }
-  } ?: config.inputConfig.property
+
+class StringToXcfaPropertyConverter : IStringConverter<XcfaProperty> {
+  override fun convert(input: String): XcfaProperty {
+    val errorDetection =
+      try {
+        valueOf(input.uppercase())
+      } catch (_: IllegalArgumentException) {
+        val allowed = ErrorDetection.entries.joinToString(", ") { it.name }
+        throw ParameterException("Invalid value '$input'. Allowed values: [$allowed]")
+      }
+    return XcfaProperty(errorDetection)
+  }
+}

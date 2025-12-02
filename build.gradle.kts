@@ -20,6 +20,13 @@ plugins {
     id("io.freefair.aggregate-javadoc") version "5.2"
     id("io.codearte.nexus-staging") version "0.30.0" apply true
     id("org.sonarqube") version "4.2.1.3168"
+    id("javasmt-common")
+}
+
+subprojects {
+    tasks.matching { it.name == "test" }.configureEach {
+        dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
+    }
 }
 
 buildscript {
@@ -29,7 +36,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "6.11.8"
+    version = "6.27.12"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
@@ -43,6 +50,10 @@ sonar {
             "sonar.coverage.jacoco.xmlReportPaths",
             "${project.layout.buildDirectory.asFile.get()}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
         )
+        property(
+            "sonar.cpd.exclusions",
+            "subprojects/xcfa/xcfa-cli/src/main/java/hu/bme/mit/theta/xcfa/cli/portfolio/**"
+        )
     }
 }
 
@@ -54,7 +65,7 @@ tasks {
         description = "Generates merged code coverage report for all test tasks."
 
         reports {
-            html.required.set(false)
+            html.required.set(true)
             xml.required.set(true)
             csv.required.set(false)
         }

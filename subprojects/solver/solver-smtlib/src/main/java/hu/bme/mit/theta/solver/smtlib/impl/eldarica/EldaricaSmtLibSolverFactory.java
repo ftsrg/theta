@@ -26,15 +26,23 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
-    private EldaricaSmtLibSolverFactory(Path solverPath, String[] args) {
+    private final Path yicesPath;
+    private final boolean needsModelWrapping;
+
+    private EldaricaSmtLibSolverFactory(
+            Path solverPath, String[] args, Path yicesPath, boolean needsModelWrapping) {
         super(solverPath, args);
+        this.yicesPath = yicesPath;
+        this.needsModelWrapping = needsModelWrapping;
     }
 
-    public static EldaricaSmtLibSolverFactory create(Path solverPath, String[] args) {
-        return new EldaricaSmtLibSolverFactory(solverPath, args);
+    public static EldaricaSmtLibSolverFactory create(
+            Path solverPath, String[] args, Path yicesPath, boolean needsModelWrapping) {
+        return new EldaricaSmtLibSolverFactory(solverPath, args, yicesPath, needsModelWrapping);
     }
 
     @Override
@@ -54,10 +62,18 @@ public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibOneshotSolverBinary(solverPath, args);
+        final var solverBinary =
+                new GenericSmtLibOneshotSolverBinary(
+                        solverPath,
+                        args,
+                        Map.of("PATH", System.getenv("PATH") + ":" + yicesPath.toAbsolutePath()));
 
         return new GenericHornSolver(
-                symbolTable, transformationManager, termTransformer, solverBinary);
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                needsModelWrapping);
     }
 
     @Override

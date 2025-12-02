@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
@@ -31,11 +30,11 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.*
 import java.util.*
 import java.util.function.Predicate
 import kotlin.random.Random
@@ -57,7 +56,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
 
   companion object {
 
-    private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
+    private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
     var random: Random = Random.Default
   }
 
@@ -80,16 +79,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   /** Backward edges in the CFA (an edge of a loop). */
   private val backwardEdges: MutableSet<Pair<XcfaLocation, XcfaLocation>> = mutableSetOf()
 
-  /**
-   * Variables associated to mutex identifiers. TODO: this should really be solved by storing
-   * VarDecls in FenceLabel.
-   */
-  protected val fenceVars: MutableMap<String, VarDecl<*>> = mutableMapOf()
-  private val String.fenceVar
-    get() =
-      fenceVars.getOrPut("") {
-        Decls.Var(if (this == "") "__THETA_atomic_mutex_" else this, Bool())
-      }
+  /** Variables of mutex handles (VarDecls in FenceLabels), needed for AASPOR. */
+  protected val fenceVars: MutableSet<VarDecl<*>> = mutableSetOf()
 
   init {
     collectBackwardEdges()
@@ -159,7 +150,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     firstProcesses: MutableSet<Int>,
     enabledActionsByProcess: Map<Int, List<XcfaAction>>,
   ) {
-    val processState = checkNotNull(state.processes[pid])
+    val processState = state.processes[pid]!!
     if (!processState.paramsInitialized) return
     val disabledOutEdges =
       processState.locs.peek().outgoingEdges.filter { edge ->
@@ -167,17 +158,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
       }
     disabledOutEdges.forEach { edge ->
       edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
-        fence.labels
-          .filter { it.startsWith("mutex_lock") }
-          .forEach { lock ->
-            val mutex = lock.substringAfter('(').substringBefore(')')
-            state.mutexes[mutex]?.let { pid2 ->
-              if (pid2 !in firstProcesses) {
-                firstProcesses.add(pid2)
-                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
-              }
+        fence.blockingMutexes.forEach { mutex ->
+          state.mutexes[mutex.name]?.forEach { pid2 ->
+            if (pid2 !in firstProcesses) {
+              firstProcesses.add(pid2)
+              checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
             }
           }
+        }
       }
     }
   }
@@ -252,14 +240,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     )
       return true
 
-    return indirectlyDependent(
-      state,
-      sourceSetAction,
-      sourceSetActionVars,
-      influencedVars,
-      sourceSetMemLocs,
-      influencedMemLocs,
-    )
+    return indirectlyDependent(state, sourceSetAction, sourceSetMemLocs, influencedMemLocs)
   }
 
   /**
@@ -270,22 +251,25 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   protected fun indirectlyDependent(
     state: XcfaState<out PtrState<out ExprState>>,
     sourceSetAction: XcfaAction,
-    sourceSetActionVars: Set<VarDecl<*>>,
-    influencedVars: Set<VarDecl<*>>,
     sourceSetMemLocs: Set<MemLoc>,
     inflMemLocs: Set<MemLoc>,
   ): Boolean {
-    val sourceSetActionMemLocs =
-      sourceSetActionVars.pointsTo(xcfa) +
-        sourceSetMemLocs.map { it.first }.filterIsInstance<LitExpr<*>>()
-    val influencedMemLocs =
-      influencedVars.pointsTo(xcfa) + inflMemLocs.map { it.first }.filterIsInstance<LitExpr<*>>()
-    val intersection = sourceSetActionMemLocs intersect influencedMemLocs
+    val sourceSetActionMemLocs = memLocsToLitExprs(sourceSetMemLocs) ?: return true
+    val influencedMemLocs = memLocsToLitExprs(inflMemLocs) ?: return true
+    val intersection = intersect(sourceSetActionMemLocs, influencedMemLocs)
     if (intersection.isEmpty())
       return false // they cannot point to the same memory location even based on static info
 
-    val derefs = sourceSetAction.label.dereferences.map { it.array }
-    var expr: Expr<BoolType> = Or(intersection.flatMap { memLoc -> derefs.map { Eq(memLoc, it) } })
+    if (sourceSetMemLocs.all { it.first is LitExpr<*> })
+      return true // there is no uncertainty in the current memory locations, and they intersect
+
+    val derefs = sourceSetAction.label.dereferences
+    var expr: Expr<BoolType> =
+      Or(
+        intersection.flatMap { memLoc ->
+          derefs.map { And(Eq(memLoc.first, it.array), Eq(memLoc.second, it.offset)) }
+        }
+      )
     expr =
       (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
         ?: ExprUtils.simplify(expr)
@@ -299,6 +283,37 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     }
   }
 
+  private fun exprToLitExpr(expr: Expr<*>): Set<LitExpr<*>>? =
+    if (expr is LitExpr<*>) setOf(expr) else expr.pointsTo(xcfa)
+
+  private fun memLocsToLitExprs(
+    memLocs: Set<MemLoc>
+  ): List<Pair<Set<LitExpr<*>>, Set<LitExpr<*>>>>? =
+    memLocs.map {
+      val first = exprToLitExpr(it.first) ?: return null
+      val second = exprToLitExpr(it.second) ?: return null
+      first to second
+    }
+
+  private fun intersect(
+    memlocs1: List<Pair<Set<LitExpr<*>>, Set<LitExpr<*>>>>,
+    memlocs2: List<Pair<Set<LitExpr<*>>, Set<LitExpr<*>>>>,
+  ): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+    val intersection = mutableSetOf<Pair<LitExpr<*>, LitExpr<*>>>()
+    for (memloc1 in memlocs1) {
+      for (memloc2 in memlocs2) {
+        val firsts = memloc1.first intersect memloc2.first
+        val seconds = memloc1.second intersect memloc2.second
+        for (f in firsts) {
+          for (s in seconds) {
+            intersection.add(f to s)
+          }
+        }
+      }
+    }
+    return intersection
+  }
+
   /**
    * Returns the global variables that an edge uses (it is present in one of its labels). Mutex
    * variables are also considered to avoid running into a deadlock and stop exploration.
@@ -308,19 +323,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    */
   private fun getDirectlyUsedVars(edge: XcfaEdge): Set<VarDecl<*>> {
     val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar)
+    fenceVars.addAll(edge.fenceVars)
     return edge
       .getFlatLabels()
-      .flatMap { label ->
-        label.collectVars().filter { it in globalVars } union
-          ((label as? FenceLabel)
-            ?.labels
-            ?.filter { it.startsWith("start_cond_wait") || it.startsWith("cond_signal") }
-            ?.map { it.substringAfter("(").substringBefore(")").split(",")[0] }
-            ?.map { it.fenceVar } ?: listOf())
-      }
+      .flatMap { label -> label.collectVars().filter { it in globalVars } }
       .toSet() union
       edge.acquiredEmbeddedFenceVars.let { mutexes ->
-        if (mutexes.size <= 1) setOf() else mutexes.map { it.fenceVar }
+        fenceVars.addAll(mutexes)
+        if (mutexes.size <= 1) setOf() else mutexes
       }
   }
 
