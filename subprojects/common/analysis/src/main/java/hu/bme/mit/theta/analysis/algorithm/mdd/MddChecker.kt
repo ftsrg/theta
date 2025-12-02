@@ -37,6 +37,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.container.Containers
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
@@ -67,6 +68,8 @@ constructor(
   }
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
+    val totalTime = Stopwatch.createStarted()
+
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
@@ -154,6 +157,9 @@ constructor(
           GeneralizedSaturationProvider(stateSig.variableOrder)
         }
       }
+
+    val ssgTime = Stopwatch.createStarted()
+
     val stateSpace =
       stateSpaceProvider.compute(
         MddNodeInitializer.of(initNode),
@@ -161,7 +167,10 @@ constructor(
         stateSig.topVariableHandle,
       )
 
-    logger.write(Logger.Level.INFO, "Enumerated state-space\n")
+    ssgTime.stop()
+    totalTime.stop()
+
+    logger.write(Logger.Level.INFO, "Enumerated state-space in: ${ssgTime.elapsedMillis()}\n")
 
     val propViolating = stateSpace.intersection(propNode) as MddHandle
 
@@ -180,12 +189,12 @@ constructor(
         stateSpaceProvider.hitCount,
         stateSpaceProvider.queryCount,
         stateSpaceProvider.cacheSize,
+        ssgTime.elapsedMillis(),
+        totalTime.elapsedMillis(),
       )
 
     logger.write(Logger.Level.MAINSTEP, "%s\n", statistics)
 
-    // var explTrans = MddExplicitRepresentationExtractor.INSTANCE.transform(transitionNode,
-    // transSig.getTopVariableHandle());
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
       val executor = Executors.newSingleThreadExecutor()

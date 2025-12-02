@@ -135,12 +135,11 @@ public class MddExpressionTemplate implements MddNode.Template {
                                 .getLower()
                                 .get()
                                 .checkInNode(
-                                        new MddExpressionTemplate(
+                                        MddExpressionTemplate.ofKnownSat(
                                                 canonizedExpr,
                                                 o -> (Decl) o,
                                                 solverPool,
-                                                transExpr,
-                                                knownSat));
+                                                transExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(canonizedExpr);
@@ -202,12 +201,11 @@ public class MddExpressionTemplate implements MddNode.Template {
                                     .getLower()
                                     .get()
                                     .checkInNode(
-                                            new MddExpressionTemplate(
+                                            MddExpressionTemplate.ofKnownSat(
                                                     overApproxExpr,
                                                     extractDecl,
                                                     solverPool,
-                                                    transExpr,
-                                                    knownSat));
+                                                    transExpr));
                 } else {
                     final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                     cont = mddGraph.getNodeFor(overApproxExpr);
