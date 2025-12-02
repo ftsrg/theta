@@ -19,6 +19,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager
+import hu.bme.mit.theta.solver.meta.MetaSolverManager
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
@@ -27,6 +28,8 @@ import java.nio.file.Path
 fun getSolver(name: String, validate: Boolean): SolverFactory =
   if (validate) {
     SolverValidatorWrapperFactory.create(name)
+  } else if (name.contains(';')) {
+    MetaSolverManager.create().getSolverFactory(name)
   } else {
     SolverManager.resolveSolverFactory(name)
   }
