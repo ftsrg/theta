@@ -1,0 +1,170 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memsafety.MemSafety-Juliet
+date:                    Mon, 2025-12-01 15:16:27 UTC
+tool:                    Theta 6.27.9
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.54304 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety.MemSafety-Juliet
+Run set 4 of 6 with options '--svcomp --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                  status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_01_good.yml                                ERROR (frontend failed, before parsing finished)        2.76        0.99        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_02_good.yml                                ERROR (frontend failed, before parsing finished)        3.16        1.12        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_03_good.yml                                ERROR (frontend failed, before parsing finished)        3.15        1.13        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_04_good.yml                                ERROR (frontend failed, before parsing finished)        3.01        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_05_good.yml                                ERROR (frontend failed, before parsing finished)        3.05        1.08        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_06_good.yml                                ERROR (frontend failed, before parsing finished)        2.99        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_07_good.yml                                ERROR (frontend failed, before parsing finished)        3.00        1.06        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_08_good.yml                                ERROR (frontend failed, before parsing finished)        3.08        1.13        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_09_good.yml                                ERROR (frontend failed, before parsing finished)        3.11        1.12        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_10_good.yml                                ERROR (frontend failed, before parsing finished)        3.22        1.14        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_11_good.yml                                ERROR (frontend failed, before parsing finished)        3.21        1.16        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_12_good.yml                                ERROR (frontend failed, before parsing finished)        3.03        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_13_good.yml                                ERROR (frontend failed, before parsing finished)        2.67        0.98        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_14_good.yml                                ERROR (frontend failed, before parsing finished)        2.74        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_15_good.yml                                ERROR (frontend failed, before parsing finished)        3.04        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_16_good.yml                                ERROR (frontend failed, before parsing finished)        2.61        0.96        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_17_good.yml                                ERROR (frontend failed, before parsing finished)        3.21        1.14        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_18_good.yml                                ERROR (frontend failed, before parsing finished)        2.97        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_21_good.yml                                ERROR (frontend failed, before parsing finished)        3.06        1.10        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_22_good.yml                                ERROR (frontend failed, before parsing finished)        2.65        0.96        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_31_good.yml                                ERROR (frontend failed, before parsing finished)        3.14        1.14        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_32_good.yml                                ERROR (frontend failed, before parsing finished)        2.96        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_34_good.yml                                ERROR (frontend failed, before parsing finished)        2.98        1.08        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_41_good.yml                                ERROR (frontend failed, before parsing finished)        3.07        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_42_good.yml                                ERROR (frontend failed, before parsing finished)        2.84        1.03        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_44_good.yml                                ERROR (frontend failed, before parsing finished)        2.66        0.97        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_45_good.yml                                ERROR (frontend failed, before parsing finished)        2.91        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_51_good.yml                                ERROR (frontend failed, before parsing finished)        2.63        0.95        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_52_good.yml                                ERROR (frontend failed, before parsing finished)        2.92        1.05        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_53_good.yml                                ERROR (frontend failed, before parsing finished)        2.71        0.98        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_54_good.yml                                ERROR (frontend failed, before parsing finished)        2.97        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_61_good.yml                                ERROR (frontend failed, before parsing finished)        2.99        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_63_good.yml                                ERROR (frontend failed, before parsing finished)        2.86        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_64_good.yml                                ERROR (frontend failed, before parsing finished)        2.64        0.95        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_65_good.yml                                ERROR (frontend failed, before parsing finished)        2.65        0.97        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_66_good.yml                                ERROR (frontend failed, before parsing finished)        2.69        0.98        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_67_good.yml                                ERROR (frontend failed, before parsing finished)        2.68        0.96        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_char_68_good.yml                                ERROR (frontend failed, before parsing finished)        2.70        0.96        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_01_good.yml                             ERROR (frontend failed, before parsing finished)        3.23        1.15        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_02_good.yml                             ERROR (frontend failed, before parsing finished)        3.12        1.11        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_03_good.yml                             ERROR (frontend failed, before parsing finished)        2.71        0.98        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_04_good.yml                             ERROR (frontend failed, before parsing finished)        2.58        0.93        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_05_good.yml                             ERROR (frontend failed, before parsing finished)        2.91        1.05        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_06_good.yml                             ERROR (frontend failed, before parsing finished)        2.91        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_07_good.yml                             ERROR (frontend failed, before parsing finished)        2.79        0.99        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_08_good.yml                             ERROR (frontend failed, before parsing finished)        2.92        1.05        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_09_good.yml                             ERROR (frontend failed, before parsing finished)        2.94        1.06        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_10_good.yml                             ERROR (frontend failed, before parsing finished)        2.77        0.99        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_11_good.yml                             ERROR (frontend failed, before parsing finished)        2.57        0.91        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_12_good.yml                             ERROR (frontend failed, before parsing finished)        2.86        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_13_good.yml                             ERROR (frontend failed, before parsing finished)        2.85        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_14_good.yml                             ERROR (frontend failed, before parsing finished)        2.46        0.89        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_15_good.yml                             ERROR (frontend failed, before parsing finished)        2.81        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_16_good.yml                             ERROR (frontend failed, before parsing finished)        2.71        0.97        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_17_good.yml                             ERROR (frontend failed, before parsing finished)        2.81        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_18_good.yml                             ERROR (frontend failed, before parsing finished)        2.79        0.99        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_21_good.yml                             ERROR (frontend failed, before parsing finished)        2.84        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_22_good.yml                             ERROR (frontend failed, before parsing finished)        2.56        0.92        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_31_good.yml                             ERROR (frontend failed, before parsing finished)        2.89        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_32_good.yml                             ERROR (frontend failed, before parsing finished)        2.87        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_34_good.yml                             ERROR (frontend failed, before parsing finished)        2.48        0.89        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_41_good.yml                             ERROR (frontend failed, before parsing finished)        2.83        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_42_good.yml                             ERROR (frontend failed, before parsing finished)        2.78        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_44_good.yml                             ERROR (frontend failed, before parsing finished)        2.87        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_45_good.yml                             ERROR (frontend failed, before parsing finished)        2.54        0.91        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_51_good.yml                             ERROR (frontend failed, before parsing finished)        2.77        0.99        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_52_good.yml                             ERROR (frontend failed, before parsing finished)        2.82        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_53_good.yml                             ERROR (frontend failed, before parsing finished)        2.86        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_54_good.yml                             ERROR (frontend failed, before parsing finished)        2.97        1.06        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_61_good.yml                             ERROR (frontend failed, before parsing finished)        2.75        0.99        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_63_good.yml                             ERROR (frontend failed, before parsing finished)        2.78        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_64_good.yml                             ERROR (frontend failed, before parsing finished)        2.89        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_65_good.yml                             ERROR (frontend failed, before parsing finished)        2.04        0.93        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_66_good.yml                             ERROR (frontend failed, before parsing finished)        2.60        0.93        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_67_good.yml                             ERROR (frontend failed, before parsing finished)        2.93        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int64_t_68_good.yml                             ERROR (frontend failed, before parsing finished)        2.93        1.06        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_01_good.yml                                 ERROR (frontend failed, before parsing finished)        2.73        0.98        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_02_good.yml                                 ERROR (frontend failed, before parsing finished)        2.92        1.05        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_03_good.yml                                 ERROR (frontend failed, before parsing finished)        3.12        1.10        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_04_good.yml                                 ERROR (frontend failed, before parsing finished)        2.81        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_05_good.yml                                 ERROR (frontend failed, before parsing finished)        2.87        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_06_good.yml                                 ERROR (frontend failed, before parsing finished)        2.95        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_07_good.yml                                 ERROR (frontend failed, before parsing finished)        2.53        0.91        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_08_good.yml                                 ERROR (frontend failed, before parsing finished)        3.11        1.12        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_09_good.yml                                 ERROR (frontend failed, before parsing finished)        3.06        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_10_good.yml                                 ERROR (frontend failed, before parsing finished)        2.72        0.97        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_11_good.yml                                 ERROR (frontend failed, before parsing finished)        3.02        1.08        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_12_good.yml                                 ERROR (frontend failed, before parsing finished)        3.08        1.11        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_13_good.yml                                 ERROR (frontend failed, before parsing finished)        3.01        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_14_good.yml                                 ERROR (frontend failed, before parsing finished)        2.70        0.97        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_15_good.yml                                 ERROR (frontend failed, before parsing finished)        3.04        1.10        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_16_good.yml                                 ERROR (frontend failed, before parsing finished)        2.94        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_17_good.yml                                 ERROR (frontend failed, before parsing finished)        3.12        1.12        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_18_good.yml                                 ERROR (frontend failed, before parsing finished)        3.07        1.10        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_21_good.yml                                 ERROR (frontend failed, before parsing finished)        2.66        0.96        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_22_good.yml                                 ERROR (frontend failed, before parsing finished)        2.07        0.93        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_31_good.yml                                 ERROR (frontend failed, before parsing finished)        2.57        0.93        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_32_good.yml                                 ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_34_good.yml                                 ERROR (frontend failed, before parsing finished)        2.58        0.92        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_41_good.yml                                 ERROR (frontend failed, before parsing finished)        3.00        1.08        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_42_good.yml                                 ERROR (frontend failed, before parsing finished)        3.07        1.11        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_44_good.yml                                 ERROR (frontend failed, before parsing finished)        2.68        0.96        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_45_good.yml                                 ERROR (frontend failed, before parsing finished)        2.58        0.93        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_51_good.yml                                 ERROR (frontend failed, before parsing finished)        2.87        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_52_good.yml                                 ERROR (frontend failed, before parsing finished)        2.86        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_53_good.yml                                 ERROR (frontend failed, before parsing finished)        3.22        1.17        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_54_good.yml                                 ERROR (frontend failed, before parsing finished)        3.05        1.09        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_61_good.yml                                 ERROR (frontend failed, before parsing finished)        2.52        0.91        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_63_good.yml                                 ERROR (frontend failed, before parsing finished)        2.88        1.05        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_64_good.yml                                 ERROR (frontend failed, before parsing finished)        2.99        1.07        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_65_good.yml                                 ERROR (frontend failed, before parsing finished)        3.04        1.08        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_66_good.yml                                 ERROR (frontend failed, before parsing finished)        2.49        0.89        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_67_good.yml                                 ERROR (frontend failed, before parsing finished)        2.83        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_int_68_good.yml                                 ERROR (frontend failed, before parsing finished)        2.79        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_01_good.yml                                ERROR (frontend failed, before parsing finished)        2.80        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_02_good.yml                                ERROR (frontend failed, before parsing finished)        2.80        1.00        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_03_good.yml                                ERROR (frontend failed, before parsing finished)        2.83        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_04_good.yml                                ERROR (frontend failed, before parsing finished)        2.81        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_05_good.yml                                ERROR (frontend failed, before parsing finished)        2.85        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_06_good.yml                                ERROR (frontend failed, before parsing finished)        2.93        1.06        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_07_good.yml                                ERROR (frontend failed, before parsing finished)        2.91        1.04        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_08_good.yml                                ERROR (frontend failed, before parsing finished)        2.90        1.03        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_09_good.yml                                ERROR (frontend failed, before parsing finished)        2.88        1.03        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_10_good.yml                                ERROR (frontend failed, before parsing finished)        2.84        1.02        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_11_good.yml                                ERROR (frontend failed, before parsing finished)        2.56        0.90        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_12_good.yml                                ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_13_good.yml                                ERROR (frontend failed, before parsing finished)        2.84        1.03        None
+CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_14_good.yml                                ERROR (frontend failed, before parsing finished)        2.47        0.89        None

@@ -1,0 +1,83 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-ProductLines
+date:                    Mon, 2025-12-01 16:12:22 UTC
+tool:                    Theta 6.27.11
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.437 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-ProductLines
+Run set 1 of 6 with options '--svcomp --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                   status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------
+elevator_spec13_product21.cil.yml           ERROR (frontend failed, before parsing finished)        3.11        1.10        None
+elevator_spec13_product22.cil.yml           ERROR (frontend failed, before parsing finished)        1.87        0.71        None
+elevator_spec13_product23.cil.yml           ERROR (frontend failed, before parsing finished)        2.90        1.03        None
+elevator_spec13_product24.cil.yml           ERROR (frontend failed, before parsing finished)        2.03        0.78        None
+elevator_spec13_product29.cil.yml           ERROR (frontend failed, before parsing finished)        3.11        1.11        None
+elevator_spec13_product30.cil.yml           ERROR (frontend failed, before parsing finished)        3.19        1.13        None
+elevator_spec13_product31.cil.yml           ERROR (frontend failed, before parsing finished)        1.78        0.70        None
+elevator_spec13_product32.cil.yml           ERROR (frontend failed, before parsing finished)        2.50        0.91        None
+elevator_spec13_productSimulator.cil.yml    ERROR (frontend failed, before parsing finished)        1.81        0.70        None
+elevator_spec14_product03.cil.yml           ERROR (frontend failed, before parsing finished)        2.39        0.87        None
+elevator_spec14_product11.cil.yml           ERROR (frontend failed, before parsing finished)        2.13        0.79        None
+elevator_spec14_product19.cil.yml           ERROR (frontend failed, before parsing finished)        2.44        0.89        None
+elevator_spec14_product20.cil.yml           ERROR (frontend failed, before parsing finished)        1.86        0.71        None
+elevator_spec14_product23.cil.yml           ERROR (frontend failed, before parsing finished)        2.13        0.80        None
+elevator_spec14_product24.cil.yml           ERROR (frontend failed, before parsing finished)        3.09        1.08        None
+elevator_spec14_product27.cil.yml           ERROR (frontend failed, before parsing finished)        2.54        0.92        None
+elevator_spec14_product28.cil.yml           ERROR (frontend failed, before parsing finished)        2.83        1.00        None
+elevator_spec14_product31.cil.yml           ERROR (frontend failed, before parsing finished)        2.23        0.81        None
+elevator_spec14_product32.cil.yml           ERROR (frontend failed, before parsing finished)        2.09        0.79        None
+elevator_spec14_productSimulator.cil.yml    ERROR (frontend failed, before parsing finished)        3.20        1.12        None
+elevator_spec1_product01.cil.yml            ERROR (frontend failed, before parsing finished)        3.19        1.13        None
+elevator_spec1_product03.cil.yml            ERROR (frontend failed, before parsing finished)        1.89        0.73        None
+elevator_spec1_product09.cil.yml            ERROR (frontend failed, before parsing finished)        1.84        0.69        None
+elevator_spec1_product11.cil.yml            ERROR (frontend failed, before parsing finished)        2.81        1.01        None
+elevator_spec1_product17.cil.yml            ERROR (frontend failed, before parsing finished)        2.24        0.83        None
+elevator_spec1_product18.cil.yml            ERROR (frontend failed, before parsing finished)        2.11        0.80        None
+elevator_spec1_product19.cil.yml            ERROR (frontend failed, before parsing finished)        3.17        1.11        None
+elevator_spec1_product20.cil.yml            ERROR (frontend failed, before parsing finished)        2.93        1.06        None
+elevator_spec1_product21.cil.yml            ERROR (frontend failed, before parsing finished)        2.96        1.07        None
+elevator_spec1_product22.cil.yml            ERROR (frontend failed, before parsing finished)        1.87        0.71        None
+elevator_spec1_product23.cil.yml            ERROR (frontend failed, before parsing finished)        1.91        0.72        None
+elevator_spec1_product24.cil.yml            ERROR (frontend failed, before parsing finished)        1.77        0.70        None
+elevator_spec1_product25.cil.yml            ERROR (frontend failed, before parsing finished)        2.02        0.77        None
+elevator_spec1_product26.cil.yml            ERROR (frontend failed, before parsing finished)        2.67        0.97        None
+elevator_spec1_product27.cil.yml            ERROR (frontend failed, before parsing finished)        2.43        0.89        None
+elevator_spec1_product28.cil.yml            ERROR (frontend failed, before parsing finished)        3.13        1.11        None
+elevator_spec1_product29.cil.yml            ERROR (frontend failed, before parsing finished)        3.12        1.11        None
+elevator_spec1_product30.cil.yml            ERROR (frontend failed, before parsing finished)        1.94        0.73        None
+elevator_spec1_product31.cil.yml            ERROR (frontend failed, before parsing finished)        1.87        0.72        None
+elevator_spec1_product32.cil.yml            ERROR (frontend failed, before parsing finished)        2.92        1.04        None
+elevator_spec1_productSimulator.cil.yml     ERROR (frontend failed, before parsing finished)        2.11        0.79        None
+elevator_spec2_product01.cil.yml            ERROR (frontend failed, before parsing finished)        1.98        0.75        None
+elevator_spec2_product03.cil.yml            ERROR (frontend failed, before parsing finished)        2.28        0.83        None
+elevator_spec2_product09.cil.yml            ERROR (frontend failed, before parsing finished)        3.02        1.08        None
+elevator_spec2_product11.cil.yml            ERROR (frontend failed, before parsing finished)        2.23        0.82        None
+elevator_spec2_product17.cil.yml            ERROR (frontend failed, before parsing finished)        3.18        1.13        None
+elevator_spec2_product18.cil.yml            ERROR (frontend failed, before parsing finished)        2.44        0.89        None
+elevator_spec2_product19.cil.yml            ERROR (frontend failed, before parsing finished)        3.11        1.09        None
+elevator_spec2_product20.cil.yml            ERROR (frontend failed, before parsing finished)        2.90        1.05        None
+elevator_spec2_product21.cil.yml            ERROR (frontend failed, before parsing finished)        1.89        0.71        None
+elevator_spec2_product22.cil.yml            ERROR (frontend failed, before parsing finished)        2.34        0.87        None
+elevator_spec2_product23.cil.yml            ERROR (frontend failed, before parsing finished)        2.28        0.84        None
+elevator_spec2_product24.cil.yml            ERROR (frontend failed, before parsing finished)        3.11        1.11        None
+elevator_spec2_product25.cil.yml            ERROR (frontend failed, before parsing finished)        2.77        0.99        None

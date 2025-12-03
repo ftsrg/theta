@@ -1,0 +1,49 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-MainHeap
+date:                    Tue, 2025-12-02 11:25:09 UTC
+tool:                    Theta 6.27.13
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3232.909 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-MainHeap
+Run set 6 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                    status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------------

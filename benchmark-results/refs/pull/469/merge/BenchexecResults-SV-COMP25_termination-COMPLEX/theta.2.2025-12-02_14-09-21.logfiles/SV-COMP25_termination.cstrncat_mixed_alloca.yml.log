@@ -1,0 +1,14 @@
+Theta/theta-start.sh sv-benchmarks/c/termination-15/cstrncat_mixed_alloca.i --svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/termination-15/cstrncat_mixed_alloca.i' using arguments '--svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64 --input sv-benchmarks/c/termination-15/cstrncat_mixed_alloca.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+line 94:12 no viable alternative at input 'struct__sFILE{unsignedchar*_p;int_r;int_w;short_flags;short_file;struct__sbuf_bf;int_lbfsize;void*_cookie;_ssize_t(__attribute__'
+line 94:12 no viable alternative at input 'struct__sFILE{unsignedchar*_p;int_r;int_w;short_flags;short_file;struct__sbuf_bf;int_lbfsize;void*_cookie;_ssize_t(__attribute__'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.externalDeclaration(CParser.java:9474), org.antlr.v4.runtime.misc.ParseCancellationException)
+Error: class org.antlr.v4.runtime.misc.ParseCancellationException - (org.antlr.v4.runtime.BailErrorStrategy#recover:51, hu.bme.mit.theta.c.frontend.dsl.gen.CParser#externalDeclaration:9474)

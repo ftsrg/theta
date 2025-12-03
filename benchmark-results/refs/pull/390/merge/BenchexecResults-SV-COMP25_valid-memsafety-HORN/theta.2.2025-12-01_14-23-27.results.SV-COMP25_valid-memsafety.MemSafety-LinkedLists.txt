@@ -1,0 +1,187 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memsafety.MemSafety-LinkedLists
+date:                    Mon, 2025-12-01 14:23:27 UTC
+tool:                    Theta 6.27.7
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.107 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety.MemSafety-LinkedLists
+Run set 4 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                              status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------
+memsafety-broom/dll-backwards.yml                      ERROR (frontend failed, before parsing finished)        3.33        1.18        None
+memsafety-broom/dll-fst-data.yml                       ERROR (frontend failed, before parsing finished)        3.09        1.11        None
+memsafety-broom/dll-fst-shared.yml                     ERROR (frontend failed, before parsing finished)        3.09        1.11        None
+memsafety-broom/dll-lst-data.yml                       ERROR (frontend failed, before parsing finished)        2.67        0.95        None
+memsafety-broom/dll-lst-shared.yml                     ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+memsafety-broom/dll-middle-data.yml                    ERROR (frontend failed, before parsing finished)        2.91        1.04        None
+memsafety-broom/dll-middle-shared.yml                  ERROR (frontend failed, before parsing finished)        2.89        1.03        None
+memsafety-broom/dll.yml                                ERROR (frontend failed, before parsing finished)        2.84        1.01        None
+memsafety-broom/linux-hlist-fst-data.yml               ERROR (frontend failed, before parsing finished)        3.04        1.09        None
+memsafety-broom/linux-hlist-lst-data.yml               ERROR (frontend failed, before parsing finished)        2.82        1.01        None
+memsafety-broom/linux-hlist-middle-data.yml            ERROR (frontend failed, before parsing finished)        2.97        1.07        None
+memsafety-broom/linux-list-fst-data.yml                ERROR (frontend failed, before parsing finished)        3.00        1.07        None
+memsafety-broom/linux-list-lst-data.yml                ERROR (frontend failed, before parsing finished)        3.13        1.13        None
+memsafety-broom/linux-list-middle-data.yml             ERROR (frontend failed, before parsing finished)        2.94        1.06        None
+memsafety-broom/sll-fst-data.yml                       ERROR (frontend failed, before parsing finished)        3.19        1.13        None
+memsafety-broom/sll-fst-shared.yml                     ERROR (frontend failed, before parsing finished)        2.80        0.99        None
+memsafety-broom/sll-lst-data.yml                       ERROR (frontend failed, before parsing finished)        2.91        1.01        None
+memsafety-broom/sll-lst-shared.yml                     ERROR (frontend failed, before parsing finished)        2.92        1.04        None
+memsafety-broom/sll-middle-data.yml                    ERROR (frontend failed, before parsing finished)        2.25        1.02        None
+memsafety-broom/sll-middle-shared.yml                  ERROR (frontend failed, before parsing finished)        2.94        1.04        None
+memsafety-broom/sll-nested-linux-list.yml              ERROR (frontend failed, before parsing finished)        2.87        1.03        None
+memsafety-broom/sll-nested-sll-inline.yml              ERROR (frontend failed, before parsing finished)        2.92        1.03        None
+memsafety-broom/sll-nested-sll-lst-data.yml            ERROR (frontend failed, before parsing finished)        2.84        1.01        None
+memsafety-broom/sll-nested-sll-twice.yml               ERROR (frontend failed, before parsing finished)        2.57        0.92        None
+memsafety-broom/sll-nested-sll.yml                     ERROR (frontend failed, before parsing finished)        2.23        0.99        None
+memsafety-broom/sll-shared-after.yml                   ERROR (frontend failed, before parsing finished)        2.27        1.02        None
+memsafety-broom/sll-shared-before.yml                  ERROR (frontend failed, before parsing finished)        2.58        0.93        None
+memsafety-broom/sll-shared-sll-after.yml               ERROR (frontend failed, before parsing finished)        3.12        1.10        None
+memsafety-broom/sll-shared-sll-before.yml              ERROR (frontend failed, before parsing finished)        2.92        1.05        None
+memsafety-broom/sll-shared-sll.yml                     ERROR (frontend failed, before parsing finished)        3.04        1.08        None
+memsafety-broom/sll.yml                                ERROR (frontend failed, before parsing finished)        2.15        0.98        None
+heap-manipulation/bubble_sort_linux-1.yml              ERROR (frontend failed, before parsing finished)        3.30        1.16        None
+heap-manipulation/dancing.yml                          ERROR (frontend failed, before parsing finished)        2.89        1.03        None
+heap-manipulation/dll_of_dll-1.yml                     ERROR (frontend failed, before parsing finished)        3.10        1.11        None
+heap-manipulation/merge_sort-2.yml                     ERROR (frontend failed, before parsing finished)        2.73        0.97        None
+heap-manipulation/sll_to_dll_rev-2.yml                 ERROR (frontend failed, before parsing finished)        2.92        1.04        None
+heap-manipulation/tree-1.yml                           ERROR (frontend failed, before parsing finished)        3.09        1.10        None
+heap-manipulation/tree-2.yml                           ERROR (frontend failed, before parsing finished)        3.07        1.10        None
+forester-heap/dll-01-2.yml                             ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+forester-heap/dll-circular-2.yml                       ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+forester-heap/dll-optional-1.yml                       ERROR (frontend failed, before parsing finished)        2.99        1.07        None
+forester-heap/dll-queue-1.yml                          ERROR (frontend failed, before parsing finished)        2.67        0.95        None
+forester-heap/dll-rb-cnstr_1-1.yml                     ERROR (frontend failed, before parsing finished)        2.89        1.02        None
+forester-heap/dll-rb-cnstr_1-2.yml                     ERROR (frontend failed, before parsing finished)        3.22        1.13        None
+forester-heap/dll-rb-sentinel-1.yml                    ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+forester-heap/dll-rb-sentinel-2.yml                    ERROR (frontend failed, before parsing finished)        2.86        1.02        None
+forester-heap/dll-reverse.yml                          ERROR (frontend failed, before parsing finished)        2.92        1.03        None
+forester-heap/dll-simple-white-blue-2.yml              ERROR (frontend failed, before parsing finished)        2.68        0.96        None
+forester-heap/dll-sorted-2.yml                         ERROR (frontend failed, before parsing finished)        3.06        1.09        None
+forester-heap/dll-token-1.yml                          ERROR (frontend failed, before parsing finished)        2.98        1.08        None
+forester-heap/sll-01-1.yml                             ERROR (frontend failed, before parsing finished)        2.94        1.06        None
+forester-heap/sll-01-2.yml                             ERROR (frontend failed, before parsing finished)        2.88        1.02        None
+forester-heap/sll-buckets-1.yml                        ERROR (frontend failed, before parsing finished)        2.74        0.97        None
+forester-heap/sll-circular-1.yml                       ERROR (frontend failed, before parsing finished)        2.88        1.03        None
+forester-heap/sll-optional-1.yml                       ERROR (frontend failed, before parsing finished)        2.37        1.08        None
+forester-heap/sll-queue-1.yml                          ERROR (frontend failed, before parsing finished)        2.96        1.05        None
+forester-heap/sll-rb-cnstr_1-1.yml                     ERROR (frontend failed, before parsing finished)        2.65        0.94        None
+forester-heap/sll-rb-cnstr_1-2.yml                     ERROR (frontend failed, before parsing finished)        3.06        1.10        None
+forester-heap/sll-rb-sentinel-1.yml                    ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+forester-heap/sll-reverse_simple.yml                   ERROR (frontend failed, before parsing finished)        3.09        1.10        None
+forester-heap/sll-simple-white-blue-1.yml              ERROR (frontend failed, before parsing finished)        2.66        0.94        None
+forester-heap/sll-sorted-2.yml                         ERROR (frontend failed, before parsing finished)        2.64        0.95        None
+forester-heap/sll-token-2.yml                          ERROR (frontend failed, before parsing finished)        3.02        1.07        None
+list-properties/alternating_list-1.yml                 ERROR (frontend failed, before parsing finished)        2.22        1.00        None
+list-properties/list-1.yml                             ERROR (frontend failed, before parsing finished)        3.11        1.11        None
+list-properties/list_flag-2.yml                        ERROR (frontend failed, before parsing finished)        3.20        1.11        None
+list-properties/simple-2.yml                           ERROR (frontend failed, before parsing finished)        2.67        0.93        None
+list-properties/simple_built_from_end.yml              ERROR (frontend failed, before parsing finished)        3.12        1.10        None
+list-properties/splice-2.yml                           ERROR (frontend failed, before parsing finished)        2.68        0.95        None
+ddv-machzwd/ddv_machzwd_all.yml                        ERROR (frontend failed, before parsing finished)        4.75        1.61        None
+ddv-machzwd/ddv_machzwd_inb.yml                        ERROR (frontend failed, before parsing finished)        4.89        1.64        None
+ddv-machzwd/ddv_machzwd_inb_p.yml                      ERROR (frontend failed, before parsing finished)        4.07        1.37        None
+ddv-machzwd/ddv_machzwd_inl.yml                        ERROR (frontend failed, before parsing finished)        4.76        1.60        None
+ddv-machzwd/ddv_machzwd_inl_p.yml                      ERROR (frontend failed, before parsing finished)        4.81        1.63        None
+ddv-machzwd/ddv_machzwd_inw.yml                        ERROR (frontend failed, before parsing finished)        4.70        1.60        None
+ddv-machzwd/ddv_machzwd_inw_p.yml                      ERROR (frontend failed, before parsing finished)        4.75        1.60        None
+ddv-machzwd/ddv_machzwd_outb.yml                       ERROR (frontend failed, before parsing finished)        4.68        1.59        None
+ddv-machzwd/ddv_machzwd_outb_p.yml                     ERROR (frontend failed, before parsing finished)        4.19        1.42        None
+ddv-machzwd/ddv_machzwd_outl.yml                       ERROR (frontend failed, before parsing finished)        4.18        1.41        None
+ddv-machzwd/ddv_machzwd_outl_p.yml                     ERROR (frontend failed, before parsing finished)        4.40        1.48        None
+ddv-machzwd/ddv_machzwd_outw_p.yml                     ERROR (frontend failed, before parsing finished)        4.66        1.55        None
+ddv-machzwd/ddv_machzwd_pthread_mutex_unlock.yml       ERROR (frontend failed, before parsing finished)        4.80        1.63        None
+list-simple/dll2c_append_equal.yml                     ERROR (frontend failed, before parsing finished)        3.01        1.06        None
+list-simple/dll2c_append_unequal.yml                   ERROR (frontend failed, before parsing finished)        3.06        1.09        None
+list-simple/dll2c_insert_equal.yml                     ERROR (frontend failed, before parsing finished)        2.32        1.06        None
+list-simple/dll2c_insert_unequal.yml                   ERROR (frontend failed, before parsing finished)        3.03        1.05        None
+list-simple/dll2c_prepend_equal.yml                    ERROR (frontend failed, before parsing finished)        3.07        1.09        None
+list-simple/dll2c_prepend_unequal.yml                  ERROR (frontend failed, before parsing finished)        2.89        1.02        None
+list-simple/dll2c_remove_all.yml                       ERROR (frontend failed, before parsing finished)        2.92        1.04        None
+list-simple/dll2c_remove_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.09        1.10        None
+list-simple/dll2c_update_all.yml                       ERROR (frontend failed, before parsing finished)        2.30        1.04        None
+list-simple/dll2c_update_all_reverse.yml               ERROR (frontend failed, before parsing finished)        2.70        0.96        None
+list-simple/dll2n_append_equal.yml                     ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+list-simple/dll2n_append_unequal.yml                   ERROR (frontend failed, before parsing finished)        2.96        1.05        None
+list-simple/dll2n_insert_equal.yml                     ERROR (frontend failed, before parsing finished)        3.21        1.15        None
+list-simple/dll2n_insert_unequal.yml                   ERROR (frontend failed, before parsing finished)        3.04        1.09        None
+list-simple/dll2n_prepend_equal.yml                    ERROR (frontend failed, before parsing finished)        2.87        1.01        None
+list-simple/dll2n_prepend_unequal.yml                  ERROR (frontend failed, before parsing finished)        2.73        0.95        None
+list-simple/dll2n_remove_all.yml                       ERROR (frontend failed, before parsing finished)        3.09        1.10        None
+list-simple/dll2n_remove_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.27        1.15        None
+list-simple/dll2n_update_all.yml                       ERROR (frontend failed, before parsing finished)        3.00        1.07        None
+list-simple/dll2n_update_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.09        1.07        None
+list-simple/sll2c_append_equal.yml                     ERROR (frontend failed, before parsing finished)        2.98        1.06        None
+list-simple/sll2c_append_unequal.yml                   ERROR (frontend failed, before parsing finished)        3.04        1.09        None
+list-simple/sll2c_insert_equal.yml                     ERROR (frontend failed, before parsing finished)        3.06        1.08        None
+list-simple/sll2c_insert_unequal.yml                   ERROR (frontend failed, before parsing finished)        3.07        1.10        None
+list-simple/sll2c_prepend_equal.yml                    ERROR (frontend failed, before parsing finished)        2.71        1.23        None
+list-simple/sll2c_prepend_unequal.yml                  ERROR (frontend failed, before parsing finished)        2.82        1.00        None
+list-simple/sll2c_remove_all.yml                       ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+list-simple/sll2c_remove_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.07        1.09        None
+list-simple/sll2c_update_all.yml                       ERROR (frontend failed, before parsing finished)        2.78        0.98        None
+list-simple/sll2c_update_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.25        1.14        None
+list-simple/sll2n_append_equal.yml                     ERROR (frontend failed, before parsing finished)        3.27        1.15        None
+list-simple/sll2n_append_unequal.yml                   ERROR (frontend failed, before parsing finished)        2.93        1.04        None
+list-simple/sll2n_insert_equal.yml                     ERROR (frontend failed, before parsing finished)        3.03        1.06        None
+list-simple/sll2n_insert_unequal.yml                   ERROR (frontend failed, before parsing finished)        3.09        1.11        None
+list-simple/sll2n_prepend_equal.yml                    ERROR (frontend failed, before parsing finished)        3.07        1.08        None
+list-simple/sll2n_prepend_unequal.yml                  ERROR (frontend failed, before parsing finished)        2.94        1.03        None
+list-simple/sll2n_remove_all.yml                       ERROR (frontend failed, before parsing finished)        3.17        1.12        None
+list-simple/sll2n_remove_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.04        1.08        None
+list-simple/sll2n_update_all.yml                       ERROR (frontend failed, before parsing finished)        3.00        1.06        None
+list-simple/sll2n_update_all_reverse.yml               ERROR (frontend failed, before parsing finished)        3.12        1.09        None
+list-ext3-properties/dll_circular_traversal-1.yml      ERROR (frontend failed, before parsing finished)        3.04        1.09        None
+list-ext3-properties/dll_circular_traversal-2.yml      
+list-ext3-properties/dll_nondet_free_order-1.yml       
+list-ext3-properties/dll_nondet_free_order-2.yml       
+list-ext3-properties/dll_nullified-2.yml               
+list-ext3-properties/sll_circular_traversal-1.yml      
+list-ext3-properties/sll_circular_traversal-2.yml      
+list-ext3-properties/sll_length_check-2.yml            
+list-ext3-properties/sll_nondet_insert-2.yml           
+list-ext3-properties/sll_of_sll_nondet_append-1.yml    
+list-ext3-properties/sll_shallow_copy-1.yml            
+list-ext3-properties/sll_shallow_copy-2.yml            
+--------------------------------------------------------------------------------------------------------------------
+Run set 4                                              done                           379.98      149.63           -
+
+Statistics:            123 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:             123
+  Score:                 0 (max: 221)

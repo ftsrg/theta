@@ -1,0 +1,115 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-Other
+date:                    Wed, 2025-11-26 18:15:33 UTC
+tool:                    Theta 6.27.5
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3166.542 MHz
+ram:                     16772.575232 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-Other
+Run set 6 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------------------------
+array-examples/data_structures_set_multi_proc_trivial_ground.yml         ERROR (server error, after parsing finished)       19.83        8.01        None
+array-examples/sanfoundry_24-1.yml                                       ERROR (server error, after parsing finished)       16.14        6.66        None
+array-examples/standard_sentinel-2.yml                                   ERROR (server error, after parsing finished)       15.70        6.80        None
+array-examples/standard_vararg_ground.yml                                ERROR (server error, after parsing finished)       15.83        6.86        None
+array-industry-pattern/array_assert_loop_dep.yml                         ERROR (server error, after parsing finished)       15.65        6.78        None
+array-industry-pattern/array_monotonic.yml                               ERROR (server error, after parsing finished)       15.94        6.81        None
+array-industry-pattern/array_mul_init.yml                                ERROR (server error, after parsing finished)       17.23        7.28        None
+array-industry-pattern/array_ptr_single_elem_init-2.yml                  ERROR (server error, after parsing finished)       16.62        7.19        None
+array-industry-pattern/array_shadowinit.yml                              ERROR (server error, after parsing finished)       14.98        6.61        None
+array-industry-pattern/array_single_elem_init.yml                        ERROR (server error, after parsing finished)       16.61        7.14        None
+reducercommutativity/avg05-1.yml                                         ERROR (server error, after parsing finished)       16.83        7.27        None
+reducercommutativity/avg10-2.yml                                         ERROR (server error, after parsing finished)       17.60        7.44        None
+reducercommutativity/max.yml                                             ERROR (frontend failed, before parsing finished)        1.76        0.67        None
+reducercommutativity/max05-1.yml                                         ERROR (server error, after parsing finished)       17.26        7.40        None
+reducercommutativity/max10-1.yml                                         ERROR (server error, after parsing finished)       18.12        7.65        None
+reducercommutativity/rangesum.yml                                        ERROR (frontend failed, before parsing finished)        1.83        0.70        None
+reducercommutativity/rangesum05.yml                                      ERROR (server error, after parsing finished)       17.84        7.56        None
+reducercommutativity/rangesum10.yml                                      ERROR (server error, after parsing finished)       19.89        8.04        None
+reducercommutativity/sep.yml                                             ERROR (frontend failed, before parsing finished)        1.89        0.71        None
+reducercommutativity/sep05-1.yml                                         ERROR (server error, after parsing finished)       18.16        7.58        None
+reducercommutativity/sum05-2.yml                                         ERROR (server error, after parsing finished)       17.05        7.29        None
+reducercommutativity/sum10-1.yml                                         ERROR (server error, after parsing finished)       17.84        7.59        None
+array-memsafety/array01-alloca-2.yml                                     ERROR (frontend failed, before parsing finished)        2.84        1.01        None
+array-memsafety/array02-alloca-2.yml                                     ERROR (frontend failed, before parsing finished)        3.14        1.11        None
+array-memsafety/bubblesort-alloca-2.yml                                  ERROR (frontend failed, before parsing finished)        2.80        0.99        None
+array-memsafety/count_down-alloca-1.yml                                  ERROR (frontend failed, before parsing finished)        2.87        1.03        None
+array-memsafety/cstrcat-alloca-2.yml                                     ERROR (frontend failed, before parsing finished)        2.96        1.04        None
+array-memsafety/cstrchr-alloca-2.yml                                     ERROR (frontend failed, before parsing finished)        2.78        0.99        None
+array-memsafety/cstrcmp-alloca-2.yml                                     ERROR (frontend failed, before parsing finished)        2.91        1.05        None
+array-memsafety/cstrcpy-alloca-1.yml                                     ERROR (frontend failed, before parsing finished)        2.68        0.98        None
+array-memsafety/cstrcspn-alloca-1.yml                                    ERROR (frontend failed, before parsing finished)        3.00        1.08        None
+array-memsafety/cstrlen-alloca-2.yml                                     ERROR (frontend failed, before parsing finished)        2.89        1.04        None
+array-memsafety/cstrncat-alloca-2.yml                                    ERROR (frontend failed, before parsing finished)        3.03        1.08        None
+array-memsafety/cstrncpy-alloca-2.yml                                    ERROR (frontend failed, before parsing finished)        2.76        0.99        None
+array-memsafety/cstrpbrk-alloca-2.yml                                    ERROR (frontend failed, before parsing finished)        2.94        1.05        None
+array-memsafety/cstrspn-alloca-1.yml                                     ERROR (frontend failed, before parsing finished)        3.28        1.15        None
+array-memsafety/diff-alloca-2.yml                                        ERROR (frontend failed, before parsing finished)        3.04        1.07        None
+array-memsafety/insertionsort-alloca-1.yml                               ERROR (frontend failed, before parsing finished)        2.99        1.08        None
+array-memsafety/java_BubbleSort-alloca-1.yml                             ERROR (frontend failed, before parsing finished)        3.02        1.09        None
+array-memsafety/lis-alloca-1.yml                                         ERROR (frontend failed, before parsing finished)        2.97        1.05        None
+array-memsafety/mult_array-alloca-1.yml                                  ERROR (frontend failed, before parsing finished)        2.93        1.04        None
+array-memsafety/openbsd_cbzero-alloca-2.yml                              ERROR (frontend failed, before parsing finished)        3.02        1.07        None
+array-memsafety/openbsd_cmemchr-alloca-2.yml                             ERROR (frontend failed, before parsing finished)        2.80        0.97        None
+array-memsafety/openbsd_cmemset-alloca-1.yml                             ERROR (frontend failed, before parsing finished)        3.03        1.07        None
+array-memsafety/openbsd_cstpcpy-alloca-1.yml                             ERROR (frontend failed, before parsing finished)        2.83        1.02        None
+array-memsafety/openbsd_cstpncpy-alloca-1.yml                            ERROR (frontend failed, before parsing finished)        2.61        0.92        None
+array-memsafety/openbsd_cstrcat-alloca-2.yml                             ERROR (frontend failed, before parsing finished)        2.92        1.03        None
+array-memsafety/openbsd_cstrcmp-alloca-1.yml                             ERROR (frontend failed, before parsing finished)        2.65        0.94        None
+array-memsafety/openbsd_cstrcpy-alloca-2.yml                             ERROR (frontend failed, before parsing finished)        2.83        1.00        None
+array-memsafety/openbsd_cstrcspn-alloca-2.yml                            ERROR (frontend failed, before parsing finished)        3.00        1.04        None
+array-memsafety/openbsd_cstrlcpy-alloca-1.yml                            ERROR (frontend failed, before parsing finished)        3.12        1.10        None
+array-memsafety/openbsd_cstrlen-alloca-1.yml                             ERROR (frontend failed, before parsing finished)        3.10        1.10        None
+array-memsafety/openbsd_cstrncat-alloca-2.yml                            ERROR (frontend failed, before parsing finished)        2.85        1.01        None
+array-memsafety/openbsd_cstrncmp-alloca-2.yml                            ERROR (frontend failed, before parsing finished)        3.19        1.12        None
+array-memsafety/openbsd_cstrncpy-alloca-2.yml                            ERROR (frontend failed, before parsing finished)        2.66        0.95        None
+array-memsafety/openbsd_cstrnlen-alloca-1.yml                            ERROR (frontend failed, before parsing finished)        2.86        1.03        None
+array-memsafety/openbsd_cstrpbrk-alloca-2.yml                            ERROR (frontend failed, before parsing finished)        2.99        1.07        None
+array-memsafety/openbsd_cstrspn-alloca-2.yml                             ERROR (frontend failed, before parsing finished)        2.74        0.96        None
+array-memsafety/openbsd_cstrstr-alloca-2.yml                             ERROR (frontend failed, before parsing finished)        2.78        0.99        None
+array-memsafety/rec_strlen-alloca-1.yml                                  ERROR (frontend failed, before parsing finished)        2.62        0.93        None
+array-memsafety/selectionsort-alloca-1.yml                               ERROR (frontend failed, before parsing finished)        2.80        0.99        None
+array-memsafety/strreplace-alloca-2.yml                                  ERROR (frontend failed, before parsing finished)        3.45        1.21        None
+array-memsafety/subseq-alloca-2.yml                                      ERROR (frontend failed, before parsing finished)        2.86        1.04        None
+array-memsafety/substring-alloca-2.yml                                   ERROR (frontend failed, before parsing finished)        2.89        1.03        None
+bitvector/byte_add-1.yml                                                 TIMEOUT                         44.04       12.49        None
+bitvector/byte_add_1-1.yml                                               TIMEOUT                         44.03       12.44        None
