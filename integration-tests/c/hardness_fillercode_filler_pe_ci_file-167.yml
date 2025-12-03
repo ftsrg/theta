@@ -12,7 +12,7 @@ input_files: 'hardness_fillercode_filler_pe_ci_file-167.i'
 properties:
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C

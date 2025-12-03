@@ -4,7 +4,7 @@ format_version: '2.0'
 input_files: 'module_get_put-drivers-atm-eni.ko.cil.out.i'
 
 properties:
-  - property_file: ../properties/no-overflow.prp
+  - property_file: no-overflow.prp
     expected_verdict: false
 
 options:

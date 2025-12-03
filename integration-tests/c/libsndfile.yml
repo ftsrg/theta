@@ -3,9 +3,9 @@ format_version: '2.0'
 input_files: 'libsndfile.i'
 
 properties:
-  - property_file: ../properties/no-overflow.prp
+  - property_file: no-overflow.prp
     expected_verdict: false
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C

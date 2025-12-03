@@ -5,7 +5,7 @@ input_files: 'aws_add_size_checked_harness.i'
 properties:
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C

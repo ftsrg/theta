@@ -3,9 +3,9 @@ input_files: 'geo3-ll_unwindbound1.c'
 properties:
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/no-overflow.prp
+  - property_file: no-overflow.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C

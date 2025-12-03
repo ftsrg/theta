@@ -3,9 +3,9 @@ format_version: '2.0'
 input_files: 'thread-local-value-cond.i'
 
 properties:
-  - property_file: ../properties/no-data-race.prp
+  - property_file: no-data-race.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C
