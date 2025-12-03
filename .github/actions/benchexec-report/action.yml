@@ -25,16 +25,11 @@ runs:
       shell: bash
       run: |
         cd artifacts
+        unzip *.zip
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
-        # Collect unique properties from all result XMLs
-        properties=$(for f in BenchexecResults*/*xml.bz2; do bzcat "$f" | xmlstarlet sel -t -m /result/run -v "@properties" -n; done | sort -u)
-        header1='| Rundefinition |'
-        for p in $properties; do header1="$header1 $p |"; done
-        header2='|--|'
-        for p in $properties; do header2="$header2 --|"; done
-        echo "$header1" >> $GITHUB_OUTPUT
-        printf "$header2" >> $GITHUB_OUTPUT
+        echo "| Rundefinition | Correct | Incorrect | All | Status |" >> $GITHUB_OUTPUT
+        echo "|--|--|--|--|--|" >> $GITHUB_OUTPUT
         lasttask=""
         for i in *
         do 
@@ -45,34 +40,31 @@ runs:
             portfolio=${filename##*-}
             task=${filename%-$portfolio}
             if [ "$task" != "$lasttask" ]
-            then printf "\n| $task | " >> $GITHUB_OUTPUT
+            then printf "| $task | " >> $GITHUB_OUTPUT
             fi
             lasttask="$task"
-            # For each property, compute correct/incorrect/all from XML directly
-            for p in $properties; do
-              correct=0
-              incorrect=0
-              all=0
-              for xf in *.xml.bz2; do
-                [ -e "$xf" ] || continue
-                new_correct=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run[@properties='$p']/column[@title='category' and @value='correct'])" 2>/dev/null || echo 0)
-                new_incorrect=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run[@properties='$p']/column[@title='category' and @value='incorrect'])" 2>/dev/null || echo 0)
-                new_all=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run[@properties='$p'])" 2>/dev/null || echo 0)
-                correct=$((correct + ${new_correct:-0}))
-                incorrect=$((incorrect + ${new_incorrect:-0}))
-                all=$((all + ${new_all:-0}))
-              done
-              emoji=":white_check_mark:"
-              [ "$correct" -eq 0 ] && emoji=":question:"
-              [ "$incorrect" -eq 0 ] || emoji=":exclamation:"
-              printf " $emoji ($correct / $incorrect / $all) | " >> $GITHUB_OUTPUT
+            # Compute correct/incorrect/all from XML directly
+            correct=0
+            incorrect=0
+            all=0
+            for xf in *.xml.bz2; do
+              [ -e "$xf" ] || continue
+              new_correct=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run/column[@title='category' and @value='correct'])" 2>/dev/null || echo 0)
+              new_incorrect=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run/column[@title='category' and @value='incorrect'])" 2>/dev/null || echo 0)
+              new_all=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run)" 2>/dev/null || echo 0)
+              correct=$((correct + ${new_correct:-0}))
+              incorrect=$((incorrect + ${new_incorrect:-0}))
+              all=$((all + ${new_all:-0}))
             done
+            emoji=":white_check_mark:"
+            [ "$correct" -eq 0 ] && emoji=":question:"
+            [ "$incorrect" -eq 0 ] || emoji=":exclamation:"
+            printf "$correct | $incorrect | $all | $emoji |\n" >> $GITHUB_OUTPUT
             popd
           else
             rm -rf "$i"
           fi
         done
-        echo >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
