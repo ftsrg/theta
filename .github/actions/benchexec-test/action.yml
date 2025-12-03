@@ -13,9 +13,6 @@ inputs:
     config_options:
         required: true
         description: 'A space-separated list of configuration options to apply to the XML input file'
-    timeout:
-        required: true
-        description: 'The overall timeout for the benchexec run in seconds'
 runs:
   using: "composite"
   steps:
@@ -48,8 +45,7 @@ runs:
         cat "$XML"
 
         folder=$(dirname $(find . -name "theta.jar" | head -n1))
-        echo "timeout --kill-after 15 ${{ inputs.timeout }} benchexec $XML -n 2 --no-container --tool-directory $folder || true"
-        timeout --kill-after 15 "${{ inputs.timeout }}" benchexec "$XML" -n 2 --no-container --tool-directory "$folder" || true
+        benchexec "$XML" -n 2 --no-container --tool-directory "$folder"
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
