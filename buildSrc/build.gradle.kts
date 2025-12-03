@@ -31,6 +31,14 @@ apply(from = rootDir.resolve("../gradle/shared-with-buildSrc/mirrors.gradle.kts"
 val kotlinVersion: String by project
 val shadowVersion: String by project
 val spotlessVersion: String by project
+val javaVersion: String by project
+
+
+
+kotlin{
+  jvmToolchain(javaVersion.toInt())
+}
+
 
 // https://github.com/gradle/kotlin-dsl/issues/430#issuecomment-414768887
 fun gradlePlugin(id: String, version: String): String = "$id:$id.gradle.plugin:$version"

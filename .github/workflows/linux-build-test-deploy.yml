@@ -138,13 +138,13 @@ jobs:
       - name: Generate aggregate Javadoc
         uses: ./.github/actions/cache-build
         with:
-          arguments: aggregateJavadoc
+          arguments: javadoc
       - name: Deploy Javadoc
         if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
         with:
           branch: gh-pages
-          folder: build/docs/aggregateJavadoc
+          folder: build/docs/javadoc
           target-folder: javadoc
           single-commit: true
 
