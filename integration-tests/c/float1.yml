@@ -6,7 +6,7 @@ input_files: 'float1.c'
 properties:
   - property_file: ../properties/termination.prp
     expected_verdict: true
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: true
 
 options:

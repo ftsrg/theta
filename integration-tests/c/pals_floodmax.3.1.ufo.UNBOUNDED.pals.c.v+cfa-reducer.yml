@@ -4,7 +4,7 @@ format_version: '2.0'
 input_files: 'pals_floodmax.3.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.c'
 
 properties:
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: false
 
 options:

@@ -6,7 +6,7 @@ input_files: 'array_of_struct_single_elem_init.i'
 properties:
   - property_file: ../properties/no-overflow.prp
     expected_verdict: true
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: true
   - property_file: ../properties/coverage-branches.prp
   - property_file: ../properties/coverage-conditions.prp

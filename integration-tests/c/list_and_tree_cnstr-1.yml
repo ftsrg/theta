@@ -6,7 +6,7 @@ input_files: 'list_and_tree_cnstr-1.i'
 properties:
   - property_file: ../properties/termination.prp
     expected_verdict: false
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: false
 
 options:
