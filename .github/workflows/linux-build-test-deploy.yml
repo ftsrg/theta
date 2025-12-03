@@ -140,7 +140,7 @@ jobs:
         with:
           arguments: javadoc
       - name: Deploy Javadoc
-        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
         with:
           branch: gh-pages
@@ -187,7 +187,6 @@ jobs:
 
   deploy-release:
     needs: [test-linux, create-archives]
-    if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 21
@@ -199,10 +198,11 @@ jobs:
         uses: ./.github/actions/create-release
         with:
           message: ${{ inputs.message }}
+          dry-run: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
 
   deploy-zenodo:
     needs: [create-archives]
-    if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
@@ -238,7 +238,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Publish to Maven Central (Dry Run)
-        if: github.event.inputs.message != '' && (github.ref != 'refs/heads/master' || github.event_name == 'pull_request')
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
         uses: ./.github/actions/cache-build
         env:
           PGP_KEY: ${{ secrets.PGP_KEY }}
@@ -246,7 +246,7 @@ jobs:
         with:
           arguments: publishToMavenLocal
       - name: Publish to Maven Central
-        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: ./.github/actions/cache-build
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
@@ -315,13 +315,13 @@ jobs:
         run: |
           echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
       - name: docker-login
-        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: ./.github/actions/docker-login
         with:
           username: ${{secrets.DOCKER_USERNAME}}
           token: ${{secrets.DOCKER_TOKEN}}
       - name: docker-login-ghcr
-        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: ./.github/actions/docker-login
         with:
           registry: ghcr.io
@@ -334,9 +334,9 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           user-dockerhub: ftsrg
           user-ghcr: ftsrg
-          push: ${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}
       - name: Docker Hub Description update
-        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -362,7 +362,7 @@ jobs:
           arguments: buildDocs
       - name: Deploy docs
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
-        if: github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         with:
           branch: gh-pages
           folder: build/doc/wiki
