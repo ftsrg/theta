@@ -187,7 +187,7 @@ afterEvaluate {
 								.replace("TOOL_VERSION", versionStr)
 						}
 						rename { scriptName }
-						fileMode = 0b111101101 // 0755 in octal = rwxr-xr-x
+            filePermissions { unix(0b111101101) } // 0755 in octal = rwxr-xr-x
 					}
 				} else {
 					println("archive-packaging: script ${scriptSourceFile.path} not found for $toolName")
