@@ -24,6 +24,14 @@ plugins {
     id("docs-builder")
 }
 
+dependencies {
+    rootProject.subprojects.forEach { subproject ->
+        subproject.pluginManager.withPlugin("java") {
+            javadoc(subproject)
+        }
+    }
+}
+
 subprojects {
     apply(plugin = "copyright-check")
     

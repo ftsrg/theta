@@ -28,7 +28,7 @@ runs:
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
         # Collect unique properties from all result XMLs
-        properties=$(for f in BenchexecResults*/*xml.bz2 2>/dev/null; do bzcat "$f" | xmlstarlet sel -t -m /result/run -v "@properties" -n; done | sort -u)
+        properties=$(for f in BenchexecResults*/*xml.bz2; do bzcat "$f" | xmlstarlet sel -t -m /result/run -v "@properties" -n; done | sort -u)
         header1='| Rundefinition |'
         for p in $properties; do header1="$header1 $p |"; done
         header2='|--|'

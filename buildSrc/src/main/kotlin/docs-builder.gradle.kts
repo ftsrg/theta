@@ -14,10 +14,17 @@
  *  limitations under the License.
  */
 
-open class DocsBuilderExtension {
-    var sourceDir: String = "doc/wiki"
-    var outputDir: String = "wiki"
-    var requirementsFile: String? = null
+import org.gradle.api.provider.Property
+
+abstract class DocsBuilderExtension {
+    abstract val sourceDir: Property<String>
+    abstract val outputDir: Property<String>
+    abstract val requirementsFile: Property<String>
+    
+    init {
+        sourceDir.convention("doc/wiki")
+        outputDir.convention("wiki")
+    }
 }
 
 val extension = extensions.create<DocsBuilderExtension>("docsBuilder")
@@ -26,40 +33,49 @@ val buildDocs by tasks.registering(Exec::class) {
     group = "documentation"
     description = "Build documentation using mkdocs"
     
-    workingDir(rootProject.file(extension.sourceDir))
+    val sourceDirPath = extension.sourceDir.map { rootProject.file(it) }
+    val outputDirValue = extension.outputDir
     
-    commandLine("mkdocs", "build", "--site-dir", extension.outputDir)
-    
-    inputs.dir(rootProject.file(extension.sourceDir))
-    outputs.dir(rootProject.file("${extension.sourceDir}/${extension.outputDir}"))
-    
+    // Use doFirst to set workingDir at execution time
     doFirst {
-        if (!commandExists("mkdocs")) {
+        workingDir = sourceDirPath.get()
+        commandLine("mkdocs", "build", "--site-dir", outputDirValue.get())
+        
+        // Check if mkdocs is installed
+        val commandExists = try {
+            val process = ProcessBuilder("which", "mkdocs")
+                .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                .redirectError(ProcessBuilder.Redirect.PIPE)
+                .start()
+            process.waitFor()
+            process.exitValue() == 0
+        } catch (e: Exception) {
+            false
+        }
+        
+        if (!commandExists) {
             throw GradleException("mkdocs is not installed. Run 'pip install mkdocs mkdocs-material python-markdown-math mkdocs-awesome-pages-plugin' (or equivalent) manually.")
         }
     }
+    
+    inputs.dir(sourceDirPath)
+    outputs.dir(sourceDirPath.zip(outputDirValue) { source, output -> 
+        source.resolve(output)
+    })
 }
 
 val cleanDocs by tasks.registering(Delete::class) {
     group = "documentation"
     description = "Clean built documentation"
     
-    delete(rootProject.file("${extension.sourceDir}/${extension.outputDir}"))
+    val sourceDirPath = extension.sourceDir.map { rootProject.file(it) }
+    val outputDirValue = extension.outputDir
+    
+    delete(sourceDirPath.zip(outputDirValue) { source, output -> 
+        source.resolve(output)
+    })
 }
 
 tasks.named("clean") {
     dependsOn(cleanDocs)
-}
-
-fun commandExists(command: String): Boolean {
-    return try {
-        val process = ProcessBuilder("which", command)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .redirectError(ProcessBuilder.Redirect.PIPE)
-            .start()
-        process.waitFor()
-        process.exitValue() == 0
-    } catch (e: Exception) {
-        false
-    }
 }
