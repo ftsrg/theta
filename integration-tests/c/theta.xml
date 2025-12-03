@@ -2,7 +2,7 @@
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
 <benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
 
-<!-- $config -->
+<!-- config -->
   
   <rundefinition name="Theta-C-Integration-Test">
     <tasks name="SV-COMP26_unreach-call">
