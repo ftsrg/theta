@@ -10,7 +10,7 @@ format_version: '2.0'
 input_files: 'hardness_fillercode_filler_pe_ci_file-184.i'
 
 properties:
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: true
   - property_file: ../properties/coverage-branches.prp
 

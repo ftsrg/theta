@@ -5,7 +5,7 @@ input_files: 'linear_interpolation.i'
 properties:
   - property_file: ../properties/no-overflow.prp
     expected_verdict: true
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: true
   - property_file: ../properties/coverage-branches.prp
 

@@ -4,7 +4,7 @@ format_version: '2.0'
 input_files: 'float-no-simp2.i'
 
 properties:
-  - property_file: ../properties/unreach-call.prp
+  - property_file: unreach-call.prp
     expected_verdict: true
   - property_file: ../properties/coverage-branches.prp
   - property_file: ../properties/coverage-conditions.prp
