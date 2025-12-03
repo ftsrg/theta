@@ -4,7 +4,7 @@ format_version: '2.0'
 input_files: '04-mutex_36-trylock_nr-overflow.i'
 
 properties:
-  - property_file: ../properties/no-overflow.prp
+  - property_file: no-overflow.prp
     expected_verdict: false
 
 options:

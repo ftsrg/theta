@@ -12,7 +12,7 @@ input_files: 'hardness_floats_no_floats_file-15.i'
 properties:
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C

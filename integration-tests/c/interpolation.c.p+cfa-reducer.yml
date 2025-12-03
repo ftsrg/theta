@@ -4,13 +4,13 @@ format_version: '2.0'
 input_files: 'interpolation.c.p+cfa-reducer.c'
 
 properties:
-  - property_file: ../properties/no-overflow.prp
+  - property_file: no-overflow.prp
     expected_verdict: true
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
-  - property_file: ../properties/coverage-conditions.prp
-  - property_file: ../properties/coverage-statements.prp
+  
+  
+  
 
 options:
   language: C

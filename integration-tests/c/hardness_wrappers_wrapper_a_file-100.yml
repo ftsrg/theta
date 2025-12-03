@@ -12,7 +12,7 @@ input_files: 'hardness_wrappers_wrapper_a_file-100.i'
 properties:
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C

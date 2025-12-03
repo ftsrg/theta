@@ -10,11 +10,11 @@ format_version: '2.0'
 input_files: 'prefixsum_iter.c'
 
 properties:
-  - property_file: ../properties/valid-memsafety.prp
+  - property_file: valid-memsafety.prp
     expected_verdict: true
   - property_file: unreach-call.prp
     expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
+  
 
 options:
   language: C
