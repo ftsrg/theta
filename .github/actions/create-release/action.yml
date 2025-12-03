@@ -3,6 +3,10 @@ description: 'Create release and deploy JARs'
 inputs:
     message:
         required: true
+    dry-run:
+        required: false
+        default: 'false'
+        description: 'If true, only generate release info and comment on PR instead of creating release'
 runs:
   using: "composite"
   steps:
@@ -56,12 +60,41 @@ runs:
       with:
         name: ThetaCHC-archive
         path: upload/
-    - run: for i in $(find jar -name "*-all.jar"); do mv -v $i upload/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
+    - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
       shell: bash
+    - name: List files for release
+      id: files
+      shell: bash
+      run: |
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "filelist<<$EOF" >> $GITHUB_OUTPUT
+        find upload -type f -exec basename {} \; | sort >> $GITHUB_OUTPUT
+        echo "$EOF" >> $GITHUB_OUTPUT
     - name: Release
+      if: inputs.dry-run == 'false'
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0
       with:
         files: upload/*
         body: ${{steps.value.outputs.message}}
         name: ${{steps.value.outputs.tagname}}
         tag_name: ${{steps.value.outputs.tagname}}
+    - name: Comment on PR (dry run)
+      if: inputs.dry-run == 'true' && github.event_name == 'pull_request'
+      uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+      continue-on-error: true
+      with: 
+        comment_tag: 'release-preview'
+        mode: 'recreate'
+        message: |
+          ## Release Preview
+          
+          **Version:** ${{steps.value.outputs.version}}
+          **Tag:** ${{steps.value.outputs.tagname}}
+          
+          **Release Notes:**
+          ${{steps.value.outputs.message}}
+          
+          **Files to be uploaded:**
+          ```
+          ${{steps.files.outputs.filelist}}
+          ```

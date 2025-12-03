@@ -43,14 +43,13 @@ runs:
         do
           echo "Applying config option: $config"
           escaped_config=$(printf '%s\n' "$config" | sed -e 's/[\/&]/\\&/g')
-          sed -i "s|<!-- config -->|<!-- config -->\n$escaped_config|g" "$XML"
+          sed -i "s|<!-- config -->|<!-- config -->\n<option name=\"$escaped_config\"/>|g" "$XML"
         done
         cat "$XML"
 
         folder=$(dirname $(find . -name "theta.jar" | head -n1))
-        timeout=$((${{inputs.timeout}} / tasks_num))
-        echo "timeout --kill-after 15 $timeout benchexec $XML -n 2 --no-container --tool-directory $folder || true"
-        timeout --kill-after 15 "$timeout" benchexec "$XML" -n 2 --no-container --tool-directory "$folder" || true
+        echo "timeout --kill-after 15 ${{ inputs.timeout }} benchexec $XML -n 2 --no-container --tool-directory $folder || true"
+        timeout --kill-after 15 "${{ inputs.timeout }}" benchexec "$XML" -n 2 --no-container --tool-directory "$folder" || true
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
