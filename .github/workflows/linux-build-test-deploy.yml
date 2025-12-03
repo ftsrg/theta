@@ -78,7 +78,6 @@ jobs:
           config_options: ${{ matrix.config }}
           tool: ${{ matrix.tool }}
           input_type: c
-          timeout: ${{ contains(github.event.pull_request.labels.*.name, 'long_test') && 3600 || 300 }}
   
   collect-results:
     needs: test-benchexec
