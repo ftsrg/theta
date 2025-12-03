@@ -186,7 +186,8 @@ afterEvaluate {
 							line.replace("TOOL_NAME", toolName)
 								.replace("TOOL_VERSION", versionStr)
 						}
-						rename { scriptName } 
+						rename { scriptName }
+						fileMode = 0b111101101 // 0755 in octal = rwxr-xr-x
 					}
 				} else {
 					println("archive-packaging: script ${scriptSourceFile.path} not found for $toolName")
