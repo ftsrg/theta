@@ -23,7 +23,7 @@ abstract class DocsBuilderExtension {
     
     init {
         sourceDir.convention("doc/wiki")
-        outputDir.convention("wiki")
+        outputDir.convention("doc/wiki")
     }
 }
 
@@ -34,12 +34,13 @@ val buildDocs by tasks.registering(Exec::class) {
     description = "Build documentation using mkdocs"
     
     val sourceDirPath = extension.sourceDir.map { rootProject.file(it) }
-    val outputDirValue = extension.outputDir
+    val outputDirValue = extension.outputDir.map { rootProject.layout.buildDirectory.file(it) }
     
     // Use doFirst to set workingDir at execution time
     doFirst {
         workingDir = sourceDirPath.get()
-        commandLine("mkdocs", "build", "--site-dir", outputDirValue.get())
+        outputDirValue.get().get().asFile.parentFile.mkdirs()
+        commandLine("mkdocs", "build", "--site-dir", outputDirValue.get().get().asFile.absolutePath)
         
         // Check if mkdocs is installed
         val commandExists = try {
@@ -59,9 +60,7 @@ val buildDocs by tasks.registering(Exec::class) {
     }
     
     inputs.dir(sourceDirPath)
-    outputs.dir(sourceDirPath.zip(outputDirValue) { source, output -> 
-        source.resolve(output)
-    })
+    outputs.dir(outputDirValue)
 }
 
 val cleanDocs by tasks.registering(Delete::class) {
