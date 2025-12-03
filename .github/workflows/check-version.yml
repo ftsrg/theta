@@ -11,11 +11,13 @@ jobs:
   check-version:
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 21
-        run: |
-          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
       - name: New version
         id: new_version
         run: |
