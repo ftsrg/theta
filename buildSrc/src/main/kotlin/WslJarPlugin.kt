@@ -87,7 +87,7 @@ class WslJarPlugin : Plugin<Project> {
         .withType<ProjectDependency>()
         .forEach { dependency ->
           wslJar.configure {
-            dependsOn(dependency.dependencyProject.tasks.named("jar"))
+            dependsOn(project.project(dependency.path).tasks.named("jar"))
           }
         }
     }
