@@ -17,12 +17,13 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VarIndexingTest {
 
@@ -64,9 +65,16 @@ public class VarIndexingTest {
         assertEquals(1, indexes.get(z));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testIncNegException() {
-        VarIndexingFactory.basicIndexingBuilder(1).inc(x, -1).inc(z, -1).inc(x, -1).build();
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        VarIndexingFactory.basicIndexingBuilder(1)
+                                .inc(x, -1)
+                                .inc(z, -1)
+                                .inc(x, -1)
+                                .build());
     }
 
     @Test
@@ -110,18 +118,27 @@ public class VarIndexingTest {
         assertEquals(3, sub.get(z));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testSubException() {
-        final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).inc(x).build();
-        final VarIndexing indexes2 =
-                VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x).build();
-        indexes1.sub(indexes2);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    final VarIndexing indexes1 =
+                            VarIndexingFactory.indexingBuilder(1).inc(x).build();
+                    final VarIndexing indexes2 =
+                            VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x).build();
+                    indexes1.sub(indexes2);
+                });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testSubException2() {
-        final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).build();
-        final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(2).build();
-        indexes1.sub(indexes2);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).build();
+                    final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(2).build();
+                    indexes1.sub(indexes2);
+                });
     }
 }

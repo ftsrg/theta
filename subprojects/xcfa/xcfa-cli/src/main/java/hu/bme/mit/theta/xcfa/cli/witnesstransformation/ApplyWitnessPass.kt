@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -40,12 +39,113 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.LinkedList
+import kotlin.jvm.optionals.getOrNull
 
 class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (parseContext.multiThreading) {
+      throw UnsupportedOperationException(
+        "Yaml violation witnesses have no semantics for multi-threaded programs."
+      )
+    }
     if (builder.parent.getInitProcedures().none { it.first.equals(builder) }) {
       return builder
     }
+
+    return if (witness.entryType == EntryType.VIOLATION) {
+      applyViolationWitness(builder)
+    } else {
+      applyCorrectnessWitness(builder)
+    }
+  }
+
+  private fun applyCorrectnessWitness(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val statementToEdge = getStatementToEdge(builder)
+    val edgeToLabels =
+      mutableMapOf<
+        XcfaEdge,
+        MutableMap<XcfaLabel, MutableSet<Expr<BoolType>>>,
+      >() // on which edges, which labels must have these new assumptions beforehand.
+    for (item in witness.content) {
+      item.invariant?.let {
+        val inv =
+          getExpressionFromC(
+            it.value,
+            parseContext,
+            false,
+            false,
+            NullLogger.getInstance(),
+            builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+          )
+        val loc = it.location
+        val labelsOnEdges =
+          statementToEdge
+            .filter { (statement, _, _) ->
+              statement.lineNumberStart == loc.line &&
+                (loc.column?.let { statement.colNumberStart + 1 == it } ?: true)
+            }
+            .map { (_, label, edge) -> Pair(label, edge) }
+        for ((label, edge) in labelsOnEdges) {
+          edgeToLabels
+            .computeIfAbsent(edge) { mutableMapOf() }
+            .computeIfAbsent(label) { mutableSetOf() }
+            .add(inv)
+        }
+      }
+    }
+
+    for ((edge, labels) in edgeToLabels) {
+      builder.removeEdge(edge)
+      val oldLabels = edge.getFlatLabels()
+      val labelCollector = mutableListOf<XcfaLabel>()
+      var i = 0
+      var nextSource = edge.source
+      builder.createErrorLoc()
+
+      fun flush(last: Boolean = false) {
+        if (labelCollector.isNotEmpty()) {
+          val anonymLoc =
+            if (last) edge.target
+            else XcfaLocation("__tmp" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData)
+          builder.addEdge(
+            XcfaEdge(
+              nextSource,
+              anonymLoc,
+              label = SequenceLabel(labelCollector),
+              metadata = EmptyMetaData,
+            )
+          )
+          nextSource = anonymLoc
+          labelCollector.clear()
+        }
+      }
+      for ((label, assumptions) in labels) {
+        while (i < oldLabels.indexOf(label)) {
+          labelCollector.add(oldLabels[i])
+          ++i
+        }
+        flush()
+        builder.addEdge(
+          XcfaEdge(
+            nextSource,
+            builder.errorLoc.get(),
+            SequenceLabel(listOf(StmtLabel(AssumeStmt.of(And(assumptions))))),
+            metadata = EmptyMetaData,
+          )
+        )
+        labelCollector.add(StmtLabel(AssumeStmt.of(Not(And(assumptions)))))
+      }
+      while (i < oldLabels.size) {
+        labelCollector.add(oldLabels[i])
+        ++i
+      }
+      flush(true)
+    }
+
+    return builder
+  }
+
+  private fun applyViolationWitness(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val segments = witness.content.map { c -> c.segment }.filterNotNull().iterator()
     val segmentCount = witness.content.map { c -> c.segment }.filterNotNull().count()
 
@@ -88,7 +188,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           when (wp.waypoint.type) {
             WaypointType.ASSUMPTION -> {
               val constraint = wp.waypoint.constraint!!
-              check(constraint.format!! == Format.C_EXPRESSION) { "Not handled: $constraint" }
+              check(
+                constraint.format!! == Format.C_EXPRESSION ||
+                  constraint.format!! == Format.EXT_C_EXPRESSION
+              ) {
+                "Not handled: $constraint"
+              }
               getExpressionFromC(
                 constraint.value,
                 parseContext,
@@ -98,6 +203,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
               )
             }
+
             WaypointType
               .FUNCTION_RETURN -> { // TODO: deduplicate with below code for statement search
               val vars =
@@ -118,7 +224,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
                 if (cNameOpt.isPresent) {
                   val constraint = wp.waypoint.constraint!!
-                  check(constraint.format!! == Format.C_EXPRESSION) { "Not handled: $constraint" }
+                  check(
+                    constraint.format!! == Format.C_EXPRESSION ||
+                      constraint.format!! == Format.EXT_C_EXPRESSION
+                  ) {
+                    "Not handled: $constraint"
+                  }
                   getExpressionFromC(
                     constraint.value.replace("\\result", cNameOpt.get() as String),
                     parseContext,
@@ -132,10 +243,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 }
               }
             }
+
             WaypointType.BRANCHING -> {
-              // we handle branching not at the 'w' of 'while' (and similar), but at its body.
-              // therefore, we need to query the ast node here.
-              val (guard, body) =
+              val branching =
                 statementToEdge
                   .mapNotNull { (statement, _, _) ->
                     if (
@@ -147,25 +257,20 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   }
                   .map {
                     when (it) {
-                      is CWhile -> Pair(it.guard, it.body)
-                      is CFor -> Pair(it.guard, it.body)
-                      is CIf -> Pair(it.guard, it.body)
-                      is CDoWhile -> Pair(it.guard, it.body)
+                      is CWhile,
+                      is CFor,
+                      is CIf,
+                      is CDoWhile -> it
+
                       else -> error("Branching not on iteration/branching statement.")
                     }
                   }
                   .first() // we hope it's a single ast node..
 
-              loc =
-                wp.waypoint.location.copy(
-                  line = body.lineNumberStart,
-                  column = body.colNumberStart + 1,
-                )
-
               val guardAssume =
                 statementToEdge.mapNotNull {
                   if (
-                    it.first == body /* now assumes are body-labelled */ &&
+                    it.first == branching &&
                       it.second is StmtLabel &&
                       (it.second as StmtLabel).stmt is AssumeStmt &&
                       (it.second as StmtLabel).choiceType != ChoiceType.NONE
@@ -181,19 +286,23 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 "true" -> {
                   guardAssume.first { it.first == ChoiceType.MAIN_PATH }.second.cond
                 }
+
                 "false" -> {
                   guardAssume.first { it.first == ChoiceType.ALTERNATIVE_PATH }.second.cond
                 }
+
                 else -> {
                   error("Unknown value for branching: ${wp.waypoint.constraint?.value}")
                 }
               }
             }
+
             WaypointType.FUNCTION_ENTER,
             WaypointType.TARGET -> {
               // no-op now
               True()
             }
+
             else -> {
               error("Not handled: ${wp.waypoint.type}")
             }
@@ -201,18 +310,17 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         )
 
       val segmentUpdate =
-        if (!segments.hasNext()) {
+        if (!segments.hasNext() && firstCycle > -1) {
           Pair(currentSegmentPred, Int(firstCycle))
-        } else {
+        } else if (segments.hasNext()) {
           Pair(currentSegmentPred, Int(i)) // here i was already incremented
+        } else {
+          null
         }
 
       val segmentFlagUpdate =
         if (i == segmentCount) {
-          AssignStmtLabel(
-            segmentFlag,
-            Ite<BoolType>(currentSegmentPred, currentSegmentPred, segmentFlag.ref),
-          )
+          AssignStmtLabel(segmentFlag, Ite(currentSegmentPred, currentSegmentPred, segmentFlag.ref))
         } else null
 
       val labelsOnEdges =
@@ -276,7 +384,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         newLabels.addAll(annots.map { it.assumption })
         newLabels.addAll(annots.mapNotNull { it.flagUpdate })
         var expr = segmentCounter.ref as Expr<IntType>
-        for ((cond, then) in annots.map { it.segmentUpdate }) {
+        for ((cond, then) in annots.mapNotNull { it.segmentUpdate }) {
           expr = Ite(cond, then, expr)
         }
         newLabels.add(AssignStmtLabel(segmentCounter, expr))
@@ -285,6 +393,20 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         newLabels.add(oldLabels[i++])
       }
       builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
+    }
+
+    if (firstCycle == -1) { // we are checking reachability, TODO refactor
+      builder.errorLoc.getOrNull()?.incomingEdges?.toSet()?.forEach {
+        builder.removeEdge(it)
+        builder.addEdge(
+          it.withLabel(
+            SequenceLabel(
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
+              metadata = it.label.metadata,
+            )
+          )
+        )
+      }
     }
 
     builder.prop = segmentFlag.ref
@@ -337,6 +459,6 @@ private data class Annotation(
   val edge: XcfaEdge,
   val beforeLabel: XcfaLabel,
   val assumption: XcfaLabel,
-  val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>,
+  val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
 ) {}

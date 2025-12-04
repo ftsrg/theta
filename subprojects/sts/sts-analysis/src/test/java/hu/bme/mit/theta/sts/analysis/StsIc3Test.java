@@ -47,21 +47,14 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class StsIc3Test {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public boolean isSafe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -84,8 +77,11 @@ public class StsIc3Test {
                 });
     }
 
-    @Test
-    public void testIC3() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}")
+    public void testIC3(String filePath, boolean isSafe) throws IOException {
+
+        initStsIc3Test(filePath, isSafe);
 
         final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
 
@@ -117,6 +113,11 @@ public class StsIc3Test {
                         List.of(),
                         List.of(),
                         logger);
-        Assert.assertEquals(isSafe, checker.check().isSafe());
+        Assertions.assertEquals(isSafe, checker.check().isSafe());
+    }
+
+    public void initStsIc3Test(String filePath, boolean isSafe) {
+        this.filePath = filePath;
+        this.isSafe = isSafe;
     }
 }

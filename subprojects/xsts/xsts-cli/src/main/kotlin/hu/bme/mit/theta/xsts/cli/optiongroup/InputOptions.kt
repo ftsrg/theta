@@ -51,7 +51,7 @@ class InputOptions :
           "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening."
       )
       .int()
-      .default(2)
+      .default(0)
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
   val pnProperty: PropType by

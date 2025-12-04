@@ -23,9 +23,9 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.frontend.stdlib.MacroExprsKt.fromName;
 import static hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType.getSmallestCommonType;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
 import hu.bme.mit.theta.common.Tuple2;
@@ -49,6 +49,7 @@ import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
@@ -70,7 +71,7 @@ import org.kframework.mpfr.BinaryMathContext;
 
 // FunctionVisitor may be null, e.g., when parsing a simple C expression.
 
-public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
+public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     protected final List<CStatement> preStatements = new ArrayList<>();
     protected final List<CStatement> postStatements = new ArrayList<>();
     protected final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
@@ -113,7 +114,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return varDecl;
             }
         }
-        throw new RuntimeException("No such variable: " + name);
+        return null;
     }
 
     public List<CStatement> getPostStatements() {
@@ -583,7 +584,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             if (type.isPresent()) {
                 LitExpr<?> value =
                         CComplexType.getSignedInt(parseContext)
-                                .getValue("" + type.get().width() / 8);
+                                .getValue("" + Math.max(type.get().width() / 8, 1));
                 return value;
             } else {
                 uniqueWarningLogger.write(
@@ -666,7 +667,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return promotedOperand;
             case "~":
                 //noinspection unchecked
-                Expr<?> expr = BvExprs.Not((Expr<BvType>) promotedOperand);
+                Expr<?> expr = BvExprs.Not(cast(promotedOperand, BvType.of(type.width())));
                 parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":
@@ -736,8 +737,18 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
-        final var variable = getVar(ctx.Identifier().getText());
-        return variable.getRef();
+        final var name = ctx.Identifier().getText();
+        final var variable = getVar(name);
+        if (variable == null) {
+            // no variable found, we try some macros..
+            final var ret = fromName(name, parseContext);
+            if (ret != null) {
+                return ret;
+            }
+            throw new RuntimeException("No such variable or macro: " + name);
+        } else {
+            return variable.getRef();
+        }
     }
 
     @Override
@@ -782,6 +793,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
         } else {
 
+            boolean negativeIsUnaryMinus = false;
+
             boolean isLongLong = text.endsWith("l");
             if (isLongLong) text = text.substring(0, text.length() - 1);
             boolean isUnsigned = text.endsWith("u");
@@ -804,6 +817,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 bigInteger = BigInteger.valueOf((int) text.charAt(1));
             } else {
                 bigInteger = new BigInteger(text, 10);
+                negativeIsUnaryMinus = true; // -10 is -(10)
             }
 
             final var size = bigInteger.bitLength();
@@ -817,9 +831,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
             CComplexType type;
             if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
-            else if (isLongLong || size >= signedLong.width()) type = signedLongLong;
+            else if (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus)
+                type = signedLongLong;
             else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (isLong || size >= signedInt.width()) type = signedLong;
+            else if (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus)
+                type = signedLong;
             else if (isUnsigned) type = unsignedInt;
             else type = signedInt;
 
@@ -887,7 +903,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         return ret;
     }
 
-    class PostfixVisitor extends CBaseVisitor<Function<Expr<?>, Expr<?>>> {
+    class PostfixVisitor extends IncludeHandlingCBaseVisitor<Function<Expr<?>, Expr<?>>> {
         @Override
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBrackets(
                 PostfixExpressionBracketsContext ctx) {
@@ -919,7 +935,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBraces(
                 PostfixExpressionBracesContext ctx) {
             return (expr) -> {
-                checkState(expr instanceof RefExpr<?>, "Only variables are callable now.");
+                checkState(
+                        expr instanceof RefExpr<?>
+                                && functions.containsKey(
+                                        (VarDecl<?>) ((RefExpr<?>) expr).getDecl()),
+                        "Only variable-backed functions are callable.");
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;
                 if (exprList == null) arguments = List.of();

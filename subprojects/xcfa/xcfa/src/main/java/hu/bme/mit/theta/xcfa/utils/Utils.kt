@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.utils.StmtSimplifier
@@ -310,6 +311,19 @@ fun <T1 : Type, T2 : Type> AssignStmtLabel(
   rhs: Expr<T2>,
   metadata: MetaData = EmptyMetaData,
 ): StmtLabel = assignStmtLabelOf(cast(lhs.decl as VarDecl<*>, rhs.type), rhs, metadata)
+
+@Suppress("FunctionName")
+fun <T1 : Type, T2 : Type> AssignStmtLabel(
+  lhs: Expr<T1>,
+  rhs: Expr<T2>,
+  metadata: MetaData = EmptyMetaData,
+): StmtLabel =
+  when (lhs) {
+    is RefExpr<*> -> AssignStmtLabel(lhs as RefExpr<T1>, rhs, metadata)
+    is Dereference<*, *, *> ->
+      StmtLabel(MemoryAssignStmt.create(lhs as Dereference<*, *, *>, rhs), metadata = metadata)
+    else -> throw IllegalArgumentException("LHS of assignment must be a reference expression.")
+  }
 
 fun intersect(v1: Valuation?, v2: Valuation?): Valuation {
   if (v1 == null || v2 == null) return ImmutableValuation.empty()

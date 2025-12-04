@@ -23,12 +23,15 @@ import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@MockitoSettings(strictness = Strictness.WARN)
+@ExtendWith(MockitoExtension.class)
 public class ASGTraceTest {
 
     @Test
@@ -36,9 +39,9 @@ public class ASGTraceTest {
         ASGNode<ExprState, ExprAction> initNode = new ASGNode<>(mock(ExprState.class), false);
         ASGNode<ExprState, ExprAction> hondaNode = new ASGNode<>(mock(ExprState.class), true);
         ASGNode<ExprState, ExprAction> loopNode = new ASGNode<>(mock(ExprState.class), false);
-        Assert.assertNotEquals(initNode, hondaNode);
-        Assert.assertNotEquals(initNode, loopNode);
-        Assert.assertNotEquals(loopNode, hondaNode);
+        Assertions.assertNotEquals(initNode, hondaNode);
+        Assertions.assertNotEquals(initNode, loopNode);
+        Assertions.assertNotEquals(loopNode, hondaNode);
         ASGEdge<ExprState, ExprAction> firstEdge =
                 new ASGEdge<>(initNode, hondaNode, mock(ExprAction.class), false);
         ASGEdge<ExprState, ExprAction> secondEdge =
@@ -55,13 +58,13 @@ public class ASGTraceTest {
         ASGTrace<ExprState, ExprAction> trace =
                 new ASGTrace<>(List.of(firstEdge, secondEdge, thirdEdge), hondaNode);
 
-        Assert.assertEquals(1, trace.getTail().size());
-        Assert.assertEquals(2, trace.getLoop().size());
-        Assert.assertEquals(initNode, trace.getTail().get(0).getSource());
-        Assert.assertEquals(hondaNode, trace.getTail().get(0).getTarget());
-        Assert.assertEquals(hondaNode, trace.getLoop().get(0).getSource());
-        Assert.assertEquals(loopNode, trace.getLoop().get(0).getTarget());
-        Assert.assertEquals(loopNode, trace.getLoop().get(1).getSource());
-        Assert.assertEquals(hondaNode, trace.getLoop().get(1).getTarget());
+        Assertions.assertEquals(1, trace.getTail().size());
+        Assertions.assertEquals(2, trace.getLoop().size());
+        Assertions.assertEquals(initNode, trace.getTail().get(0).getSource());
+        Assertions.assertEquals(hondaNode, trace.getTail().get(0).getTarget());
+        Assertions.assertEquals(hondaNode, trace.getLoop().get(0).getSource());
+        Assertions.assertEquals(loopNode, trace.getLoop().get(0).getTarget());
+        Assertions.assertEquals(loopNode, trace.getLoop().get(1).getSource());
+        Assertions.assertEquals(hondaNode, trace.getLoop().get(1).getTarget());
     }
 }

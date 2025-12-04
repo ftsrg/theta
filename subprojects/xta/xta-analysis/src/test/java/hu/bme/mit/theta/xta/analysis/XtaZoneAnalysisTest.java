@@ -39,16 +39,11 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class XtaZoneAnalysisTest {
 
-    @Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -60,11 +55,12 @@ public final class XtaZoneAnalysisTest {
                 });
     }
 
-    @Parameter(0)
     public String filepath;
 
-    @Test
-    public void test() throws FileNotFoundException, IOException {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void test(String filepath) throws FileNotFoundException, IOException {
+        initXtaZoneAnalysisTest(filepath);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
@@ -96,5 +92,9 @@ public final class XtaZoneAnalysisTest {
         System.out.println(arg.getNodes().collect(Collectors.toSet()));
 
         System.out.println(arg.getNodes().count());
+    }
+
+    public void initXtaZoneAnalysisTest(String filepath) {
+        this.filepath = filepath;
     }
 }

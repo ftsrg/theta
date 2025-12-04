@@ -22,28 +22,18 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class StsParserTest {
-
-    @Parameter(0)
     public String filepath;
-
-    @Parameter(1)
     public int vars;
 
     private Reader reader;
     private StsParser parser;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -52,22 +42,29 @@ public final class StsParserTest {
                 });
     }
 
-    @Before
     public void before() throws FileNotFoundException {
         reader = new FileReader(filepath);
         parser = new StsParser(reader);
     }
 
-    @After
+    @AfterEach
     public void after() throws IOException {
         reader.close();
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String filepath, int vars) throws FileNotFoundException {
+        initStsParserTest(filepath, vars);
         // Act
         final STS sts = parser.sts();
         System.out.println(sts);
-        Assert.assertEquals(vars, sts.getVars().size());
+        Assertions.assertEquals(vars, sts.getVars().size());
+    }
+
+    public void initStsParserTest(String filepath, int vars) throws FileNotFoundException {
+        this.filepath = filepath;
+        this.vars = vars;
+        this.before();
     }
 }

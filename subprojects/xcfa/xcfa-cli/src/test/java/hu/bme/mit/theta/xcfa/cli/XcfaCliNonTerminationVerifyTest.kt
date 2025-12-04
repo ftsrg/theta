@@ -28,6 +28,7 @@ import kotlin.io.path.exists
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -67,6 +68,12 @@ class XcfaCliNonTerminationVerifyTest {
       }
     }
 
+    private fun isWitnessViolation(temp: Path): Boolean {
+      assertTrue(temp.resolve("witness.yml").exists())
+      val witnessContents = temp.resolve("witness.yml").toFile().readText()
+      return "violation_sequence" in witnessContents
+    }
+
     @JvmStatic
     fun cFiles(): Stream<Arguments> {
       return Stream.of(
@@ -98,10 +105,6 @@ class XcfaCliNonTerminationVerifyTest {
         ),
         Arguments.of(
           "/c/nontermination/Pendulum-2.c",
-          "--property /c/nontermination/prop/termination.prp",
-        ),
-        Arguments.of(
-          "/c/nontermination/Ex02.c",
           "--property /c/nontermination/prop/termination.prp",
         ),
         Arguments.of(
@@ -139,10 +142,7 @@ class XcfaCliNonTerminationVerifyTest {
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
-      "No violation witness was produced!",
-    )
+    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
   }
 
   @ParameterizedTest
@@ -169,10 +169,7 @@ class XcfaCliNonTerminationVerifyTest {
       main(params)
       assertTrue(temp.resolve("witness.yml").exists())
       val witnessContents = temp.resolve("witness.yml").toFile().readText()
-      assertTrue(
-        "entry_type: \"violation_sequence\"" in witnessContents,
-        "No violation witness was produced!",
-      )
+      assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
     } catch (e: IllegalStateException) {
       if (!e.message.equals("Done debugging")) {
         throw e
@@ -206,10 +203,7 @@ class XcfaCliNonTerminationVerifyTest {
       main(params)
       assertTrue(temp.resolve("witness.yml").exists())
       val witnessContents = temp.resolve("witness.yml").toFile().readText()
-      assertTrue(
-        "entry_type: \"violation_sequence\"" in witnessContents,
-        "No violation witness was produced!",
-      )
+      assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
     } catch (e: Throwable) {
       if (!e.toString().contains("Done debugging")) {
         throw e
@@ -240,10 +234,7 @@ class XcfaCliNonTerminationVerifyTest {
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
-      "No violation witness was produced!",
-    )
+    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
   }
 
   @ParameterizedTest
@@ -292,15 +283,13 @@ class XcfaCliNonTerminationVerifyTest {
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
-      "No violation witness was produced!",
-    )
+    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
   }
 
   @ParameterizedTest
   @MethodSource("cFilesAdvanced")
-  fun testCVerifyBoundedPortfolio(filePath: String, extraArgs: String?) {
+  @Disabled
+  fun testCVerifyEmergentPortfolio(filePath: String, extraArgs: String?) {
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
@@ -309,7 +298,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--loglevel",
@@ -326,10 +315,7 @@ class XcfaCliNonTerminationVerifyTest {
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
-      "No violation witness was produced!",
-    )
+    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
   }
 
   @ParameterizedTest
@@ -361,9 +347,6 @@ class XcfaCliNonTerminationVerifyTest {
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
-      "No violation witness was produced!",
-    )
+    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
   }
 }

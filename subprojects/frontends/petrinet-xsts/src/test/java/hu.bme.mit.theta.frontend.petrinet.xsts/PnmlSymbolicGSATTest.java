@@ -35,7 +35,7 @@ import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PnmlSymbolicGSATTest {
 

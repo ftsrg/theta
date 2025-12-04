@@ -29,11 +29,7 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr
+import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -43,7 +39,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -145,112 +143,19 @@ class FrontendXcfaBuilder(
       )
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
-      val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
-      if (type is CVoid) {
-        continue
-      }
-      if (type is CStruct) {
-        uniqueWarningLogger.write(
-          Logger.Level.INFO,
-          "Not handling init expression of struct array ${globalDeclaration.get1()}",
-        )
-      }
-      builder.addVar(
-        XcfaGlobalVar(
-          globalDeclaration.get2(),
-          type.nullValue,
-          atomic = globalDeclaration.get1().type.isAtomic,
-        )
-      )
-      if (type is CArray) {
-        initStmtList.add(
-          StmtLabel(
-            Stmts.Assign(
-              cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-              cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type),
-            )
-          )
-        )
-        if (MemsafetyPass.enabled) {
-          val bounds = globalDeclaration.get1().arrayDimensions[0].expression
-          checkState(
-            bounds is IntLitExpr || bounds is BvLitExpr,
-            "Only IntLit and BvLit expression expected here.",
-          )
-          initStmtList.add(builder.allocate(parseContext, globalDeclaration.get2().ref, bounds))
-        }
-      } else {
-        if (
-          globalDeclaration.get1().initExpr != null &&
-            globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer
-        ) {
-          initStmtList.add(
-            StmtLabel(
-              Stmts.Assign(
-                cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                cast(
-                  type.castTo(globalDeclaration.get1().initExpr.expression),
-                  globalDeclaration.get2().type,
-                ),
-              )
-            )
-          )
-        } else {
-          initStmtList.add(
-            StmtLabel(
-              Stmts.Assign(
-                cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                cast(type.nullValue, globalDeclaration.get2().type),
-              )
-            )
-          )
-        }
-      }
-
-      if (globalDeclaration.get1().arrayDimensions.size == 1) {
-        val bounds =
-          ExprUtils.simplify(
-            CComplexType.getUnsignedLong(parseContext)
-              .castTo(globalDeclaration.get1().arrayDimensions[0].expression)
-          )
-        checkState(
-          bounds is IntLitExpr || bounds is BvLitExpr,
-          "Only IntLit and BvLit expression expected here.",
-        )
-        val literalValue =
-          if (bounds is IntLitExpr) bounds.value.toLong()
-          else BvUtils.neutralBvLitExprToBigInteger(bounds as BvLitExpr).toLong()
-        val literalToExpr = { x: Long ->
-          if (bounds is IntLitExpr) IntLitExpr.of(BigInteger.valueOf(x))
-          else
-            BvUtils.bigIntegerToNeutralBvLitExpr(
-              BigInteger.valueOf(x),
-              (bounds as BvLitExpr).type.size,
-            )
-        }
-        val initExprs: Map<Int, Expr<*>> =
-          (globalDeclaration.get1()?.initExpr as? CInitializerList)
-            ?.statements
-            ?.mapIndexed { i, it -> Pair(i, it.get2().expression) }
-            ?.toMap() ?: emptyMap()
-        for (i in 0 until literalValue) {
-          checkState(globalDeclaration.get1().actualType is CArray, "Only arrays are expected here")
-          val embeddedType = (globalDeclaration.get1().actualType as CArray).embeddedType
-          initStmtList.add(
-            StmtLabel(
-              Stmts.MemoryAssign(
-                Dereference(globalDeclaration.get2().ref, literalToExpr(i), embeddedType.smtType),
-                cast(
-                  initExprs[i.toInt()]?.let { embeddedType.castTo(it) } ?: embeddedType.nullValue,
-                  embeddedType.smtType,
-                ),
-              )
-            )
-          )
-        }
-      } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
+      if (
+        globalDeclaration.get1().initExpr != null &&
+          globalDeclaration.get1().arrayDimensions.size > 1
+      ) {
         error("Not handling init expression of high dimsension array ${globalDeclaration.get1()}")
       }
+      initializeGlobalVariable(
+        builder,
+        globalDeclaration.get2().ref,
+        initStmtList,
+        globalDeclaration.get1().initExpr,
+        globalDeclaration.get1().type.isAtomic,
+      )
     }
     for (function in cProgram.functions) {
       val toAdd: XcfaProcedureBuilder = handleFunction(function, initStmtList, builder)
@@ -315,6 +220,13 @@ class FrontendXcfaBuilder(
             )
           )
         )
+        if (MemsafetyPass.enabled) {
+          val fitsall = Fitsall(null, parseContext)
+          val size = type.fields.size
+          initStmtList.add(
+            builder.parent.allocate(parseContext, flatVariable.ref, fitsall.getValue("$size"))
+          )
+        }
       }
     }
     builder.createInitLoc(getMetadata(function))
@@ -341,6 +253,124 @@ class FrontendXcfaBuilder(
     val edge = XcfaEdge(end, ret, metadata = getMetadata(function))
     builder.addEdge(edge)
     return builder
+  }
+
+  private fun initializeGlobalVariable(
+    builder: XcfaBuilder,
+    globalDeclaration: Expr<*>,
+    initStmtList: MutableList<XcfaLabel>,
+    initExpr: CStatement? = null,
+    isAtomic: Boolean = false,
+  ) {
+    val type = CComplexType.getType(globalDeclaration, parseContext)
+    if (type is CVoid) {
+      return
+    }
+    if (globalDeclaration is RefExpr<*>) {
+      builder.addVar(
+        XcfaGlobalVar(globalDeclaration.decl as VarDecl<*>, type.nullValue, atomic = isAtomic)
+      )
+    }
+    if (type is CArray) {
+      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
+      if (MemsafetyPass.enabled) {
+        val bounds = type.arrayDimension.expression
+        checkState(
+          bounds is IntLitExpr || bounds is BvLitExpr,
+          "Only IntLit and BvLit expression expected here.",
+        )
+        initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
+      }
+      initializeCompound(
+        builder,
+        getArraySize(type, initExpr),
+        { type.embeddedType },
+        initExpr,
+        initStmtList,
+        globalDeclaration,
+      )
+    } else if (type is CStruct) {
+      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
+      if (MemsafetyPass.enabled) {
+        val fitsall = Fitsall(null, parseContext)
+        val size = type.fields.size
+        initStmtList.add(
+          builder.allocate(parseContext, globalDeclaration, fitsall.getValue("$size"))
+        )
+      }
+      if (initExpr != null && initExpr.expression !is UnsupportedInitializer) {
+        error("Unsupported initializer for global struct variable $globalDeclaration.")
+      }
+      initializeCompound(
+        builder,
+        type.fields.size,
+        { type.fields[it].get2() },
+        initExpr,
+        initStmtList,
+        globalDeclaration,
+      )
+    } else {
+      if (initExpr != null && initExpr.expression !is UnsupportedInitializer) {
+        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(initExpr.expression)))
+      } else {
+        initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
+      }
+    }
+  }
+
+  private fun initializeCompound(
+    builder: XcfaBuilder,
+    dimension: Int,
+    embeddedType: (Int) -> CComplexType,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+    globalDeclaration: Expr<*>,
+  ) {
+    val initExprs: Map<Int, CStatement> =
+      (initExpr as? CInitializerList)
+        ?.statements
+        ?.mapIndexed { i, it -> Pair(i, it.get2()) }
+        ?.toMap() ?: emptyMap()
+    val literalToExpr = { x: Long ->
+      if (CComplexType.getUnsignedLong(parseContext).smtType is IntType)
+        IntLitExpr.of(BigInteger.valueOf(x))
+      else
+        BvUtils.bigIntegerToNeutralBvLitExpr(
+          BigInteger.valueOf(x),
+          (CComplexType.getUnsignedLong(parseContext).smtType as BvType).size,
+        )
+    }
+    for (i in 0 until dimension) {
+      val et = embeddedType(i)
+      val embeddedDeclaration =
+        Dereference(globalDeclaration, literalToExpr(i.toLong()), et.smtType)
+      parseContext.metadata.create(embeddedDeclaration, "cType", et)
+      initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
+    }
+  }
+
+  private fun getArraySize(type: CArray, initExpr: CStatement?): Int {
+    if (type.arrayDimension == null) {
+      if (initExpr is CInitializerList) {
+        return initExpr.statements.size
+      } else {
+        throw UnsupportedFrontendElementException(
+          "Array with unspecified size must have initializer list."
+        )
+      }
+    }
+    val bounds =
+      ExprUtils.simplify(
+        CComplexType.getUnsignedLong(parseContext).castTo(type.arrayDimension.expression)
+      )
+    checkState(
+      bounds is IntLitExpr || bounds is BvLitExpr,
+      "Only IntLit and BvLit expression expected here.",
+    )
+    val literalValue =
+      if (bounds is IntLitExpr) bounds.value.toInt()
+      else BvUtils.neutralBvLitExprToBigInteger(bounds as BvLitExpr).toInt()
+    return literalValue
   }
 
   override fun visit(statement: CAssignment, param: ParamPack): XcfaLocation {
@@ -383,6 +413,8 @@ class FrontendXcfaBuilder(
           ) {
             throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
           }
+          // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
+          // pointer-based
           AssignStmtLabel(
             lValue,
             cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),

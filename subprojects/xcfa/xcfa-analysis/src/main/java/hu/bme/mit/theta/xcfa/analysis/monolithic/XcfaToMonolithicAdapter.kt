@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -81,10 +82,14 @@ abstract class XcfaToMonolithicAdapter(
       else -> error("Unknown integer type: $intType")
     }
 
+  private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
+    if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
+    else Eq(e1, e2)
+
   protected fun Stmt.getDefaultValues(excludedVars: Collection<VarDecl<*>>): Expr<BoolType> =
     StmtUtils.getVars(this)
       .filter { it !in excludedVars }
-      .map { Eq(it.ref, it.type.defaultValue) }
+      .map { reprEq(it.ref, it.type.defaultValue) }
       .let { And(it) }
 
   private val Type.defaultValue: LitExpr<out Type>

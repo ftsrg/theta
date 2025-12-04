@@ -1,0 +1,14 @@
+format_version: '2.0'
+
+input_files: 'linear_interpolation.i'
+
+properties:
+  - property_file: no-overflow.prp
+    expected_verdict: true
+  - property_file: unreach-call.prp
+    expected_verdict: true
+  
+
+options:
+  language: C
+  data_model: ILP32

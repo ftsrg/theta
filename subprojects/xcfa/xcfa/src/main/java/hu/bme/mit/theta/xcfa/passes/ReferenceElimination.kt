@@ -26,11 +26,14 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -50,7 +53,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       ptrVars.getOrPut(this) { Var("__sp", CPointer(null, null, parseContext).smtType) }
   }
 
+  private lateinit var currentBuilder: XcfaProcedureBuilder
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    currentBuilder = builder
     val ptrVar = builder.parent.ptrVar(parseContext)
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
@@ -71,7 +77,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
-                val assign2 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+                val t = ptrType.embeddedType
+                val assign2 =
+                  if (t is CStruct) {
+                    val type = Fitsall(null, parseContext)
+                    builder.parent.allocate(
+                      parseContext,
+                      varDecl.ref,
+                      type.getValue("${t.fields.size}"),
+                    )
+                  } else {
+                    builder.parent.allocateUnit(parseContext, varDecl.ref)
+                  }
 
                 listOf(assign, assign2)
               } else {
@@ -161,7 +178,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           labels.find {
             it is StmtLabel &&
               it.stmt is AssignStmt<*> &&
-              it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> }
+              it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> } &&
+              it.stmt.expr is ArrayLitExpr<*, *>
           }
         val spInit =
           labels.find {
@@ -204,7 +222,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   @JvmOverloads
   fun XcfaLabel.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
-    parseContext: ParseContext? = null,
+    parseContext: ParseContext,
   ): XcfaLabel =
     if (varLut.isNotEmpty())
       when (this) {
@@ -251,22 +269,21 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   @JvmOverloads
   fun Stmt.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>,
-    parseContext: ParseContext? = null,
+    parseContext: ParseContext,
   ): List<Stmt> {
     val stmts =
       when (this) {
         is AssignStmt<*> ->
           if (this.varDecl in varLut.keys) {
             val newVar = varLut[this.varDecl]!!.first
-            listOf(
-              MemoryAssignStmt.create(
-                Dereference(
-                  cast(newVar.ref, newVar.type),
-                  cast(CComplexType.getSignedLong(parseContext).nullValue, newVar.type),
-                  this.expr.type,
-                ),
-                this.expr.changeReferredVars(varLut, parseContext),
+            val deref =
+              Dereference(
+                cast(newVar.ref, newVar.type),
+                cast(CComplexType.getSignedLong(parseContext).nullValue, newVar.type),
+                this.expr.type,
               )
+            listOf(
+              MemoryAssignStmt.create(deref, this.expr.changeReferredVars(varLut, parseContext))
             )
           } else {
             listOf(

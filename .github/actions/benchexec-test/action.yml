@@ -1,78 +1,58 @@
 name: 'Run tests using benchexec'
 description: 'Running benchexec tests on xcfa-cli'
 inputs:
-    rundef:
+    name:
         required: true
-    portfolio:
-        required: true
+        description: 'The name for the benchexec run (used for result artifact naming)'
     tool:
         required: true
-    timeout:
+        description: 'The name of the tool artifact to download'
+    input_type:
         required: true
-    xml:
+        description: 'The type of input files to benchmark (e.g., "c" for C files)'
+    config_options:
         required: true
+        description: 'A space-separated list of configuration options to apply to the XML input file'
 runs:
   using: "composite"
   steps:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - name: Setup Java 21
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: temurin
+        java-version: 21
     - name: Install benchexec and dependencies
       shell: bash
       run: |
         sudo add-apt-repository ppa:sosy-lab/benchmarking
-        sudo apt install benchexec openjdk-17-jre-headless libgomp1 libmpfr-dev
-    - name: Get benchmark definition file
-      shell: bash
-      run: |
-        mkdir -p xml
-        cp $GITHUB_ACTION_PATH/${{ inputs.xml }} xml/theta.xml
-    - name: Get sv-benchmarks (retry max. 3 times)
-      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
-      with:
-        timeout_minutes: 15
-        max_attempts: 3
-        shell: bash
-        command: git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
-    - name: Get C folder (retry max. 3 times)
-      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
-      with:
-        timeout_minutes: 15
-        max_attempts: 3
-        shell: bash
-        command: |
-          cd sv-benchmarks
-          git sparse-checkout add c
-          git checkout
-          pwd
-          ls -l
+        sudo apt install benchexec openjdk-21-jre-headless libgomp1 libmpfr-dev
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      name: Get zip
+      name: Get tool
       with:
         name: ${{ inputs.tool }}
         path: release/
-    - name: Unzip 
+    - name: Unzip tool
       shell: bash
       run: |
         unzip release/*.zip
     - name: Run benchexec
       shell: bash
       run: |
-        sed -i 's/<option name="--portfolio">STABLE<\/option>/<option name="--portfolio">${{ inputs.portfolio }}<\/option>/g' xml/theta.xml
-        cat xml/theta.xml
-        folder=$(dirname $(find . -name "theta.jar" | head -n1))
-        echo $folder
-        pwd
-        tasks=($(cat xml/theta.xml | awk '/rundefinition name="${{ inputs.rundef }}"/,/<\/rundefinition>/' | grep 'tasks name=' | grep -oP '(?<=").*(?=")'))
-        tasks_num=$(wc -w <<< ${tasks[@]})
-        timeout=$((${{inputs.timeout}} / tasks_num))
-        for task in ${tasks[@]}
+        XML=integration-tests/${{ inputs.input_type }}/theta.xml
+        for config in ${{ inputs.config_options }}
         do
-          echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
-          echo "timeout --kill-after 15 $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
-          timeout --kill-after 15 $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true
+          echo "Applying config option: $config"
+          escaped_config=$(printf '%s\n' "$config" | sed -e 's/[\/&]/\\&/g')
+          sed -i "s|<!-- config -->|<option name=\"$escaped_config\"/>\n<!-- config -->|g" "$XML"
         done
+        cat "$XML"
+
+        folder=$(dirname $(find . -name "theta.jar" | head -n1))
+        benchexec "$XML" -n 2 --no-container --tool-directory "$folder"
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
-        name: BenchexecResults-${{ inputs.rundef }}-${{ inputs.portfolio }}
+        name: BenchexecResults-${{ inputs.name }}-${{ inputs.input_type }}
         path: results

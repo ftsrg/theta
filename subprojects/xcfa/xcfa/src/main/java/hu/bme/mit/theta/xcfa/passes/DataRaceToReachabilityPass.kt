@@ -167,11 +167,12 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
         }
 
         val positiveLabel = SequenceLabel(newLabels)
+        val errorLabelSeq = SequenceLabel(listOf(errorLabel!!))
         val assumeEdge = XcfaEdge(loc, newLoc, positiveLabel, metadata = EmptyMetaData)
         builder.addEdge(assumeEdge)
         builder.createErrorLoc()
         val errorEdge =
-          XcfaEdge(loc, builder.errorLoc.get(), errorLabel!!, metadata = EmptyMetaData)
+          XcfaEdge(loc, builder.errorLoc.get(), errorLabelSeq, metadata = EmptyMetaData)
         builder.addEdge(errorEdge)
       }
     }
@@ -272,7 +273,12 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
       if (errorLabel != null) {
         builder.createErrorLoc()
         val errorEdge =
-          XcfaEdge(source, builder.errorLoc.get(), errorLabel, metadata = edge.metadata)
+          XcfaEdge(
+            source,
+            builder.errorLoc.get(),
+            SequenceLabel(listOf(errorLabel)),
+            metadata = edge.metadata,
+          )
         builder.addEdge(errorEdge)
       }
 
@@ -286,7 +292,8 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
                 "${edge.source.name}_dr_${edgeIndex}_${index1}_${index2}",
                 metadata = edge.metadata,
               )
-          val newEdge = XcfaEdge(source, target, label, metadata = edge.metadata)
+          val seqLabel = label as? SequenceLabel ?: SequenceLabel(listOf(label))
+          val newEdge = XcfaEdge(source, target, seqLabel, metadata = edge.metadata)
           builder.addEdge(newEdge)
           source = target
         }

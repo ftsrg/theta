@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
@@ -50,8 +50,8 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 import java.util.function.Predicate;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class StsPredTest {
 
@@ -60,7 +60,7 @@ public class StsPredTest {
     final ItpSolver refinementSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
     STS sts = null;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         final VarDecl<IntType> vx = Var("x", Int());
         final Expr<IntType> x = vx.getRef();

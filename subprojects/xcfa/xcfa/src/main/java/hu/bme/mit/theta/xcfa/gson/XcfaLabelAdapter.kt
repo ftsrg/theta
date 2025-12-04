@@ -28,6 +28,8 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.functions
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.starProjectedType
 
 class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> Gson) :
   TypeAdapter<XcfaLabel>() {
@@ -69,7 +71,11 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> G
       }
       reader.endArray()
       reader.endObject()
-      val constr = clazz.constructors.find { it.parameters.size == 2 }
+      val constr =
+        clazz.constructors.find {
+          it.parameters.size == 2 &&
+            it.parameters[0].type.isSubtypeOf(List::class.starProjectedType)
+        }
       checkNotNull(constr)
       return constr.call(labels, metadata) as XcfaLabel
     } else {

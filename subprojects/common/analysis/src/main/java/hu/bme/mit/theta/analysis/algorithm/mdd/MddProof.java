@@ -26,6 +26,8 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 public class MddProof implements InvariantProof {
 
     private final MddHandle stateSpace;
+    private Long size = null;
+    private Expr<BoolType> invariant = null;
 
     private MddProof(MddHandle stateSpace) {
         this.stateSpace = stateSpace;
@@ -36,7 +38,10 @@ public class MddProof implements InvariantProof {
     }
 
     public Long size() {
-        return MddInterpreter.calculateNonzeroCount(stateSpace);
+        if (size == null) {
+            size = MddInterpreter.calculateNonzeroCount(stateSpace);
+        }
+        return size;
     }
 
     public MddHandle getMdd() {
@@ -45,7 +50,13 @@ public class MddProof implements InvariantProof {
 
     @Override
     public Expr<BoolType> getInvariant() {
-        return SmartBoolExprs.Or(
-                MddValuationCollector.collect(stateSpace).stream().map(Valuation::toExpr).toList());
+        if (invariant == null) {
+            invariant =
+                    SmartBoolExprs.Or(
+                            MddValuationCollector.collect(stateSpace).stream()
+                                    .map(Valuation::toExpr)
+                                    .toList());
+        }
+        return invariant;
     }
 }

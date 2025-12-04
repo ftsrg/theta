@@ -1,0 +1,12 @@
+format_version: '2.0'
+
+# old file name: rekcba_aso_false-unreach-call.1.M1.c
+input_files: 'rekcba_aso.1.M1-1.c'
+
+properties:
+  - property_file: unreach-call.prp
+    expected_verdict: false
+
+options:
+  language: C
+  data_model: ILP32

@@ -1,7 +1,7 @@
 # Building Theta
 
-Theta uses Java (JDK) 17 with [Gradle 7.4](https://gradle.org/) as a build system.
-Currently, we use [OpenJDK 17](https://openjdk.java.net/projects/jdk/17/) (see instructions for [Windows](https://java.tutorials24x7.com/blog/how-to-install-openjdk-17-on-windows) and [Ubuntu](https://www.linuxuprising.com/2019/04/install-latest-openjdk-12-11-or-8-in.html)).
+Theta uses Java (JDK) 21 with [Gradle 7.4](https://gradle.org/) as a build system.
+Currently, we use [OpenJDK 21](https://openjdk.java.net/projects/jdk/21/) (see instructions for [Windows](https://java.tutorials24x7.com/blog/how-to-install-openjdk-21-on-windows) and [Ubuntu](https://www.linuxuprising.com/2019/04/install-latest-openjdk-12-11-or-8-in.html)).
 We are developing Theta on Linux, Windows and MacOS _(10.15.7)_.
 Currently, floating point types are only fully supported on Linux and MacOS. Windows support is experimental and can cause cryptic exceptions to occur in native code.
 Theta can be built from the command line, but you can also import it into [IntelliJ IDEA](https://www.jetbrains.com/idea/).

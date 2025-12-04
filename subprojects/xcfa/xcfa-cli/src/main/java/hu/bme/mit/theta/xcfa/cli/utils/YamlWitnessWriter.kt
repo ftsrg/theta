@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
@@ -25,17 +26,26 @@ import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getCMetaData
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -44,9 +54,12 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.io.File
 import java.util.*
@@ -65,56 +78,231 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
+    logger: Logger,
   ) {
     val metadata = getMetadata(inputFile, ltlSpecification, architecture)
 
     if (safetyResult.isUnsafe) {
-      val trace =
-        safetyResult.asUnsafe().cex.let {
-          if (it is HackyAsgTrace<*>) {
-            val actions = (it as HackyAsgTrace<*>).trace.actions
-            val explStates = (it as HackyAsgTrace<*>).trace.states
-            val states =
-              (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
-                state as XcfaState<PtrState<*>>
-                state.withState(PtrState(explStates[i]))
-              }
+      try {
+        val trace =
+          safetyResult.asUnsafe().cex.let {
+            if (it is HackyAsgTrace<*>) {
+              val actions = (it as HackyAsgTrace<*>).trace.actions
+              val explStates = (it as HackyAsgTrace<*>).trace.states
+              val states =
+                (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+                  state as XcfaState<PtrState<*>>
+                  state.withState(PtrState(explStates[i]))
+                }
 
-            Trace.of(states, actions)
-          } else if (it is ASGTrace<*, *>) {
-            (it as ASGTrace<*, *>).toTrace()
+              Trace.of(states, actions)
+            } else if (it is ASGTrace<*, *>) {
+              (it as ASGTrace<*, *>).toTrace()
+            } else {
+              it
+            }
+          }
+        if (trace is Trace<*, *>) {
+          val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+            XcfaTraceConcretizer.concretize(
+              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+              cexSolverFactory,
+              parseContext,
+            )
+
+          var witness =
+            violationWitnessFromConcreteTrace(
+              concrTrace,
+              metadata,
+              inputFile,
+              property,
+              parseContext,
+              witnessfile,
+            )
+
+          if (witness.content.isEmpty()) {
+            logger.benchmark("Encountered empty witness, trying best-effort witness now.")
+            val bestEffortWitness =
+              generateBestEffortWitness(
+                safetyResult,
+                property,
+                inputFile,
+                parseContext,
+                witnessfile,
+                ltlSpecification,
+                architecture,
+              )
+            witnessfile.writeText(bestEffortWitness)
           } else {
-            it
+            witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
           }
         }
-      if (trace is Trace<*, *>) {
-        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-          XcfaTraceConcretizer.concretize(
-            trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-            cexSolverFactory,
-            parseContext,
-          )
-
-        violationWitnessFromConcreteTrace(
-          concrTrace,
-          metadata,
-          inputFile,
-          property,
-          parseContext,
-          witnessfile,
+      } catch (e: Exception) {
+        logger.benchmark(
+          "Could not emit witness, writing reachability witness with target only if possible"
         )
+        val bestEffortWitness =
+          generateBestEffortWitness(
+            safetyResult,
+            property,
+            inputFile,
+            parseContext,
+            witnessfile,
+            ltlSpecification,
+            architecture,
+          )
+        witnessfile.writeText(bestEffortWitness)
       }
     } else if (safetyResult.isSafe) {
+      try {
+        val witness =
+          YamlWitness(
+            entryType = EntryType.INVARIANTS,
+            metadata = metadata,
+            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
+          )
 
-      val witness =
-        YamlWitness(
-          entryType = EntryType.INVARIANTS,
-          metadata = metadata,
-          content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
-        )
-
-      witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+        witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+      } catch (e: Exception) {
+        logger.info("Could not emit witness, outputting empty witness")
+      }
     }
+  }
+
+  private fun generateBestEffortWitness(
+    safetyResult: SafetyResult<*, *>,
+    property: XcfaProperty,
+    inputFile: File,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String {
+
+    val trace =
+      safetyResult.asUnsafe().cex.let {
+        if (it is HackyAsgTrace<*>) {
+          val actions = (it as HackyAsgTrace<*>).trace.actions
+          val explStates = (it as HackyAsgTrace<*>).trace.states
+          val states =
+            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+              state as XcfaState<PtrState<*>>
+              state.withState(PtrState(explStates[i]))
+            }
+
+          Trace.of(states, actions)
+        } else if (it is ASGTrace<*, *>) {
+          (it as ASGTrace<*, *>).toTrace()
+        } else {
+          it as Trace<*, XcfaAction>
+        }
+      }
+
+    val lastLabel =
+      (trace as Trace<*, XcfaAction>)
+        .actions
+        .flatMap { it.label.getFlatLabels() }
+        .findLast { it -> it.metadata.isSubstantial() }
+    if (lastLabel == null)
+      return generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+    val metadata = lastLabel.getCMetaData()
+
+    return if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
+      val call = metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
+      call?.let {
+        val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
+        generateTrivialViolationWitness(
+          safetyResult = safetyResult,
+          inputFile = inputFile,
+          property = property,
+          parseContext = parseContext,
+          witnessfile = witnessfile,
+          ltlSpecification = ltlSpecification,
+          architecture = architecture,
+          targetLocation = loc,
+        )
+      } ?: generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+    } else if (
+      listOf(ErrorDetection.OVERFLOW, ErrorDetection.MEMCLEANUP, ErrorDetection.MEMSAFETY)
+        .contains(property.inputProperty)
+    ) {
+      getLocation(inputFile, metadata)?.let {
+        generateTrivialViolationWitness(
+          safetyResult = safetyResult,
+          inputFile = inputFile,
+          property = property,
+          parseContext = parseContext,
+          witnessfile = witnessfile,
+          ltlSpecification = ltlSpecification,
+          architecture = architecture,
+          targetLocation = it,
+        )
+      } ?: generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+    } else generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+  }
+
+  override fun writeTrivialCorrectnessWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ) {
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val witness =
+      YamlWitness(
+        entryType = EntryType.INVARIANTS,
+        metadata = metadata,
+        content = EmptyProof.getInstance().toContent(inputFile, parseContext),
+      )
+    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+  }
+
+  override fun generateEmptyViolationWitness(
+    inputFile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String {
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    return WitnessYamlConfig.encodeToString(
+      listOf(YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = listOf()))
+    )
+  }
+
+  fun generateTrivialViolationWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+    targetLocation: Location,
+  ): String {
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val witness =
+      YamlWitness(
+        entryType = EntryType.VIOLATION,
+        metadata = metadata,
+        content =
+          listOf(
+            ContentItem(
+              listOf(
+                Waypoint(
+                  WaypointContent(
+                    WaypointType.TARGET,
+                    null,
+                    location = targetLocation,
+                    Action.FOLLOW,
+                  )
+                )
+              )
+            )
+          ),
+      )
+    return WitnessYamlConfig.encodeToString(listOf(witness))
   }
 
   fun getMetadata(
@@ -202,133 +390,188 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
   }
 
-  fun violationWitnessFromConcreteTrace(
+  private fun terminationViolationWitnessFromConcreteTrace(
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
-  ) {
+  ): YamlWitness {
+    // last state is cycle_head, find its earliest occurrence
+    // stem is everything beforehand
+    // cycle's segments are everything in-between
+
+    val cycleHead = concrTrace.states.last()
+    val cycleHeadFirst =
+      concrTrace.states
+        .indexOfFirst {
+          it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+            it.sGlobal == cycleHead.sGlobal
+        }
+        .let { index ->
+          if (index == concrTrace.states.size - 1) {
+            // we go backwards, and find a candidate.
+            val revIdx =
+              1 +
+                concrTrace.states.subList(0, concrTrace.states.size - 1).reversed().indexOfFirst {
+                  it.processes.values.map { it.locs } ==
+                    cycleHead.processes.values.map { it.locs } &&
+                    it.sGlobal.toMap().all { (key, value) ->
+                      cycleHead.sGlobal.toMap()[key] == value
+                    }
+                }
+            concrTrace.states.size - 1 - revIdx
+          } else {
+            index
+          }
+        }
+    if (cycleHeadFirst == -1) {
+      error("Lasso not found")
+    }
+    val stem =
+      Trace.of(
+        concrTrace.states.subList(0, cycleHeadFirst + 1),
+        concrTrace.actions.subList(0, cycleHeadFirst),
+      )
+    val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
+      // case of e.g., BMC !!
+      Trace.of(
+        concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size),
+        concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size),
+      )
+
+    val stemTrace = traceToWitness(trace = stem, parseContext = parseContext, property = property)
+    val lassoTrace = traceToWitness(trace = lasso, parseContext = parseContext, property = property)
+
+    return YamlWitness(
+      entryType = EntryType.VIOLATION,
+      metadata = metadata,
+      content =
+        (0..(stemTrace.length() - 1))
+          .flatMap {
+            listOfNotNull(
+              stemTrace.states
+                .get(it)
+                ?.toSegment(
+                  stemTrace.actions.getOrNull(it - 1),
+                  stemTrace.actions.getOrNull(it),
+                  inputFile,
+                  parseContext = parseContext,
+                  violation = false,
+                ),
+              stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
+            )
+          }
+          .map { ContentItem(it) } +
+          (0..<(lassoTrace.length()))
+            .flatMap {
+              listOfNotNull(
+                lassoTrace.states
+                  .get(it)
+                  ?.toSegment(
+                    lassoTrace.actions.getOrNull(it - 1),
+                    lassoTrace.actions.getOrNull(it),
+                    inputFile,
+                    Action.CYCLE,
+                    parseContext = parseContext,
+                  ),
+                lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
+              )
+            }
+            .ifEmpty {
+              val lastLoc =
+                lassoTrace.actions
+                  .flatMap { it.edge?.getFlatLabels() ?: listOf() }
+                  .reversed()
+                  .first { it.metadata.isSubstantial() }
+              listOf(
+                WaypointContent(
+                  WaypointType.ASSUMPTION,
+                  Constraint("1", Format.C_EXPRESSION),
+                  Location(
+                    fileName = inputFile.name,
+                    line = (lastLoc.metadata as? CMetaData)?.lineNumberStart ?: -1,
+                    column = (lastLoc.metadata as? CMetaData)?.colNumberStart?.plus(1) ?: -1,
+                  ),
+                  Action.CYCLE,
+                )
+              )
+            }
+            .map { ContentItem(it) },
+    )
+  }
+
+  private fun reachabilityViolationWitnessFromConcreteTrace(
+    concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+    metadata: Metadata,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    functionReturnOnly: Boolean = false,
+  ): YamlWitness {
+    val witnessTrace =
+      traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
+
+    val content =
+      (0..(witnessTrace.length()))
+        .flatMap {
+          listOfNotNull(
+            witnessTrace.states[it]?.toSegment(
+              witnessTrace.actions.getOrNull(it - 1),
+              witnessTrace.actions.getOrNull(it),
+              inputFile,
+              parseContext = parseContext,
+              violation =
+                witnessTrace.states[it].violation ||
+                  witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
+            ),
+            witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
+          )
+        }
+        .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
+        .let { list ->
+          list.filter {
+            !functionReturnOnly ||
+              it.type == WaypointType.TARGET ||
+              it.type == WaypointType.FUNCTION_RETURN
+          }
+        }
+        .map { ContentItem(it) }
+
+    return YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = content)
+  }
+
+  private fun violationWitnessFromConcreteTrace(
+    concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+    metadata: Metadata,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+  ): YamlWitness {
     val witness =
       if (property.inputProperty == ErrorDetection.TERMINATION) {
-        // last state is cycle_head, find its earliest occurrence
-        // stem is everything beforehand
-        // cycle's segments are everything in-between
-
-        val cycleHead = concrTrace.states.last()
-        val cycleHeadFirst =
-          concrTrace.states
-            .indexOfFirst {
-              it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
-                it.sGlobal == cycleHead.sGlobal
-            }
-            .let { index ->
-              if (index == concrTrace.states.size - 1) {
-                // we go backwards, and find a candidate.
-                val revIdx =
-                  1 +
-                    concrTrace.states
-                      .subList(0, concrTrace.states.size - 1)
-                      .reversed()
-                      .indexOfFirst {
-                        it.processes.values.map { it.locs } ==
-                          cycleHead.processes.values.map { it.locs } &&
-                          it.sGlobal.toMap().all { (key, value) ->
-                            cycleHead.sGlobal.toMap()[key] == value
-                          }
-                      }
-                concrTrace.states.size - 1 - revIdx
-              } else {
-                index
-              }
-            }
-        if (cycleHeadFirst == -1) {
-          error("Lasso not found")
-        }
-        val stem =
-          Trace.of(
-            concrTrace.states.subList(0, cycleHeadFirst + 1),
-            concrTrace.actions.subList(0, cycleHeadFirst),
-          )
-        val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
-          // case of e.g., BMC !!
-          Trace.of(
-            concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size),
-            concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size),
-          )
-
-        val stemTrace =
-          traceToWitness(trace = stem, parseContext = parseContext, property = property)
-        val lassoTrace =
-          traceToWitness(trace = lasso, parseContext = parseContext, property = property)
-
-        YamlWitness(
-          entryType = EntryType.VIOLATION,
-          metadata = metadata,
-          content =
-            (0..(stemTrace.length() - 1))
-              .flatMap {
-                listOfNotNull(
-                  stemTrace.states
-                    .get(it)
-                    ?.toSegment(
-                      stemTrace.actions.getOrNull(it - 1),
-                      stemTrace.actions.getOrNull(it),
-                      inputFile,
-                      parseContext = parseContext,
-                      violation = false,
-                    ),
-                  stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
-                )
-              }
-              .map { ContentItem(it) } +
-              (0..<(lassoTrace.length()))
-                .flatMap {
-                  listOfNotNull(
-                    lassoTrace.states
-                      .get(it)
-                      ?.toSegment(
-                        lassoTrace.actions.getOrNull(it - 1),
-                        lassoTrace.actions.getOrNull(it),
-                        inputFile,
-                        Action.CYCLE,
-                        parseContext = parseContext,
-                      ),
-                    lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
-                  )
-                }
-                .map { ContentItem(it) },
+        terminationViolationWitnessFromConcreteTrace(
+          concrTrace,
+          metadata,
+          inputFile,
+          property,
+          parseContext,
+          witnessfile,
         )
       } else {
-        val witnessTrace =
-          traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
-
-        YamlWitness(
-          entryType = EntryType.VIOLATION,
-          metadata = metadata,
-          content =
-            (0..(witnessTrace.length()))
-              .flatMap {
-                listOfNotNull(
-                  witnessTrace.states[it]?.toSegment(
-                    witnessTrace.actions.getOrNull(it - 1),
-                    witnessTrace.actions.getOrNull(it),
-                    inputFile,
-                    parseContext = parseContext,
-                    violation =
-                      witnessTrace.states[it].violation ||
-                        witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
-                  ),
-                  witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
-                )
-              }
-              .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
-              .map { ContentItem(it) },
+        reachabilityViolationWitnessFromConcreteTrace(
+          concrTrace,
+          metadata,
+          inputFile,
+          property,
+          parseContext,
+          witnessfile,
         )
       }
-
-    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+    return witness
   }
 }
 
@@ -348,6 +591,12 @@ private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
       ?: return null
   val column = (metadata as? CMetaData)?.colNumberStart ?: (metadata as? CMetaData)?.colNumberStop
   return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
+}
+
+private fun getStopLocation(inputFile: File, statement: CStatement): Location {
+  val line = statement.lineNumberStop
+  val column = statement.colNumberStop
+  return Location(fileName = inputFile.name, line = line, column = column.plus(1))
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
@@ -388,21 +637,43 @@ private fun WitnessNode.toSegment(
     }
     return WaypointContent(type = WaypointType.TARGET, location = loc, action = action)
   } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
-    if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CCall }) {
-      // function return
-      // I don't know if we ever have a constant to assume what \result is, so we skip these
-      // waypoints
-      // for now
-      return null
-      /*
-      val constraint = "\\result == ??"
+    // TODO this will very much break if we have 1+ nondet call on the edge or 1+ variable or .....
+    if (
+      (outgoingEdge.edge?.metadata as CMetaData).astNodes.any {
+        it is CCall && it.functionId.contains("__VERIFIER_nondet_")
+      } &&
+        outgoingEdge.edge?.label is SequenceLabel &&
+        (outgoingEdge.edge?.label as SequenceLabel).labels.any {
+          it is StmtLabel && it.stmt is HavocStmt<*>
+        }
+    ) {
+      val varsOnEdge = (outgoingEdge.edge?.label as SequenceLabel).collectVars().toSet()
+      check(varsOnEdge.size == 1) // this has to be the havoced variable
+      val varOnEdge = varsOnEdge.first()
+      val typeName = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName
+      val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
+      val (cast, valueString) =
+        if (assignedValue is BvLitExpr) "" to assignedValue.toString().replace("#", "0")
+        else if (assignedValue is FpLitExpr)
+          (typeName?.let { "($it)" } ?: "") to
+            FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
+              .toString()
+        else "" to assignedValue.toString()
+
+      val constraint = "\\result == $cast$valueString"
+      loc =
+        getStopLocation(
+          inputFile,
+          (outgoingEdge.edge?.metadata as CMetaData).astNodes.first {
+            it is CCall && it.functionId.contains("__VERIFIER_nondet_")
+          },
+        ) ?: return null
       return WaypointContent(
-          type = WaypointType.FUNCTION_RETURN,
-          location = loc,
-          action = action,
-          constraint = TODO()
-        )
-      */
+        type = WaypointType.FUNCTION_RETURN,
+        location = loc,
+        action = action,
+        constraint = Constraint(constraint, Format.EXT_C_EXPRESSION),
+      )
     } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
       val constraintValue =
         if ((outgoingEdge.edge!!.label as StmtLabel).choiceType == ChoiceType.ALTERNATIVE_PATH)
@@ -412,7 +683,7 @@ private fun WitnessNode.toSegment(
         type = WaypointType.BRANCHING,
         location = loc,
         action = action,
-        constraint = Constraint(constraintValue, format = Format.C_EXPRESSION),
+        constraint = Constraint(constraintValue),
       )
     } else {
       // we only want assumptions that are actually about something in a function

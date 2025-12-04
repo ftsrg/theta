@@ -63,6 +63,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
       if (config.backendConfig.parseInProcess) {
         val config =
           config.copy(
+            inputConfig = config.inputConfig.copy(xcfaWCtx = null),
             outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
             backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
           )
@@ -125,9 +126,8 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
           process.destroy(true)
           throw ErrorCodeException(ExitCodes.TIMEOUT.code)
         } else {
-          logger.write(
-            Logger.Level.RESULT,
-            "Config timed out but started writing result, trying to wait an additional 10%...",
+          logger.benchmark(
+            "Config timed out but started writing result, trying to wait an additional 10%..."
           )
           val retCode = process.waitFor(config.backendConfig.timeoutMs / 10, TimeUnit.MILLISECONDS)
           if (retCode != 0) {
@@ -179,7 +179,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         val newLines = stdoutRemainder.split("\n") // if ends with \n, last element will be ""
         newLines.subList(0, newLines.size - 1).forEach {
           stdout.add(it)
-          println("server: $it")
+          println("subprocess: $it")
         }
         stdoutRemainder = newLines[newLines.size - 1]
       }
@@ -196,7 +196,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         val newLines = stderrRemainder.split("\n") // if ends with \n, last element will be ""
         newLines.subList(0, newLines.size - 1).forEach {
           stderr.add(it)
-          err.println("server: $it")
+          err.println("subprocess: $it")
         }
         stderrRemainder = newLines[newLines.size - 1]
       }

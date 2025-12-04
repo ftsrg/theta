@@ -576,6 +576,7 @@ translationUnit
 externalDeclaration
     :   functionDefinition  #externalFunctionDefinition
     |   declaration         #globalDeclaration
+    |   IncludeDirective    #includeDirective
     |   ';'                 #externalNop
     ;
 
@@ -936,7 +937,6 @@ ComplexDefine
 
 IncludeDirective
     :   '#' Whitespace? 'include' Whitespace? (('"' ~[\r\n]* '"') | ('<' ~[\r\n]* '>' )) Whitespace? Newline
-        -> skip
     ;
 
 // ignore the following asm blocks:

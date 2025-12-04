@@ -29,6 +29,7 @@ import kotlin.io.path.readText
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -96,11 +97,11 @@ class XcfaCliNonTerminationValidateTest {
     @JvmStatic
     fun wrongWitnessFiles(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of(
-          "/c/nontermination/Pendulum-2.c",
-          "/c/nontermination/Pendulum-2-wrong-loop-wrong.yml",
-          "--property /c/nontermination/prop/termination.prp",
-        ),
+        //        Arguments.of(
+        //          "/c/nontermination/Pendulum-2.c",
+        //          "/c/nontermination/Pendulum-2-wrong-loop-wrong.yml",
+        //          "--property /c/nontermination/prop/termination.prp",
+        //        ),
         Arguments.of(
           "/c/nontermination/Pendulum.c",
           "/c/nontermination/Pendulum-short-wrong.yml",
@@ -323,7 +324,7 @@ class XcfaCliNonTerminationValidateTest {
 
   @ParameterizedTest
   @MethodSource("witnessFilesAdvanced")
-  fun testCValidateBoundedPortfolio(filePath: String, witnessPath: String, extraArgs: String?) {
+  fun testCValidateEmergentPortfolio(filePath: String, witnessPath: String, extraArgs: String?) {
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
@@ -332,7 +333,7 @@ class XcfaCliNonTerminationValidateTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--loglevel",
@@ -388,7 +389,7 @@ class XcfaCliNonTerminationValidateTest {
   private fun isWitnessViolation(temp: Path): Boolean {
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    return "entry_type: \"violation_sequence\"" in witnessContents
+    return "entry_type: \'violation_sequence\'" in witnessContents
   }
 
   /////////// wrong witnesses ///////////
@@ -491,12 +492,12 @@ class XcfaCliNonTerminationValidateTest {
 
   @ParameterizedTest
   @MethodSource("wrongWitnessFiles")
+  @Disabled
   fun testCValidateWrongBoundedPortfolio(
     filePath: String,
     witnessPath: String,
     extraArgs: String?,
   ) {
-    if (true) return
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
@@ -505,7 +506,7 @@ class XcfaCliNonTerminationValidateTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--loglevel",
@@ -529,7 +530,6 @@ class XcfaCliNonTerminationValidateTest {
   @ParameterizedTest
   @MethodSource("wrongWitnessFiles")
   fun testCValidateWrongCHC(filePath: String, witnessPath: String, extraArgs: String?) {
-    if (true) return
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))

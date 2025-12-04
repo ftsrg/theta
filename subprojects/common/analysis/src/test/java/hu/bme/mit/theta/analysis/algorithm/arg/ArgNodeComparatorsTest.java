@@ -30,8 +30,8 @@ import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ArgNodeComparatorsTest {
 
@@ -54,30 +54,30 @@ public class ArgNodeComparatorsTest {
     @Test
     public void testBfs() {
         nodes.sort(bfs());
-        Assert.assertArrayEquals(new ArgNode[] {s0, s10, s11, s12, s20, s21}, nodes.toArray());
+        Assertions.assertArrayEquals(new ArgNode[] {s0, s10, s11, s12, s20, s21}, nodes.toArray());
     }
 
     @Test
     public void testDfs() {
         nodes.sort(dfs());
-        Assert.assertArrayEquals(new ArgNode[] {s20, s21, s10, s11, s12, s0}, nodes.toArray());
+        Assertions.assertArrayEquals(new ArgNode[] {s20, s21, s10, s11, s12, s0}, nodes.toArray());
     }
 
     @Test
     public void testCreationAsc() {
         nodes.sort(creationAsc());
-        Assert.assertArrayEquals(new ArgNode[] {s0, s10, s20, s21, s11, s12}, nodes.toArray());
+        Assertions.assertArrayEquals(new ArgNode[] {s0, s10, s20, s21, s11, s12}, nodes.toArray());
     }
 
     @Test
     public void testCreationDesc() {
         nodes.sort(creationDesc());
-        Assert.assertArrayEquals(new ArgNode[] {s12, s11, s21, s20, s10, s0}, nodes.toArray());
+        Assertions.assertArrayEquals(new ArgNode[] {s12, s11, s21, s20, s10, s0}, nodes.toArray());
     }
 
     @Test
     public void testTargetFirst() {
         nodes.sort(combine(targetFirst(), creationAsc()));
-        Assert.assertArrayEquals(new ArgNode[] {s20, s11, s0, s10, s21, s12}, nodes.toArray());
+        Assertions.assertArrayEquals(new ArgNode[] {s20, s11, s0, s10, s21, s12}, nodes.toArray());
     }
 }
