@@ -30,9 +30,8 @@ import java.util.jar.JarOutputStream
  * Use-case: run gradle build on Windows, then run the resulting WSL jar in WSL without rebuilding.
  */
 class WslJarPlugin : Plugin<Project> {
-  override fun apply(project: Project) {
-    if (!System.getProperty("os.name").lowercase().contains("windows")) return
 
+  override fun apply(project: Project) {
     if (!project.plugins.hasPlugin("application")) {
       throw IllegalStateException(
         "WslJarPlugin requires the 'application' plugin to be applied."
@@ -42,36 +41,34 @@ class WslJarPlugin : Plugin<Project> {
     val wslJar = project.tasks.register("wslJar") {
       dependsOn(project.tasks.named("jar"))
 
-      doLast {
-        check(System.getProperty("os.name").lowercase().contains("windows")) {
-          "The WSL jar can only be created on Windows hosts."
-        }
+      if (System.getProperty("os.name").lowercase().contains("windows")) {
+        doLast {
+          val artifactDir = project.layout.buildDirectory.dir("libs").get().asFile
+          val artifactPath = artifactDir.wslPath
+          val artifact = File(artifactDir, "${project.name}-${project.version}.jar")
+          val application = project.extensions.getByType(JavaApplication::class.java)
+          val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
 
-        val artifactDir = project.layout.buildDirectory.dir("libs").get().asFile
-        val artifactPath = artifactDir.wslPath
-        val artifact = File(artifactDir, "${project.name}-${project.version}.jar")
-        val application = project.extensions.getByType(JavaApplication::class.java)
-        val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
+          JarFile(artifact).use { jar ->
+            val manifest = jar.manifest
+            val attrs = manifest.mainAttributes
+            attrs.putValue("Main-Class", application.mainClass.get())
+            val classPath =
+              sourceSets.getByName("main").runtimeClasspath.files.joinToString(" ") { f ->
+                f.wslPath.relativePath(artifactPath)
+              }
+            attrs.putValue("Class-Path", classPath)
 
-        JarFile(artifact).use { jar ->
-          val manifest = jar.manifest
-          val attrs = manifest.mainAttributes
-          attrs.putValue("Main-Class", application.mainClass.get())
-          val classPath =
-            sourceSets.getByName("main").runtimeClasspath.files.joinToString(" ") { f ->
-              f.wslPath.relativePath(artifactPath)
-            }
-          attrs.putValue("Class-Path", classPath)
-
-          val wslJar = File(artifact.parentFile, "${project.name}-${project.version}-wsl.jar")
-          JarOutputStream(wslJar.outputStream(), manifest).use { jos ->
-            jar.entries().asSequence().forEach { entry ->
-              if (!entry.name.equals("META-INF/MANIFEST.MF", ignoreCase = true)) {
-                jos.putNextEntry(entry)
-                jar.getInputStream(entry).use { input ->
-                  input.copyTo(jos)
+            val wslJar = File(artifact.parentFile, "${project.name}-${project.version}-wsl.jar")
+            JarOutputStream(wslJar.outputStream(), manifest).use { jos ->
+              jar.entries().asSequence().forEach { entry ->
+                if (!entry.name.equals("META-INF/MANIFEST.MF", ignoreCase = true)) {
+                  jos.putNextEntry(entry)
+                  jar.getInputStream(entry).use { input ->
+                    input.copyTo(jos)
+                  }
+                  jos.closeEntry()
                 }
-                jos.closeEntry()
               }
             }
           }
@@ -93,11 +90,12 @@ class WslJarPlugin : Plugin<Project> {
     }
   }
 
-  private val File.wslPath: String get() =
-    absolutePath.let {
-      val drive = it[0].lowercase()
-      "/mnt/$drive${it.substring(2).replace("\\", "/")}"
-    }
+  private val File.wslPath: String
+    get() =
+      absolutePath.let {
+        val drive = it[0].lowercase()
+        "/mnt/$drive${it.substring(2).replace("\\", "/")}"
+      }
 
   private fun String.relativePath(base: String): String {
     val thisSplit = this.split("/").filter { it.isNotEmpty() }
