@@ -167,7 +167,7 @@ afterEvaluate {
 				dependsOn(installSolversTaskName)
 			}
 			
-			archiveFileName.set("$toolName-archive.zip")
+			archiveFileName.set("$toolName.zip")
 			destinationDirectory.set(distributionsDir)
 			
 			into(toolName) {
