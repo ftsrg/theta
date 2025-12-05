@@ -3,5 +3,5 @@ input_files: models/split-kalman_bit_width_smallb0.aag
 options:
   language: aag
 properties:
-- expected_verdict: 'false'
+- expected_verdict: false
   property_file: ../properties/default.prp

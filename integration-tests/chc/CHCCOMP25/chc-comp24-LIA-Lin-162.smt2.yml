@@ -3,5 +3,5 @@ input_files: models/chc-comp24-LIA-Lin-162.smt2
 options:
   language: smt2
 properties:
-- expected_verdict: 'true'
+- expected_verdict: true
   property_file: ../properties/default.prp

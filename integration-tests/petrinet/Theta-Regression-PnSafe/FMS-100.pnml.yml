@@ -3,5 +3,5 @@ input_files: models/FMS-100.pnml
 options:
   language: pnml
 properties:
-- expected_verdict: 'false'
+- expected_verdict: false
   property_file: ../properties/pn_safe.prp

@@ -3,5 +3,5 @@ input_files: models/split-float_req_bl_1071b0.aag
 options:
   language: aag
 properties:
-- expected_verdict: 'true'
+- expected_verdict: true
   property_file: ../properties/default.prp

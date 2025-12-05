@@ -3,5 +3,5 @@ input_files: models/dekker-10.pnml
 options:
   language: pnml
 properties:
-- expected_verdict: 'true'
+- expected_verdict: true
   property_file: ../properties/pn_safe.prp

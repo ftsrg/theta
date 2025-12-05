@@ -3,5 +3,5 @@ input_files: models/laBPEL2PNML.pnml
 options:
   language: pnml
 properties:
-- expected_verdict: 'true'
+- expected_verdict: true
   property_file: ../properties/target_marking.prp

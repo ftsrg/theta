@@ -3,5 +3,5 @@ input_files: models/split-fib_37b0.aag
 options:
   language: aag
 properties:
-- expected_verdict: 'false'
+- expected_verdict: false
   property_file: ../properties/default.prp
