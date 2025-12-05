@@ -135,8 +135,8 @@ jobs:
             gradleTask: buildArchiveEmergenTheta-svcomp
           - toolName: Thorn-svcomp
             gradleTask: buildArchiveThorn-svcomp
-          - toolName: Theta-chcomp
-            gradleTask: buildArchiveTheta-chcomp
+          - toolName: Theta-chccomp
+            gradleTask: buildArchiveTheta-chccomp
           # xsts-cli
           - toolName: Theta-xsts
             gradleTask: buildArchiveTheta-xsts
