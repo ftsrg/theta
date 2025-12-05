@@ -36,13 +36,15 @@ class InputOptions :
   OptionGroup(name = "Input options", help = "Options related to model and property input") {
   val model: File by
     option(
+        "--model",
+        "--input",
         help =
-          "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input"
+          "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input",
       )
       .file(mustExist = true, canBeDir = false)
       .required()
-  private val property: InputStream? by
-    option(help = "Path of the property file. Has priority over --inlineProperty").inputStream()
+  private val property: File? by
+    option(help = "Path of the property file. Has priority over --inlineProperty").file()
   private val inlineProperty: String? by
     option(help = "Input property as a string. Ignored if --property is defined")
   private val flattenDepth: Int by
@@ -54,22 +56,24 @@ class InputOptions :
       .default(0)
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
-  val pnProperty: PropType by
-    option(help = "Property type for Petri-nets")
+  private val pnProperty: PropType? by
+    option(help = "Property type for Petri-nets. Has priority over --property.")
       .enum<PropType>()
       .default(PropType.FULL_EXPLORATION)
 
   fun isPnml() = model.path.endsWith("pnml")
 
+  fun getPnProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
+
   fun loadXsts(): XSTS {
     val propertyStream =
-      if (property != null) property
-      else
-        (if (inlineProperty != null) ByteArrayInputStream("prop { $inlineProperty }".toByteArray())
-        else null)
+      property?.inputStream()
+        ?: if (inlineProperty != null)
+          ByteArrayInputStream("prop { $inlineProperty }".toByteArray())
+        else null
     if (isPnml()) {
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
-      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, pnProperty)
+      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, getPnProperty())
     }
     val parsedXsts =
       XstsDslManager.createXsts(

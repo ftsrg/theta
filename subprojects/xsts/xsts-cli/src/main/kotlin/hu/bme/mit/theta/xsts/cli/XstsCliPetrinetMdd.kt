@@ -68,7 +68,7 @@ class XstsCliPetrinetMdd :
     else VariableOrderingFactory.fromFile(ordering, petriNet)
 
   private fun petrinetAnalysis() {
-    checkArgument(inputOptions.pnProperty == PropType.FULL_EXPLORATION) {
+    checkArgument(inputOptions.getPnProperty() == PropType.FULL_EXPLORATION) {
       "Only full exploration is supported for dedicated PN mode. Use XSTS-based analysis for other properties."
     }
 
