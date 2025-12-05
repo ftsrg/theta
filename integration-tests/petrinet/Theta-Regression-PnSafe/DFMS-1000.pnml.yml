@@ -4,4 +4,4 @@ options:
   language: pnml
 properties:
 - expected_verdict: 'false'
-  property_file: ../properties/default.prp
+  property_file: ../properties/pn_safe.prp

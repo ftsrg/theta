@@ -84,7 +84,11 @@ jobs:
           - tool: Theta-xsts
             config: "MDD"
             name: PetriNet_MDD
-            input_type: hardware
+            input_type: petrinet
+          - tool: Theta-xsts
+            config: "PN_MDD"
+            name: PetriNet_PN_MDD
+            input_type: petrinet
           # plc
           - tool: Theta-cfa
             config: "--algorithm CEGAR"

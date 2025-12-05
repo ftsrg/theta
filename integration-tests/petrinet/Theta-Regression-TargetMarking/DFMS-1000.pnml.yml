@@ -4,4 +4,4 @@ options:
   language: pnml
 properties:
 - expected_verdict: 'true'
-  property_file: ../properties/default.prp
+  property_file: ../properties/target_marking.prp
