@@ -1,8 +1,0 @@
-format_version: '2.0'
-input_files: models/btor2c-lazyMod.vis_QF_BV_s1269b_p3.c
-options:
-  data_model: LP64
-  language: C
-properties:
-- expected_verdict: true
-  property_file: ../properties/unreach-call.prp

@@ -1,8 +1,0 @@
-format_version: '2.0'
-input_files: models/hardness_floatingpointinfluence_no-floats_file-81.i
-options:
-  data_model: ILP32
-  language: C
-properties:
-- expected_verdict: true
-  property_file: ../properties/unreach-call.prp
