@@ -57,15 +57,44 @@ jobs:
     strategy:
       matrix:
         include:
-          - tool: Theta-archive
+          # software
+          - tool: Theta-svcomp
             config: "--svcomp --portfolio STABLE --loglevel RESULT"
-            name: Theta_Portfolio_STABLE
-          - tool: EmergenTheta-archive
+            name: SV-COMP_Portfolio_Stable
+            input_type: software
+          - tool: EmergenTheta-svcomp
             config: "--svcomp --portfolio EMERGENT --loglevel RESULT"
-            name: Theta_Portfolio_EMERGENT
-          - tool: Thorn-archive
+            name: SV-COMP_Portfolio_Emergent
+            input_type: software
+          - tool: Thorn-svcomp
             config: "--svcomp --portfolio HORN --loglevel RESULT"
-            name: Thorn_Portfolio_HORN
+            name: SV-COMP_Portfolio_Horn
+            input_type: software
+          # chc
+          - tool: Theta-chccomp
+            config: "--input-type CHC --backend PORTFOLIO --portfolio HORN --print-model --loglevel RESULT"
+            name: CHC-COMP_Portfolio
+            input_type: chc
+          # hardware
+          - tool: Theta-sts
+            config: "--algorithm CEGAR"
+            name: Hardware_CEGAR
+            input_type: hardware
+          # petrinet
+          - tool: Theta-xsts
+            config: "MDD"
+            name: PetriNet_MDD
+            input_type: hardware
+          # plc
+          - tool: Theta-cfa
+            config: "--algorithm CEGAR"
+            name: PLC_CEGAR
+            input_type: plc
+          # statechart
+          - tool: Theta-xsts
+            config: "KIND"
+            name: Statechart_KIND
+            input_type: statechart
     runs-on: ubuntu-24.04
     needs: create-archives
     steps:
@@ -77,7 +106,7 @@ jobs:
           name: ${{ matrix.name }}
           config_options: ${{ matrix.config }}
           tool: ${{ matrix.tool }}
-          input_type: c
+          input_type: ${{ matrix.input_type }}
   
   collect-results:
     needs: test-benchexec
@@ -95,14 +124,27 @@ jobs:
     strategy:
       matrix:
         include:
-          - toolName: Theta
-            gradleTask: buildArchive
-          - toolName: EmergenTheta
-            gradleTask: buildArchiveEmergenTheta
-          - toolName: Thorn
-            gradleTask: buildArchiveThorn
-          - toolName: ThetaCHC
-            gradleTask: buildArchiveThetaCHC
+          # xcfa-cli
+          - toolName: Theta-svcomp
+            gradleTask: buildArchiveTheta-svcomp
+          - toolName: EmergenTheta-svcomp
+            gradleTask: buildArchiveEmergenTheta-svcomp
+          - toolName: Thorn-svcomp
+            gradleTask: buildArchiveThorn-svcomp
+          - toolName: Theta-chcomp
+            gradleTask: buildArchiveTheta-chcomp
+          # xsts-cli
+          - toolName: Theta-xsts
+            gradleTask: buildArchiveTheta-xsts
+          # sts-cli
+          - toolName: Theta-sts
+            gradleTask: buildArchiveTheta-sts
+          # cfa-cli
+          - toolName: Theta-cfa
+            gradleTask: buildArchiveTheta-cfa
+          # xta-cli
+          - toolName: Theta-xta
+            gradleTask: buildArchiveTheta-xta
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -118,8 +160,8 @@ jobs:
       - name: Upload archive artifact
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:
-          name: ${{ matrix.toolName }}-archive
-          path: subprojects/xcfa/xcfa-cli/build/distributions/${{ matrix.toolName }}-archive.zip
+          name: ${{ matrix.toolName }}
+          path: subprojects/xcfa/xcfa-cli/build/distributions/${{ matrix.toolName }}.zip
           if-no-files-found: error
 
 

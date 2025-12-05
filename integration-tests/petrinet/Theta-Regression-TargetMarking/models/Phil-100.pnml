@@ -1,0 +1,3908 @@
+<?xml version="1.0"?>
+<pnml>
+  <net id="net1" type="EPNML11">
+    <name>
+      <text>phil-100</text>
+    </name>
+    <place id="idv1">
+      <name>
+        <value>villa1</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide1">
+      <name>
+        <value>eszik1</value>
+      </name>
+    </place>
+    <place id="idg1">
+      <name>
+        <value>gondolkozik1</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge1">
+      <name>
+        <value>g-&gt;e1</value>
+      </name>
+    </transition>
+    <transition id="ideg1">
+      <name>
+        <value>e-&gt;g1</value>
+      </name>
+    </transition>
+    <arc id="idedgeA1" source="idv1" target="idge1" />
+    <arc id="idedgeB1" source="idv2" target="idge1" />
+    <arc id="idedgeC1" source="idg1" target="idge1" />
+    <arc id="idedgeD1" source="idge1" target="ide1" />
+    <arc id="idedgeE1" source="ideg1" target="idv1" />
+    <arc id="idedgeF1" source="ideg1" target="idv2" />
+    <arc id="idedgeG1" source="ide1" target="ideg1" />
+    <arc id="idedgeH1" source="ideg1" target="idg1" />
+    <place id="idv2">
+      <name>
+        <value>villa2</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide2">
+      <name>
+        <value>eszik2</value>
+      </name>
+    </place>
+    <place id="idg2">
+      <name>
+        <value>gondolkozik2</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge2">
+      <name>
+        <value>g-&gt;e2</value>
+      </name>
+    </transition>
+    <transition id="ideg2">
+      <name>
+        <value>e-&gt;g2</value>
+      </name>
+    </transition>
+    <arc id="idedgeA2" source="idv2" target="idge2" />
+    <arc id="idedgeB2" source="idv3" target="idge2" />
+    <arc id="idedgeC2" source="idg2" target="idge2" />
+    <arc id="idedgeD2" source="idge2" target="ide2" />
+    <arc id="idedgeE2" source="ideg2" target="idv2" />
+    <arc id="idedgeF2" source="ideg2" target="idv3" />
+    <arc id="idedgeG2" source="ide2" target="ideg2" />
+    <arc id="idedgeH2" source="ideg2" target="idg2" />
+    <place id="idv3">
+      <name>
+        <value>villa3</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide3">
+      <name>
+        <value>eszik3</value>
+      </name>
+    </place>
+    <place id="idg3">
+      <name>
+        <value>gondolkozik3</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge3">
+      <name>
+        <value>g-&gt;e3</value>
+      </name>
+    </transition>
+    <transition id="ideg3">
+      <name>
+        <value>e-&gt;g3</value>
+      </name>
+    </transition>
+    <arc id="idedgeA3" source="idv3" target="idge3" />
+    <arc id="idedgeB3" source="idv4" target="idge3" />
+    <arc id="idedgeC3" source="idg3" target="idge3" />
+    <arc id="idedgeD3" source="idge3" target="ide3" />
+    <arc id="idedgeE3" source="ideg3" target="idv3" />
+    <arc id="idedgeF3" source="ideg3" target="idv4" />
+    <arc id="idedgeG3" source="ide3" target="ideg3" />
+    <arc id="idedgeH3" source="ideg3" target="idg3" />
+    <place id="idv4">
+      <name>
+        <value>villa4</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide4">
+      <name>
+        <value>eszik4</value>
+      </name>
+    </place>
+    <place id="idg4">
+      <name>
+        <value>gondolkozik4</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge4">
+      <name>
+        <value>g-&gt;e4</value>
+      </name>
+    </transition>
+    <transition id="ideg4">
+      <name>
+        <value>e-&gt;g4</value>
+      </name>
+    </transition>
+    <arc id="idedgeA4" source="idv4" target="idge4" />
+    <arc id="idedgeB4" source="idv5" target="idge4" />
+    <arc id="idedgeC4" source="idg4" target="idge4" />
+    <arc id="idedgeD4" source="idge4" target="ide4" />
+    <arc id="idedgeE4" source="ideg4" target="idv4" />
+    <arc id="idedgeF4" source="ideg4" target="idv5" />
+    <arc id="idedgeG4" source="ide4" target="ideg4" />
+    <arc id="idedgeH4" source="ideg4" target="idg4" />
+    <place id="idv5">
+      <name>
+        <value>villa5</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide5">
+      <name>
+        <value>eszik5</value>
+      </name>
+    </place>
+    <place id="idg5">
+      <name>
+        <value>gondolkozik5</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge5">
+      <name>
+        <value>g-&gt;e5</value>
+      </name>
+    </transition>
+    <transition id="ideg5">
+      <name>
+        <value>e-&gt;g5</value>
+      </name>
+    </transition>
+    <arc id="idedgeA5" source="idv5" target="idge5" />
+    <arc id="idedgeB5" source="idv6" target="idge5" />
+    <arc id="idedgeC5" source="idg5" target="idge5" />
+    <arc id="idedgeD5" source="idge5" target="ide5" />
+    <arc id="idedgeE5" source="ideg5" target="idv5" />
+    <arc id="idedgeF5" source="ideg5" target="idv6" />
+    <arc id="idedgeG5" source="ide5" target="ideg5" />
+    <arc id="idedgeH5" source="ideg5" target="idg5" />
+    <place id="idv6">
+      <name>
+        <value>villa6</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide6">
+      <name>
+        <value>eszik6</value>
+      </name>
+    </place>
+    <place id="idg6">
+      <name>
+        <value>gondolkozik6</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge6">
+      <name>
+        <value>g-&gt;e6</value>
+      </name>
+    </transition>
+    <transition id="ideg6">
+      <name>
+        <value>e-&gt;g6</value>
+      </name>
+    </transition>
+    <arc id="idedgeA6" source="idv6" target="idge6" />
+    <arc id="idedgeB6" source="idv7" target="idge6" />
+    <arc id="idedgeC6" source="idg6" target="idge6" />
+    <arc id="idedgeD6" source="idge6" target="ide6" />
+    <arc id="idedgeE6" source="ideg6" target="idv6" />
+    <arc id="idedgeF6" source="ideg6" target="idv7" />
+    <arc id="idedgeG6" source="ide6" target="ideg6" />
+    <arc id="idedgeH6" source="ideg6" target="idg6" />
+    <place id="idv7">
+      <name>
+        <value>villa7</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide7">
+      <name>
+        <value>eszik7</value>
+      </name>
+    </place>
+    <place id="idg7">
+      <name>
+        <value>gondolkozik7</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge7">
+      <name>
+        <value>g-&gt;e7</value>
+      </name>
+    </transition>
+    <transition id="ideg7">
+      <name>
+        <value>e-&gt;g7</value>
+      </name>
+    </transition>
+    <arc id="idedgeA7" source="idv7" target="idge7" />
+    <arc id="idedgeB7" source="idv8" target="idge7" />
+    <arc id="idedgeC7" source="idg7" target="idge7" />
+    <arc id="idedgeD7" source="idge7" target="ide7" />
+    <arc id="idedgeE7" source="ideg7" target="idv7" />
+    <arc id="idedgeF7" source="ideg7" target="idv8" />
+    <arc id="idedgeG7" source="ide7" target="ideg7" />
+    <arc id="idedgeH7" source="ideg7" target="idg7" />
+    <place id="idv8">
+      <name>
+        <value>villa8</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide8">
+      <name>
+        <value>eszik8</value>
+      </name>
+    </place>
+    <place id="idg8">
+      <name>
+        <value>gondolkozik8</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge8">
+      <name>
+        <value>g-&gt;e8</value>
+      </name>
+    </transition>
+    <transition id="ideg8">
+      <name>
+        <value>e-&gt;g8</value>
+      </name>
+    </transition>
+    <arc id="idedgeA8" source="idv8" target="idge8" />
+    <arc id="idedgeB8" source="idv9" target="idge8" />
+    <arc id="idedgeC8" source="idg8" target="idge8" />
+    <arc id="idedgeD8" source="idge8" target="ide8" />
+    <arc id="idedgeE8" source="ideg8" target="idv8" />
+    <arc id="idedgeF8" source="ideg8" target="idv9" />
+    <arc id="idedgeG8" source="ide8" target="ideg8" />
+    <arc id="idedgeH8" source="ideg8" target="idg8" />
+    <place id="idv9">
+      <name>
+        <value>villa9</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide9">
+      <name>
+        <value>eszik9</value>
+      </name>
+    </place>
+    <place id="idg9">
+      <name>
+        <value>gondolkozik9</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge9">
+      <name>
+        <value>g-&gt;e9</value>
+      </name>
+    </transition>
+    <transition id="ideg9">
+      <name>
+        <value>e-&gt;g9</value>
+      </name>
+    </transition>
+    <arc id="idedgeA9" source="idv9" target="idge9" />
+    <arc id="idedgeB9" source="idv10" target="idge9" />
+    <arc id="idedgeC9" source="idg9" target="idge9" />
+    <arc id="idedgeD9" source="idge9" target="ide9" />
+    <arc id="idedgeE9" source="ideg9" target="idv9" />
+    <arc id="idedgeF9" source="ideg9" target="idv10" />
+    <arc id="idedgeG9" source="ide9" target="ideg9" />
+    <arc id="idedgeH9" source="ideg9" target="idg9" />
+    <place id="idv10">
+      <name>
+        <value>villa10</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide10">
+      <name>
+        <value>eszik10</value>
+      </name>
+    </place>
+    <place id="idg10">
+      <name>
+        <value>gondolkozik10</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge10">
+      <name>
+        <value>g-&gt;e10</value>
+      </name>
+    </transition>
+    <transition id="ideg10">
+      <name>
+        <value>e-&gt;g10</value>
+      </name>
+    </transition>
+    <arc id="idedgeA10" source="idv10" target="idge10" />
+    <arc id="idedgeB10" source="idv11" target="idge10" />
+    <arc id="idedgeC10" source="idg10" target="idge10" />
+    <arc id="idedgeD10" source="idge10" target="ide10" />
+    <arc id="idedgeE10" source="ideg10" target="idv10" />
+    <arc id="idedgeF10" source="ideg10" target="idv11" />
+    <arc id="idedgeG10" source="ide10" target="ideg10" />
+    <arc id="idedgeH10" source="ideg10" target="idg10" />
+    <place id="idv11">
+      <name>
+        <value>villa11</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide11">
+      <name>
+        <value>eszik11</value>
+      </name>
+    </place>
+    <place id="idg11">
+      <name>
+        <value>gondolkozik11</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge11">
+      <name>
+        <value>g-&gt;e11</value>
+      </name>
+    </transition>
+    <transition id="ideg11">
+      <name>
+        <value>e-&gt;g11</value>
+      </name>
+    </transition>
+    <arc id="idedgeA11" source="idv11" target="idge11" />
+    <arc id="idedgeB11" source="idv12" target="idge11" />
+    <arc id="idedgeC11" source="idg11" target="idge11" />
+    <arc id="idedgeD11" source="idge11" target="ide11" />
+    <arc id="idedgeE11" source="ideg11" target="idv11" />
+    <arc id="idedgeF11" source="ideg11" target="idv12" />
+    <arc id="idedgeG11" source="ide11" target="ideg11" />
+    <arc id="idedgeH11" source="ideg11" target="idg11" />
+    <place id="idv12">
+      <name>
+        <value>villa12</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide12">
+      <name>
+        <value>eszik12</value>
+      </name>
+    </place>
+    <place id="idg12">
+      <name>
+        <value>gondolkozik12</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge12">
+      <name>
+        <value>g-&gt;e12</value>
+      </name>
+    </transition>
+    <transition id="ideg12">
+      <name>
+        <value>e-&gt;g12</value>
+      </name>
+    </transition>
+    <arc id="idedgeA12" source="idv12" target="idge12" />
+    <arc id="idedgeB12" source="idv13" target="idge12" />
+    <arc id="idedgeC12" source="idg12" target="idge12" />
+    <arc id="idedgeD12" source="idge12" target="ide12" />
+    <arc id="idedgeE12" source="ideg12" target="idv12" />
+    <arc id="idedgeF12" source="ideg12" target="idv13" />
+    <arc id="idedgeG12" source="ide12" target="ideg12" />
+    <arc id="idedgeH12" source="ideg12" target="idg12" />
+    <place id="idv13">
+      <name>
+        <value>villa13</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide13">
+      <name>
+        <value>eszik13</value>
+      </name>
+    </place>
+    <place id="idg13">
+      <name>
+        <value>gondolkozik13</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge13">
+      <name>
+        <value>g-&gt;e13</value>
+      </name>
+    </transition>
+    <transition id="ideg13">
+      <name>
+        <value>e-&gt;g13</value>
+      </name>
+    </transition>
+    <arc id="idedgeA13" source="idv13" target="idge13" />
+    <arc id="idedgeB13" source="idv14" target="idge13" />
+    <arc id="idedgeC13" source="idg13" target="idge13" />
+    <arc id="idedgeD13" source="idge13" target="ide13" />
+    <arc id="idedgeE13" source="ideg13" target="idv13" />
+    <arc id="idedgeF13" source="ideg13" target="idv14" />
+    <arc id="idedgeG13" source="ide13" target="ideg13" />
+    <arc id="idedgeH13" source="ideg13" target="idg13" />
+    <place id="idv14">
+      <name>
+        <value>villa14</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide14">
+      <name>
+        <value>eszik14</value>
+      </name>
+    </place>
+    <place id="idg14">
+      <name>
+        <value>gondolkozik14</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge14">
+      <name>
+        <value>g-&gt;e14</value>
+      </name>
+    </transition>
+    <transition id="ideg14">
+      <name>
+        <value>e-&gt;g14</value>
+      </name>
+    </transition>
+    <arc id="idedgeA14" source="idv14" target="idge14" />
+    <arc id="idedgeB14" source="idv15" target="idge14" />
+    <arc id="idedgeC14" source="idg14" target="idge14" />
+    <arc id="idedgeD14" source="idge14" target="ide14" />
+    <arc id="idedgeE14" source="ideg14" target="idv14" />
+    <arc id="idedgeF14" source="ideg14" target="idv15" />
+    <arc id="idedgeG14" source="ide14" target="ideg14" />
+    <arc id="idedgeH14" source="ideg14" target="idg14" />
+    <place id="idv15">
+      <name>
+        <value>villa15</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide15">
+      <name>
+        <value>eszik15</value>
+      </name>
+    </place>
+    <place id="idg15">
+      <name>
+        <value>gondolkozik15</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge15">
+      <name>
+        <value>g-&gt;e15</value>
+      </name>
+    </transition>
+    <transition id="ideg15">
+      <name>
+        <value>e-&gt;g15</value>
+      </name>
+    </transition>
+    <arc id="idedgeA15" source="idv15" target="idge15" />
+    <arc id="idedgeB15" source="idv16" target="idge15" />
+    <arc id="idedgeC15" source="idg15" target="idge15" />
+    <arc id="idedgeD15" source="idge15" target="ide15" />
+    <arc id="idedgeE15" source="ideg15" target="idv15" />
+    <arc id="idedgeF15" source="ideg15" target="idv16" />
+    <arc id="idedgeG15" source="ide15" target="ideg15" />
+    <arc id="idedgeH15" source="ideg15" target="idg15" />
+    <place id="idv16">
+      <name>
+        <value>villa16</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide16">
+      <name>
+        <value>eszik16</value>
+      </name>
+    </place>
+    <place id="idg16">
+      <name>
+        <value>gondolkozik16</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge16">
+      <name>
+        <value>g-&gt;e16</value>
+      </name>
+    </transition>
+    <transition id="ideg16">
+      <name>
+        <value>e-&gt;g16</value>
+      </name>
+    </transition>
+    <arc id="idedgeA16" source="idv16" target="idge16" />
+    <arc id="idedgeB16" source="idv17" target="idge16" />
+    <arc id="idedgeC16" source="idg16" target="idge16" />
+    <arc id="idedgeD16" source="idge16" target="ide16" />
+    <arc id="idedgeE16" source="ideg16" target="idv16" />
+    <arc id="idedgeF16" source="ideg16" target="idv17" />
+    <arc id="idedgeG16" source="ide16" target="ideg16" />
+    <arc id="idedgeH16" source="ideg16" target="idg16" />
+    <place id="idv17">
+      <name>
+        <value>villa17</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide17">
+      <name>
+        <value>eszik17</value>
+      </name>
+    </place>
+    <place id="idg17">
+      <name>
+        <value>gondolkozik17</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge17">
+      <name>
+        <value>g-&gt;e17</value>
+      </name>
+    </transition>
+    <transition id="ideg17">
+      <name>
+        <value>e-&gt;g17</value>
+      </name>
+    </transition>
+    <arc id="idedgeA17" source="idv17" target="idge17" />
+    <arc id="idedgeB17" source="idv18" target="idge17" />
+    <arc id="idedgeC17" source="idg17" target="idge17" />
+    <arc id="idedgeD17" source="idge17" target="ide17" />
+    <arc id="idedgeE17" source="ideg17" target="idv17" />
+    <arc id="idedgeF17" source="ideg17" target="idv18" />
+    <arc id="idedgeG17" source="ide17" target="ideg17" />
+    <arc id="idedgeH17" source="ideg17" target="idg17" />
+    <place id="idv18">
+      <name>
+        <value>villa18</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide18">
+      <name>
+        <value>eszik18</value>
+      </name>
+    </place>
+    <place id="idg18">
+      <name>
+        <value>gondolkozik18</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge18">
+      <name>
+        <value>g-&gt;e18</value>
+      </name>
+    </transition>
+    <transition id="ideg18">
+      <name>
+        <value>e-&gt;g18</value>
+      </name>
+    </transition>
+    <arc id="idedgeA18" source="idv18" target="idge18" />
+    <arc id="idedgeB18" source="idv19" target="idge18" />
+    <arc id="idedgeC18" source="idg18" target="idge18" />
+    <arc id="idedgeD18" source="idge18" target="ide18" />
+    <arc id="idedgeE18" source="ideg18" target="idv18" />
+    <arc id="idedgeF18" source="ideg18" target="idv19" />
+    <arc id="idedgeG18" source="ide18" target="ideg18" />
+    <arc id="idedgeH18" source="ideg18" target="idg18" />
+    <place id="idv19">
+      <name>
+        <value>villa19</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide19">
+      <name>
+        <value>eszik19</value>
+      </name>
+    </place>
+    <place id="idg19">
+      <name>
+        <value>gondolkozik19</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge19">
+      <name>
+        <value>g-&gt;e19</value>
+      </name>
+    </transition>
+    <transition id="ideg19">
+      <name>
+        <value>e-&gt;g19</value>
+      </name>
+    </transition>
+    <arc id="idedgeA19" source="idv19" target="idge19" />
+    <arc id="idedgeB19" source="idv20" target="idge19" />
+    <arc id="idedgeC19" source="idg19" target="idge19" />
+    <arc id="idedgeD19" source="idge19" target="ide19" />
+    <arc id="idedgeE19" source="ideg19" target="idv19" />
+    <arc id="idedgeF19" source="ideg19" target="idv20" />
+    <arc id="idedgeG19" source="ide19" target="ideg19" />
+    <arc id="idedgeH19" source="ideg19" target="idg19" />
+    <place id="idv20">
+      <name>
+        <value>villa20</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide20">
+      <name>
+        <value>eszik20</value>
+      </name>
+    </place>
+    <place id="idg20">
+      <name>
+        <value>gondolkozik20</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge20">
+      <name>
+        <value>g-&gt;e20</value>
+      </name>
+    </transition>
+    <transition id="ideg20">
+      <name>
+        <value>e-&gt;g20</value>
+      </name>
+    </transition>
+    <arc id="idedgeA20" source="idv20" target="idge20" />
+    <arc id="idedgeB20" source="idv21" target="idge20" />
+    <arc id="idedgeC20" source="idg20" target="idge20" />
+    <arc id="idedgeD20" source="idge20" target="ide20" />
+    <arc id="idedgeE20" source="ideg20" target="idv20" />
+    <arc id="idedgeF20" source="ideg20" target="idv21" />
+    <arc id="idedgeG20" source="ide20" target="ideg20" />
+    <arc id="idedgeH20" source="ideg20" target="idg20" />
+    <place id="idv21">
+      <name>
+        <value>villa21</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide21">
+      <name>
+        <value>eszik21</value>
+      </name>
+    </place>
+    <place id="idg21">
+      <name>
+        <value>gondolkozik21</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge21">
+      <name>
+        <value>g-&gt;e21</value>
+      </name>
+    </transition>
+    <transition id="ideg21">
+      <name>
+        <value>e-&gt;g21</value>
+      </name>
+    </transition>
+    <arc id="idedgeA21" source="idv21" target="idge21" />
+    <arc id="idedgeB21" source="idv22" target="idge21" />
+    <arc id="idedgeC21" source="idg21" target="idge21" />
+    <arc id="idedgeD21" source="idge21" target="ide21" />
+    <arc id="idedgeE21" source="ideg21" target="idv21" />
+    <arc id="idedgeF21" source="ideg21" target="idv22" />
+    <arc id="idedgeG21" source="ide21" target="ideg21" />
+    <arc id="idedgeH21" source="ideg21" target="idg21" />
+    <place id="idv22">
+      <name>
+        <value>villa22</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide22">
+      <name>
+        <value>eszik22</value>
+      </name>
+    </place>
+    <place id="idg22">
+      <name>
+        <value>gondolkozik22</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge22">
+      <name>
+        <value>g-&gt;e22</value>
+      </name>
+    </transition>
+    <transition id="ideg22">
+      <name>
+        <value>e-&gt;g22</value>
+      </name>
+    </transition>
+    <arc id="idedgeA22" source="idv22" target="idge22" />
+    <arc id="idedgeB22" source="idv23" target="idge22" />
+    <arc id="idedgeC22" source="idg22" target="idge22" />
+    <arc id="idedgeD22" source="idge22" target="ide22" />
+    <arc id="idedgeE22" source="ideg22" target="idv22" />
+    <arc id="idedgeF22" source="ideg22" target="idv23" />
+    <arc id="idedgeG22" source="ide22" target="ideg22" />
+    <arc id="idedgeH22" source="ideg22" target="idg22" />
+    <place id="idv23">
+      <name>
+        <value>villa23</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide23">
+      <name>
+        <value>eszik23</value>
+      </name>
+    </place>
+    <place id="idg23">
+      <name>
+        <value>gondolkozik23</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge23">
+      <name>
+        <value>g-&gt;e23</value>
+      </name>
+    </transition>
+    <transition id="ideg23">
+      <name>
+        <value>e-&gt;g23</value>
+      </name>
+    </transition>
+    <arc id="idedgeA23" source="idv23" target="idge23" />
+    <arc id="idedgeB23" source="idv24" target="idge23" />
+    <arc id="idedgeC23" source="idg23" target="idge23" />
+    <arc id="idedgeD23" source="idge23" target="ide23" />
+    <arc id="idedgeE23" source="ideg23" target="idv23" />
+    <arc id="idedgeF23" source="ideg23" target="idv24" />
+    <arc id="idedgeG23" source="ide23" target="ideg23" />
+    <arc id="idedgeH23" source="ideg23" target="idg23" />
+    <place id="idv24">
+      <name>
+        <value>villa24</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide24">
+      <name>
+        <value>eszik24</value>
+      </name>
+    </place>
+    <place id="idg24">
+      <name>
+        <value>gondolkozik24</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge24">
+      <name>
+        <value>g-&gt;e24</value>
+      </name>
+    </transition>
+    <transition id="ideg24">
+      <name>
+        <value>e-&gt;g24</value>
+      </name>
+    </transition>
+    <arc id="idedgeA24" source="idv24" target="idge24" />
+    <arc id="idedgeB24" source="idv25" target="idge24" />
+    <arc id="idedgeC24" source="idg24" target="idge24" />
+    <arc id="idedgeD24" source="idge24" target="ide24" />
+    <arc id="idedgeE24" source="ideg24" target="idv24" />
+    <arc id="idedgeF24" source="ideg24" target="idv25" />
+    <arc id="idedgeG24" source="ide24" target="ideg24" />
+    <arc id="idedgeH24" source="ideg24" target="idg24" />
+    <place id="idv25">
+      <name>
+        <value>villa25</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide25">
+      <name>
+        <value>eszik25</value>
+      </name>
+    </place>
+    <place id="idg25">
+      <name>
+        <value>gondolkozik25</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge25">
+      <name>
+        <value>g-&gt;e25</value>
+      </name>
+    </transition>
+    <transition id="ideg25">
+      <name>
+        <value>e-&gt;g25</value>
+      </name>
+    </transition>
+    <arc id="idedgeA25" source="idv25" target="idge25" />
+    <arc id="idedgeB25" source="idv26" target="idge25" />
+    <arc id="idedgeC25" source="idg25" target="idge25" />
+    <arc id="idedgeD25" source="idge25" target="ide25" />
+    <arc id="idedgeE25" source="ideg25" target="idv25" />
+    <arc id="idedgeF25" source="ideg25" target="idv26" />
+    <arc id="idedgeG25" source="ide25" target="ideg25" />
+    <arc id="idedgeH25" source="ideg25" target="idg25" />
+    <place id="idv26">
+      <name>
+        <value>villa26</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide26">
+      <name>
+        <value>eszik26</value>
+      </name>
+    </place>
+    <place id="idg26">
+      <name>
+        <value>gondolkozik26</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge26">
+      <name>
+        <value>g-&gt;e26</value>
+      </name>
+    </transition>
+    <transition id="ideg26">
+      <name>
+        <value>e-&gt;g26</value>
+      </name>
+    </transition>
+    <arc id="idedgeA26" source="idv26" target="idge26" />
+    <arc id="idedgeB26" source="idv27" target="idge26" />
+    <arc id="idedgeC26" source="idg26" target="idge26" />
+    <arc id="idedgeD26" source="idge26" target="ide26" />
+    <arc id="idedgeE26" source="ideg26" target="idv26" />
+    <arc id="idedgeF26" source="ideg26" target="idv27" />
+    <arc id="idedgeG26" source="ide26" target="ideg26" />
+    <arc id="idedgeH26" source="ideg26" target="idg26" />
+    <place id="idv27">
+      <name>
+        <value>villa27</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide27">
+      <name>
+        <value>eszik27</value>
+      </name>
+    </place>
+    <place id="idg27">
+      <name>
+        <value>gondolkozik27</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge27">
+      <name>
+        <value>g-&gt;e27</value>
+      </name>
+    </transition>
+    <transition id="ideg27">
+      <name>
+        <value>e-&gt;g27</value>
+      </name>
+    </transition>
+    <arc id="idedgeA27" source="idv27" target="idge27" />
+    <arc id="idedgeB27" source="idv28" target="idge27" />
+    <arc id="idedgeC27" source="idg27" target="idge27" />
+    <arc id="idedgeD27" source="idge27" target="ide27" />
+    <arc id="idedgeE27" source="ideg27" target="idv27" />
+    <arc id="idedgeF27" source="ideg27" target="idv28" />
+    <arc id="idedgeG27" source="ide27" target="ideg27" />
+    <arc id="idedgeH27" source="ideg27" target="idg27" />
+    <place id="idv28">
+      <name>
+        <value>villa28</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide28">
+      <name>
+        <value>eszik28</value>
+      </name>
+    </place>
+    <place id="idg28">
+      <name>
+        <value>gondolkozik28</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge28">
+      <name>
+        <value>g-&gt;e28</value>
+      </name>
+    </transition>
+    <transition id="ideg28">
+      <name>
+        <value>e-&gt;g28</value>
+      </name>
+    </transition>
+    <arc id="idedgeA28" source="idv28" target="idge28" />
+    <arc id="idedgeB28" source="idv29" target="idge28" />
+    <arc id="idedgeC28" source="idg28" target="idge28" />
+    <arc id="idedgeD28" source="idge28" target="ide28" />
+    <arc id="idedgeE28" source="ideg28" target="idv28" />
+    <arc id="idedgeF28" source="ideg28" target="idv29" />
+    <arc id="idedgeG28" source="ide28" target="ideg28" />
+    <arc id="idedgeH28" source="ideg28" target="idg28" />
+    <place id="idv29">
+      <name>
+        <value>villa29</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide29">
+      <name>
+        <value>eszik29</value>
+      </name>
+    </place>
+    <place id="idg29">
+      <name>
+        <value>gondolkozik29</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge29">
+      <name>
+        <value>g-&gt;e29</value>
+      </name>
+    </transition>
+    <transition id="ideg29">
+      <name>
+        <value>e-&gt;g29</value>
+      </name>
+    </transition>
+    <arc id="idedgeA29" source="idv29" target="idge29" />
+    <arc id="idedgeB29" source="idv30" target="idge29" />
+    <arc id="idedgeC29" source="idg29" target="idge29" />
+    <arc id="idedgeD29" source="idge29" target="ide29" />
+    <arc id="idedgeE29" source="ideg29" target="idv29" />
+    <arc id="idedgeF29" source="ideg29" target="idv30" />
+    <arc id="idedgeG29" source="ide29" target="ideg29" />
+    <arc id="idedgeH29" source="ideg29" target="idg29" />
+    <place id="idv30">
+      <name>
+        <value>villa30</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide30">
+      <name>
+        <value>eszik30</value>
+      </name>
+    </place>
+    <place id="idg30">
+      <name>
+        <value>gondolkozik30</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge30">
+      <name>
+        <value>g-&gt;e30</value>
+      </name>
+    </transition>
+    <transition id="ideg30">
+      <name>
+        <value>e-&gt;g30</value>
+      </name>
+    </transition>
+    <arc id="idedgeA30" source="idv30" target="idge30" />
+    <arc id="idedgeB30" source="idv31" target="idge30" />
+    <arc id="idedgeC30" source="idg30" target="idge30" />
+    <arc id="idedgeD30" source="idge30" target="ide30" />
+    <arc id="idedgeE30" source="ideg30" target="idv30" />
+    <arc id="idedgeF30" source="ideg30" target="idv31" />
+    <arc id="idedgeG30" source="ide30" target="ideg30" />
+    <arc id="idedgeH30" source="ideg30" target="idg30" />
+    <place id="idv31">
+      <name>
+        <value>villa31</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide31">
+      <name>
+        <value>eszik31</value>
+      </name>
+    </place>
+    <place id="idg31">
+      <name>
+        <value>gondolkozik31</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge31">
+      <name>
+        <value>g-&gt;e31</value>
+      </name>
+    </transition>
+    <transition id="ideg31">
+      <name>
+        <value>e-&gt;g31</value>
+      </name>
+    </transition>
+    <arc id="idedgeA31" source="idv31" target="idge31" />
+    <arc id="idedgeB31" source="idv32" target="idge31" />
+    <arc id="idedgeC31" source="idg31" target="idge31" />
+    <arc id="idedgeD31" source="idge31" target="ide31" />
+    <arc id="idedgeE31" source="ideg31" target="idv31" />
+    <arc id="idedgeF31" source="ideg31" target="idv32" />
+    <arc id="idedgeG31" source="ide31" target="ideg31" />
+    <arc id="idedgeH31" source="ideg31" target="idg31" />
+    <place id="idv32">
+      <name>
+        <value>villa32</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide32">
+      <name>
+        <value>eszik32</value>
+      </name>
+    </place>
+    <place id="idg32">
+      <name>
+        <value>gondolkozik32</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge32">
+      <name>
+        <value>g-&gt;e32</value>
+      </name>
+    </transition>
+    <transition id="ideg32">
+      <name>
+        <value>e-&gt;g32</value>
+      </name>
+    </transition>
+    <arc id="idedgeA32" source="idv32" target="idge32" />
+    <arc id="idedgeB32" source="idv33" target="idge32" />
+    <arc id="idedgeC32" source="idg32" target="idge32" />
+    <arc id="idedgeD32" source="idge32" target="ide32" />
+    <arc id="idedgeE32" source="ideg32" target="idv32" />
+    <arc id="idedgeF32" source="ideg32" target="idv33" />
+    <arc id="idedgeG32" source="ide32" target="ideg32" />
+    <arc id="idedgeH32" source="ideg32" target="idg32" />
+    <place id="idv33">
+      <name>
+        <value>villa33</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide33">
+      <name>
+        <value>eszik33</value>
+      </name>
+    </place>
+    <place id="idg33">
+      <name>
+        <value>gondolkozik33</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge33">
+      <name>
+        <value>g-&gt;e33</value>
+      </name>
+    </transition>
+    <transition id="ideg33">
+      <name>
+        <value>e-&gt;g33</value>
+      </name>
+    </transition>
+    <arc id="idedgeA33" source="idv33" target="idge33" />
+    <arc id="idedgeB33" source="idv34" target="idge33" />
+    <arc id="idedgeC33" source="idg33" target="idge33" />
+    <arc id="idedgeD33" source="idge33" target="ide33" />
+    <arc id="idedgeE33" source="ideg33" target="idv33" />
+    <arc id="idedgeF33" source="ideg33" target="idv34" />
+    <arc id="idedgeG33" source="ide33" target="ideg33" />
+    <arc id="idedgeH33" source="ideg33" target="idg33" />
+    <place id="idv34">
+      <name>
+        <value>villa34</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide34">
+      <name>
+        <value>eszik34</value>
+      </name>
+    </place>
+    <place id="idg34">
+      <name>
+        <value>gondolkozik34</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge34">
+      <name>
+        <value>g-&gt;e34</value>
+      </name>
+    </transition>
+    <transition id="ideg34">
+      <name>
+        <value>e-&gt;g34</value>
+      </name>
+    </transition>
+    <arc id="idedgeA34" source="idv34" target="idge34" />
+    <arc id="idedgeB34" source="idv35" target="idge34" />
+    <arc id="idedgeC34" source="idg34" target="idge34" />
+    <arc id="idedgeD34" source="idge34" target="ide34" />
+    <arc id="idedgeE34" source="ideg34" target="idv34" />
+    <arc id="idedgeF34" source="ideg34" target="idv35" />
+    <arc id="idedgeG34" source="ide34" target="ideg34" />
+    <arc id="idedgeH34" source="ideg34" target="idg34" />
+    <place id="idv35">
+      <name>
+        <value>villa35</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide35">
+      <name>
+        <value>eszik35</value>
+      </name>
+    </place>
+    <place id="idg35">
+      <name>
+        <value>gondolkozik35</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge35">
+      <name>
+        <value>g-&gt;e35</value>
+      </name>
+    </transition>
+    <transition id="ideg35">
+      <name>
+        <value>e-&gt;g35</value>
+      </name>
+    </transition>
+    <arc id="idedgeA35" source="idv35" target="idge35" />
+    <arc id="idedgeB35" source="idv36" target="idge35" />
+    <arc id="idedgeC35" source="idg35" target="idge35" />
+    <arc id="idedgeD35" source="idge35" target="ide35" />
+    <arc id="idedgeE35" source="ideg35" target="idv35" />
+    <arc id="idedgeF35" source="ideg35" target="idv36" />
+    <arc id="idedgeG35" source="ide35" target="ideg35" />
+    <arc id="idedgeH35" source="ideg35" target="idg35" />
+    <place id="idv36">
+      <name>
+        <value>villa36</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide36">
+      <name>
+        <value>eszik36</value>
+      </name>
+    </place>
+    <place id="idg36">
+      <name>
+        <value>gondolkozik36</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge36">
+      <name>
+        <value>g-&gt;e36</value>
+      </name>
+    </transition>
+    <transition id="ideg36">
+      <name>
+        <value>e-&gt;g36</value>
+      </name>
+    </transition>
+    <arc id="idedgeA36" source="idv36" target="idge36" />
+    <arc id="idedgeB36" source="idv37" target="idge36" />
+    <arc id="idedgeC36" source="idg36" target="idge36" />
+    <arc id="idedgeD36" source="idge36" target="ide36" />
+    <arc id="idedgeE36" source="ideg36" target="idv36" />
+    <arc id="idedgeF36" source="ideg36" target="idv37" />
+    <arc id="idedgeG36" source="ide36" target="ideg36" />
+    <arc id="idedgeH36" source="ideg36" target="idg36" />
+    <place id="idv37">
+      <name>
+        <value>villa37</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide37">
+      <name>
+        <value>eszik37</value>
+      </name>
+    </place>
+    <place id="idg37">
+      <name>
+        <value>gondolkozik37</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge37">
+      <name>
+        <value>g-&gt;e37</value>
+      </name>
+    </transition>
+    <transition id="ideg37">
+      <name>
+        <value>e-&gt;g37</value>
+      </name>
+    </transition>
+    <arc id="idedgeA37" source="idv37" target="idge37" />
+    <arc id="idedgeB37" source="idv38" target="idge37" />
+    <arc id="idedgeC37" source="idg37" target="idge37" />
+    <arc id="idedgeD37" source="idge37" target="ide37" />
+    <arc id="idedgeE37" source="ideg37" target="idv37" />
+    <arc id="idedgeF37" source="ideg37" target="idv38" />
+    <arc id="idedgeG37" source="ide37" target="ideg37" />
+    <arc id="idedgeH37" source="ideg37" target="idg37" />
+    <place id="idv38">
+      <name>
+        <value>villa38</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide38">
+      <name>
+        <value>eszik38</value>
+      </name>
+    </place>
+    <place id="idg38">
+      <name>
+        <value>gondolkozik38</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge38">
+      <name>
+        <value>g-&gt;e38</value>
+      </name>
+    </transition>
+    <transition id="ideg38">
+      <name>
+        <value>e-&gt;g38</value>
+      </name>
+    </transition>
+    <arc id="idedgeA38" source="idv38" target="idge38" />
+    <arc id="idedgeB38" source="idv39" target="idge38" />
+    <arc id="idedgeC38" source="idg38" target="idge38" />
+    <arc id="idedgeD38" source="idge38" target="ide38" />
+    <arc id="idedgeE38" source="ideg38" target="idv38" />
+    <arc id="idedgeF38" source="ideg38" target="idv39" />
+    <arc id="idedgeG38" source="ide38" target="ideg38" />
+    <arc id="idedgeH38" source="ideg38" target="idg38" />
+    <place id="idv39">
+      <name>
+        <value>villa39</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide39">
+      <name>
+        <value>eszik39</value>
+      </name>
+    </place>
+    <place id="idg39">
+      <name>
+        <value>gondolkozik39</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge39">
+      <name>
+        <value>g-&gt;e39</value>
+      </name>
+    </transition>
+    <transition id="ideg39">
+      <name>
+        <value>e-&gt;g39</value>
+      </name>
+    </transition>
+    <arc id="idedgeA39" source="idv39" target="idge39" />
+    <arc id="idedgeB39" source="idv40" target="idge39" />
+    <arc id="idedgeC39" source="idg39" target="idge39" />
+    <arc id="idedgeD39" source="idge39" target="ide39" />
+    <arc id="idedgeE39" source="ideg39" target="idv39" />
+    <arc id="idedgeF39" source="ideg39" target="idv40" />
+    <arc id="idedgeG39" source="ide39" target="ideg39" />
+    <arc id="idedgeH39" source="ideg39" target="idg39" />
+    <place id="idv40">
+      <name>
+        <value>villa40</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide40">
+      <name>
+        <value>eszik40</value>
+      </name>
+    </place>
+    <place id="idg40">
+      <name>
+        <value>gondolkozik40</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge40">
+      <name>
+        <value>g-&gt;e40</value>
+      </name>
+    </transition>
+    <transition id="ideg40">
+      <name>
+        <value>e-&gt;g40</value>
+      </name>
+    </transition>
+    <arc id="idedgeA40" source="idv40" target="idge40" />
+    <arc id="idedgeB40" source="idv41" target="idge40" />
+    <arc id="idedgeC40" source="idg40" target="idge40" />
+    <arc id="idedgeD40" source="idge40" target="ide40" />
+    <arc id="idedgeE40" source="ideg40" target="idv40" />
+    <arc id="idedgeF40" source="ideg40" target="idv41" />
+    <arc id="idedgeG40" source="ide40" target="ideg40" />
+    <arc id="idedgeH40" source="ideg40" target="idg40" />
+    <place id="idv41">
+      <name>
+        <value>villa41</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide41">
+      <name>
+        <value>eszik41</value>
+      </name>
+    </place>
+    <place id="idg41">
+      <name>
+        <value>gondolkozik41</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge41">
+      <name>
+        <value>g-&gt;e41</value>
+      </name>
+    </transition>
+    <transition id="ideg41">
+      <name>
+        <value>e-&gt;g41</value>
+      </name>
+    </transition>
+    <arc id="idedgeA41" source="idv41" target="idge41" />
+    <arc id="idedgeB41" source="idv42" target="idge41" />
+    <arc id="idedgeC41" source="idg41" target="idge41" />
+    <arc id="idedgeD41" source="idge41" target="ide41" />
+    <arc id="idedgeE41" source="ideg41" target="idv41" />
+    <arc id="idedgeF41" source="ideg41" target="idv42" />
+    <arc id="idedgeG41" source="ide41" target="ideg41" />
+    <arc id="idedgeH41" source="ideg41" target="idg41" />
+    <place id="idv42">
+      <name>
+        <value>villa42</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide42">
+      <name>
+        <value>eszik42</value>
+      </name>
+    </place>
+    <place id="idg42">
+      <name>
+        <value>gondolkozik42</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge42">
+      <name>
+        <value>g-&gt;e42</value>
+      </name>
+    </transition>
+    <transition id="ideg42">
+      <name>
+        <value>e-&gt;g42</value>
+      </name>
+    </transition>
+    <arc id="idedgeA42" source="idv42" target="idge42" />
+    <arc id="idedgeB42" source="idv43" target="idge42" />
+    <arc id="idedgeC42" source="idg42" target="idge42" />
+    <arc id="idedgeD42" source="idge42" target="ide42" />
+    <arc id="idedgeE42" source="ideg42" target="idv42" />
+    <arc id="idedgeF42" source="ideg42" target="idv43" />
+    <arc id="idedgeG42" source="ide42" target="ideg42" />
+    <arc id="idedgeH42" source="ideg42" target="idg42" />
+    <place id="idv43">
+      <name>
+        <value>villa43</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide43">
+      <name>
+        <value>eszik43</value>
+      </name>
+    </place>
+    <place id="idg43">
+      <name>
+        <value>gondolkozik43</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge43">
+      <name>
+        <value>g-&gt;e43</value>
+      </name>
+    </transition>
+    <transition id="ideg43">
+      <name>
+        <value>e-&gt;g43</value>
+      </name>
+    </transition>
+    <arc id="idedgeA43" source="idv43" target="idge43" />
+    <arc id="idedgeB43" source="idv44" target="idge43" />
+    <arc id="idedgeC43" source="idg43" target="idge43" />
+    <arc id="idedgeD43" source="idge43" target="ide43" />
+    <arc id="idedgeE43" source="ideg43" target="idv43" />
+    <arc id="idedgeF43" source="ideg43" target="idv44" />
+    <arc id="idedgeG43" source="ide43" target="ideg43" />
+    <arc id="idedgeH43" source="ideg43" target="idg43" />
+    <place id="idv44">
+      <name>
+        <value>villa44</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide44">
+      <name>
+        <value>eszik44</value>
+      </name>
+    </place>
+    <place id="idg44">
+      <name>
+        <value>gondolkozik44</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge44">
+      <name>
+        <value>g-&gt;e44</value>
+      </name>
+    </transition>
+    <transition id="ideg44">
+      <name>
+        <value>e-&gt;g44</value>
+      </name>
+    </transition>
+    <arc id="idedgeA44" source="idv44" target="idge44" />
+    <arc id="idedgeB44" source="idv45" target="idge44" />
+    <arc id="idedgeC44" source="idg44" target="idge44" />
+    <arc id="idedgeD44" source="idge44" target="ide44" />
+    <arc id="idedgeE44" source="ideg44" target="idv44" />
+    <arc id="idedgeF44" source="ideg44" target="idv45" />
+    <arc id="idedgeG44" source="ide44" target="ideg44" />
+    <arc id="idedgeH44" source="ideg44" target="idg44" />
+    <place id="idv45">
+      <name>
+        <value>villa45</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide45">
+      <name>
+        <value>eszik45</value>
+      </name>
+    </place>
+    <place id="idg45">
+      <name>
+        <value>gondolkozik45</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge45">
+      <name>
+        <value>g-&gt;e45</value>
+      </name>
+    </transition>
+    <transition id="ideg45">
+      <name>
+        <value>e-&gt;g45</value>
+      </name>
+    </transition>
+    <arc id="idedgeA45" source="idv45" target="idge45" />
+    <arc id="idedgeB45" source="idv46" target="idge45" />
+    <arc id="idedgeC45" source="idg45" target="idge45" />
+    <arc id="idedgeD45" source="idge45" target="ide45" />
+    <arc id="idedgeE45" source="ideg45" target="idv45" />
+    <arc id="idedgeF45" source="ideg45" target="idv46" />
+    <arc id="idedgeG45" source="ide45" target="ideg45" />
+    <arc id="idedgeH45" source="ideg45" target="idg45" />
+    <place id="idv46">
+      <name>
+        <value>villa46</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide46">
+      <name>
+        <value>eszik46</value>
+      </name>
+    </place>
+    <place id="idg46">
+      <name>
+        <value>gondolkozik46</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge46">
+      <name>
+        <value>g-&gt;e46</value>
+      </name>
+    </transition>
+    <transition id="ideg46">
+      <name>
+        <value>e-&gt;g46</value>
+      </name>
+    </transition>
+    <arc id="idedgeA46" source="idv46" target="idge46" />
+    <arc id="idedgeB46" source="idv47" target="idge46" />
+    <arc id="idedgeC46" source="idg46" target="idge46" />
+    <arc id="idedgeD46" source="idge46" target="ide46" />
+    <arc id="idedgeE46" source="ideg46" target="idv46" />
+    <arc id="idedgeF46" source="ideg46" target="idv47" />
+    <arc id="idedgeG46" source="ide46" target="ideg46" />
+    <arc id="idedgeH46" source="ideg46" target="idg46" />
+    <place id="idv47">
+      <name>
+        <value>villa47</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide47">
+      <name>
+        <value>eszik47</value>
+      </name>
+    </place>
+    <place id="idg47">
+      <name>
+        <value>gondolkozik47</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge47">
+      <name>
+        <value>g-&gt;e47</value>
+      </name>
+    </transition>
+    <transition id="ideg47">
+      <name>
+        <value>e-&gt;g47</value>
+      </name>
+    </transition>
+    <arc id="idedgeA47" source="idv47" target="idge47" />
+    <arc id="idedgeB47" source="idv48" target="idge47" />
+    <arc id="idedgeC47" source="idg47" target="idge47" />
+    <arc id="idedgeD47" source="idge47" target="ide47" />
+    <arc id="idedgeE47" source="ideg47" target="idv47" />
+    <arc id="idedgeF47" source="ideg47" target="idv48" />
+    <arc id="idedgeG47" source="ide47" target="ideg47" />
+    <arc id="idedgeH47" source="ideg47" target="idg47" />
+    <place id="idv48">
+      <name>
+        <value>villa48</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide48">
+      <name>
+        <value>eszik48</value>
+      </name>
+    </place>
+    <place id="idg48">
+      <name>
+        <value>gondolkozik48</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge48">
+      <name>
+        <value>g-&gt;e48</value>
+      </name>
+    </transition>
+    <transition id="ideg48">
+      <name>
+        <value>e-&gt;g48</value>
+      </name>
+    </transition>
+    <arc id="idedgeA48" source="idv48" target="idge48" />
+    <arc id="idedgeB48" source="idv49" target="idge48" />
+    <arc id="idedgeC48" source="idg48" target="idge48" />
+    <arc id="idedgeD48" source="idge48" target="ide48" />
+    <arc id="idedgeE48" source="ideg48" target="idv48" />
+    <arc id="idedgeF48" source="ideg48" target="idv49" />
+    <arc id="idedgeG48" source="ide48" target="ideg48" />
+    <arc id="idedgeH48" source="ideg48" target="idg48" />
+    <place id="idv49">
+      <name>
+        <value>villa49</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide49">
+      <name>
+        <value>eszik49</value>
+      </name>
+    </place>
+    <place id="idg49">
+      <name>
+        <value>gondolkozik49</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge49">
+      <name>
+        <value>g-&gt;e49</value>
+      </name>
+    </transition>
+    <transition id="ideg49">
+      <name>
+        <value>e-&gt;g49</value>
+      </name>
+    </transition>
+    <arc id="idedgeA49" source="idv49" target="idge49" />
+    <arc id="idedgeB49" source="idv50" target="idge49" />
+    <arc id="idedgeC49" source="idg49" target="idge49" />
+    <arc id="idedgeD49" source="idge49" target="ide49" />
+    <arc id="idedgeE49" source="ideg49" target="idv49" />
+    <arc id="idedgeF49" source="ideg49" target="idv50" />
+    <arc id="idedgeG49" source="ide49" target="ideg49" />
+    <arc id="idedgeH49" source="ideg49" target="idg49" />
+    <place id="idv50">
+      <name>
+        <value>villa50</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide50">
+      <name>
+        <value>eszik50</value>
+      </name>
+    </place>
+    <place id="idg50">
+      <name>
+        <value>gondolkozik50</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge50">
+      <name>
+        <value>g-&gt;e50</value>
+      </name>
+    </transition>
+    <transition id="ideg50">
+      <name>
+        <value>e-&gt;g50</value>
+      </name>
+    </transition>
+    <arc id="idedgeA50" source="idv50" target="idge50" />
+    <arc id="idedgeB50" source="idv51" target="idge50" />
+    <arc id="idedgeC50" source="idg50" target="idge50" />
+    <arc id="idedgeD50" source="idge50" target="ide50" />
+    <arc id="idedgeE50" source="ideg50" target="idv50" />
+    <arc id="idedgeF50" source="ideg50" target="idv51" />
+    <arc id="idedgeG50" source="ide50" target="ideg50" />
+    <arc id="idedgeH50" source="ideg50" target="idg50" />
+    <place id="idv51">
+      <name>
+        <value>villa51</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide51">
+      <name>
+        <value>eszik51</value>
+      </name>
+    </place>
+    <place id="idg51">
+      <name>
+        <value>gondolkozik51</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge51">
+      <name>
+        <value>g-&gt;e51</value>
+      </name>
+    </transition>
+    <transition id="ideg51">
+      <name>
+        <value>e-&gt;g51</value>
+      </name>
+    </transition>
+    <arc id="idedgeA51" source="idv51" target="idge51" />
+    <arc id="idedgeB51" source="idv52" target="idge51" />
+    <arc id="idedgeC51" source="idg51" target="idge51" />
+    <arc id="idedgeD51" source="idge51" target="ide51" />
+    <arc id="idedgeE51" source="ideg51" target="idv51" />
+    <arc id="idedgeF51" source="ideg51" target="idv52" />
+    <arc id="idedgeG51" source="ide51" target="ideg51" />
+    <arc id="idedgeH51" source="ideg51" target="idg51" />
+    <place id="idv52">
+      <name>
+        <value>villa52</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide52">
+      <name>
+        <value>eszik52</value>
+      </name>
+    </place>
+    <place id="idg52">
+      <name>
+        <value>gondolkozik52</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge52">
+      <name>
+        <value>g-&gt;e52</value>
+      </name>
+    </transition>
+    <transition id="ideg52">
+      <name>
+        <value>e-&gt;g52</value>
+      </name>
+    </transition>
+    <arc id="idedgeA52" source="idv52" target="idge52" />
+    <arc id="idedgeB52" source="idv53" target="idge52" />
+    <arc id="idedgeC52" source="idg52" target="idge52" />
+    <arc id="idedgeD52" source="idge52" target="ide52" />
+    <arc id="idedgeE52" source="ideg52" target="idv52" />
+    <arc id="idedgeF52" source="ideg52" target="idv53" />
+    <arc id="idedgeG52" source="ide52" target="ideg52" />
+    <arc id="idedgeH52" source="ideg52" target="idg52" />
+    <place id="idv53">
+      <name>
+        <value>villa53</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide53">
+      <name>
+        <value>eszik53</value>
+      </name>
+    </place>
+    <place id="idg53">
+      <name>
+        <value>gondolkozik53</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge53">
+      <name>
+        <value>g-&gt;e53</value>
+      </name>
+    </transition>
+    <transition id="ideg53">
+      <name>
+        <value>e-&gt;g53</value>
+      </name>
+    </transition>
+    <arc id="idedgeA53" source="idv53" target="idge53" />
+    <arc id="idedgeB53" source="idv54" target="idge53" />
+    <arc id="idedgeC53" source="idg53" target="idge53" />
+    <arc id="idedgeD53" source="idge53" target="ide53" />
+    <arc id="idedgeE53" source="ideg53" target="idv53" />
+    <arc id="idedgeF53" source="ideg53" target="idv54" />
+    <arc id="idedgeG53" source="ide53" target="ideg53" />
+    <arc id="idedgeH53" source="ideg53" target="idg53" />
+    <place id="idv54">
+      <name>
+        <value>villa54</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide54">
+      <name>
+        <value>eszik54</value>
+      </name>
+    </place>
+    <place id="idg54">
+      <name>
+        <value>gondolkozik54</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge54">
+      <name>
+        <value>g-&gt;e54</value>
+      </name>
+    </transition>
+    <transition id="ideg54">
+      <name>
+        <value>e-&gt;g54</value>
+      </name>
+    </transition>
+    <arc id="idedgeA54" source="idv54" target="idge54" />
+    <arc id="idedgeB54" source="idv55" target="idge54" />
+    <arc id="idedgeC54" source="idg54" target="idge54" />
+    <arc id="idedgeD54" source="idge54" target="ide54" />
+    <arc id="idedgeE54" source="ideg54" target="idv54" />
+    <arc id="idedgeF54" source="ideg54" target="idv55" />
+    <arc id="idedgeG54" source="ide54" target="ideg54" />
+    <arc id="idedgeH54" source="ideg54" target="idg54" />
+    <place id="idv55">
+      <name>
+        <value>villa55</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide55">
+      <name>
+        <value>eszik55</value>
+      </name>
+    </place>
+    <place id="idg55">
+      <name>
+        <value>gondolkozik55</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge55">
+      <name>
+        <value>g-&gt;e55</value>
+      </name>
+    </transition>
+    <transition id="ideg55">
+      <name>
+        <value>e-&gt;g55</value>
+      </name>
+    </transition>
+    <arc id="idedgeA55" source="idv55" target="idge55" />
+    <arc id="idedgeB55" source="idv56" target="idge55" />
+    <arc id="idedgeC55" source="idg55" target="idge55" />
+    <arc id="idedgeD55" source="idge55" target="ide55" />
+    <arc id="idedgeE55" source="ideg55" target="idv55" />
+    <arc id="idedgeF55" source="ideg55" target="idv56" />
+    <arc id="idedgeG55" source="ide55" target="ideg55" />
+    <arc id="idedgeH55" source="ideg55" target="idg55" />
+    <place id="idv56">
+      <name>
+        <value>villa56</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide56">
+      <name>
+        <value>eszik56</value>
+      </name>
+    </place>
+    <place id="idg56">
+      <name>
+        <value>gondolkozik56</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge56">
+      <name>
+        <value>g-&gt;e56</value>
+      </name>
+    </transition>
+    <transition id="ideg56">
+      <name>
+        <value>e-&gt;g56</value>
+      </name>
+    </transition>
+    <arc id="idedgeA56" source="idv56" target="idge56" />
+    <arc id="idedgeB56" source="idv57" target="idge56" />
+    <arc id="idedgeC56" source="idg56" target="idge56" />
+    <arc id="idedgeD56" source="idge56" target="ide56" />
+    <arc id="idedgeE56" source="ideg56" target="idv56" />
+    <arc id="idedgeF56" source="ideg56" target="idv57" />
+    <arc id="idedgeG56" source="ide56" target="ideg56" />
+    <arc id="idedgeH56" source="ideg56" target="idg56" />
+    <place id="idv57">
+      <name>
+        <value>villa57</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide57">
+      <name>
+        <value>eszik57</value>
+      </name>
+    </place>
+    <place id="idg57">
+      <name>
+        <value>gondolkozik57</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge57">
+      <name>
+        <value>g-&gt;e57</value>
+      </name>
+    </transition>
+    <transition id="ideg57">
+      <name>
+        <value>e-&gt;g57</value>
+      </name>
+    </transition>
+    <arc id="idedgeA57" source="idv57" target="idge57" />
+    <arc id="idedgeB57" source="idv58" target="idge57" />
+    <arc id="idedgeC57" source="idg57" target="idge57" />
+    <arc id="idedgeD57" source="idge57" target="ide57" />
+    <arc id="idedgeE57" source="ideg57" target="idv57" />
+    <arc id="idedgeF57" source="ideg57" target="idv58" />
+    <arc id="idedgeG57" source="ide57" target="ideg57" />
+    <arc id="idedgeH57" source="ideg57" target="idg57" />
+    <place id="idv58">
+      <name>
+        <value>villa58</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide58">
+      <name>
+        <value>eszik58</value>
+      </name>
+    </place>
+    <place id="idg58">
+      <name>
+        <value>gondolkozik58</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge58">
+      <name>
+        <value>g-&gt;e58</value>
+      </name>
+    </transition>
+    <transition id="ideg58">
+      <name>
+        <value>e-&gt;g58</value>
+      </name>
+    </transition>
+    <arc id="idedgeA58" source="idv58" target="idge58" />
+    <arc id="idedgeB58" source="idv59" target="idge58" />
+    <arc id="idedgeC58" source="idg58" target="idge58" />
+    <arc id="idedgeD58" source="idge58" target="ide58" />
+    <arc id="idedgeE58" source="ideg58" target="idv58" />
+    <arc id="idedgeF58" source="ideg58" target="idv59" />
+    <arc id="idedgeG58" source="ide58" target="ideg58" />
+    <arc id="idedgeH58" source="ideg58" target="idg58" />
+    <place id="idv59">
+      <name>
+        <value>villa59</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide59">
+      <name>
+        <value>eszik59</value>
+      </name>
+    </place>
+    <place id="idg59">
+      <name>
+        <value>gondolkozik59</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge59">
+      <name>
+        <value>g-&gt;e59</value>
+      </name>
+    </transition>
+    <transition id="ideg59">
+      <name>
+        <value>e-&gt;g59</value>
+      </name>
+    </transition>
+    <arc id="idedgeA59" source="idv59" target="idge59" />
+    <arc id="idedgeB59" source="idv60" target="idge59" />
+    <arc id="idedgeC59" source="idg59" target="idge59" />
+    <arc id="idedgeD59" source="idge59" target="ide59" />
+    <arc id="idedgeE59" source="ideg59" target="idv59" />
+    <arc id="idedgeF59" source="ideg59" target="idv60" />
+    <arc id="idedgeG59" source="ide59" target="ideg59" />
+    <arc id="idedgeH59" source="ideg59" target="idg59" />
+    <place id="idv60">
+      <name>
+        <value>villa60</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide60">
+      <name>
+        <value>eszik60</value>
+      </name>
+    </place>
+    <place id="idg60">
+      <name>
+        <value>gondolkozik60</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge60">
+      <name>
+        <value>g-&gt;e60</value>
+      </name>
+    </transition>
+    <transition id="ideg60">
+      <name>
+        <value>e-&gt;g60</value>
+      </name>
+    </transition>
+    <arc id="idedgeA60" source="idv60" target="idge60" />
+    <arc id="idedgeB60" source="idv61" target="idge60" />
+    <arc id="idedgeC60" source="idg60" target="idge60" />
+    <arc id="idedgeD60" source="idge60" target="ide60" />
+    <arc id="idedgeE60" source="ideg60" target="idv60" />
+    <arc id="idedgeF60" source="ideg60" target="idv61" />
+    <arc id="idedgeG60" source="ide60" target="ideg60" />
+    <arc id="idedgeH60" source="ideg60" target="idg60" />
+    <place id="idv61">
+      <name>
+        <value>villa61</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide61">
+      <name>
+        <value>eszik61</value>
+      </name>
+    </place>
+    <place id="idg61">
+      <name>
+        <value>gondolkozik61</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge61">
+      <name>
+        <value>g-&gt;e61</value>
+      </name>
+    </transition>
+    <transition id="ideg61">
+      <name>
+        <value>e-&gt;g61</value>
+      </name>
+    </transition>
+    <arc id="idedgeA61" source="idv61" target="idge61" />
+    <arc id="idedgeB61" source="idv62" target="idge61" />
+    <arc id="idedgeC61" source="idg61" target="idge61" />
+    <arc id="idedgeD61" source="idge61" target="ide61" />
+    <arc id="idedgeE61" source="ideg61" target="idv61" />
+    <arc id="idedgeF61" source="ideg61" target="idv62" />
+    <arc id="idedgeG61" source="ide61" target="ideg61" />
+    <arc id="idedgeH61" source="ideg61" target="idg61" />
+    <place id="idv62">
+      <name>
+        <value>villa62</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide62">
+      <name>
+        <value>eszik62</value>
+      </name>
+    </place>
+    <place id="idg62">
+      <name>
+        <value>gondolkozik62</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge62">
+      <name>
+        <value>g-&gt;e62</value>
+      </name>
+    </transition>
+    <transition id="ideg62">
+      <name>
+        <value>e-&gt;g62</value>
+      </name>
+    </transition>
+    <arc id="idedgeA62" source="idv62" target="idge62" />
+    <arc id="idedgeB62" source="idv63" target="idge62" />
+    <arc id="idedgeC62" source="idg62" target="idge62" />
+    <arc id="idedgeD62" source="idge62" target="ide62" />
+    <arc id="idedgeE62" source="ideg62" target="idv62" />
+    <arc id="idedgeF62" source="ideg62" target="idv63" />
+    <arc id="idedgeG62" source="ide62" target="ideg62" />
+    <arc id="idedgeH62" source="ideg62" target="idg62" />
+    <place id="idv63">
+      <name>
+        <value>villa63</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide63">
+      <name>
+        <value>eszik63</value>
+      </name>
+    </place>
+    <place id="idg63">
+      <name>
+        <value>gondolkozik63</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge63">
+      <name>
+        <value>g-&gt;e63</value>
+      </name>
+    </transition>
+    <transition id="ideg63">
+      <name>
+        <value>e-&gt;g63</value>
+      </name>
+    </transition>
+    <arc id="idedgeA63" source="idv63" target="idge63" />
+    <arc id="idedgeB63" source="idv64" target="idge63" />
+    <arc id="idedgeC63" source="idg63" target="idge63" />
+    <arc id="idedgeD63" source="idge63" target="ide63" />
+    <arc id="idedgeE63" source="ideg63" target="idv63" />
+    <arc id="idedgeF63" source="ideg63" target="idv64" />
+    <arc id="idedgeG63" source="ide63" target="ideg63" />
+    <arc id="idedgeH63" source="ideg63" target="idg63" />
+    <place id="idv64">
+      <name>
+        <value>villa64</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide64">
+      <name>
+        <value>eszik64</value>
+      </name>
+    </place>
+    <place id="idg64">
+      <name>
+        <value>gondolkozik64</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge64">
+      <name>
+        <value>g-&gt;e64</value>
+      </name>
+    </transition>
+    <transition id="ideg64">
+      <name>
+        <value>e-&gt;g64</value>
+      </name>
+    </transition>
+    <arc id="idedgeA64" source="idv64" target="idge64" />
+    <arc id="idedgeB64" source="idv65" target="idge64" />
+    <arc id="idedgeC64" source="idg64" target="idge64" />
+    <arc id="idedgeD64" source="idge64" target="ide64" />
+    <arc id="idedgeE64" source="ideg64" target="idv64" />
+    <arc id="idedgeF64" source="ideg64" target="idv65" />
+    <arc id="idedgeG64" source="ide64" target="ideg64" />
+    <arc id="idedgeH64" source="ideg64" target="idg64" />
+    <place id="idv65">
+      <name>
+        <value>villa65</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide65">
+      <name>
+        <value>eszik65</value>
+      </name>
+    </place>
+    <place id="idg65">
+      <name>
+        <value>gondolkozik65</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge65">
+      <name>
+        <value>g-&gt;e65</value>
+      </name>
+    </transition>
+    <transition id="ideg65">
+      <name>
+        <value>e-&gt;g65</value>
+      </name>
+    </transition>
+    <arc id="idedgeA65" source="idv65" target="idge65" />
+    <arc id="idedgeB65" source="idv66" target="idge65" />
+    <arc id="idedgeC65" source="idg65" target="idge65" />
+    <arc id="idedgeD65" source="idge65" target="ide65" />
+    <arc id="idedgeE65" source="ideg65" target="idv65" />
+    <arc id="idedgeF65" source="ideg65" target="idv66" />
+    <arc id="idedgeG65" source="ide65" target="ideg65" />
+    <arc id="idedgeH65" source="ideg65" target="idg65" />
+    <place id="idv66">
+      <name>
+        <value>villa66</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide66">
+      <name>
+        <value>eszik66</value>
+      </name>
+    </place>
+    <place id="idg66">
+      <name>
+        <value>gondolkozik66</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge66">
+      <name>
+        <value>g-&gt;e66</value>
+      </name>
+    </transition>
+    <transition id="ideg66">
+      <name>
+        <value>e-&gt;g66</value>
+      </name>
+    </transition>
+    <arc id="idedgeA66" source="idv66" target="idge66" />
+    <arc id="idedgeB66" source="idv67" target="idge66" />
+    <arc id="idedgeC66" source="idg66" target="idge66" />
+    <arc id="idedgeD66" source="idge66" target="ide66" />
+    <arc id="idedgeE66" source="ideg66" target="idv66" />
+    <arc id="idedgeF66" source="ideg66" target="idv67" />
+    <arc id="idedgeG66" source="ide66" target="ideg66" />
+    <arc id="idedgeH66" source="ideg66" target="idg66" />
+    <place id="idv67">
+      <name>
+        <value>villa67</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide67">
+      <name>
+        <value>eszik67</value>
+      </name>
+    </place>
+    <place id="idg67">
+      <name>
+        <value>gondolkozik67</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge67">
+      <name>
+        <value>g-&gt;e67</value>
+      </name>
+    </transition>
+    <transition id="ideg67">
+      <name>
+        <value>e-&gt;g67</value>
+      </name>
+    </transition>
+    <arc id="idedgeA67" source="idv67" target="idge67" />
+    <arc id="idedgeB67" source="idv68" target="idge67" />
+    <arc id="idedgeC67" source="idg67" target="idge67" />
+    <arc id="idedgeD67" source="idge67" target="ide67" />
+    <arc id="idedgeE67" source="ideg67" target="idv67" />
+    <arc id="idedgeF67" source="ideg67" target="idv68" />
+    <arc id="idedgeG67" source="ide67" target="ideg67" />
+    <arc id="idedgeH67" source="ideg67" target="idg67" />
+    <place id="idv68">
+      <name>
+        <value>villa68</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide68">
+      <name>
+        <value>eszik68</value>
+      </name>
+    </place>
+    <place id="idg68">
+      <name>
+        <value>gondolkozik68</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge68">
+      <name>
+        <value>g-&gt;e68</value>
+      </name>
+    </transition>
+    <transition id="ideg68">
+      <name>
+        <value>e-&gt;g68</value>
+      </name>
+    </transition>
+    <arc id="idedgeA68" source="idv68" target="idge68" />
+    <arc id="idedgeB68" source="idv69" target="idge68" />
+    <arc id="idedgeC68" source="idg68" target="idge68" />
+    <arc id="idedgeD68" source="idge68" target="ide68" />
+    <arc id="idedgeE68" source="ideg68" target="idv68" />
+    <arc id="idedgeF68" source="ideg68" target="idv69" />
+    <arc id="idedgeG68" source="ide68" target="ideg68" />
+    <arc id="idedgeH68" source="ideg68" target="idg68" />
+    <place id="idv69">
+      <name>
+        <value>villa69</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide69">
+      <name>
+        <value>eszik69</value>
+      </name>
+    </place>
+    <place id="idg69">
+      <name>
+        <value>gondolkozik69</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge69">
+      <name>
+        <value>g-&gt;e69</value>
+      </name>
+    </transition>
+    <transition id="ideg69">
+      <name>
+        <value>e-&gt;g69</value>
+      </name>
+    </transition>
+    <arc id="idedgeA69" source="idv69" target="idge69" />
+    <arc id="idedgeB69" source="idv70" target="idge69" />
+    <arc id="idedgeC69" source="idg69" target="idge69" />
+    <arc id="idedgeD69" source="idge69" target="ide69" />
+    <arc id="idedgeE69" source="ideg69" target="idv69" />
+    <arc id="idedgeF69" source="ideg69" target="idv70" />
+    <arc id="idedgeG69" source="ide69" target="ideg69" />
+    <arc id="idedgeH69" source="ideg69" target="idg69" />
+    <place id="idv70">
+      <name>
+        <value>villa70</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide70">
+      <name>
+        <value>eszik70</value>
+      </name>
+    </place>
+    <place id="idg70">
+      <name>
+        <value>gondolkozik70</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge70">
+      <name>
+        <value>g-&gt;e70</value>
+      </name>
+    </transition>
+    <transition id="ideg70">
+      <name>
+        <value>e-&gt;g70</value>
+      </name>
+    </transition>
+    <arc id="idedgeA70" source="idv70" target="idge70" />
+    <arc id="idedgeB70" source="idv71" target="idge70" />
+    <arc id="idedgeC70" source="idg70" target="idge70" />
+    <arc id="idedgeD70" source="idge70" target="ide70" />
+    <arc id="idedgeE70" source="ideg70" target="idv70" />
+    <arc id="idedgeF70" source="ideg70" target="idv71" />
+    <arc id="idedgeG70" source="ide70" target="ideg70" />
+    <arc id="idedgeH70" source="ideg70" target="idg70" />
+    <place id="idv71">
+      <name>
+        <value>villa71</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide71">
+      <name>
+        <value>eszik71</value>
+      </name>
+    </place>
+    <place id="idg71">
+      <name>
+        <value>gondolkozik71</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge71">
+      <name>
+        <value>g-&gt;e71</value>
+      </name>
+    </transition>
+    <transition id="ideg71">
+      <name>
+        <value>e-&gt;g71</value>
+      </name>
+    </transition>
+    <arc id="idedgeA71" source="idv71" target="idge71" />
+    <arc id="idedgeB71" source="idv72" target="idge71" />
+    <arc id="idedgeC71" source="idg71" target="idge71" />
+    <arc id="idedgeD71" source="idge71" target="ide71" />
+    <arc id="idedgeE71" source="ideg71" target="idv71" />
+    <arc id="idedgeF71" source="ideg71" target="idv72" />
+    <arc id="idedgeG71" source="ide71" target="ideg71" />
+    <arc id="idedgeH71" source="ideg71" target="idg71" />
+    <place id="idv72">
+      <name>
+        <value>villa72</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide72">
+      <name>
+        <value>eszik72</value>
+      </name>
+    </place>
+    <place id="idg72">
+      <name>
+        <value>gondolkozik72</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge72">
+      <name>
+        <value>g-&gt;e72</value>
+      </name>
+    </transition>
+    <transition id="ideg72">
+      <name>
+        <value>e-&gt;g72</value>
+      </name>
+    </transition>
+    <arc id="idedgeA72" source="idv72" target="idge72" />
+    <arc id="idedgeB72" source="idv73" target="idge72" />
+    <arc id="idedgeC72" source="idg72" target="idge72" />
+    <arc id="idedgeD72" source="idge72" target="ide72" />
+    <arc id="idedgeE72" source="ideg72" target="idv72" />
+    <arc id="idedgeF72" source="ideg72" target="idv73" />
+    <arc id="idedgeG72" source="ide72" target="ideg72" />
+    <arc id="idedgeH72" source="ideg72" target="idg72" />
+    <place id="idv73">
+      <name>
+        <value>villa73</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide73">
+      <name>
+        <value>eszik73</value>
+      </name>
+    </place>
+    <place id="idg73">
+      <name>
+        <value>gondolkozik73</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge73">
+      <name>
+        <value>g-&gt;e73</value>
+      </name>
+    </transition>
+    <transition id="ideg73">
+      <name>
+        <value>e-&gt;g73</value>
+      </name>
+    </transition>
+    <arc id="idedgeA73" source="idv73" target="idge73" />
+    <arc id="idedgeB73" source="idv74" target="idge73" />
+    <arc id="idedgeC73" source="idg73" target="idge73" />
+    <arc id="idedgeD73" source="idge73" target="ide73" />
+    <arc id="idedgeE73" source="ideg73" target="idv73" />
+    <arc id="idedgeF73" source="ideg73" target="idv74" />
+    <arc id="idedgeG73" source="ide73" target="ideg73" />
+    <arc id="idedgeH73" source="ideg73" target="idg73" />
+    <place id="idv74">
+      <name>
+        <value>villa74</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide74">
+      <name>
+        <value>eszik74</value>
+      </name>
+    </place>
+    <place id="idg74">
+      <name>
+        <value>gondolkozik74</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge74">
+      <name>
+        <value>g-&gt;e74</value>
+      </name>
+    </transition>
+    <transition id="ideg74">
+      <name>
+        <value>e-&gt;g74</value>
+      </name>
+    </transition>
+    <arc id="idedgeA74" source="idv74" target="idge74" />
+    <arc id="idedgeB74" source="idv75" target="idge74" />
+    <arc id="idedgeC74" source="idg74" target="idge74" />
+    <arc id="idedgeD74" source="idge74" target="ide74" />
+    <arc id="idedgeE74" source="ideg74" target="idv74" />
+    <arc id="idedgeF74" source="ideg74" target="idv75" />
+    <arc id="idedgeG74" source="ide74" target="ideg74" />
+    <arc id="idedgeH74" source="ideg74" target="idg74" />
+    <place id="idv75">
+      <name>
+        <value>villa75</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide75">
+      <name>
+        <value>eszik75</value>
+      </name>
+    </place>
+    <place id="idg75">
+      <name>
+        <value>gondolkozik75</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge75">
+      <name>
+        <value>g-&gt;e75</value>
+      </name>
+    </transition>
+    <transition id="ideg75">
+      <name>
+        <value>e-&gt;g75</value>
+      </name>
+    </transition>
+    <arc id="idedgeA75" source="idv75" target="idge75" />
+    <arc id="idedgeB75" source="idv76" target="idge75" />
+    <arc id="idedgeC75" source="idg75" target="idge75" />
+    <arc id="idedgeD75" source="idge75" target="ide75" />
+    <arc id="idedgeE75" source="ideg75" target="idv75" />
+    <arc id="idedgeF75" source="ideg75" target="idv76" />
+    <arc id="idedgeG75" source="ide75" target="ideg75" />
+    <arc id="idedgeH75" source="ideg75" target="idg75" />
+    <place id="idv76">
+      <name>
+        <value>villa76</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide76">
+      <name>
+        <value>eszik76</value>
+      </name>
+    </place>
+    <place id="idg76">
+      <name>
+        <value>gondolkozik76</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge76">
+      <name>
+        <value>g-&gt;e76</value>
+      </name>
+    </transition>
+    <transition id="ideg76">
+      <name>
+        <value>e-&gt;g76</value>
+      </name>
+    </transition>
+    <arc id="idedgeA76" source="idv76" target="idge76" />
+    <arc id="idedgeB76" source="idv77" target="idge76" />
+    <arc id="idedgeC76" source="idg76" target="idge76" />
+    <arc id="idedgeD76" source="idge76" target="ide76" />
+    <arc id="idedgeE76" source="ideg76" target="idv76" />
+    <arc id="idedgeF76" source="ideg76" target="idv77" />
+    <arc id="idedgeG76" source="ide76" target="ideg76" />
+    <arc id="idedgeH76" source="ideg76" target="idg76" />
+    <place id="idv77">
+      <name>
+        <value>villa77</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide77">
+      <name>
+        <value>eszik77</value>
+      </name>
+    </place>
+    <place id="idg77">
+      <name>
+        <value>gondolkozik77</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge77">
+      <name>
+        <value>g-&gt;e77</value>
+      </name>
+    </transition>
+    <transition id="ideg77">
+      <name>
+        <value>e-&gt;g77</value>
+      </name>
+    </transition>
+    <arc id="idedgeA77" source="idv77" target="idge77" />
+    <arc id="idedgeB77" source="idv78" target="idge77" />
+    <arc id="idedgeC77" source="idg77" target="idge77" />
+    <arc id="idedgeD77" source="idge77" target="ide77" />
+    <arc id="idedgeE77" source="ideg77" target="idv77" />
+    <arc id="idedgeF77" source="ideg77" target="idv78" />
+    <arc id="idedgeG77" source="ide77" target="ideg77" />
+    <arc id="idedgeH77" source="ideg77" target="idg77" />
+    <place id="idv78">
+      <name>
+        <value>villa78</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide78">
+      <name>
+        <value>eszik78</value>
+      </name>
+    </place>
+    <place id="idg78">
+      <name>
+        <value>gondolkozik78</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge78">
+      <name>
+        <value>g-&gt;e78</value>
+      </name>
+    </transition>
+    <transition id="ideg78">
+      <name>
+        <value>e-&gt;g78</value>
+      </name>
+    </transition>
+    <arc id="idedgeA78" source="idv78" target="idge78" />
+    <arc id="idedgeB78" source="idv79" target="idge78" />
+    <arc id="idedgeC78" source="idg78" target="idge78" />
+    <arc id="idedgeD78" source="idge78" target="ide78" />
+    <arc id="idedgeE78" source="ideg78" target="idv78" />
+    <arc id="idedgeF78" source="ideg78" target="idv79" />
+    <arc id="idedgeG78" source="ide78" target="ideg78" />
+    <arc id="idedgeH78" source="ideg78" target="idg78" />
+    <place id="idv79">
+      <name>
+        <value>villa79</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide79">
+      <name>
+        <value>eszik79</value>
+      </name>
+    </place>
+    <place id="idg79">
+      <name>
+        <value>gondolkozik79</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge79">
+      <name>
+        <value>g-&gt;e79</value>
+      </name>
+    </transition>
+    <transition id="ideg79">
+      <name>
+        <value>e-&gt;g79</value>
+      </name>
+    </transition>
+    <arc id="idedgeA79" source="idv79" target="idge79" />
+    <arc id="idedgeB79" source="idv80" target="idge79" />
+    <arc id="idedgeC79" source="idg79" target="idge79" />
+    <arc id="idedgeD79" source="idge79" target="ide79" />
+    <arc id="idedgeE79" source="ideg79" target="idv79" />
+    <arc id="idedgeF79" source="ideg79" target="idv80" />
+    <arc id="idedgeG79" source="ide79" target="ideg79" />
+    <arc id="idedgeH79" source="ideg79" target="idg79" />
+    <place id="idv80">
+      <name>
+        <value>villa80</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide80">
+      <name>
+        <value>eszik80</value>
+      </name>
+    </place>
+    <place id="idg80">
+      <name>
+        <value>gondolkozik80</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge80">
+      <name>
+        <value>g-&gt;e80</value>
+      </name>
+    </transition>
+    <transition id="ideg80">
+      <name>
+        <value>e-&gt;g80</value>
+      </name>
+    </transition>
+    <arc id="idedgeA80" source="idv80" target="idge80" />
+    <arc id="idedgeB80" source="idv81" target="idge80" />
+    <arc id="idedgeC80" source="idg80" target="idge80" />
+    <arc id="idedgeD80" source="idge80" target="ide80" />
+    <arc id="idedgeE80" source="ideg80" target="idv80" />
+    <arc id="idedgeF80" source="ideg80" target="idv81" />
+    <arc id="idedgeG80" source="ide80" target="ideg80" />
+    <arc id="idedgeH80" source="ideg80" target="idg80" />
+    <place id="idv81">
+      <name>
+        <value>villa81</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide81">
+      <name>
+        <value>eszik81</value>
+      </name>
+    </place>
+    <place id="idg81">
+      <name>
+        <value>gondolkozik81</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge81">
+      <name>
+        <value>g-&gt;e81</value>
+      </name>
+    </transition>
+    <transition id="ideg81">
+      <name>
+        <value>e-&gt;g81</value>
+      </name>
+    </transition>
+    <arc id="idedgeA81" source="idv81" target="idge81" />
+    <arc id="idedgeB81" source="idv82" target="idge81" />
+    <arc id="idedgeC81" source="idg81" target="idge81" />
+    <arc id="idedgeD81" source="idge81" target="ide81" />
+    <arc id="idedgeE81" source="ideg81" target="idv81" />
+    <arc id="idedgeF81" source="ideg81" target="idv82" />
+    <arc id="idedgeG81" source="ide81" target="ideg81" />
+    <arc id="idedgeH81" source="ideg81" target="idg81" />
+    <place id="idv82">
+      <name>
+        <value>villa82</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide82">
+      <name>
+        <value>eszik82</value>
+      </name>
+    </place>
+    <place id="idg82">
+      <name>
+        <value>gondolkozik82</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge82">
+      <name>
+        <value>g-&gt;e82</value>
+      </name>
+    </transition>
+    <transition id="ideg82">
+      <name>
+        <value>e-&gt;g82</value>
+      </name>
+    </transition>
+    <arc id="idedgeA82" source="idv82" target="idge82" />
+    <arc id="idedgeB82" source="idv83" target="idge82" />
+    <arc id="idedgeC82" source="idg82" target="idge82" />
+    <arc id="idedgeD82" source="idge82" target="ide82" />
+    <arc id="idedgeE82" source="ideg82" target="idv82" />
+    <arc id="idedgeF82" source="ideg82" target="idv83" />
+    <arc id="idedgeG82" source="ide82" target="ideg82" />
+    <arc id="idedgeH82" source="ideg82" target="idg82" />
+    <place id="idv83">
+      <name>
+        <value>villa83</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide83">
+      <name>
+        <value>eszik83</value>
+      </name>
+    </place>
+    <place id="idg83">
+      <name>
+        <value>gondolkozik83</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge83">
+      <name>
+        <value>g-&gt;e83</value>
+      </name>
+    </transition>
+    <transition id="ideg83">
+      <name>
+        <value>e-&gt;g83</value>
+      </name>
+    </transition>
+    <arc id="idedgeA83" source="idv83" target="idge83" />
+    <arc id="idedgeB83" source="idv84" target="idge83" />
+    <arc id="idedgeC83" source="idg83" target="idge83" />
+    <arc id="idedgeD83" source="idge83" target="ide83" />
+    <arc id="idedgeE83" source="ideg83" target="idv83" />
+    <arc id="idedgeF83" source="ideg83" target="idv84" />
+    <arc id="idedgeG83" source="ide83" target="ideg83" />
+    <arc id="idedgeH83" source="ideg83" target="idg83" />
+    <place id="idv84">
+      <name>
+        <value>villa84</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide84">
+      <name>
+        <value>eszik84</value>
+      </name>
+    </place>
+    <place id="idg84">
+      <name>
+        <value>gondolkozik84</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge84">
+      <name>
+        <value>g-&gt;e84</value>
+      </name>
+    </transition>
+    <transition id="ideg84">
+      <name>
+        <value>e-&gt;g84</value>
+      </name>
+    </transition>
+    <arc id="idedgeA84" source="idv84" target="idge84" />
+    <arc id="idedgeB84" source="idv85" target="idge84" />
+    <arc id="idedgeC84" source="idg84" target="idge84" />
+    <arc id="idedgeD84" source="idge84" target="ide84" />
+    <arc id="idedgeE84" source="ideg84" target="idv84" />
+    <arc id="idedgeF84" source="ideg84" target="idv85" />
+    <arc id="idedgeG84" source="ide84" target="ideg84" />
+    <arc id="idedgeH84" source="ideg84" target="idg84" />
+    <place id="idv85">
+      <name>
+        <value>villa85</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide85">
+      <name>
+        <value>eszik85</value>
+      </name>
+    </place>
+    <place id="idg85">
+      <name>
+        <value>gondolkozik85</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge85">
+      <name>
+        <value>g-&gt;e85</value>
+      </name>
+    </transition>
+    <transition id="ideg85">
+      <name>
+        <value>e-&gt;g85</value>
+      </name>
+    </transition>
+    <arc id="idedgeA85" source="idv85" target="idge85" />
+    <arc id="idedgeB85" source="idv86" target="idge85" />
+    <arc id="idedgeC85" source="idg85" target="idge85" />
+    <arc id="idedgeD85" source="idge85" target="ide85" />
+    <arc id="idedgeE85" source="ideg85" target="idv85" />
+    <arc id="idedgeF85" source="ideg85" target="idv86" />
+    <arc id="idedgeG85" source="ide85" target="ideg85" />
+    <arc id="idedgeH85" source="ideg85" target="idg85" />
+    <place id="idv86">
+      <name>
+        <value>villa86</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide86">
+      <name>
+        <value>eszik86</value>
+      </name>
+    </place>
+    <place id="idg86">
+      <name>
+        <value>gondolkozik86</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge86">
+      <name>
+        <value>g-&gt;e86</value>
+      </name>
+    </transition>
+    <transition id="ideg86">
+      <name>
+        <value>e-&gt;g86</value>
+      </name>
+    </transition>
+    <arc id="idedgeA86" source="idv86" target="idge86" />
+    <arc id="idedgeB86" source="idv87" target="idge86" />
+    <arc id="idedgeC86" source="idg86" target="idge86" />
+    <arc id="idedgeD86" source="idge86" target="ide86" />
+    <arc id="idedgeE86" source="ideg86" target="idv86" />
+    <arc id="idedgeF86" source="ideg86" target="idv87" />
+    <arc id="idedgeG86" source="ide86" target="ideg86" />
+    <arc id="idedgeH86" source="ideg86" target="idg86" />
+    <place id="idv87">
+      <name>
+        <value>villa87</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide87">
+      <name>
+        <value>eszik87</value>
+      </name>
+    </place>
+    <place id="idg87">
+      <name>
+        <value>gondolkozik87</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge87">
+      <name>
+        <value>g-&gt;e87</value>
+      </name>
+    </transition>
+    <transition id="ideg87">
+      <name>
+        <value>e-&gt;g87</value>
+      </name>
+    </transition>
+    <arc id="idedgeA87" source="idv87" target="idge87" />
+    <arc id="idedgeB87" source="idv88" target="idge87" />
+    <arc id="idedgeC87" source="idg87" target="idge87" />
+    <arc id="idedgeD87" source="idge87" target="ide87" />
+    <arc id="idedgeE87" source="ideg87" target="idv87" />
+    <arc id="idedgeF87" source="ideg87" target="idv88" />
+    <arc id="idedgeG87" source="ide87" target="ideg87" />
+    <arc id="idedgeH87" source="ideg87" target="idg87" />
+    <place id="idv88">
+      <name>
+        <value>villa88</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide88">
+      <name>
+        <value>eszik88</value>
+      </name>
+    </place>
+    <place id="idg88">
+      <name>
+        <value>gondolkozik88</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge88">
+      <name>
+        <value>g-&gt;e88</value>
+      </name>
+    </transition>
+    <transition id="ideg88">
+      <name>
+        <value>e-&gt;g88</value>
+      </name>
+    </transition>
+    <arc id="idedgeA88" source="idv88" target="idge88" />
+    <arc id="idedgeB88" source="idv89" target="idge88" />
+    <arc id="idedgeC88" source="idg88" target="idge88" />
+    <arc id="idedgeD88" source="idge88" target="ide88" />
+    <arc id="idedgeE88" source="ideg88" target="idv88" />
+    <arc id="idedgeF88" source="ideg88" target="idv89" />
+    <arc id="idedgeG88" source="ide88" target="ideg88" />
+    <arc id="idedgeH88" source="ideg88" target="idg88" />
+    <place id="idv89">
+      <name>
+        <value>villa89</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide89">
+      <name>
+        <value>eszik89</value>
+      </name>
+    </place>
+    <place id="idg89">
+      <name>
+        <value>gondolkozik89</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge89">
+      <name>
+        <value>g-&gt;e89</value>
+      </name>
+    </transition>
+    <transition id="ideg89">
+      <name>
+        <value>e-&gt;g89</value>
+      </name>
+    </transition>
+    <arc id="idedgeA89" source="idv89" target="idge89" />
+    <arc id="idedgeB89" source="idv90" target="idge89" />
+    <arc id="idedgeC89" source="idg89" target="idge89" />
+    <arc id="idedgeD89" source="idge89" target="ide89" />
+    <arc id="idedgeE89" source="ideg89" target="idv89" />
+    <arc id="idedgeF89" source="ideg89" target="idv90" />
+    <arc id="idedgeG89" source="ide89" target="ideg89" />
+    <arc id="idedgeH89" source="ideg89" target="idg89" />
+    <place id="idv90">
+      <name>
+        <value>villa90</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide90">
+      <name>
+        <value>eszik90</value>
+      </name>
+    </place>
+    <place id="idg90">
+      <name>
+        <value>gondolkozik90</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge90">
+      <name>
+        <value>g-&gt;e90</value>
+      </name>
+    </transition>
+    <transition id="ideg90">
+      <name>
+        <value>e-&gt;g90</value>
+      </name>
+    </transition>
+    <arc id="idedgeA90" source="idv90" target="idge90" />
+    <arc id="idedgeB90" source="idv91" target="idge90" />
+    <arc id="idedgeC90" source="idg90" target="idge90" />
+    <arc id="idedgeD90" source="idge90" target="ide90" />
+    <arc id="idedgeE90" source="ideg90" target="idv90" />
+    <arc id="idedgeF90" source="ideg90" target="idv91" />
+    <arc id="idedgeG90" source="ide90" target="ideg90" />
+    <arc id="idedgeH90" source="ideg90" target="idg90" />
+    <place id="idv91">
+      <name>
+        <value>villa91</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide91">
+      <name>
+        <value>eszik91</value>
+      </name>
+    </place>
+    <place id="idg91">
+      <name>
+        <value>gondolkozik91</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge91">
+      <name>
+        <value>g-&gt;e91</value>
+      </name>
+    </transition>
+    <transition id="ideg91">
+      <name>
+        <value>e-&gt;g91</value>
+      </name>
+    </transition>
+    <arc id="idedgeA91" source="idv91" target="idge91" />
+    <arc id="idedgeB91" source="idv92" target="idge91" />
+    <arc id="idedgeC91" source="idg91" target="idge91" />
+    <arc id="idedgeD91" source="idge91" target="ide91" />
+    <arc id="idedgeE91" source="ideg91" target="idv91" />
+    <arc id="idedgeF91" source="ideg91" target="idv92" />
+    <arc id="idedgeG91" source="ide91" target="ideg91" />
+    <arc id="idedgeH91" source="ideg91" target="idg91" />
+    <place id="idv92">
+      <name>
+        <value>villa92</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide92">
+      <name>
+        <value>eszik92</value>
+      </name>
+    </place>
+    <place id="idg92">
+      <name>
+        <value>gondolkozik92</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge92">
+      <name>
+        <value>g-&gt;e92</value>
+      </name>
+    </transition>
+    <transition id="ideg92">
+      <name>
+        <value>e-&gt;g92</value>
+      </name>
+    </transition>
+    <arc id="idedgeA92" source="idv92" target="idge92" />
+    <arc id="idedgeB92" source="idv93" target="idge92" />
+    <arc id="idedgeC92" source="idg92" target="idge92" />
+    <arc id="idedgeD92" source="idge92" target="ide92" />
+    <arc id="idedgeE92" source="ideg92" target="idv92" />
+    <arc id="idedgeF92" source="ideg92" target="idv93" />
+    <arc id="idedgeG92" source="ide92" target="ideg92" />
+    <arc id="idedgeH92" source="ideg92" target="idg92" />
+    <place id="idv93">
+      <name>
+        <value>villa93</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide93">
+      <name>
+        <value>eszik93</value>
+      </name>
+    </place>
+    <place id="idg93">
+      <name>
+        <value>gondolkozik93</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge93">
+      <name>
+        <value>g-&gt;e93</value>
+      </name>
+    </transition>
+    <transition id="ideg93">
+      <name>
+        <value>e-&gt;g93</value>
+      </name>
+    </transition>
+    <arc id="idedgeA93" source="idv93" target="idge93" />
+    <arc id="idedgeB93" source="idv94" target="idge93" />
+    <arc id="idedgeC93" source="idg93" target="idge93" />
+    <arc id="idedgeD93" source="idge93" target="ide93" />
+    <arc id="idedgeE93" source="ideg93" target="idv93" />
+    <arc id="idedgeF93" source="ideg93" target="idv94" />
+    <arc id="idedgeG93" source="ide93" target="ideg93" />
+    <arc id="idedgeH93" source="ideg93" target="idg93" />
+    <place id="idv94">
+      <name>
+        <value>villa94</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide94">
+      <name>
+        <value>eszik94</value>
+      </name>
+    </place>
+    <place id="idg94">
+      <name>
+        <value>gondolkozik94</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge94">
+      <name>
+        <value>g-&gt;e94</value>
+      </name>
+    </transition>
+    <transition id="ideg94">
+      <name>
+        <value>e-&gt;g94</value>
+      </name>
+    </transition>
+    <arc id="idedgeA94" source="idv94" target="idge94" />
+    <arc id="idedgeB94" source="idv95" target="idge94" />
+    <arc id="idedgeC94" source="idg94" target="idge94" />
+    <arc id="idedgeD94" source="idge94" target="ide94" />
+    <arc id="idedgeE94" source="ideg94" target="idv94" />
+    <arc id="idedgeF94" source="ideg94" target="idv95" />
+    <arc id="idedgeG94" source="ide94" target="ideg94" />
+    <arc id="idedgeH94" source="ideg94" target="idg94" />
+    <place id="idv95">
+      <name>
+        <value>villa95</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide95">
+      <name>
+        <value>eszik95</value>
+      </name>
+    </place>
+    <place id="idg95">
+      <name>
+        <value>gondolkozik95</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge95">
+      <name>
+        <value>g-&gt;e95</value>
+      </name>
+    </transition>
+    <transition id="ideg95">
+      <name>
+        <value>e-&gt;g95</value>
+      </name>
+    </transition>
+    <arc id="idedgeA95" source="idv95" target="idge95" />
+    <arc id="idedgeB95" source="idv96" target="idge95" />
+    <arc id="idedgeC95" source="idg95" target="idge95" />
+    <arc id="idedgeD95" source="idge95" target="ide95" />
+    <arc id="idedgeE95" source="ideg95" target="idv95" />
+    <arc id="idedgeF95" source="ideg95" target="idv96" />
+    <arc id="idedgeG95" source="ide95" target="ideg95" />
+    <arc id="idedgeH95" source="ideg95" target="idg95" />
+    <place id="idv96">
+      <name>
+        <value>villa96</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide96">
+      <name>
+        <value>eszik96</value>
+      </name>
+    </place>
+    <place id="idg96">
+      <name>
+        <value>gondolkozik96</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge96">
+      <name>
+        <value>g-&gt;e96</value>
+      </name>
+    </transition>
+    <transition id="ideg96">
+      <name>
+        <value>e-&gt;g96</value>
+      </name>
+    </transition>
+    <arc id="idedgeA96" source="idv96" target="idge96" />
+    <arc id="idedgeB96" source="idv97" target="idge96" />
+    <arc id="idedgeC96" source="idg96" target="idge96" />
+    <arc id="idedgeD96" source="idge96" target="ide96" />
+    <arc id="idedgeE96" source="ideg96" target="idv96" />
+    <arc id="idedgeF96" source="ideg96" target="idv97" />
+    <arc id="idedgeG96" source="ide96" target="ideg96" />
+    <arc id="idedgeH96" source="ideg96" target="idg96" />
+    <place id="idv97">
+      <name>
+        <value>villa97</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide97">
+      <name>
+        <value>eszik97</value>
+      </name>
+    </place>
+    <place id="idg97">
+      <name>
+        <value>gondolkozik97</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge97">
+      <name>
+        <value>g-&gt;e97</value>
+      </name>
+    </transition>
+    <transition id="ideg97">
+      <name>
+        <value>e-&gt;g97</value>
+      </name>
+    </transition>
+    <arc id="idedgeA97" source="idv97" target="idge97" />
+    <arc id="idedgeB97" source="idv98" target="idge97" />
+    <arc id="idedgeC97" source="idg97" target="idge97" />
+    <arc id="idedgeD97" source="idge97" target="ide97" />
+    <arc id="idedgeE97" source="ideg97" target="idv97" />
+    <arc id="idedgeF97" source="ideg97" target="idv98" />
+    <arc id="idedgeG97" source="ide97" target="ideg97" />
+    <arc id="idedgeH97" source="ideg97" target="idg97" />
+    <place id="idv98">
+      <name>
+        <value>villa98</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide98">
+      <name>
+        <value>eszik98</value>
+      </name>
+    </place>
+    <place id="idg98">
+      <name>
+        <value>gondolkozik98</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge98">
+      <name>
+        <value>g-&gt;e98</value>
+      </name>
+    </transition>
+    <transition id="ideg98">
+      <name>
+        <value>e-&gt;g98</value>
+      </name>
+    </transition>
+    <arc id="idedgeA98" source="idv98" target="idge98" />
+    <arc id="idedgeB98" source="idv99" target="idge98" />
+    <arc id="idedgeC98" source="idg98" target="idge98" />
+    <arc id="idedgeD98" source="idge98" target="ide98" />
+    <arc id="idedgeE98" source="ideg98" target="idv98" />
+    <arc id="idedgeF98" source="ideg98" target="idv99" />
+    <arc id="idedgeG98" source="ide98" target="ideg98" />
+    <arc id="idedgeH98" source="ideg98" target="idg98" />
+    <place id="idv99">
+      <name>
+        <value>villa99</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide99">
+      <name>
+        <value>eszik99</value>
+      </name>
+    </place>
+    <place id="idg99">
+      <name>
+        <value>gondolkozik99</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge99">
+      <name>
+        <value>g-&gt;e99</value>
+      </name>
+    </transition>
+    <transition id="ideg99">
+      <name>
+        <value>e-&gt;g99</value>
+      </name>
+    </transition>
+    <arc id="idedgeA99" source="idv99" target="idge99" />
+    <arc id="idedgeB99" source="idv100" target="idge99" />
+    <arc id="idedgeC99" source="idg99" target="idge99" />
+    <arc id="idedgeD99" source="idge99" target="ide99" />
+    <arc id="idedgeE99" source="ideg99" target="idv99" />
+    <arc id="idedgeF99" source="ideg99" target="idv100" />
+    <arc id="idedgeG99" source="ide99" target="ideg99" />
+    <arc id="idedgeH99" source="ideg99" target="idg99" />
+    <place id="idv100">
+      <name>
+        <value>villa100</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="ide100">
+      <name>
+        <value>eszik100</value>
+      </name>
+    </place>
+    <place id="idg100">
+      <name>
+        <value>gondolkozik100</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge100">
+      <name>
+        <value>g-&gt;e100</value>
+      </name>
+    </transition>
+    <transition id="ideg100">
+      <name>
+        <value>e-&gt;g100</value>
+      </name>
+    </transition>
+    <arc id="idedgeA100" source="idv100" target="idge100" />
+    <arc id="idedgeB100" source="idv1" target="idge100" />
+    <arc id="idedgeC100" source="idg100" target="idge100" />
+    <arc id="idedgeD100" source="idge100" target="ide100" />
+    <arc id="idedgeE100" source="ideg100" target="idv100" />
+    <arc id="idedgeF100" source="ideg100" target="idv1" />
+    <arc id="idedgeG100" source="ide100" target="ideg100" />
+    <arc id="idedgeH100" source="ideg100" target="idg100" />
+  </net>
+</pnml>

@@ -21,12 +21,11 @@ import java.io.Serializable
 
 open class ArchivePackagingVariant : Serializable {
 	var toolName: String = ""
-	var portfolio: String = ""
+	var inputFlags: String = ""
 	var scriptName: String = "theta-start.sh"
 	var solvers: List<String> = emptyList()
 	var includeSolverCli: Boolean = true
 	var readmeTemplate: File? = null            // optional override
-	var scriptSource: File? = null              // optional override
 	var taskName: String? = null                // custom task name (else buildArchive<toolName> or buildArchive)
 	var smoketestSource: File? = null           // optional smoketest path (omit if null/missing)
 	var inputSource: File? = null               // optional input.c path (omit if null/missing)
@@ -61,15 +60,15 @@ afterEvaluate {
 		
 		// Copy variant properties to avoid capturing script objects
 		val toolName = v.toolName
-		val portfolio = v.portfolio
+		val inputFlags = v.inputFlags
 		val scriptName = v.scriptName
 		val solvers = v.solvers.toList()
 		val includeSolverCli = v.includeSolverCli
 		val versionStr = project.version.toString()
-		val scriptSourceFile = v.scriptSource ?: defaultScriptDir.resolve(v.scriptName)
+		val scriptSourceFile = defaultScriptDir.resolve(v.scriptName)
 		val readmeTemplate = v.readmeTemplate
 		val smoketestFile = v.smoketestSource
-		val inputCFile = v.inputSource
+		val inputSource = v.inputSource
 		
 		// Capture layout directories at configuration time
 		val buildDirProvider = layout.buildDirectory
@@ -155,7 +154,7 @@ afterEvaluate {
 		// Use task provider instead of realizing task
 		tasks.register<Zip>(taskName) {
 			group = "distribution"
-			description = "Create $toolName SV-COMP binary archive"
+			description = "Create $toolName binary archive"
 
 			// Dependencies using providers
 			dependsOn(downloadLibsProvider)
@@ -172,13 +171,19 @@ afterEvaluate {
 			destinationDirectory.set(distributionsDir)
 			
 			into(toolName) {
+        val contents = mutableListOf<Pair<String, String>>()
+        infix fun String.because(reason: String): String {
+          contents.add(this to reason)
+          return this
+        }
+
 				// native libs
-				from(File(rootProjectDir, "lib")) { into("lib") }
+				from(File(rootProjectDir, "lib")) { into("lib" because "Shared libraries") }
 				// license/meta
-				from(File(rootProjectDir, "CONTRIBUTORS.md"))
-				from(File(rootProjectDir, "LICENSE"))
-				from(File(rootProjectDir, "lib/README.md")) { rename { "LIB_LICENSES.md" } }
-				from(File(rootProjectDir, "README.md")) { rename { "GENERAL_README.md" } }
+				from(File(rootProjectDir, "CONTRIBUTORS.md" because "List of contributors"))
+				from(File(rootProjectDir, "LICENSE" because "Apache-2.0 license"))
+				from(File(rootProjectDir, "lib/README.md")) { rename { "LIB_LICENSES.md" because "Licenses of used shared libraries" } }
+				from(File(rootProjectDir, "README.md")) { rename { "GENERAL_README.md" because "Main README of the whole Theta project" } }
 				// script
 				if (scriptSourceFile.exists()) {
 					from(scriptSourceFile) { 
@@ -186,30 +191,23 @@ afterEvaluate {
 							line.replace("TOOL_NAME", toolName)
 								.replace("TOOL_VERSION", versionStr)
 						}
-						rename { scriptName }
+						rename { scriptName because "Executable entry point of tool" }
             filePermissions { unix(0b111101101) } // 0755 in octal = rwxr-xr-x
 					}
 				} else {
 					println("archive-packaging: script ${scriptSourceFile.path} not found for $toolName")
 				}
-				// templated README (include only if explicitly set and exists)
-				if (readmeTemplate != null && readmeTemplate.exists()) {
-					from(readmeTemplate) {
-						filter { line ->
-							line.replace("TOOL_NAME", toolName)
-								.replace("INPUT_FLAG", "--portfolio $portfolio")
-								.replace("SCRIPTNAME", scriptName)
-								.replace("TOOL_VERSION", versionStr)
-						}
-						rename { "README.md" }
-					}
-				}
 				// smoketest + input (include only if explicitly set and exists)
-				if (smoketestFile != null && smoketestFile.exists()) from(smoketestFile)
-				if (inputCFile != null && inputCFile.exists()) from(inputCFile)
+				if (smoketestFile != null && smoketestFile.exists()) from(smoketestFile) {
+          filePermissions { unix(0b111101101) } // 0755 in octal = rwxr-xr-x
+          rename { smoketestFile.name because "Executable smoke-test script (verifies a very simple problem)" }
+        }
+				if (inputSource != null && inputSource.exists()) from(inputSource) {
+          rename { inputSource.name because "Aforementioned very simple problem" }
+        }
 				// main jar - use provider
 				from(mainShadowProvider.map { (it as org.gradle.jvm.tasks.Jar).archiveFile }) { 
-					rename { "theta.jar" } 
+					rename { "theta.jar" because "Executable jar file of the tool" }
 				}
 				// solver cli jar - use provider
 				if (includeSolverCli && hasSolverCli) {
@@ -218,16 +216,28 @@ afterEvaluate {
 							(task as org.gradle.jvm.tasks.Jar).archiveFile.get()
 						}
 					}) { 
-						rename { "theta-smtlib.jar" } 
+						rename { "theta-smtlib.jar" because "Solver installation utility (only necessary if further solvers are to be installed)" }
 					}
 				}
 				// solvers directory - always include, will be empty or populated
         if (solvers.isNotEmpty()) {
 
           from(solversDirPath) {
-            into("solvers")
+            into("solvers" because "Installed SMT solvers used by the tool.")
           }
 
+        }
+        // templated README (include only if explicitly set and exists)
+        if (readmeTemplate != null && readmeTemplate.exists()) {
+          from(readmeTemplate) {
+            rename { "README.md" because "Current README" }
+            filter { line ->
+              line.replace("TOOL_NAME", toolName)
+                .replace("TOOL_VERSION", versionStr)
+                .replace("INPUT_FLAG", inputFlags)
+                .replace("CONTENTS", contents.joinToString("\n") { " * ${it.first}: ${it.second}" })
+            }
+          }
         }
 			}
 		}

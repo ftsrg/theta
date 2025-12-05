@@ -1,0 +1,195 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var MX0_0 : bool
+	var MX0_1 : bool
+	var MX0_2 : bool
+	var instance___RLO : bool
+	var instance___NFC : bool
+	var instance___BR : bool
+	var instance___STA : bool
+	var instance___OR : bool
+	var instance___CC0 : bool
+	var instance___CC1 : bool
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	loc verificationLoop_VerificationLoop_l2
+	loc verificationLoop_VerificationLoop_l3
+	loc verificationLoop_VerificationLoop_l4
+	loc verificationLoop_VerificationLoop_l5
+	loc verificationLoop_VerificationLoop_l6
+	loc verificationLoop_VerificationLoop_l7
+	loc verificationLoop_VerificationLoop_l8
+	loc verificationLoop_VerificationLoop_l9
+	loc verificationLoop_VerificationLoop_l10
+	loc verificationLoop_VerificationLoop_l11
+	loc verificationLoop_VerificationLoop_l12
+	loc verificationLoop_VerificationLoop_l13
+	loc verificationLoop_VerificationLoop_l14
+	loc verificationLoop_VerificationLoop_l15
+	loc verificationLoop_VerificationLoop_l16
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		MX0_0 := false
+		MX0_1 := false
+		MX0_2 := false
+		instance___RLO := false
+		instance___NFC := false
+		instance___BR := false
+		instance___STA := false
+		instance___OR := false
+		instance___CC0 := false
+		instance___CC1 := false
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_t1
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l1 {
+		instance___OR := false
+		instance___STA := true
+		instance___RLO := true
+		instance___CC0 := false
+		instance___CC1 := false
+		instance___BR := false
+		instance___NFC := false
+	}
+	
+	// verificationLoop_VerificationLoop_t2
+	verificationLoop_VerificationLoop_l1 -> verificationLoop_VerificationLoop_l2 {
+		instance___RLO := ((not (instance___NFC))  or  (instance___RLO))  and  ((MX0_0)  or  (instance___OR))
+	}
+	
+	// verificationLoop_VerificationLoop_t3
+	verificationLoop_VerificationLoop_l2 -> verificationLoop_VerificationLoop_l3 {
+		instance___STA := MX0_0
+	}
+	
+	// verificationLoop_VerificationLoop_t4
+	verificationLoop_VerificationLoop_l3 -> verificationLoop_VerificationLoop_l4 {
+		instance___NFC := true
+	}
+	
+	// verificationLoop_VerificationLoop_t6
+	verificationLoop_VerificationLoop_l5 -> verificationLoop_VerificationLoop_l6 {
+		instance___RLO := ((not (instance___NFC))  or  (instance___RLO))  and  ((MX0_1)  or  (instance___OR))
+	}
+	
+	// verificationLoop_VerificationLoop_t7
+	verificationLoop_VerificationLoop_l6 -> verificationLoop_VerificationLoop_l7 {
+		instance___STA := MX0_1
+	}
+	
+	// verificationLoop_VerificationLoop_t8
+	verificationLoop_VerificationLoop_l7 -> verificationLoop_VerificationLoop_l8 {
+		instance___NFC := true
+	}
+	
+	// verificationLoop_VerificationLoop_t9
+	verificationLoop_VerificationLoop_l8 -> verificationLoop_VerificationLoop_l9 {
+		assume instance___RLO
+	}
+	
+	// verificationLoop_VerificationLoop_t10
+	verificationLoop_VerificationLoop_l8 -> verificationLoop_VerificationLoop_l10 {
+		assume not (instance___RLO)
+	}
+	
+	// verificationLoop_VerificationLoop_t12
+	verificationLoop_VerificationLoop_l10 -> verificationLoop_VerificationLoop_l11 {
+		assume not (instance___RLO)
+	}
+	
+	// verificationLoop_VerificationLoop_t13
+	verificationLoop_VerificationLoop_l10 -> verificationLoop_VerificationLoop_l12 {
+		assume not (not (instance___RLO))
+	}
+	
+	// verificationLoop_VerificationLoop_t15
+	verificationLoop_VerificationLoop_l12 -> verificationLoop_VerificationLoop_l13 {
+		instance___RLO := ((not (instance___NFC))  or  (instance___RLO))  and  ((MX0_2)  or  (instance___OR))
+	}
+	
+	// verificationLoop_VerificationLoop_t16
+	verificationLoop_VerificationLoop_l13 -> verificationLoop_VerificationLoop_l14 {
+		instance___STA := MX0_2
+	}
+	
+	// verificationLoop_VerificationLoop_t17
+	verificationLoop_VerificationLoop_l14 -> verificationLoop_VerificationLoop_l15 {
+		instance___NFC := true
+	}
+	
+	// verificationLoop_VerificationLoop_jump5
+	verificationLoop_VerificationLoop_l4 -> verificationLoop_VerificationLoop_l12 {
+	}
+	
+	// verificationLoop_VerificationLoop_jump11
+	verificationLoop_VerificationLoop_l9 -> verificationLoop_VerificationLoop_l10 {
+	}
+	
+	// verificationLoop_VerificationLoop_jump14
+	verificationLoop_VerificationLoop_l11 -> verificationLoop_VerificationLoop_l4 {
+	}
+	
+	// verificationLoop_VerificationLoop_jump18
+	verificationLoop_VerificationLoop_l15 -> verificationLoop_VerificationLoop_l5 {
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_l16 -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}

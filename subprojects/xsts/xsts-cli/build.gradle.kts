@@ -16,6 +16,7 @@
 plugins {
     id("kotlin-common")
     id("cli-tool")
+  id("archive-packaging")
 }
 
 dependencies {
@@ -40,4 +41,11 @@ dependencies {
 
 application {
     mainClass.set("hu.bme.mit.theta.xsts.cli.XstsCliMainKt")
+}
+archivePackaging {
+  variant {
+    toolName = "Theta-xsts"
+    inputFlags = "CEGAR"
+    readmeTemplate = file("src/main/resources/archive-packaging/README.md")
+  }
 }

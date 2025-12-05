@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+
+<!-- config -->
+
+  <rundefinition name="Theta-petrinet-deadlock-Integration-Test">
+    <option name="--pn-property">DEADLOCK</option>
+    <tasks name="default">
+      <propertyfile>properties/default.prp</propertyfile>
+      <include>Theta-Regression-Deadlock/DFMS-10.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/DFMS-100.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/DFMS-1000.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/DFMS-10000.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/MAPK-53-1-0.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/Philosophers-5.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/Philosophers-50.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/aslink_01_a.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/dekker-10.pnml.yml</include>
+      <include>Theta-Regression-Deadlock/dekker-15.pnml.yml</include>
+    </tasks>
+  </rundefinition>
+  <rundefinition name="Theta-petrinet-targetmarking-Integration-Test">
+    <option name="--pn-property">TARGET_MARKING</option>
+    <tasks name="default">
+      <propertyfile>properties/default.prp</propertyfile>
+      <include>Theta-Regression-TargetMarking/8rook.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DFMS-10.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DFMS-100.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DFMS-1000.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DFMS-10000.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DPhil-10.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DPhil-100.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DPhil-20.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DPhil-30.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/DPhil-50.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/FMS-100.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/FMS-15.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/FMS-25.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/FMS_Ciardo.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/Kanban.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/MAPK-53-1-0.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/Phil-10.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/Phil-100.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/Philosophers-5.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/Philosophers-50.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/SlottedRing-10.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/SlottedRing-100.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/SlottedRing-30.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/SlottedRing-5.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/SlottedRing-50.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/aslink_01_a.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/auctionBPEL2PNML.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/dekker-10.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/dekker-15.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/laBPEL2PNML.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/pzh2.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/zh2_a.pnml.yml</include>
+      <include>Theta-Regression-TargetMarking/zh2_b.pnml.yml</include>
+    </tasks>
+  </rundefinition>
+  <rundefinition name="Theta-petrinet-safe-Integration-Test">
+    <option name="--pn-property">PN_SAFE</option>
+    <tasks name="default">
+      <include>Theta-Regression-PnSafe/DFMS-10.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/DFMS-100.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/DFMS-1000.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/DFMS-10000.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/FMS-100.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/FMS-15.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/FMS-25.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/FMS_Ciardo.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/Kanban.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/MAPK-53-1-0.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/Philosophers-5.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/Philosophers-50.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/aslink_01_a.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/dekker-10.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/dekker-15.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/pzh2.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/zh2_a.pnml.yml</include>
+      <include>Theta-Regression-PnSafe/zh2_b.pnml.yml</include>
+    </tasks>
+  </rundefinition>
+</benchmark>

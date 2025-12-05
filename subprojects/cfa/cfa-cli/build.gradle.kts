@@ -16,6 +16,7 @@
 plugins {
     id("java-common")
     id("cli-tool")
+    id("archive-packaging")
 }
 
 dependencies {
@@ -31,4 +32,10 @@ dependencies {
 
 application {
     mainClass.set("hu.bme.mit.theta.cfa.cli.CfaCli")
+}
+archivePackaging {
+  variant {
+    toolName = "Theta-cfa"
+    readmeTemplate = file("src/main/resources/archive-packaging/README.md")
+  }
 }

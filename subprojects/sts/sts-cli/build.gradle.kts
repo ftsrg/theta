@@ -16,6 +16,7 @@
 plugins {
     id("java-common")
     id("cli-tool")
+  id("archive-packaging")
 }
 
 dependencies {
@@ -33,4 +34,11 @@ dependencies {
 
 application {
     mainClass.set("hu.bme.mit.theta.sts.cli.StsCli")
+}
+
+archivePackaging {
+  variant {
+    toolName = "Theta-aiger"
+    readmeTemplate = file("src/main/resources/archive-packaging/README.md")
+  }
 }

@@ -1,0 +1,12 @@
+var x : integer = 20
+var y : integer = 0
+
+trans {
+    assume x>0;
+    x := x - 1;
+    y := y + 1;
+}
+
+init {}
+
+env {}

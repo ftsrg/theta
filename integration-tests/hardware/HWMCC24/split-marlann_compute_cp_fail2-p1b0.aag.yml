@@ -1,0 +1,7 @@
+format_version: '2.0'
+input_files: models/split-marlann_compute_cp_fail2-p1b0.aag
+options:
+  language: aag
+properties:
+- expected_verdict: 'false'
+  property_file: ../properties/default.prp

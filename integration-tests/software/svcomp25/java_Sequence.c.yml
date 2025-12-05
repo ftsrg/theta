@@ -1,0 +1,8 @@
+format_version: '2.0'
+input_files: models/java_Sequence.c
+options:
+  data_model: LP64
+  language: C
+properties:
+- expected_verdict: true
+  property_file: ../properties/termination.prp
