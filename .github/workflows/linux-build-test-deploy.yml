@@ -160,7 +160,7 @@ jobs:
       - name: Build archive variant
         uses: ./.github/actions/cache-build
         with:
-          arguments: theta-xcfa-cli:${{ matrix.gradleTask }}
+          arguments: ${{ matrix.gradleTask }}
       - name: Upload archive artifact
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:

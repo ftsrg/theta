@@ -100,7 +100,7 @@ tasks {
     }
 
     withType<Test> {
-        jvmArgs("-Xss5m", "-Xms512m", "-Xmx1g")
+        jvmArgs("-Xss5m", "-Xms1024m", "-Xmx1g")
     }
 }
 
