@@ -31,6 +31,14 @@ apply(from = rootDir.resolve("../gradle/shared-with-buildSrc/mirrors.gradle.kts"
 val kotlinVersion: String by project
 val shadowVersion: String by project
 val spotlessVersion: String by project
+val javaVersion: String by project
+
+
+
+kotlin{
+  jvmToolchain(javaVersion.toInt())
+}
+
 
 // https://github.com/gradle/kotlin-dsl/issues/430#issuecomment-414768887
 fun gradlePlugin(id: String, version: String): String = "$id:$id.gradle.plugin:$version"
@@ -39,7 +47,7 @@ dependencies {
     compileOnly(gradleKotlinDsl())
     implementation(kotlin("gradle-plugin", kotlinVersion))
     implementation(kotlin("serialization", kotlinVersion))
-    implementation(gradlePlugin("com.github.johnrengelman.shadow", shadowVersion))
+    implementation(gradlePlugin("com.gradleup.shadow", shadowVersion))
     implementation(gradlePlugin("com.diffplug.spotless", spotlessVersion))
 }
 
@@ -86,12 +94,7 @@ fun generateVersionsSource(): String {
 }
 
 tasks {
-    withType<KotlinCompile>() {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-    val generateVersions by creating {
+    val generateVersions by registering {
         description = "Updates Versions.kt from project properties."
         group = "build"
         outputs.dirs(generatedVersionsKotlinSrcDir)

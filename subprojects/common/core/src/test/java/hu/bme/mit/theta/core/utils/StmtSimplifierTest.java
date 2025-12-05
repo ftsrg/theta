@@ -24,7 +24,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
@@ -39,13 +39,9 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class StmtSimplifierTest {
 
     private static final VarDecl<IntType> X = Var("x", Int());
@@ -85,17 +81,10 @@ public final class StmtSimplifierTest {
                                     SEQ_ASSIGN_X_1_ASSUME_EQ_X_1,
                                     SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0,
                                     SEQ_ASSIGN_X_1_ASSUME_EQ_X_1));
-
-    @Parameter(0)
     public Stmt stmt;
-
-    @Parameter(1)
     public Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries;
-
-    @Parameter(2)
     public Stmt expectedStmt;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -146,8 +135,11 @@ public final class StmtSimplifierTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(
+            Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, Stmt expectedStmt) {
+        initStmtSimplifierTest(stmt, initialEntries, expectedStmt);
         // Arrange
         final MutableValuation val = new MutableValuation();
         for (final Tuple2<Decl<?>, LitExpr<?>> entry : initialEntries) {
@@ -159,5 +151,12 @@ public final class StmtSimplifierTest {
 
         // Assert
         assertEquals(expectedStmt, actualStmt);
+    }
+
+    public void initStmtSimplifierTest(
+            Stmt stmt, Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries, Stmt expectedStmt) {
+        this.stmt = stmt;
+        this.initialEntries = initialEntries;
+        this.expectedStmt = expectedStmt;
     }
 }

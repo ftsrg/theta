@@ -23,8 +23,8 @@ import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3;
 
 import hu.bme.mit.theta.core.type.Expr;
@@ -37,7 +37,7 @@ import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JavaSMTUserPropagatorTest {
 
@@ -59,7 +59,7 @@ public class JavaSMTUserPropagatorTest {
             solver.add(expr1);
 
             solver.check();
-            assertTrue("Should be SAT", solver.getStatus().isSat());
+            assertTrue(solver.getStatus().isSat(), "Should be SAT");
         }
     }
 
@@ -89,17 +89,17 @@ public class JavaSMTUserPropagatorTest {
             testPropagator.registerExpression(expr2);
 
             solver.check();
-            assertTrue("Should be SAT", solver.getStatus().isSat());
+            assertTrue(solver.getStatus().isSat(), "Should be SAT");
 
             final var model = solver.getModel();
             assertEquals(
-                    "Should only be one.",
                     BigInteger.ONE,
-                    ((IntLitExpr) model.eval(c2).get()).getValue());
+                    ((IntLitExpr) model.eval(c2).get()).getValue(),
+                    "Should only be one.");
 
             solver.add(Not(Eq(c2.getRef(), Int(1))));
             solver.check();
-            assertTrue("Should be UNSAT", solver.getStatus().isUnsat());
+            assertTrue(solver.getStatus().isUnsat(), "Should be UNSAT");
         }
     }
 

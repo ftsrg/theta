@@ -1,0 +1,192 @@
+type Main_region_SLP : { __Inactive__, SLP_Receive, SLP_Read_Experiment, SLP_Send, SLP_Acquisition_Experiment, SLP_ON}
+type Main_region_OBC : { __Inactive__, OBC_Receive, OBC_Write, OBC_IDLE, OBC_SEND}
+var ODC_sendData_In_slp : boolean = false
+var ODC_sendData_In_sendDataValue_slp : integer = 0
+ctrl var main_region_slp : Main_region_SLP = __Inactive__
+var ODCGetData_slp : integer = 0
+var slp3_slp : boolean = false
+var slp2_slp : boolean = false
+var sendPL_slp : integer = 0
+var slp10_slp : boolean = false
+var slp6_slp : boolean = false
+var slp4_slp : boolean = false
+var slp9_slp : boolean = false
+var sendDataOBC_slp : integer = 0
+var slp5_slp : boolean = false
+var slp7_slp : boolean = false
+var PLBuffer_slp : integer = 0
+var slp8_slp : boolean = false
+var PL_getData_In_obc : boolean = false
+var PL_getData_In_getDataValue_obc : integer = 0
+ctrl var main_region_obc : Main_region_OBC = __Inactive__
+var obc6_obc : boolean = false
+var writeOBC_obc : integer = 0
+var obc3_obc : boolean = false
+var obc2_obc : boolean = false
+var obc8_obc : boolean = false
+var obc4_obc : boolean = false
+var obc7_obc : boolean = false
+var PLGetData_obc : integer = 0
+var obc9_obc : boolean = false
+var sendOBC_obc : integer = 0
+var OBCData_obc : integer = 0
+var obc5_obc : boolean = false
+
+trans {
+	choice {
+		assume (((main_region_slp == SLP_Receive) && (!(((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 1))) && ((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 0)))));
+		ODCGetData_slp := ODC_sendData_In_sendDataValue_slp;
+		sendPL_slp := 2;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		sendDataOBC_slp := 0;
+		slp6_slp := true;
+		main_region_slp := SLP_Send;
+	} or {
+		assume (((main_region_slp == SLP_Read_Experiment) && true));
+		sendPL_slp := PLBuffer_slp;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		sendDataOBC_slp := 1;
+		slp4_slp := true;
+		main_region_slp := SLP_Send;
+	} or {
+		assume (((main_region_slp == SLP_Send) && (true && ((sendPL_slp == 2) && (ODCGetData_slp != 0)))));
+		slp8_slp := true;
+		main_region_slp := SLP_Read_Experiment;
+	} or {
+		assume (((main_region_slp == SLP_Send) && (!((true && ((sendPL_slp == 2) && (ODCGetData_slp != 0)))) && (true && (((sendPL_slp != 1) && (sendPL_slp != 2)) && (sendDataOBC_slp == 0))))));
+		sendPL_slp := 0;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		slp9_slp := true;
+		main_region_slp := SLP_Receive;
+	} or {
+		assume (((main_region_slp == SLP_Receive) && (!(((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 1))) && !(((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 0))) && ((ODC_sendData_In_slp == true) && ((ODC_sendData_In_sendDataValue_slp != 1) && (ODC_sendData_In_sendDataValue_slp != 2))))));
+		ODCGetData_slp := ODC_sendData_In_sendDataValue_slp;
+		sendPL_slp := 0;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		slp7_slp := true;
+		main_region_slp := SLP_Send;
+	} or {
+		assume (((main_region_slp == SLP_Send) && (!((true && ((sendPL_slp == 2) && (ODCGetData_slp != 0)))) && !((true && (((sendPL_slp != 1) && (sendPL_slp != 2)) && (sendDataOBC_slp == 0)))) && (true && ((sendPL_slp == 1) || (sendDataOBC_slp == 1))))));
+		sendPL_slp := 1;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		slp10_slp := true;
+		main_region_slp := SLP_Acquisition_Experiment;
+	} or {
+		assume (((main_region_slp == SLP_ON) && true));
+		sendPL_slp := 0;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		slp3_slp := true;
+		main_region_slp := SLP_Receive;
+	} or {
+		assume (((main_region_slp == SLP_Receive) && ((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 1))));
+		ODCGetData_slp := ODC_sendData_In_sendDataValue_slp;
+		sendPL_slp := 2;
+		PL_getData_In_getDataValue_obc := sendPL_slp;
+		PL_getData_In_obc := true;
+		slp5_slp := true;
+		main_region_slp := SLP_Send;
+	} or {
+		assume (((main_region_slp == SLP_Acquisition_Experiment) && true));
+		PLBuffer_slp := 3;
+		slp2_slp := true;
+		main_region_slp := SLP_Receive;
+	} or {
+		assume !(((((main_region_slp == SLP_Receive) && (!(((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 1))) && ((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 0))))) || (((main_region_slp == SLP_Read_Experiment) && true)) || (((main_region_slp == SLP_Send) && (true && ((sendPL_slp == 2) && (ODCGetData_slp != 0))))) || (((main_region_slp == SLP_Send) && (!((true && ((sendPL_slp == 2) && (ODCGetData_slp != 0)))) && (true && (((sendPL_slp != 1) && (sendPL_slp != 2)) && (sendDataOBC_slp == 0)))))) || (((main_region_slp == SLP_Receive) && (!(((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 1))) && !(((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 0))) && ((ODC_sendData_In_slp == true) && ((ODC_sendData_In_sendDataValue_slp != 1) && (ODC_sendData_In_sendDataValue_slp != 2)))))) || (((main_region_slp == SLP_Send) && (!((true && ((sendPL_slp == 2) && (ODCGetData_slp != 0)))) && !((true && (((sendPL_slp != 1) && (sendPL_slp != 2)) && (sendDataOBC_slp == 0)))) && (true && ((sendPL_slp == 1) || (sendDataOBC_slp == 1)))))) || (((main_region_slp == SLP_ON) && true)) || (((main_region_slp == SLP_Receive) && ((ODC_sendData_In_slp == true) && (ODC_sendData_In_sendDataValue_slp == 1)))) || (((main_region_slp == SLP_Acquisition_Experiment) && true))));
+	}
+	ODC_sendData_In_slp := false;
+	ODC_sendData_In_sendDataValue_slp := 0;
+	choice {
+		assume (((main_region_obc == OBC_Receive) && (true && (((PLGetData_obc != 1) && (PLGetData_obc != 2)) && (writeOBC_obc != 1)))));
+		obc5_obc := true;
+		main_region_obc := OBC_IDLE;
+	} or {
+		assume (((main_region_obc == OBC_Receive) && (!((true && (((PLGetData_obc != 1) && (PLGetData_obc != 2)) && (writeOBC_obc != 1)))) && ((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 2)))));
+		OBCData_obc := PL_getData_In_getDataValue_obc;
+		obc6_obc := true;
+		main_region_obc := OBC_Write;
+	} or {
+		assume (((main_region_obc == OBC_IDLE) && ((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 0))));
+		PLGetData_obc := PL_getData_In_getDataValue_obc;
+		sendOBC_obc := 1;
+		ODC_sendData_In_sendDataValue_slp := sendOBC_obc;
+		ODC_sendData_In_slp := true;
+		obc2_obc := true;
+		main_region_obc := OBC_SEND;
+	} or {
+		assume (((main_region_obc == OBC_Write) && true));
+		writeOBC_obc := 1;
+		obc9_obc := true;
+		main_region_obc := OBC_Receive;
+	} or {
+		assume (((main_region_obc == OBC_Receive) && (!((true && (((PLGetData_obc != 1) && (PLGetData_obc != 2)) && (writeOBC_obc != 1)))) && !(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 2))) && ((PL_getData_In_obc == true) && ((PL_getData_In_getDataValue_obc == 1) || (writeOBC_obc == 1))))));
+		PLGetData_obc := PL_getData_In_getDataValue_obc;
+		obc7_obc := true;
+		main_region_obc := OBC_IDLE;
+	} or {
+		assume (((main_region_obc == OBC_IDLE) && (!(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 0))) && !(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 1))) && ((PL_getData_In_obc == true) && (((PL_getData_In_getDataValue_obc != 0) && (PL_getData_In_getDataValue_obc != 1)) && (PL_getData_In_getDataValue_obc != 2))))));
+		PLGetData_obc := PL_getData_In_getDataValue_obc;
+		sendOBC_obc := 0;
+		ODC_sendData_In_sendDataValue_slp := sendOBC_obc;
+		ODC_sendData_In_slp := true;
+		obc4_obc := true;
+		main_region_obc := OBC_SEND;
+	} or {
+		assume (((main_region_obc == OBC_SEND) && true));
+		obc8_obc := true;
+		main_region_obc := OBC_Receive;
+	} or {
+		assume (((main_region_obc == OBC_IDLE) && (!(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 0))) && ((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 1)))));
+		PLGetData_obc := PL_getData_In_getDataValue_obc;
+		sendOBC_obc := 2;
+		ODC_sendData_In_sendDataValue_slp := sendOBC_obc;
+		ODC_sendData_In_slp := true;
+		writeOBC_obc := 2;
+		obc3_obc := true;
+		main_region_obc := OBC_SEND;
+	} or {
+		assume !(((((main_region_obc == OBC_Receive) && (true && (((PLGetData_obc != 1) && (PLGetData_obc != 2)) && (writeOBC_obc != 1))))) || (((main_region_obc == OBC_Receive) && (!((true && (((PLGetData_obc != 1) && (PLGetData_obc != 2)) && (writeOBC_obc != 1)))) && ((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 2))))) || (((main_region_obc == OBC_IDLE) && ((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 0)))) || (((main_region_obc == OBC_Write) && true)) || (((main_region_obc == OBC_Receive) && (!((true && (((PLGetData_obc != 1) && (PLGetData_obc != 2)) && (writeOBC_obc != 1)))) && !(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 2))) && ((PL_getData_In_obc == true) && ((PL_getData_In_getDataValue_obc == 1) || (writeOBC_obc == 1)))))) || (((main_region_obc == OBC_IDLE) && (!(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 0))) && !(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 1))) && ((PL_getData_In_obc == true) && (((PL_getData_In_getDataValue_obc != 0) && (PL_getData_In_getDataValue_obc != 1)) && (PL_getData_In_getDataValue_obc != 2)))))) || (((main_region_obc == OBC_SEND) && true)) || (((main_region_obc == OBC_IDLE) && (!(((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 0))) && ((PL_getData_In_obc == true) && (PL_getData_In_getDataValue_obc == 1)))))));
+	}
+	PL_getData_In_obc := false;
+	PL_getData_In_getDataValue_obc := 0;
+}
+init {
+	sendDataOBC_slp := 0;
+	ODCGetData_slp := 0;
+	PLBuffer_slp := 0;
+	sendPL_slp := 0;
+	slp7_slp := false;
+	slp9_slp := false;
+	slp10_slp := false;
+	slp8_slp := false;
+	slp3_slp := false;
+	slp6_slp := false;
+	slp2_slp := false;
+	slp5_slp := false;
+	slp4_slp := false;
+	main_region_slp := __Inactive__;
+	PLGetData_obc := 0;
+	sendOBC_obc := 0;
+	OBCData_obc := 0;
+	writeOBC_obc := 0;
+	obc5_obc := false;
+	obc9_obc := false;
+	obc2_obc := false;
+	obc3_obc := false;
+	obc6_obc := false;
+	obc8_obc := false;
+	obc4_obc := false;
+	obc7_obc := false;
+	main_region_obc := __Inactive__;
+	PL_getData_In_obc := false;
+	ODC_sendData_In_slp := false;
+	main_region_slp := SLP_ON;
+	main_region_obc := OBC_IDLE;
+}
+env {
+}

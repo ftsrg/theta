@@ -38,41 +38,41 @@ import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker
 import hu.bme.mit.theta.sts.dsl.StsDslManager
 import java.io.FileInputStream
 import java.io.IOException
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
-class StsAbstractMonolithicTest(private val filePath: String, private val expectedResult: Boolean) {
+class StsAbstractMonolithicTest() {
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters(name = "{index}: {0}, {1}")
-    fun data(): Collection<Array<Any>> {
+    fun data(): Collection<Arguments> {
       return listOf(
 
         //                    {"src/test/resources/hw1_false.aag", false},
         //                    {"src/test/resources/hw2_true.aag", true},
         //                    {"src/test/resources/boolean1.system", false},
         //                    {"src/test/resources/boolean2.system", false},
-        arrayOf("src/test/resources/counter.system", true),
-        arrayOf("src/test/resources/counter_bad.system", false),
-        arrayOf("src/test/resources/counter_parametric.system", true),
+        Arguments.of("src/test/resources/counter.system", true),
+        Arguments.of("src/test/resources/counter_bad.system", false),
+        Arguments.of("src/test/resources/counter_parametric.system", true),
 
         //                {"src/test/resources/loop.system", true},
-        arrayOf("src/test/resources/loop_bad.system", false),
-        arrayOf("src/test/resources/multipleinitial.system", false),
-        arrayOf("src/test/resources/readerswriters.system", true),
-        arrayOf("src/test/resources/simple1.system", false),
-        arrayOf("src/test/resources/simple2.system", true),
-        arrayOf("src/test/resources/simple3.system", false),
+        Arguments.of("src/test/resources/loop_bad.system", false),
+        Arguments.of("src/test/resources/multipleinitial.system", false),
+        Arguments.of("src/test/resources/readerswriters.system", true),
+        Arguments.of("src/test/resources/simple1.system", false),
+        Arguments.of("src/test/resources/simple2.system", true),
+        Arguments.of("src/test/resources/simple3.system", false),
       )
     }
   }
 
   @Throws(IOException::class)
   private fun runTest(
+    filePath: String,
+    expectedResult: Boolean,
     logger: Logger,
     checkerBuilderFunction:
       (MonolithicExpr) -> SafetyChecker<out InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>,
@@ -97,7 +97,7 @@ class StsAbstractMonolithicTest(private val filePath: String, private val expect
 
     val checker = StsPipelineChecker(sts, checkerBuilderFunction, passes, logger = logger)
 
-    Assert.assertEquals(expectedResult, checker.check().isSafe())
+    Assertions.assertEquals(expectedResult, checker.check().isSafe())
   }
 
   //    @Test
@@ -142,15 +142,18 @@ class StsAbstractMonolithicTest(private val filePath: String, private val expect
   //                        logger)
   //        );
   //    }
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   @Throws(IOException::class)
-  fun testMdd() {
+  fun testMdd(filePath: String, expectedResult: Boolean) {
     val logger: Logger = ConsoleLogger(Logger.Level.VERBOSE)
     val solverFactory = Z3LegacySolverFactory.getInstance()
 
     try {
       SolverPool(solverFactory).use { solverPool ->
         runTest(
+          filePath,
+          expectedResult,
           logger,
           { monolithicExpr: MonolithicExpr? -> MddChecker(monolithicExpr!!, solverPool, logger) },
         )

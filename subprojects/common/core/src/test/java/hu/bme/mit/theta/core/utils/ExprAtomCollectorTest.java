@@ -34,28 +34,19 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExprAtomCollectorTest {
 
     private static final Expr<BoolType> CA = Const("a", Bool()).getRef();
     private static final Expr<BoolType> CB = Const("b", Bool()).getRef();
     private static final Expr<IntType> CX = Const("x", Int()).getRef();
     private static final Expr<IntType> CY = Const("y", Int()).getRef();
-
-    @Parameter(value = 0)
     public Expr<BoolType> expr;
-
-    @Parameter(value = 1)
     public Set<Expr<BoolType>> expectedAtoms;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -69,9 +60,16 @@ public class ExprAtomCollectorTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<BoolType> expr, Set<Expr<BoolType>> expectedAtoms) {
+        initExprAtomCollectorTest(expr, expectedAtoms);
         final Set<Expr<BoolType>> atoms = ExprUtils.getAtoms(expr);
-        Assert.assertEquals(expectedAtoms, atoms);
+        Assertions.assertEquals(expectedAtoms, atoms);
+    }
+
+    public void initExprAtomCollectorTest(Expr<BoolType> expr, Set<Expr<BoolType>> expectedAtoms) {
+        this.expr = expr;
+        this.expectedAtoms = expectedAtoms;
     }
 }

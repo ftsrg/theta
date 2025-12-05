@@ -22,8 +22,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Build
-        uses: ./.github/actions/build-action
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Gradle build (no tests)
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: build -x test
       - name: Upload JARs
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:
@@ -49,21 +56,49 @@ jobs:
   test-benchexec:
     strategy:
       matrix:
-        rundef:
-          - SV-COMP25_unreach-call
-          - SV-COMP25_no-data-race
-          - SV-COMP25_valid-memcleanup
-          - SV-COMP25_valid-memsafety
-          - SV-COMP25_no-overflow
-          - SV-COMP25_termination
-        portfolio: [COMPLEX, EMERGENT, HORN]
         include:
-          - tool: Theta_SV-COMP
-            portfolio: COMPLEX
-          - tool: EmergenTheta_SV-COMP
-            portfolio: EMERGENT
-          - tool: Thorn_SV-COMP
-            portfolio: HORN
+          # software
+          - tool: Theta-svcomp
+            config: "--svcomp --portfolio STABLE --loglevel RESULT"
+            name: SV-COMP_Portfolio_Stable
+            input_type: software
+          - tool: EmergenTheta-svcomp
+            config: "--svcomp --portfolio EMERGENT --loglevel RESULT"
+            name: SV-COMP_Portfolio_Emergent
+            input_type: software
+          - tool: Thorn-svcomp
+            config: "--svcomp --portfolio HORN --loglevel RESULT"
+            name: SV-COMP_Portfolio_Horn
+            input_type: software
+          # chc
+          - tool: Theta-chccomp
+            config: "--input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model --loglevel RESULT"
+            name: CHC-COMP_Portfolio
+            input_type: chc
+          # hardware
+          - tool: Theta-sts
+            config: "--algorithm CEGAR"
+            name: Hardware_CEGAR
+            input_type: hardware
+          # petrinet
+          - tool: Theta-xsts
+            config: "MDD"
+            name: PetriNet_MDD
+            input_type: petrinet
+          - tool: Theta-xsts
+            config: "PN_MDD"
+            name: PetriNet_PN_MDD
+            input_type: petrinet
+          # plc
+          - tool: Theta-cfa
+            config: "--algorithm CEGAR"
+            name: PLC_CEGAR
+            input_type: plc
+          # statechart
+          - tool: Theta-xsts
+            config: "CEGAR"
+            name: Statechart_CEGAR
+            input_type: statechart
     runs-on: ubuntu-24.04
     needs: create-archives
     steps:
@@ -72,11 +107,10 @@ jobs:
       - name: Run benchexec
         uses: ./.github/actions/benchexec-test
         with:
-          rundef: ${{ matrix.rundef }}
-          portfolio: ${{ matrix.portfolio }}
+          name: ${{ matrix.name }}
+          config_options: ${{ matrix.config }}
           tool: ${{ matrix.tool }}
-          xml: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 'theta.xml' || 'theta-short.xml' }}
-          timeout: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 3600 || 900 }}
+          input_type: ${{ matrix.input_type }}
   
   collect-results:
     needs: test-benchexec
@@ -87,42 +121,54 @@ jobs:
       - name: Generate report
         uses: ./.github/actions/benchexec-report
 
-  create-spec-transformation:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Create spec-transformation
-        uses: ./.github/actions/build-spec-transformation
 
   create-archives:
     runs-on: ubuntu-24.04
-    needs: [build, create-spec-transformation]
+    needs: build
     strategy:
       matrix:
-        tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
         include:
-          - tool: Theta
-            script: theta-start.sh
-            portfolio: STABLE
-          - tool: EmergenTheta
-            script: theta-start.sh
-            portfolio: EMERGENT
-          - tool: Thorn
-            script: theta-start.sh
-            portfolio: HORN
-          - tool: ThetaCHC
-            script: chc
-            portfolio: CHC-COMP
+          # xcfa-cli
+          - toolName: Theta-svcomp
+            gradleTask: buildArchiveTheta-svcomp
+          - toolName: EmergenTheta-svcomp
+            gradleTask: buildArchiveEmergenTheta-svcomp
+          - toolName: Thorn-svcomp
+            gradleTask: buildArchiveThorn-svcomp
+          - toolName: Theta-chccomp
+            gradleTask: buildArchiveTheta-chccomp
+          # xsts-cli
+          - toolName: Theta-xsts
+            gradleTask: buildArchiveTheta-xsts
+          # sts-cli
+          - toolName: Theta-sts
+            gradleTask: buildArchiveTheta-sts
+          # cfa-cli
+          - toolName: Theta-cfa
+            gradleTask: buildArchiveTheta-cfa
+          # xta-cli
+          - toolName: Theta-xta
+            gradleTask: buildArchiveTheta-xta
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Create ${{matrix.tool}}
-        uses: ./.github/actions/build-archive
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
-          name: ${{matrix.tool}}
-          script: ${{matrix.script}}
-          inputflag: "--portfolio ${{matrix.portfolio}}"
+          distribution: temurin
+          java-version: 21
+      - name: Build archive variant
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: ${{ matrix.gradleTask }}
+      - name: Move to cwd
+        run: mv subprojects/*/*/build/distributions/${{ matrix.toolName }}.zip ${{ matrix.toolName }}.zip
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
+        with:
+          name: ${{ matrix.toolName }}
+          path: ${{ matrix.toolName }}.zip
+          if-no-files-found: error
 
 
   javadoc:
@@ -131,8 +177,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Deploy javadoc to github-pages
-        uses: ./.github/actions/deploy-javadoc
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Generate aggregate Javadoc
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: javadoc
+      - name: Deploy Javadoc
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+        with:
+          branch: gh-pages
+          folder: build/docs/javadoc
+          target-folder: javadoc
+          single-commit: true
 
   test-linux:
     strategy:
@@ -144,12 +205,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Install LLVM and Clang
-        uses: ./.github/actions/install-llvm
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
-          version: "15"
-      - name: Run tests
-        uses: ./.github/actions/test-action
+          distribution: temurin
+          java-version: 21
+      - name: Gradle test
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: test
       - name: Positive outcome badge
         if: ${{ matrix.os == 'ubuntu-24.04' }}
         uses: ./.github/actions/badge-creation
@@ -170,34 +234,34 @@ jobs:
 
   deploy-release:
     needs: [test-linux, create-archives]
-    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
+      - name: Set java home to java 21
         run: |
-          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_21_X64)" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Create release and deploy JARs
         uses: ./.github/actions/create-release
         with:
           message: ${{ inputs.message }}
+          dry-run: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
 
   deploy-zenodo:
     needs: [create-archives]
-    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
         include:
-          - tool: Theta
+          - tool: Theta-svcomp
             record: 14194483
-          - tool: EmergenTheta
+          - tool: EmergenTheta-svcomp
             record: 15536866
-          - tool: Thorn
+          - tool: Thorn-svcomp
             record: 14194485
-          - tool: ThetaCHC
+          - tool: Theta-chccomp
             record: 15537027
     steps:
       - name: Checkout repository
@@ -210,20 +274,36 @@ jobs:
           token: ${{secrets.zenodo_token}}
 
   deploy-maven:
-    # needs: test-linux
-    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    needs: test-linux
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Create and publish maven release 
-        uses: ./.github/actions/deploy-maven
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          distribution: temurin
+          java-version: 21
+      - name: Publish to Maven Central (Dry Run)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
+        uses: ./.github/actions/cache-build
+        env:
           PGP_KEY: ${{ secrets.PGP_KEY }}
-          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
           PGP_PWD: ${{ secrets.PGP_PWD }}
+        with:
+          arguments: publishToMavenLocal
+      - name: Publish to Maven Central
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        uses: ./.github/actions/cache-build
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_TOKEN_USERNAME }}
+          OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_PASSWORD }}
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_PWD: ${{ secrets.PGP_PWD }}
+        with:
+          arguments: publish
   
   test-docker:
     strategy:
@@ -231,9 +311,14 @@ jobs:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
+      - name: Set java home to java 21
         run: |
-          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_21_X64)" >> $GITHUB_ENV
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Version
@@ -262,27 +347,30 @@ jobs:
   
   deploy-docker:
     needs: [test-linux, test-docker]
-    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
     runs-on: ubuntu-24.04
     steps:
-      - name: Set java home to java 17
-        run: |
-          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
       - name: Version
         id: version
         run: |
           echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
       - name: docker-login
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: ./.github/actions/docker-login
         with:
           username: ${{secrets.DOCKER_USERNAME}}
           token: ${{secrets.DOCKER_TOKEN}}
       - name: docker-login-ghcr
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: ./.github/actions/docker-login
         with:
           registry: ghcr.io
@@ -295,8 +383,9 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           user-dockerhub: ftsrg
           user-ghcr: ftsrg
-          push: true
+          push: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}
       - name: Docker Hub Description update
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -308,5 +397,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install dependencies
+        run: |
+          pip install --break-system-packages mkdocs mkdocs-material python-markdown-math mkdocs-awesome-pages-plugin
+      - name: Build docs via Gradle
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: buildDocs
       - name: Deploy docs
-        uses: ./.github/actions/deploy-docs
+        uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        with:
+          branch: gh-pages
+          folder: build/doc/wiki
+          target-folder: wiki
+          single-commit: true

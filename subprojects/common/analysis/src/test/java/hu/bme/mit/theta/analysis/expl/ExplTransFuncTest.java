@@ -33,8 +33,8 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ExplTransFuncTest {
 
@@ -54,8 +54,8 @@ public class ExplTransFuncTest {
 
         final Collection<? extends ExplState> succStates =
                 transFunc.getSuccStates(state, action, prec);
-        Assert.assertEquals(1, succStates.size());
-        Assert.assertEquals(
+        Assertions.assertEquals(1, succStates.size());
+        Assertions.assertEquals(
                 ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
                 succStates.iterator().next());
     }
@@ -68,7 +68,7 @@ public class ExplTransFuncTest {
 
         final Collection<? extends ExplState> succStates =
                 transFunc.getSuccStates(state, action, prec);
-        Assert.assertEquals(1, succStates.size());
-        Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
+        Assertions.assertEquals(1, succStates.size());
+        Assertions.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
     }
 }

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddGraph;
@@ -43,11 +43,9 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class MddStateSpaceInfoTest {
 
     private static final VarDecl<IntType> X = Decls.Var("x", IntType.getInstance());
@@ -61,17 +59,10 @@ public class MddStateSpaceInfoTest {
     private static final LitExpr<EnumType> RED = colorType.litFromShortName("red");
     private static final LitExpr<EnumType> GREEN = colorType.litFromShortName("green");
     private static final LitExpr<EnumType> BLUE = colorType.litFromShortName("blue");
-
-    @Parameterized.Parameter(value = 0)
     public List<VarDecl<?>> varOrder;
-
-    @Parameterized.Parameter(value = 1)
     public Expr<BoolType> stateSpaceExpr;
-
-    @Parameterized.Parameter(value = 2)
     public Long expectedSize;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -124,8 +115,12 @@ public class MddStateSpaceInfoTest {
                 });
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
+    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize)
+            throws Exception {
+
+        initMddStateSpaceInfoTest(varOrder, stateSpaceExpr, expectedSize);
 
         try (final SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddGraph<Expr> mddGraph =
@@ -162,5 +157,12 @@ public class MddStateSpaceInfoTest {
 
             assertEquals(expectedSize, resultSize);
         }
+    }
+
+    public void initMddStateSpaceInfoTest(
+            List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize) {
+        this.varOrder = varOrder;
+        this.stateSpaceExpr = stateSpaceExpr;
+        this.expectedSize = expectedSize;
     }
 }

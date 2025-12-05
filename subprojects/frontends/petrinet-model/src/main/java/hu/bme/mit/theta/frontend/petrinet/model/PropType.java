@@ -15,9 +15,24 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.model;
 
+import java.io.File;
+import org.jetbrains.annotations.Nullable;
+
 public enum PropType {
     TARGET_MARKING,
     DEADLOCK,
     PN_SAFE,
-    FULL_EXPLORATION
+    FULL_EXPLORATION;
+
+    /**
+     * Returns a petrinet property type from a filename. E.g., pn_safe.prp -> PN_SAFE Does not parse
+     * the contents.
+     *
+     * @param property the property file to use
+     * @return the petrinet property value
+     */
+    public static PropType fromFilename(@Nullable File property) {
+        if (property == null) return PropType.FULL_EXPLORATION;
+        return PropType.valueOf(property.getName().split("\\.")[0].toUpperCase());
+    }
 }
