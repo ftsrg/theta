@@ -165,7 +165,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:
           name: ${{ matrix.toolName }}
-          path: subprojects/xcfa/xcfa-cli/build/distributions/${{ matrix.toolName }}.zip
+          path: subprojects/*/*/build/distributions/${{ matrix.toolName }}.zip
           if-no-files-found: error
 
 
