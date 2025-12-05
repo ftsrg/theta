@@ -232,7 +232,9 @@ public class CfaCli {
                             + " more details. Enter \"Z3\" to use the legacy z3 solver.")
     String refinementSolver;
 
-    @Parameter(names = {"--home", "--smt-home"}, description = "The path of the solver registry")
+    @Parameter(
+            names = {"--home", "--smt-home"},
+            description = "The path of the solver registry")
     String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
     @Parameter(

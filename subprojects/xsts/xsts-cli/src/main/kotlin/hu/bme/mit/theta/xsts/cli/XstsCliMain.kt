@@ -25,9 +25,7 @@ import com.github.ajalt.clikt.parameters.options.versionOption
 class XstsCliMainCommand : CliktCommand() {
 
   init {
-    versionOption(javaClass.`package`.implementationVersion ?: "unknown") {
-      it
-    }
+    versionOption(javaClass.`package`.implementationVersion ?: "unknown") { it }
   }
 
   val algorithm by

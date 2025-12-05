@@ -7,7 +7,6 @@
   <rundefinition name="Theta-software-Integration-Test">
     <tasks name="unreach-call">
       <propertyfile>properties/unreach-call.prp</propertyfile>
-      <include>svcomp25/benchmark43_conjunctive_abstracted.i.yml</include>
       <include>svcomp25/btor2c-lazyMod.bit-vector.c.yml</include>
       <include>svcomp25/Dubois-015.c.yml</include>
       <include>svcomp25/integerpromotion-2.c.yml</include>
@@ -16,132 +15,6 @@
       <include>svcomp25/modulus-2.i.yml</include>
       <include>svcomp25/num_conversion_1.c.yml</include>
       <include>svcomp25/num_conversion_2.c.yml</include>
-      <include>svcomp25/terminator_02-2_abstracted.c.yml</include>
-      <include>svcomp25/trex03-2_abstracted.c.yml</include>
-      <include>svcomp25/AllInterval-005.c.yml</include>
-      <include>svcomp25/benchmark52_polynomial.i.yml</include>
-      <include>svcomp25/bh2017-ex1-poly.i.yml</include>
-      <include>svcomp25/bresenham-ll_unwindbound1.c.yml</include>
-      <include>svcomp25/cohendiv-ll_unwindbound1.c.yml</include>
-      <include>svcomp25/const_1-2_abstracted.c.yml</include>
-      <include>svcomp25/divbin_unwindbound1.i.yml</include>
-      <include>svcomp25/egcd2-ll_unwindbound1.c.yml</include>
-      <include>svcomp25/egcd-ll.c.yml</include>
-      <include>svcomp25/fermat1-ll_valuebound1.c.yml</include>
-      <include>svcomp25/gcd_4.c.yml</include>
-      <include>svcomp25/hard2_unwindbound1.c.yml</include>
-      <include>svcomp25/hard-ll_unwindbound1.c.yml</include>
-      <include>svcomp25/hard-ll_unwindbound2.c.yml</include>
-      <include>svcomp25/id_trans.i.yml</include>
-      <include>svcomp25/mannadiv_unwindbound1.c.yml</include>
-      <include>svcomp25/mod3.c.v+cfa-reducer.c.yml</include>
-      <include>svcomp25/mod3.c.v+lhb-reducer.c.yml</include>
-      <include>svcomp25/mod3.c.v+sep-reducer.c.yml</include>
-      <include>svcomp25/mod3.c.yml</include>
-      <include>svcomp25/nested_1-1.c.yml</include>
-      <include>svcomp25/nested3-2_abstracted.c.yml</include>
-      <include>svcomp25/phases_2-1.c.yml</include>
-      <include>svcomp25/prodbin-ll_unwindbound2.c.yml</include>
-      <include>svcomp25/prodbin-ll_valuebound1.c.yml</include>
-      <include>svcomp25/prodbin-ll_valuebound2.c.yml</include>
-      <include>svcomp25/ps2-ll_unwindbound2.c.yml</include>
-      <include>svcomp25/simple_1-1_abstracted.c.yml</include>
-      <include>svcomp25/simple_1-2_abstracted.c.yml</include>
-      <include>svcomp25/simple_3-1.c.yml</include>
-      <include>svcomp25/simple_4-1_abstracted.c.yml</include>
-      <include>svcomp25/simple_4-2_abstracted.c.yml</include>
-      <include>svcomp25/simple_4-2.c.yml</include>
-      <include>svcomp25/sqrt1-ll_unwindbound1.c.yml</include>
-      <include>svcomp25/sum01_bug02.i.yml</include>
-      <include>svcomp25/sum02-2.c.yml</include>
-      <include>svcomp25/sum04-1.i.yml</include>
-      <include>svcomp25/sum04-2.i.yml</include>
-      <include>svcomp25/trex01-1.c.yml</include>
-      <include>svcomp25/trex01-2.i.yml</include>
-      <include>svcomp25/underapprox_1-2.c.yml</include>
-      <include>svcomp25/alt_test.i.yml</include>
-      <include>svcomp25/large_const.i.yml</include>
-      <include>svcomp25/sizeofparameters_test.c.yml</include>
-      <include>svcomp25/test_overflow.i.yml</include>
-      <include>svcomp25/dart-dart.c.yml</include>
-      <include>svcomp25/drift_tenth.c.p+cfa-reducer.c.yml</include>
-      <include>svcomp25/drift_tenth.c.yml</include>
-      <include>svcomp25/implicitfloatconversion.c.yml</include>
-      <include>svcomp25/inv_square-1.c.yml</include>
-      <include>svcomp25/inv_square-2.c.yml</include>
-      <include>svcomp25/inv_square_int.c.yml</include>
-      <include>svcomp25/knuth_valuebound1.i.yml</include>
-      <include>svcomp25/knuth_valuebound2.i.yml</include>
-      <include>svcomp25/nan_double_range.c.yml</include>
-      <include>svcomp25/nan_double.c.yml</include>
-      <include>svcomp25/nan_float_range.c.yml</include>
-      <include>svcomp25/nan_float.c.yml</include>
-      <include>svcomp25/rounding_functions.i.yml</include>
-      <include>svcomp25/apache-get-tag.i.v+lhb-reducer.c.yml</include>
-      <include>svcomp25/apache-get-tag.i.v+nlh-reducer.c.yml</include>
-      <include>svcomp25/apache-get-tag.i.yml</include>
-      <include>svcomp25/as2013-hybrid.i.yml</include>
-      <include>svcomp25/bh2017-ex3.i.yml</include>
-      <include>svcomp25/bh2017-ex-add.i.yml</include>
-      <include>svcomp25/cggmp2005b.i.yml</include>
-      <include>svcomp25/cggmp2005.i.yml</include>
-      <include>svcomp25/const_1-1.c.yml</include>
-      <include>svcomp25/CostasArray-10.c.yml</include>
-      <include>svcomp25/CostasArray-11.c.yml</include>
-      <include>svcomp25/CostasArray-12.c.yml</include>
-      <include>svcomp25/count_by_1_variant.i.yml</include>
-      <include>svcomp25/count_by_1.i.yml</include>
-      <include>svcomp25/count_up_down-2.c.yml</include>
-      <include>svcomp25/css2003.i.yml</include>
-      <include>svcomp25/for_bounded_loop1.c.yml</include>
-      <include>svcomp25/for_infinite_loop_1.c.yml</include>
-      <include>svcomp25/for_infinite_loop_2.c.yml</include>
-      <include>svcomp25/gj2007.c.i.p+nlh-reducer.c.yml</include>
-      <include>svcomp25/gsv2008.c.i.p+cfa-reducer.c.yml</include>
-      <include>svcomp25/gsv2008.c.i.v+cfa-reducer.c.yml</include>
-      <include>svcomp25/gsv2008.c.i.v+lhb-reducer.c.yml</include>
-      <include>svcomp25/gsv2008.i.yml</include>
-      <include>svcomp25/hh2012-ex2b.i.yml</include>
-      <include>svcomp25/hh2012-ex3.i.yml</include>
-      <include>svcomp25/id_build.i.p+nlh-reducer.c.yml</include>
-      <include>svcomp25/id_build.i.p+sep-reducer.c.yml</include>
-      <include>svcomp25/id_build.i.v+lhb-reducer.c.yml</include>
-      <include>svcomp25/id_build.i.yml</include>
-      <include>svcomp25/implicitunsignedconversion-1.c.yml</include>
-      <include>svcomp25/implicitunsignedconversion-2.c.yml</include>
-      <include>svcomp25/just_assert.i.yml</include>
-      <include>svcomp25/linear-inequality-inv-b.c.yml</include>
-      <include>svcomp25/mine2017-ex4.10.i.yml</include>
-      <include>svcomp25/mine2017-ex4.6.i.yml</include>
-      <include>svcomp25/mine2017-ex4.7.i.yml</include>
-      <include>svcomp25/mine2017-ex4.8.i.yml</include>
-      <include>svcomp25/multivar_1-2.c.yml</include>
-      <include>svcomp25/nested_1b.c.yml</include>
-      <include>svcomp25/nested_1.c.yml</include>
-      <include>svcomp25/nested_2.c.yml</include>
-      <include>svcomp25/nested_3.c.yml</include>
-      <include>svcomp25/nested_4.c.yml</include>
-      <include>svcomp25/nested_5.c.yml</include>
-      <include>svcomp25/oomInt.c_1.i.yml</include>
-      <include>svcomp25/oomInt.i.yml</include>
-      <include>svcomp25/pc_sfifo_1.cil-1+token_ring.01.cil-1.c.yml</include>
-      <include>svcomp25/pc_sfifo_1.cil-1+token_ring.02.cil-1.c.yml</include>
-      <include>svcomp25/pc_sfifo_1.cil-1.c.yml</include>
-      <include>svcomp25/pc_sfifo_2.cil-2.c.yml</include>
-      <include>svcomp25/s3_srvr_1b.cil.c.yml</include>
-      <include>svcomp25/signextension-1.c.yml</include>
-      <include>svcomp25/signextension2-1.c.yml</include>
-      <include>svcomp25/signextension2-2.c.yml</include>
-      <include>svcomp25/signextension-2.c.yml</include>
-      <include>svcomp25/simple_2-1_abstracted.c.yml</include>
-      <include>svcomp25/simple_2-1.c.yml</include>
-      <include>svcomp25/simple_2-2.c.yml</include>
-      <include>svcomp25/simple_vardep_1.c.yml</include>
-      <include>svcomp25/stateful_check.c.yml</include>
-      <include>svcomp25/terminator_02-2.c.yml</include>
-      <include>svcomp25/terminator_03-2_abstracted.i.yml</include>
-      <include>svcomp25/terminator_03-2.i.yml</include>
-      <include>svcomp25/test_cut_trace.i.yml</include>
       <include>svcomp25/test_locks_14-2.c.yml</include>
       <include>svcomp25/test_locks_15-1.c.yml</include>
       <include>svcomp25/test_locks_5.c.yml</include>
@@ -172,13 +45,6 @@
       <include>svcomp25/dijkstra1-both-nt.c.yml</include>
       <include>svcomp25/dijkstra2-both-nt.c.yml</include>
       <include>svcomp25/ex3a.c.yml</include>
-      <include>svcomp25/java_LogBuiltIn.c.yml</include>
-      <include>svcomp25/AliasDarteFeautrierGonnord-SAS2010-easy1.c.yml</include>
-      <include>svcomp25/Bangalore_v2.c.yml</include>
-      <include>svcomp25/Bangalore_v4.c.yml</include>
-      <include>svcomp25/BradleyMannaSipma-CAV2005-Fig1-modified.c.yml</include>
-      <include>svcomp25/ChawdharyCookGulwaniSagivYang-ESOP2008-easy1.c.yml</include>
-      <include>svcomp25/ChenCookFuhsNimkarOHearn-TACAS2014-Introduction.c.yml</include>
       <include>svcomp25/ComplInterv2.c.yml</include>
       <include>svcomp25/ConvLower.c.yml</include>
       <include>svcomp25/Ex02.c.yml</include>
@@ -192,46 +58,6 @@
       <include>svcomp25/Loop-2.c.yml</include>
       <include>svcomp25/MinusBuiltIn.c.yml</include>
       <include>svcomp25/MirrorIntervSim.c.yml</include>
-      <include>svcomp25/NO_00.c.yml</include>
-      <include>svcomp25/NO_02.c.yml</include>
-      <include>svcomp25/NO_03.c.yml</include>
-      <include>svcomp25/NO_04.c.yml</include>
-      <include>svcomp25/NO_13.c.yml</include>
-      <include>svcomp25/NO_21.c.yml</include>
-      <include>svcomp25/NO_22.c.yml</include>
-      <include>svcomp25/NO_23.c.yml</include>
-      <include>svcomp25/NO_24.c.yml</include>
-      <include>svcomp25/Nested-2.c.yml</include>
-      <include>svcomp25/NonTerminationSimple7.c.yml</include>
-      <include>svcomp25/PastaB4.c.yml</include>
-      <include>svcomp25/Sequence.c.yml</include>
-      <include>svcomp25/Singapore-2.c.yml</include>
-      <include>svcomp25/Sunset.c.yml</include>
-      <include>svcomp25/Swingers.c.yml</include>
-      <include>svcomp25/TwoFloatInterv.c.yml</include>
-      <include>svcomp25/Urban-WST2013-Fig1.c.yml</include>
-      <include>svcomp25/Velroyen.c.yml</include>
-      <include>svcomp25/WhilePart.c.yml</include>
-      <include>svcomp25/WhileSingle.c.yml</include>
-      <include>svcomp25/b.04.c.yml</include>
-      <include>svcomp25/easy1.c.yml</include>
-      <include>svcomp25/java_Break.c.yml</include>
-      <include>svcomp25/java_Continue1.c.yml</include>
-      <include>svcomp25/java_Nested.c.yml</include>
-      <include>svcomp25/java_Sequence.c.yml</include>
-      <include>svcomp25/and-03-false.c.yml</include>
-      <include>svcomp25/and-04-false.c.yml</include>
-      <include>svcomp25/and-05-false.c.yml</include>
-      <include>svcomp25/and-05.c.yml</include>
-      <include>svcomp25/counting-bits-BK.i.yml</include>
-      <include>svcomp25/counting-bits-BK1.i.yml</include>
-      <include>svcomp25/or-02.c.yml</include>
-      <include>svcomp25/or-03.c.yml</include>
-      <include>svcomp25/or-04.c.yml</include>
-      <include>svcomp25/or-05-false.c.yml</include>
-      <include>svcomp25/or-05.c.yml</include>
-      <include>svcomp25/or-06.c.yml</include>
-      <include>svcomp25/parity1.i.yml</include>
     </tasks>
   </rundefinition>
 

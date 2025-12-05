@@ -72,7 +72,7 @@ jobs:
             input_type: software
           # chc
           - tool: Theta-chccomp
-            config: "--input-type CHC --backend PORTFOLIO --portfolio HORN --print-model --loglevel RESULT"
+            config: "--input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model --loglevel RESULT"
             name: CHC-COMP_Portfolio
             input_type: chc
           # hardware
@@ -96,8 +96,8 @@ jobs:
             input_type: plc
           # statechart
           - tool: Theta-xsts
-            config: "KIND"
-            name: Statechart_KIND
+            config: "CEGAR"
+            name: Statechart_CEGAR
             input_type: statechart
     runs-on: ubuntu-24.04
     needs: create-archives
