@@ -253,13 +253,13 @@ jobs:
       matrix:
         tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
         include:
-          - tool: Theta
+          - tool: Theta-svcomp
             record: 14194483
-          - tool: EmergenTheta
+          - tool: EmergenTheta-svcomp
             record: 15536866
-          - tool: Thorn
+          - tool: Thorn-svcomp
             record: 14194485
-          - tool: ThetaCHC
+          - tool: Theta-chccomp
             record: 15537027
     steps:
       - name: Checkout repository

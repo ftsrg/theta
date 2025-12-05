@@ -36,7 +36,7 @@ runs:
     - name: Unzip tool
       shell: bash
       run: |
-        unzip release/*.zip
+        unzip release/*.zip || true # sometimes the artifact is a zip for some reason
     - name: Run benchexec
       shell: bash
       run: |
