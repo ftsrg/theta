@@ -38,7 +38,7 @@ application {
 
 archivePackaging {
     variant {
-        toolName = "Theta-aiger"
+        toolName = "Theta-sts"
         readmeTemplate = file("src/main/resources/archive-packaging/README.md")
     }
 }
