@@ -16,7 +16,7 @@
 plugins {
     id("java-common")
     id("cli-tool")
-  id("archive-packaging")
+    id("archive-packaging")
 }
 
 dependencies {
@@ -37,8 +37,8 @@ application {
 }
 
 archivePackaging {
-  variant {
-    toolName = "Theta-aiger"
-    readmeTemplate = file("src/main/resources/archive-packaging/README.md")
-  }
+    variant {
+        toolName = "Theta-aiger"
+        readmeTemplate = file("src/main/resources/archive-packaging/README.md")
+    }
 }

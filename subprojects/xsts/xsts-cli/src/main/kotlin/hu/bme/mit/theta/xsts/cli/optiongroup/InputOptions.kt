@@ -21,7 +21,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
-import com.github.ajalt.clikt.parameters.types.inputStream
 import com.github.ajalt.clikt.parameters.types.int
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
 import hu.bme.mit.theta.frontend.petrinet.model.PropType
@@ -63,7 +62,7 @@ class InputOptions :
 
   fun isPnml() = model.path.endsWith("pnml")
 
-  fun getPnProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
+  fun getPetrinetProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
 
   fun loadXsts(): XSTS {
     val propertyStream =
@@ -73,7 +72,7 @@ class InputOptions :
         else null
     if (isPnml()) {
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
-      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, getPnProperty())
+      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, getPetrinetProperty())
     }
     val parsedXsts =
       XstsDslManager.createXsts(

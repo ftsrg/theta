@@ -34,8 +34,8 @@ application {
     mainClass.set("hu.bme.mit.theta.cfa.cli.CfaCli")
 }
 archivePackaging {
-  variant {
-    toolName = "Theta-cfa"
-    readmeTemplate = file("src/main/resources/archive-packaging/README.md")
-  }
+    variant {
+        toolName = "Theta-cfa"
+        readmeTemplate = file("src/main/resources/archive-packaging/README.md")
+    }
 }
