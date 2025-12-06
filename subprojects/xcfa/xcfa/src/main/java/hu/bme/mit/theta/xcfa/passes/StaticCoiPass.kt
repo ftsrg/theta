@@ -84,7 +84,7 @@ class StaticCoiPass : ProcedurePass {
     val toVisit = mutableListOf(edge)
     val visited = mutableSetOf<XcfaEdge>()
     while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeFirst()
+      val visiting = toVisit.removeAt(0)
       visited.add(visiting)
       val labels = if (visiting == edge) remaining else visiting.getFlatLabels()
       labels.forEach { target ->
@@ -126,7 +126,7 @@ class StaticCoiPass : ProcedurePass {
     val toVisit = mutableListOf(label)
     val visited = mutableSetOf<XcfaLabel>()
     while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeFirst()
+      val visiting = toVisit.removeAt(0)
       if (visiting.collectAssumesVars().isNotEmpty()) return true
       if (visiting.dereferencesWithAccessType.any { it.value.isWritten }) return true
 

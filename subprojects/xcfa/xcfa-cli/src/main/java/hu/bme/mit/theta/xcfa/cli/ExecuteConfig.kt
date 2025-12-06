@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext

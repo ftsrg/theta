@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
@@ -94,7 +95,7 @@ class XcfaDslTest {
           config,
           ParseContext(),
           NullLogger.getInstance(),
-          NullLogger.getInstance(),
+          UniqueWarningLogger(NullLogger.getInstance()),
         )
       val safetyResult = checker.check()
       Assert.assertTrue(safetyResult.isSafe)
@@ -108,7 +109,7 @@ class XcfaDslTest {
           config,
           ParseContext(),
           NullLogger.getInstance(),
-          NullLogger.getInstance(),
+          UniqueWarningLogger(NullLogger.getInstance()),
         )
       val safetyResult = checker.check()
       Assert.assertTrue(safetyResult.isUnsafe)
