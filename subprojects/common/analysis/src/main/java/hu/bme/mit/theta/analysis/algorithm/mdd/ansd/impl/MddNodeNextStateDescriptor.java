@@ -88,7 +88,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        final MddNode constraint = localStateSpace.toStructuralRepresentation();
+        final IntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
         return new ConstrainedIntObjMapView<>(
                 new IntObjMapViews.Transforming<>(
                         node,
@@ -109,7 +109,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
-        final MddNode constraint = localStateSpace.toStructuralRepresentation();
+        final IntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
         return new IntObjMapViews.Transforming<>(
                 node,
                 outerNode ->
@@ -187,7 +187,6 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         @Override
         public AbstractNextStateDescriptor.Cursor valueCursor(
                 int from, StateSpaceInfo localStateSpace) {
-            final MddNode constraint = localStateSpace.toStructuralRepresentation();
             // TODO the valueCursor call of the wrapped cursor has to propagate the constraint
             var fromCursor = wrapped.valueCursor();
             if (fromCursor.moveTo(from)) {

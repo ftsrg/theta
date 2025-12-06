@@ -15,7 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd;
 
+import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.MddNode;
 
 /**
@@ -67,5 +69,5 @@ public interface StateSpaceInfo {
      */
     public StateSpaceInfo getLocalStateSpace(Object someLowerComponent);
 
-    public MddNode toStructuralRepresentation();
+    public RecursiveIntObjMapView<?> toStructuralRepresentation();
 }

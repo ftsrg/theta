@@ -15,35 +15,29 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
 import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.ObjIntMap;
-import com.koloboke.collect.map.hash.HashObjIntMaps;
-import com.koloboke.collect.set.ObjSet;
-import com.koloboke.collect.set.hash.HashObjSets;
-import hu.bme.mit.delta.Pair;
+import com.koloboke.collect.map.ObjObjMap;
+import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.collections.IntStatistics;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
+import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
+import hu.bme.mit.delta.java.mdd.MddNode;
+import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class MddStateSpaceInfo implements StateSpaceInfo {
     private final MddVariable variable;
     private final MddNode mddNode;
 
-    private static BinaryOperationCache<MddVariable, MddNode, MddNode> cache =
+    private static BinaryOperationCache<MddVariable, MddNode, RecursiveIntObjMapView<?>> cache =
             new BinaryOperationCache<>();
-    private MddNode structuralRepresentation = null;
+    private RecursiveIntObjMapView<?> structuralRepresentation = null;
 
     public MddStateSpaceInfo(final MddVariable variable, final MddNode mddNode) {
         this.variable = variable;
@@ -110,7 +104,7 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
     }
 
     @Override
-    public MddNode toStructuralRepresentation() {
+    public RecursiveIntObjMapView<?> toStructuralRepresentation() {
         if (structuralRepresentation == null) {
             var cached = cache.getOrNull(variable, mddNode);
             if (cached != null) {
@@ -118,108 +112,125 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
                 return structuralRepresentation;
             }
             final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
-            structuralRepresentation = representBounds(variable, boundsCollector);
+            structuralRepresentation = representBounds(variable, boundsCollector.bounds);
             cache.addToCache(variable, mddNode, structuralRepresentation);
         }
         return structuralRepresentation;
     }
 
-    private MddNode representBounds(MddVariable variable, BoundsCollector boundsCollector) {
-        final MddNode continuation;
+    private RecursiveIntObjMapView<?> representBounds(final MddVariable variable, final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
+        final RecursiveIntObjMapView<?> continuation;
         if (variable.getLower().isPresent()) {
-            continuation = representBounds(variable.getLower().get(), boundsCollector);
+            continuation = representBounds(variable.getLower().orElseThrow(), bounds);
         } else {
-            final MddGraph<Expr<BoolType>> mddGraph =
-                    (MddGraph<Expr<BoolType>>) variable.getMddGraph();
-            continuation = mddGraph.getNodeFor(True());
+            continuation = RecursiveIntObjMapView.of((IntObjMapView) IntObjMapView.empty());
         }
-        final var bounds = boundsCollector.getBoundsFor(variable);
-        final IntObjMapView<MddNode> template;
-        if (bounds.isPresent()) {
-            if (Objects.equals(bounds.get().first, bounds.get().second)) {
-                template = IntObjMapView.singleton(bounds.get().first, continuation);
+
+        final var triple = bounds.get(variable);
+        final IntObjMapView<RecursiveIntObjMapView<?>> mapView;
+        if (!triple.hasDefault) {
+            if (triple.lower == triple.upper) {
+                mapView = IntObjMapView.singleton(triple.lower, continuation);
             } else {
                 // TODO: canonization of trimmed intobjmapviews could be improved
-                template =
-                        new IntObjMapViews.Trimmed<>(
-                                IntObjMapView.empty(continuation),
-                                IntSetView.range(bounds.get().first, bounds.get().second + 1));
+                mapView = new IntObjMapViews.Trimmed<>(
+                    IntObjMapView.empty(continuation),
+                    IntSetView.range(triple.lower, triple.upper + 1)
+                );
             }
         } else {
-            template = IntObjMapView.empty(continuation);
+            mapView = IntObjMapView.empty(continuation);
         }
-
-        return variable.checkInNode(MddStructuralTemplate.of(template));
+        return RecursiveIntObjMapView.of((IntObjMapView) mapView);
     }
-
-    //    private MddNode collapseEdges(MddNode parent) {
-    //
-    //        IntSetView setView = IntSetView.empty();
-    //        for (var c = parent.cursor(); c.moveNext(); ) {
-    //            setView = setView.union(c.value().keySet());
-    //        }
-    //
-    //    }
 
     private static class BoundsCollector {
 
-        private final ObjIntMap<MddVariable> lowerBounds;
-        private final ObjIntMap<MddVariable> upperBounds;
-        private final ObjSet<MddVariable> hasDefaultValue;
+        private final ObjObjMap<MddVariable, Bounds> bounds;
+
+        static class Bounds {
+            int lower;
+            int upper;
+            boolean hasDefault;
+
+            Bounds(
+                    int lower,
+                    int upper,
+                    boolean hasDefault) {
+                this.lower = lower;
+                this.upper = upper;
+                this.hasDefault = hasDefault;
+            }
+        }
+
+        private static BinaryOperationCache<MddNode, MddVariable, ObjObjMap<MddVariable, Bounds>> cache = new BinaryOperationCache<>();
 
         public BoundsCollector(MddNode rootNode, MddVariable variable) {
             Preconditions.checkNotNull(rootNode);
-            this.lowerBounds = HashObjIntMaps.newUpdatableMap();
-            this.upperBounds = HashObjIntMaps.newUpdatableMap();
-            this.hasDefaultValue = HashObjSets.newUpdatableSet();
-
-            final Set<MddNode> traversed = Containers.createSet();
-            traverse(rootNode, variable, traversed);
+            this.bounds = traverse(rootNode, variable);
         }
 
-        private void traverse(
-                final MddNode node, final MddVariable variable, final Set<MddNode> traversed) {
-            if (traversed.contains(node) || node.isTerminal()) {
-                return;
-            } else {
-                traversed.add(node);
+        private ObjObjMap<MddVariable, Bounds> traverse(
+                final MddNode node, final MddVariable variable) {
+            final var cached = cache.getOrNull(node, variable);
+            if (cached != null) {
+                return cached;
             }
+            if (node.isTerminal()) {
+                return HashObjObjMaps.newUpdatableMap();
+            }
+
             Preconditions.checkNotNull(variable);
 
             for (var c = node.cursor(); c.moveNext(); ) {} // TODO delete later
 
+            final ObjObjMap<MddVariable, Bounds> returnValue = HashObjObjMaps.newUpdatableMap();
+            final var currentBounds = new Bounds(Integer.MAX_VALUE, Integer.MIN_VALUE, false);
+
+            final List<ObjObjMap<MddVariable, Bounds>> childBounds = new ArrayList<>();
+
             final var nodeInterpreter = variable.getNodeInterpreter(node);
             if (nodeInterpreter.defaultValue() != null) {
                 final MddNode defaultValue = nodeInterpreter.defaultValue();
-                traverse(defaultValue, variable.getLower().orElse(null), traversed);
-                hasDefaultValue.add(variable);
+                childBounds.add(traverse(defaultValue, variable.getLower().orElse(null)));
+                currentBounds.hasDefault = true;
             } else {
                 final IntStatistics statistics = nodeInterpreter.statistics();
-                lowerBounds.put(
-                        variable,
-                        Math.min(
-                                lowerBounds.getOrDefault(variable, Integer.MAX_VALUE),
-                                statistics.lowestValue()));
-                upperBounds.put(
-                        variable,
-                        Math.max(
-                                upperBounds.getOrDefault(variable, Integer.MIN_VALUE),
-                                statistics.highestValue()));
+                currentBounds.lower = statistics.lowestValue();
+                currentBounds.upper = statistics.highestValue();
 
                 for (var cur = nodeInterpreter.cursor(); cur.moveNext(); ) {
                     if (cur.value() != null) {
-                        traverse(cur.value(), variable.getLower().orElse(null), traversed);
+                        childBounds.add(traverse(cur.value(), variable.getLower().orElse(null)));
                     }
                 }
             }
-        }
 
-        public Optional<Pair<Integer, Integer>> getBoundsFor(MddVariable variable) {
-            if (hasDefaultValue.contains(variable)) return Optional.empty();
-            if (!lowerBounds.containsKey(variable) || !upperBounds.containsKey(variable))
-                return Optional.empty();
-            return Optional.of(
-                    new Pair<>(lowerBounds.getInt(variable), upperBounds.getInt(variable)));
+            returnValue.put(variable, currentBounds);
+            for (final var childBoundMap : childBounds) {
+                for (final var entry : childBoundMap.entrySet()) {
+                    final MddVariable var = entry.getKey();
+                    final Bounds childBoundsForVar = entry.getValue();
+
+                    final Bounds existingBounds = returnValue.getOrDefault(var, null);
+                    if (existingBounds == null) {
+                        returnValue.put(
+                                var,
+                                new Bounds(
+                                        childBoundsForVar.lower,
+                                        childBoundsForVar.upper,
+                                        childBoundsForVar.hasDefault));
+                    } else {
+                        existingBounds.lower =
+                                Math.min(existingBounds.lower, childBoundsForVar.lower);
+                        existingBounds.upper =
+                                Math.max(existingBounds.upper, childBoundsForVar.upper);
+                        existingBounds.hasDefault |= childBoundsForVar.hasDefault;
+                    }
+                }
+            }
+            cache.addToCache(node, variable, returnValue);
+            return returnValue;
         }
     }
 }
