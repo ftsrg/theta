@@ -175,10 +175,16 @@ class LitmusPasses : ProcedurePassManager()
 class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
+      LbePass(parseContext),
       NormalizePass(),
       DeterministicPass(),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
       SimplifyExprsPass(parseContext),
+      UnusedVarPass(uniqueWarningLogger),
     )
   )
+
+class Btor2EmptyPass() : ProcedurePassManager() {
+  // No optimization
+}

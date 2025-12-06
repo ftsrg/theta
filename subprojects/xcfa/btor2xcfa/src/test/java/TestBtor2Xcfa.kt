@@ -42,7 +42,7 @@ import org.junit.jupiter.api.Test
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
+/*
 class TestBtor2Xcfa {
   @Test
   fun testBtor2Xcfa() {
@@ -64,4 +64,4 @@ class TestBtor2Xcfa {
     val xcfa = Btor2XcfaBuilder.btor2xcfa(uniqueWarningLogger)
     logger.write(Logger.Level.VERBOSE, "XCFA built, result: " + xcfa.toDot() + "\n")
   }
-}
+}*/

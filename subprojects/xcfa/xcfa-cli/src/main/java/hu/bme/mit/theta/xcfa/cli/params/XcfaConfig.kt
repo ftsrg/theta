@@ -160,7 +160,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.LITMUS -> null
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
-        InputType.BTOR2 -> BTOR2FrontendConfig as T
+        InputType.BTOR2 -> BTOR2FrontendConfig() as T
       }
   }
 }
@@ -188,7 +188,13 @@ data class CHCFrontendConfig(
   var model: Boolean = false,
 ) : SpecFrontendConfig
 
-object BTOR2FrontendConfig : SpecFrontendConfig
+data class BTOR2FrontendConfig (
+  @Parameter(
+    names = ["--optimization"],
+    description = "Runs frontend with all given optimizations"
+  )
+  var btor2Passes: Boolean = false
+) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config
 

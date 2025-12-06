@@ -24,14 +24,17 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.models.*
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.Btor2EmptyPass
 import hu.bme.mit.theta.xcfa.passes.Btor2Passes
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+
+
 
 object Btor2XcfaBuilder {
 
   private var i: Int = 1
 
-  fun btor2xcfa(parseContext: ParseContext, uniqueLogger: Logger): XCFA {
+  fun btor2xcfa(btor2Passes: Boolean, parseContext: ParseContext, uniqueLogger: Logger): XCFA {
     check(Btor2Circuit.properties.isNotEmpty(), { "Circuit has no error property" })
     // check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
 
@@ -45,7 +48,11 @@ object Btor2XcfaBuilder {
     val xcfaBuilder = XcfaBuilder("Btor2XCFA")
     parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
 
-    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(parseContext, uniqueLogger))
+    val procBuilder = XcfaProcedureBuilder(
+      "main",
+      if (btor2Passes) Btor2Passes(parseContext, uniqueLogger) else Btor2EmptyPass()
+    )
+
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()
 
