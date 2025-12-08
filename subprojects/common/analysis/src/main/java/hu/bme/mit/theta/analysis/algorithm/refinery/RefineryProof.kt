@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.refinery
 
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
@@ -21,7 +20,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-class RefineryProof: InvariantProof {
+class RefineryProof : InvariantProof {
 
   override fun getInvariant(): Expr<BoolType> {
     return True()

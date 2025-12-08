@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.refinery
 
 import hu.bme.mit.theta.core.decl.Decl
@@ -55,7 +54,8 @@ abstract class RefineryTransitionSystemBuilder {
     |class Value extends Pointable {
     |    int value
     |}
-    """.trimMargin()
+    """
+      .trimMargin()
 
   protected open val environmentDeclarations: List<String>
     get() =
@@ -73,23 +73,23 @@ abstract class RefineryTransitionSystemBuilder {
     |
     |Environment($ENVIRONMENT).
     |atom $ENVIRONMENT.
-    """.trimMargin()
+    """
+        .trimMargin()
 
   protected val regionExists: String =
     """
     |pred regionExists(MemoryRegion region, Value address) <->
     |    exists(region), address(region, address).
-    """.trimMargin()
+    """
+      .trimMargin()
 
   protected abstract val transitionDeclarations: List<String>
 
   protected val transitions: String
-    get() =
-      transitionDeclarations.joinToString("\n\n")
+    get() = transitionDeclarations.joinToString("\n\n")
 
   protected val topLevelDeclaration: List<String>
-    get() =
-      listOf(metamodel, regionExists, environmentSetup, transitions)
+    get() = listOf(metamodel, regionExists, environmentSetup, transitions)
 
   protected val Type.refineryType: String
     get() =
@@ -99,12 +99,11 @@ abstract class RefineryTransitionSystemBuilder {
         else -> error("Unsupported type in RefineryTransformationSystemBuilder: $this")
       }
 
-  open fun build(): String =
-    topLevelDeclaration.joinToString("\n\n")
+  open fun build(): String = topLevelDeclaration.joinToString("\n\n")
 }
 
 data class RefineryRule(
-  val header: String,
+  val name: String,
   val parameters: List<String> = listOf(),
   val preConditionClauses: List<String>,
   val actionClauses: List<String>,
@@ -116,12 +115,13 @@ data class RefineryRule(
 
   override fun toString(): String =
     """
-    |rule $header(${parameters.joinToString(", ")}) <->
+    |rule $name(${parameters.joinToString(", ")}) <->
     |    ${
       if (preConditionClauses.isEmpty()) "true"
       else preConditionClauses.joinToString(",\n    ")
     }
     |==>
     |    ${actionClauses.joinToString(",\n    ")}.
-    """.trimMargin()
+    """
+      .trimMargin()
 }

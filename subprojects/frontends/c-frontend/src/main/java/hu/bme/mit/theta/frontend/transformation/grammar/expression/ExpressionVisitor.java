@@ -574,14 +574,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                             "cTypedefName")
                                                     .map(it -> (CComplexType) it))
                             .or(
-                                    () ->
-                                    {
-                                      VarDecl<?> v = getVar(ctx.typeName().getText());
-                                      if (v == null) return Optional.empty();
-                                      return Optional.ofNullable(
-                                              CComplexType.getType(
-                                                      v.getRef(),
-                                                      parseContext));
+                                    () -> {
+                                        VarDecl<?> v = getVar(ctx.typeName().getText());
+                                        if (v == null) return Optional.empty();
+                                        return Optional.ofNullable(
+                                                CComplexType.getType(v.getRef(), parseContext));
                                     });
 
             if (type.isPresent()) {

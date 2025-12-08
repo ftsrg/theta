@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.refinery
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
@@ -41,14 +40,16 @@ class MonolithicToRefinery(private val monolithicExpr: MonolithicExpr) {
     val transitions = (transExpr as OrExpr).ops.map { it.flatten() }
 
     transitions.map { transition ->
-      transition.ops.filter {
-        !(it is EqExpr<*> && (it.rightOp == PrimeExpr.of(it.leftOp) || it.leftOp == PrimeExpr.of(it.rightOp)))
-      }.forEach { expr ->
-        val lhs = mutableListOf<Literal>()
-        val rhs = mutableListOf<ActionLiteral>()
-        TODO()
-      }
-
+      transition.ops
+        .filter {
+          !(it is EqExpr<*> &&
+            (it.rightOp == PrimeExpr.of(it.leftOp) || it.leftOp == PrimeExpr.of(it.rightOp)))
+        }
+        .forEach { expr ->
+          val lhs = mutableListOf<Literal>()
+          val rhs = mutableListOf<ActionLiteral>()
+          TODO()
+        }
     }
 
     TODO()

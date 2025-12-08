@@ -33,7 +33,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -121,8 +120,13 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         try {
             type = mainType.copyOf().apply(cSimpleTypes);
         } catch (UnsupportedFrontendElementException e) {
-            // TODO: proper fix for recursive struct parsing: https://github.com/ftsrg/theta/issues/459
-            mainType = cSimpleTypes.stream().filter(t -> t instanceof Struct).findFirst().orElseThrow(() -> e);
+            // TODO: proper fix for recursive struct parsing:
+            // https://github.com/ftsrg/theta/issues/459
+            mainType =
+                    cSimpleTypes.stream()
+                            .filter(t -> t instanceof Struct)
+                            .findFirst()
+                            .orElseThrow(() -> e);
             cSimpleTypes.remove(mainType);
             type = mainType.copyOf().apply(cSimpleTypes);
         }

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.refinery
 
 import hu.bme.mit.theta.analysis.Trace
@@ -29,7 +28,7 @@ class RefineryChecker(
   private val transitionSystem: String,
   private val property: String,
   private val logger: Logger,
-): SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
+) : SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(input: UnitPrec?): SafetyResult<RefineryProof, Trace<ExplState, ExprAction>> {
     TODO("Not yet implemented")

@@ -13,12 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.refinery
 
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryRule
-import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionRuleBuilder
+import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.NondetLabel
@@ -30,9 +29,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 
-class XcfaRefineryTransitionSystemBuilder(
-  private val xcfa: XCFA,
-) : RefineryTransitionSystemBuilder() {
+class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA) :
+  RefineryTransitionSystemBuilder() {
 
   companion object {
     internal const val LOCATION_DECLARATION_NAME = "loc"
@@ -43,7 +41,10 @@ class XcfaRefineryTransitionSystemBuilder(
   }
 
   private val pointers =
-    xcfa.initProcedures.first().first.edges
+    xcfa.initProcedures
+      .first()
+      .first
+      .edges
       .flatMap { edge -> edge.label.dereferences.mapNotNull { (it.array as? RefExpr<*>)?.decl } }
       .toSet()
 
@@ -54,14 +55,13 @@ class XcfaRefineryTransitionSystemBuilder(
 
   override val transitionDeclarations: List<String>
     get() =
-      xcfa.initProcedures.first().first.edges
-        .flatMap { edge -> xcfaTransitionBuilder.build(edge).map { it.toString() } }
+      xcfa.initProcedures.first().first.edges.flatMap { edge ->
+        xcfaTransitionBuilder.build(edge).map { it.toString() }
+      }
 }
 
-class XcfaRefineryTransitionRuleBuilder(
-  variables: MutableSet<Decl<*>>,
-  pointers: Set<Decl<*>>,
-) : RefineryTransitionRuleBuilder<XcfaEdge>(variables, pointers) {
+class XcfaRefineryTransitionRuleBuilder(variables: MutableSet<Decl<*>>, pointers: Set<Decl<*>>) :
+  RefineryTransitionRuleBuilder<XcfaEdge>(variables, pointers) {
 
   companion object {
     private val supportedXcfaLabels =
@@ -75,20 +75,22 @@ class XcfaRefineryTransitionRuleBuilder(
     check(transition.getAllLabels().all { it::class in supportedXcfaLabels }) {
       "Unsupported XCFA label found in XCFA->Refinery transition."
     }
-    val rules = transition.label.toStmt().toRules("${transition.source.name}__to__${transition.target.name}")
+    val rules =
+      transition.label.toStmt().toRules("${transition.source.name}__to__${transition.target.name}")
     return rules.mapIndexed { index, rule ->
       val sourceName =
-        if (index == 0) transition.source.name
-        else "${transition.source.name}__intermediate_$index"
+        if (index == 0) transition.source.name else "${transition.source.name}__intermediate_$index"
       val targetName =
         if (index == rules.size - 1) transition.target.name
         else "${transition.source.name}__intermediate_${index + 1}"
       val locPrecondition = "$loc($env) == \"$sourceName\""
       val locAction = "$loc($env): \"$targetName\""
-      rule.copy(
-        preConditionClauses = listOf(locPrecondition) + rule.preConditionClauses,
-        actionClauses = rule.actionClauses + listOf(locAction),
-      ).toRefineryRule()
+      rule
+        .copy(
+          preConditionClauses = listOf(locPrecondition) + rule.preConditionClauses,
+          actionClauses = rule.actionClauses + listOf(locAction),
+        )
+        .toRefineryRule()
     }
   }
 }
