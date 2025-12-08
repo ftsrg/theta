@@ -71,26 +71,28 @@ class XcfaRefineryTransitionRuleBuilder(variables: MutableSet<Decl<*>>, pointers
   private val env = RefineryTransitionSystemBuilder.ENVIRONMENT
   private val loc = XcfaRefineryTransitionSystemBuilder.LOCATION_DECLARATION_NAME
 
-  override fun build(transition: XcfaEdge): List<RefineryRule> {
+  override fun build(transition: XcfaEdge): Set<RefineryRule> {
     check(transition.getAllLabels().all { it::class in supportedXcfaLabels }) {
       "Unsupported XCFA label found in XCFA->Refinery transition."
     }
-    val rules =
-      transition.label.toStmt().toRules("${transition.source.name}__to__${transition.target.name}")
-    return rules.mapIndexed { index, rule ->
-      val sourceName =
-        if (index == 0) transition.source.name else "${transition.source.name}__intermediate_$index"
-      val targetName =
-        if (index == rules.size - 1) transition.target.name
-        else "${transition.source.name}__intermediate_${index + 1}"
-      val locPrecondition = "$loc($env) == \"$sourceName\""
-      val locAction = "$loc($env): \"$targetName\""
-      rule
-        .copy(
-          preConditionClauses = listOf(locPrecondition) + rule.preConditionClauses,
-          actionClauses = rule.actionClauses + listOf(locAction),
-        )
-        .toRefineryRule()
-    }
+    val name = "${transition.source.name}__to__${transition.target.name}"
+    val topRule = transition.label.toStmt().toRules()
+    topRule.setIds()
+    return topRule.allRules
+      .map { rule ->
+        val sourceName =
+          if (rule.preId == topRule.preId) transition.source.name else "${name}__${rule.preId}"
+        val targetName =
+          if (rule.postId == topRule.postId) transition.target.name else "${name}__${rule.postId}"
+        val locPrecondition = "$loc($env) == \"$sourceName\""
+        val locAction = "$loc($env): \"$targetName\""
+        rule
+          .copy(
+            preConditionClauses = listOf(locPrecondition) + rule.preConditionClauses,
+            actionClauses = rule.actionClauses + listOf(locAction),
+          )
+          .toRefineryRule(name)
+      }
+      .toSet()
   }
 }

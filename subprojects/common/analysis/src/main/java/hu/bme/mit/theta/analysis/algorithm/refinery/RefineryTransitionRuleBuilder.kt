@@ -151,33 +151,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
     }
   }
 
-  //  protected data class ExprsWithParameters(
-  //    val nonPointerExprWithParameters: ExprWithParameters? = null,
-  //    val pointerExprWithParameters: ExprWithParameters? = null,
-  //  ) {
-  //
-  //    constructor(
-  //      nonPointerExpr: String? = null,
-  //      pointerExpr: String? = null,
-  //      nonPointerExprParameters: Set<String> = setOf(),
-  //      pointerExprParameters: Set<String> = setOf(),
-  //    ) : this(
-  //      nonPointerExprWithParameters =
-  //        nonPointerExpr?.let { ExprWithParameters(it, nonPointerExprParameters) },
-  //      pointerExprWithParameters = pointerExpr?.let { ExprWithParameters(it,
-  // pointerExprParameters) },
-  //    )
-  //
-  //    val nonPointerExpr: String?
-  //      get() = nonPointerExprWithParameters?.expr
-  //
-  //    val pointerExpr: String?
-  //      get() = pointerExprWithParameters?.expr
-  //
-  //    val single: Set<ExprsWithParameters>
-  //      get() = setOf(this)
-  //  }
-
+  /** Return a set of refinery rules for the given transition. */
   abstract fun build(transition: T): Set<RefineryRule>
 
   protected fun Stmt.toRules(): RefineryRuleBlock {
