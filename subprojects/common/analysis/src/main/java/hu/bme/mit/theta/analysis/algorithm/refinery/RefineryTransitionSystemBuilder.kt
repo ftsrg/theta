@@ -101,27 +101,3 @@ abstract class RefineryTransitionSystemBuilder {
 
   open fun build(): String = topLevelDeclaration.joinToString("\n\n")
 }
-
-data class RefineryRule(
-  val name: String,
-  val parameters: List<String> = listOf(),
-  val preConditionClauses: List<String>,
-  val actionClauses: List<String>,
-) {
-
-  init {
-    check(actionClauses.isNotEmpty()) { "Action clauses cannot be empty in a Refinery rule." }
-  }
-
-  override fun toString(): String =
-    """
-    |rule $name(${parameters.joinToString(", ")}) <->
-    |    ${
-      if (preConditionClauses.isEmpty()) "true"
-      else preConditionClauses.joinToString(",\n    ")
-    }
-    |==>
-    |    ${actionClauses.joinToString(",\n    ")}.
-    """
-      .trimMargin()
-}

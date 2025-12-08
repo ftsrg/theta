@@ -34,6 +34,30 @@ import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 
+data class RefineryRule(
+  val name: String,
+  val parameters: List<String> = listOf(),
+  val preConditionClauses: List<String>,
+  val actionClauses: List<String>,
+) {
+
+  init {
+    check(actionClauses.isNotEmpty()) { "Action clauses cannot be empty in a Refinery rule." }
+  }
+
+  override fun toString(): String =
+    """
+    |rule $name(${parameters.joinToString(", ")}) <->
+    |    ${
+      if (preConditionClauses.isEmpty()) "true"
+      else preConditionClauses.joinToString(",\n    ")
+    }
+    |==>
+    |    ${actionClauses.joinToString(",\n    ")}.
+    """
+      .trimMargin()
+}
+
 abstract class RefineryTransitionRuleBuilder<T>(
   protected val variables: MutableSet<Decl<*>>,
   protected val pointers: Set<Decl<*>>,
