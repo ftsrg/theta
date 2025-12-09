@@ -211,6 +211,53 @@ class RefineryTransitionRuleBuilderTest {
           setOf("p"),
         ),
         RefineryRuleBuilderTestData(
+          "(assign v (deref 1 0 Int))",
+          setOf(
+            """
+            |rule transition0__0__0_to_1(Value base_0) <->
+            |    loc(env) == "transition0__0",
+            |    Address(address_0),
+            |    Address::address(address_0) == 1,
+            |    MemoryRegion::address(region_0, address_0),
+            |    parts(region_0, base_0),
+            |    offset(base_0) == 0
+            |==>
+            |    v(env): value(base_0),
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin()
+          ),
+        ),
+        RefineryRuleBuilderTestData(
+          "(assume (= (deref v 1 Int) p)))",
+          setOf(
+            """
+            |rule transition0__0__0_to_1() <->
+            |    loc(env) == "transition0__0",
+            |    Address(address_0),
+            |    Address::address(address_0) == v(env),
+            |    MemoryRegion::address(region_0, address_0),
+            |    parts(region_0, base_0),
+            |    offset(base_0) == 0,
+            |    parts(region_0, base_0),
+            |    parts(region_0, referenced_0),
+            |    offset(referenced_0) == offset(base_0) + (1),
+            |    name(p) == "p",
+            |    pointer(p, pointer_p),
+            |    target(referenced_0, pointer_comp_target_left_0),
+            |    target(pointer_p, pointer_comp_target_right_0),
+            |    pointer_comp_target_left_0 == pointer_comp_target_right_0
+            |==>
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin()
+          ),
+          setOf("p"),
+          IllegalStateException(
+            "Pointer expression expected at (deref v 0 Int), expression v does not yield a pointer expression."
+          ),
+        ),
+        RefineryRuleBuilderTestData(
           "(assume (= (deref (deref p 1 Int) 2 Int) (* 3 4 5)))",
           setOf(
             """
@@ -393,12 +440,50 @@ class RefineryTransitionRuleBuilderTest {
           setOf("p"),
         ),
         RefineryRuleBuilderTestData(
-          "(assume (= (deref v 0 Int) p)))",
-          setOf(),
-          setOf("p"),
-          IllegalStateException(
-            "Pointer expression expected at (deref v 0 Int), expression v does not yield a pointer expression."
+          "(assign q (ite (/= p 0) p 0))",
+          setOf(
+            """
+            |rule transition0__0__0_to_1(Pointer assigned_pointer, Pointable target) <->
+            |    loc(env) == "transition0__0",
+            |    name(q) == "q",
+            |    pointer(q, assigned_pointer),
+            |    name(p) == "p",
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, pointer_comp_target_left_0),
+            |    target(nullptr, pointer_comp_target_right_0),
+            |    pointer_comp_target_left_0 != pointer_comp_target_right_0,
+            |    name(p) == "p",
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, target)
+            |==>
+            |    target(assigned_pointer, target),
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin(),
+            """
+            |rule transition0__1__0_to_1(Pointer assigned_pointer, Pointable target) <->
+            |    loc(env) == "transition0__0",
+            |    name(q) == "q",
+            |    pointer(q, assigned_pointer),
+            |    name(p) == "p",
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, pointer_comp_target_left_0),
+            |    target(nullptr, pointer_comp_target_right_0),
+            |    !(pointer_comp_target_left_0 != pointer_comp_target_right_0),
+            |    target(nullptr, target)
+            |==>
+            |    target(assigned_pointer, target),
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin(),
           ),
+          setOf("p", "q"),
+        ),
+        RefineryRuleBuilderTestData(
+          "(assume (= (+ p q) 0))",
+          setOf(),
+          setOf("p", "q"),
+          IllegalStateException("At least one expression expected at (+ p q), but got none."),
         ),
       )
 

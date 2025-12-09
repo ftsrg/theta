@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.MultiaryExpr
 import hu.bme.mit.theta.core.type.UnaryExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
@@ -406,12 +407,25 @@ abstract class RefineryTransitionRuleBuilder<T>(
           )
         }
 
-        val arrayExprs = array.getPointerExpr(this)
+        val arrayExprs =
+          array.toClauses().let { r ->
+            r.filter { it.type == POINTER }.ifEmpty { r } // prefer pointer expressions
+          }
         val derefCount = dereferenceCounter++
-        arrayExprs.flatMap { (_, basePreconditions, baseExpr, _) ->
+        arrayExprs.flatMap { (type, basePreconditions, baseExpr, _) ->
+          val region = "region_${derefCount}"
           val base = "base_${derefCount}"
           val preconditions = basePreconditions.toMutableList()
-          preconditions.add("target($baseExpr, $base)")
+          if (type == POINTER) {
+            preconditions.add("target($baseExpr, $base)")
+          } else {
+            val address = "address_${derefCount}"
+            preconditions.add("Address($address)")
+            preconditions.add("Address::address($address) == $baseExpr")
+            preconditions.add("MemoryRegion::address($region, $address)")
+            preconditions.add("parts($region, $base)")
+            preconditions.add("offset($base) == 0")
+          }
 
           when {
             offset == Int(0) -> {
@@ -419,7 +433,6 @@ abstract class RefineryTransitionRuleBuilder<T>(
             }
 
             offset.type == Int() -> {
-              val region = "region_${derefCount}"
               val referenced = "referenced_${derefCount}"
               preconditions.add("parts($region, $base)")
               preconditions.add("parts($region, $referenced)")
@@ -520,6 +533,39 @@ abstract class RefineryTransitionRuleBuilder<T>(
       is BinaryExpr<*, *> -> toNonPointerClauses()
       is MultiaryExpr<*, *> -> toNonPointerClauses()
 
+      is IteExpr<*> -> {
+        val condExprs = cond.getNonPointerExpr(this)
+        val thenExprs = then.toClauses()
+        val elseExprs = `else`.toClauses()
+        condExprs.flatMap { (_, condPreconditions, condExpr, _) ->
+          thenExprs.flatMap { (thenType, thenPreconditions, thenExpr, thenParams) ->
+            elseExprs.flatMap { (elseType, elsePreconditions, elseExpr, elseParams) ->
+              if (thenType == elseType) {
+                val positivePreconditions = condPreconditions + listOf(condExpr) + thenPreconditions
+                val negativePreconditions =
+                  condPreconditions + listOf("!($condExpr)") + elsePreconditions
+                listOf(
+                  RefineryExpr(
+                    type = thenType,
+                    preConditionClauses = positivePreconditions,
+                    expr = thenExpr,
+                    parameters = thenParams,
+                  ),
+                  RefineryExpr(
+                    type = elseType,
+                    preConditionClauses = negativePreconditions,
+                    expr = elseExpr,
+                    parameters = elseParams,
+                  ),
+                )
+              } else {
+                listOf()
+              }
+            }
+          }
+        }
+      }
+
       else -> error("Unsupported expression in RefineryRuleBuilder: $this")
     }.let { result: Collection<RefineryExpr> ->
       check(result.isNotEmpty()) { "At least one expression expected at $this, but got none." }
@@ -528,16 +574,6 @@ abstract class RefineryTransitionRuleBuilder<T>(
 
   private fun List<String>.join(operator: String): String =
     this.joinToString(" $operator ") { "($it)" }
-
-  private fun Expr<*>.getPointerExpr(parent: Any): Set<RefineryExpr> =
-    this.toClauses()
-      .filter { it.type == POINTER }
-      .let {
-        check(it.isNotEmpty()) {
-          "Pointer expression expected at $parent, expression $this does not yield a pointer expression."
-        }
-        it.toSet()
-      }
 
   private fun Expr<*>.getNonPointerExpr(parent: Any): Set<RefineryExpr> =
     this.toClauses()

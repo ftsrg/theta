@@ -96,16 +96,16 @@ abstract class RefineryTransitionSystemBuilder {
   protected val invalidMemorySetup: String
     get() =
       """
-    |InvalidMemory(null).
-    |scope InvalidMemory = 1.
-    |atom null.
-    |
-    |NullPointer(nullptr).
-    |scope NullPointer = 1.
-    |atom nullptr.
-    |offset(nullptr): 0.
-    |target(nullptr, null).
-    """
+      |InvalidMemory(null).
+      |scope InvalidMemory = 1.
+      |atom null.
+      |
+      |NullPointer(nullptr).
+      |scope NullPointer = 1.
+      |atom nullptr.
+      |offset(nullptr): 0.
+      |target(nullptr, null).
+      """
         .trimMargin()
 
   protected abstract val transitionDeclarations: List<String>

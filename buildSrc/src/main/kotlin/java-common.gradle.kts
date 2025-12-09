@@ -136,7 +136,7 @@ spotless {
         licenseHeader(licenseHeader)
     }
     kotlin {
-        ktfmt("0.51").googleStyle()
+        ktfmt("0.59").googleStyle()
 
         licenseHeader(licenseHeader)
     }
