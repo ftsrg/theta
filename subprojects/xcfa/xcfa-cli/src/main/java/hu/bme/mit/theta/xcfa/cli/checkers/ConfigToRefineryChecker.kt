@@ -35,6 +35,6 @@ fun getRefineryChecker(
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
-  val transitionSystem = XcfaRefineryTransitionSystemBuilder(xcfa).build()
+  val transitionSystem = XcfaRefineryTransitionSystemBuilder(xcfa, parseContext).build()
   TODO("Not yet implemented")
 }

@@ -19,17 +19,12 @@ import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryRule
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionRuleBuilder
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder
 import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.xcfa.model.NondetLabel
-import hu.bme.mit.theta.xcfa.model.NopLabel
-import hu.bme.mit.theta.xcfa.model.SequenceLabel
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 
-class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA) :
+class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA, parseContext: ParseContext) :
   RefineryTransitionSystemBuilder() {
 
   companion object {
@@ -44,8 +39,11 @@ class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA) :
     xcfa.initProcedures
       .first()
       .first
-      .edges
-      .flatMap { edge -> edge.label.dereferences.mapNotNull { (it.array as? RefExpr<*>)?.decl } }
+      .vars
+      .filter {
+        val cType = parseContext.metadata.getMetadataValue(it.ref, "cType")
+        cType.isPresent && cType.get() is CPointer
+      }
       .toSet()
 
   private val xcfaTransitionBuilder = XcfaRefineryTransitionRuleBuilder(variables, pointers)
@@ -79,7 +77,7 @@ class XcfaRefineryTransitionRuleBuilder(variables: MutableSet<Decl<*>>, pointers
     val topRule = transition.label.toStmt().toRules()
     topRule.setIds()
     return topRule.allRules
-      .map { rule ->
+      .mapIndexed { index, rule ->
         val sourceName =
           if (rule.preId == topRule.preId) transition.source.name else "${name}__${rule.preId}"
         val targetName =
@@ -91,7 +89,7 @@ class XcfaRefineryTransitionRuleBuilder(variables: MutableSet<Decl<*>>, pointers
             preConditionClauses = listOf(locPrecondition) + rule.preConditionClauses,
             actionClauses = rule.actionClauses + listOf(locAction),
           )
-          .toRefineryRule(name)
+          .toRefineryRule("${name}__$index")
       }
       .toSet()
   }
