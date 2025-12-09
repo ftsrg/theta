@@ -21,10 +21,15 @@ import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuil
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 
-class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA, parseContext: ParseContext) :
+class XcfaRefineryTransitionSystemBuilder(
+  xcfa: XCFA,
+  parseContext: ParseContext,
+  property: ErrorDetection,
+) :
   RefineryTransitionSystemBuilder() {
 
   companion object {
@@ -33,12 +38,13 @@ class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA, parseContext: 
 
   init {
     check(xcfa.initProcedures.size == 1) { "XCFA must have exactly one initial procedure." }
+    check(property == ErrorDetection.ERROR_LOCATION)
   }
 
+  private val procedure = xcfa.initProcedures.first().first
+
   private val pointers =
-    xcfa.initProcedures
-      .first()
-      .first
+    procedure
       .vars
       .filter {
         val cType = parseContext.metadata.getMetadataValue(it.ref, "cType")
@@ -51,26 +57,28 @@ class XcfaRefineryTransitionSystemBuilder(private val xcfa: XCFA, parseContext: 
   override val environmentDeclarations: List<String> // add program counter (xcfa location)
     get() = listOf("string $LOCATION_DECLARATION_NAME") + super.environmentDeclarations
 
-  override val transitionDeclarations: List<String>
-    get() =
-      xcfa.initProcedures.first().first.edges.flatMap { edge ->
-        xcfaTransitionBuilder.build(edge).map { it.toString() }
-      }
+  override val errorProperty: String
+    get() = "$LOCATION_DECLARATION_NAME(${ENVIRONMENT}) == \"${procedure.errorLoc.get().name.refinerified}\""
+
+  override val transitionDeclarations: List<String> =
+    xcfa.initProcedures.first().first.edges.flatMap { edge ->
+      xcfaTransitionBuilder.build(edge).map { it.toString() }
+    }
 }
 
 class XcfaRefineryTransitionRuleBuilder(variables: MutableSet<Decl<*>>, pointers: Set<Decl<*>>) :
   RefineryTransitionRuleBuilder<XcfaEdge>(variables, pointers) {
 
   companion object {
-    private val supportedXcfaLabels =
-      setOf(StmtLabel::class, NopLabel::class, SequenceLabel::class, NondetLabel::class)
+    private val XcfaLabel.supported: Boolean get() =
+      this::class in setOf(StmtLabel::class, NopLabel::class, SequenceLabel::class, NondetLabel::class)
   }
 
   private val env = RefineryTransitionSystemBuilder.ENVIRONMENT
   private val loc = XcfaRefineryTransitionSystemBuilder.LOCATION_DECLARATION_NAME
 
   override fun build(transition: XcfaEdge): Set<RefineryRule> {
-    check(transition.getAllLabels().all { it::class in supportedXcfaLabels }) {
+    check(transition.getAllLabels().all { it.supported }) {
       "Unsupported XCFA label found in XCFA->Refinery transition."
     }
     val name = "${transition.source.name}__to__${transition.target.name}"

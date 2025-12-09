@@ -25,12 +25,20 @@ abstract class RefineryTransitionSystemBuilder {
   companion object {
 
     const val ENVIRONMENT = "env"
+
+    val String.refinerified: String
+      get() = replace("::", "__")
   }
 
   protected val variables = mutableSetOf<Decl<*>>()
 
   protected val metamodel: String =
     """
+    |import builtin::annotations.
+    |
+    |#pred transition().
+    |#pred goal().
+    |
     |class MemoryRegion {
     |    contains Address address
     |    contains MemoryObject[] parts
@@ -77,7 +85,7 @@ abstract class RefineryTransitionSystemBuilder {
   protected open val environmentDeclarations: List<String>
     get() =
       listOf("contains NamedPointer[] pointers") +
-        variables.map { "${it.type.refineryType} ${it.name}" }
+        variables.map { "${it.type.refineryType} ${it.name.refinerified}" }
 
   protected val environmentSetup: String
     get() =
@@ -108,13 +116,22 @@ abstract class RefineryTransitionSystemBuilder {
       """
         .trimMargin()
 
+  protected abstract val errorProperty: String
+
+  protected val errorDeclaration: String
+    get() =
+      """
+      |@goal
+      |pred error_property() <-> $errorProperty.
+      """.trimMargin()
+
   protected abstract val transitionDeclarations: List<String>
 
   protected val transitions: String
     get() = transitionDeclarations.joinToString("\n\n")
 
   protected val topLevelDeclaration: List<String>
-    get() = listOf(metamodel, regionExists, environmentSetup, invalidMemorySetup, transitions)
+    get() = listOf(metamodel, regionExists, environmentSetup, invalidMemorySetup, errorDeclaration, transitions)
 
   protected val Type.refineryType: String
     get() =

@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
+import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
@@ -35,6 +36,13 @@ fun getRefineryChecker(
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
-  val transitionSystem = XcfaRefineryTransitionSystemBuilder(xcfa, parseContext).build()
-  TODO("Not yet implemented")
+  val transitionSystem =
+    XcfaRefineryTransitionSystemBuilder(
+      xcfa = xcfa,
+      parseContext = parseContext,
+      property = config.inputConfig.property.verifiedProperty,
+    )
+      .build()
+  RefineryChecker(transitionSystem, logger).check()
+  TODO()
 }

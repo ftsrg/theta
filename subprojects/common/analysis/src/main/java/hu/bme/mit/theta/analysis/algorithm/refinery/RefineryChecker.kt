@@ -22,15 +22,25 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
+import tools.refinery.generator.standalone.StandaloneRefinery
+import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter
 
 class RefineryChecker(
-  private val initState: String,
   private val transitionSystem: String,
-  private val property: String,
   private val logger: Logger,
 ) : SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(input: UnitPrec?): SafetyResult<RefineryProof, Trace<ExplState, ExprAction>> {
+    println(System.getProperty("java.version"))
+    val problem = StandaloneRefinery.getProblemLoader().loadString(transitionSystem)
+    val generator = StandaloneRefinery.getGeneratorFactory().createGenerator(problem)
+    val model = generator.model
+
+    val adapter = model.getAdapter(DesignSpaceExplorationAdapter::class.java)
+    adapter.transformations.forEach{
+      System.err.println(it)
+    }
+
     TODO("Not yet implemented")
   }
 }

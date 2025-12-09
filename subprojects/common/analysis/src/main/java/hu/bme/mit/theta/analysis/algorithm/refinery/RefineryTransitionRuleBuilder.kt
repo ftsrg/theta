@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.refinery
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionRuleBuilder.RefineryExpr.ExprType.NON_POINTER
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionRuleBuilder.RefineryExpr.ExprType.POINTER
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder.Companion.ENVIRONMENT
+import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder.Companion.refinerified
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.BinaryExpr
@@ -30,11 +31,13 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import java.math.BigInteger
 
 data class RefineryRule(
   val name: String,
@@ -49,6 +52,7 @@ data class RefineryRule(
 
   override fun toString(): String =
     """
+    |@transition
     |rule $name(${parameters.joinToString(", ")}) <->
     |    ${
       if (preConditionClauses.isEmpty()) "true"
@@ -193,11 +197,12 @@ abstract class RefineryTransitionRuleBuilder<T>(
       is SequenceStmt -> SequenceRefineryRuleBlock(stmts.map { it.toRules() })
 
       is AssignStmt<*> -> {
+        val name = varDecl.name.refinerified
         if (varDecl in pointers) {
           val commonPreconditions =
             mutableListOf(
-              "name(${varDecl.name}) == \"${varDecl.name}\"",
-              "pointer(${varDecl.name}, assigned_pointer)",
+              "name($name) == \"$name\"",
+              "pointer($name, assigned_pointer)",
             )
           NondetRefineryRuleBlock(
             expr
@@ -276,7 +281,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
                 SingleRefineryRule(
                   parameters = params.toList(),
                   preConditionClauses = preconditions,
-                  actionClauses = listOf("${varDecl.name}($ENVIRONMENT): $expr"),
+                  actionClauses = listOf("$name($ENVIRONMENT): $expr"),
                 )
               }
               .toSet()
@@ -360,7 +365,14 @@ abstract class RefineryTransitionRuleBuilder<T>(
             expr =
               when (this) {
                 is BoolLitExpr -> if (value) "true" else "false"
-                is IntLitExpr -> value.toString()
+                is IntLitExpr -> {
+                  if (value > BigInteger.valueOf(2147483647)) {
+                    System.err.println("WARNING: $value replaced by 2147483647 for Refinery!")
+                    "2147483647"
+                  } else {
+                    value.toString()
+                  }
+                }
                 else -> error("Unsupported literal expression in RefineryRuleBuilder: $this")
               },
           ),
@@ -370,12 +382,13 @@ abstract class RefineryTransitionRuleBuilder<T>(
         )
 
       is RefExpr<*> -> {
+        val name = decl.name.refinerified
         if (decl in pointers) {
-          val pointer = "pointer_${decl.name}"
+          val pointer = "pointer_$name"
           RefineryExpr.single(
             type = POINTER,
             preConditionClauses =
-              listOf("name(${decl.name}) == \"${decl.name}\"", "pointer(${decl.name}, $pointer)"),
+              listOf("name($name) == \"$name\"", "pointer($name, $pointer)"),
             expr = pointer,
             parameters = setOf("Pointer $pointer"),
           )
@@ -384,7 +397,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
           RefineryExpr.single(
             type = NON_POINTER,
             preConditionClauses = listOf(),
-            expr = "${decl.name}($ENVIRONMENT)",
+            expr = "$name($ENVIRONMENT)",
           )
         }
       }
@@ -528,7 +541,14 @@ abstract class RefineryTransitionRuleBuilder<T>(
 
       is AndExpr -> toNonPointerClauses("&&")
       is OrExpr -> toNonPointerClauses("||")
-      is NotExpr -> toNonPointerClauses("!")
+      is NotExpr -> {
+        when (val op = op) {
+          is EqExpr<*> -> NeqExpr.create2(op.leftOp, op.rightOp).toClauses()
+          is NeqExpr<*> -> EqExpr.create2(op.leftOp, op.rightOp).toClauses()
+          else -> toNonPointerClauses("!")
+        }
+      }
+
       is UnaryExpr<*, *> -> toNonPointerClauses()
       is BinaryExpr<*, *> -> toNonPointerClauses()
       is MultiaryExpr<*, *> -> toNonPointerClauses()
@@ -536,34 +556,33 @@ abstract class RefineryTransitionRuleBuilder<T>(
       is IteExpr<*> -> {
         val condExprs = cond.getNonPointerExpr(this)
         val thenExprs = then.toClauses()
-        val elseExprs = `else`.toClauses()
-        condExprs.flatMap { (_, condPreconditions, condExpr, _) ->
-          thenExprs.flatMap { (thenType, thenPreconditions, thenExpr, thenParams) ->
-            elseExprs.flatMap { (elseType, elsePreconditions, elseExpr, elseParams) ->
-              if (thenType == elseType) {
-                val positivePreconditions = condPreconditions + listOf(condExpr) + thenPreconditions
-                val negativePreconditions =
-                  condPreconditions + listOf("!($condExpr)") + elsePreconditions
-                listOf(
-                  RefineryExpr(
-                    type = thenType,
-                    preConditionClauses = positivePreconditions,
-                    expr = thenExpr,
-                    parameters = thenParams,
-                  ),
-                  RefineryExpr(
-                    type = elseType,
-                    preConditionClauses = negativePreconditions,
-                    expr = elseExpr,
-                    parameters = elseParams,
-                  ),
-                )
-              } else {
-                listOf()
-              }
+        val positiveExprs =
+          condExprs.flatMap { (_, condPreconditions, condExpr, _) ->
+            thenExprs.map { (thenType, thenPreconditions, thenExpr, thenParams) ->
+              RefineryExpr(
+                type = thenType,
+                preConditionClauses = condPreconditions + listOf(condExpr) + thenPreconditions,
+                expr = thenExpr,
+                parameters = thenParams,
+              )
             }
           }
-        }
+
+        val notCondExprs = Not(cond).getNonPointerExpr(this)
+        val elseExprs = `else`.toClauses()
+        val negativeExprs =
+          notCondExprs.flatMap { (_, condPreconditions, condExpr, _) ->
+            elseExprs.map { (elseType, elsePreconditions, elseExpr, elseParams) ->
+              RefineryExpr(
+                type = elseType,
+                preConditionClauses = condPreconditions + listOf(condExpr) + elsePreconditions,
+                expr = elseExpr,
+                parameters = elseParams,
+              )
+            }
+          }
+
+        positiveExprs + negativeExprs
       }
 
       else -> error("Unsupported expression in RefineryRuleBuilder: $this")
