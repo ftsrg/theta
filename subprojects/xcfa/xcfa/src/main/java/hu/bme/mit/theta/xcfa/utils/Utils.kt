@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -147,13 +148,8 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
       is AssignStmt<*> -> {
         simplified as AssignStmt<*>
-        if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-          parseContext.metadata.create(
-            simplified.expr,
-            "cType",
-            CComplexType.getType(stmt.expr, parseContext),
-          )
-        StmtLabel(simplified, metadata = metadata)
+        val expr = simplified.expr.withMetadata(parseContext, stmt.expr)
+        AssignStmtLabel(simplified.varDecl, expr, metadata = metadata)
       }
 
       is AssumeStmt -> {
@@ -172,6 +168,22 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
       else -> this
     }
   } else this
+
+private fun <T : Type> Expr<T>.withMetadata(
+  parseContext: ParseContext,
+  metadataSource: Expr<*>,
+): Expr<T> {
+  val oldType = parseContext.metadata.getMetadataValue(this, "cType")
+  if (oldType.isPresent) {
+    val type = CComplexType.getType(metadataSource, parseContext)
+    if (type != oldType.get()) {
+      val newExpr = Pos(this)
+      parseContext.metadata.create(newExpr, "cType", type)
+      return newExpr as Expr<T>
+    }
+  }
+  return this
+}
 
 /**
  * Returns the set of edges that are before any thread start in the init procedure or after all
