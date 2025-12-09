@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.BinaryExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.MultiaryExpr
+import hu.bme.mit.theta.core.type.UnaryExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -62,6 +63,11 @@ abstract class RefineryTransitionRuleBuilder<T>(
   protected val variables: MutableSet<Decl<*>>,
   protected val pointers: Set<Decl<*>>,
 ) {
+
+  companion object {
+    val supportedOperators =
+      setOf("+", "-", "*", "/", "==", "!=", "<", "<=", ">", ">=", "!", "&&", "||")
+  }
 
   private var dereferenceCounter: Int = 0
   private var pointerArithmeticCounter: Int = 0
@@ -187,14 +193,19 @@ abstract class RefineryTransitionRuleBuilder<T>(
 
       is AssignStmt<*> -> {
         if (varDecl in pointers) {
-          val commonPreconditions = mutableListOf("name(assigned_pointer) == \"${varDecl.name}\"")
-          val exprs = expr.toClauses()
+          val commonPreconditions =
+            mutableListOf(
+              "name(${varDecl.name}) == \"${varDecl.name}\"",
+              "pointer(${varDecl.name}, assigned_pointer)",
+            )
           NondetRefineryRuleBlock(
-            exprs
+            expr
+              .toClauses()
+              .filter { expr != Int(0) || it.type == POINTER } // exclude null non-pointer exprs
               .map { (type, preconds, expr, _) ->
                 when (type) {
                   POINTER -> {
-                    val parameters = listOf("NamedPointer assigned_pointer", "MemoryObject target")
+                    val parameters = listOf("Pointer assigned_pointer", "Pointable target")
                     val precondsPointer = listOf("target($expr, target)")
                     val actions = listOf("target(assigned_pointer, target)")
                     SingleRefineryRule(
@@ -205,16 +216,17 @@ abstract class RefineryTransitionRuleBuilder<T>(
                   }
 
                   NON_POINTER -> {
-                    val precondsNonPointer = listOf("Value(address)", "value(address) == $expr")
+                    val precondsNonPointer =
+                      listOf("Address(address)", "Address::address(address) == $expr")
 
-                    val parametersExists = listOf("NamedPointer pointer", "MemoryObject base")
+                    val parametersExists = listOf("Pointer assigned_pointer", "MemoryObject base")
                     val precondsExists =
                       listOf(
                         "regionExists(region, address)",
                         "parts(region, base)",
                         "offset(base) == 0",
                       )
-                    val actionsExists = listOf("target(pointer, base)")
+                    val actionsExists = listOf("target(assigned_pointer, base)")
                     val ruleIfRegionExists =
                       SingleRefineryRule(
                         parameters = parametersExists,
@@ -225,20 +237,20 @@ abstract class RefineryTransitionRuleBuilder<T>(
 
                     val parametersNotExists =
                       listOf(
-                        "NamedPointer pointer",
+                        "Pointer assigned_pointer",
                         "MemoryRegion region",
                         "MemoryObject base",
-                        "Value address",
+                        "Address address",
                       )
                     val precondsNotExists = listOf("!regionExists(region, address)")
                     val actionsNotExists =
                       listOf(
                         "exists(region)",
-                        "address(region, address)",
+                        "MemoryRegion::address(region, address)",
                         "exists(base)",
                         "parts(region, base)",
                         "offset(base): 0",
-                        "target(pointer, base)",
+                        "target(assigned_pointer, base)",
                       )
                     val ruleIfRegionNotExists =
                       SingleRefineryRule(
@@ -300,7 +312,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
                     val preconditions =
                       exprPreconditions + derefPreconditions + "target($exprExpr, target)"
                     SingleRefineryRule(
-                      parameters = listOf("Pointer $derefExpr", "MemoryObject target"),
+                      parameters = listOf("Pointer $derefExpr", "Pointable target"),
                       preConditionClauses = preconditions,
                       actionClauses = listOf("target($derefExpr, target)"),
                     )
@@ -340,24 +352,31 @@ abstract class RefineryTransitionRuleBuilder<T>(
   private fun Expr<*>.toClauses(): Set<RefineryExpr> =
     when (this) {
       is LitExpr<*> ->
-        RefineryExpr.single(
-          type = NON_POINTER,
-          preConditionClauses = listOf(),
-          expr =
-            when (this) {
-              is BoolLitExpr -> if (value) "true" else "false"
-              is IntLitExpr -> value.toString()
-              else -> error("Unsupported literal expression in RefineryRuleBuilder: $this")
-            },
+        setOfNotNull(
+          RefineryExpr(
+            type = NON_POINTER,
+            preConditionClauses = listOf(),
+            expr =
+              when (this) {
+                is BoolLitExpr -> if (value) "true" else "false"
+                is IntLitExpr -> value.toString()
+                else -> error("Unsupported literal expression in RefineryRuleBuilder: $this")
+              },
+          ),
+          if (this == Int(0)) {
+            RefineryExpr(type = POINTER, preConditionClauses = listOf(), expr = "nullptr")
+          } else null,
         )
 
       is RefExpr<*> -> {
         if (decl in pointers) {
+          val pointer = "pointer_${decl.name}"
           RefineryExpr.single(
             type = POINTER,
-            preConditionClauses = listOf("name(${decl.name}) == \"${decl.name}\""),
-            expr = decl.name,
-            parameters = setOf("NamedPointer ${decl.name}"),
+            preConditionClauses =
+              listOf("name(${decl.name}) == \"${decl.name}\"", "pointer(${decl.name}, $pointer)"),
+            expr = pointer,
+            parameters = setOf("Pointer $pointer"),
           )
         } else {
           variables.add(decl)
@@ -370,61 +389,45 @@ abstract class RefineryTransitionRuleBuilder<T>(
       }
 
       is Dereference<*, *, *> -> {
-        val derefCount = dereferenceCounter++
-        val base = "base_${derefCount}"
-        val region = "region_${derefCount}"
-        var referenced = "referenced_${derefCount}"
-        val pointed = "pointed_${derefCount}"
+        val derefResult = { preconditions: List<String>, referenced: String ->
+          setOf(
+            RefineryExpr(
+              type = POINTER,
+              preConditionClauses = preconditions,
+              expr = referenced,
+              parameters = setOf("Pointer $referenced"),
+            ),
+            RefineryExpr(
+              type = NON_POINTER,
+              preConditionClauses = preconditions,
+              expr = "value($referenced)",
+              parameters = setOf("Value $referenced"),
+            ),
+          )
+        }
 
-        val baseExprs = array.getPointerExpr(this)
-        baseExprs.flatMap { (_, basePreconditions, baseExpr, _) ->
+        val arrayExprs = array.getPointerExpr(this)
+        val derefCount = dereferenceCounter++
+        arrayExprs.flatMap { (_, basePreconditions, baseExpr, _) ->
+          val base = "base_${derefCount}"
           val preconditions = basePreconditions.toMutableList()
           preconditions.add("target($baseExpr, $base)")
 
           when {
             offset == Int(0) -> {
-              referenced = base
-              preconditions.add("object($referenced, $pointed)")
-
-              setOf(
-                RefineryExpr(
-                  type = POINTER,
-                  preConditionClauses = preconditions,
-                  expr = pointed,
-                  parameters = setOf("Pointer $pointed"),
-                ),
-                RefineryExpr(
-                  type = NON_POINTER,
-                  preConditionClauses = preconditions,
-                  expr = "value($pointed)",
-                  parameters = setOf("Value $pointed"),
-                ),
-              )
+              derefResult(preconditions, base)
             }
 
             offset.type == Int() -> {
+              val region = "region_${derefCount}"
+              val referenced = "referenced_${derefCount}"
               preconditions.add("parts($region, $base)")
               preconditions.add("parts($region, $referenced)")
               val offsetExprs = offset.getNonPointerExpr(this)
               offsetExprs.flatMap { (_, offsetPreconditions, offsetExpr, _) ->
                 val preconditions = (preconditions + offsetPreconditions).toMutableList()
                 preconditions.add("offset($referenced) == offset($base) + ($offsetExpr)")
-                preconditions.add("object($referenced, $pointed)")
-
-                setOf(
-                  RefineryExpr(
-                    type = POINTER,
-                    preConditionClauses = preconditions,
-                    expr = pointed,
-                    parameters = setOf("Pointer $pointed"),
-                  ),
-                  RefineryExpr(
-                    type = NON_POINTER,
-                    preConditionClauses = preconditions,
-                    expr = "value($pointed)",
-                    parameters = setOf("Value $pointed"),
-                  ),
-                )
+                derefResult(preconditions, referenced)
               }
             }
 
@@ -482,78 +485,46 @@ abstract class RefineryTransitionRuleBuilder<T>(
           }
       }
 
-      is NegExpr<*> -> {
-        val innerExprs = op.getNonPointerExpr(this)
-        innerExprs.map { (_, innerPreconditions, innerExpr, innerParams) ->
-          RefineryExpr(
-            type = NON_POINTER,
-            preConditionClauses = innerPreconditions,
-            expr = "- ($innerExpr)",
-            parameters = innerParams,
-          )
-        }
-      }
-
       is ModExpr<*> -> {
-        val lExprs = leftOp.getNonPointerExpr(this)
-        val rExprs = rightOp.getNonPointerExpr(this)
-        lExprs.flatMap { (_, lPreconditions, lExpr, lParams) ->
-          rExprs.map { (_, rPreconditions, rExpr, rParams) ->
-            RefineryExpr(
-              type = NON_POINTER,
-              preConditionClauses = lPreconditions + rPreconditions,
-              // No mod operator in Refinery
-              expr = "($lExpr) - ((($lExpr) / ($rExpr)) * ($rExpr))",
-              parameters = lParams + rParams,
-            )
+        val lExprs = leftOp.toClauses()
+        val rExprs = rightOp.toClauses()
+        lExprs.flatMap { (lType, lPreconditions, lExpr, lParams) ->
+          rExprs.mapNotNull { (rType, rPreconditions, rExpr, rParams) ->
+            when (lType) {
+              NON_POINTER if rType == NON_POINTER -> {
+                RefineryExpr(
+                  type = NON_POINTER,
+                  preConditionClauses = lPreconditions + rPreconditions,
+                  // No mod operator in Refinery
+                  expr = "($lExpr) - ((($lExpr) / ($rExpr)) * ($rExpr))",
+                  parameters = lParams + rParams,
+                )
+              }
+              POINTER if rType == NON_POINTER -> {
+                // skipping mod for pointers
+                RefineryExpr(lType, lPreconditions, lExpr, lParams)
+              }
+              else -> null
+            }
           }
-        }
-      }
-
-      is MulExpr<*> -> toNonPointerClauses("*")
-      is AndExpr -> toNonPointerClauses("&&")
-      is OrExpr -> toNonPointerClauses("||")
-      is NotExpr -> {
-        val innerExprs = op.getNonPointerExpr(this)
-        innerExprs.map { (_, innerPreconditions, innerExpr, innerParams) ->
-          RefineryExpr(
-            type = NON_POINTER,
-            preConditionClauses = innerPreconditions,
-            expr = "!($innerExpr)",
-            parameters = innerParams,
-          )
         }
       }
 
       is EqExpr<*> -> equalityCheck("==")
       is NeqExpr<*> -> equalityCheck("!=")
 
+      is AndExpr -> toNonPointerClauses("&&")
+      is OrExpr -> toNonPointerClauses("||")
+      is NotExpr -> toNonPointerClauses("!")
+      is UnaryExpr<*, *> -> toNonPointerClauses()
+      is BinaryExpr<*, *> -> toNonPointerClauses()
+      is MultiaryExpr<*, *> -> toNonPointerClauses()
+
       else -> error("Unsupported expression in RefineryRuleBuilder: $this")
     }.let { result: Collection<RefineryExpr> ->
       check(result.isNotEmpty()) { "At least one expression expected at $this, but got none." }
       result.toSet()
     }
-
-  private fun MultiaryExpr<*, *>.toNonPointerClauses(operator: String): Set<RefineryExpr> =
-    ops
-      .map { it.getNonPointerExpr(this) }
-      .combinations
-      .map { ops ->
-        RefineryExpr(
-          type = NON_POINTER,
-          preConditionClauses = ops.flatMap { it.preConditionClauses },
-          expr = ops.map { it.expr }.join(operator),
-          parameters = ops.flatMap { it.parameters }.toSet(),
-        )
-      }
-      .toSet()
-
-  private inline val <T> List<Set<T>>.combinations: Set<List<T>>
-    get() =
-      this.fold(listOf(listOf<T>())) { acc, set ->
-          acc.flatMap { prefix -> set.map { prefix + it } }
-        }
-        .toSet()
 
   private fun List<String>.join(operator: String): String =
     this.joinToString(" $operator ") { "($it)" }
@@ -615,4 +586,65 @@ abstract class RefineryTransitionRuleBuilder<T>(
       }
     }
   }
+
+  private fun UnaryExpr<*, *>.toNonPointerClauses(
+    operator: String = operatorLabel
+  ): Collection<RefineryExpr> {
+    check(operator in supportedOperators) {
+      "Unsupported operator '$operator' at $this in RefineryRuleBuilder."
+    }
+    val innerExprs = op.getNonPointerExpr(this)
+    return innerExprs.map { (_, innerPreconditions, innerExpr, innerParams) ->
+      RefineryExpr(
+        type = NON_POINTER,
+        preConditionClauses = innerPreconditions,
+        expr = "$operator($innerExpr)",
+        parameters = innerParams,
+      )
+    }
+  }
+
+  private fun BinaryExpr<*, *>.toNonPointerClauses(
+    operator: String = operatorLabel
+  ): Collection<RefineryExpr> {
+    check(operator in supportedOperators) {
+      "Unsupported operator '$operator' at $this in RefineryRuleBuilder."
+    }
+    val lExprs = leftOp.getNonPointerExpr(this)
+    val rExprs = rightOp.getNonPointerExpr(this)
+    return lExprs.flatMap { (_, lPreconditions, lExpr, lParams) ->
+      rExprs.map { (_, rPreconditions, rExpr, rParams) ->
+        RefineryExpr(
+          type = NON_POINTER,
+          preConditionClauses = lPreconditions + rPreconditions,
+          expr = "($lExpr) $operator ($rExpr)",
+          parameters = lParams + rParams,
+        )
+      }
+    }
+  }
+
+  private fun MultiaryExpr<*, *>.toNonPointerClauses(
+    operator: String = operatorLabel
+  ): Collection<RefineryExpr> {
+    check(operator in supportedOperators) {
+      "Unsupported operator '$operator' at $this in RefineryRuleBuilder."
+    }
+    return ops
+      .map { it.getNonPointerExpr(this) }
+      .combinations
+      .map { ops ->
+        RefineryExpr(
+          type = NON_POINTER,
+          preConditionClauses = ops.flatMap { it.preConditionClauses },
+          expr = ops.map { it.expr }.join(operator),
+          parameters = ops.flatMap { it.parameters }.toSet(),
+        )
+      }
+  }
+
+  private inline val <T> List<Set<T>>.combinations: Set<List<T>>
+    get() =
+      fold(listOf(listOf<T>())) { acc, set -> acc.flatMap { prefix -> set.map { prefix + it } } }
+        .toSet()
 }

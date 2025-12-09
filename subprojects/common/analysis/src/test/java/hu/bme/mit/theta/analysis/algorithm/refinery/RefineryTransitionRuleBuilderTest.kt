@@ -105,12 +105,68 @@ class RefineryTransitionRuleBuilderTest {
           ),
         ),
         RefineryRuleBuilderTestData(
-          "(assume (not (= v1 v2)))",
+          "(assign p 0)", // null pointer assignment
+          setOf(
+            """
+            |rule transition0__0__0_to_1(Pointer assigned_pointer, Pointable target) <->
+            |    loc(env) == "transition0__0",
+            |    name(p) == "p",
+            |    pointer(p, assigned_pointer),
+            |    target(nullptr, target)
+            |==>
+            |    target(assigned_pointer, target),
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin()
+          ),
+          setOf("p"),
+        ),
+        RefineryRuleBuilderTestData(
+          "(assign p 1)",
+          setOf(
+            """
+            |rule transition0__0__0_to_1(Pointer assigned_pointer, MemoryObject base) <->
+            |    loc(env) == "transition0__0",
+            |    name(p) == "p",
+            |    pointer(p, assigned_pointer),
+            |    Address(address),
+            |    Address::address(address) == 1,
+            |    regionExists(region, address),
+            |    parts(region, base),
+            |    offset(base) == 0
+            |==>
+            |    target(assigned_pointer, base),
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin(),
+            """
+            |rule transition0__1__0_to_1(Pointer assigned_pointer, MemoryRegion region, MemoryObject base, Address address) <->
+            |    loc(env) == "transition0__0",
+            |    name(p) == "p",
+            |    pointer(p, assigned_pointer),
+            |    Address(address),
+            |    Address::address(address) == 1,
+            |    !regionExists(region, address)
+            |==>
+            |    exists(region),
+            |    MemoryRegion::address(region, address),
+            |    exists(base),
+            |    parts(region, base),
+            |    offset(base): 0,
+            |    target(assigned_pointer, base),
+            |    loc(env): "transition0__1".
+            """
+              .trimMargin(),
+          ),
+          setOf("p"),
+        ),
+        RefineryRuleBuilderTestData(
+          "(assume (or (and (not (= v1 v2)) true) false))",
           setOf(
             """
             |rule transition0__0__0_to_1() <->
             |    loc(env) == "transition0__0",
-            |    !(v1(env) == v2(env))
+            |    ((!(v1(env) == v2(env))) && (true)) || (false)
             |==>
             |    loc(env): "transition0__1".
             """
@@ -118,15 +174,15 @@ class RefineryTransitionRuleBuilderTest {
           ),
         ),
         RefineryRuleBuilderTestData(
-          "(assume (not (= (deref p 0 Int) 3)))",
+          "(assume (not (= (deref p 0 Int) (- 3))))",
           setOf(
             """
             |rule transition0__0__0_to_1() <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
-            |    object(base_0, pointed_0),
-            |    !(value(pointed_0) == 3)
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
+            |    !(value(base_0) == -(3))
             |==>
             |    loc(env): "transition0__1".
             """
@@ -138,16 +194,16 @@ class RefineryTransitionRuleBuilderTest {
           "(assign v (deref p 1 Int))",
           setOf(
             """
-            |rule transition0__0__0_to_1(Value pointed_0) <->
+            |rule transition0__0__0_to_1(Value referenced_0) <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
-            |    offset(referenced_0) == offset(base_0) + (1),
-            |    object(referenced_0, pointed_0)
+            |    offset(referenced_0) == offset(base_0) + (1)
             |==>
-            |    v(env): value(pointed_0),
+            |    v(env): value(referenced_0),
             |    loc(env): "transition0__1".
             """
               .trimMargin()
@@ -155,23 +211,22 @@ class RefineryTransitionRuleBuilderTest {
           setOf("p"),
         ),
         RefineryRuleBuilderTestData(
-          "(assume (= (deref (deref p 1 Int) 2 Int) 3))",
+          "(assume (= (deref (deref p 1 Int) 2 Int) (* 3 4 5)))",
           setOf(
             """
             |rule transition0__0__0_to_1() <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_1),
-            |    parts(region_1, base_1),
-            |    parts(region_1, referenced_1),
-            |    offset(referenced_1) == offset(base_1) + (1),
-            |    object(referenced_1, pointed_1),
-            |    target(pointed_1, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
-            |    offset(referenced_0) == offset(base_0) + (2),
-            |    object(referenced_0, pointed_0),
-            |    value(pointed_0) == 3
+            |    offset(referenced_0) == offset(base_0) + (1),
+            |    target(referenced_0, base_1),
+            |    parts(region_1, base_1),
+            |    parts(region_1, referenced_1),
+            |    offset(referenced_1) == offset(base_1) + (2),
+            |    value(referenced_1) == (3) * (4) * (5)
             |==>
             |    loc(env): "transition0__1".
             """
@@ -186,9 +241,11 @@ class RefineryTransitionRuleBuilderTest {
             |rule transition0__0__0_to_1() <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
+            |    pointer(p, pointer_p),
             |    name(q) == "q",
-            |    target(p, pointer_comp_target_left_0),
-            |    target(q, pointer_comp_target_right_0),
+            |    pointer(q, pointer_q),
+            |    target(pointer_p, pointer_comp_target_left_0),
+            |    target(pointer_q, pointer_comp_target_right_0),
             |    !(pointer_comp_target_left_0 == pointer_comp_target_right_0)
             |==>
             |    loc(env): "transition0__1".
@@ -204,19 +261,19 @@ class RefineryTransitionRuleBuilderTest {
             |rule transition0__0__0_to_1() <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
             |    offset(referenced_0) == offset(base_0) + (1),
-            |    object(referenced_0, pointed_0),
             |    name(q) == "q",
-            |    target(q, base_1),
+            |    pointer(q, pointer_q),
+            |    target(pointer_q, base_1),
             |    parts(region_1, base_1),
             |    parts(region_1, referenced_1),
             |    offset(referenced_1) == offset(base_1) + (2),
-            |    object(referenced_1, pointed_1),
-            |    target(pointed_0, pointer_comp_target_left_0),
-            |    target(pointed_1, pointer_comp_target_right_0),
+            |    target(referenced_0, pointer_comp_target_left_0),
+            |    target(referenced_1, pointer_comp_target_right_0),
             |    pointer_comp_target_left_0 == pointer_comp_target_right_0
             |==>
             |    loc(env): "transition0__1".
@@ -226,18 +283,18 @@ class RefineryTransitionRuleBuilderTest {
             |rule transition0__1__0_to_1() <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
             |    offset(referenced_0) == offset(base_0) + (1),
-            |    object(referenced_0, pointed_0),
             |    name(q) == "q",
-            |    target(q, base_1),
+            |    pointer(q, pointer_q),
+            |    target(pointer_q, base_1),
             |    parts(region_1, base_1),
             |    parts(region_1, referenced_1),
             |    offset(referenced_1) == offset(base_1) + (2),
-            |    object(referenced_1, pointed_1),
-            |    value(pointed_0) == value(pointed_1)
+            |    value(referenced_0) == value(referenced_1)
             |==>
             |    loc(env): "transition0__1".
             """
@@ -246,19 +303,19 @@ class RefineryTransitionRuleBuilderTest {
           setOf("p", "q"),
         ),
         RefineryRuleBuilderTestData(
-          "(memassign (deref p 1 Int) 5)",
+          "(memassign (deref p 1 Int) (mod v 3))",
           setOf(
             """
-            |rule transition0__0__0_to_1(Value pointed_0) <->
+            |rule transition0__0__0_to_1(Value referenced_0) <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
-            |    offset(referenced_0) == offset(base_0) + (1),
-            |    object(referenced_0, pointed_0)
+            |    offset(referenced_0) == offset(base_0) + (1)
             |==>
-            |    value(pointed_0): 5,
+            |    value(referenced_0): (v(env)) - (((v(env)) / (3)) * (3)),
             |    loc(env): "transition0__1".
             """
               .trimMargin()
@@ -269,18 +326,19 @@ class RefineryTransitionRuleBuilderTest {
           "(memassign (deref p 1 Int) q)",
           setOf(
             """
-            |rule transition0__0__0_to_1(Pointer pointed_0, MemoryObject target) <->
+            |rule transition0__0__0_to_1(Pointer referenced_0, Pointable target) <->
             |    loc(env) == "transition0__0",
             |    name(q) == "q",
+            |    pointer(q, pointer_q),
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
             |    offset(referenced_0) == offset(base_0) + (1),
-            |    object(referenced_0, pointed_0),
-            |    target(q, target)
+            |    target(pointer_q, target)
             |==>
-            |    target(pointed_0, target),
+            |    target(referenced_0, target),
             |    loc(env): "transition0__1".
             """
               .trimMargin()
@@ -291,43 +349,43 @@ class RefineryTransitionRuleBuilderTest {
           "(memassign (deref p 1 Int) (deref p 2 Int))",
           setOf(
             """
-            |rule transition0__0__0_to_1(Pointer pointed_1, MemoryObject target) <->
+            |rule transition0__0__0_to_1(Pointer referenced_1, Pointable target) <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
             |    offset(referenced_0) == offset(base_0) + (2),
-            |    object(referenced_0, pointed_0),
             |    name(p) == "p",
-            |    target(p, base_1),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_1),
             |    parts(region_1, base_1),
             |    parts(region_1, referenced_1),
             |    offset(referenced_1) == offset(base_1) + (1),
-            |    object(referenced_1, pointed_1),
-            |    target(pointed_0, target)
+            |    target(referenced_0, target)
             |==>
-            |    target(pointed_1, target),
+            |    target(referenced_1, target),
             |    loc(env): "transition0__1".
             """
               .trimMargin(),
             """
-            |rule transition0__1__0_to_1(Value pointed_1, Value pointed_0) <->
+            |rule transition0__1__0_to_1(Value referenced_1, Value referenced_0) <->
             |    loc(env) == "transition0__0",
             |    name(p) == "p",
-            |    target(p, base_0),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_0),
             |    parts(region_0, base_0),
             |    parts(region_0, referenced_0),
             |    offset(referenced_0) == offset(base_0) + (2),
-            |    object(referenced_0, pointed_0),
             |    name(p) == "p",
-            |    target(p, base_1),
+            |    pointer(p, pointer_p),
+            |    target(pointer_p, base_1),
             |    parts(region_1, base_1),
             |    parts(region_1, referenced_1),
-            |    offset(referenced_1) == offset(base_1) + (1),
-            |    object(referenced_1, pointed_1)
+            |    offset(referenced_1) == offset(base_1) + (1)
             |==>
-            |    value(pointed_1): value(pointed_0),
+            |    value(referenced_1): value(referenced_0),
             |    loc(env): "transition0__1".
             """
               .trimMargin(),

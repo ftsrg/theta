@@ -32,28 +32,45 @@ abstract class RefineryTransitionSystemBuilder {
   protected val metamodel: String =
     """
     |class MemoryRegion {
-    |    contains Value address
+    |    contains Address address
     |    contains MemoryObject[] parts
     |}
     |
-    |class MemoryObject {
-    |    int offset
-    |    contains Pointable object
+    |class Address {
+    |    int address
     |}
     |
     |abstract class Pointable.
     |
-    |class Pointer extends Pointable {
-    |    contains MemoryObject target
+    |class InvalidMemory extends Pointable.
+    |
+    |abstract class MemoryObject extends Pointable {
+    |    int offset
     |}
     |
-    |class NamedPointer extends Pointer {
-    |    string name
-    |}
-    |
-    |class Value extends Pointable {
+    |class Value extends MemoryObject {
     |    int value
     |}
+    |
+    |abstract class AbstractPointer {
+    |    Pointable target
+    |}
+    |
+    |class Pointer extends AbstractPointer, MemoryObject.
+    |
+    |class NullPointer extends AbstractPointer.
+    |
+    |class NamedPointer {
+    |    string name
+    |    contains Pointer pointer
+    |}
+    """
+      .trimMargin()
+
+  protected val regionExists: String =
+    """
+    |pred regionExists(MemoryRegion region, Address address) <->
+    |    exists(region), MemoryRegion::address(region, address).
     """
       .trimMargin()
 
@@ -76,12 +93,20 @@ abstract class RefineryTransitionSystemBuilder {
     """
         .trimMargin()
 
-  protected val regionExists: String =
+  protected val invalidMemorySetup: String
+    get() =
+      """
+    |InvalidMemory(null).
+    |scope InvalidMemory = 1.
+    |atom null.
+    |
+    |NullPointer(nullptr).
+    |scope NullPointer = 1.
+    |atom nullptr.
+    |offset(nullptr): 0.
+    |target(nullptr, null).
     """
-    |pred regionExists(MemoryRegion region, Value address) <->
-    |    exists(region), address(region, address).
-    """
-      .trimMargin()
+        .trimMargin()
 
   protected abstract val transitionDeclarations: List<String>
 
@@ -89,7 +114,7 @@ abstract class RefineryTransitionSystemBuilder {
     get() = transitionDeclarations.joinToString("\n\n")
 
   protected val topLevelDeclaration: List<String>
-    get() = listOf(metamodel, regionExists, environmentSetup, transitions)
+    get() = listOf(metamodel, regionExists, environmentSetup, invalidMemorySetup, transitions)
 
   protected val Type.refineryType: String
     get() =
