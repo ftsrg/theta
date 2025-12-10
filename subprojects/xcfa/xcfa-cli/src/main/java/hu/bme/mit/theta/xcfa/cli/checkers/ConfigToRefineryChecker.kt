@@ -38,10 +38,10 @@ fun getRefineryChecker(
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
   val transitionSystem =
     XcfaRefineryTransitionSystemBuilder(
-      xcfa = xcfa,
-      parseContext = parseContext,
-      property = config.inputConfig.property.verifiedProperty,
-    )
+        xcfa = xcfa,
+        parseContext = parseContext,
+        property = config.inputConfig.property.verifiedProperty,
+      )
       .build()
   RefineryChecker(transitionSystem, logger).check()
   TODO()

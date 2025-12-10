@@ -200,10 +200,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
         val name = varDecl.name.refinerified
         if (varDecl in pointers) {
           val commonPreconditions =
-            mutableListOf(
-              "name($name) == \"$name\"",
-              "pointer($name, assigned_pointer)",
-            )
+            mutableListOf("name($name) == \"$name\"", "pointer($name, assigned_pointer)")
           NondetRefineryRuleBlock(
             expr
               .toClauses()
@@ -387,8 +384,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
           val pointer = "pointer_$name"
           RefineryExpr.single(
             type = POINTER,
-            preConditionClauses =
-              listOf("name($name) == \"$name\"", "pointer($name, $pointer)"),
+            preConditionClauses = listOf("name($name) == \"$name\"", "pointer($name, $pointer)"),
             expr = pointer,
             parameters = setOf("Pointer $pointer"),
           )
