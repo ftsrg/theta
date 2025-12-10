@@ -36,7 +36,7 @@ import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 
-data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> {
+private class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> {
 
   override fun getType(): T = kType
 

@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.base.Preconditions.checkState
+import hu.bme.mit.theta.analysis.algorithm.refinery.MemoryAllocationExpr
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
@@ -38,11 +39,14 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import java.math.BigInteger
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
+
+    var useMemoryAllocationExpression = false
 
     private var cnt = 2 // counts upwards, uses 3k+2
       get() = field.also { field += 3 }
@@ -71,10 +75,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .associateWith {
             val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
             val varDecl = Var(it.name + "*", ptrType.smtType)
-            val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
-            builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-            val assign = AssignStmtLabel(varDecl, lit)
+            val expr =
+              if (useMemoryAllocationExpression) {
+                MemoryAllocationExpr(BigInteger.valueOf(1), varDecl.type)
+              } else {
+                CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
+              }
+            builder.parent.addVar(XcfaGlobalVar(varDecl, expr))
+            val assign = AssignStmtLabel(varDecl, expr)
             val labels =
               if (MemsafetyPass.enabled) {
                 val t = ptrType.embeddedType
@@ -127,19 +136,23 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               newEdges.forEach(proc::addEdge)
             }
           }
-          val assign1 =
-            AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-          val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
+          val (assign1, assign2) =
+            if (useMemoryAllocationExpression) {
+              null to
+                AssignStmtLabel(varDecl, MemoryAllocationExpr(BigInteger.valueOf(1), varDecl.type))
+            } else {
+              AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType) to
+                AssignStmtLabel(varDecl, ptrVar.ref)
+            }
           val labels =
             if (MemsafetyPass.enabled) {
               val assign3 = builder.parent.allocateUnit(parseContext, varDecl.ref)
-
-              listOf(assign1, assign2, assign3)
+              listOfNotNull(assign1, assign2, assign3)
             } else {
-              listOf(assign1, assign2)
+              listOfNotNull(assign1, assign2)
             }
           Pair(varDecl, SequenceLabel(labels))
         }

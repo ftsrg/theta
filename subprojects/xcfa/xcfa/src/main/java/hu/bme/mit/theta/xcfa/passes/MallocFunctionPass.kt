@@ -34,6 +34,9 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
+
+    var enabled = true
+
     private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
     private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
@@ -41,6 +44,8 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!enabled) return builder
+
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
     for (edge in ArrayList(builder.getEdges())) {

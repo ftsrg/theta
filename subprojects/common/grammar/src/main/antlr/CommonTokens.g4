@@ -368,6 +368,10 @@ REF
     :   'ref'
     ;
 
+ALLOC
+    :   'alloc'
+    ;
+
 HAVOC
 	:	'havoc'
 	;

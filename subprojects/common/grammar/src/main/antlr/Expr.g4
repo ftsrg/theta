@@ -159,8 +159,13 @@ derefExpr
     ;
 
 refExpr
-    :   primaryExpr
+    :   allocExpr
     |   LPAREN REF expr type RPAREN
+    ;
+
+allocExpr
+    :   primaryExpr
+    |   LPAREN ALLOC size=INT type RPAREN
     ;
 
 primaryExpr

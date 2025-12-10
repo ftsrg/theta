@@ -32,6 +32,8 @@ abstract class RefineryTransitionSystemBuilder {
 
   protected val variables = mutableSetOf<Decl<*>>()
 
+  // Metamodel
+
   protected val metamodel: String =
     """
     |import builtin::annotations.
@@ -82,9 +84,11 @@ abstract class RefineryTransitionSystemBuilder {
     """
       .trimMargin()
 
+  // Environment
+
   protected open val environmentDeclarations: List<String>
     get() =
-      listOf("contains NamedPointer[] pointers") +
+      listOf("int next_address", "contains NamedPointer[] pointers") +
         variables.map { "${it.type.refineryType} ${it.name.refinerified}" }
 
   protected open val environmentSetup: String
@@ -116,6 +120,23 @@ abstract class RefineryTransitionSystemBuilder {
       """
         .trimMargin()
 
+  // Initial state
+
+  protected open val initialStateDeclarations: List<String>
+    get() = listOf("next_address($ENVIRONMENT): 1.")
+
+  protected val initialState: String
+    get() = initialStateDeclarations.joinToString("\n")
+
+  // Transitions
+
+  protected abstract val transitionDeclarations: List<String>
+
+  protected val transitions: String
+    get() = transitionDeclarations.joinToString("\n\n")
+
+  // Error property
+
   protected abstract val errorProperty: String
 
   protected val errorDeclaration: String
@@ -126,10 +147,7 @@ abstract class RefineryTransitionSystemBuilder {
       """
         .trimMargin()
 
-  protected abstract val transitionDeclarations: List<String>
-
-  protected val transitions: String
-    get() = transitionDeclarations.joinToString("\n\n")
+  // Top-level declarations
 
   protected val topLevelDeclaration: List<String>
     get() =
@@ -156,7 +174,5 @@ abstract class RefineryTransitionSystemBuilder {
         else -> error("Unsupported type in RefineryTransformationSystemBuilder: $this")
       }
 
-  protected abstract val initialState: String
-
-  open fun build(): String = topLevelDeclaration.joinToString("\n\n")
+  fun build(): String = topLevelDeclaration.joinToString("\n\n")
 }

@@ -17,6 +17,7 @@ package hu.bme.mit.theta.grammar.dsl.expr
 
 import com.google.common.base.Preconditions
 import com.google.common.collect.ImmutableList
+import hu.bme.mit.theta.analysis.algorithm.refinery.MemoryAllocationExpr
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.dsl.BasicScope
 import hu.bme.mit.theta.common.dsl.Env
@@ -810,6 +811,16 @@ class ExpressionWrapper(scope: Scope, content: String) {
         val expr = ctx.expr().accept(this)
         val type = TypeWrapper(ctx.type().textWithWS()).instantiate()
         return Reference(expr, type)
+      } else {
+        visitChildren(ctx)
+      }
+    }
+
+    override fun visitAllocExpr(ctx: AllocExprContext): Expr<out Type> {
+      return if (ctx.size != null) {
+        val size = BigInteger(ctx.size.text)
+        val type = TypeWrapper(ctx.type().textWithWS()).instantiate()
+        return MemoryAllocationExpr(size, type)
       } else {
         visitChildren(ctx)
       }

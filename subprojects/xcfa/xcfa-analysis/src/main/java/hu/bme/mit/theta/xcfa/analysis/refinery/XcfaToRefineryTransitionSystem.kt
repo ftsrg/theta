@@ -15,15 +15,20 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.refinery
 
+import hu.bme.mit.theta.analysis.algorithm.refinery.MemoryAllocationExpr
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryRule
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionRuleBuilder
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionSystemBuilder.Companion.refinerified
 import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 
 class XcfaRefineryTransitionSystemBuilder(
@@ -71,23 +76,23 @@ class XcfaRefineryTransitionSystemBuilder(
   override val environmentSetup: String
     get() = listOf(locationDeclaration, super.environmentSetup).joinToString("\n\n")
 
-  override val initialState: String
+  override val initialStateDeclarations: List<String>
     get() =
-      (listOf(
+      super.initialStateDeclarations +
+        listOf(
           "$LOCATION_DECLARATION($ENVIRONMENT, ${procedure.initLoc.name.refinerified}).",
           "scope NamedPointer += 0.",
         ) +
-          variables.map { "${it.name.refinerified}($ENVIRONMENT): 0." } +
-          pointers.flatMap {
-            val name = it.name.refinerified
-            listOf(
-              "NamedPointer($name).",
-              "name($name): \"$name\".",
-              "pointer($name, pointer_$name).",
-              "target(pointer_$name, null).",
-            )
-          })
-        .joinToString("\n")
+        variables.map { "${it.name.refinerified}($ENVIRONMENT): 0." } +
+        pointers.flatMap {
+          val name = it.name.refinerified
+          listOf(
+            "NamedPointer($name).",
+            "name($name): \"$name\".",
+            "pointer($name, pointer_$name).",
+            "target(pointer_$name, null).",
+          )
+        }
 
   override val transitionDeclarations: List<String> =
     xcfa.initProcedures.first().first.edges.flatMap { edge ->
@@ -95,8 +100,7 @@ class XcfaRefineryTransitionSystemBuilder(
     }
 
   override val errorProperty: String
-    get() =
-      "$LOCATION_DECLARATION(${ENVIRONMENT}, ${procedure.errorLoc.get().name.refinerified})"
+    get() = "$LOCATION_DECLARATION(${ENVIRONMENT}, ${procedure.errorLoc.get().name.refinerified})"
 }
 
 class XcfaRefineryTransitionRuleBuilder(
@@ -109,7 +113,8 @@ class XcfaRefineryTransitionRuleBuilder(
     private val XcfaLabel.supported: Boolean
       get() =
         this::class in
-          setOf(StmtLabel::class, NopLabel::class, SequenceLabel::class, NondetLabel::class)
+          setOf(StmtLabel::class, NopLabel::class, SequenceLabel::class, NondetLabel::class) ||
+          (this is InvokeLabel && this.name in listOf("malloc"))
   }
 
   private val env = RefineryTransitionSystemBuilder.ENVIRONMENT
@@ -117,30 +122,45 @@ class XcfaRefineryTransitionRuleBuilder(
 
   override fun build(transition: XcfaEdge): Set<RefineryRule> {
     check(transition.getAllLabels().all { it.supported }) {
-      "Unsupported XCFA label found in XCFA->Refinery transition."
+      "Unsupported XCFA label found in XCFA->Refinery transition: ${transition.label}"
     }
     val sourceLocName = transition.source.name.refinerified
     val targetLocName = transition.target.name.refinerified
     val name = "${sourceLocName}__to__${targetLocName}"
-    val topRule = transition.label.toStmt().toRules()
+    val label = transition.label.replaceInvokes()
+    val topRule = label.toStmt().toRules()
     topRule.setIds()
     return topRule.allRules
       .mapIndexed { index, rule ->
-        val source =
-          if (rule.preId == topRule.preId) sourceLocName else "${name}__${rule.preId}"
-        val target =
-          if (rule.postId == topRule.postId) targetLocName else "${name}__${rule.postId}"
+        val source = if (rule.preId == topRule.preId) sourceLocName else "${name}__${rule.preId}"
+        val target = if (rule.postId == topRule.postId) targetLocName else "${name}__${rule.postId}"
         locations.add(source)
         locations.add(target)
         val locPrecondition = "$loc($env, $source)"
         val locAction = "$loc($env, $target)"
         rule
           .copy(
-            preConditionClauses = listOf(locPrecondition) + rule.preConditionClauses,
+            preConditionClauses = setOf(locPrecondition) + rule.preConditionClauses,
             actionClauses = rule.actionClauses + listOf(locAction),
           )
           .toRefineryRule("${name}__$index")
       }
       .toSet()
   }
+
+  private fun XcfaLabel.replaceInvokes(): XcfaLabel =
+    when (this) {
+      is InvokeLabel ->
+        when (name) {
+          "malloc" -> {
+            val ret = (params[0] as RefExpr).decl as VarDecl
+            val size = (params[1] as IntLitExpr).value
+            AssignStmtLabel(ret, MemoryAllocationExpr(size, ret.type), metadata)
+          }
+          else -> error("Unsupported invoke label: $this")
+        }
+      is SequenceLabel -> SequenceLabel(labels.map { it.replaceInvokes() }, metadata)
+      is NondetLabel -> NondetLabel(labels.map { it.replaceInvokes() }.toSet(), metadata)
+      else -> this
+    }
 }

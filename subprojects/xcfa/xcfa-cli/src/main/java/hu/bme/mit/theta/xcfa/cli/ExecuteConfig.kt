@@ -93,6 +93,10 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }
+  if (config.backendConfig.backend == Backend.REFINERY) {
+    MallocFunctionPass.enabled = false
+    ReferenceElimination.useMemoryAllocationExpression = true
+  }
   if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
   }
