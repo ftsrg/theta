@@ -60,7 +60,7 @@ object PrecReuse {
     private var inputFile: File? = null
     private var serializer: PrecSerializer<Prec>? = null
     private var toSave: Prec? = null
-    var precReuseMode = PrecReuseMode.PROPRIETARY
+    var precReuseMode = PrecReuseMode.WITNESS
 
     fun enable(precSerializer: PrecSerializer<*>) {
         isEnabled = true
@@ -76,9 +76,7 @@ object PrecReuse {
         assert(inputFile != null)
         assert(serializer != null)
 
-        val savedPrec = (if (isEnabled) inputFile?.readLines() else null)
-            ?.filter { line -> line.trim().let { it.isNotEmpty() && ':' != it.last() } }
-            ?.joinToString(separator = "\n") ?: ""
+        val savedPrec = (if (isEnabled) inputFile?.readText() else null) ?: ""
         return serializer?.parse(savedPrec, currentVars) as? P ?: throw RuntimeException("Misconfigured PrecSerializer")
     }
 
@@ -108,7 +106,7 @@ interface PrecSerializer<out P : Prec> {
 class ExplPrecSerializer : PrecSerializer<ExplPrec> {
     override fun serialize(prec: Prec) = "*:\n" + prec.usedVars.joinToString(separator = "\n") { it.name }
     override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): ExplPrec {
-        val varNames = input.trim().split(Regex("\\s+"))
+        val varNames = removeScopes(input).trim().split(Regex("\\s+"))
         val vars = currentVars.filter { varNames.contains(it.name) }
         return ExplPrec.of(vars)
     }
@@ -138,7 +136,7 @@ class PredPrecSerializer : PrecSerializer<PredPrec> {
         val symbolTable = PrecSmtLibSymbolTable()
         val termTransformer = GenericSmtLibTermTransformer(symbolTable)
 
-        val savedPrec = parseResponse(input)
+        val savedPrec = parseResponse(removeScopes(input))
         val funDecls = savedPrec.funDeclarations
 
         funDecls.forEach { (name, def) ->
@@ -221,3 +219,7 @@ private fun parseResponse(input: String): PrecisionResponse {
         throw SmtLibSolverException("Could not parse solver output: $input", e)
     }
 }
+
+fun removeScopes(input: String) = input.lines()
+    .filter { line -> line.trim().let { it.isNotEmpty() && ':' != it.last() } }
+    .joinToString("\n")
