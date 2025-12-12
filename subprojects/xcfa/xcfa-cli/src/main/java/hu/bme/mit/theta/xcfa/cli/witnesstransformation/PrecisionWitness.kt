@@ -54,13 +54,14 @@ object WitnessPrecSerializerConfig {
 class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
     override fun serialize(prec: Prec): String {
         val procedureVars = prec.usedVars.groupByProcedure()
-        val procedurePreds = (prec as PredPrec).preds.map {
-            it.toC(parseContext)
-        }.groupBy { pred ->
-            procedureVars.keys.firstOrNull { proc -> // preds without local vars are grouped to null
-                proc?.let{ pred.contains(it) } ?: false
+        val procedurePreds = (prec as PredPrec).preds
+            .filter { ExprUtils.getVars(it).none(VarDecl<*>::isInternal) }
+            .map { it.toC(parseContext) }
+            .groupBy { pred ->
+                procedureVars.keys.firstOrNull { proc -> // preds without local vars are grouped to null
+                    proc?.let{ pred.contains(it) } ?: false
+                }
             }
-        }
         val contents = procedurePreds.map { (procedure, preds) ->
             val precision = if (procedure == null) { // preds with global variables only
                 Precision(
@@ -118,6 +119,7 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
 class WitnessExplPrecSerializer : PrecSerializer<ExplPrec> {
     override fun serialize(prec: Prec): String {
         val procedureVars = (prec as ExplPrec).vars
+            .filterNot { it.isInternal }
             .groupByProcedure()
             .mapValues { (_, vars) ->
                 vars.map { "&" + it.split("::").last() }
@@ -171,6 +173,9 @@ private fun Collection<VarDecl<*>>.groupByProcedure() = this
         if (it.contains("::")) it.split("::").first()
         else null
     }
+
+val VarDecl<*>.isInternal: Boolean
+    get() = parseContext.metadata.getMetadataValue(this.name, "cName").isEmpty
 
 private fun getMetadata() =
     Metadata(
