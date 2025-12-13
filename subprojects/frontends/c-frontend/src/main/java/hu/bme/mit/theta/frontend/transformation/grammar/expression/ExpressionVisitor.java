@@ -746,7 +746,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             //throw new RuntimeException("No such variable or macro: " + name);
             return Var(name, BoolType.getInstance()).getRef();
         } else {
-            return variable.getRef();
+            return variable.get().getRef();
         }
     }
 
