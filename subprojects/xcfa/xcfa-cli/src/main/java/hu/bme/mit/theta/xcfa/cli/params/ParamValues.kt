@@ -45,6 +45,7 @@ import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplP
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrPrecSerializer
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.utils.ExplPrecSerializer

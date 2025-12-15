@@ -21,10 +21,9 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
-import hu.bme.mit.theta.xcfa.cli.params.HornConfig
-import hu.bme.mit.theta.xcfa.cli.params.OutputLevel
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getGson
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.toC
@@ -40,6 +39,13 @@ internal fun preAnalysisLogging(
   logger: Logger,
   uniqueLogger: Logger,
 ) {
+  if ((config.backendConfig.specConfig as? CegarConfig)?.initPrec == InitPrec.REUSE) {
+    WitnessPrecSerializerConfig.inputFile = config.inputConfig.input
+    WitnessPrecSerializerConfig.parseContext = parseContext
+    WitnessPrecSerializerConfig.logger = logger
+    WitnessPrecSerializerConfig.architecture = (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture
+    WitnessPrecSerializerConfig.ltlSpecification = config.inputConfig.property.inputProperty.ltl(Unit)
+  }
   if (config.outputConfig.enabled != OutputLevel.NONE) {
     try {
       val enabled = config.outputConfig.enabled == OutputLevel.ALL

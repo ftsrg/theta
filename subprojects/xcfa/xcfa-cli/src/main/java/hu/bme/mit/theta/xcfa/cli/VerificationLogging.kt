@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
+import hu.bme.mit.theta.analysis.utils.PrecReuse
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.common.logging.Logger
@@ -54,7 +55,7 @@ internal fun postVerificationLogging(
   uniqueLogger: Logger,
 ) {
   val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
-
+  PrecReuse.writeTo(config.outputConfig.resultFolder)
   val ltlSpecification =
     if (safetyResult.isUnsafe) {
       (safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>).let {

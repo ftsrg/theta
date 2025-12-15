@@ -131,7 +131,7 @@ fun getExpressionFromC(
   return expr
 }
 
-fun getBoolExprFromC(
+fun getBoolExpressionFromC(
   value: String,
   parseContext: ParseContext,
   collectStatistics: Boolean,

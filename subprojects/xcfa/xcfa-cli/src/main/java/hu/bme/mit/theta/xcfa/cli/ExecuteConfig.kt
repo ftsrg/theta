@@ -31,11 +31,8 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.PrecReuse
 import hu.bme.mit.theta.analysis.utils.PrecReuseMode
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer
-import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
@@ -50,8 +47,6 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
-import hu.bme.mit.theta.xcfa.cli.utils.*
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
@@ -62,6 +57,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
+import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -195,14 +191,6 @@ private fun parseInputFiles(
     Triple(null, null, null)
   } else {
     var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
-
-    if ((config.backendConfig.specConfig as? CegarConfig)?.initPrec == InitPrec.REUSE) {
-      WitnessPrecSerializerConfig.inputFile = config.inputConfig.input
-      WitnessPrecSerializerConfig.parseContext = parseContext
-      WitnessPrecSerializerConfig.logger = logger
-      WitnessPrecSerializerConfig.architecture = (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture
-      WitnessPrecSerializerConfig.property = config.inputConfig.property
-    }
     preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     Triple(xcfa, mcm, parseContext)
   }
@@ -392,9 +380,7 @@ private fun postAnalysisLogging(
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
-) {
-  PrecReuse.writeTo(config.outputConfig.resultFolder)
-  when (config.backendConfig.backend) {
+) = when (config.backendConfig.backend) {
     Backend.TRACEGEN ->
       postTraceGenerationLogging(
         result
@@ -421,7 +407,6 @@ private fun postAnalysisLogging(
         uniqueLogger,
       ) // safety analysis (or none)
   }
-}
 
 internal fun concretizeTrace(
   trace: Cex?,
