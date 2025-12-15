@@ -30,12 +30,16 @@ import java.util.Map;
 
 public class GolemSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
-    private GolemSmtLibSolverFactory(Path solverPath, String[] args) {
+    private final boolean needsModelWrapping;
+
+    private GolemSmtLibSolverFactory(Path solverPath, String[] args, boolean needsModelWrapping) {
         super(solverPath, args);
+        this.needsModelWrapping = needsModelWrapping;
     }
 
-    public static GolemSmtLibSolverFactory create(Path solverPath, String[] args) {
-        return new GolemSmtLibSolverFactory(solverPath, args);
+    public static GolemSmtLibSolverFactory create(
+            Path solverPath, String[] args, boolean needsModelWrapping) {
+        return new GolemSmtLibSolverFactory(solverPath, args, needsModelWrapping);
     }
 
     @Override
@@ -56,7 +60,11 @@ public class GolemSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var solverBinary = new GenericSmtLibOneshotSolverBinary(solverPath, args, Map.of());
 
         return new GenericHornSolver(
-                symbolTable, transformationManager, termTransformer, solverBinary);
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                needsModelWrapping);
     }
 
     @Override

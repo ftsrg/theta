@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
@@ -35,6 +36,7 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -149,7 +151,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
 
         val.put(decl, litExpr);
-        final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, val);
+        Expr<BoolType> simplifiedExpr;
+        try {
+            simplifiedExpr = ExprUtils.simplify(expr, val);
+        } catch (ArithmeticException e) {
+            // This is needed for division by zero cases
+            simplifiedExpr = False();
+        }
 
         final MddNode childNode;
         if (mddVariable.getLower().isPresent()) {
@@ -214,7 +222,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
                 final LitExpr<?> upperBound =
                         LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if (decl.getType().getDomainSize().isInfinite()) { // TODO delete
+                if (decl.getType().getDomainSize().isInfinite()
+                        && decl.getType() instanceof Ordered) { // TODO delete
                     if (lowerBound.equals(upperBound)) {
                         exprs.add(Eq(decl.getRef(), lowerBound));
                     } else {
@@ -587,7 +596,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                 representation.mddVariable.getLower();
                         if (lower.isPresent()) {
                             final MddExpressionTemplate template =
-                                    MddExpressionTemplate.of(
+                                    MddExpressionTemplate.ofKnownSat(
                                             substitutedExpr,
                                             o -> (Decl) o,
                                             representation.solverPool,

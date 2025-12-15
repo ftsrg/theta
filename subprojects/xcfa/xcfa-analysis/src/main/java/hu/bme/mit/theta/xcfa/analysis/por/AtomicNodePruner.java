@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.expr.refinement.NodePruner;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
+import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel;
 
 /**
  * Prunes the given node from the given ARG if the action of its incoming edge is not part of an
@@ -34,7 +35,8 @@ public class AtomicNodePruner<S extends XcfaState<?>, A extends XcfaAction>
         implements NodePruner<S, A> {
     @Override
     public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
-        while (node.getState().getMutexes().containsKey("")) { // TODO: needs further checks?
+        var atomicMutex = AtomicFenceLabel.Companion.getATOMIC_MUTEX().getName();
+        while (node.getState().getMutexes().containsKey(atomicMutex)) {
             ArgEdge<S, A> inEdge = node.getInEdge().get();
             node = inEdge.getSource();
         }

@@ -54,7 +54,8 @@ class XstsCliMdd :
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
-    val stats = status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0)) as MddAnalysisStatistics
+    val stats =
+      status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0, 0, 0)) as MddAnalysisStatistics
     listOf(
         stats.violatingSize,
         stats.stateSpaceSize,

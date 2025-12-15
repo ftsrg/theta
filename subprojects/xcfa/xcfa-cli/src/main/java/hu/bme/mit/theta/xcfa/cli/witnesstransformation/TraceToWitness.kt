@@ -21,17 +21,22 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.getCMetaData
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorDetector
+import hu.bme.mit.theta.xcfa.model.ChoiceType
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
@@ -48,29 +53,25 @@ fun traceToWitness(
   verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
   trace: Trace<XcfaState<ExplState>, XcfaAction>,
   parseContext: ParseContext,
-  property: ErrorDetection,
+  property: XcfaProperty,
 ): Trace<WitnessNode, WitnessEdge> {
   val newStates = ArrayList<WitnessNode>()
   val newActions = ArrayList<WitnessEdge>()
 
   val isError =
-    if (property == ErrorDetection.TERMINATION) {
+    if (property.verifiedProperty == ErrorDetection.TERMINATION) {
       Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-    } else getXcfaErrorPredicate(property)
+    } else getXcfaErrorDetector(property.verifiedProperty)
 
-  var lastNode =
-    WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
-  newStates.add(lastNode)
+  var lastNode: WitnessNode? = null
 
-  for (i in 0 until trace.length()) {
+  for (i in 0 until trace.length() + 1) {
     val state = trace.states[i]
-    val action = trace.actions[i]
-    val nextState = trace.states[i + 1]
-    val newThreads = nextState.processes.keys - state.processes.keys
+    val action = trace.actions.getOrNull(i - 1)
     val node =
       WitnessNode(
         id = "N${newStates.size}",
-        entry = false,
+        entry = i == 0,
         sink = false,
         violation =
           isError.test( // this is a hack so that a simple explstate can become a ptrstate
@@ -91,83 +92,47 @@ fun traceToWitness(
             }
             .toMap(),
         globalState = state.sGlobal,
+        // localState = //state
       )
     if (node != WitnessNode(id = "N${newStates.size}")) {
       newStates.add(node)
-      val edge =
-        WitnessEdge(
-          sourceId = lastNode.id,
-          targetId = node.id,
-          threadId = trace.actions[i].pid.toString(),
-          edge = action.edge,
-        )
-      newActions.add(edge)
+      if (lastNode != null && action != null) {
+        val edge =
+          labelToEdge(
+            lastNode,
+            node,
+            action.edge.label,
+            action.pid,
+            ImmutableValuation.empty(),
+            parseContext,
+            action.edge,
+          )
+        newActions.add(edge)
+      }
       lastNode = node
     }
-
-    val flattenedSequence = flattenSequence(action.edge.label)
-    for (xcfaLabel in flattenedSequence) {
-      val node =
-        WitnessNode(id = "N${newStates.size}", entry = false, sink = false, violation = false)
-      var edge =
-        labelToEdge(
-          lastNode,
-          node,
-          xcfaLabel,
-          action.pid,
-          nextState.sGlobal.getVal(),
-          parseContext,
-          action.edge,
-        )
-      if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
-        edge = edge.copy(createThread = newThreads.joinToString(","))
-      }
-      if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
-        newStates.add(node)
-        newActions.add(edge)
-        lastNode = node
-      }
-    }
-  }
-
-  if (trace.length() > 0) {
-    val lastState = trace.states[trace.length()]
-    val node =
-      WitnessNode(
-        id = "N${newStates.size}",
-        entry = false,
-        sink = false,
-        violation =
-          isError.test( // this is a hack so that a simple explstate can become a ptrstate
-            XcfaState(
-              lastState.xcfa,
-              lastState.processes,
-              PtrState(lastState.sGlobal),
-              lastState.mutexes,
-              lastState.threadLookup,
-              lastState.bottom,
-            )
-          ),
-        xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-        cSources =
-          lastState.processes
-            .map {
-              Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
-            }
-            .toMap(),
-        globalState = lastState.sGlobal,
-      )
-    newStates.add(node)
-    val edge =
-      WitnessEdge(
-        sourceId = lastNode.id,
-        targetId = node.id,
-        edge = trace.actions[trace.length() - 1].edge,
-      )
-    newActions.add(edge)
   }
 
   return Trace.of(newStates, newActions)
+}
+
+fun targetToWitness(startline: Int, endline: Int, startoffset: Int, endoffset: Int): String {
+  return """
+  <node id="N0">
+  <data key="violation">false</data>
+  <data key="entry">true</data>
+  </node>
+  <node id="N1">
+  <data key="violation">true</data>
+  </node>
+  
+  <edge source="N0" target="N1">
+    <data key="startline">$startline</data>
+    <data key="endline">$endline</data>
+    <data key="startoffset">$startoffset</data>
+    <data key="endoffset">$endoffset</data>
+  </edge>
+  """
 }
 
 fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
@@ -187,10 +152,10 @@ private fun labelToEdge(
   valuation: Valuation,
   parseContext: ParseContext,
   edge: XcfaEdge,
-): WitnessEdge =
-  WitnessEdge(
-    sourceId = lastNode.id,
-    targetId = node.id,
+): WitnessEdge {
+  return WitnessEdge(
+    source = lastNode,
+    target = node,
     assumption =
       if (xcfaLabel is StmtLabel && xcfaLabel.stmt is HavocStmt<*>) {
         val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl
@@ -221,15 +186,9 @@ private fun labelToEdge(
     cSource = xcfaLabel.getCMetaData()?.sourceText,
     edge = edge,
   )
+}
 
-private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
-  when (label) {
-    is NondetLabel -> listOf(label)
-    is SequenceLabel -> label.labels.map { flattenSequence(it) }.flatten()
-    else -> listOf(label)
-  }
-
-private fun printLit(litExpr: LitExpr<*>): String? {
+fun printLit(litExpr: LitExpr<*>): String? {
   return if (litExpr is BvLitExpr) {
     val value = litExpr.value
     var intValue = BigInteger.ZERO

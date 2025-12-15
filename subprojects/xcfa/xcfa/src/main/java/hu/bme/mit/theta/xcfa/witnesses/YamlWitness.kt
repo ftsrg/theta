@@ -15,13 +15,23 @@
  */
 package hu.bme.mit.theta.xcfa.witnesses
 
+import com.charleskorn.kaml.MultiLineStringStyle
+import com.charleskorn.kaml.SingleLineStringStyle
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 val WitnessYamlConfig =
-  Yaml(configuration = Yaml.default.configuration.copy(encodeDefaults = false))
+  Yaml(
+    configuration =
+      Yaml.default.configuration.copy(
+        encodeDefaults = false,
+        strictMode = false,
+        singleLineStringStyle = SingleLineStringStyle.SingleQuoted,
+        multiLineStringStyle = MultiLineStringStyle.SingleQuoted,
+      )
+  )
 
 // https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/8f5dc4bf00c01bc6d5636d7993e164d181e19204/violation-witness-schema.yml
 // https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/8f5dc4bf00c01bc6d5636d7993e164d181e19204/correctness-witness-schema.yml
@@ -245,7 +255,6 @@ enum class WaypointType {
   @SerialName("function_enter") FUNCTION_ENTER,
   @SerialName("function_return") FUNCTION_RETURN,
   @SerialName("branching") BRANCHING,
-  @SerialName("recurrence_condition") RECURRENCE_CONDITION,
 }
 
 /**
@@ -259,6 +268,7 @@ enum class WaypointType {
 @Serializable
 enum class Format {
   @SerialName("c_expression") C_EXPRESSION,
+  @SerialName("ext_c_expression") EXT_C_EXPRESSION,
   @SerialName("acsl_expression") ACSL_EXPRESSION,
 }
 

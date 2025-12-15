@@ -15,9 +15,8 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static com.google.common.base.Preconditions.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +29,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
@@ -48,17 +48,19 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
-class Z3Solver implements UCSolver, Solver {
+class Z3Solver implements UCSolver, Solver, ItpSolver {
 
     protected final Z3SymbolTable symbolTable;
     protected final Z3TransformationManager transformationManager;
     protected final Z3TermTransformer termTransformer;
 
-    protected final com.microsoft.z3.Context z3Context;
+    protected final Context z3Context;
     protected final com.microsoft.z3.Solver z3Solver;
 
     private final Stack<Expr<BoolType>> assertions;
+    private final Stack<Z3ItpMarker> markers;
     private final Map<String, Expr<BoolType>> assumptions;
 
     private static final String ASSUMPTION_LABEL = "_LABEL_%d";
@@ -72,7 +74,7 @@ class Z3Solver implements UCSolver, Solver {
             final Z3SymbolTable symbolTable,
             final Z3TransformationManager transformationManager,
             final Z3TermTransformer termTransformer,
-            final com.microsoft.z3.Context z3Context,
+            final Context z3Context,
             final com.microsoft.z3.Solver z3Solver) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
@@ -82,6 +84,7 @@ class Z3Solver implements UCSolver, Solver {
 
         assertions = new StackImpl<>();
         assumptions = Containers.createMap();
+        markers = new StackImpl<>();
     }
 
     ////
@@ -89,12 +92,11 @@ class Z3Solver implements UCSolver, Solver {
     @Override
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
-        final com.microsoft.z3.BoolExpr term =
-                (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
+        final BoolExpr term = (BoolExpr) transformationManager.toTerm(assertion);
         add(assertion, term);
     }
 
-    void add(final Expr<BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
+    void add(final Expr<BoolType> assertion, final BoolExpr term) {
         assertions.add(assertion);
         z3Solver.add(term);
         clearState();
@@ -105,10 +107,9 @@ class Z3Solver implements UCSolver, Solver {
         checkNotNull(assertion);
 
         assertions.add(assertion);
-        final com.microsoft.z3.BoolExpr term =
-                (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
+        final BoolExpr term = (BoolExpr) transformationManager.toTerm(assertion);
         final String label = String.format(ASSUMPTION_LABEL, labelNum++);
-        final com.microsoft.z3.BoolExpr labelTerm = z3Context.mkBoolConst(label);
+        final BoolExpr labelTerm = z3Context.mkBoolConst(label);
 
         assumptions.put(label, assertion);
 
@@ -138,12 +139,14 @@ class Z3Solver implements UCSolver, Solver {
     @Override
     public void push() {
         assertions.push();
+        markers.push();
         z3Solver.push();
     }
 
     @Override
     public void pop(final int n) {
         assertions.pop(n);
+        markers.pop(n);
         z3Solver.pop(n);
         clearState();
     }
@@ -152,6 +155,7 @@ class Z3Solver implements UCSolver, Solver {
     public void reset() {
         z3Solver.reset();
         assertions.clear();
+        markers.clear();
         assumptions.clear();
         symbolTable.clear();
         transformationManager.reset();
@@ -180,7 +184,7 @@ class Z3Solver implements UCSolver, Solver {
         assert status == SolverStatus.SAT;
         assert model == null;
 
-        final com.microsoft.z3.Model z3Model = z3Solver.getModel();
+        final Model z3Model = z3Solver.getModel();
         assert z3Model != null;
 
         return new Z3Model(z3Model);
@@ -273,15 +277,80 @@ class Z3Solver implements UCSolver, Solver {
         }
     }
 
+    @Override
+    public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
+        checkNotNull(root);
+        return Z3ItpPattern.of(root);
+    }
+
+    @Override
+    public ItpMarker createMarker() {
+        final Z3ItpMarker marker = new Z3ItpMarker();
+        markers.add(marker);
+        return marker;
+    }
+
+    @Override
+    public void add(ItpMarker marker, Expr<BoolType> assertion) {
+        checkNotNull(marker);
+        checkNotNull(assertion);
+        checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
+        final Z3ItpMarker z3Marker = (Z3ItpMarker) marker;
+        final BoolExpr term = (BoolExpr) transformationManager.toTerm(assertion);
+        add(assertion, term);
+        z3Marker.add(assertion);
+    }
+
+    @Override
+    public Interpolant getInterpolant(ItpPattern pattern) {
+        if (pattern instanceof Z3ItpPattern z3ItpPattern) {
+            List<Z3ItpMarker> markers = z3ItpPattern.getSequence();
+            List<AndExpr> terms =
+                    markers.stream()
+                            .map(z3ItpMarker -> z3ItpMarker.getTerms().stream().toList())
+                            .map(AndExpr::create)
+                            .toList();
+
+            List<InterpolationMetadata> itpTasks =
+                    IntStream.range(1, terms.size())
+                            .mapToObj(
+                                    i ->
+                                            new InterpolationMetadata(
+                                                    transformationManager,
+                                                    terms.subList(0, i),
+                                                    terms.subList(i, terms.size())))
+                            .toList();
+
+            List<BoolExpr> itps =
+                    itpTasks.stream()
+                            .map((InterpolationMetadata i) -> i.interpolate(z3Context))
+                            .toList();
+
+            Map<ItpMarker, Expr<BoolType>> itpMap = new LinkedHashMap<>();
+            for (int i = 0; i < itps.size(); i++) {
+                itpMap.put(markers.get(i), (Expr<BoolType>) termTransformer.toExpr(itps.get(i)));
+            }
+            itpMap.put(markers.get(markers.size() - 1), False());
+            return new Z3Interpolant(itpMap);
+        } else {
+            throw new UnsupportedOperationException("Unsupported pattern: " + pattern);
+        }
+    }
+
+    @Override
+    public Collection<? extends ItpMarker> getMarkers() {
+        return markers.toCollection();
+    }
+
     ////
 
     private final class Z3Model extends Valuation {
 
-        private final com.microsoft.z3.Model z3Model;
+        private final Model z3Model;
         private final Map<Decl<?>, LitExpr<?>> constToExpr;
         private volatile Collection<ConstDecl<?>> constDecls = null;
 
-        public Z3Model(final com.microsoft.z3.Model z3Model) {
+        public Z3Model(final Model z3Model) {
             this.z3Model = z3Model;
             constToExpr = Containers.createMap();
         }
@@ -383,7 +452,7 @@ class Z3Solver implements UCSolver, Solver {
 
         ////
 
-        private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
+        private Collection<ConstDecl<?>> constDeclsOf(final Model z3Model) {
             final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
             for (final FuncDecl symbol : z3Model.getDecls()) {
                 if (symbolTable.definesSymbol(symbol)) {

@@ -102,7 +102,7 @@ public class FpTypeTest {
                                                 FpUtils.getMathContext(
                                                         (FpType) actual.getType(), RNE)),
                                         (FpType) actual.getType()));
-                assertEquals(Bool(true), leq.eval(val));
+                assertEquals("%s".formatted(actual.eval(val)), Bool(true), leq.eval(val));
             }
         } else {
             assertEquals(expected, actual.eval(val));

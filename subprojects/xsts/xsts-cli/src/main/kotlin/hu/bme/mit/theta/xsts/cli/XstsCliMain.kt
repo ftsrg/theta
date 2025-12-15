@@ -19,8 +19,13 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.deprecated
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.versionOption
 
 class XstsCliMainCommand : CliktCommand() {
+
+  init {
+    versionOption(javaClass.`package`.implementationVersion ?: "unknown")
+  }
 
   val algorithm by
     option(eager = true)
@@ -50,5 +55,6 @@ fun main(args: Array<String>) =
       XstsCliIC3(),
       XstsCliHeader(),
       XstsCliMetrics(),
+      XstsCliTracegen(),
     )
     .main(args)

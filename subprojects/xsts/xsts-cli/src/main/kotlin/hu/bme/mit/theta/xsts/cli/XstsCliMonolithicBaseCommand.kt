@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
+import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xsts.XSTS
@@ -57,7 +58,12 @@ abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String =
       passes.add(ReverseMEPass())
     }
     if (cegar) {
-      passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(solverFactory)))
+      passes.add(
+        PredicateAbstractionMEPass(
+          createFwBinItpCheckerFactory(solverFactory),
+          { monolithicExpr -> PredPrec.of(listOf(monolithicExpr.propExpr)) },
+        )
+      )
     }
     return XstsPipelineChecker(xsts, checkerFactory, passes)
   }

@@ -146,22 +146,14 @@ open class XcfaAasporLts(
     val precVars = prec.usedVars
     for (varDecl in influencedVars) {
       if (varDecl in sourceSetActionVars) {
-        if (varDecl !in precVars && varDecl !in fenceVars.values) {
-          // the actions would be dependent, but we may have a chance to ignore it in the current
-          // abstraction
+        if (varDecl !in precVars && varDecl !in fenceVars) {
+          // the actions would be dependent, but we can ignore it in the current abstraction
           ignoredVariables.add(varDecl)
           continue
         }
         return true
       }
     }
-    return indirectlyDependent(
-      state,
-      sourceSetAction,
-      sourceSetActionVars,
-      influencedVars,
-      sourceSetMemLocs,
-      influencedMemLocs,
-    )
+    return indirectlyDependent(state, sourceSetAction, sourceSetMemLocs, influencedMemLocs)
   }
 }

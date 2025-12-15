@@ -1,0 +1,14 @@
+var x: integer = 2
+
+trans {
+    assume x < 100;
+    x:=x*2;
+}
+
+init {}
+
+env {}
+
+prop {
+    true
+}

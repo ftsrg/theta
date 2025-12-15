@@ -22,7 +22,6 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -35,10 +34,12 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
@@ -51,12 +52,11 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import java.util.*;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.*;
 
 /**
  * FunctionVisitor is responsible for the instantiation of high-level model elements, such as
@@ -65,7 +65,7 @@ import org.antlr.v4.runtime.Token;
  * and local, complete with initializations) and an ExpressionVisitor instance to provide
  * information on Expressions in the source code.
  */
-public class FunctionVisitor extends CBaseVisitor<CStatement> {
+public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private final ParseContext parseContext;
     private final DeclarationVisitor declarationVisitor;
     private final GlobalDeclUsageVisitor globalDeclUsageVisitor;
@@ -191,14 +191,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         return program;
     }
 
-    public void recordMetadata(ParserRuleContext ctx, CStatement statement) {
-        if (!currentStatementContext.isEmpty()) {
-            ctx =
-                    currentStatementContext
-                            .peek()
-                            .get1(); // this will overwrite the current ASt element's ctx
-            // with the statement's ctx
-        }
+    public void recordMetadataCommon(ParserRuleContext ctx, CStatement statement) {
         Token start = ctx.getStart();
         Token stop = ctx.getStop();
         String stopText = stop.getText();
@@ -221,6 +214,49 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         statement.setOffsetEnd(offsetEnd);
         statement.setSourceText(textWithWS(ctx));
         statement.setCtx(ctx);
+    }
+
+    public void recordMetadata(ParserRuleContext ctx, CStatement statement) {
+        if (!currentStatementContext.isEmpty()) {
+            ctx =
+                    currentStatementContext
+                            .peek()
+                            .get1(); // this will overwrite the current ASt element's ctx
+            // with the statement's ctx
+        }
+        recordMetadataCommon(ctx, statement);
+    }
+
+    public void recordMetadata(ParserRuleContext ctx, CFunction statement) {
+        if (!currentStatementContext.isEmpty()) {
+            ctx =
+                    currentStatementContext
+                            .peek()
+                            .get1(); // this will overwrite the current ASt element's ctx
+            // with the statement's ctx
+        }
+        recordMetadataCommon(ctx, statement);
+        // propagate function name to all statements
+        propagateFunctionName(statement.getCompound(), statement.getFuncDecl().getName());
+    }
+
+    public void recordMetadata(ParserRuleContext ctx, CCall statement) {
+        ctx = (ParserRuleContext) ctx.parent.parent;
+        recordMetadataCommon(ctx, statement);
+    }
+
+    private void propagateFunctionName(CStatement stmt, String name) {
+        if (stmt.getFunctionName() == null) {
+            // only overwrite if null, because
+            // sometimes we set it to "NotC" on purpose
+            // and we do not want to overwrite that
+            stmt.setFunctionName(name);
+        }
+        if (stmt instanceof CCompound) {
+            ((CCompound) stmt)
+                    .getcStatementList()
+                    .forEach(cStatement -> propagateFunctionName(cStatement, name));
+        }
     }
 
     @Override
@@ -323,7 +359,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitIdentifierStatement(CParser.IdentifierStatementContext ctx) {
-        CStatement statement = ctx.statement().accept(this);
+        CStatement statement = ctx.blockItem().accept(this);
         CCompound compound = new CCompound(parseContext);
         compound.addCStatement(statement);
         compound.setId(ctx.Identifier().getText());
@@ -541,30 +577,44 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                 }
             }
             if (declaration.getInitExpr() != null) {
-                if (declaration.getType() instanceof Struct) {
-                    checkState(
-                            declaration.getInitExpr() instanceof CInitializerList,
-                            "Struct can only be initialized via an initializer list!");
-                    final var initializerList = (CInitializerList) declaration.getInitExpr();
-                    List<VarDecl<?>> varDecls = declaration.getVarDecls();
-                    VarDecl<?> varDecl = varDecls.get(0);
-                    final var ptrType = CComplexType.getUnsignedLong(parseContext);
-                    LitExpr<?> currentValue = ptrType.getNullValue();
-                    LitExpr<?> unitValue = ptrType.getUnitValue();
-                    for (Tuple2<Optional<CStatement>, CStatement> statement :
-                            initializerList.getStatements()) {
-                        final var expr = statement.get2().getExpression();
-                        final var deref =
-                                Exprs.Dereference(
-                                        cast(varDecl.getRef(), currentValue.getType()),
-                                        cast(currentValue, currentValue.getType()),
-                                        expr.getType());
-                        CAssignment cAssignment =
-                                new CAssignment(deref, statement.get2(), "=", parseContext);
-                        recordMetadata(ctx, cAssignment);
-                        compound.addCStatement(cAssignment);
-                        currentValue =
-                                Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                if (declaration.getActualType() instanceof CStruct) {
+                    if (declaration.getInitExpr() instanceof CInitializerList) {
+                        final var initializerList = (CInitializerList) declaration.getInitExpr();
+                        List<VarDecl<?>> varDecls = declaration.getVarDecls();
+                        VarDecl<?> varDecl = varDecls.get(0);
+                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        LitExpr<?> currentValue = ptrType.getNullValue();
+                        LitExpr<?> unitValue = ptrType.getUnitValue();
+                        for (Tuple2<Optional<CStatement>, CStatement> statement :
+                                initializerList.getStatements()) {
+                            final var expr = statement.get2().getExpression();
+                            final var deref =
+                                    Exprs.Dereference(
+                                            cast(varDecl.getRef(), currentValue.getType()),
+                                            cast(currentValue, currentValue.getType()),
+                                            expr.getType());
+                            CAssignment cAssignment =
+                                    new CAssignment(deref, statement.get2(), "=", parseContext);
+                            recordMetadata(ctx, cAssignment);
+                            compound.addCStatement(cAssignment);
+                            currentValue =
+                                    Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                        }
+                    } else {
+                        Expr<?> expression = declaration.getInitExpr().getExpression();
+                        checkState(
+                                expression instanceof RefExpr<?>,
+                                "Initializer type not handled for structs: " + expression);
+                        final var type = CComplexType.getType(expression, parseContext);
+                        checkState(
+                                type instanceof CStruct,
+                                "Initializer type not handled for structs: " + type);
+                        checkState(
+                                type.equals(declaration.getActualType()),
+                                "Mismatching types: "
+                                        + type
+                                        + " vs. "
+                                        + declaration.getActualType());
                     }
                 } else {
                     checkState(
@@ -615,7 +665,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             } else {
                 // if there is no initializer, then we'll add an assumption regarding min and max
                 // values
-                if (declaration.getType() instanceof Struct) {
+                if (declaration.getActualType() instanceof CStruct) {
                     for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                         if (!(varDecl.getType() instanceof ArrayType)
                                 && !(varDecl.getType()
@@ -627,6 +677,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                             .limit(varDecl.getRef());
                             CAssume cAssume = new CAssume(assumeStmt, parseContext);
                             recordMetadata(ctx, cAssume);
+                            cAssume.setFunctionName("NotC");
+                            // as assumption is not in C
+                            // file
                             compound.addCStatement(cAssume);
                         }
                     }
@@ -641,6 +694,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                         .limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
                         recordMetadata(ctx, cAssume);
+                        cAssume.setFunctionName("NotC");
+                        // assumption is not in C file
                         compound.addCStatement(cAssume);
                     }
                 }
@@ -689,11 +744,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         }
         CAssignment cAssignment =
                 new CAssignment(ret, rhs, ctx.assignmentOperator().getText(), parseContext);
+        recordMetadata(ctx, cAssignment);
+        expressionVisitor.getPreStatements().forEach(preStatements::addCStatement);
         compound.addCStatement(cAssignment);
-        expressionVisitor.getPreStatements().forEach(compound::addCStatement);
         compound.setPreStatements(preStatements);
         recordMetadata(ctx, compound);
-        expressionVisitor.getPostStatements().forEach(compound::addCStatement);
+        expressionVisitor.getPostStatements().forEach(postStatements::addCStatement);
         compound.setPostStatements(postStatements);
         recordMetadata(ctx, compound);
         return compound;

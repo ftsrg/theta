@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbst
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -275,7 +276,8 @@ public class XstsAbstractMddCheckerTest {
                     List.of(
                             new PredicateAbstractionMEPass<>(
                                     ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
-                                            Z3LegacySolverFactory.getInstance())));
+                                            Z3LegacySolverFactory.getInstance()),
+                                    mE -> PredPrec.of(mE.getPropExpr())));
 
             SafetyChecker<
                             InvariantProof,

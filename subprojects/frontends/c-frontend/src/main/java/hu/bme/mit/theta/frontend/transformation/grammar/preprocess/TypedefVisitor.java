@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class TypedefVisitor extends CBaseVisitor<Set<CDeclaration>> {
+public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration>> {
     private final DeclarationVisitor declarationVisitor;
 
     public TypedefVisitor(DeclarationVisitor declarationVisitor) {

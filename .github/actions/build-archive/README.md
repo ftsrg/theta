@@ -8,7 +8,7 @@ Theta can both serve as a model checking backend, and also includes ready-to-use
 
 The submitted version can be found under the `COMMIT_ID` commit in the [GitHub repository](https://github.com/ftsrg/theta/commit/COMMIT_ID).
 
-Minimal necessary packages for Ubuntu 22.04 LTS:
+Minimal necessary packages for Ubuntu 24.04 LTS:
 
 * openjdk-17-jre-headless
 * libgomp1
@@ -22,12 +22,11 @@ Minimal necessary packages for Ubuntu 22.04 LTS:
 ├── LICENSE - contains the license for TOOL_NAME
 ├── README.md - this file
 ├── lib - contains the native library dependencies
-├── offset.sh - creates a mapping between statements of two C files
 ├── solvers - contains further dependencies (SMT-solvers), each having their respective licenses 
-├── specification-transformation - binaries for transforming various specifications to reachability (this includes cpachecker, but we do not use it for verification.)
-├── specification-transformation.LICENSE - license for `specification-transformation`
 ├── theta-smtlib.jar - the jarfile for installing and managing smt solvers (not necessary unless different solver versions are required)
 ├── SCRIPTNAME - the starting script of TOOL_NAME
+├── input.c - the input file for the smoketest
+├── smoketest.sh - the smoketest
 └── theta.jar - the main jarfile of TOOL_NAME
 ```
 

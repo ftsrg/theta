@@ -22,11 +22,14 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
 private var pidCnt = 1
@@ -38,7 +41,7 @@ constructor(
   val xcfa: XCFA?,
   val processes: Map<Int, XcfaProcessState>,
   val sGlobal: S,
-  val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
+  val mutexes: Map<String, Set<Int>> = mapOf(),
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
 ) : ExprState {
@@ -50,10 +53,19 @@ constructor(
   ) : this(
     xcfa = xcfa,
     processes =
-      mapOf(Pair(0, XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList()))),
-    state,
+      mapOf(0 to XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList())),
+    sGlobal = state,
     mutexes = emptyMap(),
   )
+
+  init {
+    check((mutexes[ATOMIC_MUTEX.name]?.size ?: 0) <= 1) {
+      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX.name]} hold it."
+    }
+    check(mutexes.values.all { it.isNotEmpty() }) {
+      "No mutex can be held by an empty set of processes, but $mutexes contains empty mutexes."
+    }
+  }
 
   override fun isBottom(): Boolean {
     return bottom || sGlobal.isBottom
@@ -65,79 +77,53 @@ constructor(
 
   fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-    if (mutexes[""] != null && mutexes[""] != a.pid)
+    if (mutexes[ATOMIC_MUTEX.name]?.any { it != a.pid } == true) {
       return Pair(copy(bottom = true), a.withLabel(SequenceLabel(listOf(NopLabel))))
+    }
 
     val processState = processes[a.pid]
     checkNotNull(processState)
     check(processState.locs.peek() == a.source)
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    newProcesses[a.pid] = checkNotNull(processes[a.pid]?.withNewLoc(a.target))
+    newProcesses[a.pid] = processes[a.pid]!!.withNewLoc(a.target)
     if (processes != newProcesses) {
       changes.add { state -> state.withProcesses(newProcesses) }
     }
 
-    val newLabels =
-      a.edge.getFlatLabels().filter {
-        when (it) {
-          is FenceLabel ->
-            it.labels
-              .forEach { label ->
-                when (label) {
-                  "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }
-                  "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }
-                  in Regex("mutex_lock\\((.*)\\)") ->
-                    changes.add { state ->
-                      state.enterMutex(
-                        label.substring("mutex_lock".length + 1, label.length - 1),
-                        a.pid,
-                      )
-                    }
+    val newLabels: List<XcfaLabel> =
+      a.edge.getFlatLabels().mapNotNull { label ->
+        when (label) {
+          is FenceLabel -> {
+            when (label) {
+              is AtomicBeginLabel,
+              is MutexLockLabel,
+              is RWLockReadLockLabel,
+              is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
 
-                  in Regex("mutex_unlock\\((.*)\\)") ->
-                    changes.add { state ->
-                      state.exitMutex(
-                        label.substring("mutex_unlock".length + 1, label.length - 1),
-                        a.pid,
-                      )
-                    }
+              is AtomicEndLabel,
+              is MutexUnlockLabel,
+              is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
 
-                  in Regex("start_cond_wait\\((.*)\\)") -> {
-                    val args =
-                      label.substring("start_cond_wait".length + 1, label.length - 1).split(",")
-                    changes.add { state -> state.enterMutex(args[0], -1) }
-                    changes.add { state -> state.exitMutex(args[1], a.pid) }
-                  }
-
-                  in Regex("cond_wait\\((.*)\\)") -> {
-                    val args = label.substring("cond_wait".length + 1, label.length - 1).split(",")
-                    changes.add { state -> state.enterMutex(args[0], a.pid) }
-                    changes.add { state -> state.exitMutex(args[0], a.pid) }
-                    changes.add { state -> state.enterMutex(args[1], a.pid) }
-                  }
-
-                  in Regex("cond_signal\\((.*)\\)") ->
-                    changes.add { state ->
-                      state.exitMutex(
-                        label.substring("cond_signal".length + 1, label.length - 1),
-                        -1,
-                      )
-                    }
-
-                  "pthread_exit" -> {
-                    if (processState.locs.size > 1)
-                      error("pthread_exit not allowed in invoked function")
-                  }
-
-                  else -> error("Unknown fence label $label")
+              is MutexTryLockLabel -> {
+                var success = false
+                changes.add { state ->
+                  val newState = state.enterMutex(label, a.pid)
+                  success = !newState.isBottom
+                  if (newState.isBottom) state else newState
                 }
+                AssignStmtLabel(
+                  label.successVar.ref,
+                  Int(if (success) 1 else 0),
+                  metadata = label.metadata,
+                )
               }
-              .let { false }
+            }.let { it as? XcfaLabel }
+          }
 
           is InvokeLabel -> {
             val proc =
-              xcfa?.procedures?.find { proc -> proc.name == it.name }
-                ?: error("No such method ${it.name}.")
+              xcfa?.procedures?.find { proc -> proc.name == label.name }
+                ?: error("No such method ${label.name}.")
             val returnStmt =
               SequenceLabel(
                 proc.params
@@ -145,38 +131,38 @@ constructor(
                   .filter { it.value.second != ParamDirection.IN }
                   .map { iVal ->
                     AssignStmtLabel(
-                      it.params[iVal.index] as RefExpr<*>,
+                      label.params[iVal.index] as RefExpr<*>,
                       cast(iVal.value.first.ref, iVal.value.first.type),
-                      metadata = it.metadata,
+                      metadata = label.metadata,
                     )
                   }
               )
             changes.add { state ->
-              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), it.tempLookup)
+              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
             }
-            false
+            null
           }
 
-          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { true }
+          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
 
+          is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
           is JoinLabel -> {
-            changes.add { state -> state.enterMutex("${threadLookup[it.pidVar]}", a.pid) }
-            changes.add { state -> state.exitMutex("${threadLookup[it.pidVar]}", a.pid) }
-            false
+            changes.add { state ->
+              val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
+              if (joinedPid in state.processes) copy(bottom = true) else state
+            }
+            null
           }
 
-          is NondetLabel -> true
-          NopLabel -> false
-          is ReadLabel -> error("Read/Write labels not yet supported")
-          is SequenceLabel -> true
-          is StartLabel -> changes.add { state -> state.start(it) }.let { true }
-          is StmtLabel -> true
-          is WriteLabel -> error("Read/Write labels not yet supported")
+          is SequenceLabel -> label
+          is NondetLabel -> label
+          is StmtLabel -> label
+          NopLabel -> null
         }
       }
 
     changes.add { state ->
-      if (checkNotNull(state.processes[a.pid]).locs.isEmpty()) state.endProcess(a.pid) else state
+      if (state.processes[a.pid]!!.locs.isEmpty()) state.endProcess(a.pid) else state
     }
 
     return Pair(
@@ -185,11 +171,11 @@ constructor(
     )
   }
 
-  private fun start(startLabel: StartLabel): XcfaState<S> {
+  private fun start(startLabel: StartLabel, startingPid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
     val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
-    val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
+    val procedure = xcfa?.procedures?.find { it.name == startLabel.name }!!
     val paramList = procedure.params.toMap()
     val tempLookup = startLabel.tempLookup
     val returnStmt =
@@ -207,7 +193,7 @@ constructor(
       )
 
     val pid = pidCnt++
-    val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
+    val lookup = procedure.createLookup("T$pid")
     newThreadLookup[startLabel.pidVar] = pid
     newProcesses[pid] =
       XcfaProcessState(
@@ -249,18 +235,19 @@ constructor(
             )
           ),
       )
-    val newMutexes = LinkedHashMap(mutexes)
-    newMutexes["$pid"] = pid
 
-    return copy(processes = newProcesses, threadLookup = newThreadLookup, mutexes = newMutexes)
+    newProcesses[startingPid] =
+      newProcesses[startingPid]!!.let {
+        it.copy(invokeParameterCounter = it.invokeParameterCounter + 1)
+      }
+
+    return copy(processes = newProcesses, threadLookup = newThreadLookup)
   }
 
   private fun endProcess(pid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
     newProcesses.remove(pid)
-    val newMutexes = LinkedHashMap(mutexes)
-    newMutexes.remove("$pid")
-    return copy(processes = newProcesses, mutexes = newMutexes)
+    return copy(processes = newProcesses)
   }
 
   private fun invokeFunction(
@@ -271,32 +258,47 @@ constructor(
     tempLookup: Map<VarDecl<*>, VarDecl<*>>,
   ): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    newProcesses[pid] =
-      checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup))
+    newProcesses[pid] = processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup)!!
     return copy(processes = newProcesses)
   }
 
   private fun returnFromFunction(pid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    newProcesses[pid] = checkNotNull(processes[pid]?.exitFunction())
+    newProcesses[pid] = processes[pid]?.exitFunction()!!
     return copy(processes = newProcesses)
   }
 
-  fun enterMutex(key: String, pid: Int): XcfaState<S> {
-    if (mutexes.keys.any { it == key && mutexes[it] != pid }) return copy(bottom = true)
+  private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> {
+    if (label.blockingMutexes.any { it.name in mutexes && pid !in mutexes[it.name]!! }) {
+      return copy(bottom = true)
+    }
 
     val newMutexes = LinkedHashMap(mutexes)
-    newMutexes[key] = pid
+    label.acquiredMutexes.forEach { newMutexes[it.name] = (newMutexes[it.name] ?: setOf()) + pid }
     return copy(mutexes = newMutexes)
   }
 
-  fun exitMutex(key: String, pid: Int): XcfaState<S> {
+  private fun exitMutex(label: FenceLabel, pid: Int): XcfaState<S> {
     val newMutexes = LinkedHashMap(mutexes)
-    newMutexes.remove(key, pid)
+    label.releasedMutexes.forEach {
+      val holders = newMutexes[it.name]
+      when {
+        holders == null || pid !in holders -> {}
+        holders.size == 1 -> newMutexes.remove(it.name)
+        else -> newMutexes[it.name] = holders - pid
+      }
+    }
     return copy(mutexes = newMutexes)
   }
 
   private fun withProcesses(nP: Map<Int, XcfaProcessState>): XcfaState<S> {
+    return copy(processes = nP)
+  }
+
+  fun withLocation(pid: Int, loc: XcfaLocation): XcfaState<S> {
+    val nP = processes.toMutableMap()
+    nP[pid] =
+      nP[pid]?.withNewLoc(loc) ?: XcfaProcessState(locs = LinkedList(listOf(loc)), LinkedList())
     return copy(processes = nP)
   }
 
@@ -317,6 +319,7 @@ data class XcfaProcessState(
     LinkedList(listOf(Pair(NopLabel, NopLabel))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
+  val invokeParameterCounter: Int = 0,
 ) {
 
   internal var popped: XcfaLocation? =
@@ -347,7 +350,7 @@ data class XcfaProcessState(
     val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
     val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(paramStmts)
     deque.push(xcfaProcedure.initLoc)
-    val lookup = createLookup(xcfaProcedure, prefix, "P${procCnt++}")
+    val lookup = xcfaProcedure.createLookup(prefix, "P${procCnt++}")
     varLookup.push(lookup)
     returnStmts.push(returnStmt)
     paramStmts.push(
@@ -386,6 +389,7 @@ data class XcfaProcessState(
       returnStmts = returnStmts,
       paramStmts = paramStmts,
       paramsInitialized = false,
+      invokeParameterCounter = invokeParameterCounter + 1,
     )
   }
 
@@ -426,12 +430,11 @@ data class XcfaProcessState(
 
   companion object {
 
-    fun createLookup(
-      proc: XcfaProcedure,
-      threadPrefix: String,
-      procPrefix: String,
+    fun XcfaProcedure.createLookup(
+      threadPrefix: String = "",
+      procPrefix: String = "",
     ): Map<VarDecl<*>, VarDecl<*>> =
-      listOf(proc.params.map { it.first }, proc.vars)
+      listOf(params.map { it.first }, vars)
         .flatten()
         .associateWith {
           val sj = StringJoiner("::")

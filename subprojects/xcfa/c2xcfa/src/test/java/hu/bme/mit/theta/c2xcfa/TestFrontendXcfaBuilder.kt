@@ -17,6 +17,8 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import java.io.IOException
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +28,8 @@ import org.junit.runners.Parameterized
 class TestFrontendXcfaBuilder {
 
   @Parameterized.Parameter(0) lateinit var filepath: String
+
+  private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
   companion object {
 
@@ -57,6 +61,7 @@ class TestFrontendXcfaBuilder {
         arrayOf("/21namecollision.c"),
         arrayOf("/22nondet.c"),
         arrayOf("/23exotic.c"),
+        arrayOf("/24initializer.c"),
       )
     }
   }
@@ -67,7 +72,7 @@ class TestFrontendXcfaBuilder {
 
     val stream = javaClass.getResourceAsStream(filepath)
 
-    getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance())
+    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
   }
 
   @Test
@@ -76,6 +81,6 @@ class TestFrontendXcfaBuilder {
 
     val stream = javaClass.getResourceAsStream(filepath)
 
-    getXcfaFromC(stream!!, ParseContext(), false, true, NullLogger.getInstance())
+    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
   }
 }

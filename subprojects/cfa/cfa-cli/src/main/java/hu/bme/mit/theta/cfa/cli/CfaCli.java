@@ -21,7 +21,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -508,6 +507,7 @@ public class CfaCli {
 
     private void printResult(
             final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
+        logger.result(status.toString());
         final CegarStatistics stats =
                 (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {

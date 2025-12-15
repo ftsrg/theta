@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlList
+import com.charleskorn.kaml.YamlMap
+import com.charleskorn.kaml.YamlNode
+import com.charleskorn.kaml.YamlScalar
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
@@ -26,11 +31,12 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.exitProcess
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
@@ -39,8 +45,8 @@ import java.io.FileInputStream
 import java.io.FileReader
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
+import kotlin.io.path.Path
 import kotlin.jvm.optionals.getOrNull
-import kotlin.system.exitProcess
 import org.antlr.v4.runtime.CharStreams
 
 fun getXcfa(
@@ -101,7 +107,7 @@ fun getXcfa(
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
     logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
-    exitProcess(ExitCodes.FRONTEND_FAILED.code)
+    exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
 
 private fun CFA.toXcfa(): XCFA {
@@ -143,43 +149,61 @@ private fun CFA.toXcfa(): XCFA {
 
 private fun parseC(
   input: File,
-  explicitProperty: ErrorDetection,
+  property: XcfaProperty,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
+  val input =
+    if (input.name.endsWith(".yml")) {
+      try {
+        val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
+        if (parsedYaml is YamlMap) {
+          when (val files = parsedYaml.get<YamlNode>("input_files")) {
+            is YamlList -> {
+              val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
+              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              inputFile
+            }
+            is YamlScalar -> {
+              val inputFile = Path(input.parent).resolve(files.content).toFile()
+              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              inputFile
+            }
+            else -> {
+              logger.info("Unexpected yml content: $files")
+              input
+            }
+          }
+        } else {
+          logger.info("Unexpected yml content: $parsedYaml")
+          input
+        }
+      } catch (ex: Exception) {
+        logger.info("Could not parse YAML data: ${ex.message}")
+        input
+      }
+    } else {
+      input
+    }
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
-      getXcfaFromC(
-          stream,
-          parseContext,
-          false,
-          explicitProperty == ErrorDetection.OVERFLOW,
-          uniqueWarningLogger,
-        )
-        .first
+      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
     } catch (e: Throwable) {
       if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
         val xcfa =
-          getXcfaFromC(
-              stream,
-              parseContext,
-              false,
-              explicitProperty == ErrorDetection.OVERFLOW,
-              uniqueWarningLogger,
-            )
-            .first
+          getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
         throw e
       }
     }
-  logger.write(Logger.Level.RESULT, "Arithmetic: ${parseContext.arithmeticTraits}\n")
+  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 

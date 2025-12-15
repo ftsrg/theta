@@ -19,6 +19,7 @@ plugins {
 }
 
 dependencies {
+    implementation(files(rootDir.resolve(Deps.delta)))
     implementation(project(":theta-petrinet-model"))
     implementation(project(":theta-petrinet-analysis"))
     implementation(project(":theta-petrinet-xsts"))

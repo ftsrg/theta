@@ -1,0 +1,70 @@
+/*
+ *  Copyright 2025 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.analysis
+
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.xcfa.ErrorDetection.*
+import hu.bme.mit.theta.xcfa.XcfaProperty
+
+class UnknownResultException(message: String = "Unknown analysis result") :
+  RuntimeException(message)
+
+data class LtlProperty(val name: String, val value: String)
+
+/**
+ * Derives the correct LTL property string for a given ErrorDetection type. Optionally inspects a
+ * trace to disambiguate MEMSAFETY and MEMCLEANUP cases. Returns
+ */
+fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): LtlProperty? {
+  return when (this.inputProperty) {
+    MEMSAFETY,
+    MEMCLEANUP -> {
+      val locName =
+        trace
+          ?.states
+          ?.asReversed()
+          ?.firstOrNull { it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } } }
+          ?.processes
+          ?.values
+          ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
+          ?.locs
+          ?.firstOrNull { it.name.contains("__THETA_") }
+          ?.name
+
+      locName?.let {
+        when (it) {
+          "__THETA_bad_free" ->
+            LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_FREE))
+          "__THETA_bad_deref" ->
+            LtlProperty("valid-deref", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_DEREF))
+          "__THETA_lost" ->
+            if (this.inputProperty == MEMCLEANUP) {
+              LtlProperty("valid-memcleanup", MEMCLEANUP.ltl(Unit))
+            } else {
+              throw UnknownResultException("Uncertain MEMSAFETY result: __THETA_lost encountered")
+            }
+          else -> throw RuntimeException("Could not determine subproperty from location name: $it")
+        }
+      }
+    }
+
+    DATA_RACE -> LtlProperty("no-data-race", DATA_RACE.ltl(Unit))
+    ERROR_LOCATION -> LtlProperty("unreach-call", ERROR_LOCATION.ltl(Unit))
+    OVERFLOW -> LtlProperty("no-overflow", OVERFLOW.ltl(Unit))
+    NO_ERROR -> LtlProperty("no-error", NO_ERROR.ltl(Unit))
+    TERMINATION -> LtlProperty("termination", TERMINATION.ltl(Unit))
+  }
+}

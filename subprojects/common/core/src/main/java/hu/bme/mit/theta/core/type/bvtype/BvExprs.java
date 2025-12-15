@@ -68,6 +68,10 @@ public final class BvExprs {
         return BvPosExpr.of(op);
     }
 
+    public static BvToIntExpr ToInt(final Expr<BvType> op) {
+        return BvToIntExpr.of(op);
+    }
+
     public static BvNegExpr Neg(final Expr<BvType> op) {
         return BvNegExpr.of(op);
     }

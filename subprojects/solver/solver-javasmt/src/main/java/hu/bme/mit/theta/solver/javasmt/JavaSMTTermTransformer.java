@@ -276,6 +276,10 @@ final class JavaSMTTermTransformer {
         addEnvFunc(
                 FunctionDeclarationKind.BV_NEG,
                 exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNegExpr::create));
+        addOtherFunc(
+                "bv2int",
+                exprUnaryOperator(
+                        t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, false)));
         addEnvFunc(
                 FunctionDeclarationKind.BV_MUL,
                 exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));

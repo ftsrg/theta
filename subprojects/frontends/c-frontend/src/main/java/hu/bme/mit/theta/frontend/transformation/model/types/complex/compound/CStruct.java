@@ -23,6 +23,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clon
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CStruct extends CInteger {
@@ -62,5 +64,15 @@ public class CStruct extends CInteger {
     @Override
     public String getTypeName() {
         return new CUnsignedLong(null, parseContext).getTypeName();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CStruct cStruct = (CStruct) o;
+        final Function<Tuple2<String, CComplexType>, Tuple2<String, Class<?>>> mapper =
+                (Tuple2<String, CComplexType> it) -> Tuple2.of(it.get1(), it.get2().getClass());
+        return Objects.equals(
+                fields.stream().map(mapper).toList(), cStruct.fields.stream().map(mapper).toList());
     }
 }

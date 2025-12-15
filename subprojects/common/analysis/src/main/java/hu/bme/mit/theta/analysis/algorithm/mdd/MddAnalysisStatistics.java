@@ -24,24 +24,32 @@ public class MddAnalysisStatistics extends Statistics {
     private final Long hitCount;
     private final Long queryCount;
     private final Long cacheSize;
+    private final Long algorithmTimeMs;
+    private final Long totalTimeMs;
 
     public MddAnalysisStatistics(
             Long violatingSize,
             Long stateSpaceSize,
             Long hitCount,
             Long queryCount,
-            Long cacheSize) {
+            Long cacheSize,
+            Long algorithmTimeMs,
+            Long totalTimeMs) {
         this.violatingSize = violatingSize;
         this.stateSpaceSize = stateSpaceSize;
         this.hitCount = hitCount;
         this.queryCount = queryCount;
         this.cacheSize = cacheSize;
+        this.algorithmTimeMs = algorithmTimeMs;
+        this.totalTimeMs = totalTimeMs;
 
         addStat("ViolatingSize", this::getViolatingSize);
         addStat("StateSpaceSize", this::getStateSpaceSize);
         addStat("HitCount", this::getHitCount);
         addStat("QueryCount", this::getQueryCount);
         addStat("CacheSize", this::getCacheSize);
+        addStat("AlgorithmTimeMs", this::getAlgorithmTimeMs);
+        addStat("TotalTimeMs", this::getTotalTimeMs);
     }
 
     public Long getViolatingSize() {
@@ -62,5 +70,13 @@ public class MddAnalysisStatistics extends Statistics {
 
     public Long getCacheSize() {
         return cacheSize;
+    }
+
+    public Long getAlgorithmTimeMs() {
+        return algorithmTimeMs;
+    }
+
+    public Long getTotalTimeMs() {
+        return totalTimeMs;
     }
 }

@@ -19,29 +19,22 @@ runs:
       if: env.file_exists == 'false'
       shell: bash
       run: |
-        git clone https://gitlab.com/sosy-lab/software/specification-transformation.git specification-transformation
+        git clone https://gitlab.com/sosy-lab/software/transver.git specification-transformation
         cd specification-transformation
-        git checkout d966deb4ea0e34c1bc658d7c979a032340c93b13 # Fri Nov 8 10:43:02 2024 
-        git apply $GITHUB_ACTION_PATH/patch.diff
+        git checkout cb403db10ca9eb9c0ef6d38afc16eb63799410dc # Fri Oct 10 18:53:56 2025 
     - name: Build cpachecker
       if: env.file_exists == 'false'
       shell: bash
       run: |
-        cd specification-transformation/lib
-        git clone https://github.com/sosy-lab/cpachecker.git cpachecker
-        cd cpachecker
-        git checkout c087875f139c14692b08a33f7d2cc77006c80ddc
-        ant jar
-        cd ../../
-        mkdir cpachecker/runtime -p
-        mv lib/cpachecker/lib/java/runtime/*.jar cpachecker/runtime/
-        mv lib/cpachecker/config cpachecker/
-        mv lib/cpachecker/cpachecker.jar cpachecker/
+        cd specification-transformation/
+        make setup
+        cd lib/cpachecker
+        rm lib/java/runtime/libLLVM-9.so lib/java/runtime/lib{z3,cvc}*
     - name: zip file
       if: env.file_exists == 'false'
       shell: bash
       run: |
-        zip specification-transformation.zip specification-transformation/cpachecker specification-transformation/src -r
+        zip specification-transformation.zip specification-transformation -r
     - name: Move if exists
       if: env.file_exists == 'true'
       shell: bash

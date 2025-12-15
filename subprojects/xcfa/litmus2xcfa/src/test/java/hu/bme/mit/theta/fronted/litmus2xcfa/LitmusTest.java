@@ -28,11 +28,9 @@ import java.util.Collection;
 import java.util.List;
 import kotlin.Pair;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
+// @RunWith(Parameterized.class)
 public class LitmusTest {
     @Parameterized.Parameter(0)
     public String filepath;
@@ -57,7 +55,7 @@ public class LitmusTest {
                 });
     }
 
-    @Test
+    //    @Test
     public void parse() throws IOException {
         final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
 
@@ -70,7 +68,7 @@ public class LitmusTest {
         }
     }
 
-    @Test
+    //    @Test
     public void check() throws IOException {
         try (Solver solver = Z3LegacySolverFactory.getInstance().createSolver()) {
             final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));

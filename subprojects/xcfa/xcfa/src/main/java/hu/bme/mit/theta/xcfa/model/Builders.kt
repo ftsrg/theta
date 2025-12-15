@@ -17,24 +17,21 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 @DslMarker annotation class XcfaDsl
 
 @XcfaDsl
 class XcfaBuilder
 @JvmOverloads
-constructor(
-  var name: String,
-  private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
-  val heapMap: MutableMap<Triple<Int, Int, Type>, VarDecl<*>> = LinkedHashMap(),
-  private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
-  private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
-  val metaData: MutableMap<String, Any> = LinkedHashMap(),
-) {
+constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet()) {
+
+  private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet()
+  private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList()
+  val metaData: MutableMap<String, Any> = LinkedHashMap()
 
   fun getVars(): Set<XcfaGlobalVar> = vars
 
@@ -64,6 +61,13 @@ constructor(
     addProcedure(toAdd)
     initProcedures.add(Pair(toAdd, params))
   }
+
+  fun removeProcedure(toRemove: XcfaProcedureBuilder) {
+    check(!initProcedures.any { it.first == toRemove }) {
+      "Cannot remove an entry point procedure!"
+    }
+    procedures.remove(toRemove)
+  }
 }
 
 @XcfaDsl
@@ -79,6 +83,7 @@ constructor(
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
   unsafeUnrollUsed: Boolean = false,
+  var prop: Expr<BoolType> = True(),
 ) {
 
   lateinit var initLoc: XcfaLocation
@@ -118,6 +123,7 @@ constructor(
       this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
       this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
         partlyOptimized.vars.contains(this)
+
       else -> atomicVars.contains(this)
     }
 
@@ -176,6 +182,7 @@ constructor(
         initLoc = optimized.initLoc,
         finalLoc = optimized.finalLoc,
         errorLoc = optimized.errorLoc,
+        prop = prop,
       )
     built.parent = parent
     return built
@@ -282,6 +289,13 @@ constructor(
   fun removeEdge(toRemove: XcfaEdge) {
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
+    }
+    check(
+      toRemove.source.outgoingEdges.contains(toRemove) &&
+        toRemove.target.incomingEdges.contains(toRemove) &&
+        edges.contains(toRemove)
+    ) {
+      "Cannot remove edge if it wasn't already present!"
     }
     toRemove.source.outgoingEdges.remove(toRemove)
     toRemove.target.incomingEdges.remove(toRemove)

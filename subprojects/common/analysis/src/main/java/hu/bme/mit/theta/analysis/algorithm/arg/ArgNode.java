@@ -87,6 +87,10 @@ public final class ArgNode<S extends State, A extends Action> {
         this.state = state;
     }
 
+    public boolean inPartialOrder(final ArgNode<S, A> node) {
+        return arg.getPartialOrd().isLeq(node.getState(), this.getState());
+    }
+
     public boolean mayCover(final ArgNode<S, A> node) {
         if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
             return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());

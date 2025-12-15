@@ -18,8 +18,13 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectAssumesVars
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isRead
+import hu.bme.mit.theta.xcfa.utils.isWritten
 
 class StaticCoiPass : ProcedurePass {
 
@@ -69,7 +74,7 @@ class StaticCoiPass : ProcedurePass {
       this is StmtLabel &&
         ((this.stmt is AssignStmt<*> && "_ret" !in this.stmt.varDecl.name) ||
           this.stmt is HavocStmt<*>) &&
-        dereferencesWithAccessTypes.none { it.second.isWritten }
+        dereferencesWithAccessType.none { it.value.isWritten }
 
   private fun findDirectObservers(edge: XcfaEdge, label: XcfaLabel, remaining: List<XcfaLabel>) {
     val writtenVars =
@@ -123,7 +128,7 @@ class StaticCoiPass : ProcedurePass {
     while (toVisit.isNotEmpty()) {
       val visiting = toVisit.removeFirst()
       if (visiting.collectAssumesVars().isNotEmpty()) return true
-      if (visiting.dereferencesWithAccessTypes.any { it.second.isWritten }) return true
+      if (visiting.dereferencesWithAccessType.any { it.value.isWritten }) return true
 
       visited.add(visiting)
       val toAdd =

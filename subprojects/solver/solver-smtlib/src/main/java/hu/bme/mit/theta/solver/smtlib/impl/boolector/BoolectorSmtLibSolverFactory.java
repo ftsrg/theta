@@ -20,6 +20,7 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import java.nio.file.Path;
 
+@Deprecated
 public class BoolectorSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
     private BoolectorSmtLibSolverFactory(Path solverPath, String[] args) {

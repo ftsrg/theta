@@ -21,7 +21,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Stopwatch
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
@@ -32,6 +31,8 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
+import hu.bme.mit.theta.frontend.petrinet.analysis.PetriNetForceVarOrdering
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory
@@ -42,7 +43,6 @@ import hu.bme.mit.theta.xsts.cli.optiongroup.PetrinetDependencyOutputOptions
 import java.io.File
 import java.io.PrintStream
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import kotlin.system.exitProcess
 
@@ -64,10 +64,7 @@ class XstsCliPetrinetMdd :
   private val dependencyOutput by PetrinetDependencyOutputOptions()
 
   private fun loadOrdering(petriNet: PetriNet): List<Place> =
-    if (ordering == null)
-      petriNet.places.sortedWith { p1: Place, p2: Place ->
-        String.CASE_INSENSITIVE_ORDER.compare(p1.id.reversed(), p2.id.reversed())
-      }
+    if (ordering == null) PetriNetForceVarOrdering.orderVars(petriNet)
     else VariableOrderingFactory.fromFile(ordering, petriNet)
 
   private fun petrinetAnalysis() {
@@ -110,6 +107,8 @@ class XstsCliPetrinetMdd :
           provider.hitCount,
           provider.queryCount,
           provider.cacheSize,
+          ssgTimer.elapsedMillis(),
+          totalTimer.elapsedMillis(),
         )
       logger.writeln(Logger.Level.MAINSTEP, statistics.toString())
       logger.writeln(Logger.Level.RESULT, "(SafetyResult Safe)")
@@ -121,8 +120,8 @@ class XstsCliPetrinetMdd :
           system.name,
           MddInterpreter.calculateNonzeroCount(stateSpace),
           numberOfNodes(stateSpace),
-          totalTimer.elapsed(TimeUnit.MICROSECONDS),
-          ssgTimer.elapsed(TimeUnit.MICROSECONDS),
+          totalTimer.elapsedNanos(),
+          ssgTimer.elapsedNanos(),
           variableOrder.mddGraph.uniqueTableSize,
           unionProvider.cacheSize,
           unionProvider.queryCount,

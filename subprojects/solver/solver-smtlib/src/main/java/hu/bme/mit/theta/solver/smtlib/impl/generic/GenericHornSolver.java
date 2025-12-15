@@ -48,12 +48,14 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
     private static final Pattern CEX_ROOT = Pattern.compile("([0-9]+):\s*(.*)");
 
     private ProofNode proof = null;
+    private final boolean needsModelWrapping;
 
     public GenericHornSolver(
             SmtLibSymbolTable symbolTable,
             SmtLibTransformationManager transformationManager,
             SmtLibTermTransformer termTransformer,
-            SmtLibSolverBinary solverBinary) {
+            SmtLibSolverBinary solverBinary,
+            boolean needsModelWrapping) {
         super(
                 symbolTable,
                 transformationManager,
@@ -62,6 +64,7 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
                 false,
                 SmtLibEnumStrategy.getDefaultStrategy(),
                 "HORN");
+        this.needsModelWrapping = needsModelWrapping;
     }
 
     @Override
@@ -80,11 +83,11 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
         if (status == SolverStatus.SAT) {
             // we have a model
             final var sb = new StringBuilder();
-            sb.append("(");
+            if (needsModelWrapping) sb.append("(");
             for (int i = 1; i < response.size(); i++) {
                 sb.append(response.get(i)).append("\n");
             }
-            sb.append(")");
+            if (needsModelWrapping) sb.append(")");
             final var generalResponse = parseResponse(sb.toString());
             if (generalResponse.isSpecific() && generalResponse.asSpecific().isGetModelResponse()) {
                 model =

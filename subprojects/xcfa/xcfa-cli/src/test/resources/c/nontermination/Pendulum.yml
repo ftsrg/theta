@@ -1,0 +1,94 @@
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "77d4a34c-1901-4965-9901-524ba605a65f"
+    creation_time: "2025-05-25T15:38:27Z"
+    producer:
+      name: "Theta"
+      version: "no version found"
+    task:
+      input_files:
+        - "Pendulum.c"
+      input_file_hashes:
+        "Pendulum.c": "8a09f35af29d06b0ca7ab67795124d95f0aff5bcafd8a5ac9480d8525ca55422"
+      specification: "TERMINATION"
+      data_model: "LP64"
+      language: "C"
+  content:
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 13)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 5
+              column: 20
+            action: "follow"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 13)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 6
+              column: 9
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 13)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 7
+              column: 13
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 31)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 5
+              column: 20
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 31)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 6
+              column: 9
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 31)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 9
+              column: 13
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(p == 13)"
+              format: "c_expression"
+            location:
+              file_name: "Pendulum.c"
+              line: 5
+              column: 20
+            action: "cycle"

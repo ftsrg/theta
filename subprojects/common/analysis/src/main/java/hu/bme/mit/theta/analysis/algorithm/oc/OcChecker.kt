@@ -95,10 +95,12 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
 
   protected fun derive(rels: GlobalRelation, rf: Relation<E>, w: E): Reason? =
     when {
-      !rf.from.sameMemory(w) -> null // different referenced memory locations
-      rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
-      w.clkId == rf.from.clkId || w.clkId == rf.to.clkId ->
-        null // w within an atomic block with one of the rf ends
+      rf.from.clkId == rf.to.clkId -> null
+      // rf within an atomic block
+      w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null
+      // w within an atomic block with one of the rf ends
+      !rf.to.sameMemory(w) -> null
+      // different memory locations (checking with rf.to due to common memory garbage event)
 
       rels[w.clkId, rf.to.clkId] != null -> { // WS derivation
         val reason = WriteSerializationReason(rf, w, rels[w.clkId, rf.to.clkId]!!)
@@ -159,7 +161,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
 /**
  * Represents the known value of an important element for ordering consistency checking. Such an
  * important element is either a relation (being enabled) or an event (being enabled - having a
- * guard that evaluates to true). The fix (closed by theory axioms) relations and the solver
+ * guard that evaluates to true). The fix relations (closed by theory axioms) and the solver
  * decision stack level are also stored.
  */
 open class OcAssignment<E : Event>

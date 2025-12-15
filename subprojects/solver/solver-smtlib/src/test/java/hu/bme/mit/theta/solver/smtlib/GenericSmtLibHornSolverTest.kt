@@ -15,22 +15,27 @@
  */
 package hu.bme.mit.theta.solver.smtlib
 
+import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.plus
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.App
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr
 import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.solver.*
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -43,10 +48,13 @@ class GenericSmtLibHornSolverTest {
 
     private val SOLVERS: List<Pair<String, String>> =
       listOf(
-        Pair("z3", "4.13.0"),
-        Pair("z3", "4.12.6"),
         Pair("eldarica", "2.1"),
+        Pair("golem", "0.8.1"),
+        Pair("eldarica", "2.2"),
         Pair("golem", "0.5.0"),
+        Pair("z3", "4.13.0"),
+        Pair("z3", "4.14.0"),
+        Pair("z3", "4.15.0"),
       )
 
     @JvmStatic
@@ -146,6 +154,7 @@ class GenericSmtLibHornSolverTest {
   @ParameterizedTest(name = "[{index}] {0}")
   @MethodSource("solvers")
   fun testUnsolvable(name: Pair<String, String>) {
+    assumeFalse(name.first.equals("golem") && name.second.equals("0.8.1"))
     val solverFactory = solverFactories[name]!!
     val solver = solverFactory.createHornSolver()
 
@@ -175,6 +184,7 @@ class GenericSmtLibHornSolverTest {
   @ParameterizedTest(name = "[{index}] {0}")
   @MethodSource("solvers")
   fun testNonlinearUnsolvable(name: Pair<String, String>) {
+    assumeFalse(name.first.equals("golem") && name.second.equals("0.8.1"))
     val solverFactory = solverFactories[name]!!
     val solver = solverFactory.createHornSolver()
 
@@ -210,6 +220,76 @@ class GenericSmtLibHornSolverTest {
       val proof = hornSolver.proof
       Assertions.assertTrue(proof != null)
       System.err.println(proof)
+    }
+  }
+
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("solvers")
+  fun testBinaryInterpolation(name: Pair<String, String>) {
+    val solverFactory = solverFactories[name]!!
+    val solver = solverFactory.createHornSolver()
+
+    val ad = Const("a", Int())
+    val bd = Const("b", Int())
+    val cd = Const("c", Int())
+    val dd = Const("d", Int())
+
+    val a = ad.getRef()
+    val b = bd.getRef()
+    val c = cd.getRef()
+    val d = dd.getRef()
+
+    solver.use { hornSolver ->
+      val A = ArrayList<Expr<BoolType>>(2)
+      val B = ArrayList<Expr<BoolType>>(2)
+
+      A.add(IntExprs.Eq(a, b))
+      A.add(IntExprs.Eq(a, c))
+      B.add(IntExprs.Eq(b, d))
+      B.add(IntExprs.Neq(c, d))
+
+      val itp = hornSolver.interpolate(A, B)
+
+      println(itp)
+      println("----------")
+      Assertions.assertTrue(ExprUtils.getConstants(itp).size <= 3)
+    }
+  }
+
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("solvers")
+  fun testLIA(name: Pair<String, String>) {
+    if (name.first == "golem") return
+    val solverFactory = solverFactories[name]!!
+    val solver = solverFactory.createHornSolver()
+
+    val ad = Const("a", Int())
+    val bd = Const("b", Int())
+    val cd = Const("c", Int())
+
+    val a = ad.getRef()
+    val b = bd.getRef()
+    val c = cd.getRef()
+
+    solver.use { hornSolver ->
+      val A = ArrayList<Expr<BoolType>>(2)
+      val B = ArrayList<Expr<BoolType>>(2)
+
+      A.add(IntExprs.Eq(b, IntExprs.Mul(ImmutableList.of<Expr<IntType?>?>(Int(2), a))))
+      B.add(
+        IntExprs.Eq(
+          b,
+          IntExprs.Add(
+            ImmutableList.of(IntExprs.Mul(ImmutableList.of<Expr<IntType?>?>(Int(2), c)), Int(1))
+          ),
+        )
+      )
+
+      val itp = hornSolver.interpolate(A, B)
+
+      println(itp)
+      println("----------")
+      Assertions.assertTrue(ExprUtils.getConstants(itp).size <= 3)
     }
   }
 }

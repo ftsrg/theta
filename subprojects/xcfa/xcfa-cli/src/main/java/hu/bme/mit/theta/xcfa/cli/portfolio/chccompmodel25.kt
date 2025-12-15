@@ -26,8 +26,8 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Domain.*
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.BW_BIN_ITP
 import hu.bme.mit.theta.xcfa.cli.runConfig
-import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 fun chcCompPortfolioModel25(
   xcfa: XCFA,
@@ -158,9 +158,10 @@ fun chcCompPortfolioModel25(
         "Complex25-$inProcess",
         XcfaConfig(
           inputConfig =
-            InputConfig(
-              input = null,
-              xcfaWCtx = Triple(xcfa, mcm, parseContext),
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
               propertyFile = null,
               property = portfolioConfig.inputConfig.property,
             ),

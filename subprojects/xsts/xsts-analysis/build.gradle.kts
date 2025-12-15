@@ -13,12 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("java-common")
     id("kotlin-common")
 }
 
 dependencies {
+    implementation(files(rootDir.resolve(Deps.delta)))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
@@ -26,6 +30,18 @@ dependencies {
     implementation(project(":theta-xsts"))
     testImplementation(project(":theta-solver-z3"))
     testImplementation(project(":theta-solver-z3-legacy"))
+    implementation(kotlin("stdlib-jdk8"))
     testImplementation(project(":theta-solver-smtlib"))
     testImplementation(project(":theta-solver-javasmt"))
+}
+repositories {
+    mavenCentral()
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "17"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "17"
 }

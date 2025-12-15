@@ -24,9 +24,9 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
  * Transforms mallocs into address assignments. Requires the ProcedureBuilder be `deterministic`.
@@ -59,7 +59,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               builder.parent.addVar(
                 XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
               )
-              if (MemsafetyPass.NEED_CHECK) {
+              if (MemsafetyPass.enabled) {
                 builder.parent.addVar(
                   XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
                 )
@@ -92,11 +92,11 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 mallocVar,
                 Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
                 ret.type,
-                invokeLabel.metadata,
+                EmptyMetaData,
               )
             val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
             val labels =
-              if (MemsafetyPass.NEED_CHECK) {
+              if (MemsafetyPass.enabled) {
                 val assign3 = builder.parent.allocate(parseContext, ret, arg)
                 listOf(assign1, assign2, assign3)
               } else {
