@@ -296,7 +296,7 @@ enum class Format {
  */
 @Serializable
 data class Location(
-  @SerialName("file_name") val fileName: String,
+  @SerialName("file_name") val fileName: String? = null,
   val line: Int,
   val column: Int? = null,
   val function: String? = null,

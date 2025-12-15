@@ -27,6 +27,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.architecture
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.inputFile
@@ -39,6 +41,8 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.*
+import kotlin.jvm.optionals.getOrDefault
+import kotlin.jvm.optionals.getOrNull
 import kotlin.reflect.KProperty
 
 object WitnessPrecSerializerConfig {
@@ -53,38 +57,32 @@ object WitnessPrecSerializerConfig {
 
 class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
     override fun serialize(prec: Prec): String {
-        val procedureVars = prec.usedVars.groupByProcedure()
-        val procedurePreds = (prec as PredPrec).preds
+        val precVars = prec.usedVars
+        val scopedVars = precVars.groupByScope()
+        val scopedPreds = (prec as PredPrec).preds
             .filter { ExprUtils.getVars(it).none(VarDecl<*>::isInternal) }
-            .map { it.toC(parseContext) }
             .groupBy { pred ->
-                procedureVars.keys.firstOrNull { proc -> // preds without local vars are grouped to null
-                    proc?.let{ pred.contains(it) } ?: false
+                val usedVars = ExprUtils.getVars(pred)
+                scopedVars.entries.fold(PrecisionScope(PrecisionScopeType.GLOBAL)) { tightest, (scope, vars) ->
+                    if (usedVars.any { vars.contains(it) } && scope.type > tightest.type) scope
+                    else tightest
                 }
             }
-        val contents = procedurePreds.map { (procedure, preds) ->
-            val precision = if (procedure == null) { // preds with global variables only
-                Precision(
-                    type = PrecisionType.PREDICATE,
-                    scope = PrecisionScope(PrecisionScopeType.GLOBAL),
-                    format = Format.C_EXPRESSION,
-                    values = preds,
-                )
-            } else {
-                val vars = procedureVars[procedure] ?: listOf()
-                val values = preds.map {
-                    vars.fold(it) { pred, v ->
-                        pred.replace(v.toC(), v.split("::").last())
+
+        val contents = scopedPreds.map { (scope, preds) ->
+            val values = preds.mapNotNull {
+                try {
+                    val cExpr = it.toC(parseContext)
+                    precVars.fold(cExpr) { pred, v ->
+                        pred.replace(v.name.toC(), v.name.split("::").last())
                     }
+                } catch (e: NotImplementedError) {
+                    logger.writeln(Logger.Level.INFO, "WARNING: Couldn't serialize initial precision predicate, skipping it (${e.message})")
+                    null
                 }
-                Precision(
-                    type = PrecisionType.PREDICATE,
-                    scope = PrecisionScope(PrecisionScopeType.FUNCTION, functionName = procedure),
-                    format = Format.C_EXPRESSION,
-                    values = values,
-                )
             }
-            ContentItem(precision = precision)
+
+            ContentItem(precision = Precision(Format.C_EXPRESSION, scope, PrecisionType.PREDICATE, values))
         }
 
         val witness = YamlWitness(
@@ -103,14 +101,18 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
         val predSet = witness.content
             .mapNotNull { it.precision }
             .filter { it.type == PrecisionType.PREDICATE }
-            .flatMap { it.values.mapNotNull { value ->
-                try {
-                    getBoolExprFromC(value, parseContext, false, false, logger, currentVars)
-                } catch (e: RuntimeException) {
-                    logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
-                    null
+            .flatMap {
+                val vars = currentVars.filterInScope(it.scope)
+                it.values.mapNotNull { value ->
+                    try {
+                        val expr = getBoolExprFromC(value, parseContext, false, false, logger, vars)
+                        ExprUtils.simplify(expr)
+                    } catch (e: RuntimeException) {
+                        logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
+                        null
+                    }
                 }
-            } }
+            }
 
         return PredPrec.of(predSet)
     }
@@ -120,21 +122,14 @@ class WitnessExplPrecSerializer : PrecSerializer<ExplPrec> {
     override fun serialize(prec: Prec): String {
         val procedureVars = (prec as ExplPrec).vars
             .filterNot { it.isInternal }
-            .groupByProcedure()
-            .mapValues { (_, vars) ->
-                vars.map { "&" + it.split("::").last() }
-            }
+            .groupByScope()
 
-        val contents = procedureVars.map { (procedure, vars) ->
-            ContentItem(precision =
-                Precision(
-                    type = PrecisionType.EXPLICIT,
-                    scope = if (procedure == null) PrecisionScope(PrecisionScopeType.GLOBAL)
-                            else PrecisionScope(PrecisionScopeType.FUNCTION, functionName = procedure),
-                    format = Format.C_EXPRESSION,
-                    values = vars,
-                )
-            )
+        val contents = procedureVars.map { (scope, vars) ->
+            val values = vars.map {
+                val prefix = if (CComplexType.getType(it.ref, parseContext) is CPointer) "" else "&"
+                prefix + it.name.split("::").last()
+            }
+            ContentItem(precision = Precision(Format.C_EXPRESSION, scope, PrecisionType.EXPLICIT, values))
         }
 
         val witness = YamlWitness(
@@ -153,25 +148,40 @@ class WitnessExplPrecSerializer : PrecSerializer<ExplPrec> {
         val vars = witness.content
             .mapNotNull { it.precision }
             .filter { it.type == PrecisionType.EXPLICIT }
-            .flatMap { it.values.flatMap { value ->
-                try {
-                    val expr = getExpressionFromC(value, parseContext, false, false, logger, currentVars)
-                    ExprUtils.getVars(expr)
-                } catch (e: RuntimeException) {
-                    logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
-                    emptySet()
+            .flatMap {
+                val vars = currentVars.filterInScope(it.scope)
+                it.values.flatMap { value ->
+                    try {
+                        val expr = getExpressionFromC(value, parseContext, false, false, logger, vars)
+                        ExprUtils.getVars(expr)
+                    } catch (e: RuntimeException) {
+                        logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
+                        emptySet()
+                    }
                 }
-            } }
+            }
 
         return ExplPrec.of(vars)
     }
 }
 
-private fun Collection<VarDecl<*>>.groupByProcedure() = this
-    .map { it.name }
+private fun Collection<VarDecl<*>>.groupByScope() = this
     .groupBy {
-        if (it.contains("::")) it.split("::").first()
-        else null
+        val scopes = it.name.split("::")
+        when (scopes.size) {
+            1 -> PrecisionScope(PrecisionScopeType.GLOBAL)
+            2 -> PrecisionScope(PrecisionScopeType.FUNCTION, functionName = scopes.first())
+            else -> {
+                val functionName = scopes.first()
+                val line = parseContext.metadata.getMetadataValue(it.name, "locationLine").getOrNull() as? Int
+                    ?: return@groupBy PrecisionScope(PrecisionScopeType.FUNCTION, functionName = functionName)
+                val column = parseContext.metadata.getMetadataValue(it.name, "locationColumn").getOrNull() as? Int
+                PrecisionScope(
+                    PrecisionScopeType.LOCATION,
+                    location = Location(line = line, column = column, function = functionName)
+                )
+            }
+        }
     }
 
 val VarDecl<*>.isInternal: Boolean
@@ -211,4 +221,32 @@ class ThrowIfNullDelegate<T, P>(private val errorMessage: String) {
     operator fun setValue(thisRef: T?, property: KProperty<*>, value: P) {
         this.value = value
     }
+}
+
+fun Iterable<VarDecl<*>>.filterInScope(scope: PrecisionScope): List<VarDecl<*>> {
+    val preference: (VarDecl<*>, String) -> Int = when (scope.type) {
+        PrecisionScopeType.GLOBAL -> { varDecl, simpleName ->
+            if (varDecl.name == simpleName) 1 else 0
+        }
+        PrecisionScopeType.FUNCTION -> { varDecl, _ ->
+            if (varDecl.name.contains("${scope.functionName}::")) 1 else 0
+        }
+        else -> { varDecl, _ ->
+            val line = parseContext.metadata.getMetadataValue(varDecl.name, "locationLine").getOrNull() as? Int
+            val column = parseContext.metadata.getMetadataValue(varDecl.name, "locationColumn").getOrNull() as? Int
+            if (line != null && scope.location?.line == line)
+                if (column != null && scope.location?.column == column) 3 else 2
+            else
+                if (varDecl.name.contains("${scope.functionName}::")) 1 else 0
+        }
+    }
+
+    val varsInScope = fold(mutableMapOf<String, Pair<VarDecl<*>, Int>>()) { vars, it ->
+        val simpleName = parseContext.metadata.getMetadataValue(it.name, "cName").getOrDefault(it.name) as String
+        val pref = preference(it, simpleName)
+        if (!vars.containsKey(simpleName) || pref > vars.getValue(simpleName).second)
+            vars[simpleName] = Pair(it, pref)
+        vars
+    }
+    return varsInScope.map { it.value.first }
 }

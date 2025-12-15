@@ -400,4 +400,4 @@ fun Expr<*>.arrayCOperator() =
     else -> TODO("Not yet implemented array operator label for expr: $this")
   }
 
-fun String.toC() = this.replace(Regex("[^A-Za-z_0-9]"), "_")
+fun String.toC() = this.replace(Regex("[^A-Za-z_0-9$]"), "_")
