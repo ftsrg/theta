@@ -61,6 +61,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
+import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 

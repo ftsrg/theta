@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.utils.PrecSerializer
-import hu.bme.mit.theta.c2xcfa.getBoolExprFromC
+import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
 import hu.bme.mit.theta.c2xcfa.getExpressionFromC
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -29,12 +29,11 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.architecture
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.inputFile
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.logger
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.ltlSpecification
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.parseContext
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig.property
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.witnesses.*
 import kotlinx.serialization.builtins.ListSerializer
@@ -51,7 +50,7 @@ object WitnessPrecSerializerConfig {
     var parseContext: ParseContext by ThrowIfNullDelegate(ERROR_MESSAGE)
     var logger: Logger by ThrowIfNullDelegate(ERROR_MESSAGE)
     var inputFile: File? = null
-    var property: ErrorDetection? = null
+    var ltlSpecification: String? = null
     var architecture: ArchitectureConfig.ArchitectureType? = null
 }
 
@@ -105,7 +104,7 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
                 val vars = currentVars.filterInScope(it.scope)
                 it.values.mapNotNull { value ->
                     try {
-                        val expr = getBoolExprFromC(value, parseContext, false, false, logger, vars)
+                        val expr = getBoolExpressionFromC(value, parseContext, false, false, logger, vars)
                         ExprUtils.simplify(expr)
                     } catch (e: RuntimeException) {
                         log(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
@@ -201,7 +200,7 @@ private fun getMetadata() =
         Task(
             inputFiles = listOf(inputFile?.name ?: "unknown"),
             inputFileHashes = mapOf(Pair(inputFile?.path ?: "unknown", createTaskHash(inputFile?.path ?: "unknown"))),
-            specification = property?.name ?: "unknown",
+            specification = ltlSpecification ?: "unknown",
             dataModel =
             architecture?.let {
                 if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
