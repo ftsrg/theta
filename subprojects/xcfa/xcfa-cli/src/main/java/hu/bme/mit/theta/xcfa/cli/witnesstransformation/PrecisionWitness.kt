@@ -77,7 +77,7 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
                         pred.replace(v.name.toC(), v.name.split("::").last())
                     }
                 } catch (e: NotImplementedError) {
-                    logger.writeln(Logger.Level.INFO, "WARNING: Couldn't serialize initial precision predicate, skipping it (${e.message})")
+                    log(Logger.Level.INFO, "WARNING: Couldn't serialize precision predicate, skipping it (${e.message})")
                     null
                 }
             }
@@ -108,7 +108,7 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
                         val expr = getBoolExprFromC(value, parseContext, false, false, logger, vars)
                         ExprUtils.simplify(expr)
                     } catch (e: RuntimeException) {
-                        logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
+                        log(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
                         null
                     }
                 }
@@ -155,7 +155,7 @@ class WitnessExplPrecSerializer : PrecSerializer<ExplPrec> {
                         val expr = getExpressionFromC(value, parseContext, false, false, logger, vars)
                         ExprUtils.getVars(expr)
                     } catch (e: RuntimeException) {
-                        logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
+                        log(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
                         emptySet()
                     }
                 }

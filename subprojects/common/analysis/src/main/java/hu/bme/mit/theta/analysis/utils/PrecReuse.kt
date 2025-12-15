@@ -21,6 +21,7 @@ import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
@@ -60,6 +61,7 @@ object PrecReuse {
     private var inputFile: File? = null
     private var serializer: PrecSerializer<Prec>? = null
     private var toSave: Prec? = null
+    internal var logger: Logger? = null
     var precReuseMode = PrecReuseMode.WITNESS
 
     fun enable(precSerializer: PrecSerializer<*>) {
@@ -69,6 +71,10 @@ object PrecReuse {
 
     fun setInput(precFile: File) {
         inputFile = precFile
+    }
+
+    fun setLogger(logger: Logger) {
+        this.logger = logger
     }
 
     fun <P : Prec> load(currentVars: Iterable<VarDecl<*>> = listOf()): P {
@@ -101,6 +107,7 @@ object PrecReuse {
 interface PrecSerializer<out P : Prec> {
     fun serialize(prec: Prec): String
     fun parse(input: String, currentVars: Iterable<VarDecl<*>>): P
+    fun log(level: Logger.Level, message: String) = PrecReuse.logger?.writeln(level, message) ?: println(message)
 }
 
 class ExplPrecSerializer : PrecSerializer<ExplPrec> {
@@ -125,8 +132,16 @@ class PredPrecSerializer : PrecSerializer<PredPrec> {
 
         val predicates = (prec as PredPrec).preds
             .map { pred -> ExprUtils.changeDecls(pred, quotedVarLookup) }
+            .mapNotNull {
+                try {
+                    transformationManager.toTerm(it)
+                } catch (e: Exception) {
+                    log(Logger.Level.INFO, "WARNING: Couldn't serialize precision predicate, skipping it (${e.message})")
+                    null
+                }
+            }
             .joinToString(separator = "\n") {
-                "(assert ${transformationManager.toTerm(it)})"
+                "(assert $it)"
             }
 
         return "$varDecls\n\n*:\n$predicates"
@@ -151,9 +166,15 @@ class PredPrecSerializer : PrecSerializer<PredPrec> {
             .associateBy(symbolTable::getConst) { name -> currentVars.find { it.toSymbol() == name } }
             .filterValues { it != null }
 
-        val preds = savedPrec.terms.map { t ->
-            val expr = termTransformer.toExpr(t, BoolExprs.Bool(), SmtLibModel(emptyMap()))
-            ExprUtils.changeDecls(expr, varLookup)
+        val preds = savedPrec.terms.mapNotNull { t ->
+            try {
+                var expr = termTransformer.toExpr(t, BoolExprs.Bool(), SmtLibModel(emptyMap()))
+                expr = ExprUtils.changeDecls(expr, varLookup)
+                ExprUtils.simplify(expr)
+            } catch (e: Exception) {
+                log(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $t, skipping it (${e.message})")
+                null
+            }
         }
         return PredPrec.of(preds)
     }
