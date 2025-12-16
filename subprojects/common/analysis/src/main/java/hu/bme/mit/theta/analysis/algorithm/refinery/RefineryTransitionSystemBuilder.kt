@@ -44,6 +44,8 @@ abstract class RefineryTransitionSystemBuilder {
     |class MemoryRegion {
     |    contains Address address
     |    contains MemoryObject[] parts
+    |    int size
+    |    boolean valid
     |}
     |
     |class Address {
@@ -56,6 +58,7 @@ abstract class RefineryTransitionSystemBuilder {
     |
     |abstract class MemoryObject extends Pointable {
     |    int offset
+    |    int size
     |}
     |
     |class Value extends MemoryObject {
@@ -123,7 +126,7 @@ abstract class RefineryTransitionSystemBuilder {
   // Initial state
 
   protected open val initialStateDeclarations: List<String>
-    get() = listOf("next_address($ENVIRONMENT): 1.")
+    get() = listOf("!exists(MemoryRegion::new).", "next_address($ENVIRONMENT): 1.")
 
   protected val initialState: String
     get() = initialStateDeclarations.joinToString("\n")

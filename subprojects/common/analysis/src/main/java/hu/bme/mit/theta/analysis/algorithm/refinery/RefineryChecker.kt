@@ -25,21 +25,16 @@ import hu.bme.mit.theta.common.logging.Logger
 import tools.refinery.generator.standalone.StandaloneRefinery
 import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter
 
-class RefineryChecker(
-  private val transitionSystem: String,
-  private val logger: Logger,
-) : SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
+class RefineryChecker(private val transitionSystem: String, private val logger: Logger) :
+  SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(input: UnitPrec?): SafetyResult<RefineryProof, Trace<ExplState, ExprAction>> {
-    println(System.getProperty("java.version"))
     val problem = StandaloneRefinery.getProblemLoader().loadString(transitionSystem)
     val generator = StandaloneRefinery.getGeneratorFactory().createGenerator(problem)
     val model = generator.model
 
     val adapter = model.getAdapter(DesignSpaceExplorationAdapter::class.java)
-    adapter.transformations.forEach{
-      System.err.println(it)
-    }
+    adapter.transformations.forEach { System.err.println(it) }
 
     TODO("Not yet implemented")
   }

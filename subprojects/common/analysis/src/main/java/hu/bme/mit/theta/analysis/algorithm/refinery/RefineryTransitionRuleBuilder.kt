@@ -194,11 +194,12 @@ abstract class RefineryTransitionRuleBuilder<T>(
     pointerArithmeticCounter = 0
     pointerComparisonCounter = 0
     return when (this) {
-      is SequenceStmt -> SequenceRefineryRuleBlock(stmts.map { it.toRules() })
       is AssignStmt<*> -> toRules()
       is AssumeStmt -> toRules()
       is MemoryAssignStmt<*, *, *> -> toRules()
       is SkipStmt -> SingleRefineryRule(preConditionClauses = setOf(), actionClauses = listOf())
+      is SequenceStmt ->
+        SequenceRefineryRuleBlock(stmts.filter { it !is SkipStmt }.map { it.toRules() })
       else -> error("Unsupported statement in RefineryRuleBuilder: $this")
     }
   }
@@ -209,6 +210,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
       val pointer = "pointer_$name"
       val commonPreconditions = mutableSetOf("name($name) == \"$name\"", "pointer($name, $pointer)")
       if (expr is MemoryAllocationExpr<*>) {
+        val expr = expr as MemoryAllocationExpr<*>
         val address = "allocated_address"
         val region = "allocated_region"
         val base = "allocated_base"
@@ -231,6 +233,8 @@ abstract class RefineryTransitionRuleBuilder<T>(
             listOf(
               "exists($region)",
               "MemoryRegion::address($region, $address)",
+              "MemoryRegion::size($region): ${expr.size}",
+              "valid($region): true",
               "next_address($ENVIRONMENT): next_address($ENVIRONMENT) + 1",
               "exists($base)",
               "parts($region, $base)",
@@ -337,14 +341,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
             expr =
               when (this) {
                 is BoolLitExpr -> if (value) "true" else "false"
-                is IntLitExpr -> {
-                  if (value > BigInteger.valueOf(2147483647)) {
-                    System.err.println("WARNING: $value replaced by 2147483647 for Refinery!")
-                    "2147483647"
-                  } else {
-                    value.toString()
-                  }
-                }
+                is IntLitExpr -> value.toString()
                 else -> error("Unsupported literal expression in RefineryRuleBuilder: $this")
               },
           ),

@@ -67,9 +67,6 @@ class XcfaRefineryTransitionSystemBuilder(
       """
         .trimMargin()
 
-  private val xcfaTransitionBuilder =
-    XcfaRefineryTransitionRuleBuilder(locations, variables, pointers)
-
   override val environmentDeclarations: List<String> // add program counter (xcfa location)
     get() = listOf("Location $LOCATION_DECLARATION") + super.environmentDeclarations
 
@@ -86,13 +83,19 @@ class XcfaRefineryTransitionSystemBuilder(
         variables.map { "${it.name.refinerified}($ENVIRONMENT): 0." } +
         pointers.flatMap {
           val name = it.name.refinerified
+          val pointer = "pointer_$name"
           listOf(
             "NamedPointer($name).",
             "name($name): \"$name\".",
-            "pointer($name, pointer_$name).",
-            "target(pointer_$name, null).",
+            "pointer($name, $pointer).",
+            "target($pointer, null).",
+            "offset($pointer): 0.",
+            "MemoryObject::size($pointer): 4.", // C pointer size
           )
         }
+
+  private val xcfaTransitionBuilder =
+    XcfaRefineryTransitionRuleBuilder(locations, variables, pointers)
 
   override val transitionDeclarations: List<String> =
     xcfa.initProcedures.first().first.edges.flatMap { edge ->
