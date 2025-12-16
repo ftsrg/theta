@@ -62,6 +62,7 @@ object Deps {
     val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
     val refinery = "tools.refinery:refinery-generator:${Versions.refinery}"
+    val refineryDev = "tools.refinery:refinery-generator:${Versions.refineryLocal}"
 
     val jcommander = "org.jcommander:jcommander:${Versions.jcommander}"
 

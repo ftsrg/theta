@@ -28,7 +28,7 @@ dependencies {
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver-z3-legacy"))
     implementation(project(":theta-graph-solver"))
-    implementation(Deps.refinery)
+    implementation(Deps.refineryDev)
     implementation(project(mapOf("path" to ":theta-solver-z3-legacy")))
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver-z3"))
