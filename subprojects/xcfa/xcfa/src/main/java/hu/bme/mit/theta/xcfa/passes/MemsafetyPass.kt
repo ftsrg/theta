@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     val errorLoc =
       builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
 
-    val invalidFree = XcfaLocation("__THETA_bad_free", metadata = EmptyMetaData)
+    val invalidFree = XcfaLocation("${builder.name}__THETA_bad_free", metadata = EmptyMetaData)
     builder.addLoc(invalidFree)
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::free)
@@ -159,7 +159,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   private fun annotateDeref(builder: XcfaProcedureBuilder) {
     val errorLoc =
       builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
-    val badDeref = XcfaLocation("__THETA_bad_deref", metadata = EmptyMetaData)
+    val badDeref = XcfaLocation("${builder.name}__THETA_bad_deref", metadata = EmptyMetaData)
     builder.addLoc(badDeref)
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::deref)
@@ -226,7 +226,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
     val finalLoc =
       builder.finalLoc.orElseGet { builder.createFinalLoc().let { builder.finalLoc.get() } }
-    val lostLoc = XcfaLocation("__THETA_lost", metadata = EmptyMetaData)
+    val lostLoc = XcfaLocation("${builder.name}__THETA_lost", metadata = EmptyMetaData)
     builder.addLoc(lostLoc)
 
     val sizeVar = builder.parent.getPtrSizeVar()
@@ -241,8 +241,8 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         fitsall.nullValue,
       )
 
-    val preFinalHavoc = XcfaLocation("_pre_final_havoc", metadata = EmptyMetaData)
-    val preFinal = XcfaLocation("_pre_final", metadata = EmptyMetaData)
+    val preFinalHavoc = XcfaLocation("${builder.name}_pre_final_havoc", metadata = EmptyMetaData)
+    val preFinal = XcfaLocation("${builder.name}_pre_final", metadata = EmptyMetaData)
     builder.addLoc(preFinalHavoc)
     for (incomingEdge in LinkedHashSet(finalLoc.incomingEdges)) {
       builder.removeEdge(incomingEdge)
