@@ -261,6 +261,12 @@ public final class ExprSimplifier {
         final Expr<ExprType> then = simplify(expr.getThen(), val);
         final Expr<ExprType> elze = simplify(expr.getElse(), val);
 
+        if (then instanceof TrueExpr && elze instanceof FalseExpr) {
+            return (Expr<ExprType>) cond;
+        } else if (then instanceof FalseExpr && elze instanceof TrueExpr) {
+            return (Expr<ExprType>) Not(cond);
+        }
+
         return expr.with(cond, then, elze);
     }
 

@@ -34,6 +34,7 @@ final class Z3TypeTransformer {
     private final Z3TransformationManager transformer;
 
     private final Context context;
+    private final Z3TypeSymbolTable symbolTable;
 
     private final com.microsoft.z3legacy.BoolSort boolSort;
     private final com.microsoft.z3legacy.IntSort intSort;
@@ -42,9 +43,10 @@ final class Z3TypeTransformer {
     private final Set<com.microsoft.z3legacy.FPSort> fpSorts;
     private final Map<String, EnumSort> enumSorts;
 
-    Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
+    Z3TypeTransformer(final Z3TransformationManager transformer, final Z3TypeSymbolTable symbolTable, final Context context) {
         this.context = context;
         this.transformer = transformer;
+        this.symbolTable = symbolTable;
 
         boolSort = context.mkBoolSort();
         intSort = context.mkIntSort();
@@ -108,10 +110,12 @@ final class Z3TypeTransformer {
     }
 
     private EnumSort createEnumSort(EnumType enumType) {
-        return context.mkEnumSort(
+        var sort = context.mkEnumSort(
                 enumType.getName(),
                 enumType.getValues().stream()
                         .map(lit -> EnumType.makeLongName(enumType, lit))
                         .toArray(String[]::new));
+        symbolTable.put(enumType, sort.getName().toString());
+        return sort;
     }
 }
