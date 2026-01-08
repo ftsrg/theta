@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,7 +117,9 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
         return structuralRepresentation;
     }
 
-    private RecursiveIntObjMapView<?> representBounds(final MddVariable variable, final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
+    private RecursiveIntObjMapView<?> representBounds(
+            final MddVariable variable,
+            final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
         final RecursiveIntObjMapView<?> continuation;
         if (variable.getLower().isPresent()) {
             continuation = representBounds(variable.getLower().orElseThrow(), bounds);
@@ -133,10 +134,10 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
                 mapView = IntObjMapView.singleton(triple.lower, continuation);
             } else {
                 // TODO: canonization of trimmed intobjmapviews could be improved
-                mapView = new IntObjMapViews.Trimmed<>(
-                    IntObjMapView.empty(continuation),
-                    IntSetView.range(triple.lower, triple.upper + 1)
-                );
+                mapView =
+                        new IntObjMapViews.Trimmed<>(
+                                IntObjMapView.empty(continuation),
+                                IntSetView.range(triple.lower, triple.upper + 1));
             }
         } else {
             mapView = IntObjMapView.empty(continuation);
@@ -153,17 +154,15 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
             int upper;
             boolean hasDefault;
 
-            Bounds(
-                    int lower,
-                    int upper,
-                    boolean hasDefault) {
+            Bounds(int lower, int upper, boolean hasDefault) {
                 this.lower = lower;
                 this.upper = upper;
                 this.hasDefault = hasDefault;
             }
         }
 
-        private static BinaryOperationCache<MddNode, MddVariable, ObjObjMap<MddVariable, Bounds>> cache = new BinaryOperationCache<>();
+        private static BinaryOperationCache<MddNode, MddVariable, ObjObjMap<MddVariable, Bounds>>
+                cache = new BinaryOperationCache<>();
 
         public BoundsCollector(MddNode rootNode, MddVariable variable) {
             Preconditions.checkNotNull(rootNode);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
-import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
@@ -46,8 +45,6 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -167,29 +164,29 @@ public class MddStateSpaceInfoTest {
         }
     }
 
-  private static Long calculateSize(RecursiveIntObjMapView<?> mapView) {
-    if (mapView.equals(IntObjMapView.empty())) {
-      return 1L;
-    } else {
-      mapView.defaultValue();
-      if (mapView.defaultValue() != null) {
-        return null;
-      } else {
-        Long ret = 0L;
-        IntStatistics statistics = mapView.statistics();
-        int lowestValue = statistics.lowestValue();
-        int highestValue = statistics.highestValue();
+    private static Long calculateSize(RecursiveIntObjMapView<?> mapView) {
+        if (mapView.equals(IntObjMapView.empty())) {
+            return 1L;
+        } else {
+            mapView.defaultValue();
+            if (mapView.defaultValue() != null) {
+                return null;
+            } else {
+                Long ret = 0L;
+                IntStatistics statistics = mapView.statistics();
+                int lowestValue = statistics.lowestValue();
+                int highestValue = statistics.highestValue();
 
-        for(int i = lowestValue; i < highestValue + 1; ++i) {
-          Long res = calculateSize((RecursiveIntObjMapView<?>) mapView.get(i));
-          if (res == null) {
-            return null;
-          }
+                for (int i = lowestValue; i < highestValue + 1; ++i) {
+                    Long res = calculateSize((RecursiveIntObjMapView<?>) mapView.get(i));
+                    if (res == null) {
+                        return null;
+                    }
 
-          ret += res;
+                    ret += res;
+                }
+                return ret;
+            }
         }
-        return ret;
-      }
     }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import static java.lang.String.format;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3legacy.*;
 import com.microsoft.z3legacy.enumerations.Z3_decl_kind;
-import com.microsoft.z3legacy.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -116,7 +115,8 @@ final class Z3TermTransformer {
                     TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>>
             environment;
 
-    public Z3TermTransformer(final Z3SymbolTable symbolTable, final Z3TypeSymbolTable typeSymbolTable) {
+    public Z3TermTransformer(
+            final Z3SymbolTable symbolTable, final Z3TypeSymbolTable typeSymbolTable) {
         this.symbolTable = symbolTable;
         this.typeSymbolTable = typeSymbolTable;
 
@@ -429,9 +429,8 @@ final class Z3TermTransformer {
             return transformArrLit(term, model, vars);
 
         } else if (term.isApp()) {
-            if (term.getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))  {
-                final EnumType enumType =
-                        (EnumType) transformSort(term.getSort());
+            if (term.getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR)) {
+                final EnumType enumType = (EnumType) transformSort(term.getSort());
                 return transformEnumLit(term, enumType);
             }
             return transformApp(term, model, vars);
@@ -905,25 +904,31 @@ final class Z3TermTransformer {
                 (term, model, vars) -> {
                     final com.microsoft.z3legacy.Expr[] args = term.getArgs();
                     checkArgument(args.length == 3, "Number of arguments must be three");
-//                    if (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
-//                        // ternary operator is on enum types
-//                        // if either arg is a literal, we need special handling to get its type
-//                        // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is
-//                        // Z3_OP_DT_CONSTRUCTOR)
-//                        int litIndex = -1;
-//                        for (int i = 0; i < 3; i++) {
-//                            if (args[i].getFuncDecl()
-//                                .getDeclKind()
-//                                .equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR)) litIndex = i;
-//                        }
-//                        if (litIndex > -1) {
-//                            int refIndex = Math.abs(litIndex - 1);
-//                            final Expr<?> refOp = transform(args[refIndex], model, vars);
-////                            final Expr<EnumType> litExpr =
-////                                transformEnumLit(args[litIndex], (EnumType) refOp.getType());
-////                            return function.apply(refOp, litExpr);
-//                        }
-//                    }
+                    //                    if
+                    // (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
+                    //                        // ternary operator is on enum types
+                    //                        // if either arg is a literal, we need special
+                    // handling to get its type
+                    //                        // (references' decl kind is Z3_OP_UNINTERPRETED,
+                    // literals' decl kind is
+                    //                        // Z3_OP_DT_CONSTRUCTOR)
+                    //                        int litIndex = -1;
+                    //                        for (int i = 0; i < 3; i++) {
+                    //                            if (args[i].getFuncDecl()
+                    //                                .getDeclKind()
+                    //                                .equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))
+                    // litIndex = i;
+                    //                        }
+                    //                        if (litIndex > -1) {
+                    //                            int refIndex = Math.abs(litIndex - 1);
+                    //                            final Expr<?> refOp = transform(args[refIndex],
+                    // model, vars);
+                    ////                            final Expr<EnumType> litExpr =
+                    ////                                transformEnumLit(args[litIndex], (EnumType)
+                    // refOp.getType());
+                    ////                            return function.apply(refOp, litExpr);
+                    //                        }
+                    //                    }
                     final Expr<?> op1 = transform(args[0], model, vars);
                     final Expr<?> op2 = transform(args[1], model, vars);
                     final Expr<?> op3 = transform(args[2], model, vars);

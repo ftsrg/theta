@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
+import static com.google.common.base.Preconditions.*;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
-import com.microsoft.z3legacy.Sort;
-import com.microsoft.z3legacy.Symbol;
-import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Type;
-
-import static com.google.common.base.Preconditions.*;
 
 final class Z3TypeSymbolTable {
 
@@ -42,8 +39,7 @@ final class Z3TypeSymbolTable {
     }
 
     public String getSymbol(final Type type) {
-        checkArgument(
-                definesType(type), "Type %s not found in symbol table", type);
+        checkArgument(definesType(type), "Type %s not found in symbol table", type);
         return constToSymbol.get(type);
     }
 
