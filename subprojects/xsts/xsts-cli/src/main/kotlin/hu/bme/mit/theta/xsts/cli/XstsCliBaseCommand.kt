@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
@@ -40,8 +41,12 @@ import hu.bme.mit.theta.xsts.cli.optiongroup.OutputOptions
 import java.io.File
 import java.io.PrintWriter
 
-abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
-  CliktCommand(name = name, help = help, printHelpOnEmptyArgs = true) {
+abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
+  CliktCommand(name = name) {
+
+  override fun help(c: Context) = help
+
+  override val printHelpOnEmptyArgs = true
 
   init {
     versionOption(javaClass.`package`.implementationVersion ?: "unknown")
@@ -98,9 +103,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     val concreteTrace =
       XstsTraceConcretizerUtil.concretize(trace, SolverManager.resolveSolverFactory(solver), xsts)
     val outputFile: File = outputOptions.cexfile!!
-    if (!outputFile.parentFile.exists()) {
-      outputFile.parentFile.mkdir()
-    }
+    outputFile.parentFile?.let { parent -> if (!parent.exists()) parent.mkdirs() }
     PrintWriter(outputFile).use { printWriter -> printWriter.write(concreteTrace.toString()) }
   }
 }

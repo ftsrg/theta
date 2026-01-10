@@ -1,0 +1,13 @@
+
+var x : integer
+
+trans {
+}
+
+init {}
+
+env {}
+
+prop {
+    true
+}

@@ -18,6 +18,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 apply<ApplicationPlugin>()
 apply<ShadowPlugin>()
+apply<WslJarPlugin>()
 
 tasks {
     val libPath: String by rootProject.extra
@@ -32,9 +33,15 @@ tasks {
     named("runShadow", JavaExec::class).configure { setupEnvironment() }
 }
 
-tasks.withType<ShadowJar>() {
+val shadowJar = tasks.withType<ShadowJar> {
     manifest {
         attributes["Implementation-Version"] = archiveVersion
     }
     isZip64 = true
+    entryCompression = ZipEntryCompression.DEFLATED
+}
+
+tasks.register("prepareDockerDistribution") {
+    dependsOn(shadowJar)
+    dependsOn(rootProject.tasks["downloadJavaSmtLibs"])
 }

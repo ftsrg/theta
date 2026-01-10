@@ -29,6 +29,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.getStatistics
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor
+import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -46,6 +48,7 @@ fun getXcfaFromC(
   collectStatistics: Boolean,
   property: XcfaProperty,
   warningLogger: Logger,
+  logger: Logger = warningLogger,
 ): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
   val input = CharStreams.fromStream(stream)
   val lexer = CLexer(input)
@@ -56,6 +59,7 @@ fun getXcfaFromC(
 
   val program = context.accept(FunctionVisitor(parseContext, warningLogger))
   check(program is CProgram)
+  logger.benchmark("ParsingResult Success")
 
   val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
   val builder = frontendXcfaBuilder.buildXcfa(program)
@@ -118,7 +122,7 @@ fun getExpressionFromC(
         ArrayDeque(listOf(variables)),
         mapOf(),
         null,
-        null,
+        TypeVisitor(null, TypedefVisitor(null), parseContext, warningLogger),
         warningLogger,
       )
     )

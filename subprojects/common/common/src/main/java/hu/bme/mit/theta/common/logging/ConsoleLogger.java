@@ -15,11 +15,7 @@
  */
 package hu.bme.mit.theta.common.logging;
 
-import java.io.PrintStream;
-
 public final class ConsoleLogger extends BaseLogger {
-
-    private static final PrintStream CONSOLE = System.out;
 
     public ConsoleLogger(final Level minLevel) {
         super(minLevel);
@@ -27,6 +23,6 @@ public final class ConsoleLogger extends BaseLogger {
 
     @Override
     protected void writeStr(final String str) {
-        CONSOLE.print(str);
+        System.out.print(str);
     }
 }

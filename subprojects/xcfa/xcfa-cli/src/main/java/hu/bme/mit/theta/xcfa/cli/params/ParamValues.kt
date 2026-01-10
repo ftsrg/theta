@@ -55,7 +55,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.autoexpl.xcfaNewOperandsAutoExpl
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
@@ -144,7 +143,7 @@ enum class Domain(
       stopCriterion: StopCriterion<out XcfaState<out PtrState<out ExprState>>, XcfaAction>,
       logger: Logger,
       lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
-      errorDetectionType: ErrorDetection,
+      errorDetectionType: XcfaErrorDetector,
       partialOrd: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
       isHavoc: Boolean,
       coi: XcfaCoi?,

@@ -37,6 +37,8 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
+import hu.bme.mit.theta.xcfa.model.InvokeLabel
+import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
@@ -97,6 +99,11 @@ fun XcfaProcedure.toCHC(
           newLabels
         } else {
           it.label.getFlatLabels()
+        }
+        .let {
+          if (it.any { it is InvokeLabel || it is StartLabel })
+            error("CHC transformation does not support label $it")
+          it
         }
         .map(XcfaLabel::toStmt)
 

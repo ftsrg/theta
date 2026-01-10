@@ -14,39 +14,51 @@
  *  limitations under the License.
  */
 
+import java.net.URI
 import java.net.URL
 import java.nio.file.Files
 import java.security.MessageDigest
 
-fun md5(file: File): String {
-    val buffer = ByteArray(8192)
-    val digest = MessageDigest.getInstance("MD5")
-    file.inputStream().use { fis ->
-        var read = fis.read(buffer)
-        while (read != -1) {
-            digest.update(buffer, 0, read)
-            read = fis.read(buffer)
-        }
-    }
-    return digest.digest().joinToString("") { "%02x".format(it) }
-}
-
-val archSuffix = when (val arch = System.getProperty("os.arch")) {
-    "x86_64", "amd64" -> "x64"
-    "aarch64" -> "arm64"
-    else -> throw GradleException("Unsupported architecture: $arch")
-}
-
 tasks.register("downloadJavaSmtLibs") {
     val outputDir = rootProject.layout.projectDirectory.dir("lib")
+    
+    // Capture dependencies at configuration time to avoid script object references
+    val javasmtDeps = Deps.javasmtDeps
+    val expectedFiles = javasmtDeps.values.flatten().toSet()
+
+    outputs.files(expectedFiles.map { outputDir.file(it) })
+    outputs.cacheIf { true }
+    outputs.upToDateWhen { 
+        expectedFiles.all { outputDir.file(it).asFile.exists() }
+    }
 
     doLast {
+        // MD5 calculation function (inlined to avoid script object capture)
+        fun md5(file: File): String {
+            val buffer = ByteArray(8192)
+            val digest = MessageDigest.getInstance("MD5")
+            file.inputStream().use { fis ->
+                var read = fis.read(buffer)
+                while (read != -1) {
+                    digest.update(buffer, 0, read)
+                    read = fis.read(buffer)
+                }
+            }
+            return digest.digest().joinToString("") { "%02x".format(it) }
+        }
+        
+        val archSuffix = when (val arch = System.getProperty("os.arch")) {
+            "x86_64", "amd64" -> "x64"
+            "aarch64" -> "arm64"
+            else -> throw GradleException("Unsupported architecture: $arch")
+        }
+        
         val extensions = listOf("so", "dll", "dylib")
         val baseUrl = "https://repo1.maven.org/maven2"
 
         outputDir.asFile.mkdirs()
 
-        Deps.javasmtDeps.forEach { dep ->
+        javasmtDeps.forEach { (dep, files) ->
             val (group, artifact, version) = dep.split(":")
 
             val path = group.replace('.', '/') + "/$artifact/$version"
@@ -54,7 +66,7 @@ tasks.register("downloadJavaSmtLibs") {
 
             println("Fetching from: $artifactUrl")
 
-            val html = URL(artifactUrl).readText()
+            val html = URI.create(artifactUrl).toURL().readText()
             val regex = Regex("href=\"([^\"]*?-$archSuffix\\.(${extensions.joinToString("|")}))\"")
 
             var matches = regex.findAll(html).map { it.groupValues[1] }.toSet()
@@ -71,9 +83,9 @@ tasks.register("downloadJavaSmtLibs") {
             }
 
             matches.forEach { fileName ->
-                val fileUrl = URL("$artifactUrl$fileName")
+                val fileUrl = URI.create("$artifactUrl$fileName").toURL()
 
-                val md5url = URL("$artifactUrl$fileName.md5")
+                val md5url = URI.create("$artifactUrl$fileName.md5").toURL()
 
                 // Strip prefix and -arch suffix
                 val cleanName = fileName

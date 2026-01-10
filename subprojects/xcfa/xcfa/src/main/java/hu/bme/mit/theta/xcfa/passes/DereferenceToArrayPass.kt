@@ -15,15 +15,18 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.common.Tuple4
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
@@ -41,6 +44,8 @@ import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import org.kframework.mpfr.BigFloat
 
@@ -56,37 +61,83 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  */
 class DereferenceToArrayPass : ProcedurePass {
 
-  private val arraysByType = mutableMapOf<Triple<Type, Type, Type>, VarDecl<out ArrayType2D>>()
+  private lateinit var arraysByType:
+    Map<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>
 
+  /** Maps a dereference to an identifying type key */
+  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey(
+    xcfa: XcfaBuilder
+  ): Tuple4<Type, Type, Type, Boolean> {
+    val globalVars = xcfa.getVars().map { it.wrappedVar }
+    val isGlobal =
+      (array as? RefExpr<*>)?.decl in globalVars ||
+        xcfa.getInitProcedures().any { p ->
+          p.first.getEdges().any { e ->
+            e.label.getFlatLabels().any { l ->
+              l is StmtLabel &&
+                l.stmt.let { assign ->
+                  assign is AssignStmt<*> && assign.varDecl in globalVars && assign.expr == array
+                }
+            }
+          }
+        }
+    return Tuple4.of(array.type, offset.type, type, isGlobal)
+  }
+
+  /** Returns an array from the pre-generated lookup of types */
   private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
     xcfa: XcfaBuilder
   ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
     val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
-    return cast(
-      arraysByType.getOrPut(Triple(array.type, offset.type, type)) {
-        val decl = Decls.Var("__arrays_${array.type}_${offset.type}_${type}", arrayType)
+
+    return cast(arraysByType[getTypeKey(xcfa)]!!, arrayType)
+  }
+
+  /** Creates arrays from dereference types */
+  private fun createArray(
+    key: Tuple4<Type, Type, Type, Boolean>,
+    xcfa: XcfaBuilder,
+  ): VarDecl<out ArrayType2D> {
+    val (derefArrayType, derefOffsetType, derefType, isGlobal) = key
+    val arrayType = ArrayType.of(derefArrayType, ArrayType.of(derefOffsetType, derefType))
+
+    val decl =
+      Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}_${isGlobal}", arrayType)
+    val (globalDecl, initLabel) =
+      if (isGlobal) {
         val defaultValue =
           ArrayLitExpr.of(
             listOf(),
             cast(arrayType.elemType.defaultValue, arrayType.elemType),
             arrayType,
           )
-        xcfa.addVar(XcfaGlobalVar(decl, defaultValue, atomic = true))
-        xcfa.getInitProcedures().forEach { (procedure, _) ->
-          procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
-            procedure.removeEdge(edge)
-            procedure.addEdge(
-              edge.withLabel(SequenceLabel(listOf(AssignStmtLabel(decl, defaultValue), edge.label)))
-            )
-          }
-        }
-        decl as VarDecl<out ArrayType2D>
-      },
-      arrayType,
-    )
+        XcfaGlobalVar(decl, defaultValue, atomic = true) to AssignStmtLabel(decl, defaultValue)
+      } else {
+        XcfaGlobalVar(decl, atomic = true) to StmtLabel(HavocStmt.of(decl))
+      }
+    xcfa.addVar(globalDecl)
+    xcfa.getInitProcedures().forEach { (procedure, _) ->
+      procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
+        procedure.removeEdge(edge)
+        procedure.addEdge(edge.withLabel(SequenceLabel(listOf(initLabel, edge.label))))
+      }
+    }
+    return decl as VarDecl<out ArrayType2D>
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!::arraysByType.isInitialized) {
+      val arrays = mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
+      val types = mutableSetOf<Tuple4<Type, Type, Type, Boolean>>()
+      builder.parent.getProcedures().forEach { p ->
+        p.getEdges().forEach { e ->
+          e.label.dereferences.forEach { deref -> types.add(deref.getTypeKey(builder.parent)) }
+        }
+      }
+      types.forEach { arrays[it] = createArray(it, builder.parent) }
+      arraysByType = arrays
+    }
+
     builder.getEdges().toList().forEach { edge ->
       val newLabel = edge.label.replaceDereferences(builder.parent)
       if (newLabel != edge.label) {
@@ -129,7 +180,7 @@ class DereferenceToArrayPass : ProcedurePass {
                         arrayType.elemType,
                       ),
                       cast(deref.offset.getArrayReads(xcfa), arrayType.elemType.indexType),
-                      cast(stmt.expr, arrayType.elemType.elemType),
+                      cast(stmt.expr.getArrayReads(xcfa), arrayType.elemType.elemType),
                     ),
                   ),
                   arrayType,

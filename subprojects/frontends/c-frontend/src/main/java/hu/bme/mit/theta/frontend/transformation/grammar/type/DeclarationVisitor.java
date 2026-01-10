@@ -17,13 +17,13 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
@@ -35,7 +35,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
+public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration> {
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
@@ -92,15 +92,22 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                 CDeclaration declaration = context.declarator().accept(this);
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
-                    if (context.initializer().initializerList() != null) {
+                    if (context.initializer().bracedPrimaryExpression() != null) {
                         checkState(
-                                context.initializer().initializerList().designation().size() == 0,
+                                context.initializer()
+                                        .bracedPrimaryExpression()
+                                        .initializerList()
+                                        .designation()
+                                        .isEmpty(),
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList =
                                 new CInitializerList(cSimpleType.getActualType(), parseContext);
                         try {
                             for (CParser.InitializerContext initializer :
-                                    context.initializer().initializerList().initializers) {
+                                    context.initializer()
+                                            .bracedPrimaryExpression()
+                                            .initializerList()
+                                            .initializers) {
                                 Expr<?> expr =
                                         cSimpleType
                                                 .getActualType()

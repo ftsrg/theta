@@ -206,7 +206,7 @@ final class Z3ExprTransformer {
                         .addCase(ArrayLitExpr.class, this::transformArrayLit)
                         .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
-                        // dereference
+                        // Dereference
 
                         .addCase(Dereference.class, this::transformDereference)
 

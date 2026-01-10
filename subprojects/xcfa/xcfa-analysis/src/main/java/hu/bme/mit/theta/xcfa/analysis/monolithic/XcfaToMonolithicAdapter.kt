@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -42,7 +43,9 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
-import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -54,21 +57,21 @@ import org.kframework.mpfr.BigFloat
 
 abstract class XcfaToMonolithicAdapter(
   model: XCFA,
-  protected val property: ErrorDetection,
+  protected val property: XcfaProperty,
   furtherPasses: ProcedurePassManager,
   protected val parseContext: ParseContext,
   protected val initValues: Boolean,
 ) : ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {
 
-  init {
-    check(property in listOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.TERMINATION)) {
-      "Unsupported property for monolithic conversion: $property"
-    }
-  }
-
   override val model: XCFA = model.optimizeFurther(furtherPasses)
 
   protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
+
+  init {
+    check(property.verifiedProperty in listOf(ERROR_LOCATION, TERMINATION)) {
+      "Unsupported property for monolithic conversion: ${property.verifiedProperty}"
+    }
+  }
 
   protected fun smtInt(value: Int): LitExpr<*> =
     when (intType) {
@@ -79,10 +82,14 @@ abstract class XcfaToMonolithicAdapter(
       else -> error("Unknown integer type: $intType")
     }
 
+  private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
+    if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
+    else Eq(e1, e2)
+
   protected fun Stmt.getDefaultValues(excludedVars: Collection<VarDecl<*>>): Expr<BoolType> =
     StmtUtils.getVars(this)
       .filter { it !in excludedVars }
-      .map { Eq(it.ref, it.type.defaultValue) }
+      .map { reprEq(it.ref, it.type.defaultValue) }
       .let { And(it) }
 
   private val Type.defaultValue: LitExpr<out Type>

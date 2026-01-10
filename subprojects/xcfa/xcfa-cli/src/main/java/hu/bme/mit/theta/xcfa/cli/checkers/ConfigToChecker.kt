@@ -65,7 +65,7 @@ fun getSafetyChecker(
         > { _ ->
           SafetyResult.unknown()
         }
-      Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
+      Backend.CHC -> getHornChecker(xcfa, mcm, config, logger, parseContext)
       Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
       Backend.LIVENESS_CEGAR -> getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
       Backend.TRACEGEN ->

@@ -63,21 +63,9 @@ fun getPortfolioChecker(
   val portfolioStm =
     when (portfolioName) {
       "STABLE",
-      "CEGAR",
-      "COMPLEX",
-      "COMPLEX26" -> complexPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "COMPLEX" -> complex26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "COMPLEX25" -> complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "EMERGENT",
-      "BOUNDED",
-      "BOUNDED25" -> boundedPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "CHC-COMP" ->
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
@@ -85,10 +73,11 @@ fun getPortfolioChecker(
 
       "TESTING",
       "CHC",
-      "HORN",
-      "HORN25" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "MULTITHREAD" -> multithreadPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       else -> {
         if (File(portfolioName).exists()) {
@@ -107,13 +96,11 @@ fun getPortfolioChecker(
       }
     }
 
-  val result = portfolioStm.execute() as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
+  val result =
+    portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
-  logger.write(
-    Logger.Level.RESULT,
-    "Config ${result.first.second} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
-  )
-  logger.write(Logger.Level.RESULT, "success-result: ${result.first.first}\n")
+  logger.result("Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
+  logger.benchmark("success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<

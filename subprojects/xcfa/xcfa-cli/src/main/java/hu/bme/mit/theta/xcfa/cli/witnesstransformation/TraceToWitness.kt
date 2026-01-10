@@ -32,8 +32,11 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorDetector
+import hu.bme.mit.theta.xcfa.model.ChoiceType
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
@@ -58,7 +61,7 @@ fun traceToWitness(
   val isError =
     if (property.verifiedProperty == ErrorDetection.TERMINATION) {
       Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-    } else getXcfaErrorPredicate(property.verifiedProperty)
+    } else getXcfaErrorDetector(property.verifiedProperty)
 
   var lastNode: WitnessNode? = null
 
@@ -68,7 +71,7 @@ fun traceToWitness(
     val node =
       WitnessNode(
         id = "N${newStates.size}",
-        entry = false,
+        entry = i == 0,
         sink = false,
         violation =
           isError.test( // this is a hack so that a simple explstate can become a ptrstate
@@ -113,6 +116,25 @@ fun traceToWitness(
   return Trace.of(newStates, newActions)
 }
 
+fun targetToWitness(startline: Int, endline: Int, startoffset: Int, endoffset: Int): String {
+  return """
+  <node id="N0">
+  <data key="violation">false</data>
+  <data key="entry">true</data>
+  </node>
+  <node id="N1">
+  <data key="violation">true</data>
+  </node>
+  
+  <edge source="N0" target="N1">
+    <data key="startline">$startline</data>
+    <data key="endline">$endline</data>
+    <data key="startoffset">$startoffset</data>
+    <data key="endoffset">$endoffset</data>
+  </edge>
+  """
+}
+
 fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
   when (verbosity) {
     Verbosity.NECESSARY ->
@@ -132,8 +154,8 @@ private fun labelToEdge(
   edge: XcfaEdge,
 ): WitnessEdge {
   return WitnessEdge(
-    sourceId = lastNode.id,
-    targetId = node.id,
+    source = lastNode,
+    target = node,
     assumption =
       if (xcfaLabel is StmtLabel && xcfaLabel.stmt is HavocStmt<*>) {
         val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl

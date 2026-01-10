@@ -37,18 +37,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.ltlPropertyFromTrace
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
-import hu.bme.mit.theta.xcfa.cli.params.Backend
-import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.OutputLevel
-import hu.bme.mit.theta.xcfa.cli.params.WitnessLevel
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.utils.GraphmlWitnessWriter
-import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
-import hu.bme.mit.theta.xcfa.cli.utils.YamlWitnessWriter
-import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.cli.utils.writeModel
+import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -149,6 +139,7 @@ internal fun postVerificationLogging(
                 parseContext,
                 witnessFile,
                 ltlSpecification,
+                logger = logger,
               )
           } catch (e: Exception) {
             logger.info("Could not emit witness as GraphML file: ${e.stackTraceToString()}")
@@ -169,6 +160,7 @@ internal fun postVerificationLogging(
                 yamlWitnessFile,
                 ltlSpecification,
                 (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+                logger,
               )
           } catch (e: Exception) {
             logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
@@ -309,6 +301,7 @@ private fun writeSvcompWitness(
         witnessFile,
         ltlSpecification,
         (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+        logger,
       )
     } else {
       logger.info(

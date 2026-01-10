@@ -25,6 +25,12 @@ plugins {
     id("com.diffplug.spotless")
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 dependencies {
     val implementation: Configuration by configurations
     val testImplementation: Configuration by configurations
@@ -33,12 +39,12 @@ dependencies {
     implementation(Deps.guava)
     implementation(Deps.gson)
     implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
-    implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
-    testImplementation(Deps.junit4)
-    testImplementation(Deps.junit4engine)
+    implementation(Deps.hawtjni)
+
     testImplementation(Deps.junit5)
     testImplementation(Deps.junit5param)
     testImplementation(Deps.junit5engine)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${project.findProperty("launcherVersion")}")
     testImplementation(Deps.Mockito.core)
     testImplementation(Deps.Mockito.extension)
 }
@@ -58,6 +64,7 @@ tasks {
         environment["DYLD_LIBRARY_PATH"] = libPath
         systemProperty("java.library.path", libPath)
         enableAssertions = true
+        failOnNoDiscoveredTests=false
     }
 
     named<JacocoReport>("jacocoTestReport") {
@@ -93,7 +100,7 @@ tasks {
     }
 
     withType<Test> {
-        jvmArgs("-Xss5m", "-Xms512m", "-Xmx1g")
+        jvmArgs("-Xss5m", "-Xms1024m", "-Xmx1g")
     }
 }
 
@@ -101,7 +108,7 @@ spotless {
     ratchetFrom("origin/master")
 
     isEnforceCheck = false
-    
+
     val year = "\$YEAR" // you can't escape $ in raw strings..
     val licenseHeader = """            /*
              *  Copyright $year Budapest University of Technology and Economics
@@ -123,7 +130,7 @@ spotless {
     java {
         importOrder("java|javax", "hu.bme.", "")
         removeUnusedImports()
-        googleJavaFormat("1.24.0").aosp().reflowLongStrings()
+        googleJavaFormat("1.25.2").aosp().reflowLongStrings()
         formatAnnotations()
 
         licenseHeader(licenseHeader)

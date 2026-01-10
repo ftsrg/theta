@@ -290,6 +290,13 @@ constructor(
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
+    check(
+      toRemove.source.outgoingEdges.contains(toRemove) &&
+        toRemove.target.incomingEdges.contains(toRemove) &&
+        edges.contains(toRemove)
+    ) {
+      "Cannot remove edge if it wasn't already present!"
+    }
     toRemove.source.outgoingEdges.remove(toRemove)
     toRemove.target.incomingEdges.remove(toRemove)
     edges.remove(toRemove)

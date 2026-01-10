@@ -22,6 +22,7 @@ public interface Logger {
     enum Level {
         DISABLE,
         RESULT,
+        BENCHMARK,
         MAINSTEP,
         SUBSTEP,
         INFO,
@@ -45,6 +46,10 @@ public interface Logger {
 
     default Logger result(String pattern, Object... objects) {
         return writeln(Level.RESULT, pattern, objects);
+    }
+
+    default Logger benchmark(String pattern, Object... objects) {
+        return writeln(Level.BENCHMARK, pattern, objects);
     }
 
     default Logger mainStep(String pattern, Object... objects) {

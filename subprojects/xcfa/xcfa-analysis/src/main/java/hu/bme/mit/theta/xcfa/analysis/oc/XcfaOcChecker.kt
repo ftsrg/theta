@@ -33,7 +33,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
+import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -57,7 +57,18 @@ class XcfaOcChecker(
     }
   }
 
-  private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
+  private val xcfa =
+    xcfa.optimizeFurther(
+      ProcedurePassManager(
+        listOf(
+          AssumeFalseRemovalPass(),
+          MutexToVarPass(),
+          AtomicReadsOneWritePass(),
+          LoopUnrollPass(2), // force loop unroll for BMC
+        )
+      )
+    )
+
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private val ocChecker: OcChecker<E> =
@@ -121,8 +132,14 @@ class XcfaOcChecker(
             if (ocChecker is XcfaOcCorrectnessValidator)
               return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
             if (memoryModel == SC) {
-              val trace = XcfaOcTraceExtractor(xcfa, ocChecker, eg).trace
-              SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+              val trace =
+                try {
+                  XcfaOcTraceExtractor(xcfa, ocChecker, eg).trace
+                } catch (e: Exception) {
+                  logger.info("OC checker trace extraction failed: ${e.message}")
+                  EmptyCex.getInstance()
+                }
+              SafetyResult.unsafe(trace, EmptyProof.getInstance())
             } else {
               SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
             }
@@ -135,7 +152,7 @@ class XcfaOcChecker(
         logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
           logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
-          logger.result(SafetyResult.unknown<EmptyProof, Cex>().toString())
+          logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
           throw NotSolvableException()
         }
       }

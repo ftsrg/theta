@@ -69,6 +69,7 @@ import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -273,6 +274,15 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("hyper-res", expectedFunc("hyper-res"));
                         put("asserted", expectedFunc("asserted"));
                         put("mp", expectedFunc("mp"));
+
+                        put(
+                                "deref",
+                                exprTernaryOperator(
+                                        (expr, expr2, expr3) ->
+                                                Dereference.of(
+                                                        (Expr<Type>) expr,
+                                                        (Expr<Type>) expr2,
+                                                        (Type) expr3)));
                     }
                 };
     }

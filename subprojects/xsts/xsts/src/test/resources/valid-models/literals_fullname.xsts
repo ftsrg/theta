@@ -1,0 +1,14 @@
+type alphabet : { A, B, C, D }
+
+var f : alphabet = alphabet.A
+var g : alphabet = alphabet.B
+
+trans {}
+
+init {}
+
+env {}
+
+prop {
+    true
+}

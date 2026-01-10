@@ -1,0 +1,18 @@
+var x: integer = 0
+var y: integer = 0
+var z: integer = 0
+
+trans {
+    assume x < 100;
+    y:=y+1;
+    x:=y;
+    z:=y;
+}
+
+init {}
+
+env {}
+
+prop {
+    true
+}

@@ -12,7 +12,7 @@ if [ "$1" == "--version" ]; then
     exit
 fi
 
-JAVA_VERSION=17
+JAVA_VERSION=21
 JAVA_FALLBACK_PATH="/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64/bin/:/usr/lib/jvm/java-$JAVA_VERSION-openjdk/bin/:/usr/lib/jvm/java-$JAVA_VERSION/bin/"
 grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || export PATH="$JAVA_FALLBACK_PATH":$PATH
 grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || {

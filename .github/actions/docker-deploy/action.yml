@@ -16,18 +16,6 @@ runs:
   steps:
     - name: Checkout
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    # - name: Extract metadata (tags, labels) for DockerHub
-    #   id: metaDH
-    #   uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
-    #   with:
-    #     images: ${{ inputs.user-dockerhub }}/${{ inputs.project }}
-    #     tags: type:raw, value=${{ inputs.version }}
-    # - name: Extract metadata (tags, labels) for ghcr.io
-    #   id: metaGH
-    #   uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
-    #   with:
-    #     images: ghcr.io/${{ inputs.user-ghcr }}/${{ inputs.project }}
-    #     tags: type:raw, value=${{ inputs.version }}
     - name: Creating path
       id: 'path'
       shell: bash
@@ -35,7 +23,7 @@ runs:
         echo "path=./docker/${{ inputs.project }}.Dockerfile" >> $GITHUB_OUTPUT
     - name: Assemble Shadow JAR
       shell: bash
-      run: ./gradlew clean ${{ inputs.project }}:shadowJar
+      run: ./gradlew clean ${{ inputs.project }}:prepareDockerDistribution
     - name: Build and push to DockerHub
       uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825
       with:

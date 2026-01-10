@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.Result
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -25,14 +26,14 @@ abstract class Node(val name: String) {
   val outEdges: MutableSet<Edge> = LinkedHashSet()
   var parent: STM? = null
 
-  abstract fun execute(): Pair<Any, Any>
+  abstract fun execute(logger: Logger): Pair<Any, Any>
 
   abstract fun visualize(): String
 }
 
 class HierarchicalNode(name: String, val innerSTM: STM) : Node(name) {
 
-  override fun execute(): Pair<Any, Any> = innerSTM.execute()
+  override fun execute(logger: Logger): Pair<Any, Any> = innerSTM.execute(logger)
 
   override fun visualize(): String =
     """state $name {
@@ -65,8 +66,9 @@ class ConfigNode(
   private val check: (config: XcfaConfig<*, *>) -> Result<*>,
 ) : Node(name) {
 
-  override fun execute(): Pair<Any, Any> {
-    println("Current configuration: $config")
+  override fun execute(logger: Logger): Pair<Any, Any> {
+    logger.result("Current configuration: $name")
+    logger.benchmark("Current configuration: $config")
     return Pair(Pair(name, config), check(config))
   }
 
@@ -147,19 +149,19 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
 """
       .trimMargin()
 
-  fun execute(): Pair<Any, Any> {
+  fun execute(logger: Logger): Pair<Any, Any> {
     var currentNode: Node = initNode
     while (true) {
       try {
-        return currentNode.execute()
+        return currentNode.execute(logger)
       } catch (e: Throwable) {
-        println("Caught exception: $e")
+        logger.benchmark("Caught exception: $e")
         val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
         if (edge != null) {
-          println("Handling exception as ${edge.trigger}")
+          logger.benchmark("Handling exception as ${edge.trigger}")
           currentNode = edge.target
         } else {
-          println(
+          logger.benchmark(
             "Could not handle trigger $e (Available triggers: ${
                         currentNode.outEdges.map { it.trigger }.toList()
                     })"

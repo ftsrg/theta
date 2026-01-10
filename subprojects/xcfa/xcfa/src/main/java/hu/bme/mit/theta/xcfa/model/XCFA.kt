@@ -186,7 +186,7 @@ data class XcfaGlobalVar
 @JvmOverloads
 constructor(
   val wrappedVar: VarDecl<*>,
-  val initValue: LitExpr<*>,
+  val initValue: LitExpr<*>? = null,
   val threadLocal: Boolean = false,
   val atomic: Boolean = false,
 )

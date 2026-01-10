@@ -232,11 +232,21 @@ public class CfaCli {
                             + " more details. Enter \"Z3\" to use the legacy z3 solver.")
     String refinementSolver;
 
-    @Parameter(names = "--home", description = "The path of the solver registry")
+    @Parameter(
+            names = {"--home", "--smt-home"},
+            description = "The path of the solver registry")
     String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
-    @Parameter(names = "--model", description = "Path of the input CFA model", required = true)
+    @Parameter(
+            names = {"--model", "--input"},
+            description = "Path of the input CFA model",
+            required = true)
     String model;
+
+    @Parameter(
+            names = {"--property"},
+            description = "Property placeholder (ignored)")
+    String property;
 
     @Parameter(names = "--errorloc", description = "Error (target) location")
     String errorLoc = "";
@@ -507,6 +517,7 @@ public class CfaCli {
 
     private void printResult(
             final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
+        logger.result(status.toString());
         final CegarStatistics stats =
                 (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {

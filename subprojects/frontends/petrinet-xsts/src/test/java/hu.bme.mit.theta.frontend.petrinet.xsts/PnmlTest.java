@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.xsts;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -34,30 +34,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.xml.sax.SAXException;
 
-@RunWith(value = Parameterized.class)
+@Disabled("No PNML datasets configured for parameterized test")
 public class PnmlTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public String targetMarking;
-
-    @Parameterized.Parameter(value = 2)
     public String initialMarking;
-
-    @Parameterized.Parameter(value = 3)
     public boolean safe;
-
-    @Parameterized.Parameter(value = 4)
     public XstsConfigBuilder.Domain domain;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -105,12 +94,20 @@ public class PnmlTest {
                 });
     }
 
-    @Test
-    public void test()
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
+    public void test(
+            String filePath,
+            String targetMarking,
+            String initialMarking,
+            boolean safe,
+            XstsConfigBuilder.Domain domain)
             throws IOException,
                     XPathExpressionException,
                     SAXException,
                     ParserConfigurationException {
+
+        initPnmlTest(filePath, targetMarking, initialMarking, safe, domain);
 
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
@@ -139,5 +136,18 @@ public class PnmlTest {
         } else {
             assertTrue(status.isUnsafe());
         }
+    }
+
+    public void initPnmlTest(
+            String filePath,
+            String targetMarking,
+            String initialMarking,
+            boolean safe,
+            XstsConfigBuilder.Domain domain) {
+        this.filePath = filePath;
+        this.targetMarking = targetMarking;
+        this.initialMarking = initialMarking;
+        this.safe = safe;
+        this.domain = domain;
     }
 }

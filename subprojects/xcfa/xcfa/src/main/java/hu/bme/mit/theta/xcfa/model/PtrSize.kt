@@ -38,6 +38,11 @@ fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*
   return AssignStmtLabel(arr, write)
 }
 
+fun XcfaBuilder.deallocate(parseContext: ParseContext, base: Expr<*>): StmtLabel {
+  val type = Fitsall(null, parseContext)
+  return allocate(parseContext, base, type.getValue("-1"))
+}
+
 fun XcfaBuilder.allocateUnit(parseContext: ParseContext, base: Expr<*>): StmtLabel {
   val type = Fitsall(null, parseContext)
   return allocate(parseContext, base, type.unitValue)

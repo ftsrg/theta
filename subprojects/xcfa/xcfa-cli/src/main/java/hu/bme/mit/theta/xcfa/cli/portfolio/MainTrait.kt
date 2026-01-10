@@ -23,4 +23,5 @@ enum class MainTrait {
   ARR,
   MULTITHREAD,
   PTR,
+  TERMINATION,
 }

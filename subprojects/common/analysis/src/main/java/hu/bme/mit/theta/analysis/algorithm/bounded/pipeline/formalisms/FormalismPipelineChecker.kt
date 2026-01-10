@@ -56,16 +56,13 @@ open class FormalismPipelineChecker<
 
   override fun check(input: UnitPrec?): SafetyResult<OuterPr, Trace<S, A>> {
     val result = pipeline.check(input)
-    if (result.isSafe) {
-      return SafetyResult.safe(
+    return if (result.isSafe)
+      SafetyResult.safe(modelAdapter.proofToModelProof(result.proof), result.stats.orElse(null))
+    else
+      SafetyResult.unsafe(
+        modelAdapter.traceToModelTrace(result.asUnsafe().cex),
         modelAdapter.proofToModelProof(result.proof),
         result.stats.orElse(null),
       )
-    }
-    return SafetyResult.unsafe(
-      modelAdapter.traceToModelTrace(result.asUnsafe().cex),
-      modelAdapter.proofToModelProof(result.proof),
-      result.stats.orElse(null),
-    )
   }
 }

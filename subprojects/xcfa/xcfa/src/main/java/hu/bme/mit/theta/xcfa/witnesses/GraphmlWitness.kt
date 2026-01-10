@@ -27,7 +27,11 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.stream.StreamResult
 import javax.xml.transform.stream.StreamSource
 
-class GraphmlWitness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: File) {
+class GraphmlWitness(
+  private val trace: Trace<WitnessNode, WitnessEdge>?,
+  programFile: File,
+  ltlProperty: String,
+) {
 
   private val attributes: MutableList<GraphmlWitnessAttribute> = ArrayList()
   private val data: MutableList<Pair<String, String>> = ArrayList()
@@ -79,7 +83,7 @@ class GraphmlWitness(private val trace: Trace<WitnessNode, WitnessEdge>, program
     data.add(Pair("witness-type", "violation_witness"))
     data.add(Pair("producer", "theta"))
     data.add(Pair("sourcecodelang", "C"))
-    data.add(Pair("specification", "CHECK( init(main()), LTL(G ! call(reach_error())) )"))
+    data.add(Pair("specification", "${ltlProperty}"))
     data.add(Pair("programfile", programFile.absolutePath))
     data.add(Pair("programhash", createTaskHash(programFile.path)))
     data.add(Pair("architecture", "32bit"))
@@ -99,9 +103,9 @@ ${attributes.map(GraphmlWitnessAttribute::toXml).reduce { a, b -> "$a\n$b" }}
 
 ${data.map { "<data key=\"${it.first}\">${it.second}</data>" }.reduce { a, b -> "$a\n$b" }}
 
-${trace.states.map(WitnessNode::toXml).reduce { a, b -> "$a\n$b" }}   
+${trace?.states?.map(WitnessNode::toXml)?.reduce { a, b -> "$a\n$b" } ?: ""}   
      
-${trace.actions.map(WitnessEdge::toXml).reduce { a, b -> "$a\n$b" }}        
+${trace?.actions?.map(WitnessEdge::toXml)?.reduce { a, b -> "$a\n$b" } ?: ""}        
 
 </graph>
 </graphml>
@@ -190,7 +194,7 @@ fun WitnessNode.toXml(): String =
 
 fun WitnessEdge.toXml(): String =
   """
-        <edge source="$sourceId" target="$targetId">
+        <edge source="${source.id}" target="${target.id}">
             ${if (assumption != null) "<data key=\"assumption\">$assumption</data>" else ""}
             ${if (assumption_scope != null) "<data key=\"assumption.scope\">$assumption_scope</data>" else ""}
             ${if (assumption_resultfunction != null) "<data key=\"assumption.resultfunction\">$assumption_resultfunction</data>" else ""}

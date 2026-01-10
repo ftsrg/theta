@@ -48,14 +48,12 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
-import java.util.function.Predicate
 
 open class XcfaAnalysis<S : ExprState, P : Prec>(
   private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
@@ -212,22 +210,6 @@ fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
   }
 }
 
-fun getXcfaErrorPredicate(
-  errorDetection: ErrorDetection
-): Predicate<XcfaState<out PtrState<out ExprState>>> =
-  when (errorDetection) {
-    ErrorDetection.ERROR_LOCATION ->
-      Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
-        s.processes.any { it.value.locs.peek().error }
-      }
-    ErrorDetection.DATA_RACE -> getDataRacePredicate()
-    ErrorDetection.NO_ERROR -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-    else ->
-      error(
-        "The error detection mode $errorDetection cannot be converted to a state predicate. Consider using a specification transformation."
-      )
-  }
-
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
   PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
     s1.processes == s2.processes &&
@@ -256,9 +238,8 @@ fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
 private fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
   analysis: Analysis<S, XcfaAction, P>,
   lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
-  errorDetection: ErrorDetection,
-): ArgBuilder<S, XcfaAction, P> =
-  ArgBuilder.create(lts, analysis, getXcfaErrorPredicate(errorDetection))
+  errorDetector: XcfaErrorDetector,
+): ArgBuilder<S, XcfaAction, P> = ArgBuilder.create(lts, analysis, errorDetector)
 
 fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
   analysis: Analysis<S, XcfaAction, P>,
@@ -266,9 +247,9 @@ fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfa
   stopCriterion: StopCriterion<*, *>,
   logger: Logger,
   lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
-  errorDetection: ErrorDetection,
+  errorDetector: XcfaErrorDetector,
 ): ArgAbstractor<out XcfaState<out PtrState<out ExprState>>, XcfaAction, out XcfaPrec<out Prec>> =
-  XcfaArgAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+  XcfaArgAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetector))
     .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
     .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>)
     .logger(logger)

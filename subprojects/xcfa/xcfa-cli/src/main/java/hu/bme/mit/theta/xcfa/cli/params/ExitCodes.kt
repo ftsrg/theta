@@ -39,7 +39,14 @@ enum class ExitCodes(val code: Int) {
 
 data class ErrorCodeException(val code: Int) : Exception()
 
-private fun exitProcess(debug: Boolean, e: Throwable, code: Int): Nothing {
+fun exitProcess(debug: Boolean, e: Throwable, code: Int): Nothing {
+  try {
+    println(
+      "Error: ${e.javaClass} ${e.message ?: "-"} (${e.stackTrace.toList().subList(0, 2).joinToString { it.className + "#" + it.methodName + ":" + it.lineNumber }})"
+    )
+  } catch (t: Throwable) {
+    // ignore at this point..
+  }
   if (debug) {
     throw ErrorCodeException(code)
   } else exitProcess(code)
@@ -55,7 +62,7 @@ fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T):
   try {
     return body()
   } catch (e: ErrorCodeException) {
-    e.printStackTrace()
+    e.printCauseAndTrace(stacktrace)
     exitProcess(throwDontExit, e, e.code)
   } catch (e: UnsupportedFrontendElementException) {
     e.printCauseAndTrace(stacktrace)
@@ -70,6 +77,9 @@ fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T):
     e.printCauseAndTrace(stacktrace)
     exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
   } catch (e: Z3Exception) {
+    e.printCauseAndTrace(stacktrace)
+    exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
+  } catch (e: com.microsoft.z3legacy.Z3Exception) {
     e.printCauseAndTrace(stacktrace)
     exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
   } catch (e: ClassCastException) {

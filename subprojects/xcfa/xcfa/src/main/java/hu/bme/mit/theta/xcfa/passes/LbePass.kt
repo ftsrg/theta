@@ -19,10 +19,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.collectVars
-import hu.bme.mit.theta.xcfa.utils.dereferences
-import hu.bme.mit.theta.xcfa.utils.getAtomicBlockInnerLocations
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.*
 
 /**
  * This pass simplifies the XCFA by joining certain edges to single edges.
@@ -33,7 +30,11 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  *   at the ends)
  * * Middle location: a location whose incoming degree is 1
  */
-class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : ProcedurePass {
+class LbePass(
+  parseContext: ParseContext,
+  level: LbeLevel = defaultLevel,
+  private val aggressivelyCollapseNonConcurrentEdges: Boolean = false,
+) : ProcedurePass {
 
   companion object {
 
@@ -78,6 +79,7 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
   val level: LbeLevel =
     if (parseContext.multiThreading && !level.isLocal) LbeLevel.NO_LBE else level
   lateinit var builder: XcfaProcedureBuilder
+  private var nonConcurrentEdges: Set<XcfaEdge>? = null
 
   /**
    * Steps of graph transformation:
@@ -91,6 +93,14 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
     if (level == LbeLevel.NO_LBE) return builder
 
     this.builder = builder
+    if (
+      level.isLocal &&
+        aggressivelyCollapseNonConcurrentEdges &&
+        builder in builder.parent.getInitProcedures().map { it.first }
+    ) {
+      val (initEdges, finalEdges) = getNonConcurrentEdges(builder.parent)
+      this.nonConcurrentEdges = initEdges + (finalEdges ?: emptySet())
+    }
 
     // Step 0
     if (builder.errorLoc.isPresent) {
@@ -300,12 +310,12 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
    * @return true, if the edge performs at least one non-local operation
    */
   private fun isNotLocal(edge: XcfaEdge): Boolean {
-    return !edge.getFlatLabels().all { label ->
+    return !edge.getAllLabels().all { label ->
       !(label is StartLabel || label is JoinLabel) &&
         label.collectVars().all(builder.getVars()::contains) &&
         label.dereferences.isEmpty() &&
         !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
         !(label is FenceLabel && label.acquiredMutexes.isNotEmpty())
-    }
+    } && nonConcurrentEdges?.contains(edge) != true
   }
 }

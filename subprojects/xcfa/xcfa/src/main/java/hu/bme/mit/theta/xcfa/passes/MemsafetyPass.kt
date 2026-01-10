@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
@@ -74,7 +75,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
 
     annotateDeref(builder)
 
-    annotateLost(builder)
+    if (builder in builder.parent.getInitProcedures().map { it.first }) {
+      annotateLost(builder)
+    }
 
     property.transformSpecification(ErrorDetection.ERROR_LOCATION)
     return builder
@@ -113,15 +116,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             val argument = invokeLabel.params[1]
             val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
-              Assume(
-                Or(
-                  Leq(argument, pointerType.nullValue), // uninit ptr
-                  // freed/not big enough ptr
-                  Leq(
-                    ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument),
-                    pointerType.nullValue,
-                  ), // freed/not big enough ptr
-                )
+              Or(
+                Lt(argument, pointerType.nullValue), // uninit ptr
+                // freed/not big enough ptr
+                Lt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), pointerType.nullValue),
               )
 
             builder.addEdge(
@@ -129,7 +127,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.source,
                 it.target,
                 SequenceLabel(
-                  listOf(builder.parent.allocate(parseContext, argument, fitsall.nullValue))
+                  listOf(
+                    StmtLabel(Assume(Not(derefAssume)), metadata = it.label.labels[0].metadata),
+                    builder.parent.deallocate(parseContext, argument),
+                  )
                 ),
                 it.metadata,
               )
@@ -138,7 +139,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
               XcfaEdge(
                 it.source,
                 invalidFree,
-                SequenceLabel(listOf(StmtLabel(derefAssume))),
+                SequenceLabel(
+                  listOf(StmtLabel(Assume(derefAssume), metadata = it.label.labels[0].metadata))
+                ),
                 it.metadata,
               )
             )
@@ -165,34 +168,44 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       ) {
         builder.removeEdge(edge)
         edges.forEach {
-          if (deref((it.label as SequenceLabel).labels[0])) {
+          if (
+            deref((it.label as SequenceLabel).labels[0]) &&
+              !builder.ptrSizeAssign(it.label.labels[0])
+          ) {
             // if dereference is in a short-circuiting path, add prior assumptions as well.
             val derefAssume =
-              Assume(
-                Or(
-                  it.label.labels[0].derefsWithShortCircuitCond.map { (deref, shortCircuitConds) ->
-                    val sizeVar = builder.parent.getPtrSizeVar()
-                    And(
-                      And(shortCircuitConds),
-                      Or(
-                        Leq(deref.array, pointerType.nullValue), // uninit ptr
-                        Leq(
-                          ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
-                          deref.offset,
-                        ), // freed/not big enough ptr
-                        Lt(deref.offset, fitsall.nullValue), // negative index
-                      ),
-                    )
-                  }
+              Or(
+                it.label.labels[0].derefsWithShortCircuitCond.map { (deref, shortCircuitConds) ->
+                  val sizeVar = builder.parent.getPtrSizeVar()
+                  And(
+                    And(shortCircuitConds),
+                    Or(
+                      Leq(deref.array, pointerType.nullValue), // uninit ptr
+                      Leq(
+                        ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
+                        deref.offset,
+                      ), // freed/not big enough ptr
+                      Lt(deref.offset, fitsall.nullValue), // negative index
+                    ),
+                  )
+                }
+              )
+            builder.addEdge(
+              it.withLabel(
+                SequenceLabel(
+                  listOf(
+                    StmtLabel(Assume(Not(derefAssume)), metadata = it.label.labels[0].metadata),
+                    it.label,
+                  )
                 )
               )
-            builder.addEdge(it)
+            )
             builder.addEdge(
               XcfaEdge(
                 it.source,
                 badDeref,
                 SequenceLabel(
-                  listOf(StmtLabel(derefAssume))
+                  listOf(StmtLabel(Assume(derefAssume), metadata = it.label.labels[0].metadata))
                 ), // deref(x a), x <= 0 || a >= sizeof(x)
                 it.metadata,
               )
@@ -228,28 +241,33 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         fitsall.nullValue,
       )
 
+    val preFinalHavoc = XcfaLocation("_pre_final_havoc", metadata = EmptyMetaData)
+    val preFinal = XcfaLocation("_pre_final", metadata = EmptyMetaData)
+    builder.addLoc(preFinalHavoc)
     for (incomingEdge in LinkedHashSet(finalLoc.incomingEdges)) {
       builder.removeEdge(incomingEdge)
-      val newLoc = XcfaLocation("pre_final", metadata = EmptyMetaData)
-      builder.addLoc(newLoc)
-      builder.addEdge(incomingEdge.withTarget(newLoc))
-      builder.addEdge(
-        XcfaEdge(
-          newLoc,
-          lostLoc,
-          label = SequenceLabel(listOf(StmtLabel(Assume(remained)))),
-          metadata = EmptyMetaData,
-        )
-      )
-      builder.addEdge(
-        XcfaEdge(
-          lostLoc,
-          errorLoc,
-          label = SequenceLabel(listOf(NopLabel)),
-          metadata = EmptyMetaData,
-        )
-      )
+      builder.addEdge(incomingEdge.withTarget(preFinalHavoc))
     }
+    builder.addEdge(
+      XcfaEdge(
+        preFinalHavoc,
+        preFinal,
+        SequenceLabel(listOf(StmtLabel(HavocStmt.of(anyBase)))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        preFinal,
+        finalLoc,
+        SequenceLabel(listOf(StmtLabel(Assume(Not(remained))))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(preFinal, lostLoc, SequenceLabel(listOf(StmtLabel(Assume(remained)))), EmptyMetaData)
+    )
+    builder.addEdge(XcfaEdge(lostLoc, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
   }
 
   private fun free(it: XcfaLabel): Boolean {
@@ -258,6 +276,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
 
   private fun deref(it: XcfaLabel): Boolean {
     return it.dereferences.isNotEmpty()
+  }
+
+  private fun XcfaProcedureBuilder.ptrSizeAssign(it: XcfaLabel): Boolean {
+    return it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == parent.getPtrSizeVar()
   }
 
   private val XcfaLabel.derefsWithShortCircuitCond:

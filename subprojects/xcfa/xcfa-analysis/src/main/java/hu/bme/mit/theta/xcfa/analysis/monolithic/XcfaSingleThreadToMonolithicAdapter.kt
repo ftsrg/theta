@@ -41,10 +41,12 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -55,7 +57,7 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 class XcfaSingleThreadToMonolithicAdapter(
   model: XCFA,
-  property: ErrorDetection,
+  property: XcfaProperty,
   parseContext: ParseContext,
   initValues: Boolean = false,
 ) :
@@ -77,7 +79,7 @@ class XcfaSingleThreadToMonolithicAdapter(
       Preconditions.checkArgument(model.initProcedures.size == 1)
       val proc = model.initProcedures.stream().findFirst().orElse(null).first
       Preconditions.checkArgument(
-        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
+        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel && it !is NopLabel }
       )
 
       // Initialize location var, location and edge mappings
@@ -100,7 +102,7 @@ class XcfaSingleThreadToMonolithicAdapter(
             )
           )
         } +
-          if (property != ErrorDetection.TERMINATION && proc.errorLoc.isPresent)
+          if (property.verifiedProperty != TERMINATION && proc.errorLoc.isPresent)
             proc.errorLoc.get().let { errorLoc ->
               listOf(
                 SequenceStmt.of(
@@ -129,7 +131,7 @@ class XcfaSingleThreadToMonolithicAdapter(
         transExpr = And(transUnfold.exprs),
         propExpr =
           when {
-            property == ErrorDetection.TERMINATION -> model.initProcedures[0].first.prop
+            property.verifiedProperty == TERMINATION -> model.initProcedures[0].first.prop
             proc.errorLoc.isPresent -> Neq(locVar.ref, smtInt(locationMap[proc.errorLoc.get()]!!))
             else -> True()
           },

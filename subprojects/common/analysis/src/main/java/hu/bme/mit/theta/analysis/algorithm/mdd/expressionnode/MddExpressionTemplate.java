@@ -21,10 +21,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -47,16 +44,25 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final Function<Object, Decl> extractDecl;
     private final SolverPool solverPool;
     private final boolean transExpr;
+    private final boolean knownSat;
 
     private static Solver lazySolver;
 
+    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
+            new UnaryOperationCache();
+
     private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
+        Boolean cached = satCache.getOrNull(expr);
+        if (cached != null) {
+            return cached;
+        }
         if (lazySolver == null) lazySolver = solverPool.requestSolver();
         boolean res;
         try (var wpp = new WithPushPop(lazySolver)) {
             lazySolver.add(expr);
             res = lazySolver.check().isSat();
         }
+        satCache.addToCache(expr, res);
         return res;
     }
 
@@ -64,16 +70,18 @@ public class MddExpressionTemplate implements MddNode.Template {
             Expr<BoolType> expr,
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
-            boolean transExpr) {
+            boolean transExpr,
+            boolean knownSat) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
         this.transExpr = transExpr;
+        this.knownSat = knownSat;
     }
 
     public static MddExpressionTemplate of(
             Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false);
     }
 
     public static MddExpressionTemplate of(
@@ -81,7 +89,15 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false);
+    }
+
+    public static MddExpressionTemplate ofKnownSat(
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true);
     }
 
     @Override
@@ -104,7 +120,8 @@ public class MddExpressionTemplate implements MddNode.Template {
         //        }
 
         // Check if terminal 0
-        if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
+        if (!knownSat
+                && (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool))) {
             return null;
         }
 
@@ -118,7 +135,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                 .getLower()
                                 .get()
                                 .checkInNode(
-                                        new MddExpressionTemplate(
+                                        MddExpressionTemplate.ofKnownSat(
                                                 canonizedExpr,
                                                 o -> (Decl) o,
                                                 solverPool,
@@ -184,7 +201,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                     .getLower()
                                     .get()
                                     .checkInNode(
-                                            new MddExpressionTemplate(
+                                            MddExpressionTemplate.ofKnownSat(
                                                     overApproxExpr,
                                                     extractDecl,
                                                     solverPool,

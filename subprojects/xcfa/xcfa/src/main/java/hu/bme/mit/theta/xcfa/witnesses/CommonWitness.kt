@@ -46,8 +46,8 @@ data class WitnessNode(
 }
 
 data class WitnessEdge(
-  val sourceId: String,
-  val targetId: String,
+  val source: WitnessNode,
+  val target: WitnessNode,
   val assumption: String? = null,
   val assumption_scope: String? = null,
   val assumption_resultfunction: String? = null,

@@ -99,7 +99,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     protected String[] getDefaultSolverArgs(String version) {
         if (SemVer.of(version).compareTo(SemVer.of("0.8.1")) >= 0) {
-            return new String[] {"--print-witness", "-portfolio"};
+            return new String[] {"--print-witness" /*, "-portfolio"*/};
         }
         return new String[] {"--print-witness"};
     }
@@ -118,7 +118,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("0.5.0", "0.8.1");
+        return Arrays.asList("0.5.0", "0.8.1", "0.9.0");
     }
 
     private String getSolverBinaryName() {

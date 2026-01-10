@@ -391,6 +391,11 @@ data class SequenceLabel
 constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = EmptyMetaData) :
   XcfaLabel(metadata = metadata) {
 
+  constructor(
+    labels: Sequence<XcfaLabel>,
+    metadata: MetaData = EmptyMetaData,
+  ) : this(labels.toList(), metadata)
+
   override fun toStmt(): Stmt {
     return SequenceStmt(labels.filter { it !is NopLabel }.map { it.toStmt() })
   }

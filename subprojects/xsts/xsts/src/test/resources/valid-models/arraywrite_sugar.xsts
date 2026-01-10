@@ -1,0 +1,13 @@
+var arr : [integer] -> integer = [0 <- 0, default <- 3]
+
+trans{
+    arr[0]:=arr[0]+1;
+}
+
+init{}
+
+env{}
+
+prop {
+    true
+}

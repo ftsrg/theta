@@ -42,6 +42,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -54,18 +56,23 @@ import java.util.*
 
 class XcfaMultiThreadToMonolithicAdapter(
   model: XCFA,
-  property: ErrorDetection,
+  property: XcfaProperty,
   parseContext: ParseContext,
   initValues: Boolean = false,
+  forceUnroll: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
     property,
     ProcedurePassManager(
-      listOf(
+      listOfNotNull(
+        if (forceUnroll) LoopUnrollPass(2) else null,
         EliminateSelfLoops(),
         RemoveAbortBranchesPass(),
-        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
+        if (property.verifiedProperty == ErrorDetection.DATA_RACE)
+          DataRaceToReachabilityPass(property, true)
+        else null,
+        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true),
         RemoveUnnecessaryAtomicBlocksPass(),
         MutexToVarPass(),
         DereferenceToArrayPass(),
@@ -75,6 +82,8 @@ class XcfaMultiThreadToMonolithicAdapter(
     initValues,
   ) {
 
+  // use model of super class in init expressions since it is optimized further
+  private val threads = super.model.staticThreadProcedureMap
   private lateinit var locVars: Map<StartLabel?, VarDecl<Type>>
   private val edgeVar = Decls.Var("__edge_", intType)
   private lateinit var locs: Map<StartLabel?, Map<XcfaLocation, Int>>
@@ -86,7 +95,6 @@ class XcfaMultiThreadToMonolithicAdapter(
     get() {
       // Collect static thread-procedure mapping
       Preconditions.checkArgument(model.initProcedures.size == 1)
-      val threads = model.staticThreadProcedureMap
       val anyAtomicBlock =
         threads.values.any { proc ->
           proc.edges.any { edge -> edge.getFlatLabels().any { it is AtomicFenceLabel } }
@@ -163,7 +171,16 @@ class XcfaMultiThreadToMonolithicAdapter(
                             startedLocVar,
                             cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
                           ),
-                        )
+                        ) +
+                          threads[l]!!
+                            .params
+                            .filter { it.second != ParamDirection.OUT }
+                            .mapIndexed { i, p ->
+                              AssignStmt.of(
+                                cast(p.first.changeVars(varLookUps[l]!!), p.first.type),
+                                cast(l.params[i + 1].changeVars(varLookUp), p.first.type),
+                              )
+                            }
                       }
 
                       is JoinLabel -> {
@@ -215,7 +232,7 @@ class XcfaMultiThreadToMonolithicAdapter(
               )
             }
             .toList() +
-            if (property != ErrorDetection.TERMINATION && proc.errorLoc.isPresent)
+            if (property.verifiedProperty != TERMINATION && proc.errorLoc.isPresent)
               proc.errorLoc.get().let { errorLoc ->
                 listOf(
                   SequenceStmt.of(
@@ -253,7 +270,7 @@ class XcfaMultiThreadToMonolithicAdapter(
 
       // Build property expression
       val propExpr =
-        if (property == ErrorDetection.TERMINATION) {
+        if (property.verifiedProperty == TERMINATION) {
           model.initProcedures[0].first.prop
         } else {
           threads

@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.exitProcess
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
@@ -46,7 +47,6 @@ import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
 import kotlin.jvm.optionals.getOrNull
-import kotlin.system.exitProcess
 import org.antlr.v4.runtime.CharStreams
 
 fun getXcfa(
@@ -107,7 +107,7 @@ fun getXcfa(
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
     logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
-    exitProcess(ExitCodes.FRONTEND_FAILED.code)
+    exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
 
 private fun CFA.toXcfa(): XCFA {
@@ -189,20 +189,21 @@ private fun parseC(
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
-      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger).first
+      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
     } catch (e: Throwable) {
       if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
-        val xcfa = getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger).first
+        val xcfa =
+          getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
         throw e
       }
     }
-  logger.write(Logger.Level.RESULT, "Arithmetic: ${parseContext.arithmeticTraits}\n")
+  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 

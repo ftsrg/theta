@@ -90,11 +90,12 @@ fun getMddChecker(
 
   return XcfaPipelineChecker(
     xcfa,
-    config.inputConfig.property.verifiedProperty,
+    config.inputConfig.property,
     parseContext,
     baseChecker,
     passes,
     logger,
+    config.outputConfig.acceptUnreliableSafe,
     true,
   )
 }

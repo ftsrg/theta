@@ -15,46 +15,27 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
-import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.isInlined
-import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
-import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.cli.params.*
-import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
-import hu.bme.mit.theta.xcfa.cli.params.Backend.OC
-import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.CHECK
-import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.COI
-import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
-import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
-import hu.bme.mit.theta.xcfa.cli.params.Domain.PRED_CART
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SERVER_ERROR
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SOLVER_ERROR
-import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
-import hu.bme.mit.theta.xcfa.cli.params.InitPrec.ALLASSUMES
-import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
-import hu.bme.mit.theta.xcfa.cli.params.POR.AASPOR
-import hu.bme.mit.theta.xcfa.cli.params.POR.SPOR
-import hu.bme.mit.theta.xcfa.cli.params.Refinement.*
-import hu.bme.mit.theta.xcfa.cli.params.Search.*
-import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
+import hu.bme.mit.theta.xcfa.cli.params.Domain.*
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.ARR
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.BITWISE
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.FLOAT
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.LIN_INT
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.MULTITHREAD
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.NONLIN_INT
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.PTR
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.TERMINATION
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.*
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
-@Suppress("LocalVariableName")
-fun complexPortfolio26(
+fun complex26(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -62,1134 +43,348 @@ fun complexPortfolio26(
   logger: Logger,
   uniqueLogger: Logger,
 ): STM {
-
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  var baseConfig =
-    XcfaConfig<CFrontendConfig, CegarConfig>(
-      inputConfig =
-        InputConfig(
-          xcfaWCtx = Triple(xcfa, mcm, parseContext),
-          property = portfolioConfig.inputConfig.property,
-        ),
-      backendConfig =
-        BackendConfig(
-          backend = CEGAR,
-          solverHome = portfolioConfig.backendConfig.solverHome,
-          timeoutMs = 0,
-          specConfig =
-            CegarConfig(
-              initPrec = EMPTY,
-              cexMonitor = CHECK,
-              abstractorConfig =
-                CegarAbstractorConfig(
-                  abstractionSolver = "Z3",
-                  validateAbstractionSolver = false,
-                  domain = EXPL,
-                  maxEnum = 1,
-                  search = ERR,
-                ),
-              refinerConfig =
-                CegarRefinerConfig(
-                  refinementSolver = "Z3",
-                  validateRefinementSolver = false,
-                  refinement = SEQ_ITP,
-                  exprSplitter = WHOLE,
-                  pruneStrategy = FULL,
-                ),
-            ),
-        ),
-      outputConfig = getDefaultOutputConfig(portfolioConfig),
-      debugConfig = portfolioConfig.debugConfig,
-    )
+  var baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
 
-  if (parseContext.multiThreading) {
-    val baseCegarConfig = baseConfig.backendConfig.specConfig!!
-    val verifiedProperty = baseConfig.inputConfig.property.verifiedProperty
-    val multiThreadedCegarConfig =
-      baseCegarConfig.copy(
-        coi = if (verifiedProperty == ERROR_LOCATION) COI else NO_COI,
-        por = if (verifiedProperty == ERROR_LOCATION) AASPOR else SPOR,
-        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
-      )
-    baseConfig =
-      baseConfig.copy(
-        backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
-      )
-  } else if (!xcfa.isInlined) {
-    val baseCegarConfig = baseConfig.backendConfig.specConfig!!
-    val recursiveConfig =
-      baseCegarConfig.copy(
-        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = BFS),
-        refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = LAZY),
-      )
-    baseConfig =
-      baseConfig.copy(backendConfig = baseConfig.backendConfig.copy(specConfig = recursiveConfig))
-  }
-
-  val timeoutOrNotSolvableError =
-    ExceptionTrigger(
-      fallthroughExceptions =
-        setOf(ErrorCodeException(SOLVER_ERROR.code), ErrorCodeException(SERVER_ERROR.code)),
-      label = "TimeoutOrNotSolvableError",
-    )
-  val timeoutOrSolverError =
-    ExceptionTrigger(
-      fallthroughExceptions = setOf(ErrorCodeException(SERVER_ERROR.code)),
-      label = "TimeoutOrSolverError",
-    )
-  val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label = "SolverError")
-  val anyError = ExceptionTrigger(label = "Anything")
-
-  fun getStm(trait: MainTrait, inProcess: Boolean): STM {
+  fun getStm(mainTrait: MainTrait, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
 
-    return when (trait) {
-      BITWISE -> {
-        val config_BITWISE_EXPL_NWT_IT_WP_cvc5 =
-          ConfigNode(
-            "BITWISE_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        val config_BITWISE_EXPL_NWT_IT_WP_Z3 =
-          ConfigNode(
-            "BITWISE_EXPL_NWT_IT_WP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_BITWISE_EXPL_NWT_IT_WP_cvc5, config_BITWISE_EXPL_NWT_IT_WP_Z3, solverError)
-        )
-        val config_BITWISE_EXPL_NWT_IT_WP_mathsat =
-          ConfigNode(
-            "BITWISE_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_BITWISE_EXPL_NWT_IT_WP_Z3, config_BITWISE_EXPL_NWT_IT_WP_mathsat, solverError)
-        )
-        val config_BITWISE_PRED_CART_SEQ_ITP_mathsat =
-          ConfigNode(
-            "BITWISE_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_BITWISE_EXPL_NWT_IT_WP_cvc5,
-            config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_BITWISE_EXPL_NWT_IT_WP_Z3,
-            config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_BITWISE_EXPL_NWT_IT_WP_mathsat,
-            config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_BITWISE_PRED_CART_SEQ_ITP_cvc5 =
-          ConfigNode(
-            "BITWISE_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
-            config_BITWISE_PRED_CART_SEQ_ITP_cvc5,
-            solverError,
-          )
-        )
-        val config_BITWISE_EXPL_SEQ_ITP_mathsat =
-          ConfigNode(
-            "BITWISE_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
-            config_BITWISE_EXPL_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_BITWISE_PRED_CART_SEQ_ITP_cvc5,
-            config_BITWISE_EXPL_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_BITWISE_EXPL_SEQ_ITP_cvc5 =
-          ConfigNode(
-            "BITWISE_EXPL_SEQ_ITP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_BITWISE_EXPL_SEQ_ITP_mathsat, config_BITWISE_EXPL_SEQ_ITP_cvc5, solverError)
-        )
+    fun cegar(
+      timeout: Long,
+      solver: String,
+      domain: Domain = Domain.PRED_CART,
+      refinement: Refinement = Refinement.SEQ_ITP,
+    ): ConfigNode {
+      return ConfigNode(
+        "${domain.name}-${refinement.name}-${solver}-$inProcess",
+        baseCegarConfig.adaptConfig(
+          inProcess = inProcess,
+          domain = domain,
+          refinement = refinement,
+          exprSplitter = ExprSplitterOptions.WHOLE,
+          timeoutMs = timeout,
+          abstractionSolver = solver,
+          refinementSolver = solver,
+        ),
+        checker,
+      )
+    }
 
-        STM(config_BITWISE_EXPL_NWT_IT_WP_cvc5, edges)
-      }
+    val bmc = { timeout: Long, solver: String ->
+      ConfigNode(
+        "BMC-${solver}-$inProcess",
+        baseBoundedConfig.adaptConfig(
+          inProcess = inProcess,
+          bmcEnabled = true,
+          indEnabled = false,
+          itpEnabled = false,
+          timeoutMs = timeout,
+          bmcSolver = solver,
+        ),
+        checker,
+      )
+    }
 
-      FLOAT -> {
-        val config_FLOAT_EXPL_NWT_IT_WP_cvc5 =
-          ConfigNode(
-            "FLOAT_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = NWT_IT_WP,
-              timeoutMs = 200000,
-            ),
-            checker,
-          )
-        val config_FLOAT_EXPL_NWT_IT_WP_Z3 =
-          ConfigNode(
-            "FLOAT_EXPL_NWT_IT_WP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = NWT_IT_WP,
-              timeoutMs = 200000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_FLOAT_EXPL_NWT_IT_WP_cvc5, config_FLOAT_EXPL_NWT_IT_WP_Z3, solverError)
-        )
-        val config_FLOAT_EXPL_NWT_IT_WP_mathsat =
-          ConfigNode(
-            "FLOAT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              validateRefinementSolver = true,
-              refinement = NWT_IT_WP,
-              timeoutMs = 200000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_FLOAT_EXPL_NWT_IT_WP_Z3, config_FLOAT_EXPL_NWT_IT_WP_mathsat, solverError)
-        )
-        val config_FLOAT_PRED_CART_SEQ_ITP_mathsat =
-          ConfigNode(
-            "FLOAT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              validateRefinementSolver = true,
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_FLOAT_EXPL_NWT_IT_WP_cvc5,
-            config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_FLOAT_EXPL_NWT_IT_WP_Z3,
-            config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_FLOAT_EXPL_NWT_IT_WP_mathsat,
-            config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_FLOAT_PRED_CART_SEQ_ITP_cvc5 =
-          ConfigNode(
-            "FLOAT_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
-            config_FLOAT_PRED_CART_SEQ_ITP_cvc5,
-            solverError,
-          )
-        )
-        val config_FLOAT_EXPL_SEQ_ITP_mathsat =
-          ConfigNode(
-            "FLOAT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              validateRefinementSolver = true,
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
-            config_FLOAT_EXPL_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_FLOAT_PRED_CART_SEQ_ITP_cvc5,
-            config_FLOAT_EXPL_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_FLOAT_EXPL_SEQ_ITP_cvc5 =
-          ConfigNode(
-            "FLOAT_EXPL_SEQ_ITP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_FLOAT_EXPL_SEQ_ITP_mathsat, config_FLOAT_EXPL_SEQ_ITP_cvc5, solverError)
-        )
+    val kind = { timeout: Long, solver: String ->
+      ConfigNode(
+        "KIND-${solver}-$inProcess",
+        baseBoundedConfig.adaptConfig(
+          inProcess = inProcess,
+          bmcEnabled = true,
+          indEnabled = true,
+          itpEnabled = false,
+          timeoutMs = timeout,
+          bmcSolver = solver,
+          indSolver = solver,
+        ),
+        checker,
+      )
+    }
 
-        STM(config_FLOAT_EXPL_NWT_IT_WP_cvc5, edges)
-      }
+    val imc = { timeout: Long, solver: String ->
+      ConfigNode(
+        "IMC-${solver}-$inProcess",
+        baseBoundedConfig.adaptConfig(
+          inProcess = inProcess,
+          bmcEnabled = false,
+          indEnabled = false,
+          itpEnabled = true,
+          timeoutMs = timeout,
+          itpSolver = solver,
+        ),
+        checker,
+      )
+    }
 
-      LIN_INT -> {
-        val config_LIN_INT_EXPL_NWT_IT_WP_mathsat =
-          ConfigNode(
-            "LIN_INT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
+    val ic3 = { timeout: Long, solver: String ->
+      ConfigNode(
+        "IC3-${solver}-$inProcess",
+        baseIc3Config.copy(
+          backendConfig =
+            baseIc3Config.backendConfig.copy(
+              parseInProcess = true,
+              timeoutMs = timeout,
               inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        val config_LIN_INT_EXPL_NWT_IT_WP_Z3 =
-          ConfigNode(
-            "LIN_INT_EXPL_NWT_IT_WP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_LIN_INT_EXPL_NWT_IT_WP_mathsat, config_LIN_INT_EXPL_NWT_IT_WP_Z3, solverError)
-        )
-        val config_LIN_INT_EXPL_SEQ_ITP_Z3 =
-          ConfigNode(
-            "LIN_INT_EXPL_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 300000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_LIN_INT_EXPL_NWT_IT_WP_mathsat,
-            config_LIN_INT_EXPL_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_LIN_INT_EXPL_NWT_IT_WP_Z3,
-            config_LIN_INT_EXPL_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_LIN_INT_EXPL_SEQ_ITP_mathsat =
-          ConfigNode(
-            "LIN_INT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 300000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_LIN_INT_EXPL_SEQ_ITP_Z3, config_LIN_INT_EXPL_SEQ_ITP_mathsat, solverError)
-        )
-        val config_LIN_INT_PRED_CART_SEQ_ITP_Z3 =
-          ConfigNode(
-            "LIN_INT_PRED_CART_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_LIN_INT_EXPL_SEQ_ITP_Z3,
-            config_LIN_INT_PRED_CART_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_LIN_INT_EXPL_SEQ_ITP_mathsat,
-            config_LIN_INT_PRED_CART_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_LIN_INT_PRED_CART_SEQ_ITP_mathsat =
-          ConfigNode(
-            "LIN_INT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_LIN_INT_PRED_CART_SEQ_ITP_Z3,
-            config_LIN_INT_PRED_CART_SEQ_ITP_mathsat,
-            solverError,
-          )
-        )
-        val config_LIN_INT_PRED_CART_SEQ_ITP_z3 =
-          ConfigNode(
-            "LIN_INT_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "z3:4.12.2",
-              refinementSolver = "z3:4.12.2",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_LIN_INT_PRED_CART_SEQ_ITP_mathsat,
-            config_LIN_INT_PRED_CART_SEQ_ITP_z3,
-            solverError,
-          )
-        )
-
-        STM(config_LIN_INT_EXPL_NWT_IT_WP_mathsat, edges)
-      }
-
-      NONLIN_INT -> {
-        val config_NONLIN_INT_EXPL_NWT_IT_WP_Z3 =
-          ConfigNode(
-            "NONLIN_INT_EXPL_NWT_IT_WP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        val config_NONLIN_INT_EXPL_NWT_IT_WP_mathsat =
-          ConfigNode(
-            "NONLIN_INT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_EXPL_NWT_IT_WP_Z3,
-            config_NONLIN_INT_EXPL_NWT_IT_WP_mathsat,
-            solverError,
-          )
-        )
-        val config_NONLIN_INT_EXPL_SEQ_ITP_Z3 =
-          ConfigNode(
-            "NONLIN_INT_EXPL_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_EXPL_NWT_IT_WP_Z3,
-            config_NONLIN_INT_EXPL_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_EXPL_NWT_IT_WP_mathsat,
-            config_NONLIN_INT_EXPL_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_NONLIN_INT_EXPL_SEQ_ITP_z3 =
-          ConfigNode(
-            "NONLIN_INT_EXPL_SEQ_ITP_z3:4.12.2-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "z3:4.12.2",
-              refinementSolver = "z3:4.12.2",
-              refinement = SEQ_ITP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_NONLIN_INT_EXPL_SEQ_ITP_Z3, config_NONLIN_INT_EXPL_SEQ_ITP_z3, solverError)
-        )
-        val config_NONLIN_INT_EXPL_SEQ_ITP_mathsat =
-          ConfigNode(
-            "NONLIN_INT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 200000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_EXPL_SEQ_ITP_Z3,
-            config_NONLIN_INT_EXPL_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_EXPL_SEQ_ITP_z3,
-            config_NONLIN_INT_EXPL_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_NONLIN_INT_PRED_CART_SEQ_ITP_mathsat =
-          ConfigNode(
-            "NONLIN_INT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_EXPL_SEQ_ITP_mathsat,
-            config_NONLIN_INT_PRED_CART_SEQ_ITP_mathsat,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_NONLIN_INT_PRED_CART_SEQ_ITP_Z3 =
-          ConfigNode(
-            "NONLIN_INT_PRED_CART_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_PRED_CART_SEQ_ITP_mathsat,
-            config_NONLIN_INT_PRED_CART_SEQ_ITP_Z3,
-            solverError,
-          )
-        )
-        val config_NONLIN_INT_EXPL_NWT_IT_WP_cvc5 =
-          ConfigNode(
-            "NONLIN_INT_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = NWT_IT_WP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_PRED_CART_SEQ_ITP_mathsat,
-            config_NONLIN_INT_EXPL_NWT_IT_WP_cvc5,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_NONLIN_INT_PRED_CART_SEQ_ITP_Z3,
-            config_NONLIN_INT_EXPL_NWT_IT_WP_cvc5,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-
-        STM(config_NONLIN_INT_EXPL_NWT_IT_WP_Z3, edges)
-      }
-
-      ARR -> {
-        val config_ARR_EXPL_NWT_IT_WP_cvc5 =
-          ConfigNode(
-            "ARR_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        val config_ARR_EXPL_NWT_IT_WP_Z3 =
-          ConfigNode(
-            "ARR_EXPL_NWT_IT_WP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = NWT_IT_WP,
-              timeoutMs = 100000,
-            ),
-            checker,
-          )
-        edges.add(Edge(config_ARR_EXPL_NWT_IT_WP_cvc5, config_ARR_EXPL_NWT_IT_WP_Z3, solverError))
-        val config_ARR_PRED_CART_SEQ_ITP_Z3 =
-          ConfigNode(
-            "ARR_PRED_CART_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 300000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_ARR_EXPL_NWT_IT_WP_cvc5,
-            config_ARR_PRED_CART_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_ARR_EXPL_NWT_IT_WP_Z3,
-            config_ARR_PRED_CART_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_ARR_PRED_CART_SEQ_ITP_z3 =
-          ConfigNode(
-            "ARR_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "z3:4.12.2",
-              refinementSolver = "z3:4.12.2",
-              refinement = SEQ_ITP,
-              timeoutMs = 300000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(config_ARR_PRED_CART_SEQ_ITP_Z3, config_ARR_PRED_CART_SEQ_ITP_z3, solverError)
-        )
-        val config_ARR_PRED_CART_SEQ_ITP_princess =
-          ConfigNode(
-            "ARR_PRED_CART_SEQ_ITP_princess:2023-06-19-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "princess:2023-06-19",
-              refinementSolver = "princess:2023-06-19",
-              refinement = SEQ_ITP,
-              timeoutMs = 500000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_ARR_PRED_CART_SEQ_ITP_Z3,
-            config_ARR_PRED_CART_SEQ_ITP_princess,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_ARR_PRED_CART_SEQ_ITP_z3,
-            config_ARR_PRED_CART_SEQ_ITP_princess,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_ARR_PRED_CART_SEQ_ITP_cvc5 =
-          ConfigNode(
-            "ARR_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "cvc5:1.0.8",
-              refinementSolver = "cvc5:1.0.8",
-              refinement = SEQ_ITP,
-              timeoutMs = 500000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_ARR_PRED_CART_SEQ_ITP_princess,
-            config_ARR_PRED_CART_SEQ_ITP_cvc5,
-            solverError,
-          )
-        )
-
-        STM(config_ARR_EXPL_NWT_IT_WP_cvc5, edges)
-      }
-
-      MULTITHREAD -> {
-        val cegarXcfa =
-          xcfa.optimizeFurther(
-            ProcedurePassManager(
-              listOf(
-                LbePass(parseContext, LBE_LOCAL),
-                NormalizePass(),
-                DeterministicPass(),
-                UnusedVarPass(logger, portfolioConfig.inputConfig.property),
-                EmptyEdgeRemovalPass(),
-                UnusedLocRemovalPass(),
-              )
+              specConfig =
+                baseIc3Config.backendConfig.specConfig!!.copy(solver = solver, reversed = true),
             )
-          )
+        ),
+        checker,
+      )
+    }
 
-        val property = baseConfig.inputConfig.property.copy()
-        val ocXcfa =
-          if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE)
-            xcfa.optimizeFurther(
-              ProcedurePassManager(listOf(DataRaceToReachabilityPass(property, true)))
+    val ic3Cegar = { timeout: Long, solver: String ->
+      ConfigNode(
+        "IC3-cegar-${solver}-$inProcess",
+        baseIc3Config.copy(
+          backendConfig =
+            baseIc3Config.backendConfig.copy(
+              parseInProcess = true,
+              timeoutMs = timeout,
+              inProcess = inProcess,
+              specConfig =
+                baseIc3Config.backendConfig.specConfig!!.copy(
+                  solver = solver,
+                  cegar = true,
+                  reversed = true,
+                ),
             )
-          else xcfa
+        ),
+        checker,
+      )
+    }
 
-        val multithreadCegarBaseConfig =
-          baseConfig.copy(
-            inputConfig =
-              baseConfig.inputConfig.copy(xcfaWCtx = Triple(cegarXcfa, mcm, parseContext)),
-            frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
-          )
-
-        val ocBaseConfig =
-          XcfaConfig(
-            inputConfig =
-              baseConfig.inputConfig.copy(
-                xcfaWCtx = Triple(ocXcfa, mcm, parseContext),
-                property = property,
-              ),
-            frontendConfig =
-              baseConfig.frontendConfig.copy(
-                lbeLevel = NO_LBE,
-                enableDataRaceToReachability =
-                  baseConfig.inputConfig.property.verifiedProperty == DATA_RACE,
-              ),
-            backendConfig =
-              BackendConfig(
-                backend = OC,
-                solverHome = baseConfig.backendConfig.solverHome,
-                inProcess = inProcess,
-                specConfig = OcConfig(decisionProcedure = OcDecisionProcedureType.BASIC),
-              ),
-            outputConfig = baseConfig.outputConfig,
-            debugConfig = baseConfig.debugConfig,
-          )
-
-        val config_OC =
-          ConfigNode(
-            "MULTITHREAD_OC_BASIC_GENERIC3-$inProcess",
-            ocBaseConfig.copy(
-              backendConfig =
-                ocBaseConfig.backendConfig.copy(
-                  timeoutMs = 250_000,
-                  specConfig =
-                    OcConfig(
-                      decisionProcedure = OcDecisionProcedureType.BASIC,
-                      autoConflict = AutoConflictFinderConfig.GENERIC,
-                      autoConflictBound = 3,
-                    ),
-                )
-            ),
-            checker,
-          )
-
-        val config_MULTITHREAD_EXPL_SEQ_ITP =
-          ConfigNode(
-            "MULTITHREAD_EXPL_SEQ_ITP-$inProcess",
-            multithreadCegarBaseConfig.adaptConfig(
+    val mdd = { timeout: Long, solver: String ->
+      ConfigNode(
+        "MDD-${solver}-$inProcess",
+        baseMddConfig.copy(
+          backendConfig =
+            baseMddConfig.backendConfig.copy(
+              timeoutMs = timeout,
               inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 300_000,
-            ),
-            checker,
-          )
+              parseInProcess = true,
+              specConfig = baseMddConfig.backendConfig.specConfig!!.copy(solver = solver),
+            )
+        ),
+        checker,
+      )
+    }
 
-        val config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES =
-          ConfigNode(
-            "MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES-$inProcess",
-            multithreadCegarBaseConfig.adaptConfig(
+    val mddCegar = { timeout: Long, solver: String ->
+      ConfigNode(
+        "MDD-cegar-${solver}-$inProcess",
+        baseMddConfig.copy(
+          backendConfig =
+            baseMddConfig.backendConfig.copy(
+              timeoutMs = timeout,
               inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = BW_BIN_ITP,
-              initPrec = ALLASSUMES,
-              timeoutMs = 320_000,
+              parseInProcess = true,
+              specConfig =
+                baseMddConfig.backendConfig.specConfig!!.copy(cegar = true, solver = solver),
+            )
+        ),
+        checker,
+      )
+    }
+
+    val complex =
+      ConfigNode(
+        "Complex-$inProcess",
+        XcfaConfig(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
             ),
-            checker,
-          )
-
-        val config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3 =
-          ConfigNode(
-            "MULTITHREAD_PRED_SEQ_ITP_NEWZ3-$inProcess",
-            multithreadCegarBaseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "Z3:4.13",
-              refinementSolver = "Z3:4.13",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
+          frontendConfig = portfolioConfig.frontendConfig,
+          backendConfig =
+            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
+              specConfig = PortfolioConfig("COMPLEX")
             ),
-            checker,
-          )
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
 
-        val config_MULTITHREAD_EXPL_NWT_IT_WP_MATHSAT =
-          ConfigNode(
-            "MULTITHREAD_EXPL_NWT_WP_MATHSAT-$inProcess",
-            multithreadCegarBaseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = NWT_IT_WP,
-              timeoutMs = 0,
+    val termination =
+      ConfigNode(
+        "Termination-$inProcess",
+        XcfaConfig(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
             ),
-            checker,
-          )
+          frontendConfig = portfolioConfig.frontendConfig,
+          backendConfig =
+            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
+              specConfig = PortfolioConfig("TERMINATION")
+            ),
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
 
-        val startNode =
-          when (baseConfig.inputConfig.property.verifiedProperty) {
-            ERROR_LOCATION -> {
-              val config_MULTITHREAD_EXPL_COI_SEQ_ITP =
-                ConfigNode(
-                  "MULTITHREAD_EXPL_COI_SEQ_ITP-$inProcess",
-                  multithreadCegarBaseConfig.adaptConfig(
-                    inProcess = inProcess,
-                    domain = EXPL,
-                    abstractionSolver = "Z3",
-                    refinementSolver = "Z3",
-                    refinement = SEQ_ITP,
-                    coi = COI,
-                    timeoutMs = 250_000,
-                  ),
-                  checker,
-                )
+    val multithread =
+      ConfigNode(
+        "MultiThread-$inProcess",
+        XcfaConfig(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
+            ),
+          frontendConfig = portfolioConfig.frontendConfig,
+          backendConfig =
+            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
+              specConfig = PortfolioConfig("MULTITHREAD")
+            ),
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
 
-              val config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES =
-                ConfigNode(
-                  "MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES-$inProcess",
-                  multithreadCegarBaseConfig.adaptConfig(
-                    inProcess = inProcess,
-                    domain = PRED_CART,
-                    abstractionSolver = "Z3",
-                    refinementSolver = "Z3",
-                    refinement = SEQ_ITP,
-                    coi = COI,
-                    initPrec = ALLASSUMES,
-                    timeoutMs = 0,
-                  ),
-                  checker,
-                )
+    infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
+      edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
+      return node
+    }
 
-              val config_MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3 =
-                ConfigNode(
-                  "MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3-$inProcess",
-                  multithreadCegarBaseConfig.adaptConfig(
-                    inProcess = inProcess,
-                    domain = PRED_CART,
-                    abstractionSolver = "Z3:4.13",
-                    refinementSolver = "Z3:4.13",
-                    refinement = SEQ_ITP,
-                    coi = COI,
-                    timeoutMs = 0,
-                  ),
-                  checker,
-                )
+    infix fun ConfigNode.onSolverError(node: ConfigNode): ConfigNode {
+      edges.add(Edge(this, node, solverError))
+      return node
+    }
 
-              edges.add(Edge(config_OC, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+    val (startingConfig, endConfig) =
+      if (xcfa.isInlined) {
+        when (mainTrait) {
+          BITWISE -> {
 
-              edges.add(
-                Edge(
-                  config_MULTITHREAD_EXPL_COI_SEQ_ITP,
-                  config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
-                  anyError,
-                )
-              )
+            val kind = kind(300_000, "Z3:new")
+            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmc = bmc(150_000, "Z3:new")
 
-              edges.add(
-                Edge(
-                  config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
-                  config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES,
-                  anyError,
-                )
-              )
+            val kindMS = kind(300_000, "mathsat:5.6.12")
+            val pred_bwMS =
+              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcMS = bmc(150_000, "mathsat:5.6.12")
 
-              edges.add(
-                Edge(
-                  config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES,
-                  config_MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3,
-                  anyError,
-                )
-              )
+            kind then pred_bw then expl then bmc
 
-              config_OC
-            }
+            kindMS onSolverError kind
+            pred_bwMS onSolverError pred_bw
+            explMS onSolverError expl
 
-            DATA_RACE -> {
-              val config_MULTITHREAD_PRED_SEQ_ITP =
-                ConfigNode(
-                  "MULTITHREAD_PRED_SEQ_ITP-$inProcess",
-                  multithreadCegarBaseConfig.adaptConfig(
-                    inProcess = inProcess,
-                    domain = PRED_CART,
-                    abstractionSolver = "Z3",
-                    refinementSolver = "Z3",
-                    refinement = SEQ_ITP,
-                    timeoutMs = 750_000,
-                  ),
-                  checker,
-                )
+            kindMS then pred_bwMS then explMS then bmcMS
 
-              val config_OC_NO_CONFLICT =
-                ConfigNode("MULTITHREAD_OC-$inProcess", ocBaseConfig, checker)
+            kindMS to bmcMS
+          }
+          FLOAT -> {
+            // CVC by default, Z3 as fallback
 
-              edges.add(Edge(config_MULTITHREAD_PRED_SEQ_ITP, config_OC_NO_CONFLICT, anyError))
+            val kind = kind(300_000, "Z3:new")
+            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmc = bmc(150_000, "Z3:new")
 
-              config_MULTITHREAD_PRED_SEQ_ITP
-            }
+            val kindCVC = kind(300_000, "cvc5:1.2.0")
+            val pred_bwCVC = cegar(300_000, "cvc5:1.2.0", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explCVC = cegar(200_000, "cvc5:1.2.0", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcCVC = bmc(150_000, "cvc5:1.2.0")
 
-            else -> {
-              val config_MULTITHREAD_PRED_SEQ_ITP =
-                ConfigNode(
-                  "MULTITHREAD_PRED_SEQ_ITP-$inProcess",
-                  multithreadCegarBaseConfig.adaptConfig(
-                    inProcess = inProcess,
-                    domain = PRED_CART,
-                    abstractionSolver = "Z3",
-                    refinementSolver = "Z3",
-                    refinement = SEQ_ITP,
-                    timeoutMs = 0,
-                  ),
-                  checker,
-                )
+            kind then pred_bw then expl then bmc
 
-              edges.add(
-                Edge(config_MULTITHREAD_EXPL_SEQ_ITP, config_MULTITHREAD_PRED_SEQ_ITP, anyError)
-              )
+            kindCVC onSolverError kind
+            pred_bwCVC onSolverError pred_bw
+            explCVC onSolverError expl
+            bmcCVC onSolverError bmc
 
-              edges.add(
-                Edge(
-                  config_MULTITHREAD_PRED_SEQ_ITP,
-                  config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
-                  anyError,
-                )
-              )
+            kindCVC then pred_bwCVC then explCVC then bmcCVC
 
-              edges.add(
-                Edge(
-                  config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
-                  config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3,
-                  anyError,
-                )
-              )
+            kindCVC to bmcCVC
+          }
+          PTR,
+          ARR,
+          NONLIN_INT,
+          LIN_INT -> {
+            val kind = kind(300_000, "Z3:new")
+            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmc = bmc(150_000, "Z3:new")
 
-              edges.add(
-                Edge(
-                  config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3,
-                  config_MULTITHREAD_EXPL_NWT_IT_WP_MATHSAT,
-                  anyError,
-                )
-              )
+            val kindMS = kind(300_000, "mathsat:5.6.12")
+            val pred_bwMS =
+              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcMS = bmc(150_000, "mathsat:5.6.12")
 
-              config_MULTITHREAD_EXPL_SEQ_ITP
-            }
+            kind then pred_bw then expl then bmc
+
+            kind onSolverError kindMS
+            pred_bw onSolverError pred_bwMS
+            expl onSolverError explMS
+
+            kindMS then pred_bwMS then explMS then bmcMS
+
+            kind to bmc
           }
 
-        STM(startNode, edges)
+          MULTITHREAD -> {
+            multithread to multithread
+          }
+          TERMINATION -> {
+            termination to termination
+          }
+        }
+      } else {
+        val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+        val expl = cegar(300_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+        val pred_seq = cegar(150_000, "Z3", Domain.PRED_CART, Refinement.SEQ_ITP)
+        val expl_seq = cegar(150_000, "Z3", Domain.EXPL, Refinement.SEQ_ITP)
+
+        val pred_bwMS = cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+        val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
+        val pred_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.SEQ_ITP)
+        val expl_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.EXPL, Refinement.SEQ_ITP)
+
+        pred_bw then expl then pred_seq then expl_seq
+
+        pred_bw onSolverError pred_bwMS
+        expl onSolverError explMS
+        pred_seq onSolverError pred_seqMS
+        expl_seq onSolverError expl_seqMS
+
+        pred_bwMS then explMS then pred_seqMS then expl_seqMS
+
+        pred_bw to expl_seq
       }
 
-      PTR -> {
-        val config_EXPL =
-          ConfigNode(
-            "PTR_EXPL-$inProcess",
-            baseConfig.adaptConfig(inProcess = inProcess, domain = EXPL, timeoutMs = 100_000),
-            checker,
-          )
-        val config_PRED_CART =
-          ConfigNode(
-            "PTR_PRED_CART-$inProcess",
-            baseConfig.adaptConfig(inProcess = inProcess, domain = PRED_CART),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_EXPL,
-            config_PRED_CART,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        STM(config_EXPL, edges)
-      }
-    }
+    endConfig then complex
+
+    return STM(startingConfig, edges)
   }
 
   val mainTrait =
     when {
+      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION ->
+        MainTrait.TERMINATION
       parseContext.multiThreading -> MULTITHREAD
       xcfa.procedures.any { p -> p.edges.any { it.label.dereferences.isNotEmpty() } } -> PTR
       ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> FLOAT
@@ -1199,17 +394,16 @@ fun complexPortfolio26(
       else -> LIN_INT
     }
 
-  logger.write(RESULT, "Using portfolio $mainTrait\n")
-
-  if (portfolioConfig.debugConfig.debug) {
-    return getStm(mainTrait, false)
-  }
+  logger.benchmark("Using portfolio: $mainTrait\n")
 
   val inProcessStm = getStm(mainTrait, true)
   val notInProcessStm = getStm(mainTrait, false)
+
   val inProcess = HierarchicalNode("InProcess", inProcessStm)
   val notInProcess = HierarchicalNode("NotInprocess", notInProcessStm)
-  val fallbackEdge = Edge(inProcess, notInProcess, anyError)
 
-  return STM(inProcess, setOf(fallbackEdge))
+  val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
+
+  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, false)
+  else STM(inProcess, setOf(fallbackEdge))
 }

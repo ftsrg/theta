@@ -23,8 +23,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class PonateTest {
 
@@ -33,9 +33,9 @@ public class PonateTest {
         final Expr<IntType> ca = Const("a", Int()).getRef();
         final Expr<BoolType> expr = Eq(ca, Int(2));
 
-        Assert.assertEquals(expr, ExprUtils.ponate(expr));
-        Assert.assertEquals(expr, ExprUtils.ponate(Not(expr)));
-        Assert.assertEquals(expr, ExprUtils.ponate(Not(Not(expr))));
-        Assert.assertEquals(expr, ExprUtils.ponate(Not(Not(Not(expr)))));
+        Assertions.assertEquals(expr, ExprUtils.ponate(expr));
+        Assertions.assertEquals(expr, ExprUtils.ponate(Not(expr)));
+        Assertions.assertEquals(expr, ExprUtils.ponate(Not(Not(expr))));
+        Assertions.assertEquals(expr, ExprUtils.ponate(Not(Not(Not(expr)))));
     }
 }

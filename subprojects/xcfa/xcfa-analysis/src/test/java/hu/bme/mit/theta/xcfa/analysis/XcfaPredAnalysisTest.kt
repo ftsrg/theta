@@ -84,6 +84,7 @@ class XcfaPredAnalysisTest {
 
     val lts = getXcfaLts()
 
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -93,7 +94,7 @@ class XcfaPredAnalysisTest {
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
         ConsoleLogger(Logger.Level.DETAIL),
         lts,
-        ErrorDetection.ERROR_LOCATION,
+        errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
@@ -141,6 +142,7 @@ class XcfaPredAnalysisTest {
 
     val lts = XcfaSporLts(xcfa)
 
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -150,7 +152,7 @@ class XcfaPredAnalysisTest {
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
         ConsoleLogger(Logger.Level.DETAIL),
         lts,
-        ErrorDetection.ERROR_LOCATION,
+        errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
@@ -199,6 +201,7 @@ class XcfaPredAnalysisTest {
 
     val lts = XcfaDporLts(xcfa)
 
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -206,7 +209,7 @@ class XcfaPredAnalysisTest {
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
         ConsoleLogger(Logger.Level.DETAIL),
         lts,
-        ErrorDetection.ERROR_LOCATION,
+        errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
@@ -254,6 +257,7 @@ class XcfaPredAnalysisTest {
 
     val lts = XcfaAasporLts(xcfa, mutableMapOf())
 
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -263,7 +267,7 @@ class XcfaPredAnalysisTest {
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
         ConsoleLogger(Logger.Level.DETAIL),
         lts,
-        ErrorDetection.ERROR_LOCATION,
+        errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
@@ -316,6 +320,7 @@ class XcfaPredAnalysisTest {
 
     val lts = XcfaAadporLts(xcfa)
 
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -323,7 +328,7 @@ class XcfaPredAnalysisTest {
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
         ConsoleLogger(Logger.Level.DETAIL),
         lts,
-        ErrorDetection.ERROR_LOCATION,
+        errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
