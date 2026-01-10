@@ -70,7 +70,7 @@ fun XcfaLabel.collectHavocs(): Set<HavocStmt<*>> =
     else -> setOf()
   }
 
-fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
+fun XcfaLabel.collectVars(): Collection<VarDecl<*>> =
   when (this) {
     is StmtLabel -> StmtUtils.getVars(stmt)
     is NondetLabel -> labels.map { it.collectVars() }.flatten()
