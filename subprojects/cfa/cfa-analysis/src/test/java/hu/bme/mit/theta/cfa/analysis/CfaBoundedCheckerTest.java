@@ -33,22 +33,15 @@ import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class CfaBoundedCheckerTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public boolean isSafe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -64,8 +57,10 @@ public class CfaBoundedCheckerTest {
                 });
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}")
+    public void test(String filePath, boolean isSafe) throws Exception {
+        initCfaBoundedCheckerTest(filePath, isSafe);
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         SolverManager.registerSolverManager(Z3SolverManager.create());
@@ -78,7 +73,7 @@ public class CfaBoundedCheckerTest {
         try {
             solverFactory = SolverManager.resolveSolverFactory("Z3");
         } catch (Exception e) {
-            Assume.assumeNoException(e);
+            Assumptions.assumeFalse(true, e::toString);
             return;
         }
 
@@ -97,9 +92,14 @@ public class CfaBoundedCheckerTest {
                                             logger));
             status = checker.check(null);
 
-            Assert.assertEquals(isSafe, status.isSafe());
+            Assertions.assertEquals(isSafe, status.isSafe());
         } finally {
             SolverManager.closeAll();
         }
+    }
+
+    public void initCfaBoundedCheckerTest(String filePath, boolean isSafe) {
+        this.filePath = filePath;
+        this.isSafe = isSafe;
     }
 }

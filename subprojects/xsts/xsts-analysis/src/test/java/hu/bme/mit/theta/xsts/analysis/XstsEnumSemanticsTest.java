@@ -15,23 +15,30 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class XstsEnumSemanticsTest {
 
-    @Test(expected = ClassCastException.class)
+    @Test
     public void test() throws IOException {
-
-        try (InputStream inputStream =
-                new SequenceInputStream(
-                        new FileInputStream("src/test/resources/model/literals_bad.xsts"),
-                        new FileInputStream("src/test/resources/property/literals.prop"))) {
-            XstsDslManager.createXsts(inputStream);
-        }
+        assertThrows(
+                ClassCastException.class,
+                () -> {
+                    try (InputStream inputStream =
+                            new SequenceInputStream(
+                                    new FileInputStream(
+                                            "src/test/resources/model/literals_bad.xsts"),
+                                    new FileInputStream(
+                                            "src/test/resources/property/literals.prop"))) {
+                        XstsDslManager.createXsts(inputStream);
+                    }
+                });
     }
 }

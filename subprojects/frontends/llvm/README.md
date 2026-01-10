@@ -12,6 +12,19 @@ LLVM IR can largely decrease this complexity.
 Currently there is no official LLVM Java API, thus a C++ project is necessary to handle the parsing
 of LLVM bytecode.
 
+# Building the Native Library
+
+By default, the native LLVM library is **not built** during regular Gradle builds. To enable native library compilation, pass the `-PbuildLlvmNative=true` property:
+
+```bash
+./gradlew build -PbuildLlvmNative=true
+```
+
+Prerequisites for building:
+- Linux operating system
+- LLVM 15 installed (`llvm-config-15` or `llvm-config` pointing to version 15)
+- Clang 15 installed
+
 # Connection with Theta
 
 [Link to Theta](https://github.com/ftsrg/theta)

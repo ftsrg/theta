@@ -26,8 +26,8 @@ import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import java.util.Map;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class SmtLibParserTest {
 
@@ -44,13 +44,14 @@ public class SmtLibParserTest {
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
         var general = GeneralResponse.fromContext(parser.response());
-        Assert.assertTrue(general.isSpecific());
+        Assertions.assertTrue(general.isSpecific());
 
-        Assert.assertTrue(general.asSpecific().isGetUnsatCoreResponse());
-        Assert.assertEquals(0, general.asSpecific().asGetUnsatCoreResponse().getLabels().size());
+        Assertions.assertTrue(general.asSpecific().isGetUnsatCoreResponse());
+        Assertions.assertEquals(
+                0, general.asSpecific().asGetUnsatCoreResponse().getLabels().size());
 
-        Assert.assertTrue(general.asSpecific().isGetModelResponse());
-        Assert.assertEquals(0, general.asSpecific().asGetModelResponse().getModel().size());
+        Assertions.assertTrue(general.asSpecific().isGetModelResponse());
+        Assertions.assertEquals(0, general.asSpecific().asGetModelResponse().getModel().size());
     }
 
     @Test
@@ -74,6 +75,6 @@ public class SmtLibParserTest {
         final var expr =
                 termTransformer.toExpr(response, BoolExprs.Bool(), new SmtLibModel(Map.of()));
 
-        Assert.assertNotNull(expr);
+        Assertions.assertNotNull(expr);
     }
 }

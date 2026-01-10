@@ -22,8 +22,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Optional;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class SubstitutionTest {
 
@@ -35,10 +35,10 @@ public class SubstitutionTest {
     public void testBasic() {
         final Substitution sb =
                 BasicSubstitution.builder().put(ca, Add(Int(1), Int(2))).put(cb, Int(3)).build();
-        Assert.assertEquals(2, sb.getDecls().size());
-        Assert.assertEquals(Add(Int(1), Int(2)), sb.eval(ca).get());
-        Assert.assertEquals(Int(3), sb.eval(cb).get());
-        Assert.assertEquals(Optional.empty(), sb.eval(cc));
+        Assertions.assertEquals(2, sb.getDecls().size());
+        Assertions.assertEquals(Add(Int(1), Int(2)), sb.eval(ca).get());
+        Assertions.assertEquals(Int(3), sb.eval(cb).get());
+        Assertions.assertEquals(Optional.empty(), sb.eval(cc));
     }
 
     @Test
@@ -48,9 +48,9 @@ public class SubstitutionTest {
         final Substitution sb2 =
                 BasicSubstitution.builder().put(ca, Int(3)).put(cc, Int(4)).build();
         final NestedSubstitution sb = NestedSubstitution.create(sb1, sb2);
-        Assert.assertEquals(3, sb.getDecls().size());
-        Assert.assertEquals(Int(3), sb.eval(ca).get());
-        Assert.assertEquals(Int(2), sb.eval(cb).get());
-        Assert.assertEquals(Int(4), sb.eval(cc).get());
+        Assertions.assertEquals(3, sb.getDecls().size());
+        Assertions.assertEquals(Int(3), sb.eval(ca).get());
+        Assertions.assertEquals(Int(2), sb.eval(cb).get());
+        Assertions.assertEquals(Int(4), sb.eval(cc).get());
     }
 }

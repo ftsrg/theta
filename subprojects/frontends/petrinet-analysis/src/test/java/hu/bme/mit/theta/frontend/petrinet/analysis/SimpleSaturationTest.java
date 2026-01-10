@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -29,7 +29,7 @@ import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
 import java.io.File;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class SimpleSaturationTest {
     public static String reverseString(String str) {
