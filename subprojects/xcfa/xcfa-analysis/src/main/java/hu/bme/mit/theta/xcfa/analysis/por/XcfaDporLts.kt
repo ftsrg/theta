@@ -291,7 +291,10 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
           (last.lastDependents[process]?.toMutableMap() ?: mutableMapOf()).apply {
             this[process] = stack.size
           }
-        val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
+        val relevantProcesses =
+          (newProcessLastAction.keys - setOf(process))
+            .filter { p -> newLastDependents[p]?.let { it < virtualLimit } ?: true }
+            .toMutableSet()
 
         // Race detection
         for (index in stack.size - 1 downTo 1) {
@@ -345,23 +348,26 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
           } else {
             last.sleep.filter { !dependent(it.action, newAction) }.toMutableSet()
           }
-        val enabledActions = item.state.enabled subtract newSleep
         val newBacktrack =
-          when {
-            isVirtualExploration ->
-              item.state.backtrack // for virtual exploration through a covering relation
-            item.explored.isNotEmpty() ->
-              item.explored.toMutableSet().apply {
+          if (isVirtualExploration) { // for virtual exploration through a covering relation
+            item.state.backtrack
+          } else {
+            val enabledActions = item.state.enabled subtract newSleep
+            when {
+              item.explored.isNotEmpty() -> item.explored.toMutableSet().apply {
                 if (newSleep.containsAll(this) && enabledActions.isNotEmpty()) {
                   this.add(enabledActions.random(random))
                 }
               } // for LAZY pruning
-            enabledActions.isNotEmpty() -> {
-              val sporSuggestion =
-                sporSuggestion(item.state, enabledActions.map { it.action.pid }).map { AW(it) }
-              mutableSetOf((sporSuggestion intersect enabledActions).random(random))
+
+              enabledActions.isNotEmpty() -> {
+                val sporSuggestion =
+                  sporSuggestion(item.state, enabledActions.map { it.action.pid }).map { AW(it) }
+                mutableSetOf((sporSuggestion intersect enabledActions).random(random))
+              }
+
+              else -> mutableSetOf()
             }
-            else -> mutableSetOf()
           }
 
         // Check cycle before pushing new item on stack
@@ -413,7 +419,7 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
             }
 
             if (node != visiting) {
-              if (!push(visiting, startStackSize) || noInfluenceOnRealExploration(realStackSize))
+              if (!push(visiting, realStackSize) || noInfluenceOnRealExploration(realStackSize))
                 continue
             }
 
