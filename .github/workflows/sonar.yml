@@ -2,12 +2,12 @@ name: Sonar analysis
 on:
   push:
   pull_request_target:
-     types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, labeled]
 
 # Please read https://securitylab.github.com/research/github-actions-preventing-pwn-requests/ before editing this file
 permissions: read-all
 
-concurrency: 
+concurrency:
   group: sonar-${{ github.ref }}
   cancel-in-progress: true
 
