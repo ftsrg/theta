@@ -354,11 +354,12 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
           } else {
             val enabledActions = item.state.enabled subtract newSleep
             when {
-              item.explored.isNotEmpty() -> item.explored.toMutableSet().apply {
-                if (newSleep.containsAll(this) && enabledActions.isNotEmpty()) {
-                  this.add(enabledActions.random(random))
-                }
-              } // for LAZY pruning
+              item.explored.isNotEmpty() ->
+                item.explored.toMutableSet().apply {
+                  if (newSleep.containsAll(this) && enabledActions.isNotEmpty()) {
+                    this.add(enabledActions.random(random))
+                  }
+                } // for LAZY pruning
 
               enabledActions.isNotEmpty() -> {
                 val sporSuggestion =
@@ -509,9 +510,10 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
   protected fun dependent(a: A, b: A, aSource: S? = null, bSource: S? = null): Boolean {
     val result: Boolean
     PorLogger.dependentTimeMs += measureTimeMillis {
-      result = dependentControlFlow(a, b) ||
-        dependentGlobalVar(a, b) ||
-        dependentMemLoc(a, b, aSource, bSource)
+      result =
+        dependentControlFlow(a, b) ||
+          dependentGlobalVar(a, b) ||
+          dependentMemLoc(a, b, aSource, bSource)
     }
     return result
   }

@@ -285,10 +285,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<S, A> {
       (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
         ?: ExprUtils.simplify(expr)
     if (expr == True()) return true
-    return WithPushPop(dependencySolver).use {
-      dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
-      dependencySolver.add(PathUtils.unfold(expr, 0))
-      dependencySolver.check().isSat // two pointers may point to the same memory location
+    return try {
+      WithPushPop(dependencySolver).use {
+        dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
+        dependencySolver.add(PathUtils.unfold(expr, 0))
+        dependencySolver.check().isSat // two pointers may point to the same memory location
+      }
+    } catch (_: Throwable) {
+      true
     }
   }
 

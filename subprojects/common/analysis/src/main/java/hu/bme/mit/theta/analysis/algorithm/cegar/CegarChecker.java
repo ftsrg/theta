@@ -102,7 +102,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
             logger.write(
                     Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-            PorLogger.INSTANCE.getExploredActions().add(((ARG)proof).size());
+            PorLogger.INSTANCE.getExploredActions().add(((ARG) proof).size());
 
             if (WebDebuggerLogger.enabled()) {
                 String argGraph =
