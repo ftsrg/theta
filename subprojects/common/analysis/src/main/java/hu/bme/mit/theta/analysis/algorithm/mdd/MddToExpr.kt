@@ -15,92 +15,94 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd
 
-import hu.bme.mit.delta.java.mdd.MddHandle
-import hu.bme.mit.delta.java.mdd.UnaryOperationCache
+import hu.bme.mit.delta.java.mdd.MddNode
+import hu.bme.mit.delta.java.mdd.BinaryOperationCache
+import hu.bme.mit.delta.java.mdd.MddVariable
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
-import kotlin.jvm.optionals.getOrNull
 
 object MddToExpr {
 
-  val auxvarCache: UnaryOperationCache<MddHandle, VarDecl<BoolType>> =
-    UnaryOperationCache()
-  val constraintCache: UnaryOperationCache<MddHandle, Expr<BoolType>> =
-    UnaryOperationCache()
-  val expressionCache: UnaryOperationCache<MddHandle, Expr<BoolType>> =
-    UnaryOperationCache()
+  val auxvarCache: BinaryOperationCache<MddNode, MddVariable, VarDecl<BoolType>> =
+    BinaryOperationCache()
+  val constraintCache: BinaryOperationCache<MddNode, MddVariable, Expr<BoolType>> =
+    BinaryOperationCache()
+  val expressionCache: BinaryOperationCache<MddNode, MddVariable, Expr<BoolType>> =
+    BinaryOperationCache()
 
-  fun toExpr(root: MddHandle): Expr<BoolType> {
+  fun toExpr(root: MddNode, variable: MddVariable): Expr<BoolType> {
     // Return cached expression if present
-    expressionCache.getOrNull(root)?.let { return it }
+    expressionCache.getOrNull(root, variable)?.let { return it }
 
-    // Traverse the MDD and collect unique nodes
-    val visited = mutableSetOf<MddHandle>()
-    val stack = ArrayDeque<MddHandle>()
-    stack.add(root)
+    // Traverse the MDD and collect unique (node, variable) pairs
+    val visited = mutableSetOf<Pair<MddNode, MddVariable>>()
+    val stack = ArrayDeque<Pair<MddNode, MddVariable>>()
+    stack.add(Pair(root, variable))
 
     while (stack.isNotEmpty()) {
-      val node = stack.removeLast()
-      if (visited.contains(node)) continue
-      visited.add(node)
+      val (node, varNode) = stack.removeLast()
+      val pair = Pair(node, varNode)
+      if (visited.contains(pair)) continue
+      visited.add(pair)
 
-      // Ensure constraint (and auxiliary var) exists for this node
-      getConstraintForNode(node)
+      // Ensure constraint (and auxiliary var) exists for this node-variable pair
+      getConstraintForNode(node, varNode)
 
-      // If non-terminal, push children (including default)
-      if (!node.isTerminal) {
-        val cursor = node.cursor()
-        while (cursor.moveNext()) {
-          stack.add(cursor.value())
+      // If non-terminal, push children (including default) with the next variable
+      if (!node.isTerminal && varNode.lower.isPresent) {
+        val nextVar = varNode.lower.orElseThrow()
+        val defaultNode = node.defaultValue()
+        if (defaultNode != null) {
+          stack.add(Pair(defaultNode, nextVar))
+        } else {
+          val cursor = node.cursor()
+          while (cursor.moveNext()) {
+            stack.add(Pair(cursor.value(), nextVar))
+          }
         }
-        // defaultValue may be terminal or non-terminal; add it to traversal
-        stack.add(node.defaultValue())
       }
     }
-    val constraints = visited.map { constraintCache.getOrNull(it)!! }
+    val constraints = visited.map { (n, v) -> constraintCache.getOrNull(n, v)!! }
 
-    val rootVar = getVarForNode(root)
-    var result: Expr<BoolType> = And(rootVar.ref, And(constraints))
+    val rootRepresentative = getRepresentativeForNode(root, variable)
+    val result: Expr<BoolType> = And(rootRepresentative, And(constraints))
 
 
-    expressionCache.addToCache(root, result)
+    expressionCache.addToCache(root, variable, result)
     return result
   }
 
-  fun getVarForNode(node: MddHandle): VarDecl<BoolType> {
-    auxvarCache.getOrNull(node)?.let { return it }
+  fun getRepresentativeForNode(node: MddNode, variable: MddVariable?): Expr<BoolType> {
+    if (node.isTerminal) return True()
+    else {
+      auxvarCache.getOrNull(node, variable)?.let { return it.ref }
 
-    val varDecl = Decls.Var("mdd_aux_${auxvarCache.cacheSize}", BoolType.getInstance())
-    auxvarCache.addToCache(node, varDecl)
-    return varDecl
+      val varDecl = Decls.Var("mddnode_${auxvarCache.cacheSize}", BoolType.getInstance())
+      auxvarCache.addToCache(node, variable, varDecl)
+      return varDecl.ref
+    }
   }
 
-  fun getConstraintForNode(node: MddHandle): Expr<BoolType> {
-    // Return existing auxiliary variable if already created
-    constraintCache.getOrNull(node)?.let { return it }
+  fun getConstraintForNode(node: MddNode, variable: MddVariable): Expr<BoolType> {
+    // Return existing constraint if already created
+    constraintCache.getOrNull(node, variable)?.let { return it }
 
-    // Create auxiliary variable for this node
-    val nodeVar = getVarForNode(node)
+    val representative = getRepresentativeForNode(node, variable)
 
     val definition: Expr<BoolType> =
       if (node.isTerminal) {
         // Terminal definition
-        if (node.isTerminalZero) {
-          Eq(nodeVar.ref, False())
-        } else {
-          Eq(nodeVar.ref, True())
-        }
+        return representative
       } else {
-        if (node.defaultValue().isTerminalZero) {
-          val x = node.variableHandle.variable.getOrNull()?.getTraceInfo(
+        if (node.defaultValue() == null) {
+          val x = variable.getTraceInfo(
             Decl::class.java)!!
 
           val disjuncts = mutableListOf<Expr<BoolType>>()
@@ -108,20 +110,20 @@ object MddToExpr {
           val cursor = node.cursor()
           while (cursor.moveNext()) {
 
-            val childVar = getVarForNode(cursor.value())
+            val childRepresentative = getRepresentativeForNode(cursor.value(), variable.lower.orElse(null))
 
             val value = cursor.key()
             disjuncts +=
-              And(Eq(x.ref, LitExprConverter.toLitExpr(value, x.type)), childVar.ref)
+              And(Eq(x.ref, LitExprConverter.toLitExpr(value, x.type)), childRepresentative)
           }
 
-          Eq(nodeVar.ref, Or(disjuncts))
+          Eq(representative, Or(disjuncts))
         } else {
-          Eq(nodeVar.ref, getVarForNode(node.defaultValue()).ref)
+          Eq(representative, getRepresentativeForNode(node.defaultValue(), variable.lower.orElseThrow()))
         }
       }
 
-    constraintCache.addToCache(node, definition)
+    constraintCache.addToCache(node, variable,definition)
     return definition
   }
 }
