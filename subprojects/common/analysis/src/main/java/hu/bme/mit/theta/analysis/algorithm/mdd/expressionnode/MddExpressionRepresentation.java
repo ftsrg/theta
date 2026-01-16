@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -205,28 +205,34 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         if (mddVariable.getLower().isPresent()) {
             MddVariable variable = mddVariable.getLower().get();
             RecursiveIntObjMapView<?> currentMapView =
-                (RecursiveIntObjMapView<?>) (constraint.defaultValue() == null
-                            ? constraint.get(constraint.statistics().lowestValue())
-                            : constraint.defaultValue());
+                    (RecursiveIntObjMapView<?>)
+                            (constraint.defaultValue() == null
+                                    ? constraint.get(constraint.statistics().lowestValue())
+                                    : constraint.defaultValue());
             while (true) {
-                final Decl<?> decl = variable.getTraceInfo(Decl.class);
-                final IntStatistics statistics = currentMapView.statistics();
-                final int lower = statistics.lowestValue();
-                final int upper = statistics.highestValue();
-                if (decl.getType().getDomainSize().isInfinite()
-                        && decl.getType() instanceof Ordered) {
-                    final LitExpr<?> lowerLit =
-                        LitExprConverter.toLitExpr(lower, decl.getType());
-                    if (lower == upper) {
-                        exprs.add(Eq(decl.getRef(), lowerLit));
-                    } else {
-                        final LitExpr<?> upperLit =
-                            LitExprConverter.toLitExpr(upper, decl.getType());
-                        exprs.add(
-                                And(
-                                        Geq(decl.getRef(), lowerLit),
-                                        Leq(decl.getRef(), upperLit)));
+                final int lower, upper;
+                if (currentMapView.defaultValue() == null) {
+                    final Decl<?> decl = variable.getTraceInfo(Decl.class);
+                    final IntStatistics statistics = currentMapView.statistics();
+                    lower = statistics.lowestValue();
+                    upper = statistics.highestValue();
+                    if (decl.getType().getDomainSize().isInfinite()
+                            && decl.getType() instanceof Ordered) {
+                        final LitExpr<?> lowerLit =
+                                LitExprConverter.toLitExpr(lower, decl.getType());
+                        if (lower == upper) {
+                            exprs.add(Eq(decl.getRef(), lowerLit));
+                        } else {
+                            final LitExpr<?> upperLit =
+                                    LitExprConverter.toLitExpr(upper, decl.getType());
+                            exprs.add(
+                                    And(
+                                            Geq(decl.getRef(), lowerLit),
+                                            Leq(decl.getRef(), upperLit)));
+                        }
                     }
+                } else {
+                    lower = 0;
                 }
 
                 if (variable.getLower().isEmpty()
@@ -234,9 +240,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     break;
                 } else {
                     variable = variable.getLower().get().getLower().get();
-                    currentMapView =
-                        (RecursiveIntObjMapView<?>) currentMapView.get(
-                                    lower);
+                    currentMapView = (RecursiveIntObjMapView<?>) currentMapView.get(lower);
                     // TODO we assume here that all edges
                     // point to the same node
                 }
@@ -403,7 +407,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                 assignment, currentRepresentation.decl.getType());
                 try (WithPushPop wpp = new WithPushPop(solver)) {
                     solver.add(currentRepresentation.expr);
-//                    solver.add(constraint);
+                    //                    solver.add(constraint);
                     solver.add(Eq(currentRepresentation.decl.getRef(), litExpr));
                     solver.check();
                     status = solver.getStatus();
@@ -433,7 +437,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 try (var wpp = new WithPushPop(solver)) {
 
                     solver.add(currentRepresentation.expr);
-                    if(currentRepresentation.explicitRepresentation.getCacheView().size() > 5) {
+                    if (currentRepresentation.explicitRepresentation.getCacheView().size() > 5) {
                         solver.add(constraint);
                         constraintApplied = true;
                     }
