@@ -312,6 +312,7 @@ constructor(
       try {
         "[$number] "
       } catch (_: Exception) {
+        ""
       }
     }$processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}}"
   }
