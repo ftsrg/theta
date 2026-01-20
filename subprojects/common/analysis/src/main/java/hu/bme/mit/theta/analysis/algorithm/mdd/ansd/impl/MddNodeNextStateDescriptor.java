@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
@@ -88,7 +89,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        final IntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
+        final RecursiveIntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
         return new ConstrainedIntObjMapView<>(
                 new IntObjMapViews.Transforming<>(
                         node,
@@ -109,7 +110,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
-        final IntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
+        final RecursiveIntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
         return new IntObjMapViews.Transforming<>(
                 node,
                 outerNode ->
