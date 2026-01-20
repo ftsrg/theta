@@ -139,10 +139,10 @@ public class MddHandleVisualizer {
                         node.getVariableHandle().getVariable().get().getTraceInfo(Decl.class);
                 for (var cursor = node.cursor(); cursor.moveNext(); ) {
 
-                    traverse(graph, cursor.value(), traversed);
+                    traverse(graph, (MddHandle) cursor.value(), traversed);
 
                     final String sourceId = NODE_ID_PREFIX + idFor(node);
-                    final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
+                    final String targetId = NODE_ID_PREFIX + idFor((MddHandle) cursor.value());
                     final EdgeAttributes eAttributes =
                             EdgeAttributes.builder()
                                     .label(

@@ -36,7 +36,7 @@ object MddSinglePathExtractor {
       } else {
         val cursor = node.cursor()
         cursor.moveNext()
-        templateBuilder.set(cursor.key(), transform(cursor.value()).node)
+        templateBuilder.set(cursor.key(), transform(cursor.value() as MddHandle).node)
       }
 
       return node.variableHandle.checkInNode(
