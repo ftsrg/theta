@@ -104,17 +104,9 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
 
     @Override
     public RecursiveIntObjMapView<?> toStructuralRepresentation() {
-        if (structuralRepresentation == null) {
-            var cached = cache.getOrNull(variable, mddNode);
-            if (cached != null) {
-                structuralRepresentation = cached;
-                return structuralRepresentation;
-            }
-            final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
-            structuralRepresentation = representBounds(variable, boundsCollector.bounds);
-            cache.addToCache(variable, mddNode, structuralRepresentation);
-        }
-        return structuralRepresentation;
+        var varHandle = variable.getMddVariableOrder().getDefaultSetSignature().getHandleFor(variable.getTraceInfo());
+        var mddHandle = varHandle.orElseThrow().getHandleFor(mddNode);
+        return mddHandle;
     }
 
     private RecursiveIntObjMapView<?> representBounds(

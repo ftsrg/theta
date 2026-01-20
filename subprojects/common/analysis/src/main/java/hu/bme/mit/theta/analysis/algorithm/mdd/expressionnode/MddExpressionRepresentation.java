@@ -25,8 +25,10 @@ import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.java.mdd.MddGraph;
+import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.MddAbstraction;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
@@ -200,53 +202,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     @Override
     public RecursiveIntObjCursor<? extends MddNode> cursor(RecursiveIntObjMapView<?> constraint) {
-        final List<Expr<BoolType>> exprs = new ArrayList<>();
+        Preconditions.checkArgument(constraint instanceof MddHandle);
+        final MddHandle mddHandle = (MddHandle) constraint;
 
-        if (mddVariable.getLower().isPresent()) {
-            MddVariable variable = mddVariable.getLower().get();
-            RecursiveIntObjMapView<?> currentMapView =
-                    (RecursiveIntObjMapView<?>)
-                            (constraint.defaultValue() == null
-                                    ? constraint.get(constraint.statistics().lowestValue())
-                                    : constraint.defaultValue());
-            while (true) {
-                final int lower, upper;
-                if (currentMapView.defaultValue() == null) {
-                    final Decl<?> decl = variable.getTraceInfo(Decl.class);
-                    final IntStatistics statistics = currentMapView.statistics();
-                    lower = statistics.lowestValue();
-                    upper = statistics.highestValue();
-                    if (decl.getType().getDomainSize().isInfinite()
-                            && decl.getType() instanceof Ordered) {
-                        final LitExpr<?> lowerLit =
-                                LitExprConverter.toLitExpr(lower, decl.getType());
-                        if (lower == upper) {
-                            exprs.add(Eq(decl.getRef(), lowerLit));
-                        } else {
-                            final LitExpr<?> upperLit =
-                                    LitExprConverter.toLitExpr(upper, decl.getType());
-                            exprs.add(
-                                    And(
-                                            Geq(decl.getRef(), lowerLit),
-                                            Leq(decl.getRef(), upperLit)));
-                        }
-                    }
-                } else {
-                    lower = 0;
-                }
+        final var exprConstraint = MddAbstraction.getExpr(mddHandle);
 
-                if (variable.getLower().isEmpty()
-                        || variable.getLower().get().getLower().isEmpty()) {
-                    break;
-                } else {
-                    variable = variable.getLower().get().getLower().get();
-                    currentMapView = (RecursiveIntObjMapView<?>) currentMapView.get(lower);
-                    // TODO we assume here that all edges
-                    // point to the same node
-                }
-            }
-        }
-        return new Cursor(null, Traverser.create(this, And(exprs), solverPool));
+        return new Cursor(null, Traverser.create(this, expr, solverPool));
     }
 
     @Override

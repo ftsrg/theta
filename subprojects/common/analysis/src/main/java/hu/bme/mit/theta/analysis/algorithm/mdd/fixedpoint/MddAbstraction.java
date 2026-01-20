@@ -19,17 +19,16 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.ObjObjMap;
 import com.koloboke.collect.map.hash.HashObjObjMaps;
-import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.collections.IntStatistics;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
+import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
@@ -40,24 +39,29 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 public class MddAbstraction {
 
-  private static final BinaryOperationCache<MddVariable, MddNode, RecursiveIntObjMapView<?>> cache =
-      new BinaryOperationCache<>();
+//  private static final BinaryOperationCache<MddVariable, MddNode, RecursiveIntObjMapView<?>> cache =
+//      new BinaryOperationCache<>();
+
+  public static Expr<BoolType> getExpr(MddHandle mddHandle) {
+    return getExpr(mddHandle.getNode(), mddHandle.getVariableHandle().getVariable().orElseThrow());
+  }
 
   public static Expr<BoolType> getExpr(MddNode mddNode, MddVariable variable) {
-    final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
+    final var bounds = BoundsCollector.traverse(mddNode, variable);
     final var exprs = new ArrayList<Expr<BoolType>>();
-    for (var entry : boundsCollector.bounds.entrySet()) {
-      final MddVariable var = entry.getKey();
-      final BoundsCollector.Bounds bounds = entry.getValue();
-      final var decl = var.getTraceInfo(Decl.class);
-      if (!bounds.hasDefault) {
-        if (bounds.lower == bounds.upper) {
-          exprs.add(Eq(decl.getRef(), LitExprConverter.toLitExpr(bounds.lower, decl.getType())));
+    for (var entry : bounds.entrySet()) {
+      final var decl = entry.getKey().getTraceInfo(Decl.class);
+      final var boundsForVar = entry.getValue();
+      if (!boundsForVar.hasDefault
+          && decl.getType().getDomainSize().isInfinite()
+          && decl.getType() instanceof Ordered) {
+        if (boundsForVar.lower == boundsForVar.upper) {
+          exprs.add(Eq(decl.getRef(), LitExprConverter.toLitExpr(boundsForVar.lower, decl.getType())));
         } else {
           exprs.add(
               And(
-                  Geq(decl.getRef(), LitExprConverter.toLitExpr(bounds.lower, decl.getType())),
-                  Leq(decl.getRef(), LitExprConverter.toLitExpr(bounds.upper, decl.getType()))
+                  Geq(decl.getRef(), LitExprConverter.toLitExpr(boundsForVar.lower, decl.getType())),
+                  Leq(decl.getRef(), LitExprConverter.toLitExpr(boundsForVar.upper, decl.getType()))
               ));
         }
       }
@@ -65,51 +69,49 @@ public class MddAbstraction {
     return And(exprs);
   }
 
-  public static RecursiveIntObjMapView<?> getAbstraction(MddNode mddNode, MddVariable variable) {
+//  public static RecursiveIntObjMapView<?> getAbstraction(MddNode mddNode, MddVariable variable) {
+//
+//    var cached = cache.getOrNull(variable, mddNode);
+//    if (cached != null) {
+//      return cached;
+//    }
+//
+//    final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
+//    final RecursiveIntObjMapView<?> res = representBounds(variable, boundsCollector.bounds);
+//    cache.addToCache(variable, mddNode, res);
+//
+//    return res;
+//  }
 
-    var cached = cache.getOrNull(variable, mddNode);
-    if (cached != null) {
-      return cached;
-    }
-
-    final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
-    final RecursiveIntObjMapView<?> res = representBounds(variable, boundsCollector.bounds);
-    cache.addToCache(variable, mddNode, res);
-
-    return res;
-  }
-
-  private static RecursiveIntObjMapView<?> representBounds(
-      final MddVariable variable,
-      final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
-    final RecursiveIntObjMapView<?> continuation;
-    if (variable.getLower().isPresent()) {
-      continuation = representBounds(variable.getLower().orElseThrow(), bounds);
-    } else {
-      continuation = RecursiveIntObjMapView.of((IntObjMapView) IntObjMapView.empty());
-    }
-
-    final var triple = bounds.get(variable);
-    final IntObjMapView<RecursiveIntObjMapView<?>> mapView;
-    if (!triple.hasDefault) {
-      if (triple.lower == triple.upper) {
-        mapView = IntObjMapView.singleton(triple.lower, continuation);
-      } else {
-        // TODO: canonization of trimmed intobjmapviews could be improved
-        mapView =
-            new IntObjMapViews.Trimmed<>(
-                IntObjMapView.empty(continuation),
-                IntSetView.range(triple.lower, triple.upper + 1));
-      }
-    } else {
-      mapView = IntObjMapView.empty(continuation);
-    }
-    return RecursiveIntObjMapView.of((IntObjMapView) mapView);
-  }
+//  private static RecursiveIntObjMapView<?> representBounds(
+//      final MddVariable variable,
+//      final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
+//    final RecursiveIntObjMapView<?> continuation;
+//    if (variable.getLower().isPresent()) {
+//      continuation = representBounds(variable.getLower().orElseThrow(), bounds);
+//    } else {
+//      continuation = RecursiveIntObjMapView.of((IntObjMapView) IntObjMapView.empty());
+//    }
+//
+//    final var triple = bounds.get(variable);
+//    final IntObjMapView<RecursiveIntObjMapView<?>> mapView;
+//    if (!triple.hasDefault) {
+//      if (triple.lower == triple.upper) {
+//        mapView = IntObjMapView.singleton(triple.lower, continuation);
+//      } else {
+//        // TODO: canonization of trimmed intobjmapviews could be improved
+//        mapView =
+//            new IntObjMapViews.Trimmed<>(
+//                IntObjMapView.empty(continuation),
+//                IntSetView.range(triple.lower, triple.upper + 1));
+//      }
+//    } else {
+//      mapView = IntObjMapView.empty(continuation);
+//    }
+//    return RecursiveIntObjMapView.of((IntObjMapView) mapView);
+//  }
 
   private static class BoundsCollector {
-
-    private final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds;
 
     static class Bounds {
       int lower;
@@ -126,12 +128,7 @@ public class MddAbstraction {
     private static BinaryOperationCache<MddNode, MddVariable, ObjObjMap<MddVariable, BoundsCollector.Bounds>>
         cache = new BinaryOperationCache<>();
 
-    public BoundsCollector(MddNode rootNode, MddVariable variable) {
-      Preconditions.checkNotNull(rootNode);
-      this.bounds = traverse(rootNode, variable);
-    }
-
-    private ObjObjMap<MddVariable, BoundsCollector.Bounds> traverse(
+    public static ObjObjMap<MddVariable, BoundsCollector.Bounds> traverse(
         final MddNode node, final MddVariable variable) {
       final var cached = cache.getOrNull(node, variable);
       if (cached != null) {
