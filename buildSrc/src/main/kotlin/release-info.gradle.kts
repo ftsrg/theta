@@ -41,9 +41,10 @@ abstract class ComputeReleaseInfoTask : DefaultTask() {
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectError(ProcessBuilder.Redirect.PIPE)
                 .start()
+            val output = process.inputStream.bufferedReader().readText().trim()
             process.waitFor()
-            process.inputStream.bufferedReader().readText().trim()
-        } catch (e: Exception) {
+            output
+        } catch (_: Exception) {
             ""
         }
     }
