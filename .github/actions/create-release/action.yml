@@ -34,10 +34,13 @@ runs:
         echo "Message:"
         cat build/release-info/message.txt
         echo "Message end."
+        echo "Using delimiter: $EOF"
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "message<<$EOF" >> $GITHUB_OUTPUT
         cat build/release-info/message.txt >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
+        echo "=== Contents of GITHUB_OUTPUT ==="
+        cat $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash
       run: |
