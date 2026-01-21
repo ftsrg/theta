@@ -30,6 +30,10 @@ runs:
       run: |
         echo "version=$(cat build/release-info/version.txt)" >> $GITHUB_OUTPUT
         echo "tagname=$(cat build/release-info/tagname.txt)" >> $GITHUB_OUTPUT
+        ls -la build/release-info/
+        echo "Message:"
+        cat build/release-info/message.txt
+        echo "Message end."
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "message<<$EOF" >> $GITHUB_OUTPUT
         cat build/release-info/message.txt >> $GITHUB_OUTPUT
