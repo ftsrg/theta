@@ -248,7 +248,15 @@ public class PredAbstractors {
                 final PredState state,
                 final ExprAction action) {
             var actionExpr = action.toExpr();
-            if (actionExpr.equals(True())) {
+            if (actionExpr.equals(True())
+                    || ExprUtils.getVars(actionExpr).stream()
+                            .noneMatch(
+                                    v ->
+                                            prec.getPreds().stream()
+                                                    .anyMatch(
+                                                            p ->
+                                                                    ExprUtils.getVars(p)
+                                                                            .contains(v)))) {
                 var filteredPreds =
                         state.getPreds().stream()
                                 .filter(

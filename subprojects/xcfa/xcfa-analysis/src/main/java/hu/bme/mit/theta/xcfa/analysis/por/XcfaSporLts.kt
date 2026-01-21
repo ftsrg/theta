@@ -120,12 +120,15 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<S, A> {
     val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions, startFromPids)
     for (firstActions in sourceSetFirstActions) {
       val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions)
-      if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
+      if (preferNewSourceSet(minimalSourceSet, sourceSet)) {
         minimalSourceSet = sourceSet
       }
     }
     return minimalSourceSet
   }
+
+  protected fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean =
+    minimalSourceSet.isEmpty() || newSourceSet.size < minimalSourceSet.size
 
   /**
    * Returns the possible starting actions of a source set.

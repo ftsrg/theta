@@ -58,7 +58,7 @@ open class XcfaAasporLts(
       // to be added to the source set)
       val ignoredVars = mutableSetOf<VarDecl<*>>()
       val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
-      if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
+      if (preferNewSourceSet(minimalSourceSet, sourceSet)) {
         minimalSourceSet = sourceSet.toMutableSet()
         finalIgnoredVars = ignoredVars
       }
@@ -67,7 +67,7 @@ open class XcfaAasporLts(
       if (ignoredVar !in ignoredVarRegistry) {
         ignoredVarRegistry[ignoredVar] = mutableSetOf()
       }
-      checkNotNull(ignoredVarRegistry[ignoredVar]).add(state)
+      ignoredVarRegistry[ignoredVar]!!.add(state)
     }
     minimalSourceSet.removeAll(exploredActions.toSet())
     return minimalSourceSet
@@ -119,12 +119,12 @@ open class XcfaAasporLts(
         } else {
           // the action is not added to the source set because we ignore variables in
           // potentialIgnoredVars
-          checkNotNull(ignoredVarsByAction[action]).addAll(potentialIgnoredVars)
+          ignoredVarsByAction[action]!!.addAll(potentialIgnoredVars)
         }
       }
       actionsToRemove.forEach(otherActions::remove)
     }
-    otherActions.forEach { action -> ignoredVars.addAll(checkNotNull(ignoredVarsByAction[action])) }
+    otherActions.forEach { action -> ignoredVars.addAll(ignoredVarsByAction[action]!!) }
     return sourceSet
   }
 
