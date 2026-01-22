@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,9 +57,11 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         final com.microsoft.z3legacy.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
+        final Z3TypeSymbolTable typeSymbolTable = new Z3TypeSymbolTable();
         final Z3TransformationManager transformationManager =
-                new Z3TransformationManager(symbolTable, z3Context);
-        final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
+                new Z3TransformationManager(symbolTable, typeSymbolTable, z3Context);
+        final Z3TermTransformer termTransformer =
+                new Z3TermTransformer(symbolTable, typeSymbolTable);
 
         return new Z3Solver(
                 symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
@@ -71,9 +73,11 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         final com.microsoft.z3legacy.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
+        final Z3TypeSymbolTable typeSymbolTable = new Z3TypeSymbolTable();
         final Z3TransformationManager transformationManager =
-                new Z3TransformationManager(symbolTable, z3Context);
-        final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
+                new Z3TransformationManager(symbolTable, typeSymbolTable, z3Context);
+        final Z3TermTransformer termTransformer =
+                new Z3TermTransformer(symbolTable, typeSymbolTable);
 
         return new Z3Solver(
                 symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
@@ -85,9 +89,11 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         final com.microsoft.z3legacy.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
+        final Z3TypeSymbolTable typeSymbolTable = new Z3TypeSymbolTable();
         final Z3TransformationManager transformationManager =
-                new Z3TransformationManager(symbolTable, z3Context);
-        final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
+                new Z3TransformationManager(symbolTable, typeSymbolTable, z3Context);
+        final Z3TermTransformer termTransformer =
+                new Z3TermTransformer(symbolTable, typeSymbolTable);
 
         return new Z3ItpSolver(
                 symbolTable, transformationManager, termTransformer, z3Context, z3Solver);

@@ -73,7 +73,7 @@ public class MddValuationCollector {
                                     node.getVariableHandle().getVariable().orElseThrow(),
                                     cursor.key()));
 
-                    collect(cursor.value(), assignments, valuations);
+                    collect((MddHandle) cursor.value(), assignments, valuations);
 
                     assignments.pop();
                 }

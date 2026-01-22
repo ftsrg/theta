@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,8 +81,8 @@ private fun <V> eventSpans(vars: List<V>, events: List<Event<V>>) =
         when (it.isEmpty()) {
           true -> 0
           else -> {
-            val firstVar = it.filter { decl -> decl in vars }.minOf { vars.indexOf(it) }
-            val lastVar = it.filter { decl -> decl in vars }.maxOf { vars.indexOf(it) }
+            val firstVar = it.filter { decl -> decl in vars }.minOfOrNull { vars.indexOf(it) } ?: 0
+            val lastVar = it.filter { decl -> decl in vars }.maxOfOrNull { vars.indexOf(it) } ?: 0
             lastVar - firstVar
           }
         }

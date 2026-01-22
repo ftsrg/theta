@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ final class Z3TypeTransformer {
     private final Z3TransformationManager transformer;
 
     private final Context context;
+    private final Z3TypeSymbolTable symbolTable;
 
     private final com.microsoft.z3legacy.BoolSort boolSort;
     private final com.microsoft.z3legacy.IntSort intSort;
@@ -42,9 +43,13 @@ final class Z3TypeTransformer {
     private final Set<com.microsoft.z3legacy.FPSort> fpSorts;
     private final Map<String, EnumSort> enumSorts;
 
-    Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
+    Z3TypeTransformer(
+            final Z3TransformationManager transformer,
+            final Z3TypeSymbolTable symbolTable,
+            final Context context) {
         this.context = context;
         this.transformer = transformer;
+        this.symbolTable = symbolTable;
 
         boolSort = context.mkBoolSort();
         intSort = context.mkIntSort();
@@ -108,10 +113,13 @@ final class Z3TypeTransformer {
     }
 
     private EnumSort createEnumSort(EnumType enumType) {
-        return context.mkEnumSort(
-                enumType.getName(),
-                enumType.getValues().stream()
-                        .map(lit -> EnumType.makeLongName(enumType, lit))
-                        .toArray(String[]::new));
+        var sort =
+                context.mkEnumSort(
+                        enumType.getName(),
+                        enumType.getValues().stream()
+                                .map(lit -> EnumType.makeLongName(enumType, lit))
+                                .toArray(String[]::new));
+        symbolTable.put(enumType, sort.getName().toString());
+        return sort;
     }
 }
