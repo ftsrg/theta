@@ -27,8 +27,8 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprUtilKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprUtilKt;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -203,10 +203,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         Preconditions.checkArgument(constraint instanceof MddHandle);
         final MddHandle mddHandle = (MddHandle) constraint;
 
-//        final var concreteExpr = MddToExprUtilKt.toExprNodeLevel(mddHandle);
+        //        final var concreteExpr = MddToExprUtilKt.toExprNodeLevel(mddHandle);
         final var abstractExpr = MddToExprUtilKt.toApproximationExprVariableLevel(mddHandle);
 
-      return new Cursor(null, Traverser.create(this, abstractExpr, solverPool));
+        return new Cursor(null, Traverser.create(this, abstractExpr, solverPool));
     }
 
     @Override

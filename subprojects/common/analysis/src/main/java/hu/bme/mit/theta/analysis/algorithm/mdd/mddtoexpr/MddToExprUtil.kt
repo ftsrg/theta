@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr
 
 import hu.bme.mit.delta.java.mdd.MddHandle
@@ -24,4 +23,5 @@ fun MddHandle.toExprNodeLevel(): Expr<BoolType> = MddToExprNodeLevel.toExpr(this
 
 fun MddHandle.toExprVectorLevel(): Expr<BoolType> = MddToExprVectorLevel().toExpr(this)
 
-fun MddHandle.toApproximationExprVariableLevel(): Expr<BoolType> = MddToExprVariableLevel().toExpr(this)
+fun MddHandle.toApproximationExprVariableLevel(): Expr<BoolType> =
+  MddToExprVariableLevel().toExpr(this)

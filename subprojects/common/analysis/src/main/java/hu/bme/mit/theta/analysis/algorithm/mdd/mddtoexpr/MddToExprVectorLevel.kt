@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr
 
 import hu.bme.mit.delta.java.mdd.MddHandle
@@ -22,9 +21,8 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 
-class MddToExprVectorLevel: MddToExpr {
+class MddToExprVectorLevel : MddToExpr {
 
-  override fun toExpr(
-    node: MddHandle
-  ): Expr<BoolType> = Or(MddValuationCollector.collect(node) as List<Expr<BoolType>>)
+  override fun toExpr(node: MddHandle): Expr<BoolType> =
+    Or(MddValuationCollector.collect(node) as List<Expr<BoolType>>)
 }

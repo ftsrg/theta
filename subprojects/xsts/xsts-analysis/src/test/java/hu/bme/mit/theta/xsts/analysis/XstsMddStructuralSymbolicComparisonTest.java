@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -171,7 +171,9 @@ public class XstsMddStructuralSymbolicComparisonTest {
 
             while (cursor.moveNext()) {
                 try (var valueCursor = cursor.valueCursor()) {
-                    Long res = calculateNonzeroCount((MddHandle) cursor.value(), level - 1, cache, valueCursor);
+                    Long res =
+                            calculateNonzeroCount(
+                                    (MddHandle) cursor.value(), level - 1, cache, valueCursor);
                     if (res == null) {
                         return null;
                     }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr
 
-import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.BinaryOperationCache
 import hu.bme.mit.delta.java.mdd.MddHandle
+import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.MddVariable
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter
 import hu.bme.mit.theta.core.decl.Decl
@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
 
-object MddToExprNodeLevel: MddToExpr {
+object MddToExprNodeLevel : MddToExpr {
 
   val auxvarCache: BinaryOperationCache<MddNode, MddVariable, Decl<BoolType>> =
     BinaryOperationCache()
@@ -37,11 +37,14 @@ object MddToExprNodeLevel: MddToExpr {
   val expressionCache: BinaryOperationCache<MddNode, MddVariable, Expr<BoolType>> =
     BinaryOperationCache()
 
-  override fun toExpr(root: MddHandle): Expr<BoolType> = toExpr(root.node, root.variableHandle.variable.orElseThrow())
+  override fun toExpr(root: MddHandle): Expr<BoolType> =
+    toExpr(root.node, root.variableHandle.variable.orElseThrow())
 
   fun toExpr(root: MddNode, variable: MddVariable): Expr<BoolType> {
     // Return cached expression if present
-    expressionCache.getOrNull(root, variable)?.let { return it }
+    expressionCache.getOrNull(root, variable)?.let {
+      return it
+    }
 
     // Traverse the MDD and collect unique (node, variable) pairs
     val visited = mutableSetOf<Pair<MddNode, MddVariable>>()
@@ -76,7 +79,6 @@ object MddToExprNodeLevel: MddToExpr {
     val rootRepresentative = getRepresentativeForNode(root, variable)
     val result: Expr<BoolType> = And(rootRepresentative, And(constraints))
 
-
     expressionCache.addToCache(root, variable, result)
     return result
   }
@@ -84,10 +86,12 @@ object MddToExprNodeLevel: MddToExpr {
   fun getRepresentativeForNode(node: MddNode, variable: MddVariable?): Expr<BoolType> {
     if (node.isTerminal) return True()
     else {
-      auxvarCache.getOrNull(node, variable)?.let { return it.ref }
+      auxvarCache.getOrNull(node, variable)?.let {
+        return it.ref
+      }
 
       val varDecl = Decls.Var("mddnode_${auxvarCache.cacheSize}", BoolType.getInstance())
-      val constDecl = varDecl.getConstDecl(0);
+      val constDecl = varDecl.getConstDecl(0)
       auxvarCache.addToCache(node, variable, constDecl)
       return constDecl.ref
     }
@@ -95,7 +99,9 @@ object MddToExprNodeLevel: MddToExpr {
 
   fun getConstraintForNode(node: MddNode, variable: MddVariable): Expr<BoolType> {
     // Return existing constraint if already created
-    constraintCache.getOrNull(node, variable)?.let { return it }
+    constraintCache.getOrNull(node, variable)?.let {
+      return it
+    }
 
     val representative = getRepresentativeForNode(node, variable)
 
@@ -105,15 +111,15 @@ object MddToExprNodeLevel: MddToExpr {
         return representative
       } else {
         if (node.defaultValue() == null) {
-          val x = variable.getTraceInfo(
-            Decl::class.java)!!
+          val x = variable.getTraceInfo(Decl::class.java)!!
 
           val disjuncts = mutableListOf<Expr<BoolType>>()
 
           val cursor = node.cursor()
           while (cursor.moveNext()) {
 
-            val childRepresentative = getRepresentativeForNode(cursor.value(), variable.lower.orElse(null))
+            val childRepresentative =
+              getRepresentativeForNode(cursor.value(), variable.lower.orElse(null))
 
             val value = cursor.key()
             disjuncts +=
@@ -122,11 +128,14 @@ object MddToExprNodeLevel: MddToExpr {
 
           Eq(representative, Or(disjuncts))
         } else {
-          Eq(representative, getRepresentativeForNode(node.defaultValue(), variable.lower.orElseThrow()))
+          Eq(
+            representative,
+            getRepresentativeForNode(node.defaultValue(), variable.lower.orElseThrow()),
+          )
         }
       }
 
-    constraintCache.addToCache(node, variable,definition)
+    constraintCache.addToCache(node, variable, definition)
     return definition
   }
 }

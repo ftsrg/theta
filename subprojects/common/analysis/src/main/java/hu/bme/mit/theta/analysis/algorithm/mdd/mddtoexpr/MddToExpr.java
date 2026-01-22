@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr;
 
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -22,6 +21,5 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public interface MddToExpr {
 
-  Expr<BoolType> toExpr(MddHandle node);
-
+    Expr<BoolType> toExpr(MddHandle node);
 }
