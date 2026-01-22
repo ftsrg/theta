@@ -1,0 +1,3 @@
+prop {
+	!( ((main_region_slp == SLP_Read_Experiment)))
+}

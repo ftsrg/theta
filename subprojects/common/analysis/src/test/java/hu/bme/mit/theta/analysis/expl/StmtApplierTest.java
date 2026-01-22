@@ -28,7 +28,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.common.Tuple2;
@@ -41,13 +41,9 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class StmtApplierTest {
 
     private static final VarDecl<IntType> X = Var("x", Int());
@@ -66,23 +62,12 @@ public final class StmtApplierTest {
     private static final Stmt ASSIGN_X_1 = Assign(X, Int(1));
     private static final Stmt ASSIGN_X_2 = Assign(X, Int(2));
     private static final Stmt ASSIGN_X_Y = Assign(X, Y.getRef());
-
-    @Parameter(0)
     public Stmt stmt;
-
-    @Parameter(1)
     public Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries;
-
-    @Parameter(2)
     public boolean approximate;
-
-    @Parameter(3)
     public ApplyResult expectedResult;
-
-    @Parameter(4)
     public Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -116,8 +101,15 @@ public final class StmtApplierTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(
+            Stmt stmt,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries,
+            boolean approximate,
+            ApplyResult expectedResult,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries) {
+        initStmtApplierTest(stmt, initialEntries, approximate, expectedResult, finalEntries);
         // Arrange
         final MutableValuation val = new MutableValuation();
         for (final Tuple2<Decl<?>, LitExpr<?>> entry : initialEntries) {
@@ -134,5 +126,18 @@ public final class StmtApplierTest {
             final LitExpr<?> lit = val.eval(entry.get1()).get();
             assertEquals(lit, entry.get2());
         }
+    }
+
+    public void initStmtApplierTest(
+            Stmt stmt,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> initialEntries,
+            boolean approximate,
+            ApplyResult expectedResult,
+            Set<Tuple2<Decl<?>, LitExpr<?>>> finalEntries) {
+        this.stmt = stmt;
+        this.initialEntries = initialEntries;
+        this.approximate = approximate;
+        this.expectedResult = expectedResult;
+        this.finalEntries = finalEntries;
     }
 }

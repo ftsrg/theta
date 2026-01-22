@@ -1,0 +1,7 @@
+format_version: '2.0'
+input_files: models/split-processed_hl_arr_access_128_bvb0.aag
+options:
+  language: aag
+properties:
+- expected_verdict: false
+  property_file: ../properties/default.prp

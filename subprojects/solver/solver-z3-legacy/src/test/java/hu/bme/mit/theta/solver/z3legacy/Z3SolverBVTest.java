@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -28,23 +25,14 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class Z3SolverBVTest {
-
-    @Parameterized.Parameter(0)
     public Class<?> exprType;
-
-    @Parameterized.Parameter(1)
     public Expr<?> expected;
-
-    @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return Stream.concat(
                         BvTestUtils.BasicOperations().stream(),
@@ -54,8 +42,10 @@ public class Z3SolverBVTest {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    @Test
-    public void testOperationEquals() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expr: {0}, expected: {1}, actual: {2}")
+    public void testOperationEquals(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        initZ3SolverBVTest(exprType, expected, actual);
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -63,19 +53,19 @@ public class Z3SolverBVTest {
 
         // Type checks
         assertTrue(
+                exprType.isInstance(actual),
                 "The type of actual is "
                         + actual.getClass().getName()
                         + " instead of "
-                        + exprType.getName(),
-                exprType.isInstance(actual));
+                        + exprType.getName());
         assertEquals(
+                expected.getType(),
+                actual.getType(),
                 "The type of expected ("
                         + expected.getType()
                         + ") must match the type of actual ("
                         + actual.getType()
-                        + ")",
-                expected.getType(),
-                actual.getType());
+                        + ")");
 
         // Equality check
         final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
@@ -85,5 +75,11 @@ public class Z3SolverBVTest {
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
+    }
+
+    public void initZ3SolverBVTest(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        this.exprType = exprType;
+        this.expected = expected;
+        this.actual = actual;
     }
 }

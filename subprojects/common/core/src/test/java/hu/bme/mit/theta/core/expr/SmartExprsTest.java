@@ -29,28 +29,19 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class SmartExprsTest {
 
     // Constants for testing
     private static final Expr<BoolType> A = Const("a", Bool()).getRef();
     private static final Expr<BoolType> B = Const("b", Bool()).getRef();
     private static final Expr<BoolType> C = Const("c", Bool()).getRef();
-
-    @Parameter(value = 0)
     public Expr<BoolType> expr;
-
-    @Parameter(value = 1)
     public Expr<BoolType> smartExpr;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -75,8 +66,15 @@ public class SmartExprsTest {
                 });
     }
 
-    @Test
-    public void test() {
-        Assert.assertEquals(expr, smartExpr);
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<BoolType> expr, Expr<BoolType> smartExpr) {
+        initSmartExprsTest(expr, smartExpr);
+        Assertions.assertEquals(expr, smartExpr);
+    }
+
+    public void initSmartExprsTest(Expr<BoolType> expr, Expr<BoolType> smartExpr) {
+        this.expr = expr;
+        this.smartExpr = smartExpr;
     }
 }

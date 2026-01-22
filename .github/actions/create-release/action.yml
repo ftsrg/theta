@@ -3,28 +3,37 @@ description: 'Create release and deploy JARs'
 inputs:
     message:
         required: true
+    dry-run:
+        required: false
+        default: 'false'
+        description: 'If true, only generate release info and comment on PR instead of creating release'
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         fetch-depth: 0
-    - name: Creating versions
-      id: 'value'
+    - name: Setup java 21
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: temurin
+        java-version: 21
+    - name: Compute release info via Gradle
+      uses: ./.github/actions/cache-build
+      with:
+        arguments: computeReleaseInfo
+      env:
+        RELEASE_MESSAGE: ${{ inputs.message }}
+    - name: Export release outputs
+      id: value
       shell: bash
       run: |
-        export version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )
-        export lasttag=$(git describe --abbrev=0 --tags)
-        echo Last tag: $lasttag
-        export subprojects=$(git diff $lasttag --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
-        echo Modified subprojects: $subprojects
-        export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n$subprojects")
-        echo Message: $message
-        echo "version=$version" >> $GITHUB_OUTPUT
-        echo "tagname=v$version" >> $GITHUB_OUTPUT
+        echo "version=$(cat build/release-info/version.txt)" >> $GITHUB_OUTPUT
+        echo "tagname=$(cat build/release-info/tagname.txt)" >> $GITHUB_OUTPUT
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "message<<$EOF" >> $GITHUB_OUTPUT
-        echo "$message" >> $GITHUB_OUTPUT
+        cat build/release-info/message.txt >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash
@@ -38,26 +47,43 @@ runs:
         path: jar/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: Theta_SV-COMP
         path: upload/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: EmergenTheta_SV-COMP
-        path: upload/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: Thorn_SV-COMP
-        path: upload/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: ThetaCHC_SV-COMP
-        path: upload/
-    - run: for i in $(find jar -name "*-all.jar"); do mv -v $i upload/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
+    - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
       shell: bash
+    - name: List files for release
+      id: files
+      shell: bash
+      run: |
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "filelist<<$EOF" >> $GITHUB_OUTPUT
+        find upload -type f -exec basename {} \; | sort >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "$EOF" >> $GITHUB_OUTPUT
     - name: Release
+      if: inputs.dry-run == 'false'
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0
       with:
         files: upload/*
         body: ${{steps.value.outputs.message}}
         name: ${{steps.value.outputs.tagname}}
         tag_name: ${{steps.value.outputs.tagname}}
+    - name: Comment on PR (dry run)
+      if: inputs.dry-run == 'true' && github.event_name == 'pull_request'
+      uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+      continue-on-error: true
+      with: 
+        comment_tag: 'release-preview'
+        mode: 'recreate'
+        message: |
+          ## Release Preview
+          
+          **Version:** ${{steps.value.outputs.version}}
+          **Tag:** ${{steps.value.outputs.tagname}}
+          
+          **Release Notes:**
+          ${{steps.value.outputs.message}}
+          
+          **Files to be uploaded:**
+          ```
+          ${{steps.files.outputs.filelist}}
+          ```

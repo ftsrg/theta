@@ -26,57 +26,62 @@ plugins {
  * This subproject builds the lib/libtheta-llvm.so if the necessary pre-requisites are met (LLVM-15 is available)
  */
 
-val llvmConfigBinary = try {
+val llvmConfigBinary by lazy {
+  try {
     val output = runCommandForOutput("llvm-config", "--version")
     val version = output[0].split('.')
     val major = version[0]
     val minor = version[1]
     val patch = version[2]
     if (major == "15")
-        "llvm-config"
+      "llvm-config"
     else
-        throw IOException()
-} catch (e: IOException) {
+      throw IOException()
+  } catch (e: IOException) {
     try {
-        val output = runCommandForOutput("llvm-config-15", "--version")
-        val version = output[0].split('.')
-        val major = version[0]
-        val minor = version[1]
-        val patch = version[2]
-        if (major == "15")
-            "llvm-config-15"
-        else
-            throw IOException()
+      val output = runCommandForOutput("llvm-config-15", "--version")
+      val version = output[0].split('.')
+      val major = version[0]
+      val minor = version[1]
+      val patch = version[2]
+      if (major == "15")
+        "llvm-config-15"
+      else
+        throw IOException()
     } catch (e: IOException) {
-        println("LLVM-15 not installed, not building native library.")
-        null
+      println("LLVM-15 not installed, not building native library.")
+      null
     }
+  }
 }
 
-val clangBinary = try {
+val clangBinary by lazy {
+  try {
     val output = runCommandForOutput("clang", "--version")
     var version: List<String> = listOf(output.joinToString(" "))
     for (token in output) {
-        val tryVersion = token.split('.')
-        if (tryVersion.size == 3 && tryVersion.all { it.all(Char::isDigit) }) {
-            version = tryVersion
-            break
-        }
+      val tryVersion = token.split('.')
+      if (tryVersion.size == 3 && tryVersion.all { it.all(Char::isDigit) }) {
+        version = tryVersion
+        break
+      }
     }
 
     val major = version[0]
     if (major == "15") {
-        "clang"
+      "clang"
     } else {
-        println("clang does not point to clang-15, not building native library. Found version: $version")
-        null
+      println("clang does not point to clang-15, not building native library. Found version: $version")
+      null
     }
-} catch (e: IOException) {
+  } catch (e: IOException) {
     println("clang-15 not installed , not building native library.")
     null
+  }
 }
 
-val taskEnabled = current().isLinux && llvmConfigBinary != null && clangBinary != null
+val buildNativeLib = project.findProperty("buildLlvmNative")?.toString()?.toBoolean() ?: false
+val taskEnabled = buildNativeLib && current().isLinux && llvmConfigBinary != null && clangBinary != null
 
 fun runCommandForOutput(vararg args: String): Array<String> {
     val process = ProcessBuilder(*args).start()
@@ -126,7 +131,6 @@ library {
             *jniConfigFlags(),
             *llvmConfigFlags("--cxxflags")))
         if (!taskEnabled) {
-            println("CppCompile is enabled: $taskEnabled")
             enabled = false
         }
     }
@@ -137,7 +141,6 @@ library {
             *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
             "-ldl"))
         if (!taskEnabled) {
-            println("LinkSharedLibrary is enabled: $taskEnabled")
             enabled = false
         }
     }

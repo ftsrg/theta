@@ -17,13 +17,24 @@
 plugins {
     base
     id("jacoco-common")
-    id("io.freefair.aggregate-javadoc") version "5.2"
-    id("io.codearte.nexus-staging") version "0.30.0" apply true
-    id("org.sonarqube") version "4.2.1.3168"
+    id("io.freefair.aggregate-javadoc") version Versions.javadoc
+    id("org.sonarqube") version Versions.sonarqube
     id("javasmt-common")
+    id("release-info")
+    id("docs-builder")
+}
+
+dependencies {
+    rootProject.subprojects.forEach { subproject ->
+        subproject.pluginManager.withPlugin("java") {
+            javadoc(subproject)
+        }
+    }
 }
 
 subprojects {
+    apply(plugin = "copyright-check")
+    
     tasks.matching { it.name == "test" }.configureEach {
         dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
     }
@@ -36,7 +47,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "6.27.15"
+    version = "6.27.16"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
@@ -60,7 +71,7 @@ sonar {
 evaluationDependsOnChildren()
 
 tasks {
-    val jacocoRootReport by creating(JacocoReport::class) {
+    val jacocoRootReport by registering(JacocoReport::class) {
         group = "verification"
         description = "Generates merged code coverage report for all test tasks."
 
@@ -85,7 +96,7 @@ tasks {
     }
 
     // Dummy test task for generating coverage report after ./gradlew test and ./gradlew check.
-    val test by creating {
+    val test by registering {
         finalizedBy(jacocoRootReport)
     }
 
@@ -94,10 +105,4 @@ tasks {
     }
 
     project.tasks["sonar"].dependsOn(jacocoRootReport)
-
-    nexusStaging {
-        serverUrl = "https://s01.oss.sonatype.org/service/local/"
-        username = System.getenv("OSSRH_USERNAME")
-        password = System.getenv("OSSRH_PASSWORD")
-    }
 }

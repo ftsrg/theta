@@ -22,6 +22,6 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
     implementation(Deps.javasmt)
-    Deps.javasmtDeps.forEach(this@dependencies::implementation)
+    Deps.javasmtDeps.keys.forEach(this@dependencies::implementation)
     testImplementation(testFixtures(project(":theta-core")))
 }

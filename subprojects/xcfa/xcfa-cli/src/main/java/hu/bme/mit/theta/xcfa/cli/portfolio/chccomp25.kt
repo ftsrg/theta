@@ -171,7 +171,7 @@ fun chcCompPortfolio25(
 
     val complex25 =
       ConfigNode(
-        "Complex25-$inProcess",
+        "Complex-$inProcess",
         XcfaConfig(
           inputConfig =
             portfolioConfig.inputConfig.copy(
@@ -184,7 +184,7 @@ fun chcCompPortfolio25(
           frontendConfig = portfolioConfig.frontendConfig,
           backendConfig =
             (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX25")
+              specConfig = PortfolioConfig("COMPLEX")
             ),
           outputConfig = baseCegarConfig.outputConfig,
           debugConfig = portfolioConfig.debugConfig,

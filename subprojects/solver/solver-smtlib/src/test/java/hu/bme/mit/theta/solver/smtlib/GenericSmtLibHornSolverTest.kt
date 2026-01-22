@@ -275,12 +275,12 @@ class GenericSmtLibHornSolverTest {
       val A = ArrayList<Expr<BoolType>>(2)
       val B = ArrayList<Expr<BoolType>>(2)
 
-      A.add(IntExprs.Eq(b, IntExprs.Mul(ImmutableList.of<Expr<IntType?>?>(Int(2), a))))
+      A.add(IntExprs.Eq(b, IntExprs.Mul(ImmutableList.of<Expr<IntType>>(Int(2), a))))
       B.add(
         IntExprs.Eq(
           b,
           IntExprs.Add(
-            ImmutableList.of(IntExprs.Mul(ImmutableList.of<Expr<IntType?>?>(Int(2), c)), Int(1))
+            ImmutableList.of(IntExprs.Mul(ImmutableList.of<Expr<IntType>>(Int(2), c)), Int(1))
           ),
         )
       )

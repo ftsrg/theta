@@ -1,0 +1,250 @@
+type Main_TrafficLight : { __Inactive__, Interrupted, Normal}
+type Counting_TrafficLight : { __Inactive__, Ok, Threshold}
+type Light_TrafficLight : { __Inactive__, Red, Yellow, Green}
+type Main_o_TrafficLight : { __Inactive__, Off, On}
+var Display_DisplayGreen_Out_TrafficLight : boolean = false
+var in_default_Interrupt_In_TrafficLight : boolean = false
+var in_default_Tick_In_TrafficLight : boolean = false
+var Display_DisplayOff_Out_TrafficLight : boolean = false
+var in_default_Arrive_In_TrafficLight : boolean = false
+var in_default_Toggle_In_TrafficLight : boolean = false
+var Display_DisplayYellow_Out_TrafficLight : boolean = false
+var in_default_Leave_In_TrafficLight : boolean = false
+var Display_DisplayRed_Out_TrafficLight : boolean = false
+var main_TrafficLight : Main_TrafficLight = __Inactive__
+var counting_TrafficLight : Counting_TrafficLight = __Inactive__
+var light_TrafficLight : Light_TrafficLight = __Inactive__
+var main_o_TrafficLight : Main_o_TrafficLight = __Inactive__
+var clk_TrafficLight : integer = 0
+var tran1_TrafficLight : boolean = false
+var tran4_TrafficLight : boolean = false
+var tran5_TrafficLight : boolean = false
+var tran2_TrafficLight : boolean = false
+var tran15_TrafficLight : boolean = false
+var tran8_TrafficLight : boolean = false
+var counter_TrafficLight : integer = 0
+var tran7_TrafficLight : boolean = false
+var tran16_TrafficLight : boolean = false
+var tran11_TrafficLight : boolean = false
+var _transition_TrafficLight : integer = 0
+var tran13_TrafficLight : boolean = false
+var tran14_TrafficLight : boolean = false
+var tran17_TrafficLight : boolean = false
+var tran12_TrafficLight : boolean = false
+
+trans {
+	choice {
+		assume ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == Off)) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3))));
+		clk_TrafficLight := 0;
+		_transition_TrafficLight := 10;
+		tran13_TrafficLight := true;
+		main_o_TrafficLight := On;
+		Display_DisplayYellow_Out_TrafficLight := true;
+	} or {
+		assume ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == Off)) && (!(((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3))) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight <= 3)))));
+		clk_TrafficLight := (clk_TrafficLight + 1);
+		tran14_TrafficLight := true;
+		main_o_TrafficLight := Off;
+		Display_DisplayOff_Out_TrafficLight := true;
+	} or {
+		assume ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == On)) && (!(((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3))) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight <= 3)))));
+		clk_TrafficLight := (clk_TrafficLight + 1);
+		tran15_TrafficLight := true;
+		main_o_TrafficLight := On;
+		Display_DisplayYellow_Out_TrafficLight := true;
+	} or {
+		assume ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == On)) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3))));
+		clk_TrafficLight := 0;
+		tran4_TrafficLight := true;
+		main_o_TrafficLight := Off;
+		Display_DisplayOff_Out_TrafficLight := true;
+	} or {
+		assume ((((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && !(((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0))) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight < 10))))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10)))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Threshold)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && ((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0)))))) || (((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Yellow)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Red)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Green)) && (in_default_Toggle_In_TrafficLight == true)))));
+		choice {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && !(((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0))) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight < 10)))));
+			counter_TrafficLight := (counter_TrafficLight + 1);
+			tran16_TrafficLight := true;
+			counting_TrafficLight := Ok;
+		} or {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))));
+			tran5_TrafficLight := true;
+			counting_TrafficLight := Threshold;
+		} or {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Threshold)) && (in_default_Toggle_In_TrafficLight == true)));
+			counting_TrafficLight := __Inactive__;
+			tran7_TrafficLight := true;
+			main_TrafficLight := Interrupted;
+			clk_TrafficLight := 0;
+			main_o_TrafficLight := On;
+			choice {
+				assume (main_o_TrafficLight == Off);
+				Display_DisplayOff_Out_TrafficLight := true;
+			} or {
+				assume (main_o_TrafficLight == On);
+				Display_DisplayYellow_Out_TrafficLight := true;
+			}
+		} or {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && ((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0)))));
+			counter_TrafficLight := (counter_TrafficLight - 1);
+			tran12_TrafficLight := true;
+			counting_TrafficLight := Ok;
+		} or {
+			assume !((((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && !(((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0))) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight < 10))))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10)))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Threshold)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && ((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0)))))));
+		}
+		choice {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Yellow)) && (in_default_Toggle_In_TrafficLight == true)));
+			tran11_TrafficLight := true;
+			light_TrafficLight := Red;
+			Display_DisplayRed_Out_TrafficLight := true;
+		} or {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Red)) && (in_default_Toggle_In_TrafficLight == true)));
+			tran8_TrafficLight := true;
+			light_TrafficLight := Green;
+			Display_DisplayGreen_Out_TrafficLight := true;
+		} or {
+			assume ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Green)) && (in_default_Toggle_In_TrafficLight == true)));
+			tran1_TrafficLight := true;
+			light_TrafficLight := Yellow;
+			Display_DisplayYellow_Out_TrafficLight := true;
+		} or {
+			assume !((((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Yellow)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Red)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Green)) && (in_default_Toggle_In_TrafficLight == true)))));
+		}
+	} or {
+		assume (((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)));
+		main_o_TrafficLight := __Inactive__;
+		tran17_TrafficLight := true;
+		main_TrafficLight := Normal;
+		counter_TrafficLight := 0;
+		counting_TrafficLight := Ok;
+		choice {
+			assume (light_TrafficLight == __Inactive__);
+			light_TrafficLight := Red;
+		} or {
+			assume !((light_TrafficLight == __Inactive__));
+		}
+		choice {
+			assume (light_TrafficLight == Red);
+			Display_DisplayRed_Out_TrafficLight := true;
+		} or {
+			assume (light_TrafficLight == Yellow);
+			Display_DisplayYellow_Out_TrafficLight := true;
+		} or {
+			assume (light_TrafficLight == Green);
+			Display_DisplayGreen_Out_TrafficLight := true;
+		}
+	} or {
+		assume (((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)));
+		counting_TrafficLight := __Inactive__;
+		tran2_TrafficLight := true;
+		main_TrafficLight := Interrupted;
+		clk_TrafficLight := 0;
+		main_o_TrafficLight := On;
+		choice {
+			assume (main_o_TrafficLight == Off);
+			Display_DisplayOff_Out_TrafficLight := true;
+		} or {
+			assume (main_o_TrafficLight == On);
+			Display_DisplayYellow_Out_TrafficLight := true;
+		}
+	} or {
+		assume !((((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == Off)) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3)))) || ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == Off)) && (!(((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3))) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight <= 3))))) || ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == On)) && (!(((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3))) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight <= 3))))) || ((!(((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Interrupted) && (main_o_TrafficLight == On)) && ((in_default_Tick_In_TrafficLight == true) && (clk_TrafficLight > 3)))) || ((((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && !(((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0))) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight < 10))))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && ((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10)))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Threshold)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (counting_TrafficLight == Ok)) && (!(((in_default_Arrive_In_TrafficLight == true) && (counter_TrafficLight >= 10))) && ((in_default_Leave_In_TrafficLight == true) && (counter_TrafficLight > 0)))))) || (((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Yellow)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Red)) && (in_default_Toggle_In_TrafficLight == true))) || ((!(((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))) && (((main_TrafficLight == Normal) && (light_TrafficLight == Green)) && (in_default_Toggle_In_TrafficLight == true))))) || (((main_TrafficLight == Interrupted) && (in_default_Interrupt_In_TrafficLight == true))) || (((main_TrafficLight == Normal) && (in_default_Interrupt_In_TrafficLight == true)))));
+	}
+	in_default_Toggle_In_TrafficLight := false;
+	in_default_Tick_In_TrafficLight := false;
+	in_default_Interrupt_In_TrafficLight := false;
+	in_default_Arrive_In_TrafficLight := false;
+	in_default_Leave_In_TrafficLight := false;
+}
+init {
+	clk_TrafficLight := 0;
+	counter_TrafficLight := (1 + 1);
+	_transition_TrafficLight := 1;
+	tran1_TrafficLight := false;
+	tran4_TrafficLight := false;
+	tran13_TrafficLight := false;
+	tran12_TrafficLight := false;
+	tran14_TrafficLight := false;
+	tran7_TrafficLight := false;
+	tran5_TrafficLight := false;
+	tran8_TrafficLight := false;
+	tran16_TrafficLight := false;
+	tran11_TrafficLight := false;
+	tran15_TrafficLight := false;
+	tran2_TrafficLight := false;
+	tran17_TrafficLight := false;
+	main_TrafficLight := __Inactive__;
+	counting_TrafficLight := __Inactive__;
+	light_TrafficLight := __Inactive__;
+	main_o_TrafficLight := __Inactive__;
+	in_default_Interrupt_In_TrafficLight := false;
+	in_default_Tick_In_TrafficLight := false;
+	in_default_Arrive_In_TrafficLight := false;
+	in_default_Toggle_In_TrafficLight := false;
+	in_default_Leave_In_TrafficLight := false;
+	Display_DisplayGreen_Out_TrafficLight := false;
+	Display_DisplayOff_Out_TrafficLight := false;
+	Display_DisplayYellow_Out_TrafficLight := false;
+	Display_DisplayRed_Out_TrafficLight := false;
+	main_TrafficLight := Normal;
+	counter_TrafficLight := 0;
+	counting_TrafficLight := Ok;
+	choice {
+		assume (light_TrafficLight == __Inactive__);
+		light_TrafficLight := Red;
+	} or {
+		assume !((light_TrafficLight == __Inactive__));
+	}
+	choice {
+		assume (main_TrafficLight == Interrupted);
+		choice {
+			assume (main_o_TrafficLight == Off);
+			Display_DisplayOff_Out_TrafficLight := true;
+		} or {
+			assume (main_o_TrafficLight == On);
+			Display_DisplayYellow_Out_TrafficLight := true;
+		}
+	} or {
+		assume (main_TrafficLight == Normal);
+		choice {
+			assume (light_TrafficLight == Red);
+			Display_DisplayRed_Out_TrafficLight := true;
+		} or {
+			assume (light_TrafficLight == Yellow);
+			Display_DisplayYellow_Out_TrafficLight := true;
+		} or {
+			assume (light_TrafficLight == Green);
+			Display_DisplayGreen_Out_TrafficLight := true;
+		}
+	}
+}
+env {
+	choice {
+		in_default_Arrive_In_TrafficLight := true;
+	} or {
+		in_default_Arrive_In_TrafficLight := false;
+	}
+	choice {
+		in_default_Leave_In_TrafficLight := true;
+	} or {
+		in_default_Leave_In_TrafficLight := false;
+	}
+	choice {
+		in_default_Tick_In_TrafficLight := true;
+	} or {
+		in_default_Tick_In_TrafficLight := false;
+	}
+	choice {
+		in_default_Toggle_In_TrafficLight := true;
+	} or {
+		in_default_Toggle_In_TrafficLight := false;
+	}
+	choice {
+		in_default_Interrupt_In_TrafficLight := true;
+	} or {
+		in_default_Interrupt_In_TrafficLight := false;
+	}
+	Display_DisplayYellow_Out_TrafficLight := false;
+	Display_DisplayRed_Out_TrafficLight := false;
+	Display_DisplayGreen_Out_TrafficLight := false;
+	Display_DisplayOff_Out_TrafficLight := false;
+}

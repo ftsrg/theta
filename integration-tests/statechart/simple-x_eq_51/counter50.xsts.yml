@@ -1,0 +1,7 @@
+format_version: '2.0'
+input_files: models/counter50.xsts
+options:
+  language: yml
+properties:
+- expected_verdict: true
+  property_file: ../properties/x_eq_51.prop

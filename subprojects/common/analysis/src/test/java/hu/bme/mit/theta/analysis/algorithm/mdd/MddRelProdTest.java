@@ -19,7 +19,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
@@ -41,11 +41,9 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.*;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class MddRelProdTest {
 
     private static final VarDecl<IntType> X = Decls.Var("x", IntType.getInstance());
@@ -59,20 +57,11 @@ public class MddRelProdTest {
     private static final LitExpr<EnumType> RED = colorType.litFromShortName("red");
     private static final LitExpr<EnumType> GREEN = colorType.litFromShortName("green");
     private static final LitExpr<EnumType> BLUE = colorType.litFromShortName("blue");
-
-    @Parameterized.Parameter(value = 0)
     public List<VarDecl<?>> varOrder;
-
-    @Parameterized.Parameter(value = 1)
     public Expr<BoolType> stateExpr;
-
-    @Parameterized.Parameter(value = 2)
     public Expr<BoolType> transExpr;
-
-    @Parameterized.Parameter(value = 3)
     public Long expectedSize;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -274,8 +263,16 @@ public class MddRelProdTest {
                 });
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+    public void test(
+            List<VarDecl<?>> varOrder,
+            Expr<BoolType> stateExpr,
+            Expr<BoolType> transExpr,
+            Long expectedSize)
+            throws Exception {
+
+        initMddRelProdTest(varOrder, stateExpr, transExpr, expectedSize);
 
         try (final SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddGraph<Expr> mddGraph =
@@ -327,5 +324,16 @@ public class MddRelProdTest {
 
             assertEquals(expectedSize, resultSize);
         }
+    }
+
+    public void initMddRelProdTest(
+            List<VarDecl<?>> varOrder,
+            Expr<BoolType> stateExpr,
+            Expr<BoolType> transExpr,
+            Long expectedSize) {
+        this.varOrder = varOrder;
+        this.stateExpr = stateExpr;
+        this.transExpr = transExpr;
+        this.expectedSize = expectedSize;
     }
 }

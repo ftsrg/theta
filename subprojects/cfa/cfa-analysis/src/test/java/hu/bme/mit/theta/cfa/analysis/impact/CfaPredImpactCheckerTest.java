@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.cfa.analysis.impact;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -38,7 +38,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class CfaPredImpactCheckerTest {
 

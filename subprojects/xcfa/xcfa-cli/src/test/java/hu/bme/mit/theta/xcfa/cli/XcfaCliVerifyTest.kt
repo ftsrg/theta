@@ -22,7 +22,6 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
@@ -314,7 +313,6 @@ class XcfaCliVerifyTest {
 
   @ParameterizedTest
   @MethodSource("finiteStateSpaceC")
-  @Timeout(value = 10, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
   fun testCVerifyMDD(filePath: String, extraArgs: String?) {
     val params =
       arrayOf(

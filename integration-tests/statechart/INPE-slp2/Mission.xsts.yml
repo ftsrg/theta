@@ -1,0 +1,7 @@
+format_version: '2.0'
+input_files: models/Mission.xsts
+options:
+  language: yml
+properties:
+- expected_verdict: false
+  property_file: ../properties/slp2.prop
