@@ -27,7 +27,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         if: env.SONAR_TOKEN != '' && github.event_name == 'push'
-        uses: .github/actions/cache-build
+        uses: ./.github/actions/cache-build
         with:
           arguments: build jacocoTestReport sonar --stacktrace --info --max-workers 2 --no-daemon -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
       - name: Checkout source branch
@@ -42,6 +42,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         if: env.SONAR_TOKEN != '' && github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'Ready to test')
-        uses: .github/actions/cache-build
+        uses: ./.github/actions/cache-build
         with:
           arguments: build jacocoTestReport sonar --info --max-workers 2 --no-daemon -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m  -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
