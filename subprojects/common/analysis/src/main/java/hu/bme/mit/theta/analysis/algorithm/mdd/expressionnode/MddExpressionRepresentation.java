@@ -203,10 +203,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         Preconditions.checkArgument(constraint instanceof MddHandle);
         final MddHandle mddHandle = (MddHandle) constraint;
 
-        final var concreteExpr = MddToExprUtilKt.toExprNodeLevel(mddHandle);
+//        final var concreteExpr = MddToExprUtilKt.toExprNodeLevel(mddHandle);
         final var abstractExpr = MddToExprUtilKt.toApproximationExprVariableLevel(mddHandle);
 
-      return new Cursor(null, Traverser.create(this, concreteExpr, solverPool));
+      return new Cursor(null, Traverser.create(this, abstractExpr, solverPool));
     }
 
     @Override
