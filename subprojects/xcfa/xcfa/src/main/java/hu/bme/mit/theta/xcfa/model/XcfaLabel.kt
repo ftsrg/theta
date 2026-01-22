@@ -19,16 +19,23 @@ import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.xcfa.model.RWLockReadLockLabel.Companion.readHandle
 import hu.bme.mit.theta.xcfa.model.RWLockWriteLockLabel.Companion.writeHandle
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {
@@ -77,47 +84,103 @@ data class ReturnLabel(val enclosedLabel: XcfaLabel) :
 data class StartLabel(
   val name: String,
   val params: List<Expr<*>>,
-  val pidVar: VarDecl<*>,
+  val handle: Expr<*>,
   override val metadata: MetaData,
   val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
+  val dereferenceAsArrayWrite: ((Expr<*>) -> AssignStmt<*>)? = null,
 ) : XcfaLabel(metadata = metadata) {
+
+  constructor(
+    name: String,
+    params: List<Expr<*>>,
+    pidVar: VarDecl<*>,
+    metadata: MetaData,
+    tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
+    dereferenceAsArrayWrite: ((Expr<*>) -> AssignStmt<*>)? = null,
+  ) : this(name, params, pidVar.ref, metadata, tempLookup, dereferenceAsArrayWrite)
+
+  constructor(
+    name: String,
+    params: List<Expr<*>>,
+    handle: Dereference<*, *, *>,
+    metadata: MetaData,
+    tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
+    dereferenceAsArrayWrite: ((Expr<*>) -> AssignStmt<*>)? = null,
+  ) : this(name, params, handle as Expr<*>, metadata, tempLookup, dereferenceAsArrayWrite)
+
+  init {
+    check(
+      (handle is RefExpr && handle.decl is VarDecl<*>) ||
+        handle is Dereference<*, *, *> ||
+        handle is LitExpr<*>
+    ) {
+      "Handle must be a variable reference or dereference expression."
+    }
+  }
+
+  fun getHandleAssignment(expr: Expr<*>, varLookUp: Map<VarDecl<*>, VarDecl<*>>? = null): Stmt =
+    when (handle) {
+      is RefExpr -> {
+        val pidVar = (varLookUp?.let { handle.decl.changeVars(it) } ?: handle.decl) as VarDecl<*>
+        Assign(cast(pidVar, handle.type), cast(expr, handle.type))
+      }
+
+      is Dereference<*, *, *> ->
+        if (dereferenceAsArrayWrite == null) {
+          MemoryAssign(handle as Dereference<Type, Type, Type>, cast(expr, handle.type))
+        } else {
+          varLookUp?.let { dereferenceAsArrayWrite.invoke(expr).changeVars(it) }
+            ?: dereferenceAsArrayWrite.invoke(expr)
+        }
+
+      else -> error("Handle must be a variable reference or dereference expression.")
+    }
 
   override fun toString(): String {
     val sj = StringJoiner(", ", "(", ")")
     params.forEach { sj.add(it.toString()) }
-    return "$pidVar = start $name$sj"
+    return "$handle = start $name$sj"
   }
 
   companion object {
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (pidVarName, pidVarType, name, params) =
-        Regex("^\\(var (.*) (.*)\\) = start ([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
-      val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
+      val (handleStr, name, params) =
+        Regex("^(.*) = start ([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
+      val handle = ExpressionWrapper(scope, handleStr).instantiate(env)
       return StartLabel(
         name,
         params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) },
-        pidVar,
+        handle,
         metadata = metadata,
       )
     }
   }
 }
 
-data class JoinLabel(val pidVar: VarDecl<*>, override val metadata: MetaData) :
+data class JoinLabel(val handle: Expr<*>, override val metadata: MetaData) :
   XcfaLabel(metadata = metadata) {
 
-  override fun toString(): String = "join $pidVar"
+  constructor(pidVar: VarDecl<*>, metadata: MetaData) : this(pidVar.ref, metadata)
+
+  constructor(handle: Dereference<*, *, *>, metadata: MetaData) : this(handle as Expr<*>, metadata)
+
+  init {
+    check(handle is RefExpr || handle is Dereference<*, *, *>) {
+      "Handle must be a variable reference or dereference expression."
+    }
+  }
+
+  override fun toString(): String = "join $handle"
 
   companion object {
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (pidVarName, pidVarType) =
-        Regex("^join \\(var (.*) (.*)\\)$").matchEntire(s)!!.destructured
-      val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
-      return JoinLabel(pidVar, metadata = metadata)
+      val (handleStr) = Regex("^join (.*)$").matchEntire(s)!!.destructured
+      val handle = ExpressionWrapper(scope, handleStr).instantiate(env)
+      return JoinLabel(handle, metadata = metadata)
     }
   }
 }

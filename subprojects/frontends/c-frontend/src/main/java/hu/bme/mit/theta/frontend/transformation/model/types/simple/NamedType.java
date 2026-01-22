@@ -173,7 +173,10 @@ public class NamedType extends CSimpleType {
             case "":
                 break;
             default:
-                if (!cSimpleType.isTypedef()) {
+                if (cSimpleType.getAssociatedName() == null
+                        || cSimpleType.getAssociatedName().isEmpty()) {
+                    cSimpleType.setAssociatedName(namedType);
+                } else if (!cSimpleType.isTypedef()) {
                     throw new UnsupportedFrontendElementException(
                             "namedType should be short or long or type specifier, instead it is "
                                     + namedType);

@@ -69,7 +69,7 @@ internal class XcfaEvent(
 
     internal fun uniqueClkId(): Int = clkCnt++
 
-    internal var memoryGarbage: IndexedConstDecl<*>? = null
+    internal var memoryGarbages: Set<IndexedConstDecl<*>> = setOf()
   }
 
   // A (memory) event is only considered enabled if the array and offset expressions are also known
@@ -94,7 +94,7 @@ internal class XcfaEvent(
   override fun sameMemory(other: Event): Boolean {
     other as XcfaEvent
     if (!super.sameMemory(other)) return false
-    if (const == memoryGarbage || other.const == memoryGarbage) return true
+    if (const in memoryGarbages || other.const in memoryGarbages) return true
     if (arrayLit != other.arrayLit) return false
     if (offsetLit != other.offsetLit) return false
     return potentialSameMemory(other)
@@ -102,7 +102,7 @@ internal class XcfaEvent(
 
   fun potentialSameMemory(other: XcfaEvent): Boolean {
     if (!super.sameMemory(other)) return false
-    if (const == memoryGarbage || other.const == memoryGarbage) return true
+    if (const in memoryGarbages || other.const in memoryGarbages) return true
     if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic)
       return false
     if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic)

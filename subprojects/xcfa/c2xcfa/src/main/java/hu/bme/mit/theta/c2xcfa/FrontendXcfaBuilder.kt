@@ -406,13 +406,13 @@ class FrontendXcfaBuilder(
         }
 
         is RefExpr<*> -> {
-          if (
+          /*if (
             (CComplexType.getType(lValue, parseContext) is CPointer ||
               CComplexType.getType(lValue, parseContext) is CArray ||
               CComplexType.getType(lValue, parseContext) is CStruct) && rExpression.hasArithmetic()
           ) {
             throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
-          }
+          }*/
           // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
           // pointer-based
           AssignStmtLabel(

@@ -180,9 +180,9 @@ class XcfaOcChecker(
         .forEach { (event, rels) ->
           rels.forEach { rel ->
             var conseq = And(rel.from.guardExpr, rel.to.guardExpr)
-            if (rel.from.const != eg.memoryGarbage) {
+            if (rel.from.const !in eg.memoryGarbages) {
               conseq = And(conseq, Eq(rel.from.const.ref, rel.to.const.ref))
-              if (v == eg.memoryDecl) {
+              if (v in eg.memoryDecls) {
                 conseq =
                   And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
               }

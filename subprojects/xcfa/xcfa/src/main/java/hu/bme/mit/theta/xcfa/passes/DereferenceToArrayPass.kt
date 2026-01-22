@@ -213,7 +213,7 @@ class DereferenceToArrayPass : ProcedurePass {
         )
 
       is StartLabel ->
-        StartLabel(name, params.map { it.getArrayReads(xcfa) }, pidVar, metadata, tempLookup)
+        StartLabel(name, params.map { it.getArrayReads(xcfa) }, handle, metadata, tempLookup)
 
       is ReturnLabel -> ReturnLabel(enclosedLabel.replaceDereferences(xcfa))
       else -> this

@@ -154,10 +154,17 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 }
             }
             if (specifierQualifierListContext.typeSpecifierPointer() != null) {
-                CSimpleType qualifierSpecifier =
-                        specifierQualifierListContext.typeSpecifierPointer().accept(this);
-                if (qualifierSpecifier != null) {
-                    cSimpleTypes.add(qualifierSpecifier);
+                if (specifierQualifierListContext.typeSpecifierPointer().typeSpecifier() != null) {
+                    CSimpleType qualifierSpecifier =
+                            specifierQualifierListContext.typeSpecifierPointer().accept(this);
+                    if (qualifierSpecifier != null) {
+                        cSimpleTypes.add(qualifierSpecifier);
+                    }
+                } else {
+                    for (Token star :
+                            specifierQualifierListContext.typeSpecifierPointer().pointer().stars) {
+                        cSimpleTypes.get(cSimpleTypes.size() - 1).incrementPointer();
+                    }
                 }
             }
         }
@@ -320,7 +327,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public CSimpleType visitTypeSpecifierPointer(CParser.TypeSpecifierPointerContext ctx) {
         CSimpleType subtype =
                 ctx.typeSpecifier() == null
-                        ? NamedType("", parseContext, uniqueWarningLogger)
+                        ? NamedType("void", parseContext, uniqueWarningLogger)
                         : ctx.typeSpecifier().accept(this);
         if (subtype == null) {
             return null;

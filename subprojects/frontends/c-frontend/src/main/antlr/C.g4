@@ -29,15 +29,58 @@
 /** C 2011 grammar built from the C11 Spec */
 grammar C;
 
-
+@parser::header {
+ import java.util.LinkedHashSet;
+ import java.util.Set;
+ }
+ @parser::members {
+ private final LinkedHashSet<String> typedefNames = new LinkedHashSet<>(Set.of(
+                                                                            "void",
+                                                                            "_Bool",
+                                                                            "char",
+                                                                            "signed",
+                                                                            "unsigned",
+                                                                            "short",
+                                                                            "int",
+                                                                            "long",
+                                                                            "float",
+                                                                            "double",
+                                                                            "struct",
+                                                                            "enum"
+                                                                        ));
+ private void saveTypedef(DeclarationContext ctx) {
+     if(ctx.initDeclaratorList() == null) return;
+     if(ctx.declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
+       var dD = ctx.initDeclaratorList().initDeclarator(0).declarator().directDeclarator();
+       while(!(dD instanceof DirectDeclaratorIdContext idDd))
+         dD = (DirectDeclaratorContext) dD.getChild(0);
+       typedefNames.add(idDd.Identifier().getText());
+     }
+ }
+ private boolean isDefinedTypeCast(TokenStream ts) {
+    int i = 1;
+    while(ts.LA(i) == LeftParen) ++i;
+    int parens = 1;
+    while(parens > 0) {
+      int next = ts.LA(i);
+      if(next == RightParen) --parens;
+      else if(next == LeftParen) ++parens;
+      else if(typedefNames.contains(ts.LT(i).getText())) {
+        return true;
+      }
+      ++i;
+    }
+    return false;
+ }
+ }
 primaryExpression
     :   PRETTY_FUNC                                                         # gccPrettyFunc
-    |   Identifier                                                          # primaryExpressionId
+    |   {!typedefNames.contains(_input.LT(1).getText())}? Identifier        # primaryExpressionId
     |   Constant                                                            # primaryExpressionConstant
     |   StringLiteral+                                                      # primaryExpressionStrings
     |   '(' expression ')'                                                  # primaryExpressionBraceExpression
     |   '(' compoundStatement ')'                                           # primaryExpressionCompoundStatement // GNU C extension?
-    |   '(' castDeclarationSpecifierList ')' initializer                    # primaryExpressionTypeInitializer
+    |   '(' castDeclarationSpecifierList ')' initializer                      # primaryExpressionTypeInitializer
     //|   genericSelection                                                    # primaryExpressionGenericSelection
     |   '__extension__'? '(' compoundStatement ')'                          # primaryExpressionGccExtension
     //|   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
@@ -133,7 +176,7 @@ unaryOperator
     ;
 
 castExpression
-    :   '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
+    :   {isDefinedTypeCast(_input)}? '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
     |   unaryExpression                                     #castExpressionUnaryExpression
 //    |   DigitSequence                                       #castExpressionDigitSequence
     ;
@@ -201,7 +244,7 @@ constantExpression
     ;
 
 declaration
-    :   declarationSpecifiers initDeclaratorList? ';'
+    :   declarationSpecifiers initDeclaratorList? ';' {saveTypedef(_localctx); }
 //    |   staticAssertDeclaration                         # declarationStatic
     ;
 
@@ -575,9 +618,14 @@ translationUnit
 
 externalDeclaration
     :   functionDefinition  #externalFunctionDefinition
+    |   typeDefinition      #externalTypeDefinition
     |   declaration         #globalDeclaration
     |   IncludeDirective    #includeDirective
     |   ';'                 #externalNop
+    ;
+
+typeDefinition
+    :   'typedef' declarationSpecifiers Identifier ';' {typedefNames.add($Identifier.text); }
     ;
 
 functionDefinition

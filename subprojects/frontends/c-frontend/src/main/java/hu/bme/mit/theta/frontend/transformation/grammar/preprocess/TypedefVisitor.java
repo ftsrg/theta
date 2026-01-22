@@ -132,4 +132,15 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
         }
         return declarations;
     }
+
+    @Override
+    public Set<CDeclaration> visitTypeDefinition(CParser.TypeDefinitionContext ctx) {
+        CSimpleType cSimpleType =
+                ctx.declarationSpecifiers().accept(declarationVisitor.getTypeVisitor());
+        CDeclaration cDeclaration = new CDeclaration(ctx.Identifier.getText());
+        cDeclaration.setType(cSimpleType);
+        cDeclaration.incDerefCounter(cSimpleType.getPointerLevel());
+        this.declarations.add(cDeclaration);
+        return Set.of(cDeclaration);
+    }
 }

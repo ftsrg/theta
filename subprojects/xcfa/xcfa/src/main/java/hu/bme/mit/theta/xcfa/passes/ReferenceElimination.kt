@@ -65,7 +65,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .flatMap { p ->
             p.getEdges().flatMap { it -> it.label.getFlatLabels().flatMap { it.references } }
           }
-          .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+          .mapNotNull { (it.expr as? RefExpr<*>)?.decl as? VarDecl<*> }
           .toSet()
           .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
           .associateWith {
@@ -104,7 +104,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder
         .getEdges()
         .flatMap { e -> e.label.getFlatLabels().flatMap { it.references } }
-        .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+        .mapNotNull { (it.expr as? RefExpr<*>)?.decl as? VarDecl<*> }
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
         .associateWith { v ->
@@ -226,41 +226,26 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   ): XcfaLabel =
     if (varLut.isNotEmpty())
       when (this) {
-        is InvokeLabel ->
-          InvokeLabel(
-            name,
-            params.map { it.changeReferredVars(varLut, parseContext) },
-            metadata = metadata,
-            isLibraryFunction = isLibraryFunction,
-          )
+        is InvokeLabel -> copy(params = params.map { it.changeReferredVars(varLut, parseContext) })
 
         is NondetLabel ->
-          NondetLabel(
-            labels.map { it.changeReferredVars(varLut, parseContext) }.toSet(),
-            metadata = metadata,
-          )
+          copy(labels = labels.map { it.changeReferredVars(varLut, parseContext) }.toSet())
 
         is SequenceLabel ->
-          SequenceLabel(
-            labels.map { it.changeReferredVars(varLut, parseContext) },
-            metadata = metadata,
-          )
+          copy(labels = labels.map { it.changeReferredVars(varLut, parseContext) })
 
         is StartLabel ->
-          StartLabel(
-            name,
-            params.map { it.changeReferredVars(varLut, parseContext) },
-            pidVar,
-            metadata = metadata,
+          copy(
+            params = params.map { it.changeReferredVars(varLut, parseContext) },
+            handle = handle.changeReferredVars(varLut, parseContext),
           )
 
+        is JoinLabel -> copy(handle = handle.changeReferredVars(varLut, parseContext))
+
         is StmtLabel ->
-          SequenceLabel(
-              stmt.changeReferredVars(varLut, parseContext).map {
-                StmtLabel(it, metadata = metadata, choiceType = this.choiceType)
-              }
-            )
-            .let { if (it.labels.size == 1) it.labels[0] else it }
+          SequenceLabel(stmt.changeReferredVars(varLut, parseContext).map { copy(stmt = it) }).let {
+            if (it.labels.size == 1) it.labels[0] else it
+          }
 
         else -> this
       }
@@ -347,7 +332,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     varLut[this]?.first?.let {
       Dereference(
         cast(it.ref, it.type),
-        cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
+        cast(CComplexType.getType(it.ref, parseContext).nullValue, it.type),
         this.type,
       )
         as Expr<T>
