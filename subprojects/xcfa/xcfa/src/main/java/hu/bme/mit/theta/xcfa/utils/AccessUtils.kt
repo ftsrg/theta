@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,12 +27,10 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.Predicate
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> =
-  globalVars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
+  globalVars.map { it.wrappedVar } union procedures.flatMap { it.vars }
 
 fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> =
-  procedures
-    .map { procedure -> procedure.edges.map { it.label.collectAssumes() }.flatten() }
-    .flatten()
+  procedures.flatMap { procedure -> procedure.edges.flatMap { it.label.collectAssumes() } }
 
 fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> =
   when (this) {
@@ -42,8 +40,8 @@ fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> =
         else -> setOf()
       }
 
-    is NondetLabel -> labels.map { it.collectAssumes() }.flatten()
-    is SequenceLabel -> labels.map { it.collectAssumes() }.flatten()
+    is NondetLabel -> labels.flatMap { it.collectAssumes() }
+    is SequenceLabel -> labels.flatMap { it.collectAssumes() }
     else -> setOf()
   }
 
@@ -65,19 +63,19 @@ fun XcfaLabel.collectHavocs(): Set<HavocStmt<*>> =
         else -> setOf()
       }
 
-    is NondetLabel -> labels.map { it.collectHavocs() }.flatten().toSet()
-    is SequenceLabel -> labels.map { it.collectHavocs() }.flatten().toSet()
+    is NondetLabel -> labels.flatMap { it.collectHavocs() }.toSet()
+    is SequenceLabel -> labels.flatMap { it.collectHavocs() }.toSet()
     else -> setOf()
   }
 
 fun XcfaLabel.collectVars(): Collection<VarDecl<*>> =
   when (this) {
     is StmtLabel -> StmtUtils.getVars(stmt)
-    is NondetLabel -> labels.map { it.collectVars() }.flatten()
-    is SequenceLabel -> labels.map { it.collectVars() }.flatten()
-    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
+    is NondetLabel -> labels.flatMap { it.collectVars() }
+    is SequenceLabel -> labels.flatMap { it.collectVars() }
+    is InvokeLabel -> params.flatMap { ExprUtils.getVars(it) }
     is JoinLabel -> setOf(pidVar)
-    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
+    is StartLabel -> params.flatMap { ExprUtils.getVars(it) }.toSet() union setOf(pidVar)
     is FenceLabel ->
       when (this) {
         is AtomicFenceLabel -> setOf()
@@ -142,9 +140,9 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is InvokeLabel ->
-      params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
+      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } // TODO is it read?
     is StartLabel ->
-      params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to WRITE)
+      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } + mapOf(pidVar to WRITE)
 
     is JoinLabel -> mapOf(pidVar to READ)
     is FenceLabel -> {
