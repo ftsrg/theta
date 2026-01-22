@@ -16,8 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import com.google.common.base.Preconditions;
@@ -28,7 +27,7 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.MddAbstraction;
+import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprUtilKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
@@ -38,7 +37,6 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -205,9 +203,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         Preconditions.checkArgument(constraint instanceof MddHandle);
         final MddHandle mddHandle = (MddHandle) constraint;
 
-        final var exprConstraint = MddAbstraction.getExpr(mddHandle);
+        final var concreteExpr = MddToExprUtilKt.toExprNodeLevel(mddHandle);
+        final var abstractExpr = MddToExprUtilKt.toApproximationExprVariableLevel(mddHandle);
 
-        return new Cursor(null, Traverser.create(this, expr, solverPool));
+      return new Cursor(null, Traverser.create(this, concreteExpr, solverPool));
     }
 
     @Override
@@ -398,7 +397,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 try (var wpp = new WithPushPop(solver)) {
 
                     solver.add(currentRepresentation.expr);
-                    if (currentRepresentation.explicitRepresentation.getCacheView().size() > 5) {
+                    if (currentRepresentation.explicitRepresentation.getCacheView().size() >= 0) {
                         solver.add(constraint);
                         constraintApplied = true;
                     }

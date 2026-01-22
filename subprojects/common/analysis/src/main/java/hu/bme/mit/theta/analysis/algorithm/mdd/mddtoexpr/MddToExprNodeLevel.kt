@@ -13,29 +13,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd
+package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr
 
 import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.BinaryOperationCache
+import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariable
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
 
-object MddToExpr {
+object MddToExprNodeLevel: MddToExpr {
 
-  val auxvarCache: BinaryOperationCache<MddNode, MddVariable, VarDecl<BoolType>> =
+  val auxvarCache: BinaryOperationCache<MddNode, MddVariable, Decl<BoolType>> =
     BinaryOperationCache()
   val constraintCache: BinaryOperationCache<MddNode, MddVariable, Expr<BoolType>> =
     BinaryOperationCache()
   val expressionCache: BinaryOperationCache<MddNode, MddVariable, Expr<BoolType>> =
     BinaryOperationCache()
+
+  override fun toExpr(root: MddHandle): Expr<BoolType> = toExpr(root.node, root.variableHandle.variable.orElseThrow())
 
   fun toExpr(root: MddNode, variable: MddVariable): Expr<BoolType> {
     // Return cached expression if present
@@ -85,8 +87,9 @@ object MddToExpr {
       auxvarCache.getOrNull(node, variable)?.let { return it.ref }
 
       val varDecl = Decls.Var("mddnode_${auxvarCache.cacheSize}", BoolType.getInstance())
-      auxvarCache.addToCache(node, variable, varDecl)
-      return varDecl.ref
+      val constDecl = varDecl.getConstDecl(0);
+      auxvarCache.addToCache(node, variable, constDecl)
+      return constDecl.ref
     }
   }
 

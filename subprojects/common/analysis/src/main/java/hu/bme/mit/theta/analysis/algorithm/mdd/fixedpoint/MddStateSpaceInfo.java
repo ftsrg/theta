@@ -15,28 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
-import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.ObjObjMap;
-import com.koloboke.collect.map.hash.HashObjObjMaps;
-import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
-import hu.bme.mit.delta.collections.IntStatistics;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import java.util.ArrayList;
-import java.util.List;
 
 public final class MddStateSpaceInfo implements StateSpaceInfo {
     private final MddVariable variable;
     private final MddNode mddNode;
-
-    private static BinaryOperationCache<MddVariable, MddNode, RecursiveIntObjMapView<?>> cache =
-            new BinaryOperationCache<>();
-    private RecursiveIntObjMapView<?> structuralRepresentation = null;
 
     public MddStateSpaceInfo(final MddVariable variable, final MddNode mddNode) {
         this.variable = variable;
@@ -104,124 +91,8 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
 
     @Override
     public RecursiveIntObjMapView<?> toStructuralRepresentation() {
-        var varHandle = variable.getMddVariableOrder().getDefaultSetSignature().getHandleFor(variable.getTraceInfo());
-        var mddHandle = varHandle.orElseThrow().getHandleFor(mddNode);
+        var varHandle = variable.getDefaultSetSignatureHandle();
+        var mddHandle = varHandle.getHandleFor(mddNode);
         return mddHandle;
-    }
-
-    private RecursiveIntObjMapView<?> representBounds(
-            final MddVariable variable,
-            final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
-        final RecursiveIntObjMapView<?> continuation;
-        if (variable.getLower().isPresent()) {
-            continuation = representBounds(variable.getLower().orElseThrow(), bounds);
-        } else {
-            continuation = RecursiveIntObjMapView.of((IntObjMapView) IntObjMapView.empty());
-        }
-
-        final var triple = bounds.get(variable);
-        final IntObjMapView<RecursiveIntObjMapView<?>> mapView;
-        if (!triple.hasDefault) {
-            if (triple.lower == triple.upper) {
-                mapView = IntObjMapView.singleton(triple.lower, continuation);
-            } else {
-                // TODO: canonization of trimmed intobjmapviews could be improved
-                mapView =
-                        new IntObjMapViews.Trimmed<>(
-                                IntObjMapView.empty(continuation),
-                                IntSetView.range(triple.lower, triple.upper + 1));
-            }
-        } else {
-            mapView = IntObjMapView.empty(continuation);
-        }
-        return RecursiveIntObjMapView.of((IntObjMapView) mapView);
-    }
-
-    private static class BoundsCollector {
-
-        private final ObjObjMap<MddVariable, Bounds> bounds;
-
-        static class Bounds {
-            int lower;
-            int upper;
-            boolean hasDefault;
-
-            Bounds(int lower, int upper, boolean hasDefault) {
-                this.lower = lower;
-                this.upper = upper;
-                this.hasDefault = hasDefault;
-            }
-        }
-
-        private static BinaryOperationCache<MddNode, MddVariable, ObjObjMap<MddVariable, Bounds>>
-                cache = new BinaryOperationCache<>();
-
-        public BoundsCollector(MddNode rootNode, MddVariable variable) {
-            Preconditions.checkNotNull(rootNode);
-            this.bounds = traverse(rootNode, variable);
-        }
-
-        private ObjObjMap<MddVariable, Bounds> traverse(
-                final MddNode node, final MddVariable variable) {
-            final var cached = cache.getOrNull(node, variable);
-            if (cached != null) {
-                return cached;
-            }
-            if (node.isTerminal()) {
-                return HashObjObjMaps.newUpdatableMap();
-            }
-
-            Preconditions.checkNotNull(variable);
-
-            for (var c = node.cursor(); c.moveNext(); ) {} // TODO delete later
-
-            final ObjObjMap<MddVariable, Bounds> returnValue = HashObjObjMaps.newUpdatableMap();
-            final var currentBounds = new Bounds(Integer.MAX_VALUE, Integer.MIN_VALUE, false);
-
-            final List<ObjObjMap<MddVariable, Bounds>> childBounds = new ArrayList<>();
-
-            final var nodeInterpreter = variable.getNodeInterpreter(node);
-            if (nodeInterpreter.defaultValue() != null) {
-                final MddNode defaultValue = nodeInterpreter.defaultValue();
-                childBounds.add(traverse(defaultValue, variable.getLower().orElse(null)));
-                currentBounds.hasDefault = true;
-            } else {
-                final IntStatistics statistics = nodeInterpreter.statistics();
-                currentBounds.lower = statistics.lowestValue();
-                currentBounds.upper = statistics.highestValue();
-
-                for (var cur = nodeInterpreter.cursor(); cur.moveNext(); ) {
-                    if (cur.value() != null) {
-                        childBounds.add(traverse(cur.value(), variable.getLower().orElse(null)));
-                    }
-                }
-            }
-
-            returnValue.put(variable, currentBounds);
-            for (final var childBoundMap : childBounds) {
-                for (final var entry : childBoundMap.entrySet()) {
-                    final MddVariable var = entry.getKey();
-                    final Bounds childBoundsForVar = entry.getValue();
-
-                    final Bounds existingBounds = returnValue.getOrDefault(var, null);
-                    if (existingBounds == null) {
-                        returnValue.put(
-                                var,
-                                new Bounds(
-                                        childBoundsForVar.lower,
-                                        childBoundsForVar.upper,
-                                        childBoundsForVar.hasDefault));
-                    } else {
-                        existingBounds.lower =
-                                Math.min(existingBounds.lower, childBoundsForVar.lower);
-                        existingBounds.upper =
-                                Math.max(existingBounds.upper, childBoundsForVar.upper);
-                        existingBounds.hasDefault |= childBoundsForVar.hasDefault;
-                    }
-                }
-            }
-            cache.addToCache(node, variable, returnValue);
-            return returnValue;
-        }
     }
 }

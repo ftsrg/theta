@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
+package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr;
 
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.ObjObjMap;
 import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.delta.collections.IntStatistics;
-import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
@@ -37,12 +36,10 @@ import java.util.List;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
-public class MddAbstraction {
+public class MddToExprVariableLevel implements MddToExpr {
 
-//  private static final BinaryOperationCache<MddVariable, MddNode, RecursiveIntObjMapView<?>> cache =
-//      new BinaryOperationCache<>();
-
-  public static Expr<BoolType> getExpr(MddHandle mddHandle) {
+  @Override
+  public Expr<BoolType> toExpr(MddHandle mddHandle) {
     return getExpr(mddHandle.getNode(), mddHandle.getVariableHandle().getVariable().orElseThrow());
   }
 
@@ -68,48 +65,6 @@ public class MddAbstraction {
     }
     return And(exprs);
   }
-
-//  public static RecursiveIntObjMapView<?> getAbstraction(MddNode mddNode, MddVariable variable) {
-//
-//    var cached = cache.getOrNull(variable, mddNode);
-//    if (cached != null) {
-//      return cached;
-//    }
-//
-//    final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
-//    final RecursiveIntObjMapView<?> res = representBounds(variable, boundsCollector.bounds);
-//    cache.addToCache(variable, mddNode, res);
-//
-//    return res;
-//  }
-
-//  private static RecursiveIntObjMapView<?> representBounds(
-//      final MddVariable variable,
-//      final ObjObjMap<MddVariable, BoundsCollector.Bounds> bounds) {
-//    final RecursiveIntObjMapView<?> continuation;
-//    if (variable.getLower().isPresent()) {
-//      continuation = representBounds(variable.getLower().orElseThrow(), bounds);
-//    } else {
-//      continuation = RecursiveIntObjMapView.of((IntObjMapView) IntObjMapView.empty());
-//    }
-//
-//    final var triple = bounds.get(variable);
-//    final IntObjMapView<RecursiveIntObjMapView<?>> mapView;
-//    if (!triple.hasDefault) {
-//      if (triple.lower == triple.upper) {
-//        mapView = IntObjMapView.singleton(triple.lower, continuation);
-//      } else {
-//        // TODO: canonization of trimmed intobjmapviews could be improved
-//        mapView =
-//            new IntObjMapViews.Trimmed<>(
-//                IntObjMapView.empty(continuation),
-//                IntSetView.range(triple.lower, triple.upper + 1));
-//      }
-//    } else {
-//      mapView = IntObjMapView.empty(continuation);
-//    }
-//    return RecursiveIntObjMapView.of((IntObjMapView) mapView);
-//  }
 
   private static class BoundsCollector {
 
