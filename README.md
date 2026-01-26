@@ -101,7 +101,7 @@ Furthermore, our [paper in the Journal of Automated Reasoning](https://link.spri
 
 To cite Theta as a tool, please use the following paper.
 
-```
+```bibtex
 @inproceedings{theta-fmcad2017,
     author     = {T\'oth, Tam\'as and Hajdu, \'{A}kos and V\"or\"os, Andr\'as and Micskei, Zolt\'an and Majzik, Istv\'an},
     year       = {2017},
@@ -115,6 +115,7 @@ To cite Theta as a tool, please use the following paper.
 ```
 
 ## Acknowledgements
+
 Supporters of the Theta project are listed below.
 
 * [MTA-BME Lendület Cyber-Physical Systems Research Group](http://lendulet.inf.mit.bme.hu/)
