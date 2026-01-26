@@ -26,7 +26,7 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
     private final Optional<Statistics> stats;
 
     private SafetyResult(final Pr proof, final Optional<Statistics> stats) {
-        this.proof = checkNotNull(proof);
+        this.proof = proof;
         this.stats = checkNotNull(stats);
     }
 
@@ -70,6 +70,11 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
 
     public static <Pr extends Proof, C extends Cex> Unknown<Pr, C> unknown(final Statistics stats) {
         return new Unknown<>(Optional.ofNullable(stats));
+    }
+
+    public static <Pr extends Proof, C extends Cex> Unknown<Pr, C> unknown(
+            final Pr proof, final Statistics stats) {
+        return new Unknown<>(proof, Optional.ofNullable(stats));
     }
 
     public abstract boolean isSafe();
@@ -172,6 +177,10 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
 
         public Unknown(final Optional<Statistics> stats) {
             super(null, stats);
+        }
+
+        public Unknown(final Pr proof, final Optional<Statistics> stats) {
+            super(proof, stats);
         }
 
         @Override
