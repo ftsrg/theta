@@ -178,15 +178,9 @@ class XstsCliTracegen :
   }
 
   private fun doRun() {
-    val traceDirPath: File =
-      if (traceDir == null) {
-        File(inputOptions.model.parent + File.separator + "traces")
-      } else {
-        traceDir!!
-      }
+    val traceDirPath = traceDir ?: inputOptions.model.parentFile.resolve("traces")
 
     registerSolverManagers()
-    val solverFactory = SolverManager.resolveSolverFactory(solver)
 
     val modelFile = inputOptions.model
     if (traceDirPath.exists()) {
@@ -197,7 +191,7 @@ class XstsCliTracegen :
 
       filesToDelete?.forEach { file -> file.delete() }
     } else {
-      traceDirPath.mkdir()
+      traceDirPath.mkdirs()
     }
 
     val propStream = ByteArrayInputStream(("prop {\n" + "\ttrue\n" + "}\n").toByteArray())
