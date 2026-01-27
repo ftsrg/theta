@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public final class Z3SolverTest {
         assertEquals(ca.getType(), val.getType());
     }
 
-    // @Test
+    @Test
     public void testArray() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
@@ -156,7 +156,7 @@ public final class Z3SolverTest {
         assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
     }
 
-    // @Test
+    @Test
     public void testArrayInit() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
         var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();

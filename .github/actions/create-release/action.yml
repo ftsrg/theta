@@ -33,6 +33,7 @@ runs:
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "message<<$EOF" >> $GITHUB_OUTPUT
         cat build/release-info/message.txt >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash
@@ -56,6 +57,7 @@ runs:
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "filelist<<$EOF" >> $GITHUB_OUTPUT
         find upload -type f -exec basename {} \; | sort >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Release
       if: inputs.dry-run == 'false'
