@@ -33,6 +33,7 @@ runs:
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "message<<$EOF" >> $GITHUB_OUTPUT
         cat build/release-info/message.txt >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash
@@ -46,19 +47,6 @@ runs:
         path: jar/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: Theta-archive
-        path: upload/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: EmergenTheta-archive
-        path: upload/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: Thorn-archive
-        path: upload/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: ThetaCHC-archive
         path: upload/
     - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
       shell: bash
@@ -69,6 +57,7 @@ runs:
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "filelist<<$EOF" >> $GITHUB_OUTPUT
         find upload -type f -exec basename {} \; | sort >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Release
       if: inputs.dry-run == 'false'

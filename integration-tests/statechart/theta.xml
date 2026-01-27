@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+
+<!-- config -->
+
+  <rundefinition name="Theta-statechart-Integration-Test">
+    <tasks name="slp7">
+      <propertyfile>properties/slp7.prop</propertyfile>
+      <include>INPE-slp7/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="tran13">
+      <propertyfile>properties/tran13.prop</propertyfile>
+      <include>COID-tran13/ANTIVAL_CHK_COID_System.xsts.yml</include>
+      <include>TrafficLight-tran13/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="tran7">
+      <propertyfile>properties/tran7.prop</propertyfile>
+      <include>TrafficLight-tran7/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="obc4">
+      <propertyfile>properties/obc4.prop</propertyfile>
+      <include>INPE-obc4/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="tran8">
+      <propertyfile>properties/tran8.prop</propertyfile>
+      <include>COID-tran8/ANTIVAL_CHK_COID_System.xsts.yml</include>
+      <include>TrafficLight-tran8/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="slp9">
+      <propertyfile>properties/slp9.prop</propertyfile>
+      <include>INPE-slp9/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="x_eq_5">
+      <propertyfile>properties/x_eq_5.prop</propertyfile>
+      <include>simple-x_eq_5/counter5.xsts.yml</include>
+      <include>simple-x_eq_5/counter50.xsts.yml</include>
+    </tasks>
+    <tasks name="tran1">
+      <propertyfile>properties/tran1.prop</propertyfile>
+      <include>COID-tran1/ANTIVAL_CHK_COID_System.xsts.yml</include>
+      <include>TrafficLight-tran1/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="on_off_statemachine">
+      <propertyfile>properties/on_off_statemachine.prop</propertyfile>
+      <include>simple-on_off_statemachine/on_off_statemachine.xsts.yml</include>
+    </tasks>
+    <tasks name="obc7">
+      <propertyfile>properties/obc7.prop</propertyfile>
+      <include>INPE-obc7/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="slp8">
+      <propertyfile>properties/slp8.prop</propertyfile>
+      <include>INPE-slp8/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="x_eq_51">
+      <propertyfile>properties/x_eq_51.prop</propertyfile>
+      <include>simple-x_eq_51/counter50.xsts.yml</include>
+    </tasks>
+    <tasks name="green_and_red">
+      <propertyfile>properties/green_and_red.prop</propertyfile>
+      <include>simple-green_and_red/trafficlight.xsts.yml</include>
+      <include>simple-green_and_red/trafficlight_v2.xsts.yml</include>
+    </tasks>
+    <tasks name="count_up_down2">
+      <propertyfile>properties/count_up_down2.prop</propertyfile>
+      <include>simple-count_up_down2/count_up_down.xsts.yml</include>
+    </tasks>
+    <tasks name="slp10">
+      <propertyfile>properties/slp10.prop</propertyfile>
+      <include>INPE-slp10/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="x_between_0_and_5">
+      <propertyfile>properties/x_between_0_and_5.prop</propertyfile>
+      <include>simple-x_between_0_and_5/counter5.xsts.yml</include>
+    </tasks>
+    <tasks name="sequential">
+      <propertyfile>properties/sequential.prop</propertyfile>
+      <include>simple-sequential/sequential.xsts.yml</include>
+    </tasks>
+    <tasks name="tran10">
+      <propertyfile>properties/tran10.prop</propertyfile>
+      <include>COID-tran10/ANTIVAL_CHK_COID_System.xsts.yml</include>
+    </tasks>
+    <tasks name="slp6">
+      <propertyfile>properties/slp6.prop</propertyfile>
+      <include>INPE-slp6/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="tran5">
+      <propertyfile>properties/tran5.prop</propertyfile>
+      <include>TrafficLight-tran5/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="obc9">
+      <propertyfile>properties/obc9.prop</propertyfile>
+      <include>INPE-obc9/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="tran12">
+      <propertyfile>properties/tran12.prop</propertyfile>
+      <include>COID-tran12/ANTIVAL_CHK_COID_System.xsts.yml</include>
+      <include>TrafficLight-tran12/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="obc8">
+      <propertyfile>properties/obc8.prop</propertyfile>
+      <include>INPE-obc8/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="slp5">
+      <propertyfile>properties/slp5.prop</propertyfile>
+      <include>INPE-slp5/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="tran14">
+      <propertyfile>properties/tran14.prop</propertyfile>
+      <include>TrafficLight-tran14/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="obc6">
+      <propertyfile>properties/obc6.prop</propertyfile>
+      <include>INPE-obc6/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="sequential2">
+      <propertyfile>properties/sequential2.prop</propertyfile>
+      <include>simple-sequential2/sequential.xsts.yml</include>
+    </tasks>
+    <tasks name="slp2">
+      <propertyfile>properties/slp2.prop</propertyfile>
+      <include>INPE-slp2/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="obc5">
+      <propertyfile>properties/obc5.prop</propertyfile>
+      <include>INPE-obc5/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="x_eq_50">
+      <propertyfile>properties/x_eq_50.prop</propertyfile>
+      <include>simple-x_eq_50/counter50.xsts.yml</include>
+    </tasks>
+    <tasks name="tran9">
+      <propertyfile>properties/tran9.prop</propertyfile>
+      <include>COID-tran9/ANTIVAL_CHK_COID_System.xsts.yml</include>
+    </tasks>
+    <tasks name="_transition_TrafficLight_10">
+      <propertyfile>properties/_transition_TrafficLight_10.prop</propertyfile>
+      <include>TrafficLight-_transition_TrafficLight_10/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="tran4">
+      <propertyfile>properties/tran4.prop</propertyfile>
+      <include>TrafficLight-tran4/TrafficLightWrapper.xsts.yml</include>
+      <include>COID-tran4/ANTIVAL_CHK_COID_System.xsts.yml</include>
+    </tasks>
+    <tasks name="count_up_down">
+      <propertyfile>properties/count_up_down.prop</propertyfile>
+      <include>simple-count_up_down/count_up_down.xsts.yml</include>
+    </tasks>
+    <tasks name="oldas_exit">
+      <propertyfile>properties/oldas_exit.prop</propertyfile>
+      <include>COID-oldas_exit/ANTIVAL_CHK_COID_System.xsts.yml</include>
+    </tasks>
+    <tasks name="tran17">
+      <propertyfile>properties/tran17.prop</propertyfile>
+      <include>TrafficLight-tran17/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="tran2">
+      <propertyfile>properties/tran2.prop</propertyfile>
+      <include>COID-tran2/ANTIVAL_CHK_COID_System.xsts.yml</include>
+      <include>TrafficLight-tran2/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="slp4">
+      <propertyfile>properties/slp4.prop</propertyfile>
+      <include>INPE-slp4/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="tran16">
+      <propertyfile>properties/tran16.prop</propertyfile>
+      <include>TrafficLight-tran16/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="tran11">
+      <propertyfile>properties/tran11.prop</propertyfile>
+      <include>COID-tran11/ANTIVAL_CHK_COID_System.xsts.yml</include>
+      <include>TrafficLight-tran11/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="tran6">
+      <propertyfile>properties/tran6.prop</propertyfile>
+      <include>COID-tran6/ANTIVAL_CHK_COID_System.xsts.yml</include>
+    </tasks>
+    <tasks name="x_geq_y">
+      <propertyfile>properties/x_geq_y.prop</propertyfile>
+      <include>simple-x_geq_y/x_and_y.xsts.yml</include>
+    </tasks>
+    <tasks name="obc3">
+      <propertyfile>properties/obc3.prop</propertyfile>
+      <include>INPE-obc3/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="cross">
+      <propertyfile>properties/cross.prop</propertyfile>
+      <include>simple-cross/cross3.xsts.yml</include>
+      <include>simple-cross/cross_with.xsts.yml</include>
+      <include>simple-cross/cross_without.xsts.yml</include>
+    </tasks>
+    <tasks name="choices">
+      <propertyfile>properties/choices.prop</propertyfile>
+      <include>simple-choices/choices.xsts.yml</include>
+    </tasks>
+    <tasks name="main_region_eq_read_exp">
+      <propertyfile>properties/main_region_eq_read_exp.prop</propertyfile>
+      <include>INPE-main_region_eq_read_exp/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="on_off_statemachine2">
+      <propertyfile>properties/on_off_statemachine2.prop</propertyfile>
+      <include>simple-on_off_statemachine2/on_off_statemachine.xsts.yml</include>
+    </tasks>
+    <tasks name="on_off_statemachine3">
+      <propertyfile>properties/on_off_statemachine3.prop</propertyfile>
+      <include>simple-on_off_statemachine3/on_off_statemachine.xsts.yml</include>
+    </tasks>
+    <tasks name="tran3">
+      <propertyfile>properties/tran3.prop</propertyfile>
+      <include>COID-tran3/ANTIVAL_CHK_COID_System.xsts.yml</include>
+    </tasks>
+    <tasks name="tran15">
+      <propertyfile>properties/tran15.prop</propertyfile>
+      <include>TrafficLight-tran15/TrafficLightWrapper.xsts.yml</include>
+    </tasks>
+    <tasks name="slp3">
+      <propertyfile>properties/slp3.prop</propertyfile>
+      <include>INPE-slp3/Mission.xsts.yml</include>
+    </tasks>
+    <tasks name="obc2">
+      <propertyfile>properties/obc2.prop</propertyfile>
+      <include>INPE-obc2/Mission.xsts.yml</include>
+    </tasks>
+  </rundefinition>
+
+</benchmark>

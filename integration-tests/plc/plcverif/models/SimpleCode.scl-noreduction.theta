@@ -1,0 +1,133 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var MX123_7 : bool
+	var function1_out1 : int
+	var function2_in1 : bool
+	var function2_in2 : int
+	var function2_RET_VAL : int
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	loc verificationLoop_VerificationLoop_simplecode_OB1_init
+	loc verificationLoop_VerificationLoop_simplecode_OB1_l1
+	loc verificationLoop_VerificationLoop_simplecode_OB1_function1_init
+	loc verificationLoop_VerificationLoop_simplecode_OB1_function1_l1
+	loc verificationLoop_VerificationLoop_simplecode_OB1_function1_l2
+	loc verificationLoop_VerificationLoop_simplecode_OB1_function1_l3
+	loc verificationLoop_VerificationLoop_simplecode_OB1_function1_l4
+	loc verificationLoop_VerificationLoop_simplecode_OB1_function1_l5
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		MX123_7 := false
+		function1_out1 := 0
+		function2_in1 := false
+		function2_in2 := 0
+		function2_RET_VAL := 0
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_t1
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_init -> verificationLoop_VerificationLoop_simplecode_OB1_function1_l1 {
+		assume function2_in1
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_t2
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_l1 -> verificationLoop_VerificationLoop_simplecode_OB1_function1_l2 {
+		function2_RET_VAL := function2_in2
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_t3
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_init -> verificationLoop_VerificationLoop_simplecode_OB1_function1_l3 {
+		assume not (function2_in1)
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_t4
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_l3 -> verificationLoop_VerificationLoop_simplecode_OB1_function1_l4 {
+		function2_RET_VAL := -(function2_in2)
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_t5
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_l2 -> verificationLoop_VerificationLoop_simplecode_OB1_function1_l5 {
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_t6
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_l4 -> verificationLoop_VerificationLoop_simplecode_OB1_function1_l5 {
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_inputs
+	verificationLoop_VerificationLoop_simplecode_OB1_init -> verificationLoop_VerificationLoop_simplecode_OB1_function1_init {
+		function2_in1 := MX123_7
+		function2_in2 := 123
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_function1_outputs
+	verificationLoop_VerificationLoop_simplecode_OB1_function1_l5 -> verificationLoop_VerificationLoop_simplecode_OB1_l1 {
+		function1_out1 := function2_RET_VAL
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_inputs
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_simplecode_OB1_init {
+	}
+	
+	// verificationLoop_VerificationLoop_simplecode_OB1_outputs
+	verificationLoop_VerificationLoop_simplecode_OB1_l1 -> verificationLoop_VerificationLoop_l1 {
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_l1 -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}
