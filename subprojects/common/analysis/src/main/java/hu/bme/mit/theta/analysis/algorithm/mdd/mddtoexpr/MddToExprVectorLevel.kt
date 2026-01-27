@@ -24,5 +24,5 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 class MddToExprVectorLevel : MddToExpr {
 
   override fun toExpr(node: MddHandle): Expr<BoolType> =
-    Or(MddValuationCollector.collect(node) as List<Expr<BoolType>>)
+    Or(MddValuationCollector.collect(node).map { it.toExpr() })
 }
