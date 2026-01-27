@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
@@ -43,6 +44,11 @@ class XstsCliMdd :
     option(help = "The state space enumeration algorithm to use")
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
+
+  private val mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy by
+    option(help = "The MDD to expression conversion strategy")
+      .enum<MddExpressionRepresentation.MddToExprStrategy>()
+      .default(MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL)
 
   private fun printResult(
     status: SafetyResult<InvariantProof, out Trace<XstsState<*>, XstsAction>>,
@@ -85,7 +91,13 @@ class XstsCliMdd :
       SolverPool(solverFactory).use { solverPool ->
         val checker =
           createChecker(xsts, solverFactory) {
-            MddChecker(it, solverPool, logger, iterationStrategy)
+            MddChecker(
+              it,
+              solverPool,
+              logger,
+              iterationStrategy,
+              mddToExprStrategy = mddToExprStrategy,
+            )
           }
         checker.check(null)
       }

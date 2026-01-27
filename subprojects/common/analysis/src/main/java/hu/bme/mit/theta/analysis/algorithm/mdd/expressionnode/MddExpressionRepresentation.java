@@ -58,6 +58,40 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     private final SolverPool solverPool;
     private final boolean transExpr;
+    private static MddToExprStrategy mddToExprStrategy = MddToExprStrategy.VARIABLE_LEVEL;
+
+    public enum MddToExprStrategy {
+        NONE {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return True();
+            }
+        },
+        NODE_LEVEL {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return MddToExprUtilKt.toExprNodeLevel(handle);
+            }
+        },
+        VARIABLE_LEVEL {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return MddToExprUtilKt.toApproximationExprVariableLevel(handle);
+            }
+        },
+        VECTOR_LEVEL {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return MddToExprUtilKt.toExprVectorLevel(handle);
+            }
+        };
+
+        public abstract Expr<BoolType> toExpr(MddHandle handle);
+    }
+
+    public static void setMddToExprStrategy(MddToExprStrategy strategy) {
+        mddToExprStrategy = strategy;
+    }
 
     private MddExpressionRepresentation(
             final Expr<BoolType> expr,
@@ -203,10 +237,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         Preconditions.checkArgument(constraint instanceof MddHandle);
         final MddHandle mddHandle = (MddHandle) constraint;
 
-        //        final var concreteExpr = MddToExprUtilKt.toExprNodeLevel(mddHandle);
-        final var abstractExpr = MddToExprUtilKt.toApproximationExprVariableLevel(mddHandle);
+        final var constraintExpr = mddToExprStrategy.toExpr(mddHandle);
 
-        return new Cursor(null, Traverser.create(this, abstractExpr, solverPool));
+        return new Cursor(null, Traverser.create(this, constraintExpr, solverPool));
     }
 
     @Override

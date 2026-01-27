@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -59,6 +60,8 @@ constructor(
   private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   private val traceTimeout: Long = 10,
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
+  private val mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   enum class IterationStrategy {
@@ -69,6 +72,8 @@ constructor(
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
+
+    MddExpressionRepresentation.setMddToExprStrategy(mddToExprStrategy)
 
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
 
