@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 open class XcfaAasporLts(
   xcfa: XCFA,
@@ -39,6 +40,11 @@ open class XcfaAasporLts(
   ): Set<A> {
     // Collecting enabled actions
     val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
+
+    val sporSourceSet = super.getEnabledActions(state, allEnabledActions, null)
+    if (prec.usedVars.size >= xcfa.globalVars.size || sporSourceSet.size == 1) {
+      return sporSourceSet
+    }
 
     // Calculating the source set starting from every (or some of the) enabled transition or from
     // exploredActions if it is not empty
@@ -71,6 +77,13 @@ open class XcfaAasporLts(
     }
     minimalSourceSet.removeAll(exploredActions.toSet())
     return minimalSourceSet
+  }
+
+  override fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean {
+    return super.preferNewSourceSet(minimalSourceSet, newSourceSet) ||
+      (minimalSourceSet.size == newSourceSet.size &&
+        newSourceSet.sumOf { it.label.collectVars().size } >
+          minimalSourceSet.sumOf { it.label.collectVars().size })
   }
 
   /**

@@ -127,7 +127,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<S, A> {
     return minimalSourceSet
   }
 
-  protected fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean =
+  protected open fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean =
     minimalSourceSet.isEmpty() || newSourceSet.size < minimalSourceSet.size
 
   /**
