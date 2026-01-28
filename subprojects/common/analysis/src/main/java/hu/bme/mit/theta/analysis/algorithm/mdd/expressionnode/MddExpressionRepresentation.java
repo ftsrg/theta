@@ -307,9 +307,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         public void cacheNode(int key, MddNode node) {
             Preconditions.checkState(!complete);
             Preconditions.checkState(defaultValue == null);
-            if (this.cache.size() > 1000) {
-                throw new NotSolvableException();
-            }
+//            if (this.cache.size() > 1000) {
+//                throw new NotSolvableException();
+//            }
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
         }

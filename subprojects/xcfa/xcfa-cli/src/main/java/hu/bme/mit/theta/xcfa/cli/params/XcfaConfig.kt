@@ -19,6 +19,7 @@ import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -547,6 +548,11 @@ data class MddConfig(
     description = "Iteration strategy for the MDD checker",
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(
+    names = ["--mdd-to-expr-strategy"],
+    description = "MDD to expression conversion strategy",
+  )
+  var mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy = MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

@@ -51,32 +51,15 @@ fun getMddChecker(
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
 
-  val stmts =
-    xcfa.procedures
-      .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
-      .toSet()
   val solverPool = SolverPool(refinementSolverFactory)
-  val iterationStrategy = mddConfig.iterationStrategy
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     MddChecker(
       monolithicExpr,
       solverPool,
       logger,
-      iterationStrategy,
-      //      variableOrdering =
-      //        orderVarsFromRandomStartingPoints(
-      //          monolithicExpr.vars,
-      //          stmts
-      //            .map {
-      //              object : Event<VarDecl<*>> {
-      //                override fun getAffectedVars(): List<VarDecl<*>> =
-      //                  StmtUtils.getWrittenVars(it).toList()
-      //              }
-      //            }
-      //            .toList(),
-      //          20,
-      //        ),
+      iterationStrategy = mddConfig.iterationStrategy,
+      mddToExprStrategy = mddConfig.mddToExprStrategy
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
