@@ -1,0 +1,12 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_17_good.i --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_17_good.i' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_long_17_good.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionBraces$1(ExpressionVisitor.java:938), java.lang.IllegalStateException: Only variable-backed functions are callable.)
+Error: class java.lang.IllegalStateException Only variable-backed functions are callable. (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor#lambda$visitPostfixExpressionBraces$1:938)

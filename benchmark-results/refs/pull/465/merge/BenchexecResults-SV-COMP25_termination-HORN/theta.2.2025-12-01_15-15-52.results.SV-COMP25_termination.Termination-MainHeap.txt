@@ -1,0 +1,264 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-MainHeap
+date:                    Mon, 2025-12-01 15:15:52 UTC
+tool:                    Theta 6.27.9
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.54304 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-MainHeap
+Run set 6 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                    status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+termination-dietlibc/atoi.yml                                                                ERROR (frontend failed, before parsing finished)        2.46        0.87        None
+termination-dietlibc/atol.yml                                                                ERROR (frontend failed, before parsing finished)        2.89        1.02        None
+termination-dietlibc/atoll-2.yml                                                             ERROR (frontend failed, before parsing finished)        2.80        1.00        None
+termination-dietlibc/basename-3.yml                                                          ERROR (frontend failed, before parsing finished)        2.67        0.96        None
+termination-dietlibc/skip_to.yml                                                             ERROR (frontend failed, before parsing finished)        2.86        1.02        None
+termination-dietlibc/stpcpy.yml                                                              ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+termination-dietlibc/strchr-1.yml                                                            ERROR (frontend failed, before parsing finished)        2.95        1.05        None
+termination-dietlibc/strchr_short.yml                                                        ERROR (frontend failed, before parsing finished)        2.67        0.95        None
+termination-dietlibc/strcmp_short.yml                                                        ERROR (frontend failed, before parsing finished)        2.84        1.00        None
+termination-dietlibc/strcpy_small.yml                                                        ERROR (frontend failed, before parsing finished)        2.68        0.97        None
+termination-dietlibc/strcspn.yml                                                             ERROR (frontend failed, before parsing finished)        2.88        1.02        None
+termination-dietlibc/strdup.yml                                                              ERROR (frontend failed, before parsing finished)        2.69        0.95        None
+termination-dietlibc/strlen.yml                                                              ERROR (frontend failed, before parsing finished)        2.68        0.96        None
+termination-dietlibc/strpbrk.yml                                                             ERROR (frontend failed, before parsing finished)        2.63        0.95        None
+termination-dietlibc/strrchr.yml                                                             ERROR (frontend failed, before parsing finished)        2.79        0.99        None
+termination-dietlibc/strrchr_short.yml                                                       ERROR (frontend failed, before parsing finished)        2.73        1.00        None
+termination-dietlibc/strspn.yml                                                              ERROR (frontend failed, before parsing finished)        2.43        0.85        None
+termination-dietlibc/strstr.yml                                                              ERROR (frontend failed, before parsing finished)        2.64        0.96        None
+termination-dietlibc/wcsrchr.yml                                                             ERROR (frontend failed, before parsing finished)        2.75        0.98        None
+termination-memory-alloca/Avery-2006FLOPS-Tabel1_true-alloca.yml                             ERROR (frontend failed, before parsing finished)        2.58        0.94        None
+termination-memory-alloca/BrockschmidtCookFuhs-2013CAV-Fig1-alloca-2.yml                     ERROR (frontend failed, before parsing finished)        2.57        0.92        None
+termination-memory-alloca/BrockschmidtCookFuhs-2013CAV-Introduction-alloca-2.yml             ERROR (frontend failed, before parsing finished)        2.74        0.98        None
+termination-memory-alloca/CookSeeZuleger-2013TACAS-Fig3-alloca-2.yml                         ERROR (frontend failed, before parsing finished)        2.83        1.02        None
+termination-memory-alloca/CookSeeZuleger-2013TACAS-Fig7a-alloca-2.yml                        ERROR (frontend failed, before parsing finished)        2.57        0.91        None
+termination-memory-alloca/CookSeeZuleger-2013TACAS-Fig7b-alloca-2.yml                        ERROR (frontend failed, before parsing finished)        2.58        0.93        None
+termination-memory-alloca/GulwaniJainKoskinen-2009PLDI-Fig1-alloca-2.yml                     ERROR (frontend failed, before parsing finished)        2.62        0.94        None
+termination-memory-alloca/HarrisLalNoriRajamani-2010SAS-Fig1-alloca.yml                      ERROR (frontend failed, before parsing finished)        2.74        0.97        None
+termination-memory-alloca/HarrisLalNoriRajamani-2010SAS-Fig3-alloca.yml                      ERROR (frontend failed, before parsing finished)        2.31        0.83        None
+termination-memory-alloca/KroeningSharyginaTsitovichWintersteiger-2010CAV-Fig1-alloca.yml    ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+termination-memory-alloca/Masse-alloca-3.yml                                                 ERROR (frontend failed, before parsing finished)        2.60        0.94        None
+termination-memory-alloca/TelAviv-Amir-Minimum-alloca-2.yml                                  ERROR (frontend failed, before parsing finished)        2.36        0.86        None
+termination-memory-alloca/Urban-2013WST-Fig1-alloca.yml                                      ERROR (frontend failed, before parsing finished)        2.61        0.94        None
+termination-memory-alloca/Urban-2013WST-Fig2-alloca-2.yml                                    ERROR (frontend failed, before parsing finished)        2.66        0.97        None
+termination-memory-alloca/Urban-2013WST-Fig2-modified1000-alloca.yml                         ERROR (frontend failed, before parsing finished)        2.57        0.94        None
+termination-memory-alloca/Urban-alloca-2.yml                                                 ERROR (frontend failed, before parsing finished)        2.70        0.99        None
+termination-memory-alloca/Velroyen-alloca.yml                                                ERROR (frontend failed, before parsing finished)        2.65        0.94        None
+termination-memory-alloca/a.01-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+termination-memory-alloca/a.04-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.59        0.95        None
+termination-memory-alloca/a.05-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.94        1.03        None
+termination-memory-alloca/a.06-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.62        0.94        None
+termination-memory-alloca/a.07-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.61        0.93        None
+termination-memory-alloca/a.08-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.55        0.92        None
+termination-memory-alloca/a.09_assume-alloca.yml                                             ERROR (frontend failed, before parsing finished)        2.38        0.84        None
+termination-memory-alloca/a.10-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+termination-memory-alloca/array01-alloca-1.yml                                               ERROR (frontend failed, before parsing finished)        2.65        0.95        None
+termination-memory-alloca/aviad_true-alloca.yml                                              ERROR (frontend failed, before parsing finished)        2.67        0.94        None
+termination-memory-alloca/b.01-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.73        0.98        None
+termination-memory-alloca/b.02-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.41        0.86        None
+termination-memory-alloca/b.03-no-inv_assume-alloca.yml                                      ERROR (frontend failed, before parsing finished)        2.33        0.84        None
+termination-memory-alloca/b.03_assume-alloca.yml                                             ERROR (frontend failed, before parsing finished)        2.38        0.86        None
+termination-memory-alloca/b.04-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.36        0.84        None
+termination-memory-alloca/b.05-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.62        0.95        None
+termination-memory-alloca/b.06-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.88        1.01        None
+termination-memory-alloca/b.07-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.70        0.97        None
+termination-memory-alloca/b.09-no-inv_assume-alloca.yml                                      ERROR (frontend failed, before parsing finished)        2.66        0.96        None
+termination-memory-alloca/b.09_assume-alloca.yml                                             ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+termination-memory-alloca/b.10-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.81        1.01        None
+termination-memory-alloca/b.11-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.68        0.97        None
+termination-memory-alloca/b.12-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+termination-memory-alloca/b.13-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.32        0.84        None
+termination-memory-alloca/b.14-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.65        0.96        None
+termination-memory-alloca/b.15-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.54        0.91        None
+termination-memory-alloca/b.16-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.65        0.95        None
+termination-memory-alloca/b.17-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.34        0.84        None
+termination-memory-alloca/b.18-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.63        0.95        None
+termination-memory-alloca/bubblesort-alloca-1.yml                                            ERROR (frontend failed, before parsing finished)        2.76        0.97        None
+termination-memory-alloca/c.01-no-inv-alloca.yml                                             ERROR (frontend failed, before parsing finished)        2.64        0.96        None
+termination-memory-alloca/c.01_assume-alloca.yml                                             ERROR (frontend failed, before parsing finished)        2.62        0.95        None
+termination-memory-alloca/c.02-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.58        0.94        None
+termination-memory-alloca/c.03-alloca-1.yml                                                  ERROR (frontend failed, before parsing finished)        2.64        0.94        None
+termination-memory-alloca/c.07-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.34        0.84        None
+termination-memory-alloca/c.08-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.56        0.93        None
+termination-memory-alloca/count_down-alloca-2.yml                                            ERROR (frontend failed, before parsing finished)        2.65        0.95        None
+termination-memory-alloca/cstrcat-alloca-1.yml                                               ERROR (frontend failed, before parsing finished)        2.67        0.96        None
+termination-memory-alloca/cstrchr-alloca-1.yml                                               ERROR (frontend failed, before parsing finished)        2.67        0.96        None
+termination-memory-alloca/cstrcmp-alloca-1.yml                                               ERROR (frontend failed, before parsing finished)        2.79        0.99        None
+termination-memory-alloca/cstrcpy-alloca-2.yml                                               ERROR (frontend failed, before parsing finished)        2.69        0.96        None
+termination-memory-alloca/cstrcspn-alloca-2.yml                                              ERROR (frontend failed, before parsing finished)        2.99        1.06        None
+termination-memory-alloca/cstrlen-alloca-1.yml                                               ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+termination-memory-alloca/cstrncat-alloca-1.yml                                              ERROR (frontend failed, before parsing finished)        2.92        1.05        None
+termination-memory-alloca/cstrncpy-alloca-1.yml                                              ERROR (frontend failed, before parsing finished)        2.54        0.94        None
+termination-memory-alloca/cstrpbrk-alloca-1.yml                                              ERROR (frontend failed, before parsing finished)        2.65        0.94        None
+termination-memory-alloca/cstrspn-alloca-2.yml                                               ERROR (frontend failed, before parsing finished)        2.40        0.86        None
+termination-memory-alloca/diff-alloca-1.yml                                                  ERROR (frontend failed, before parsing finished)        2.74        0.99        None
+termination-memory-alloca/easySum-alloca.yml                                                 ERROR (frontend failed, before parsing finished)        2.70        0.96        None
+termination-memory-alloca/ex3a-alloca.yml                                                    ERROR (frontend failed, before parsing finished)        2.45        0.88        None
+termination-memory-alloca/fermat-alloca.yml                                                  ERROR (frontend failed, before parsing finished)        2.68        0.96        None
+termination-memory-alloca/genady-alloca.yml                                                  ERROR (frontend failed, before parsing finished)        2.66        0.94        None
+termination-memory-alloca/insertionsort-alloca-2.yml                                         ERROR (frontend failed, before parsing finished)        2.71        0.97        None
+termination-memory-alloca/java_AG313-alloca.yml                                              ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+termination-memory-alloca/java_Break-alloca.yml                                              ERROR (frontend failed, before parsing finished)        2.57        0.94        None
+termination-memory-alloca/java_BubbleSort-alloca-2.yml                                       ERROR (frontend failed, before parsing finished)        2.71        0.96        None
+termination-memory-alloca/java_Continue1-alloca.yml                                          ERROR (frontend failed, before parsing finished)        2.85        1.03        None
+termination-memory-alloca/java_LogBuiltIn-alloca.yml                                         ERROR (frontend failed, before parsing finished)        2.33        0.86        None
+termination-memory-alloca/java_Nested-alloca.yml                                             ERROR (frontend failed, before parsing finished)        2.55        0.90        None
+termination-memory-alloca/java_Sequence-alloca.yml                                           ERROR (frontend failed, before parsing finished)        2.65        0.96        None
+termination-memory-alloca/lis-alloca-2.yml                                                   ERROR (frontend failed, before parsing finished)        2.38        0.85        None
+termination-memory-alloca/openbsd_cbzero-alloca-1.yml                                        ERROR (frontend failed, before parsing finished)        2.41        0.85        None
+termination-memory-alloca/openbsd_cmemchr-alloca-1.yml                                       ERROR (frontend failed, before parsing finished)        2.68        0.97        None
+termination-memory-alloca/openbsd_cmemrchr-alloca-1.yml                                      ERROR (frontend failed, before parsing finished)        3.01        1.08        None
+termination-memory-alloca/openbsd_cmemset-alloca-2.yml                                       ERROR (frontend failed, before parsing finished)        2.71        0.96        None
+termination-memory-alloca/openbsd_cstpcpy-alloca-2.yml                                       ERROR (frontend failed, before parsing finished)        2.37        0.85        None
+termination-memory-alloca/openbsd_cstpncpy-alloca-2.yml                                      ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+termination-memory-alloca/openbsd_cstrcat-alloca-1.yml                                       ERROR (frontend failed, before parsing finished)        2.74        0.98        None
+termination-memory-alloca/openbsd_cstrcmp-alloca-2.yml                                       ERROR (frontend failed, before parsing finished)        2.77        0.99        None
+termination-memory-alloca/openbsd_cstrcpy-alloca-1.yml                                       ERROR (frontend failed, before parsing finished)        2.70        0.96        None
+termination-memory-alloca/openbsd_cstrcspn-alloca-1.yml                                      ERROR (frontend failed, before parsing finished)        2.72        0.97        None
+termination-memory-alloca/openbsd_cstrlcpy-alloca-2.yml                                      ERROR (frontend failed, before parsing finished)        2.66        0.94        None
+termination-memory-alloca/openbsd_cstrlen-alloca-2.yml                                       ERROR (frontend failed, before parsing finished)        2.66        0.96        None
+termination-memory-alloca/openbsd_cstrncat-alloca-1.yml                                      ERROR (frontend failed, before parsing finished)        2.74        0.98        None
+termination-memory-alloca/openbsd_cstrncmp-alloca-1.yml                                      ERROR (frontend failed, before parsing finished)        3.04        1.07        None
+termination-memory-alloca/openbsd_cstrncpy-alloca-1.yml                                      ERROR (frontend failed, before parsing finished)        2.68        0.97        None
+termination-memory-alloca/openbsd_cstrnlen-alloca-2.yml                                      ERROR (frontend failed, before parsing finished)        3.06        1.08        None
+termination-memory-alloca/openbsd_cstrpbrk-alloca-1.yml                                      ERROR (frontend failed, before parsing finished)        2.69        0.96        None
+termination-memory-alloca/openbsd_cstrspn-alloca-1.yml                                       ERROR (frontend failed, before parsing finished)        2.40        0.85        None
+termination-memory-alloca/openbsd_cstrstr-alloca-1.yml                                       ERROR (frontend failed, before parsing finished)        2.78        0.99        None
+termination-memory-alloca/rec_strlen-alloca-2.yml                                            ERROR (frontend failed, before parsing finished)        2.69        0.96        None
+termination-memory-alloca/selectionsort-alloca-2.yml                                         ERROR (frontend failed, before parsing finished)        2.70        0.96        None
+termination-memory-alloca/strreplace-alloca-1.yml                                            ERROR (frontend failed, before parsing finished)        2.42        0.87        None
+termination-memory-alloca/subseq-alloca-1.yml                                                ERROR (frontend failed, before parsing finished)        2.74        0.98        None
+termination-memory-alloca/substring-alloca-1.yml                                             ERROR (frontend failed, before parsing finished)        2.70        0.96        None
+termination-memory-alloca/twisted-alloca.yml                                                 ERROR (frontend failed, before parsing finished)        2.69        0.97        None
+termination-memory-linkedlists/cll_by_lseg-alloca-2.yml                                      ERROR (frontend failed, before parsing finished)        2.72        0.97        None
+termination-memory-linkedlists/cll_by_lseg_traverse-alloca.yml                               ERROR (frontend failed, before parsing finished)        2.64        0.97        None
+termination-memory-linkedlists/cll_search-alloca-1.yml                                       ERROR (frontend failed, before parsing finished)        2.71        1.00        None
+termination-memory-linkedlists/cll_search-alloca-2.yml                                       ERROR (frontend failed, before parsing finished)        2.39        0.85        None
+termination-memory-linkedlists/cll_traverse-alloca.yml                                       ERROR (frontend failed, before parsing finished)        2.70        0.97        None
+termination-memory-linkedlists/ll_append-alloca-1.yml                                        ERROR (frontend failed, before parsing finished)        2.63        0.95        None
+termination-memory-linkedlists/ll_append-alloca-2.yml                                        ERROR (frontend failed, before parsing finished)        2.34        0.84        None
+termination-memory-linkedlists/ll_append_rec-alloca-1.yml                                    ERROR (frontend failed, before parsing finished)        2.87        1.02        None
+termination-memory-linkedlists/ll_append_rec-alloca-2.yml                                    ERROR (frontend failed, before parsing finished)        2.80        1.00        None
+termination-memory-linkedlists/ll_create_rec-alloca-1.yml                                    ERROR (frontend failed, before parsing finished)        2.59        0.93        None
+termination-memory-linkedlists/ll_create_rec-alloca-2.yml                                    ERROR (frontend failed, before parsing finished)        2.78        1.00        None
+termination-memory-linkedlists/ll_search-alloca.yml                                          ERROR (frontend failed, before parsing finished)        2.40        0.86        None
+termination-memory-linkedlists/ll_search_not_found-alloca.yml                                ERROR (frontend failed, before parsing finished)        2.63        0.94        None
+termination-memory-linkedlists/ll_traverse-alloca.yml                                        ERROR (frontend failed, before parsing finished)        2.75        0.98        None
+termination-memory-linkedlists/nondet_ll_search-alloca-1.yml                                 ERROR (frontend failed, before parsing finished)        2.75        0.98        None
+termination-memory-linkedlists/nondet_ll_search-alloca-2.yml                                 ERROR (frontend failed, before parsing finished)        2.43        0.87        None
+termination-memory-linkedlists/nondet_ll_traverse-alloca.yml                                 ERROR (frontend failed, before parsing finished)        2.88        1.03        None
+termination-15/array12_alloca.yml                                                            ERROR (frontend failed, before parsing finished)        1.49        0.59        None
+termination-15/array13_alloca.yml                                                            ERROR (frontend failed, before parsing finished)        1.54        0.63        None
+termination-15/array14_alloca.yml                                                            ERROR (frontend failed, before parsing finished)        1.44        0.57        None
+termination-15/array15_alloca.yml                                                            ERROR (frontend failed, before parsing finished)        1.42        0.57        None
+termination-15/array16_alloca_fixed.yml                                                      ERROR (frontend failed, before parsing finished)        1.48        0.59        None
+termination-15/array16_alloca_original.yml                                                   ERROR (frontend failed, before parsing finished)        1.44        0.57        None
+termination-15/array17_alloca.yml                                                            ERROR (frontend failed, before parsing finished)        1.42        0.56        None
+termination-15/count_up_alloca.yml                                                           ERROR (frontend failed, before parsing finished)        1.54        0.62        None
+termination-15/count_up_and_down_alloca.yml                                                  ERROR (frontend failed, before parsing finished)        1.47        0.59        None
+termination-15/cstrcat_diffterm_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.48        0.59        None
+termination-15/cstrcat_malloc.yml                                                            ERROR (frontend failed, before parsing finished)        1.44        0.58        None
+termination-15/cstrcat_mixed_alloca.yml                                                      ERROR (frontend failed, before parsing finished)        1.55        0.60        None
+termination-15/cstrcat_reverse_alloca.yml                                                    ERROR (frontend failed, before parsing finished)        1.56        0.61        None
+termination-15/cstrchr_diffterm_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.50        0.59        None
+termination-15/cstrchr_malloc.yml                                                            ERROR (frontend failed, before parsing finished)        1.55        0.61        None
+termination-15/cstrchr_reverse_alloca.yml                                                    ERROR (frontend failed, before parsing finished)        1.50        0.60        None
+termination-15/cstrcmp_diffterm_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.48        0.58        None
+termination-15/cstrcmp_malloc.yml                                                            ERROR (frontend failed, before parsing finished)        1.42        0.56        None
+termination-15/cstrcmp_mixed_alloca.yml                                                      ERROR (frontend failed, before parsing finished)        1.55        0.61        None
+termination-15/cstrcmp_reverse_alloca.yml                                                    ERROR (frontend failed, before parsing finished)        1.43        0.57        None
+termination-15/cstrcpy_diffterm_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.50        0.60        None
+termination-15/cstrcpy_malloc.yml                                                            ERROR (frontend failed, before parsing finished)        1.56        0.61        None
+termination-15/cstrcpy_mixed_alloca.yml                                                      ERROR (frontend failed, before parsing finished)        1.56        0.61        None
+termination-15/cstrcpy_reverse_alloca.yml                                                    ERROR (frontend failed, before parsing finished)        1.58        0.61        None
+termination-15/cstrcspn_diffterm_alloca.yml                                                  ERROR (frontend failed, before parsing finished)        1.54        0.60        None
+termination-15/cstrcspn_malloc.yml                                                           ERROR (frontend failed, before parsing finished)        1.53        0.61        None
+termination-15/cstrcspn_mixed_alloca.yml                                                     ERROR (frontend failed, before parsing finished)        1.55        0.61        None
+termination-15/cstrcspn_reverse_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.49        0.59        None
+termination-15/cstrlen_diffterm_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.49        0.59        None
+termination-15/cstrlen_malloc.yml                                                            ERROR (frontend failed, before parsing finished)        1.41        0.58        None
+termination-15/cstrlen_reverse_alloca.yml                                                    ERROR (frontend failed, before parsing finished)        1.52        0.60        None
+termination-15/cstrncat_diffterm_alloca.yml                                                  ERROR (frontend failed, before parsing finished)        1.54        0.61        None
+termination-15/cstrncat_malloc.yml                                                           ERROR (frontend failed, before parsing finished)        1.50        0.59        None
+termination-15/cstrncat_mixed_alloca.yml                                                     ERROR (frontend failed, before parsing finished)        1.47        0.58        None
+termination-15/cstrncpy_diffterm_alloca.yml                                                  ERROR (frontend failed, before parsing finished)        1.51        0.60        None
+termination-15/cstrncpy_malloc.yml                                                           ERROR (frontend failed, before parsing finished)        1.56        0.62        None
+termination-15/cstrncpy_mixed_alloca.yml                                                     ERROR (frontend failed, before parsing finished)        1.55        0.62        None
+termination-15/cstrncpy_reverse_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.51        0.61        None
+termination-15/cstrpbrk_diffterm_alloca.yml                                                  ERROR (frontend failed, before parsing finished)        1.54        0.61        None
+termination-15/cstrpbrk_malloc.yml                                                           ERROR (frontend failed, before parsing finished)        1.43        0.57        None
+termination-15/cstrpbrk_mixed_alloca.yml                                                     ERROR (frontend failed, before parsing finished)        1.50        0.60        None
+termination-15/cstrpbrk_reverse_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.49        0.59        None
+termination-15/cstrspn_diffterm_alloca.yml                                                   ERROR (frontend failed, before parsing finished)        1.50        0.60        None
+termination-15/cstrspn_malloc.yml                                                            ERROR (frontend failed, before parsing finished)        1.43        0.57        None
+termination-15/cstrspn_mixed_alloca.yml                                                      ERROR (frontend failed, before parsing finished)        1.55        0.61        None
+termination-15/cstrspn_reverse_alloca.yml                                                    ERROR (frontend failed, before parsing finished)        1.54        0.61        None
+termination-recursive-malloc/chunk1-2.yml                                                    ERROR (server error, after parsing finished)        8.78        4.65        None
+termination-recursive-malloc/chunk2.yml                                                      ERROR (server error, after parsing finished)       10.71        5.12        None
+termination-recursive-malloc/insertionSort_recursive.yml                                     ERROR (server error, after parsing finished)        9.96        4.89        None
+termination-recursive-malloc/mergeSort.yml                                                   ERROR (server error, after parsing finished)       10.92        5.14        None
+termination-recursive-malloc/mutual_simple.yml                                               ERROR (server error, after parsing finished)        9.25        4.86        None
+termination-recursive-malloc/mutual_simple2.yml                                              ERROR (server error, after parsing finished)        9.91        4.96        None
+termination-recursive-malloc/rec_malloc_ex11.yml                                             ERROR (server error, after parsing finished)        9.92        4.95        None
+termination-recursive-malloc/rec_malloc_ex11B.yml                                            ERROR (server error, after parsing finished)        9.86        4.90        None
+termination-recursive-malloc/rec_malloc_ex11C.yml                                            
+termination-recursive-malloc/rec_malloc_ex11D.yml                                            
+termination-recursive-malloc/rec_malloc_ex2.yml                                              
+termination-recursive-malloc/rec_malloc_ex3.yml                                              
+termination-recursive-malloc/rec_malloc_ex9.yml                                              
+termination-recursive-malloc/rec_strcopy_malloc.yml                                          
+termination-recursive-malloc/rec_strcopy_malloc2.yml                                         
+termination-recursive-malloc/rec_strlen_malloc.yml                                           
+termination-recursive-malloc/selectionSort_recursive.yml                                     
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 6                                                                                    done                           518.35      224.57           -
+
+Statistics:            193 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:             193
+  Score:                 0 (max: 373)

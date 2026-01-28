@@ -1,0 +1,32 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ConcurrencySafety-Main
+date:                    Sun, 2025-11-30 00:17:58 UTC
+tool:                    Theta 6.27.5
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio EMERGENT --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.54304 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ConcurrencySafety-Main
+Run set 1 of 6 with options '--svcomp --portfolio EMERGENT --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                                                                                          status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread/bigshot_s.yml                                                                                                                                                              TIMEOUT                         42.16       16.58        None
+pthread/bigshot_s2.yml                                                                                                                                                             TIMEOUT                         41.71       16.57        None

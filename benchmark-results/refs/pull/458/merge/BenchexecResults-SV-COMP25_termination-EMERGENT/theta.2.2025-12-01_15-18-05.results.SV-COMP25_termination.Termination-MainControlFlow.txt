@@ -1,0 +1,57 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-MainControlFlow
+date:                    Mon, 2025-12-01 15:18:05 UTC
+tool:                    Theta 6.27.8
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio EMERGENT --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.538944 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-MainControlFlow
+Run set 6 of 6 with options '--svcomp --portfolio EMERGENT --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                            status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------------------------------------
+termination-crafted/2Nested-1.yml                                                    TIMEOUT                         41.18       66.03        None
+termination-crafted/4BitCounterPointer.yml                                           ERROR (frontend failed, before parsing finished)        1.53        0.66        None
+termination-crafted/4NestedWith3Variables-1.yml                                      TIMEOUT                         40.45       31.34        None
+termination-crafted/Ackermann-2.yml                                                  TIMEOUT                         41.40       23.81        None
+termination-crafted/Arrays01-EquivalentConstantIndices-1.yml                         TIMEOUT                         43.18       19.68        None
+termination-crafted/Arrays02-EquivalentConstantIndices.yml                           TIMEOUT                         40.19       26.33        None
+termination-crafted/Arrays03-ValueRestictsIndex-2.yml                                TIMEOUT                         40.71       23.43        None

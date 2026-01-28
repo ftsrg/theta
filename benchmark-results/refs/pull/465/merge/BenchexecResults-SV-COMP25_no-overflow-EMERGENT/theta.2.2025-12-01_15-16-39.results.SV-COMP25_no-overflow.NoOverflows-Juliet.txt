@@ -1,0 +1,63 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_no-overflow.NoOverflows-Juliet
+date:                    Mon, 2025-12-01 15:16:39 UTC
+tool:                    Theta 6.27.9
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio EMERGENT --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3294.086 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow.NoOverflows-Juliet
+Run set 5 of 6 with options '--svcomp --portfolio EMERGENT --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                            status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------
+CWE190_Integer_Overflow__int64_t_fscanf_add_01_bad.yml               TIMEOUT                         41.24       15.98        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_01_good.yml              TIMEOUT                         41.54       15.96        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_02_bad.yml               TIMEOUT                         41.32       16.04        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_02_good.yml              TIMEOUT                         42.73       15.84        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_03_bad.yml               TIMEOUT                         41.33       15.88        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_03_good.yml              TIMEOUT                         43.25       15.66        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_04_bad.yml               TIMEOUT                         41.60       16.06        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_04_good.yml              TIMEOUT                         42.59       15.84        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_05_bad.yml               TIMEOUT                         41.25       16.09        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_05_good.yml              TIMEOUT                         42.53       15.82        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_06_bad.yml               TIMEOUT                         41.18       16.04        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_06_good.yml              TIMEOUT                         43.02       15.80        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_07_bad.yml               TIMEOUT                         41.14       15.97        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_07_good.yml              TIMEOUT                         42.34       15.75        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_08_bad.yml               TIMEOUT                         41.39       15.99        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_08_good.yml              TIMEOUT                         40.07       14.55        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_09_bad.yml               TIMEOUT                         41.58       15.94        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.yml              TIMEOUT                         42.57       15.77        None
