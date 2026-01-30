@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.algorithm.PorLogger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
@@ -34,6 +35,7 @@ import hu.bme.mit.theta.xcfa.utils.*
 import java.util.*
 import java.util.function.Predicate
 import kotlin.random.Random
+import kotlin.system.measureTimeMillis
 
 internal typealias MemLoc = Pair<Expr<*>, Expr<*>>
 
@@ -98,8 +100,13 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<S, A> {
    *   are calculated (and the minimal among them is returned)
    * @return the minimal source set in the current state
    */
-  internal fun getEnabledActions(state: S, startFromPids: Set<Int>? = null): Set<A> =
-    getEnabledActions(state, simpleXcfaLts.getEnabledActionsFor(state), startFromPids)
+  internal fun getEnabledActions(state: S, startFromPids: Set<Int>? = null): Set<A> {
+    var enabledActions: Collection<A>
+    PorLogger.sporTime += measureTimeMillis {
+      enabledActions = simpleXcfaLts.getEnabledActionsFor(state)
+    }
+    return getEnabledActions(state, enabledActions, startFromPids)
+  }
 
   /**
    * Calculates the source set starting from every (or some of the) enabled transition; the minimal
@@ -116,18 +123,21 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<S, A> {
     allEnabledActions: Collection<A>,
     startFromPids: Set<Int>? = null,
   ): Set<A> {
-    var minimalSourceSet = setOf<A>()
-    val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions, startFromPids)
-    for (firstActions in sourceSetFirstActions) {
-      val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions)
-      if (preferNewSourceSet(minimalSourceSet, sourceSet)) {
-        minimalSourceSet = sourceSet
+    var minimalSourceSet: Set<A>
+    PorLogger.sporTime += measureTimeMillis {
+      minimalSourceSet = setOf()
+      val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions, startFromPids)
+      for (firstActions in sourceSetFirstActions) {
+        val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions)
+        if (preferNewSourceSet(minimalSourceSet, sourceSet)) {
+          minimalSourceSet = sourceSet
+        }
       }
     }
     return minimalSourceSet
   }
 
-  protected open fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean =
+  protected fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean =
     minimalSourceSet.isEmpty() || newSourceSet.size < minimalSourceSet.size
 
   /**

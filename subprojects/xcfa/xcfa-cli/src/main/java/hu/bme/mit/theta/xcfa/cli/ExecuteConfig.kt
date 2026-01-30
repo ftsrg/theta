@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.Checker
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
+import hu.bme.mit.theta.analysis.algorithm.PorLogger
 import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
@@ -237,6 +238,7 @@ private fun backend(
   uniqueLogger: Logger,
   throwDontExit: Boolean,
 ): Result<*> {
+  PorLogger.globalVars = xcfa?.globalVars?.map { it.wrappedVar }?.toSet() ?: setOf()
   val portfolioRun =
     (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO)
   val result =

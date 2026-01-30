@@ -16,13 +16,28 @@
 
 package hu.bme.mit.theta.analysis.algorithm
 
+import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.core.decl.VarDecl
+
 object PorLogger {
+  lateinit var globalVars: Set<VarDecl<*>>
   val exploredActions = mutableListOf<Long>()
+  val precGlobalVarSizes = mutableListOf<Int>()
   var virtualExplorationTimeMs: Long = 0
   var dependentTimeMs: Long = 0
+  var porTime: Long = 0
+  var sporTime: Long = 0
+
+  fun newPrec(prec: Prec) {
+    precGlobalVarSizes.add(prec.usedVars.filter { it in globalVars }.size)
+  }
 
   fun printStatistics() {
     System.err.println("POR explored actions (per iteration): $exploredActions")
+    System.err.println("Precision global variables (per iteration): $precGlobalVarSizes")
+    System.err.println("Number of global variables: ${globalVars.size}")
+    System.err.println("POR algorithm time (ms): ${if (porTime == 0L) sporTime else porTime}")
+    System.err.println("SPOR algorithm time (ms): $sporTime")
     System.err.println("DPOR Virtual exploration (ms): $virtualExplorationTimeMs")
     System.err.println("DPOR Dependency calculation time (ms): $dependentTimeMs")
   }

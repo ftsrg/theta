@@ -177,15 +177,21 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
 
   /** Returns an action (wrapped into a set) to be explored from the given state. */
   override fun getEnabledActionsFor(state: S): Set<A> {
-    require(state == last.state)
-    val possibleActions = last.backtrack subtract last.sleep
-    if (possibleActions.isEmpty()) return emptySet()
-
-    val actionToExplore = possibleActions.random(random)
-    last.backtrack.addAll(state.enabled.filter { it.pid == actionToExplore.pid })
-    last.sleep.add(actionToExplore)
-    last.explored.add(actionToExplore)
-    return setOf(actionToExplore.action)
+    val result: Set<A>
+    PorLogger.porTime += measureTimeMillis {
+      require(state == last.state)
+      val possibleActions = last.backtrack subtract last.sleep
+      if (possibleActions.isEmpty()) {
+        result = emptySet()
+      } else {
+        val actionToExplore = possibleActions.random(random)
+        last.backtrack.addAll(state.enabled.filter { it.pid == actionToExplore.pid })
+        last.sleep.add(actionToExplore)
+        last.explored.add(actionToExplore)
+        result = setOf(actionToExplore.action)
+      }
+    }
+    return result
   }
 
   /**
@@ -197,13 +203,15 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
 
       /** Adds a new ARG node to the search stack. */
       override fun add(item: Node) {
-        var node = item
-        // lazy pruning: goes to the root when the stack is empty
-        while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
+        PorLogger.porTime += measureTimeMillis {
+          var node = item
+          // lazy pruning: goes to the root when the stack is empty
+          while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
 
-        node.state.reExplored =
-          true // lazy pruning: indicates that the state is explored in the current iteration
-        push(node, stack.size)
+          node.state.reExplored =
+            true // lazy pruning: indicates that the state is explored in the current iteration
+          push(node, stack.size)
+        }
       }
 
       override fun addAll(items: Collection<Node>) {
@@ -222,42 +230,47 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
        * there is no more action to be explored.
        */
       override fun isEmpty(): Boolean {
-        if (last.node.isCovered && last.node.isFeasible) {
-          // if the last node is covered, the subtree of the covering node is explored again (to
-          // detect possible races)
-          virtualExploration(last.node.coveringNode.get(), stack.size)
-        } else {
-          // when lazy pruning is used the explored parts from previous iterations are reexplored to
-          // detect possible races
-          exploreLazily()
-        }
-
-        while (
-          stack.isNotEmpty() &&
-            (last.node.isSubsumed ||
-              (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
-        ) { // until the last is covered/not feasible, or it has no more action to be explored
-          if (stack.size >= 2) {
-            val lastButOne = stack[stack.size - 2]
-
-            val neverReleasedMutexes =
-              last.mutexLocks.filter { (_, index) -> index == stack.size - 1 }.map { it.key }
-
-            neverReleasedMutexes.forEach { mutex ->
-              val blockedActions =
-                lastButOne.state.enabled.filter { action ->
-                  mutex == ATOMIC_MUTEX.name ||
-                    action.edge.label.getFlatLabels().any {
-                      it is FenceLabel && mutex in it.blockingMutexes.map { m -> m.name }
-                    }
-                }
-              lastButOne.backtrack.addAll(blockedActions)
-            }
+        val result: Boolean
+        PorLogger.porTime += measureTimeMillis {
+          if (last.node.isCovered && last.node.isFeasible) {
+            // if the last node is covered, the subtree of the covering node is explored again (to
+            // detect possible races)
+            virtualExploration(last.node.coveringNode.get(), stack.size)
+          } else {
+            // when lazy pruning is used the explored parts from previous iterations are reexplored
+            // to
+            // detect possible races
+            exploreLazily()
           }
-          stack.pop()
-          exploreLazily()
+
+          while (
+            stack.isNotEmpty() &&
+              (last.node.isSubsumed ||
+                (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
+          ) { // until the last is covered/not feasible, or it has no more action to be explored
+            if (stack.size >= 2) {
+              val lastButOne = stack[stack.size - 2]
+
+              val neverReleasedMutexes =
+                last.mutexLocks.filter { (_, index) -> index == stack.size - 1 }.map { it.key }
+
+              neverReleasedMutexes.forEach { mutex ->
+                val blockedActions =
+                  lastButOne.state.enabled.filter { action ->
+                    mutex == ATOMIC_MUTEX.name ||
+                      action.edge.label.getFlatLabels().any {
+                        it is FenceLabel && mutex in it.blockingMutexes.map { m -> m.name }
+                      }
+                  }
+                lastButOne.backtrack.addAll(blockedActions)
+              }
+            }
+            stack.pop()
+            exploreLazily()
+          }
+          result = stack.isEmpty()
         }
-        return stack.isEmpty()
+        return result
       }
 
       /** Returns the last element of the stack after all unnecessary actions have been removed. */

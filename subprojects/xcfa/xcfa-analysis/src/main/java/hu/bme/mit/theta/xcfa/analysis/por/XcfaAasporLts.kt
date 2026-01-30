@@ -16,10 +16,12 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.PorLogger
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import kotlin.system.measureTimeMillis
 
 open class XcfaAasporLts(
   xcfa: XCFA,
@@ -38,52 +40,67 @@ open class XcfaAasporLts(
     prec: P,
     startFromPids: Set<Int>? = null,
   ): Set<A> {
-    // Collecting enabled actions
-    val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
+    val result: Set<A>
+    PorLogger.porTime += measureTimeMillis {
+      // Collecting enabled actions
+      val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
-    val sporSourceSet = super.getEnabledActions(state, allEnabledActions, null)
-    if (prec.usedVars.size >= xcfa.globalVars.size || sporSourceSet.size == 1) {
-      return sporSourceSet
-    }
-
-    // Calculating the source set starting from every (or some of the) enabled transition or from
-    // exploredActions if it is not empty
-    // The minimal source set is stored
-    var minimalSourceSet = mutableSetOf<A>()
-    val sourceSetFirstActions =
-      if (exploredActions.isEmpty()) {
-        getSourceSetFirstActions(state, allEnabledActions, startFromPids)
+      val sporSourceSet = super.getEnabledActions(state, allEnabledActions, null)
+      if (
+        prec.usedVars.filter { it in xcfa.globalVars.map { it.wrappedVar } }.size >=
+          xcfa.globalVars.size || sporSourceSet.size == 1
+      ) {
+        result = sporSourceSet
       } else {
-        setOf(exploredActions)
-      }
-    var finalIgnoredVars = setOf<VarDecl<*>>()
+        // Calculating the source set starting from every (or some of the) enabled transition or
+        // from
+        // exploredActions if it is not empty
+        // The minimal source set is stored
+        var minimalSourceSet = mutableSetOf<A>()
+        val sourceSetFirstActions =
+          if (exploredActions.isEmpty()) {
+            getSourceSetFirstActions(state, allEnabledActions, startFromPids)
+          } else {
+            setOf(exploredActions)
+          }
+        var finalIgnoredVars = setOf<VarDecl<*>>()
 
-    // Calculate source sets from all possible starting action set
-    for (firstActions in sourceSetFirstActions) {
-      // Variables that have been ignored (if they would be in the precision, more actions have had
-      // to be added to the source set)
-      val ignoredVars = mutableSetOf<VarDecl<*>>()
-      val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
-      if (preferNewSourceSet(minimalSourceSet, sourceSet)) {
-        minimalSourceSet = sourceSet.toMutableSet()
-        finalIgnoredVars = ignoredVars
+        // Calculate source sets from all possible starting action set
+        for (firstActions in sourceSetFirstActions) {
+          // Variables that have been ignored (if they would be in the precision, more actions have
+          // had
+          // to be added to the source set)
+          val ignoredVars = mutableSetOf<VarDecl<*>>()
+          val sourceSet =
+            calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
+          if (preferNewSourceSet(minimalSourceSet, sourceSet, prec)) {
+            minimalSourceSet = sourceSet.toMutableSet()
+            finalIgnoredVars = ignoredVars
+          }
+        }
+        finalIgnoredVars.forEach { ignoredVar ->
+          if (ignoredVar !in ignoredVarRegistry) {
+            ignoredVarRegistry[ignoredVar] = mutableSetOf()
+          }
+          ignoredVarRegistry[ignoredVar]!!.add(state)
+        }
+        minimalSourceSet.removeAll(exploredActions.toSet())
+        result = minimalSourceSet
       }
     }
-    finalIgnoredVars.forEach { ignoredVar ->
-      if (ignoredVar !in ignoredVarRegistry) {
-        ignoredVarRegistry[ignoredVar] = mutableSetOf()
-      }
-      ignoredVarRegistry[ignoredVar]!!.add(state)
-    }
-    minimalSourceSet.removeAll(exploredActions.toSet())
-    return minimalSourceSet
+    return result
   }
 
-  override fun preferNewSourceSet(minimalSourceSet: Set<A>, newSourceSet: Set<A>): Boolean {
+  private fun <P : Prec> preferNewSourceSet(
+    minimalSourceSet: Set<A>,
+    newSourceSet: Set<A>,
+    prec: P,
+  ): Boolean {
+    val precVars = prec.usedVars
     return super.preferNewSourceSet(minimalSourceSet, newSourceSet) ||
       (minimalSourceSet.size == newSourceSet.size &&
-        newSourceSet.sumOf { it.label.collectVars().size } >
-          minimalSourceSet.sumOf { it.label.collectVars().size })
+        newSourceSet.sumOf { (it.label.collectVars() - precVars).size } >
+          minimalSourceSet.sumOf { (it.label.collectVars() - precVars).size })
   }
 
   /**
