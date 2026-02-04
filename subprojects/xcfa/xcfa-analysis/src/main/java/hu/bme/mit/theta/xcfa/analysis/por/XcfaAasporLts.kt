@@ -28,6 +28,8 @@ open class XcfaAasporLts(
   private val ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
 ) : XcfaSporLts(xcfa) {
 
+//  private val globalVars = xcfa.globalVars.map { it.wrappedVar }.toSet()
+
   override fun <P : Prec> getEnabledActionsFor(
     state: S,
     exploredActions: Collection<A>,
@@ -45,16 +47,11 @@ open class XcfaAasporLts(
       // Collecting enabled actions
       val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
-      val sporSourceSet = super.getEnabledActions(state, allEnabledActions, null)
-      if (
-        prec.usedVars.filter { it in xcfa.globalVars.map { it.wrappedVar } }.size >=
-          xcfa.globalVars.size || sporSourceSet.size == 1
-      ) {
-        result = sporSourceSet
-      } else {
+//      if (prec.usedVars.filter { it in globalVars }.size >= globalVars.size) {
+//        result = super.getEnabledActions(state, allEnabledActions, null)
+//      } else {
         // Calculating the source set starting from every (or some of the) enabled transition or
-        // from
-        // exploredActions if it is not empty
+        // from exploredActions if it is not empty
         // The minimal source set is stored
         var minimalSourceSet = mutableSetOf<A>()
         val sourceSetFirstActions =
@@ -68,8 +65,7 @@ open class XcfaAasporLts(
         // Calculate source sets from all possible starting action set
         for (firstActions in sourceSetFirstActions) {
           // Variables that have been ignored (if they would be in the precision, more actions have
-          // had
-          // to be added to the source set)
+          // had to be added to the source set)
           val ignoredVars = mutableSetOf<VarDecl<*>>()
           val sourceSet =
             calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
@@ -86,7 +82,7 @@ open class XcfaAasporLts(
         }
         minimalSourceSet.removeAll(exploredActions.toSet())
         result = minimalSourceSet
-      }
+//      }
     }
     return result
   }
