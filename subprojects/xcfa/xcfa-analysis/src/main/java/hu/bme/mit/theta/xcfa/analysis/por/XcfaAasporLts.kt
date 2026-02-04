@@ -28,8 +28,6 @@ open class XcfaAasporLts(
   private val ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
 ) : XcfaSporLts(xcfa) {
 
-//  private val globalVars = xcfa.globalVars.map { it.wrappedVar }.toSet()
-
   override fun <P : Prec> getEnabledActionsFor(
     state: S,
     exploredActions: Collection<A>,
@@ -47,42 +45,38 @@ open class XcfaAasporLts(
       // Collecting enabled actions
       val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
-//      if (prec.usedVars.filter { it in globalVars }.size >= globalVars.size) {
-//        result = super.getEnabledActions(state, allEnabledActions, null)
-//      } else {
-        // Calculating the source set starting from every (or some of the) enabled transition or
-        // from exploredActions if it is not empty
-        // The minimal source set is stored
-        var minimalSourceSet = mutableSetOf<A>()
-        val sourceSetFirstActions =
-          if (exploredActions.isEmpty()) {
-            getSourceSetFirstActions(state, allEnabledActions, startFromPids)
-          } else {
-            setOf(exploredActions)
-          }
-        var finalIgnoredVars = setOf<VarDecl<*>>()
+      // Calculating the source set starting from every (or some of the) enabled transition or
+      // from exploredActions if it is not empty
+      // The minimal source set is stored
+      var minimalSourceSet = mutableSetOf<A>()
+      val sourceSetFirstActions =
+        if (exploredActions.isEmpty()) {
+          getSourceSetFirstActions(state, allEnabledActions, startFromPids)
+        } else {
+          setOf(exploredActions)
+        }
+      var finalIgnoredVars = setOf<VarDecl<*>>()
 
-        // Calculate source sets from all possible starting action set
-        for (firstActions in sourceSetFirstActions) {
-          // Variables that have been ignored (if they would be in the precision, more actions have
-          // had to be added to the source set)
-          val ignoredVars = mutableSetOf<VarDecl<*>>()
-          val sourceSet =
-            calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
-          if (preferNewSourceSet(minimalSourceSet, sourceSet, prec)) {
-            minimalSourceSet = sourceSet.toMutableSet()
-            finalIgnoredVars = ignoredVars
-          }
+      // Calculate source sets from all possible starting action set
+      for (firstActions in sourceSetFirstActions) {
+        // Variables that have been ignored (if they would be in the precision, more actions have
+        // had to be added to the source set)
+        val ignoredVars = mutableSetOf<VarDecl<*>>()
+        val sourceSet =
+          calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
+        if (preferNewSourceSet(minimalSourceSet, sourceSet, prec)) {
+          minimalSourceSet = sourceSet.toMutableSet()
+          finalIgnoredVars = ignoredVars
         }
-        finalIgnoredVars.forEach { ignoredVar ->
-          if (ignoredVar !in ignoredVarRegistry) {
-            ignoredVarRegistry[ignoredVar] = mutableSetOf()
-          }
-          ignoredVarRegistry[ignoredVar]!!.add(state)
+      }
+      finalIgnoredVars.forEach { ignoredVar ->
+        if (ignoredVar !in ignoredVarRegistry) {
+          ignoredVarRegistry[ignoredVar] = mutableSetOf()
         }
-        minimalSourceSet.removeAll(exploredActions.toSet())
-        result = minimalSourceSet
-//      }
+        ignoredVarRegistry[ignoredVar]!!.add(state)
+      }
+      minimalSourceSet.removeAll(exploredActions.toSet())
+      result = minimalSourceSet
     }
     return result
   }
