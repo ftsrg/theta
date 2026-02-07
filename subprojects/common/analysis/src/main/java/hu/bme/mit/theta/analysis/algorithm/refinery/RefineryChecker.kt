@@ -27,45 +27,56 @@ import tools.refinery.language.semantics.ModelInitializer
 import tools.refinery.store.dse.modification.ModificationAdapter
 import tools.refinery.store.dse.propagation.PropagationAdapter
 import tools.refinery.store.dse.strategy.BestFirstStoreManager
-import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter
+import tools.refinery.store.dse.transition.objectives.Criteria
 import tools.refinery.store.model.ModelStore
 import tools.refinery.store.query.ModelQueryAdapter
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter
 import tools.refinery.store.reasoning.ReasoningAdapter
 import tools.refinery.store.reasoning.ReasoningBuilder
 import tools.refinery.store.statecoding.StateCoderAdapter
-import tools.refinery.store.tuple.Tuple
+import tools.refinery.store.transition.system.TransitionSystemAdapter
+import tools.refinery.store.transition.system.TransitionSystemBuilder
 import tools.refinery.visualization.ModelVisualizerAdapter
 import tools.refinery.visualization.internal.FileFormat
 
-class RefineryChecker(private val transitionSystem: String, private val logger: Logger) :
-  SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
+class RefineryChecker(
+  private val transitionSystem: RefineryTransitionSystem,
+  private val logger: Logger,
+) : SafetyChecker<RefineryProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(input: UnitPrec?): SafetyResult<RefineryProof, Trace<ExplState, ExprAction>> {
-    val problem = StandaloneRefinery.getProblemLoader().loadString(transitionSystem)
+    val problem =
+      StandaloneRefinery.getProblemLoader().loadString(transitionSystem.textualDeclarations)
     val initializer = StandaloneRefinery.getInstance(ModelInitializer::class.java)
     initializer.readProblem(problem)
 
     val storeBuilder =
       ModelStore.builder()
         .with(QueryInterpreterAdapter.builder())
-        .with(PropagationAdapter.builder())
         .with(
           ModelVisualizerAdapter.builder()
-            .withOutputPath("refinery_output")
-            .withFormat(FileFormat.DOT)
+            .withOutputPath("test_output")
             .withFormat(FileFormat.SVG)
             .saveStates()
             .saveDesignSpace()
         )
+        .with(PropagationAdapter.builder())
         .with(StateCoderAdapter.builder())
         .with(ModificationAdapter.builder())
-        .with(DesignSpaceExplorationAdapter.builder()
-//            .accept(Criteria.whenHasMatch(goalQuery))
-        )
+        .with(TransitionSystemAdapter.builder())
         .with(ReasoningAdapter.builder())
+
     initializer.configureStoreBuilder(storeBuilder)
-    val reasoningBuilder = storeBuilder.getAdapter(ReasoningBuilder::class.java)
+
+    val transitionSystemBuilder = storeBuilder.getAdapter(TransitionSystemBuilder::class.java)
+    ProblemContext(initializer.problemTrace, storeBuilder).apply {
+      transitionSystem.transitions.forEach { transition ->
+        transitionSystemBuilder.transition(transition())
+      }
+      val targetProvider = transitionSystem.target
+      transitionSystemBuilder.accept(Criteria.whenHasMatch(targetProvider()))
+    }
+
     val store = storeBuilder.build()
 
     store.createEmptyModel().use { model ->
@@ -75,7 +86,8 @@ class RefineryChecker(private val transitionSystem: String, private val logger: 
 
       val bestFirst = BestFirstStoreManager(store, 1)
       bestFirst.startExploration(initialVersion)
-      model.getAdapter(ModelVisualizerAdapter::class.java)
+      model
+        .getAdapter(ModelVisualizerAdapter::class.java)
         .visualize(bestFirst.getVisualizationStore())
     }
 

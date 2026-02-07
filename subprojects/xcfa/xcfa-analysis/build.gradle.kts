@@ -26,6 +26,8 @@ dependencies {
     implementation(project(":theta-solver-z3"))
     implementation(project(":theta-xcfa"))
     implementation(project(":theta-c-frontend"))
+    implementation(Deps.refineryStoreDseDev)
+    implementation(Deps.refineryLanguageSemanticsDev)
     testImplementation(project(":theta-c2xcfa"))
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver"))

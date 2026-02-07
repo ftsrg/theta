@@ -56,8 +56,8 @@ class RefineryTransitionRuleBuilderTest {
                 preConditionClauses =
                   setOf("loc(env) == \"${transitionName}__${rule.preId}\"") +
                     rule.preConditionClauses,
-                actionClauses =
-                  rule.actionClauses + listOf("loc(env): \"${transitionName}__${rule.postId}\""),
+                actionLiterals =
+                  rule.actionLiterals + listOf("loc(env): \"${transitionName}__${rule.postId}\""),
               )
               .toRefineryRule("${transitionName}__$index")
           }
@@ -606,7 +606,7 @@ class RefineryTransitionRuleBuilderTest {
           )
 
         private fun simple() =
-          SingleRefineryRule(preConditionClauses = setOf(), actionClauses = listOf())
+          SingleRefineryRule(preConditionClauses = setOf(), actionLiterals = listOf())
 
         private fun sequence(vararg blocks: RefineryRuleBlock) =
           SequenceRefineryRuleBlock(blocks.toList())

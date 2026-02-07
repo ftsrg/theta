@@ -19,6 +19,8 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntType
+import tools.refinery.logic.dnf.Query
+import tools.refinery.store.dse.transition.Rule
 
 abstract class RefineryTransitionSystemBuilder {
 
@@ -28,6 +30,14 @@ abstract class RefineryTransitionSystemBuilder {
 
     val String.refinerified: String
       get() = replace("::", "__")
+
+    val Type.refineryType: String
+      get() =
+        when (this) {
+          is BoolType -> "boolean"
+          is IntType -> "int"
+          else -> error("Unsupported type in RefineryTransformationSystemBuilder: $this")
+        }
   }
 
   protected val variables = mutableSetOf<Decl<*>>()
@@ -36,20 +46,11 @@ abstract class RefineryTransitionSystemBuilder {
 
   protected val metamodel: String =
     """
-    |import builtin::annotations.
-    |
-    |#pred transition().
-    |#pred goal().
-    |
     |class MemoryRegion {
-    |    contains Address address
+    |    int address
     |    contains MemoryObject[] parts
     |    int size
     |    boolean valid
-    |}
-    |
-    |class Address {
-    |    int address
     |}
     |
     |abstract class Pointable.
@@ -74,16 +75,8 @@ abstract class RefineryTransitionSystemBuilder {
     |class NullPointer extends AbstractPointer.
     |
     |class NamedPointer {
-    |    string name
     |    contains Pointer pointer
     |}
-    """
-      .trimMargin()
-
-  protected val regionExists: String =
-    """
-    |pred regionExists(MemoryRegion region, Address address) <->
-    |    exists(region), MemoryRegion::address(region, address).
     """
       .trimMargin()
 
@@ -133,10 +126,10 @@ abstract class RefineryTransitionSystemBuilder {
 
   // Transitions
 
-  protected abstract val transitionDeclarations: List<String>
+  protected abstract val transitions: List<RefineryRule>
 
-  protected val transitions: String
-    get() = transitionDeclarations.joinToString("\n\n")
+  protected val transitionHelpers: String
+    get() = transitions.joinToString("\n\n") { it.getHelpers() }
 
   // Error property
 
@@ -145,7 +138,6 @@ abstract class RefineryTransitionSystemBuilder {
   protected val errorDeclaration: String
     get() =
       """
-      |@goal
       |pred error_property() <-> $errorProperty.
       """
         .trimMargin()
@@ -157,7 +149,6 @@ abstract class RefineryTransitionSystemBuilder {
       listOf(
         "% --- METAMODEL ---",
         metamodel,
-        regionExists,
         "% --- ENVIRONMENT SETUP ---",
         environmentSetup,
         invalidMemorySetup,
@@ -165,17 +156,28 @@ abstract class RefineryTransitionSystemBuilder {
         initialState,
         "% --- ERROR PROPERTY ---",
         errorDeclaration,
-        "% --- TRANSITIONS ---",
-        transitions,
+        "% --- TRANSITIONS HELPERS ---",
+        transitionHelpers,
       )
 
-  protected val Type.refineryType: String
-    get() =
-      when (this) {
-        is BoolType -> "boolean"
-        is IntType -> "int"
-        else -> error("Unsupported type in RefineryTransformationSystemBuilder: $this")
-      }
-
-  fun build(): String = topLevelDeclaration.joinToString("\n\n")
+  fun build(): RefineryTransitionSystem =
+    RefineryTransitionSystem(
+      textualDeclarations = topLevelDeclaration.joinToString("\n\n"),
+      transitions =
+        transitions.map { rule ->
+          {
+            val variables = rule.parameters.map { it.second }.toTypedArray()
+            Rule.builder(rule.name)
+              .parameters(*variables)
+              .clause(getPartialRelation(rule.preconditionName).call(*variables))
+              .action(rule.actionLiterals.map { it() })
+              .build()
+          }
+        },
+      target = {
+        Query.of("target") { builder ->
+          builder.clause(getPartialRelation("error_property").call())
+        }
+      },
+    )
 }

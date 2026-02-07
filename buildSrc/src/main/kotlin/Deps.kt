@@ -63,8 +63,10 @@ object Deps {
 
     val refinery = "tools.refinery:refinery-generator:${Versions.refinery}"
     val refineryGeneratorDev = "tools.refinery:refinery-generator:${Versions.refineryLocal}"
+    val refineryLanguageSemanticsDev = "tools.refinery:refinery-language-semantics:${Versions.refineryLocal}"
     val refineryStoreDev = "tools.refinery:refinery-store:${Versions.refineryLocal}"
     val refineryStoreDseDev = "tools.refinery:refinery-store-dse:${Versions.refineryLocal}"
+    val refineryStoreTransitionSystemDev = "tools.refinery:refinery-store-transition-system:${Versions.refineryLocal}"
     val refineryQueryInterpreterDev = "tools.refinery:refinery-store-query-interpreter:${Versions.refineryLocal}"
     val refineryVisualizationDev = "tools.refinery:refinery-store-dse-visualization:${Versions.refineryLocal}"
 

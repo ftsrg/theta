@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.refinery
 
+import hu.bme.mit.theta.analysis.algorithm.refinery.ActionLiteralProvider
 import hu.bme.mit.theta.analysis.algorithm.refinery.MemoryAllocationExpr
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryRule
 import hu.bme.mit.theta.analysis.algorithm.refinery.RefineryTransitionRuleBuilder
@@ -30,6 +31,9 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import tools.refinery.logic.term.Variable
+import tools.refinery.logic.term.truthvalue.TruthValue
+import tools.refinery.store.dse.transition.actions.ActionLiterals
 
 class XcfaRefineryTransitionSystemBuilder(
   xcfa: XCFA,
@@ -38,6 +42,7 @@ class XcfaRefineryTransitionSystemBuilder(
 ) : RefineryTransitionSystemBuilder() {
 
   companion object {
+    internal const val LOCATION_ENUM = "Location"
     internal const val LOCATION_DECLARATION = "loc"
   }
 
@@ -61,14 +66,14 @@ class XcfaRefineryTransitionSystemBuilder(
   private val locationDeclaration: String
     get() =
       """
-      |enum Location {
+      |enum $LOCATION_ENUM {
       |    ${locations.joinToString(", ")}
       |}
       """
         .trimMargin()
 
   override val environmentDeclarations: List<String> // add program counter (xcfa location)
-    get() = listOf("Location $LOCATION_DECLARATION") + super.environmentDeclarations
+    get() = listOf("$LOCATION_ENUM $LOCATION_DECLARATION") + super.environmentDeclarations
 
   override val environmentSetup: String
     get() = listOf(locationDeclaration, super.environmentSetup).joinToString("\n\n")
@@ -85,8 +90,8 @@ class XcfaRefineryTransitionSystemBuilder(
           val name = it.name.refinerified
           val pointer = "pointer_$name"
           listOf(
+            "atom $name.",
             "NamedPointer($name).",
-            "name($name): \"$name\".",
             "pointer($name, $pointer).",
             "target($pointer, null).",
             "offset($pointer): 0.",
@@ -97,10 +102,8 @@ class XcfaRefineryTransitionSystemBuilder(
   private val xcfaTransitionBuilder =
     XcfaRefineryTransitionRuleBuilder(locations, variables, pointers)
 
-  override val transitionDeclarations: List<String> =
-    xcfa.initProcedures.first().first.edges.flatMap { edge ->
-      xcfaTransitionBuilder.build(edge).map { it.toString() }
-    }
+  override val transitions: List<RefineryRule> =
+    xcfa.initProcedures.first().first.edges.flatMap { edge -> xcfaTransitionBuilder.build(edge) }
 
   override val errorProperty: String
     get() = "$LOCATION_DECLARATION(${ENVIRONMENT}, ${procedure.errorLoc.get().name.refinerified})"
@@ -122,6 +125,8 @@ class XcfaRefineryTransitionRuleBuilder(
 
   private val env = RefineryTransitionSystemBuilder.ENVIRONMENT
   private val loc = XcfaRefineryTransitionSystemBuilder.LOCATION_DECLARATION
+  @Suppress("PrivatePropertyName")
+  private val Location = XcfaRefineryTransitionSystemBuilder.LOCATION_ENUM
 
   override fun build(transition: XcfaEdge): Set<RefineryRule> {
     check(transition.getAllLabels().all { it.supported }) {
@@ -139,12 +144,19 @@ class XcfaRefineryTransitionRuleBuilder(
         val target = if (rule.postId == topRule.postId) targetLocName else "${name}__${rule.postId}"
         locations.add(source)
         locations.add(target)
-        val locPrecondition = "$loc($env, $source)"
-        val locAction = "$loc($env, $target)"
+        val locPrecondition = "$loc($env, $Location::$source)"
+        val env = rule.actionParameters.find { it.name == env } ?: Variable.of(env)
+        val targetVar = Variable.of(target)
+        val locActions =
+          listOf<ActionLiteralProvider>(
+            { ActionLiterals.constant(env, getNodeId(this@XcfaRefineryTransitionRuleBuilder.env)) },
+            { ActionLiterals.constant(targetVar, getNodeId("$Location::$target")) },
+            { ActionLiterals.put(getStorageSymbol(loc), TruthValue.TRUE, env, targetVar) },
+          )
         rule
           .copy(
             preConditionClauses = setOf(locPrecondition) + rule.preConditionClauses,
-            actionClauses = rule.actionClauses + listOf(locAction),
+            actionLiterals = rule.actionLiterals + locActions,
           )
           .toRefineryRule("${name}__$index")
       }
