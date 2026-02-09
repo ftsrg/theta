@@ -281,7 +281,7 @@ abstract class RefineryTransitionRuleBuilder<T>(
                 )
               },
               { ModificationActionLiterals.create(base) },
-              { ActionLiterals.put(getStorageSymbol("parts"), TruthValue.TRUE, region, base) },
+              { ActionLiterals.put(getStorageSymbol("parts"), inferredContainment("parts"), region, base) },
               { ActionLiterals.put(getStorageSymbol("offset"), IntInterval.ZERO, base) },
               { ActionLiterals.put(getStorageSymbol("target"), TruthValue.TRUE, pointerVar, base) },
             ),

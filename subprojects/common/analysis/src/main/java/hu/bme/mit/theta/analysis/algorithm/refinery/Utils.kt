@@ -16,18 +16,23 @@
 
 package hu.bme.mit.theta.analysis.algorithm.refinery
 
+import tools.refinery.language.model.problem.ReferenceDeclaration
+import tools.refinery.language.model.problem.ReferenceKind
 import tools.refinery.language.semantics.ProblemTrace
 import tools.refinery.logic.dnf.FunctionalQuery
 import tools.refinery.logic.dnf.Query
 import tools.refinery.logic.term.NodeVariable
 import tools.refinery.logic.term.Variable
+import tools.refinery.logic.term.truthvalue.TruthValue
 import tools.refinery.store.dse.transition.actions.ActionLiteral
 import tools.refinery.store.model.ModelStoreBuilder
 import tools.refinery.store.reasoning.ReasoningBuilder
+import tools.refinery.store.reasoning.translator.containment.InferredContainment
 import tools.refinery.store.representation.Symbol
+import kotlin.jvm.optionals.getOrNull
 
 @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
-class ProblemContext(private val problemTrace: ProblemTrace, storeBuilder: ModelStoreBuilder) : ProblemTrace by problemTrace {
+class ProblemContext(private val problemTrace: ProblemTrace, private val storeBuilder: ModelStoreBuilder) : ProblemTrace by problemTrace {
 
   private val reasoningBuilder = storeBuilder.getAdapter(ReasoningBuilder::class.java)
 
@@ -35,8 +40,17 @@ class ProblemContext(private val problemTrace: ProblemTrace, storeBuilder: Model
   fun <T> getStorageSymbol(name: String): Symbol<T> {
     val partialSymbol = getPartialSymbol(name)
     return reasoningBuilder.getStorageSymbolForPartialSymbol(partialSymbol) as? Symbol<T>
+      ?: run {
+        val declaration = inverseRelationTrace[partialSymbol]
+        if (declaration is ReferenceDeclaration && declaration.kind == ReferenceKind.CONTAINMENT) {
+          storeBuilder.getSymbol("CONTAINS").getOrNull() as? Symbol<T>
+        } else null
+      }
       ?: error("No storage symbol found for $name")
   }
+
+  fun inferredContainment(name: String): InferredContainment =
+    InferredContainment(TruthValue.TRUE, setOf(getPartialRelation(name)), setOf())
 
   inline fun <reified S, reified T : S> List<ProblemContext.() -> Any?>.reduce(
     operator: (S, T) -> S

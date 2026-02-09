@@ -32,6 +32,7 @@ dependencies {
     implementation(Deps.refineryLanguageSemanticsDev)
     implementation(Deps.refineryStoreDev)
     implementation(Deps.refineryStoreDseDev)
+    implementation(Deps.refineryStoreReasoningDev)
     implementation(Deps.refineryStoreTransitionSystemDev)
     implementation(Deps.refineryQueryInterpreterDev)
     implementation(Deps.refineryVisualizationDev)

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntType
 import tools.refinery.logic.dnf.Query
 import tools.refinery.store.dse.transition.Rule
+import tools.refinery.store.dse.transition.actions.ConstantActionLiteral
 
 abstract class RefineryTransitionSystemBuilder {
 
@@ -167,10 +168,24 @@ abstract class RefineryTransitionSystemBuilder {
         transitions.map { rule ->
           {
             val variables = rule.parameters.map { it.second }.toTypedArray()
+            val constDeclarations = mutableSetOf<ConstantActionLiteral>()
+            val actionLiterals = rule.actionLiterals.map { it() }.filter {
+              if (it is ConstantActionLiteral) {
+                constDeclarations.find { c -> c.variable == it.variable }?.run {
+                  check (this.nodeId == it.nodeId) {
+                    "Conflicting constant declarations for variable ${it.variable}: ${this.nodeId} vs ${it.nodeId}"
+                  }
+                  false
+                } ?: run {
+                  constDeclarations.add(it)
+                  true
+                }
+              } else true
+            }
             Rule.builder(rule.name)
               .parameters(*variables)
               .clause(getPartialRelation(rule.preconditionName).call(*variables))
-              .action(rule.actionLiterals.map { it() })
+              .action(actionLiterals)
               .build()
           }
         },
