@@ -16,11 +16,11 @@
 
 package hu.bme.mit.theta.analysis.algorithm.refinery
 
-import tools.refinery.logic.dnf.RelationalQuery
+import tools.refinery.logic.dnf.AnyQuery
 import tools.refinery.store.dse.transition.Rule
 
 class RefineryTransitionSystem(
   val textualDeclarations: String,
   val transitions: List<ProblemContext.() -> Rule>,
-  val target: ProblemContext.() -> RelationalQuery,
+  val target: ProblemContext.() -> AnyQuery,
 )

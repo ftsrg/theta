@@ -27,17 +27,20 @@ import tools.refinery.language.semantics.ModelInitializer
 import tools.refinery.store.dse.modification.ModificationAdapter
 import tools.refinery.store.dse.propagation.PropagationAdapter
 import tools.refinery.store.dse.strategy.BestFirstStoreManager
+import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter
+import tools.refinery.store.dse.transition.DesignSpaceExplorationStoreAdapter
 import tools.refinery.store.dse.transition.objectives.Criteria
 import tools.refinery.store.model.ModelStore
 import tools.refinery.store.query.ModelQueryAdapter
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter
 import tools.refinery.store.reasoning.ReasoningAdapter
-import tools.refinery.store.reasoning.ReasoningBuilder
+import tools.refinery.store.reasoning.ReasoningStoreAdapter
 import tools.refinery.store.statecoding.StateCoderAdapter
 import tools.refinery.store.transition.system.TransitionSystemAdapter
 import tools.refinery.store.transition.system.TransitionSystemBuilder
 import tools.refinery.visualization.ModelVisualizerAdapter
 import tools.refinery.visualization.internal.FileFormat
+import kotlin.jvm.java
 
 class RefineryChecker(
   private val transitionSystem: RefineryTransitionSystem,
@@ -79,7 +82,7 @@ class RefineryChecker(
 
     val store = storeBuilder.build()
 
-    store.createEmptyModel().use { model ->
+    store.getAdapter(ReasoningStoreAdapter::class.java).createInitialModel(initializer.modelSeed).use { model ->
       val queryEngine = model.getAdapter(ModelQueryAdapter::class.java)
       val initialVersion = model.commit()
       queryEngine.flushChanges()

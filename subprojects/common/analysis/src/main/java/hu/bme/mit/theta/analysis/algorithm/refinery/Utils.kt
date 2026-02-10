@@ -19,6 +19,7 @@ package hu.bme.mit.theta.analysis.algorithm.refinery
 import tools.refinery.language.model.problem.ReferenceDeclaration
 import tools.refinery.language.model.problem.ReferenceKind
 import tools.refinery.language.semantics.ProblemTrace
+import tools.refinery.logic.dnf.AnyQuery
 import tools.refinery.logic.dnf.FunctionalQuery
 import tools.refinery.logic.dnf.Query
 import tools.refinery.logic.term.NodeVariable
@@ -27,6 +28,7 @@ import tools.refinery.logic.term.truthvalue.TruthValue
 import tools.refinery.store.dse.transition.actions.ActionLiteral
 import tools.refinery.store.model.ModelStoreBuilder
 import tools.refinery.store.reasoning.ReasoningBuilder
+import tools.refinery.store.reasoning.literal.Concreteness
 import tools.refinery.store.reasoning.translator.containment.InferredContainment
 import tools.refinery.store.representation.Symbol
 import kotlin.jvm.optionals.getOrNull
@@ -49,6 +51,9 @@ class ProblemContext(private val problemTrace: ProblemTrace, private val storeBu
       ?: error("No storage symbol found for $name")
   }
 
+  fun getQueryForPartialSymbol(name: String): AnyQuery =
+    reasoningBuilder.getQueryForPartialSymbol(getPartialSymbol(name))
+
   fun inferredContainment(name: String): InferredContainment =
     InferredContainment(TruthValue.TRUE, setOf(getPartialRelation(name)), setOf())
 
@@ -67,7 +72,7 @@ class ProblemContext(private val problemTrace: ProblemTrace, private val storeBu
     type: Class<T>,
     parameters: List<NodeVariable> = listOf(),
   ): FunctionalQuery<T> {
-    val valueTerm = getPartialFunction(name).call(*parameters.toTypedArray()).asType(type)
+    val valueTerm = getPartialFunction(name).call(Concreteness.PARTIAL, *parameters.toTypedArray()).asType(type)
     val output = Variable.of("output", type)
     return Query.builder().output(output).clause(output.assign(valueTerm)).build()
   }

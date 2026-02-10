@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import tools.refinery.logic.dnf.Query
 import tools.refinery.store.dse.transition.Rule
 import tools.refinery.store.dse.transition.actions.ConstantActionLiteral
+import tools.refinery.store.reasoning.literal.PartialLiterals.must
 
 abstract class RefineryTransitionSystemBuilder {
 
@@ -95,10 +96,9 @@ abstract class RefineryTransitionSystemBuilder {
     |    ${environmentDeclarations.joinToString("\n    ")}
     |}
     |
-    |scope Environment = 1.
-    |
     |Environment($ENVIRONMENT).
     |atom $ENVIRONMENT.
+    |scope Environment += 0.
     """
         .trimMargin()
 
@@ -106,12 +106,12 @@ abstract class RefineryTransitionSystemBuilder {
     get() =
       """
       |InvalidMemory(null).
-      |scope InvalidMemory = 1.
       |atom null.
+      |scope InvalidMemory += 0.
       |
       |NullPointer(nullptr).
-      |scope NullPointer = 1.
       |atom nullptr.
+      |scope NullPointer += 0.
       |offset(nullptr): 0.
       |target(nullptr, null).
       """
@@ -184,14 +184,14 @@ abstract class RefineryTransitionSystemBuilder {
             }
             Rule.builder(rule.name)
               .parameters(*variables)
-              .clause(getPartialRelation(rule.preconditionName).call(*variables))
+              .clause(getQueryForPartialSymbol(rule.preconditionName).dnf.call(*variables))
               .action(actionLiterals)
               .build()
           }
         },
       target = {
         Query.of("target") { builder ->
-          builder.clause(getPartialRelation("error_property").call())
+          builder.clause(must(getPartialRelation("error_property").call()))
         }
       },
     )
