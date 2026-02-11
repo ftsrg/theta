@@ -168,7 +168,7 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
     override fun toString() = action.toString()
   }
 
-  protected open val spor = XcfaSporLts(xcfa)
+  private val spor = XcfaSporLts(xcfa)
 
   private val stack: Stack<StackItem> = Stack() // the DFS search stack
 
@@ -591,7 +591,7 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
       }
     }
 
-  protected open fun sporSuggestion(state: S, startFromPids: Collection<Int>): Set<A> =
+  fun sporSuggestion(state: S, startFromPids: Collection<Int>): Set<A> =
     spor.getEnabledActions(state, startFromPids.toSet())
 }
 
@@ -602,8 +602,6 @@ class XcfaAadporLts(xcfa: XCFA) : XcfaDporLts(xcfa) {
 
   /** The current precision of the abstraction. */
   private lateinit var prec: Prec
-
-  override val spor = XcfaAasporLts(xcfa, mutableMapOf())
 
   /** Returns actions to be explored from the given state considering the given precision. */
   override fun <P : Prec> getEnabledActionsFor(
@@ -625,7 +623,4 @@ class XcfaAadporLts(xcfa: XCFA) : XcfaDporLts(xcfa) {
       (aGlobalVars[it].isWritten || bGlobalVars[it].isWritten) && it.wrappedVar in precVars
     }
   }
-
-  override fun sporSuggestion(state: S, startFromPids: Collection<Int>): Set<A> =
-    spor.getEnabledActions(state, listOf(), prec, startFromPids.toSet())
 }
