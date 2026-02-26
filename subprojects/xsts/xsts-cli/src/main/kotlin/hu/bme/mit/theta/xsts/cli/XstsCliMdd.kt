@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xsts.cli
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.clikt.parameters.types.long
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
@@ -49,6 +50,11 @@ class XstsCliMdd :
     option(help = "The MDD to expression conversion strategy")
       .enum<MddExpressionRepresentation.MddToExprStrategy>()
       .default(MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL)
+
+  private val traceTimeout: Long by
+    option(help = "The timeout for trace generation in seconds (0 for no timeout)")
+      .long()
+      .default(10)
 
   private fun printResult(
     status: SafetyResult<InvariantProof, out Trace<XstsState<*>, XstsAction>>,
@@ -97,6 +103,7 @@ class XstsCliMdd :
               logger,
               iterationStrategy,
               mddToExprStrategy = mddToExprStrategy,
+              traceTimeout = traceTimeout,
             )
           }
         checker.check(null)
