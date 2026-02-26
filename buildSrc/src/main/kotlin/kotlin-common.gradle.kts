@@ -25,13 +25,9 @@ dependencies {
     implementation(Deps.Kotlin.reflect)
     implementation(Deps.Mockito.kotlin)
 }
-tasks {
-    withType<KotlinCompile>() {
-        kotlinOptions {
-            jvmTarget = "17"
-            freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
-        }
-    }
+
+kotlin{
+  jvmToolchain(Versions.java.toInt())
 }
 
 // Check if "antlr-common" plugin is applied and if the "generateGrammarSource" task is available

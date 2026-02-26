@@ -48,7 +48,7 @@ public final class XtaCli {
     private final TableWriter writer;
 
     @Parameter(
-            names = {"--model", "-m"},
+            names = {"--model", "-m", "--input"},
             description = "Path of the input model",
             required = true)
     String model;
@@ -86,6 +86,11 @@ public final class XtaCli {
             description = "Print only a header (for benchmarks)",
             help = true)
     boolean headerOnly = false;
+
+    @Parameter(
+            names = {"--property"},
+            description = "Property placeholder (ignored)")
+    String property;
 
     @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
     boolean stacktrace = false;

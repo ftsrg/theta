@@ -34,25 +34,17 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import hu.bme.mit.theta.xsts.passes.XstsNormalizerPass
 import java.io.FileInputStream
-import junit.framework.TestCase.fail
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
-class LtlCheckTestWithXstsExpl(
-  private val xstsName: String,
-  private val ltlExpr: String,
-  private val result: Boolean,
-) {
+class LtlCheckTestWithXstsExpl {
 
   private val solverFactory = Z3LegacySolverFactory.getInstance()
   private val logger: Logger = ConsoleLogger(Logger.Level.VERBOSE)
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters
     fun data() =
       listOf(
         arrayOf("counter3inf", "F G(x=3)", true),
@@ -65,13 +57,14 @@ class LtlCheckTestWithXstsExpl(
       )
   }
 
-  @Test
-  fun test() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun test(xstsName: String, ltlExpr: String, result: Boolean) {
     var xstsI: XSTS?
     FileInputStream(String.format("src/test/resources/xsts/%s.xsts", xstsName)).use { inputStream ->
       xstsI = XstsDslManager.createXsts(inputStream)
     }
-    if (xstsI == null) fail("Couldn't read xsts $xstsName")
+    if (xstsI == null) Assertions.fail<Unit>("Couldn't read xsts $xstsName")
     val xsts = XstsNormalizerPass.transform(xstsI!!)
     val configBuilder: XstsConfigBuilder.ExplStrategy =
       XstsConfigBuilder(
@@ -112,6 +105,6 @@ class LtlCheckTestWithXstsExpl(
       )
     val checkResult = checker.check(initPrec, initPrec)
 
-    Assert.assertEquals(result, checkResult.isSafe)
+    Assertions.assertEquals(result, checkResult.isSafe)
   }
 }

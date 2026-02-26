@@ -1,0 +1,12 @@
+var x: integer = 0
+var y: integer = 0
+var a: boolean
+
+trans {
+    y:=y+1;
+    x:=x+1;
+}
+
+init {}
+
+env {}

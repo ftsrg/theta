@@ -1,0 +1,7 @@
+format_version: '2.0'
+input_files: models/counter5.xsts
+options:
+  language: yml
+properties:
+- expected_verdict: true
+  property_file: ../properties/x_between_0_and_5.prop

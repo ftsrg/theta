@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
@@ -167,9 +168,6 @@ internal class XcfaOcTraceExtractor(
     to: XcfaLocation,
     explState: ExplState,
   ): Pair<List<XcfaAction>, List<XcfaState<PtrState<ExplState>>>>? {
-    check(state.mutexes[ATOMIC_MUTEX.name]?.contains(pid) != false) {
-      "Atomic mutex is owned by another process"
-    }
     val actions = mutableListOf<XcfaAction>()
     val states = mutableListOf<XcfaState<PtrState<ExplState>>>()
     var currentState = state
@@ -180,6 +178,9 @@ internal class XcfaOcTraceExtractor(
       val stepPid = currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid
       val edge =
         currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
+      check(stepPid == pid || edge.label.collectVars().isEmpty()) {
+        "Atomic mutex is held by another thread which still has events in its atomic block."
+      }
       actions.add(XcfaAction(stepPid, edge))
       currentState =
         currentState.copy(

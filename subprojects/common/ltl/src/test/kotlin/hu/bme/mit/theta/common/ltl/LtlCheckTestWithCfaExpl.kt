@@ -35,18 +35,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import java.io.FileInputStream
-import junit.framework.TestCase.fail
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
-class LtlCheckTestWithCfaExpl(
-  private val cfaName: String,
-  private val ltlExpr: String,
-  private val result: Boolean,
-) {
+class LtlCheckTestWithCfaExpl {
 
   private val itpSolverFactory = Z3LegacySolverFactory.getInstance()
   private val abstractionSolver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
@@ -54,7 +47,6 @@ class LtlCheckTestWithCfaExpl(
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters
     fun data() =
       listOf(
         arrayOf("counter2inf", "G(x=1)", false),
@@ -65,14 +57,15 @@ class LtlCheckTestWithCfaExpl(
       )
   }
 
-  @Test
-  fun test() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun test(cfaName: String, ltlExpr: String, result: Boolean) {
     abstractionSolver.reset()
     var cfaI: CFA?
     FileInputStream(String.format("src/test/resources/cfa/%s.cfa", cfaName)).use { inputStream ->
       cfaI = CfaDslManager.createCfa(inputStream)
     }
-    if (cfaI == null) fail("Couldn't read cfa $cfaName")
+    if (cfaI == null) Assertions.fail<Unit>("Couldn't read cfa $cfaName")
     val cfa = cfaI!!
     val configBuilder =
       CfaConfigBuilder(
@@ -105,6 +98,6 @@ class LtlCheckTestWithCfaExpl(
         nextSideFunction = NextSideFunctions.Alternating(),
       )
 
-    Assert.assertEquals(result, checker.check(initPrec, dataInitPrec).isSafe)
+    Assertions.assertEquals(result, checker.check(initPrec, dataInitPrec).isSafe)
   }
 }

@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -32,13 +32,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExprSizeTest {
 
     private static final VarDecl<BoolType> VA = Var("a", Bool());
@@ -46,14 +42,9 @@ public class ExprSizeTest {
 
     private static final Expr<BoolType> A = VA.getRef();
     private static final Expr<IntType> B = VB.getRef();
-
-    @Parameter(value = 0)
     public Expr<Type> expr;
-
-    @Parameter(value = 1)
     public int expectedSize;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -66,9 +57,16 @@ public class ExprSizeTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<Type> expr, int expectedSize) {
+        initExprSizeTest(expr, expectedSize);
         final int actualSize = ExprUtils.nodeCountSize(expr);
         assertEquals(expectedSize, actualSize);
+    }
+
+    public void initExprSizeTest(Expr<Type> expr, int expectedSize) {
+        this.expr = expr;
+        this.expectedSize = expectedSize;
     }
 }

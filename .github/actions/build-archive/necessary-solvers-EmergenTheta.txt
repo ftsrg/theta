@@ -1,4 +1,0 @@
-cvc5:1.2.0
-cvc5:1.0.8
-mathsat:5.6.12
-mathsat:5.6.10

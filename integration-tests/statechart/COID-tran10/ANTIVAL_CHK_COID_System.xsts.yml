@@ -1,0 +1,7 @@
+format_version: '2.0'
+input_files: models/ANTIVAL_CHK_COID_System.xsts
+options:
+  language: yml
+properties:
+- expected_verdict: false
+  property_file: ../properties/tran10.prop

@@ -1,0 +1,648 @@
+<?xml version="1.0"?>
+<pnml>
+  <net id="net1" type="EPNML11">
+    <name>
+      <text>SlottedRing-5</text>
+    </name>
+    <place id="idpa1">
+      <name>
+        <value>H1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpb1">
+      <name>
+        <value>E1</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpc1">
+      <name>
+        <value>F1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpd1">
+      <name>
+        <value>G1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpe1">
+      <name>
+        <value>C1</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpf1">
+      <name>
+        <value>D1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpg1">
+      <name>
+        <value>A1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idph1">
+      <name>
+        <value>B1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <transition id="idge1">
+      <name>
+        <value>Get1</value>
+      </name>
+    </transition>
+    <transition id="idfr1">
+      <name>
+        <value>Free1</value>
+      </name>
+    </transition>
+    <transition id="idpu1">
+      <name>
+        <value>Put1</value>
+      </name>
+    </transition>
+    <transition id="idus1">
+      <name>
+        <value>Used1</value>
+      </name>
+    </transition>
+    <transition id="idot1">
+      <name>
+        <value>Other1</value>
+      </name>
+    </transition>
+    <transition id="idow1">
+      <name>
+        <value>Owner1</value>
+      </name>
+    </transition>
+    <transition id="idgo1">
+      <name>
+        <value>GoOn1</value>
+      </name>
+    </transition>
+    <transition id="idwr1">
+      <name>
+        <value>Write1</value>
+      </name>
+    </transition>
+    <arc id="ide_1_1" source="idpa1" target="idge1" />
+    <arc id="ide_2_1" source="idge1" target="idpb1" />
+    <arc id="ide_3_1" source="idpb1" target="idfr1" />
+    <arc id="ide_4_1" source="idfr1" target="idpc1" />
+    <arc id="ide_5_1" source="idus1" target="idpc1" />
+    <arc id="ide_6_1" source="idpc1" target="idge1" />
+    <arc id="ide_7_1" source="idpc1" target="idpu1" />
+    <arc id="ide_8_1" source="idpu1" target="idpd1" />
+    <arc id="ide_9_1" source="idge1" target="idpe1" />
+    <arc id="ide_10_1" source="idpu1" target="idpe1" />
+    <arc id="ide_11_1" source="idpe1" target="idfr2" />
+    <arc id="ide_12_1" source="idpe1" target="idus2" />
+    <arc id="ide_13_1" source="idgo1" target="idpa1" />
+    <arc id="ide_14_1" source="idpg1" target="idot1" />
+    <arc id="ide_15_1" source="idot1" target="idpf1" />
+    <arc id="ide_16_1" source="idwr1" target="idpf1" />
+    <arc id="ide_17_1" source="idph1" target="idwr1" />
+    <arc id="ide_18_1" source="idph1" target="idgo1" />
+    <arc id="ide_19_1" source="idow1" target="idph1" />
+    <arc id="ide_20_1" source="idpg1" target="idow1" />
+    <arc id="ide_21_1" source="idus2" target="idpg1" />
+    <arc id="ide_22_1" source="idfr2" target="idph1" />
+    <arc id="ide_23_1" source="idpd1" target="idus1" />
+    <arc id="ide_24_1" source="idpf1" target="idpu1" />
+    <place id="idpa2">
+      <name>
+        <value>H2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpb2">
+      <name>
+        <value>E2</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpc2">
+      <name>
+        <value>F2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpd2">
+      <name>
+        <value>G2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpe2">
+      <name>
+        <value>C2</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpf2">
+      <name>
+        <value>D2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpg2">
+      <name>
+        <value>A2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idph2">
+      <name>
+        <value>B2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <transition id="idge2">
+      <name>
+        <value>Get2</value>
+      </name>
+    </transition>
+    <transition id="idfr2">
+      <name>
+        <value>Free2</value>
+      </name>
+    </transition>
+    <transition id="idpu2">
+      <name>
+        <value>Put2</value>
+      </name>
+    </transition>
+    <transition id="idus2">
+      <name>
+        <value>Used2</value>
+      </name>
+    </transition>
+    <transition id="idot2">
+      <name>
+        <value>Other2</value>
+      </name>
+    </transition>
+    <transition id="idow2">
+      <name>
+        <value>Owner2</value>
+      </name>
+    </transition>
+    <transition id="idgo2">
+      <name>
+        <value>GoOn2</value>
+      </name>
+    </transition>
+    <transition id="idwr2">
+      <name>
+        <value>Write2</value>
+      </name>
+    </transition>
+    <arc id="ide_1_2" source="idpa2" target="idge2" />
+    <arc id="ide_2_2" source="idge2" target="idpb2" />
+    <arc id="ide_3_2" source="idpb2" target="idfr2" />
+    <arc id="ide_4_2" source="idfr2" target="idpc2" />
+    <arc id="ide_5_2" source="idus2" target="idpc2" />
+    <arc id="ide_6_2" source="idpc2" target="idge2" />
+    <arc id="ide_7_2" source="idpc2" target="idpu2" />
+    <arc id="ide_8_2" source="idpu2" target="idpd2" />
+    <arc id="ide_9_2" source="idge2" target="idpe2" />
+    <arc id="ide_10_2" source="idpu2" target="idpe2" />
+    <arc id="ide_11_2" source="idpe2" target="idfr3" />
+    <arc id="ide_12_2" source="idpe2" target="idus3" />
+    <arc id="ide_13_2" source="idgo2" target="idpa2" />
+    <arc id="ide_14_2" source="idpg2" target="idot2" />
+    <arc id="ide_15_2" source="idot2" target="idpf2" />
+    <arc id="ide_16_2" source="idwr2" target="idpf2" />
+    <arc id="ide_17_2" source="idph2" target="idwr2" />
+    <arc id="ide_18_2" source="idph2" target="idgo2" />
+    <arc id="ide_19_2" source="idow2" target="idph2" />
+    <arc id="ide_20_2" source="idpg2" target="idow2" />
+    <arc id="ide_21_2" source="idus3" target="idpg2" />
+    <arc id="ide_22_2" source="idfr3" target="idph2" />
+    <arc id="ide_23_2" source="idpd2" target="idus2" />
+    <arc id="ide_24_2" source="idpf2" target="idpu2" />
+    <place id="idpa3">
+      <name>
+        <value>H3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpb3">
+      <name>
+        <value>E3</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpc3">
+      <name>
+        <value>F3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpd3">
+      <name>
+        <value>G3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpe3">
+      <name>
+        <value>C3</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpf3">
+      <name>
+        <value>D3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpg3">
+      <name>
+        <value>A3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idph3">
+      <name>
+        <value>B3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <transition id="idge3">
+      <name>
+        <value>Get3</value>
+      </name>
+    </transition>
+    <transition id="idfr3">
+      <name>
+        <value>Free3</value>
+      </name>
+    </transition>
+    <transition id="idpu3">
+      <name>
+        <value>Put3</value>
+      </name>
+    </transition>
+    <transition id="idus3">
+      <name>
+        <value>Used3</value>
+      </name>
+    </transition>
+    <transition id="idot3">
+      <name>
+        <value>Other3</value>
+      </name>
+    </transition>
+    <transition id="idow3">
+      <name>
+        <value>Owner3</value>
+      </name>
+    </transition>
+    <transition id="idgo3">
+      <name>
+        <value>GoOn3</value>
+      </name>
+    </transition>
+    <transition id="idwr3">
+      <name>
+        <value>Write3</value>
+      </name>
+    </transition>
+    <arc id="ide_1_3" source="idpa3" target="idge3" />
+    <arc id="ide_2_3" source="idge3" target="idpb3" />
+    <arc id="ide_3_3" source="idpb3" target="idfr3" />
+    <arc id="ide_4_3" source="idfr3" target="idpc3" />
+    <arc id="ide_5_3" source="idus3" target="idpc3" />
+    <arc id="ide_6_3" source="idpc3" target="idge3" />
+    <arc id="ide_7_3" source="idpc3" target="idpu3" />
+    <arc id="ide_8_3" source="idpu3" target="idpd3" />
+    <arc id="ide_9_3" source="idge3" target="idpe3" />
+    <arc id="ide_10_3" source="idpu3" target="idpe3" />
+    <arc id="ide_11_3" source="idpe3" target="idfr4" />
+    <arc id="ide_12_3" source="idpe3" target="idus4" />
+    <arc id="ide_13_3" source="idgo3" target="idpa3" />
+    <arc id="ide_14_3" source="idpg3" target="idot3" />
+    <arc id="ide_15_3" source="idot3" target="idpf3" />
+    <arc id="ide_16_3" source="idwr3" target="idpf3" />
+    <arc id="ide_17_3" source="idph3" target="idwr3" />
+    <arc id="ide_18_3" source="idph3" target="idgo3" />
+    <arc id="ide_19_3" source="idow3" target="idph3" />
+    <arc id="ide_20_3" source="idpg3" target="idow3" />
+    <arc id="ide_21_3" source="idus4" target="idpg3" />
+    <arc id="ide_22_3" source="idfr4" target="idph3" />
+    <arc id="ide_23_3" source="idpd3" target="idus3" />
+    <arc id="ide_24_3" source="idpf3" target="idpu3" />
+    <place id="idpa4">
+      <name>
+        <value>H4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpb4">
+      <name>
+        <value>E4</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpc4">
+      <name>
+        <value>F4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpd4">
+      <name>
+        <value>G4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpe4">
+      <name>
+        <value>C4</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpf4">
+      <name>
+        <value>D4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpg4">
+      <name>
+        <value>A4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idph4">
+      <name>
+        <value>B4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <transition id="idge4">
+      <name>
+        <value>Get4</value>
+      </name>
+    </transition>
+    <transition id="idfr4">
+      <name>
+        <value>Free4</value>
+      </name>
+    </transition>
+    <transition id="idpu4">
+      <name>
+        <value>Put4</value>
+      </name>
+    </transition>
+    <transition id="idus4">
+      <name>
+        <value>Used4</value>
+      </name>
+    </transition>
+    <transition id="idot4">
+      <name>
+        <value>Other4</value>
+      </name>
+    </transition>
+    <transition id="idow4">
+      <name>
+        <value>Owner4</value>
+      </name>
+    </transition>
+    <transition id="idgo4">
+      <name>
+        <value>GoOn4</value>
+      </name>
+    </transition>
+    <transition id="idwr4">
+      <name>
+        <value>Write4</value>
+      </name>
+    </transition>
+    <arc id="ide_1_4" source="idpa4" target="idge4" />
+    <arc id="ide_2_4" source="idge4" target="idpb4" />
+    <arc id="ide_3_4" source="idpb4" target="idfr4" />
+    <arc id="ide_4_4" source="idfr4" target="idpc4" />
+    <arc id="ide_5_4" source="idus4" target="idpc4" />
+    <arc id="ide_6_4" source="idpc4" target="idge4" />
+    <arc id="ide_7_4" source="idpc4" target="idpu4" />
+    <arc id="ide_8_4" source="idpu4" target="idpd4" />
+    <arc id="ide_9_4" source="idge4" target="idpe4" />
+    <arc id="ide_10_4" source="idpu4" target="idpe4" />
+    <arc id="ide_11_4" source="idpe4" target="idfr5" />
+    <arc id="ide_12_4" source="idpe4" target="idus5" />
+    <arc id="ide_13_4" source="idgo4" target="idpa4" />
+    <arc id="ide_14_4" source="idpg4" target="idot4" />
+    <arc id="ide_15_4" source="idot4" target="idpf4" />
+    <arc id="ide_16_4" source="idwr4" target="idpf4" />
+    <arc id="ide_17_4" source="idph4" target="idwr4" />
+    <arc id="ide_18_4" source="idph4" target="idgo4" />
+    <arc id="ide_19_4" source="idow4" target="idph4" />
+    <arc id="ide_20_4" source="idpg4" target="idow4" />
+    <arc id="ide_21_4" source="idus5" target="idpg4" />
+    <arc id="ide_22_4" source="idfr5" target="idph4" />
+    <arc id="ide_23_4" source="idpd4" target="idus4" />
+    <arc id="ide_24_4" source="idpf4" target="idpu4" />
+    <place id="idpa5">
+      <name>
+        <value>H5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpb5">
+      <name>
+        <value>E5</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpc5">
+      <name>
+        <value>F5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpd5">
+      <name>
+        <value>G5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpe5">
+      <name>
+        <value>C5</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idpf5">
+      <name>
+        <value>D5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idpg5">
+      <name>
+        <value>A5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idph5">
+      <name>
+        <value>B5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <transition id="idge5">
+      <name>
+        <value>Get5</value>
+      </name>
+    </transition>
+    <transition id="idfr5">
+      <name>
+        <value>Free5</value>
+      </name>
+    </transition>
+    <transition id="idpu5">
+      <name>
+        <value>Put5</value>
+      </name>
+    </transition>
+    <transition id="idus5">
+      <name>
+        <value>Used5</value>
+      </name>
+    </transition>
+    <transition id="idot5">
+      <name>
+        <value>Other5</value>
+      </name>
+    </transition>
+    <transition id="idow5">
+      <name>
+        <value>Owner5</value>
+      </name>
+    </transition>
+    <transition id="idgo5">
+      <name>
+        <value>GoOn5</value>
+      </name>
+    </transition>
+    <transition id="idwr5">
+      <name>
+        <value>Write5</value>
+      </name>
+    </transition>
+    <arc id="ide_1_5" source="idpa5" target="idge5" />
+    <arc id="ide_2_5" source="idge5" target="idpb5" />
+    <arc id="ide_3_5" source="idpb5" target="idfr5" />
+    <arc id="ide_4_5" source="idfr5" target="idpc5" />
+    <arc id="ide_5_5" source="idus5" target="idpc5" />
+    <arc id="ide_6_5" source="idpc5" target="idge5" />
+    <arc id="ide_7_5" source="idpc5" target="idpu5" />
+    <arc id="ide_8_5" source="idpu5" target="idpd5" />
+    <arc id="ide_9_5" source="idge5" target="idpe5" />
+    <arc id="ide_10_5" source="idpu5" target="idpe5" />
+    <arc id="ide_11_5" source="idpe5" target="idfr1" />
+    <arc id="ide_12_5" source="idpe5" target="idus1" />
+    <arc id="ide_13_5" source="idgo5" target="idpa5" />
+    <arc id="ide_14_5" source="idpg5" target="idot5" />
+    <arc id="ide_15_5" source="idot5" target="idpf5" />
+    <arc id="ide_16_5" source="idwr5" target="idpf5" />
+    <arc id="ide_17_5" source="idph5" target="idwr5" />
+    <arc id="ide_18_5" source="idph5" target="idgo5" />
+    <arc id="ide_19_5" source="idow5" target="idph5" />
+    <arc id="ide_20_5" source="idpg5" target="idow5" />
+    <arc id="ide_21_5" source="idus1" target="idpg5" />
+    <arc id="ide_22_5" source="idfr1" target="idph5" />
+    <arc id="ide_23_5" source="idpd5" target="idus5" />
+    <arc id="ide_24_5" source="idpf5" target="idpu5" />
+  </net>
+</pnml>

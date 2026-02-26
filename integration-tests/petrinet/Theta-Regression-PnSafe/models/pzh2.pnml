@@ -1,0 +1,588 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<pnml>
+     <net id="n1" type="http://www.pnml.org/version-2009/grammar/ptnet">
+          <name>
+               <text>Net1</text>
+          </name>
+          <declaration>
+               <structure>
+                    <declarations />
+               </structure>
+          </declaration>
+          <place id="id1">
+               <name>
+                    <text>Francia_rud</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="560" y="20" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id2">
+               <name>
+                    <text>Tarcsa</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="560" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id3">
+               <name>
+                    <text>Olimpiai_rud</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="560" y="420" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id4">
+               <name>
+                    <text>Bicepsz_gyakorlat</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="340" y="20" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id5">
+               <name>
+                    <text>Fekvenyomas</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="340" y="420" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id6">
+               <name>
+                    <text>Eszkozre_var</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="340" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id28">
+               <name>
+                    <text>Beleptetes</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="220" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id29">
+               <name>
+                    <text>Beleptetesre_var</text>
+               </name>
+               <initialMarking>
+                    <text>0</text>
+               </initialMarking>
+               <graphics>
+                    <position x="100" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <place id="id30">
+               <name>
+                    <text>Recepcios</text>
+               </name>
+               <initialMarking>
+                    <text>2</text>
+               </initialMarking>
+               <graphics>
+                    <position x="220" y="300" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="true" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <transition id="id8">
+               <name>
+                    <text>Transition1</text>
+               </name>
+               <graphics>
+                    <position x="420" y="120" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id9">
+               <name>
+                    <text>Transition2</text>
+               </name>
+               <graphics>
+                    <position x="420" y="320" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id10">
+               <name>
+                    <text>Transition3</text>
+               </name>
+               <graphics>
+                    <position x="480" y="120" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id11">
+               <name>
+                    <text>Transition4</text>
+               </name>
+               <graphics>
+                    <position x="480" y="320" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id31">
+               <name>
+                    <text>Transition5</text>
+               </name>
+               <graphics>
+                    <position x="40" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id33">
+               <name>
+                    <text>Transition6</text>
+               </name>
+               <graphics>
+                    <position x="160" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id34">
+               <name>
+                    <text>Transition7</text>
+               </name>
+               <graphics>
+                    <position x="280" y="220" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <transition id="id35">
+               <name>
+                    <text>Transition8</text>
+               </name>
+               <graphics>
+                    <position x="280" y="160" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <orientation>Vertical</orientation>
+                    <priority>100</priority>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <important>False</important>
+                    <abnormal>False</abnormal>
+                    <condition />
+                    <command />
+               </toolspecific>
+          </transition>
+          <arc id="id12" source="id6" target="id8">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id13" source="id1" target="id8">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id14" source="id2" target="id8">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>2</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id15" source="id8" target="id4">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id16" source="id6" target="id9">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>2</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id17" source="id2" target="id9">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>4</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id18" source="id3" target="id9">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id19" source="id9" target="id5">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id20" source="id4" target="id10">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id21" source="id10" target="id2">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>2</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id22" source="id10" target="id1">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id23" source="id10" target="id6">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id24" source="id5" target="id11">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id25" source="id11" target="id3">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id26" source="id11" target="id2">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>4</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id27" source="id11" target="id6">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>2</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id32" source="id31" target="id29">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id36" source="id6" target="id35">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id37" source="id29" target="id33">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id38" source="id33" target="id28">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id39" source="id28" target="id34">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id40" source="id34" target="id6">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id41" source="id30" target="id33">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <arc id="id42" source="id34" target="id30">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+          <place id="id43">
+               <name>
+                    <text>Place1</text>
+               </name>
+               <initialMarking>
+                    <text>10</text>
+               </initialMarking>
+               <graphics>
+                    <position x="20" y="140" />
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <capacity>Unlimited</capacity>
+                    <textalign>Bottom</textalign>
+                    <textvisible visible="false" />
+                    <interface>False</interface>
+               </toolspecific>
+          </place>
+          <arc id="id45" source="id43" target="id31">
+               <graphics>
+                    <fill color="White" />
+                    <line color="Black" />
+               </graphics>
+               <toolspecific tool="Petri.NET" version="1.5.5945.12338">
+                    <weight>1</weight>
+               </toolspecific>
+          </arc>
+     </net>
+</pnml>
