@@ -36,11 +36,7 @@ import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.params.exitProcess
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
@@ -109,8 +105,8 @@ fun getXcfa(
       }
 
       InputType.BTOR2 -> {
-        val btor2Passes = config.frontendConfig.specConfig as Boolean
-        parseBTOR2(config.inputConfig.input!!, btor2Passes, parseContext, logger, uniqueWarningLogger)
+        val btor2Frontend = config.frontendConfig.specConfig as BTOR2FrontendConfig
+        parseBTOR2(config.inputConfig.input!!, btor2Frontend.btor2Passes, parseContext, logger, uniqueWarningLogger)
       }
     }
   } catch (e: Exception) {
