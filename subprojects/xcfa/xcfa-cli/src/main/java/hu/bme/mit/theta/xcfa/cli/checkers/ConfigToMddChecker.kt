@@ -59,7 +59,8 @@ fun getMddChecker(
       solverPool,
       logger,
       iterationStrategy = mddConfig.iterationStrategy,
-      mddToExprStrategy = mddConfig.mddToExprStrategy
+      mddToExprStrategy = mddConfig.mddToExprStrategy,
+      traceTimeout = mddConfig.traceTimeout,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
