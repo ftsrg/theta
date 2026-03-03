@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -552,7 +552,8 @@ data class MddConfig(
     names = ["--mdd-to-expr-strategy"],
     description = "MDD to expression conversion strategy",
   )
-  var mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy = MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+  var mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
