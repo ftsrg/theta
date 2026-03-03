@@ -92,6 +92,7 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
     @Override
     public RecursiveIntObjMapView<?> toStructuralRepresentation() {
         var varHandle = variable.getDefaultSetSignatureHandle();
+        // TODO: MddSignature::getHandlefor(MddVariable)
         var mddHandle = varHandle.getHandleFor(mddNode);
         return mddHandle;
     }
