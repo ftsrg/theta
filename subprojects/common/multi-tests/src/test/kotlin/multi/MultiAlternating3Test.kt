@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.multi.NextSideFunctions
 import hu.bme.mit.theta.analysis.multi.RefToMultiPrec
 import hu.bme.mit.theta.analysis.multi.builder.stmt.StmtMultiBuilder
 import hu.bme.mit.theta.analysis.multi.config.StmtMultiConfigBuilder
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.Solver
@@ -40,8 +39,12 @@ import org.junit.jupiter.api.Test
 
 class MultiAlternating3Test {
 
-  val logger: Logger = ConsoleLogger(Logger.Level.SUBSTEP)
   val solver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
+
+  companion object {
+    @JvmStatic
+    fun initLogger() = Logger.initOld(Logger.LegacyLevel.SUBSTEP)
+  }
 
   @Test
   fun test() {
@@ -93,7 +96,7 @@ class MultiAlternating3Test {
         MultiPrec(dataInitPrec, dataInitPrec, dataInitPrec),
         dataInitPrec,
         Z3LegacySolverFactory.getInstance(),
-        logger,
+        Logger,
       )
     val result = multiConfigBuilder.build().check()
 

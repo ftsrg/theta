@@ -27,7 +27,6 @@ import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
 
 class CegarTraceGenerationChecker<S : State, A : Action, P : Prec>(
-  private val logger: Logger,
   private val abstractor: BasicArgAbstractor<S, A, P>,
   private val getFullTraces: Boolean,
 ) : Checker<AbstractTraceSet<S, A>, P> {
@@ -35,24 +34,22 @@ class CegarTraceGenerationChecker<S : State, A : Action, P : Prec>(
 
   companion object {
     fun <S : State, A : Action, P : Prec> create(
-      logger: Logger,
       abstractor: BasicArgAbstractor<S, A, P>,
       getFullTraces: Boolean,
     ): CegarTraceGenerationChecker<S, A, P> {
-      return CegarTraceGenerationChecker(logger, abstractor, getFullTraces)
+      return CegarTraceGenerationChecker(abstractor, getFullTraces)
     }
   }
 
   override fun check(prec: P): TraceGenerationResult<AbstractTraceSet<S, A>, S, A> {
-    logger.write(
-      Logger.Level.SUBSTEP,
+    Logger.subStep(
       "Printing prec for trace generation...\n" + System.lineSeparator(),
     )
-    logger.write(Logger.Level.SUBSTEP, prec.toString())
+    Logger.subStep(prec.toString())
 
     val arg = abstractor.createProof()
     abstractor.check(arg, prec)
-    logger.write(Logger.Level.SUBSTEP, "ARG done, fetching traces...\n")
+    Logger.subStep("ARG done, fetching traces...\n")
 
     // bad node: mostly XSTS specific thing, that the last state (last_env nodes) doubles up and the
     // leaf is covered by the
@@ -60,7 +57,7 @@ class CegarTraceGenerationChecker<S : State, A : Action, P : Prec>(
     // Possible side effect if not handled: possibly a "non-existing leaf" and superfluous traces or
     // just traces that are 1 longer than they should be
     val badNodes = DoubleEndNodeRemover.collectBadLeaves(arg)
-    logger.write(Logger.Level.INFO, "Number of bad nodes filtered out: ${badNodes.size}\n")
+    Logger.info("Number of bad nodes filtered out: ${badNodes.size}\n")
 
     // leaves
     val endNodes = arg.nodes.filter { obj: ArgNode<S, A> -> obj.isLeaf }.toList()
@@ -79,7 +76,7 @@ class CegarTraceGenerationChecker<S : State, A : Action, P : Prec>(
     val traceSetSummary = summaryBuilder.build(arg)
      */
 
-    logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
+    Logger.subStep("-- Trace generation done --\n")
 
     return TraceGenerationResult(AbstractTraceSet(argTraces))
   }

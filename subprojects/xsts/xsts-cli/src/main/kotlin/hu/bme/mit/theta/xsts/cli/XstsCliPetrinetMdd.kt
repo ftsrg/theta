@@ -110,8 +110,8 @@ class XstsCliPetrinetMdd :
           ssgTimer.elapsedMillis(),
           totalTimer.elapsedMillis(),
         )
-      logger.writeln(Logger.Level.MAINSTEP, statistics.toString())
-      logger.writeln(Logger.Level.RESULT, "(SafetyResult Safe)")
+      Logger.mainStep(statistics.toString())
+      Logger.result("(SafetyResult Safe)")
     } else {
       val unionProvider = variableOrder.defaultUnionProvider
       listOf(
@@ -149,8 +149,7 @@ class XstsCliPetrinetMdd :
   private fun createDepMatPng(system: PtNetSystem) {
     if (dependencyOutput.depMatPng == null) return
     if (system.placeCount > 10000 || system.transitionCount > 10000) {
-      logger.write(
-        Logger.Level.INFO,
+      Logger.info(
         "[WARNING] Skipping image generation because the model size exceeds 10k places or " +
           "transitions.",
       )

@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
@@ -36,12 +35,18 @@ import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class StsMddCheckerTest {
     public String filePath;
     public boolean safe;
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -67,7 +72,6 @@ public class StsMddCheckerTest {
     @ParameterizedTest(name = "{index}: {0}, {1}")
     public void test(String filePath, boolean safe) throws Exception {
         initStsMddCheckerTest(filePath, safe);
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final STS sts;
         if (filePath.endsWith("aag")) sts = AigerToSts.createSts(AigerParser.parse(filePath));
@@ -83,7 +87,7 @@ public class StsMddCheckerTest {
             final var checker =
                     new StsPipelineChecker<>(
                             sts,
-                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool));
             status = checker.check(null);
         }
 

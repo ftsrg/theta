@@ -55,7 +55,6 @@ class MddChecker
 constructor(
   private val monolithicExpr: MonolithicExpr,
   private val solverPool: SolverPool,
-  private val logger: Logger,
   private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   private val traceTimeout: Long = 10,
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
@@ -121,7 +120,7 @@ constructor(
         MddExpressionTemplate.of(initExpr, { it as Decl<*> }, solverPool)
       )
 
-    logger.write(Logger.Level.INFO, "Created initial node\n")
+    Logger.info("Created initial node\n")
 
     val transNodes = mutableListOf<MddHandle>()
     val descriptors = mutableListOf<AbstractNextStateDescriptor>()
@@ -144,7 +143,7 @@ constructor(
       )
     val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
 
-    logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
+    Logger.info("Created next-state node, starting fixed point calculation\n")
     val stateSpaceProvider =
       when (iterationStrategy) {
         IterationStrategy.BFS -> {
@@ -170,17 +169,17 @@ constructor(
     ssgTime.stop()
     totalTime.stop()
 
-    logger.write(Logger.Level.INFO, "Enumerated state-space in: ${ssgTime.elapsedMillis()}\n")
+    Logger.info("Enumerated state-space in: ${ssgTime.elapsedMillis()}\n")
 
     val propViolating = stateSpace.intersection(propNode) as MddHandle
 
-    logger.write(Logger.Level.INFO, "Calculated violating states\n")
+    Logger.info("Calculated violating states\n")
 
     val violatingSize = MddInterpreter.calculateNonzeroCount(propViolating)
-    logger.write(Logger.Level.INFO, "States violating the property: $violatingSize\n")
+    Logger.info("States violating the property: $violatingSize\n")
 
     val stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace)
-    logger.write(Logger.Level.DETAIL, "State space size: $stateSpaceSize\n")
+    Logger.detail("State space size: $stateSpaceSize\n")
 
     val statistics =
       MddAnalysisStatistics(
@@ -193,7 +192,7 @@ constructor(
         totalTime.elapsedMillis(),
       )
 
-    logger.write(Logger.Level.MAINSTEP, "%s\n", statistics)
+    Logger.mainStep("%s\n", statistics)
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
@@ -227,11 +226,11 @@ constructor(
         }
 
       try {
-        logger.mainStep("Starting trace generation.\n")
+        Logger.mainStep("Starting trace generation.\n")
         val trace = future.get(traceTimeout, TimeUnit.SECONDS)
         return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics)
       } catch (e: TimeoutException) {
-        logger.mainStep("Trace generation timed out, returning empty trace!\n")
+        Logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
@@ -239,7 +238,7 @@ constructor(
           statistics,
         )
       } catch (e: InterruptedException) {
-        logger.mainStep("Trace generation timed out, returning empty trace!\n")
+        Logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),

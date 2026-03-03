@@ -31,8 +31,6 @@ import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
@@ -44,20 +42,17 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
     protected final ArgBuilder<S, A, P> argBuilder;
     protected final Function<? super S, ?> projection;
     protected final Waitlist<ArgNode<S, A>> waitlist;
-    protected final StopCriterion<S, A> stopCriterion;
-    protected final Logger logger;
+    protected StopCriterion<S, A> stopCriterion;
 
     protected BasicArgAbstractor(
             final ArgBuilder<S, A, P> argBuilder,
             final Function<? super S, ?> projection,
             final Waitlist<ArgNode<S, A>> waitlist,
-            final StopCriterion<S, A> stopCriterion,
-            final Logger logger) {
+            final StopCriterion<S, A> stopCriterion) {
         this.argBuilder = checkNotNull(argBuilder);
         this.projection = checkNotNull(projection);
         this.waitlist = checkNotNull(waitlist);
         this.stopCriterion = checkNotNull(stopCriterion);
-        this.logger = checkNotNull(logger);
     }
 
     public static <S extends State, A extends Action, P extends Prec> Builder<S, A, P> builder(
@@ -74,23 +69,22 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
     public AbstractorResult check(final ARG<S, A> arg, final P prec) {
         checkNotNull(arg);
         checkNotNull(prec);
-        logger.write(Level.DETAIL, "|  |  Precision: %s%n", prec);
+        Logger.detail("|  |  Precision: %s%n", prec);
 
         if (!arg.isInitialized()) {
-            logger.write(Level.SUBSTEP, "|  |  (Re)initializing ARG...");
+            Logger.subStep("|  |  (Re)initializing ARG...");
             argBuilder.init(arg, prec);
-            logger.write(Level.SUBSTEP, "done%n");
+            Logger.subStep("done%n");
         }
 
         assert arg.isInitialized();
 
-        logger.write(
-                Level.INFO,
+        Logger.info(
                 "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n",
                 arg.getNodes().count(),
                 arg.getIncompleteNodes().count(),
                 arg.getUnsafeNodes().count());
-        logger.write(Level.SUBSTEP, "|  |  Building ARG...");
+        Logger.subStep("|  |  Building ARG...");
 
         final Partition<ArgNode<S, A>, ?> reachedSet =
                 Partition.of(n -> projection.apply(n.getState()));
@@ -115,9 +109,8 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
             }
         }
 
-        logger.write(Level.SUBSTEP, "done%n");
-        logger.write(
-                Level.INFO,
+        Logger.subStep("done%n");
+        Logger.info(
                 "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n",
                 arg.getNodes().count(),
                 arg.getIncompleteNodes().count(),
@@ -155,14 +148,12 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
         protected Function<? super S, ?> projection;
         protected Waitlist<ArgNode<S, A>> waitlist;
         protected StopCriterion<S, A> stopCriterion;
-        protected Logger logger;
 
         protected Builder(final ArgBuilder<S, A, P> argBuilder) {
             this.argBuilder = argBuilder;
             this.projection = s -> 0;
             this.waitlist = FifoWaitlist.create();
             this.stopCriterion = StopCriterions.firstCex();
-            this.logger = NullLogger.getInstance();
         }
 
         public Builder<S, A, P> projection(final Function<? super S, ?> projection) {
@@ -180,14 +171,9 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
             return this;
         }
 
-        public Builder<S, A, P> logger(final Logger logger) {
-            this.logger = logger;
-            return this;
-        }
-
         public BasicArgAbstractor<S, A, P> build() {
             return new BasicArgAbstractor<>(
-                    argBuilder, projection, waitlist, stopCriterion, logger);
+                    argBuilder, projection, waitlist, stopCriterion);
         }
     }
 }

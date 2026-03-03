@@ -32,11 +32,9 @@ fun hornPortfolio(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   var baseConfig =
     XcfaConfig(
@@ -139,7 +137,7 @@ fun hornPortfolio(
     return STM(configEldarica, edges)
   }
 
-  logger.benchmark("Using CHC portfolio\n")
+  Logger.benchmark("Using CHC portfolio\n")
 
   if (parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) {
     throw UnsupportedOperationException("CHC portfolio does not support floating points")

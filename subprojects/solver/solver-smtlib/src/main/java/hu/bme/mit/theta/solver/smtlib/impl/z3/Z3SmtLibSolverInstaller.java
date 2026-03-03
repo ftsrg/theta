@@ -39,8 +39,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     private final List<SemVer.VersionDecoder> versions;
 
-    public Z3SmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public Z3SmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -207,7 +206,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                 "https://github.com/Z3Prover/z3/releases/download/z3-%s/z3-%s-%s.zip",
                                 version, version, archStr));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.mainStep("Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
             installDir
@@ -219,7 +218,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

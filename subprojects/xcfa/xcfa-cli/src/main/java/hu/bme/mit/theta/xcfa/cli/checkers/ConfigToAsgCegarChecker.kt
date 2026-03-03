@@ -51,7 +51,6 @@ fun getAsgCegarChecker(
   parseContext: ParseContext,
   mcm: MCM,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<
   ASG<XcfaState<PtrState<*>>, XcfaAction>,
   ASGTrace<XcfaState<PtrState<*>>, XcfaAction>,
@@ -130,7 +129,6 @@ fun getAsgCegarChecker(
       xcfa,
       abstractionSolverInstance,
       asgCegarConfig.abstractorConfig.maxEnum,
-      logger,
       lts.second,
       asgCegarConfig.abstractorConfig.search,
       getPartialOrder(
@@ -157,14 +155,12 @@ fun getAsgCegarChecker(
       asgCegarConfig.refinerConfig.refinement,
       refinementSolverFactory,
       precRefiner,
-      logger,
     )
 
   val checker =
     AsgCegarChecker.create(
       abstractor as ASGAbstractor<ExprState, ExprAction, Prec>,
       refiner,
-      logger,
     )
 
   return object :

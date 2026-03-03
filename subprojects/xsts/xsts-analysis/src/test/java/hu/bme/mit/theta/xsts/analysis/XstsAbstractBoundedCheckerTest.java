@@ -27,7 +27,6 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbst
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -39,6 +38,7 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -46,6 +46,11 @@ public class XstsAbstractBoundedCheckerTest {
     public String filePath;
     public String propPath;
     public boolean safe;
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -211,7 +216,6 @@ public class XstsAbstractBoundedCheckerTest {
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
     public void runTest(String filePath, String propPath, boolean safe) throws Exception {
         initXstsAbstractBoundedCheckerTest(filePath, propPath, safe);
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
         try (InputStream inputStream =
@@ -235,7 +239,6 @@ public class XstsAbstractBoundedCheckerTest {
                                                 monolithicExpr,
                                                 Z3LegacySolverFactory.getInstance().createSolver(),
                                                 Z3LegacySolverFactory.getInstance().createSolver(),
-                                                logger,
                                                 (i) -> false,
                                                 () -> true,
                                                 () -> false),

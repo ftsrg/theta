@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
@@ -38,11 +37,14 @@ class XcfaCliNonTerminationValidateTest {
   companion object {
 
     private val SMTLIB_HOME: Path = SmtLibSolverManager.HOME
-    private val solvers = listOf("z3:4.13.0", "mathsat:5.6.10", "eldarica:2.1")
+    private val solvers = listOf("z3:4.13.0", "mathsat:5.6.10", "eldarica:2.2")
+
+    @JvmStatic
+    fun initLogger() = Logger.initOld(Logger.LegacyLevel.VERBOSE)
 
     private fun installSolver(name: String) {
       try {
-        SmtLibSolverManager.create(SMTLIB_HOME, ConsoleLogger(Logger.Level.DETAIL)).use {
+        SmtLibSolverManager.create(SMTLIB_HOME).use {
           solverManager ->
           val solverVersion = SmtLibSolverManager.getSolverVersion(name)
           val solverName = SmtLibSolverManager.getSolverName(name)
@@ -364,7 +366,7 @@ class XcfaCliNonTerminationValidateTest {
     val params =
       arrayOf(
         "--solver",
-        "eldarica:2.1",
+        "eldarica:2.2",
         "--backend",
         "CHC",
         "--input-type",
@@ -537,7 +539,7 @@ class XcfaCliNonTerminationValidateTest {
     val params =
       arrayOf(
         "--solver",
-        "eldarica:2.1",
+        "eldarica:2.2",
         "--backend",
         "CHC",
         "--input-type",

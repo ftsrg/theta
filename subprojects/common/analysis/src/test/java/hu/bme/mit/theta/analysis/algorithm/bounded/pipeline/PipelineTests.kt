@@ -25,7 +25,6 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.TraceChangeCheckMEPass
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
 import hu.bme.mit.theta.analysis.pred.PredPrec
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -46,7 +45,6 @@ class PipelineTests {
   companion object {
     private val x_var: VarDecl<IntType> = Decls.Var("x", IntType.getInstance())
     val x: RefExpr<IntType> = Exprs.Ref(x_var)
-    val logger = ConsoleLogger(Logger.Level.VERBOSE)
     val solverFactory: Z3LegacySolverFactory = Z3LegacySolverFactory.getInstance()
     private val checkerFactory = { expr: MonolithicExpr ->
       BoundedChecker(
@@ -54,7 +52,6 @@ class PipelineTests {
         bmcSolver = solverFactory.createSolver(),
         itpSolver = solverFactory.createItpSolver(),
         imcEnabled = { false },
-        logger = logger,
       )
     }
   }
@@ -77,7 +74,6 @@ class PipelineTests {
       MonolithicExprPassPipelineChecker(
         model = expression,
         checkerFactory = checkerFactory,
-        logger = logger,
       )
     pipeline.insertLastPass(ReverseMEPass())
     val pipelineResult = pipeline.check()

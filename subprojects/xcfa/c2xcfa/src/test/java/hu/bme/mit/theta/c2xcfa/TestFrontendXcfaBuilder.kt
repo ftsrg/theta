@@ -15,17 +15,24 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import java.io.IOException
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class TestFrontendXcfaBuilder {
 
   companion object {
+
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+    }
 
     @JvmStatic
     fun data(): Collection<Array<Any>> {
@@ -66,7 +73,7 @@ class TestFrontendXcfaBuilder {
   @Throws(IOException::class)
   fun testReachability(filepath: String) {
     val stream = javaClass.getResourceAsStream(filepath)
-    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
+    getXcfaFromC(stream!!, ParseContext(), false, property)
   }
 
   @ParameterizedTest
@@ -74,6 +81,6 @@ class TestFrontendXcfaBuilder {
   @Throws(IOException::class)
   fun testOverflow(filepath: String) {
     val stream = javaClass.getResourceAsStream(filepath)
-    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
+    getXcfaFromC(stream!!, ParseContext(), false, property)
   }
 }

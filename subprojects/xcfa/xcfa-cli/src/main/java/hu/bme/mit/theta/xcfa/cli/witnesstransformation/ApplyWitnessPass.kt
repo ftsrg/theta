@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getExpressionFromC
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -74,7 +73,6 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
             parseContext,
             false,
             false,
-            NullLogger.getInstance(),
             builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
           )
         val loc = it.location
@@ -199,7 +197,6 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 parseContext,
                 false,
                 false,
-                NullLogger.getInstance(),
                 builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
               )
             }
@@ -235,7 +232,6 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                     parseContext,
                     false,
                     false,
-                    NullLogger.getInstance(),
                     builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
                   )
                 } else {

@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.SingleASGTrace
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.utils.AsgVisualizer
-import hu.bme.mit.theta.common.logging.Logger
 import java.util.*
 
 /*
@@ -51,12 +50,10 @@ object AsgCegarChecker {
   fun <S : ExprState, A : ExprAction, P : Prec> create(
     abstractor: ASGAbstractor<S, A, P>,
     refiner: SingleASGTraceRefiner<S, A, P>,
-    logger: Logger,
   ): CegarChecker<P, ASG<S, A>, ASGTrace<S, A>> {
     return CegarChecker.create(
       abstractor,
       refiner,
-      logger,
       AsgVisualizer<S, A>({ o: Any? -> Objects.toString(o) }, { o: Any? -> Objects.toString(o) }),
     )
   }

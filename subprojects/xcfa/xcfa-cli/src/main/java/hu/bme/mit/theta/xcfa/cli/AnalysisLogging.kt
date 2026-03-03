@@ -37,8 +37,6 @@ internal fun preAnalysisLogging(
   mcm: MCM,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ) {
   if (config.outputConfig.enabled != OutputLevel.NONE) {
     try {
@@ -46,25 +44,25 @@ internal fun preAnalysisLogging(
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
 
-      logger.info(
+      Logger.info(
         "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}"
       )
 
       if (enabled || config.outputConfig.chcOutputConfig.enabled) {
-        writeChc(xcfa, resultFolder, config, logger)
+        writeChc(xcfa, resultFolder, config)
       }
 
       if (enabled || config.outputConfig.xcfaOutputConfig.enabled) {
-        writeXcfaAsDot(resultFolder, xcfa, logger)
+        writeXcfaAsDot(resultFolder, xcfa)
 
-        writeXcfaAsJson(resultFolder, xcfa, logger)
+        writeXcfaAsJson(resultFolder, xcfa)
       }
 
       if (enabled || config.outputConfig.cOutputConfig.enabled) {
-        writeXcfaAsC(resultFolder, xcfa, parseContext, config, logger)
+        writeXcfaAsC(resultFolder, xcfa, parseContext, config)
       }
     } catch (e: Throwable) {
-      logger.info("Could not output files: ${e.stackTraceToString()}")
+      Logger.info("Could not output files: ${e.stackTraceToString()}")
     }
   }
 }
@@ -74,7 +72,6 @@ private fun writeXcfaAsC(
   xcfa: XCFA,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ) {
   try {
     val xcfaCFile = File(resultFolder, "xcfa.c")
@@ -87,31 +84,31 @@ private fun writeXcfaAsC(
       )
     )
   } catch (e: Throwable) {
-    logger.info("Could not emit XCFA as C file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit XCFA as C file: ${e.stackTraceToString()}")
   }
 }
 
-private fun writeXcfaAsJson(resultFolder: File, xcfa: XCFA, logger: Logger) {
+private fun writeXcfaAsJson(resultFolder: File, xcfa: XCFA) {
   try {
     val xcfaJsonFile = File(resultFolder, "xcfa.json")
     val uglyJson = getGson(xcfa).toJson(xcfa)
     val create = GsonBuilder().setPrettyPrinting().create()
     xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
   } catch (e: Exception) {
-    logger.info("Could not emit XCFA as JSON file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit XCFA as JSON file: ${e.stackTraceToString()}")
   }
 }
 
-private fun writeXcfaAsDot(resultFolder: File, xcfa: XCFA, logger: Logger) {
+private fun writeXcfaAsDot(resultFolder: File, xcfa: XCFA) {
   try {
     val xcfaDotFile = File(resultFolder, "xcfa.dot")
     xcfaDotFile.writeText(xcfa.toDot())
   } catch (e: Exception) {
-    logger.info("Could not emit XCFA as DOT file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit XCFA as DOT file: ${e.stackTraceToString()}")
   }
 }
 
-private fun writeChc(xcfa: XCFA, resultFolder: File, config: XcfaConfig<*, *>, logger: Logger) {
+private fun writeChc(xcfa: XCFA, resultFolder: File, config: XcfaConfig<*, *>) {
   xcfa.procedures.forEach {
     try {
       val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
@@ -122,7 +119,7 @@ private fun writeChc(xcfa: XCFA, resultFolder: File, config: XcfaConfig<*, *>, l
         )
       )
     } catch (e: Exception) {
-      logger.info("Could not emit XCFA as CHC file: ${e.stackTraceToString()}")
+      Logger.info("Could not emit XCFA as CHC file: ${e.stackTraceToString()}")
     }
   }
 }

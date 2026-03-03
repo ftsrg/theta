@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
@@ -35,8 +34,14 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.jupiter.api.BeforeAll;
 
 public class XstsMddCheckerTest {
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -206,7 +211,6 @@ public class XstsMddCheckerTest {
     public static void runTestWithIterationStrategy(
             String filePath, String propPath, boolean safe, IterationStrategy iterationStrategy)
             throws Exception {
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
         try (InputStream inputStream =
@@ -221,9 +225,9 @@ public class XstsMddCheckerTest {
             var checker =
                     new XstsPipelineChecker<>(
                             xsts,
-                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, iterationStrategy));
             status = checker.check();
-            logger.mainStep(status.toString());
+            Logger.mainStep(status.toString());
         }
 
         if (safe) {

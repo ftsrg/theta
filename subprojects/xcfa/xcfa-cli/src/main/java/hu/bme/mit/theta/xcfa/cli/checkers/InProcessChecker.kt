@@ -41,7 +41,6 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
   val xcfa: XCFA?,
   val config: XcfaConfig<F, B>,
   val parseContext: ParseContext?,
-  val logger: Logger,
 ) : SafetyChecker<EmptyProof, EmptyCex, XcfaPrec<*>> {
 
   override fun check(prec: XcfaPrec<*>?): SafetyResult<EmptyProof, EmptyCex> {
@@ -97,7 +96,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
     val heapSize =
       "-Xmx${if(config.backendConfig.memlimit == 0L) 1420L else config.backendConfig.memlimit/1024/1024 }m"
-    logger.write(Logger.Level.INFO, "Starting process with $heapSize of heap\n")
+    Logger.write(Logger.Level.INFO, "Starting process with $heapSize of heap\n")
 
     val pb =
       NuProcessBuilder(
@@ -126,7 +125,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
           process.destroy(true)
           throw ErrorCodeException(ExitCodes.TIMEOUT.code)
         } else {
-          logger.benchmark(
+          Logger.benchmark(
             "Config timed out but started writing result, trying to wait an additional 10%..."
           )
           val retCode = process.waitFor(config.backendConfig.timeoutMs / 10, TimeUnit.MILLISECONDS)

@@ -32,9 +32,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
@@ -43,6 +41,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -53,6 +52,12 @@ class XcfaPredAnalysisTest {
     private val seed = 1001
 
     private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+    }
 
     @JvmStatic
     fun data(): Collection<Array<Any>> {
@@ -70,7 +75,7 @@ class XcfaPredAnalysisTest {
     println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -92,7 +97,6 @@ class XcfaPredAnalysisTest {
           ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
         ),
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
-        ConsoleLogger(Logger.Level.DETAIL),
         lts,
         errorDetector,
       )
@@ -112,7 +116,6 @@ class XcfaPredAnalysisTest {
         ),
         precRefiner,
         PruneStrategy.FULL,
-        NullLogger.getInstance(),
       ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
@@ -128,7 +131,7 @@ class XcfaPredAnalysisTest {
     println("Testing SPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -150,7 +153,6 @@ class XcfaPredAnalysisTest {
           ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
         ),
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
-        ConsoleLogger(Logger.Level.DETAIL),
         lts,
         errorDetector,
       )
@@ -170,7 +172,6 @@ class XcfaPredAnalysisTest {
         ),
         precRefiner,
         PruneStrategy.FULL,
-        NullLogger.getInstance(),
       ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
@@ -187,7 +188,7 @@ class XcfaPredAnalysisTest {
     println("Testing DPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -207,7 +208,6 @@ class XcfaPredAnalysisTest {
         analysis,
         lts.waitlist,
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
-        ConsoleLogger(Logger.Level.DETAIL),
         lts,
         errorDetector,
       )
@@ -227,7 +227,6 @@ class XcfaPredAnalysisTest {
         ),
         precRefiner,
         PruneStrategy.FULL,
-        ConsoleLogger(Logger.Level.DETAIL),
       ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
@@ -243,7 +242,7 @@ class XcfaPredAnalysisTest {
     println("Testing AASPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -265,7 +264,6 @@ class XcfaPredAnalysisTest {
           ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
         ),
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
-        ConsoleLogger(Logger.Level.DETAIL),
         lts,
         errorDetector,
       )
@@ -286,7 +284,6 @@ class XcfaPredAnalysisTest {
         ),
         precRefiner,
         PruneStrategy.FULL,
-        NullLogger.getInstance(),
         atomicNodePruner,
       ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
@@ -306,7 +303,7 @@ class XcfaPredAnalysisTest {
     println("Testing AADPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -326,7 +323,6 @@ class XcfaPredAnalysisTest {
         analysis,
         lts.waitlist,
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
-        ConsoleLogger(Logger.Level.DETAIL),
         lts,
         errorDetector,
       )
@@ -346,7 +342,6 @@ class XcfaPredAnalysisTest {
         ),
         precRefiner,
         PruneStrategy.FULL,
-        NullLogger.getInstance(),
       ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)

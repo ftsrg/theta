@@ -112,7 +112,7 @@ sealed class StmtMultiConfigBuilder<
       >(
         RefToMultiPrec(lRefToPrec, rRefToPrec, dRefToPrec)
       )
-    val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy, logger)
+    val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy)
     return MultiConfig(
       ArgCegarChecker.create(abstractor, refiner),
       MultiPrec(lInitPrec, rInitPrec, dInitPrec),

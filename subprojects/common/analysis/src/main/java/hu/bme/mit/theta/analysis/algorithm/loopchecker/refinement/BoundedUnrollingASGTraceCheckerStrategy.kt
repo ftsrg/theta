@@ -47,8 +47,7 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
   private val solverFactory: SolverFactory,
   init: Expr<BoolType>,
   private val bound: Int,
-  private val logger: Logger,
-) : AbstractASGTraceCheckerStrategy<S, A>(trace, solverFactory, init, logger) {
+) : AbstractASGTraceCheckerStrategy<S, A>(trace, solverFactory, init) {
 
   override fun evaluateLoop(valuation: Valuation): ExprTraceStatus<ItpRefutation> {
     val indexingBeforeLoop = indexings[trace.tail.size]
@@ -59,7 +58,7 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
     if (requiredLoops == bound + 1) {
       throw TraceCheckingFailedException("Required number of unrolling is above $bound")
     }
-    logger.write(Logger.Level.INFO, "Unrolling loop of trace at most %d times%n", requiredLoops)
+    Logger.info("Unrolling loop of trace at most %d times%n", requiredLoops)
     solver.reset()
     var loopIndexing = VarIndexingFactory.indexing(0)
     for (i in 0 until requiredLoops) {
@@ -68,7 +67,7 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
       if (solver.check().isUnsat) {
         solver.pop()
         putLoopOnSolver(unreachableMarker, loopIndexing)
-        logger.write(Logger.Level.INFO, "Unrolled loop of trace %d times%n", i + 1)
+        Logger.info("Unrolled loop of trace %d times%n", i + 1)
         return infeasibleThroughInterpolant(trace.tail.size, loopIndexing)
       }
       loopIndexing = loopIndexing.add(deltaIndexing)
@@ -86,7 +85,7 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
         }
       )
       if (solver.check().isSat) {
-        logger.write(Logger.Level.INFO, "Unrolled loop of trace %d times%n", i + 1)
+        Logger.info("Unrolled loop of trace %d times%n", i + 1)
         return getItpRefutationFeasible()
       }
       solver.pop()

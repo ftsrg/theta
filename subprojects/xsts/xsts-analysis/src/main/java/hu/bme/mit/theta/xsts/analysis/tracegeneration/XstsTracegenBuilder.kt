@@ -25,8 +25,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.CegarTraceGenerationChecker.Companion.create
 import hu.bme.mit.theta.analysis.expl.*
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -46,15 +44,9 @@ class XstsTracegenBuilder(
   private val solverFactory: SolverFactory,
   private val transitionCoverage: Boolean,
 ) {
-  private var logger: Logger = NullLogger.getInstance()
   private var varFile: File? = null
   private var abstraction = TracegenerationAbstraction.NONE
   private var getFullTraces = false
-
-  fun logger(logger: Logger): XstsTracegenBuilder {
-    this.logger = logger
-    return this
-  }
 
   fun setVarFile(filename: String?): XstsTracegenBuilder {
     if (filename != null) {
@@ -85,10 +77,9 @@ class XstsTracegenBuilder(
         BasicArgAbstractor.builder(argBuilder)
           .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
           .stopCriterion(StopCriterions.fullExploration())
-          .logger(logger)
           .build()
 
-      val tracegenChecker = create(logger, abstractor, getFullTraces)
+      val tracegenChecker = create(abstractor, getFullTraces)
 
       assert(varFile != null)
       try {
@@ -121,10 +112,9 @@ class XstsTracegenBuilder(
         BasicArgAbstractor.builder(argBuilder)
           .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
           .stopCriterion(StopCriterions.fullExploration())
-          .logger(logger)
           .build()
 
-      val tracegenChecker = create(logger, abstractor, getFullTraces)
+      val tracegenChecker = create(abstractor, getFullTraces)
       return XstsTracegenConfig.create(tracegenChecker, XstsAllVarsInitPrec().createExpl(xsts))
     }
   }
@@ -152,8 +142,7 @@ class XstsTracegenBuilder(
       val abstractor: Abstractor<XstsState<PredState>?, XstsAction?, PredPrec?> =
           BasicArgAbstractor.builder(argBuilder)
               .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
-              .stopCriterion(StopCriterions.fullExploration())
-              .logger(logger).build()
+              .stopCriterion(StopCriterions.fullExploration()).build()
       val tracegenChecker = create(logger, abstractor)
       return XstsTracegenConfig.create(
           tracegenChecker,

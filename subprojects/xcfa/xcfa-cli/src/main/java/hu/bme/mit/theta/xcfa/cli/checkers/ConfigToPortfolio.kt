@@ -46,8 +46,6 @@ fun getPortfolioChecker(
   mcm: MCM,
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): SafetyChecker<
   ARG<XcfaState<PtrState<*>>, XcfaAction>,
   Trace<XcfaState<PtrState<*>>, XcfaAction>,
@@ -63,21 +61,21 @@ fun getPortfolioChecker(
   val portfolioStm =
     when (portfolioName) {
       "STABLE",
-      "COMPLEX" -> complex26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "COMPLEX" -> complex26(xcfa, mcm, parseContext, config)
 
-      "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config)
 
       "CHC-COMP" ->
-        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config)
+        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config)
 
       "TESTING",
       "CHC",
-      "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config)
 
-      "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "TERMINATION" -> termination(xcfa, mcm, parseContext, config)
 
-      "MULTITHREAD" -> multithreadPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "MULTITHREAD" -> multithreadPortfolio(xcfa, mcm, parseContext, config)
 
       else -> {
         if (File(portfolioName).exists()) {
@@ -87,8 +85,6 @@ fun getPortfolioChecker(
           bindings["mcm"] = mcm
           bindings["parseContext"] = parseContext
           bindings["portfolioConfig"] = config
-          bindings["logger"] = logger
-          bindings["uniqueLogger"] = uniqueLogger
           kotlinEngine.eval(FileReader(portfolioName), bindings) as STM
         } else {
           error("No such file or built-in config: $portfolioName")
@@ -97,10 +93,10 @@ fun getPortfolioChecker(
     }
 
   val result =
-    portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
+    portfolioStm.execute(Logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
-  logger.result("Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
-  logger.benchmark("success-result: ${result.first.first}\n")
+  Logger.result("Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
+  Logger.benchmark("success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<

@@ -67,7 +67,7 @@ class XstsCliCegar :
     totalTimeMs: Long,
   ) {
     if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
+      Logger.result(status.toString())
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
@@ -118,7 +118,6 @@ class XstsCliCegar :
         .search(search)
         .predSplit(predsplit)
         .optimizeStmts(optimizestmts)
-        .logger(logger)
         .build(xsts)
     val sw = Stopwatch.createStarted()
     val result = config.check()

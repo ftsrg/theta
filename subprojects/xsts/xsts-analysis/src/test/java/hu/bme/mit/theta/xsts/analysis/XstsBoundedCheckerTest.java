@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -35,6 +34,7 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -42,6 +42,11 @@ public class XstsBoundedCheckerTest {
     public String filePath;
     public String propPath;
     public boolean safe;
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -222,7 +227,6 @@ public class XstsBoundedCheckerTest {
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
     public void runTest(String filePath, String propPath, boolean safe) throws Exception {
         initXstsBoundedCheckerTest(filePath, propPath, safe);
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
         try (InputStream inputStream =
@@ -239,8 +243,7 @@ public class XstsBoundedCheckerTest {
                                 monolithicExpr1 ->
                                         buildBMC(
                                                 monolithicExpr1,
-                                                Z3LegacySolverFactory.getInstance().createSolver(),
-                                                logger));
+                                                Z3LegacySolverFactory.getInstance().createSolver()));
 
         final SafetyResult<?, ?> status = checker.check(null);
 

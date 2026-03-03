@@ -56,8 +56,6 @@ import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
@@ -124,7 +122,6 @@ public final class StsConfigBuilder {
         }
     }
 
-    private Logger logger = NullLogger.getInstance();
     private final SolverFactory solverFactory;
     private final Domain domain;
     private final Refinement refinement;
@@ -138,11 +135,6 @@ public final class StsConfigBuilder {
         this.domain = domain;
         this.refinement = refinement;
         this.solverFactory = solverFactory;
-    }
-
-    public StsConfigBuilder logger(final Logger logger) {
-        this.logger = logger;
-        return this;
     }
 
     public StsConfigBuilder search(final Search search) {
@@ -184,7 +176,6 @@ public final class StsConfigBuilder {
                                     refinement == Refinement.MULTI_SEQ
                                             ? StopCriterions.fullExploration()
                                             : StopCriterions.firstCex())
-                            .logger(logger)
                             .build();
 
             ArgRefiner<ExplState, StsAction, ExplPrec> refiner = null;
@@ -196,8 +187,7 @@ public final class StsConfigBuilder {
                                     ExprTraceFwBinItpChecker.create(
                                             init, negProp, solverFactory.createItpSolver()),
                                     JoiningPrecRefiner.create(new ItpRefToExplPrec()),
-                                    pruneStrategy,
-                                    logger);
+                                    pruneStrategy);
                     break;
                 case BW_BIN_ITP:
                     refiner =
@@ -205,8 +195,7 @@ public final class StsConfigBuilder {
                                     ExprTraceBwBinItpChecker.create(
                                             init, negProp, solverFactory.createItpSolver()),
                                     JoiningPrecRefiner.create(new ItpRefToExplPrec()),
-                                    pruneStrategy,
-                                    logger);
+                                    pruneStrategy);
                     break;
                 case SEQ_ITP:
                     refiner =
@@ -214,8 +203,7 @@ public final class StsConfigBuilder {
                                     ExprTraceSeqItpChecker.create(
                                             init, negProp, solverFactory.createItpSolver()),
                                     JoiningPrecRefiner.create(new ItpRefToExplPrec()),
-                                    pruneStrategy,
-                                    logger);
+                                    pruneStrategy);
                     break;
                 case MULTI_SEQ:
                     refiner =
@@ -223,8 +211,7 @@ public final class StsConfigBuilder {
                                     ExprTraceSeqItpChecker.create(
                                             init, negProp, solverFactory.createItpSolver()),
                                     JoiningPrecRefiner.create(new ItpRefToExplPrec()),
-                                    pruneStrategy,
-                                    logger);
+                                    pruneStrategy);
                     break;
                 case UNSAT_CORE:
                     refiner =
@@ -232,8 +219,7 @@ public final class StsConfigBuilder {
                                     ExprTraceUnsatCoreChecker.create(
                                             init, negProp, solverFactory.createUCSolver()),
                                     JoiningPrecRefiner.create(new VarsRefToExplPrec()),
-                                    pruneStrategy,
-                                    logger);
+                                    pruneStrategy);
                     break;
                 default:
                     throw new UnsupportedOperationException(
@@ -241,7 +227,7 @@ public final class StsConfigBuilder {
             }
 
             final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec>
-                    checker = ArgCegarChecker.create(abstractor, refiner, logger);
+                    checker = ArgCegarChecker.create(abstractor, refiner);
             final ExplPrec prec = initPrec.builder.createExpl(sts);
             return StsConfig.create(checker, prec);
 
@@ -275,7 +261,6 @@ public final class StsConfigBuilder {
                                     refinement == Refinement.MULTI_SEQ
                                             ? StopCriterions.fullExploration()
                                             : StopCriterions.firstCex())
-                            .logger(logger)
                             .build();
 
             ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
@@ -310,19 +295,17 @@ public final class StsConfigBuilder {
                         MultiExprTraceRefiner.create(
                                 exprTraceChecker,
                                 JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)),
-                                pruneStrategy,
-                                logger);
+                                pruneStrategy);
             } else {
                 refiner =
                         SingleExprTraceRefiner.create(
                                 exprTraceChecker,
                                 JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)),
-                                pruneStrategy,
-                                logger);
+                                pruneStrategy);
             }
 
             final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec>
-                    checker = ArgCegarChecker.create(abstractor, refiner, logger);
+                    checker = ArgCegarChecker.create(abstractor, refiner);
 
             final PredPrec prec = initPrec.builder.createPred(sts);
             return StsConfig.create(checker, prec);

@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -50,6 +50,7 @@ class XcfaOcCheckerTest {
     @BeforeAll
     @JvmStatic
     fun registerSolver() {
+      Logger.initOld(Logger.LegacyLevel.VERBOSE)
       SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     }
   }
@@ -66,7 +67,7 @@ class XcfaOcCheckerTest {
     )
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val ocChecker =
       XcfaOcChecker(
@@ -74,7 +75,7 @@ class XcfaOcCheckerTest {
         property = property.verifiedProperty,
         decisionProcedure = decisionProcedure,
         smtSolver = "Z3:4.13",
-        logger = NullLogger.getInstance(),
+        logger = Logger,
         conflictInput = null,
         outputConflictClauses = false,
         nonPermissiveValidation = false,

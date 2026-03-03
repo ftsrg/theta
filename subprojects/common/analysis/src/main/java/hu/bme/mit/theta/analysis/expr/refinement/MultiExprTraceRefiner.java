@@ -27,7 +27,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,31 +38,34 @@ public final class MultiExprTraceRefiner<
     private final PrecRefiner<S, A, P, R> precRefiner;
     private final PruneStrategy pruneStrategy;
     private final NodePruner<S, A> nodePruner;
-    private final Logger logger;
 
     private MultiExprTraceRefiner(
             final ExprTraceChecker<R> exprTraceChecker,
             final PrecRefiner<S, A, P, R> precRefiner,
-            final PruneStrategy pruneStrategy,
-            final Logger logger) {
+            final PruneStrategy pruneStrategy) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
         this.nodePruner = ARG::prune;
-        this.logger = checkNotNull(logger);
     }
 
     private MultiExprTraceRefiner(
             final ExprTraceChecker<R> exprTraceChecker,
             final PrecRefiner<S, A, P, R> precRefiner,
             final PruneStrategy pruneStrategy,
-            final Logger logger,
             final NodePruner<S, A> nodePruner) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
         this.nodePruner = checkNotNull(nodePruner);
-        this.logger = checkNotNull(logger);
+    }
+
+    public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
+            MultiExprTraceRefiner<S, A, P, R> create(
+                    final ExprTraceChecker<R> exprTraceChecker,
+                    final PrecRefiner<S, A, P, R> precRefiner,
+                    final PruneStrategy pruneStrategy) {
+        return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy);
     }
 
     public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
@@ -71,19 +73,9 @@ public final class MultiExprTraceRefiner<
                     final ExprTraceChecker<R> exprTraceChecker,
                     final PrecRefiner<S, A, P, R> precRefiner,
                     final PruneStrategy pruneStrategy,
-                    final Logger logger) {
-        return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
-    }
-
-    public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
-            MultiExprTraceRefiner<S, A, P, R> create(
-                    final ExprTraceChecker<R> exprTraceChecker,
-                    final PrecRefiner<S, A, P, R> precRefiner,
-                    final PruneStrategy pruneStrategy,
-                    final Logger logger,
                     final NodePruner<S, A> nodePruner) {
         return new MultiExprTraceRefiner<>(
-                exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner);
+                exprTraceChecker, precRefiner, pruneStrategy, nodePruner);
     }
 
     @Override
@@ -96,10 +88,10 @@ public final class MultiExprTraceRefiner<
         final List<Trace<S, A>> traces = arg.getCexs().map(ArgTrace::toTrace).toList();
         assert traces.size() == cexs.size();
 
-        logger.write(Level.INFO, "|  |  Number of traces: %d%n", traces.size());
+        Logger.info("|  |  Number of traces: %d%n", traces.size());
         assert !traces.isEmpty() : "No counterexample in ARG";
 
-        logger.write(Level.SUBSTEP, "|  |  Checking traces...");
+        Logger.subStep("|  |  Checking traces...");
         final List<ExprTraceStatus<R>> cexStatuses = new ArrayList<>(traces.size());
         for (final Trace<S, A> trace : traces) {
             final ExprTraceStatus<R> status = exprTraceChecker.check(trace);
@@ -110,7 +102,7 @@ public final class MultiExprTraceRefiner<
         }
 
         if (cexStatuses.stream().anyMatch(ExprTraceStatus::isFeasible)) {
-            logger.write(Level.SUBSTEP, "done, result: found feasible%n");
+            Logger.subStep("done, result: found feasible%n");
             return RefinerResult.unsafe(
                     traces.get(
                             cexStatuses.indexOf(
@@ -120,7 +112,7 @@ public final class MultiExprTraceRefiner<
                                             .get())));
         } else {
             assert cexStatuses.size() == cexs.size();
-            logger.write(Level.SUBSTEP, "done, result: all infeasible%n");
+            Logger.subStep("done, result: all infeasible%n");
             final List<R> refutations =
                     cexStatuses.stream().map(s -> s.asInfeasible().getRefutation()).toList();
             assert refutations.size() == cexs.size();
@@ -153,7 +145,7 @@ public final class MultiExprTraceRefiner<
 
             switch (pruneStrategy) {
                 case LAZY:
-                    logger.write(Level.SUBSTEP, "|  |  Pruning (lazy)...");
+                    Logger.subStep("|  |  Pruning (lazy)...");
                     for (int i = 0; i < nodesToPrune.size(); ++i) {
                         if (!skip.get(i)) {
                             nodePruner.prune(arg, nodesToPrune.get(i));
@@ -161,13 +153,13 @@ public final class MultiExprTraceRefiner<
                     }
                     break;
                 case FULL:
-                    logger.write(Level.SUBSTEP, "|  |  Pruning (full)...");
+                    Logger.subStep("|  |  Pruning (full)...");
                     arg.pruneAll();
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported pruning strategy");
             }
-            logger.write(Level.SUBSTEP, "done%n");
+            Logger.subStep("done%n");
             return RefinerResult.spurious(refinedPrec);
         }
     }

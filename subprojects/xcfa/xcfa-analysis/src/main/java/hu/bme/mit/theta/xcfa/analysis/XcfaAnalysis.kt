@@ -245,14 +245,12 @@ fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfa
   analysis: Analysis<S, XcfaAction, P>,
   waitlist: Waitlist<*>,
   stopCriterion: StopCriterion<*, *>,
-  logger: Logger,
   lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
   errorDetector: XcfaErrorDetector,
 ): ArgAbstractor<out XcfaState<out PtrState<out ExprState>>, XcfaAction, out XcfaPrec<out Prec>> =
   XcfaArgAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetector))
     .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
     .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>)
-    .logger(logger)
     .projection {
       if (it.xcfa!!.isInlined) it.processes else it.processes.map { (_, p) -> p.locs.peek() }
     }

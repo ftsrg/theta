@@ -17,7 +17,7 @@ package hu.bme.mit.theta.solver.smtlib
 
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
@@ -48,9 +48,8 @@ class GenericSmtLibHornSolverTest {
 
     private val SOLVERS: List<Pair<String, String>> =
       listOf(
-        Pair("eldarica", "2.1"),
-        Pair("golem", "0.8.1"),
         Pair("eldarica", "2.2"),
+        Pair("golem", "0.8.1"),
         Pair("golem", "0.5.0"),
         Pair("z3", "4.13.0"),
         Pair("z3", "4.14.0"),
@@ -65,16 +64,17 @@ class GenericSmtLibHornSolverTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      if (!Logger.isEnabled("ERROR")) {
+        Logger.init("ERROR")
+      }
       if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val home = SmtLibSolverManager.HOME
 
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+        solverManager = SmtLibSolverManager.create(home)
         for ((solver, version) in SOLVERS) {
-
-          try {
+          val installedVersions = solverManager!!.getInstalledVersions(solver)
+          if (!installedVersions.contains(version)) {
             solverManager!!.install(solver, version, version, null, false)
-          } catch (e: SmtLibSolverInstallerException) {
-            e.printStackTrace()
           }
 
           solverFactories.put(
@@ -82,6 +82,10 @@ class GenericSmtLibHornSolverTest {
             solverManager!!.getSolverFactory(solver, version),
           )
         }
+        Assertions.assertTrue(
+          solverFactories.keys.containsAll(SOLVERS),
+          "Required solvers not installed: " + SOLVERS.filter { !solverFactories.containsKey(it) }
+        )
       }
     }
 

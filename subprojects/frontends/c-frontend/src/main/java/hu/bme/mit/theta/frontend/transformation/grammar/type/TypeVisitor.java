@@ -22,7 +22,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierConte
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierListContext;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.TypeSpecifierPointerContext;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
+import static hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
@@ -47,6 +47,13 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
             List.of("long", "__int128", "short", "unsigned", "_Bool");
+
+    public TypeVisitor(
+            DeclarationVisitor declarationVisitor,
+            TypedefVisitor typedefVisitor,
+            ParseContext parseContext) {
+        this(declarationVisitor, typedefVisitor, parseContext, Logger.INSTANCE);
+    }
 
     public TypeVisitor(
             DeclarationVisitor declarationVisitor,

@@ -26,7 +26,10 @@ import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerExce
 import hu.bme.mit.theta.solver.smtlib.utils.Compress;
 import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,12 +39,10 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     private final List<SemVer.VersionDecoder> versions;
 
-    private final YicesSmtLibSolverInstaller yicesInstaller =
-            new YicesSmtLibSolverInstaller(logger);
+    private final YicesSmtLibSolverInstaller yicesInstaller = new YicesSmtLibSolverInstaller();
     private static final String YICES_VERSION = "1.0.40";
 
-    public EldaricaSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public EldaricaSmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -62,8 +63,8 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     @Override
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
-        final var yicesPath = getInstallDir(installDir, "yices");
-        yicesInstaller.installSolver(yicesPath, "1.0.40"); // dependency
+            final var yicesPath = getInstallDir(installDir, "yices");
+            yicesInstaller.installSolver(yicesPath, YICES_VERSION);
 
         final var semVer = SemVer.of(version);
         String archStr = null;
@@ -87,7 +88,7 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
                                 "https://github.com/uuverifiers/eldarica/releases/download/v%s/eldarica-bin-%s.%s",
                                 version, version, archStr));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.mainStep("Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
@@ -95,14 +96,14 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
+
 
     @Override
     protected void uninstallSolver(Path installDir, String version) {
         final var yicesPath = getInstallDir(installDir, "yices");
         yicesInstaller.uninstallSolver(yicesPath, YICES_VERSION);
-        // Default uninstall is suitable
     }
 
     @Override
@@ -119,7 +120,13 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
             throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
-        final var yicesPath = installDir.resolve("yices").resolve("bin");
+        final var yicesInstallPath = getInstallDir(installDir, "yices");
+        final var yicesPath = yicesInstallPath.resolve("bin");
+        final var yicesBinary = yicesPath.resolve("yices");
+        if (!yicesBinary.toFile().canExecute() || !isUsableYices(yicesBinary)) {
+            Logger.mainStep("Yices binary not found in %s, installing it now...%n", yicesPath);
+            yicesInstaller.installSolver(yicesInstallPath, YICES_VERSION);
+        }
         return EldaricaSmtLibSolverFactory.create(
                 solverFilePath, solverArgs, yicesPath, version.equals("2.1"));
     }
@@ -135,6 +142,30 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
                 return "eld";
             default:
                 throw new AssertionError();
+        }
+    }
+
+    private boolean isUsableYices(final Path yicesBinary) {
+        try {
+            final var process =
+                    new ProcessBuilder(yicesBinary.toAbsolutePath().toString(), "--version").start();
+            final var output = new StringBuilder();
+            try (final var reader =
+                    new BufferedReader(
+                            new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!output.isEmpty()) {
+                        output.append(' ');
+                    }
+                    output.append(line);
+                }
+            }
+            process.waitFor();
+            final var versionOutput = output.toString();
+            return versionOutput.contains("1.") || versionOutput.contains("2.");
+        } catch (Exception e) {
+            return false;
         }
     }
 }

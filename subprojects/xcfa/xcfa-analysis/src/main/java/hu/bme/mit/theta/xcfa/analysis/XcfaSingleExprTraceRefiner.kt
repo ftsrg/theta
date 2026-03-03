@@ -36,16 +36,14 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     exprTraceChecker: ExprTraceChecker<R>,
     precRefiner: PrecRefiner<S, A, P, R>,
     pruneStrategy: PruneStrategy,
-    logger: Logger,
-  ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger)
+  ) : super(exprTraceChecker, precRefiner, pruneStrategy)
 
   private constructor(
     exprTraceChecker: ExprTraceChecker<R>,
     precRefiner: PrecRefiner<S, A, P, R>,
     pruneStrategy: PruneStrategy,
-    logger: Logger,
     nodePruner: NodePruner<S, A>,
-  ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner)
+  ) : super(exprTraceChecker, precRefiner, pruneStrategy, nodePruner)
 
   private fun findPoppedState(trace: Trace<S, A>): Pair<Int, XcfaState<S>>? {
     trace.states.forEachIndexed { i, s ->
@@ -96,36 +94,36 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       }
     val traceToConcretize = Trace.of(states, actions)
 
-    logger.write(Logger.Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length())
-    logger.write(Logger.Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize)
-    logger.write(Logger.Level.SUBSTEP, "|  |  Checking trace...")
+    Logger.write(Logger.LegacyLevel.INFO, "|  |  Trace length: %d%n", traceToConcretize.length())
+    Logger.write(Logger.LegacyLevel.DETAIL, "|  |  Trace: %s%n", traceToConcretize)
+    Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Checking trace...")
     val cexStatus = exprTraceChecker.check(traceToConcretize)
-    logger.write(Logger.Level.SUBSTEP, "done, result: %s%n", cexStatus)
+    Logger.write(Logger.LegacyLevel.SUBSTEP, "done, result: %s%n", cexStatus)
     assert(cexStatus.isFeasible() || cexStatus.isInfeasible()) { "Unknown CEX status" }
     return if (cexStatus.isFeasible()) {
       RefinerResult.unsafe(traceToConcretize)
     } else {
       val refutation = cexStatus.asInfeasible().refutation
-      logger.write(Logger.Level.DETAIL, "|  |  |  Refutation: %s%n", refutation)
+      Logger.write(Logger.LegacyLevel.DETAIL, "|  |  |  Refutation: %s%n", refutation)
       val refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation)
       val pruneIndex = refutation.getPruneIndex()
       assert(0 <= pruneIndex) { "Pruning index must be non-negative" }
       assert(pruneIndex <= cexToConcretize.length()) { "Pruning index larger than cex length" }
       when (pruneStrategy) {
         PruneStrategy.LAZY -> {
-          logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex)
+          Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex)
           val nodeToPrune = cexToConcretize.node(pruneIndex)
           nodePruner.prune(arg, nodeToPrune)
         }
 
         PruneStrategy.FULL -> {
-          logger.write(Logger.Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex)
+          Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex)
           arg.pruneAll()
         }
 
         else -> throw java.lang.UnsupportedOperationException("Unsupported pruning strategy")
       }
-      logger.write(Logger.Level.SUBSTEP, "done%n")
+      Logger.write(Logger.LegacyLevel.SUBSTEP, "done%n")
       RefinerResult.spurious(refinedPrec)
     }
   }
@@ -146,13 +144,13 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       findPoppedState(traceToConcretize)?.let { (i, state) ->
         when (pruneStrategy) {
           PruneStrategy.LAZY -> {
-            logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", i)
+            Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning from index %d...", i)
             val nodeToPrune = cexToConcretize.node(i)
             nodePruner.prune(arg, nodeToPrune)
           }
 
           PruneStrategy.FULL -> {
-            logger.write(Logger.Level.SUBSTEP, "|  |  Pruning whole ARG", i)
+            Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning whole ARG", i)
             arg.pruneAll()
           }
 
@@ -172,23 +170,20 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       exprTraceChecker: ExprTraceChecker<R>,
       precRefiner: PrecRefiner<S, A, P, R>,
       pruneStrategy: PruneStrategy,
-      logger: Logger,
     ): XcfaSingleExprTraceRefiner<S, A, P, R> {
-      return XcfaSingleExprTraceRefiner(exprTraceChecker, precRefiner, pruneStrategy, logger)
+      return XcfaSingleExprTraceRefiner(exprTraceChecker, precRefiner, pruneStrategy)
     }
 
     fun <S : ExprState, A : ExprAction, P : Prec, R : Refutation> create(
       exprTraceChecker: ExprTraceChecker<R>,
       precRefiner: PrecRefiner<S, A, P, R>,
       pruneStrategy: PruneStrategy,
-      logger: Logger,
       nodePruner: NodePruner<S, A>,
     ): XcfaSingleExprTraceRefiner<S, A, P, R> {
       return XcfaSingleExprTraceRefiner(
         exprTraceChecker,
         precRefiner,
         pruneStrategy,
-        logger,
         nodePruner,
       )
     }

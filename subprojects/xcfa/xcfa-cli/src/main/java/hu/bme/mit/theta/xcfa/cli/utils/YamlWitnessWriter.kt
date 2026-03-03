@@ -78,7 +78,6 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
-    logger: Logger,
   ) {
     val metadata = getMetadata(inputFile, ltlSpecification, architecture)
 
@@ -121,7 +120,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             )
 
           if (witness.content.isEmpty()) {
-            logger.benchmark("Encountered empty witness, trying best-effort witness now.")
+            Logger.benchmark("Encountered empty witness, trying best-effort witness now.")
             val bestEffortWitness =
               generateBestEffortWitness(
                 safetyResult,
@@ -138,7 +137,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         }
       } catch (e: Exception) {
-        logger.benchmark(
+        Logger.benchmark(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
         val bestEffortWitness =
@@ -164,7 +163,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
 
         witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
       } catch (e: Exception) {
-        logger.info("Could not emit witness, outputting empty witness")
+        Logger.info("Could not emit witness, outputting empty witness")
       }
     }
   }
