@@ -6,7 +6,7 @@ input_file=$1
 
 export VERIFIER_NAME=TOOL_NAME
 export VERIFIER_VERSION=TOOL_VERSION
-MIN_JAVA_VERSION=17
+MIN_JAVA_VERSION=21
 
 # ----------------------------------------
 # Helper functions

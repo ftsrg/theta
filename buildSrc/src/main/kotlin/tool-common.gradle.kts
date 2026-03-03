@@ -18,6 +18,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 apply<ApplicationPlugin>()
 apply<ShadowPlugin>()
+apply<WslJarPlugin>()
 
 tasks {
     val libPath: String by rootProject.extra
@@ -37,6 +38,7 @@ val shadowJar = tasks.withType<ShadowJar> {
         attributes["Implementation-Version"] = archiveVersion
     }
     isZip64 = true
+    entryCompression = ZipEntryCompression.DEFLATED
 }
 
 tasks.register("prepareDockerDistribution") {

@@ -20,21 +20,14 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import java.io.IOException
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class TestFrontendXcfaBuilder {
-
-  @Parameterized.Parameter(0) lateinit var filepath: String
-
-  private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
   companion object {
 
     @JvmStatic
-    @Parameterized.Parameters
     fun data(): Collection<Array<Any>> {
       return listOf(
         arrayOf("/00assignment.c"),
@@ -66,21 +59,21 @@ class TestFrontendXcfaBuilder {
     }
   }
 
-  @Test
+  private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+
+  @ParameterizedTest
+  @MethodSource("data")
   @Throws(IOException::class)
-  fun testReachability() {
-
+  fun testReachability(filepath: String) {
     val stream = javaClass.getResourceAsStream(filepath)
-
     getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   @Throws(IOException::class)
-  fun testOverflow() {
-
+  fun testOverflow(filepath: String) {
     val stream = javaClass.getResourceAsStream(filepath)
-
     getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
   }
 }

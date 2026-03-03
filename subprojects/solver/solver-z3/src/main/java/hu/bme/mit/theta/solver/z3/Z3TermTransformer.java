@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,13 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
@@ -36,13 +31,7 @@ import static java.lang.String.format;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.microsoft.z3.ArrayExpr;
-import com.microsoft.z3.ArraySort;
-import com.microsoft.z3.FPNum;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Model;
-import com.microsoft.z3.Sort;
-import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.*;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 import com.microsoft.z3.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
@@ -53,7 +42,8 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
@@ -364,17 +354,34 @@ final class Z3TermTransformer {
 
     public Expr<?> toArrayLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
-        final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
-        if (funcInterp == null) {
+        com.microsoft.z3.Expr constInterp = model.getConstInterp(funcDecl);
+        if (constInterp == null) {
             return null;
         }
-        final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
-                createEntryExprs(funcInterp, model, vars);
-        final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 
-        final ArraySort sort = (ArraySort) funcDecl.getRange();
+        final ImmutableList.Builder<Tuple2<List<Expr<?>>, Expr<?>>> builder =
+                ImmutableList.builder();
+        while (constInterp.getNumArgs() == 3) {
+            var args = constInterp.getArgs();
+            var index = transform(args[1], model, vars);
+            var value = transform(args[2], model, vars);
+            builder.add(Tuple2.of(List.of(index), value));
+            constInterp = args[0];
+        }
+        var entryExprs = builder.build();
 
-        return createArrayLitExpr(sort, entryExprs, elseExpr);
+        checkState(constInterp.getNumArgs() == 1);
+        var elseExpr = transform(constInterp.getArgs()[0], model, vars);
+
+        if (funcDecl.getRange() instanceof ArraySort sort) {
+            return createArrayLitExpr(sort, entryExprs, elseExpr);
+        } else {
+            return createIndexValueArrayLitExpr(
+                    transformSort(funcDecl.getDomain()[0]),
+                    transformSort(funcDecl.getRange()),
+                    entryExprs,
+                    elseExpr);
+        }
     }
 
     private Expr<?> createArrayLitExpr(

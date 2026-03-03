@@ -1,0 +1,1269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+<net id="MAPKbis-PT-5310" type="http://www.pnml.org/version-2009/grammar/ptnet">
+<page id="page0"><name><text>DefaultPage</text></name><place id="AKT_0"><name><text>AKT=0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="AKT_equals_1"><name><text>AKT_equals_1</text></name></place>
+<place id="AP1_equals_0"><name><text>AP1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="AP1_equals_1"><name><text>AP1_equals_1</text></name></place>
+<place id="ATF2_equals_0"><name><text>ATF2_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="ATF2_equals_1"><name><text>ATF2_equals_1</text></name></place>
+<place id="ATM_equals_0"><name><text>ATM_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="ATM_equals_1"><name><text>ATM_equals_1</text></name></place>
+<place id="Apoptosis_equals_0"><name><text>Apoptosis_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="Apoptosis_equals_1"><name><text>Apoptosis_equals_1</text></name></place>
+<place id="BCL2_equals_0"><name><text>BCL2_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="BCL2_equals_1"><name><text>BCL2_equals_1</text></name></place>
+<place id="CREB_equals_0"><name><text>CREB_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="CREB_equals_1"><name><text>CREB_equals_1</text></name></place>
+<place id="DNA_damage_equals_0"><name><text>DNA_damage_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="DNA_damage_equals_1"><name><text>DNA_damage_equals_1</text></name></place>
+<place id="DUSP1_equals_0"><name><text>DUSP1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="DUSP1_equals_1"><name><text>DUSP1_equals_1</text></name></place>
+<place id="EGFR_equals_0"><name><text>EGFR_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="EGFR_equals_1"><name><text>EGFR_equals_1</text></name></place>
+<place id="EGFR_stimulus_equals_0"><name><text>EGFR_stimulus_equals_0</text></name></place>
+<place id="EGFR_stimulus_equals_1"><name><text>EGFR_stimulus_equals_1</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="ELK1_equals_0"><name><text>ELK1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="ELK1_equals_1"><name><text>ELK1_equals_1</text></name></place>
+<place id="ERK_equals_0"><name><text>ERK_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="ERK_equals_1"><name><text>ERK_equals_1</text></name></place>
+<place id="FGFR3_equals_0"><name><text>FGFR3_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="FGFR3_equals_1"><name><text>FGFR3_equals_1</text></name></place>
+<place id="FGFR3_stimulus_equals_0"><name><text>FGFR3_stimulus_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="FGFR3_stimulus_equals_1"><name><text>FGFR3_stimulus_equals_1</text></name></place>
+<place id="FOS_equals_0"><name><text>FOS_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="FOS_equals_1"><name><text>FOS_equals_1</text></name></place>
+<place id="FOXO3_equals_0"><name><text>FOXO3_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="FOXO3_equals_1"><name><text>FOXO3_equals_1</text></name></place>
+<place id="FRS2_equals_0"><name><text>FRS2_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="FRS2_equals_1"><name><text>FRS2_equals_1</text></name></place>
+<place id="GAB1_equals_0"><name><text>GAB1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="GAB1_equals_1"><name><text>GAB1_equals_1</text></name></place>
+<place id="GADD45_equals_0"><name><text>GADD45_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="GADD45_equals_1"><name><text>GADD45_equals_1</text></name></place>
+<place id="GRB2_equals_0"><name><text>GRB2_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="GRB2_equals_1"><name><text>GRB2_equals_1</text></name></place>
+<place id="Growth_Arrest_equals_0"><name><text>Growth_Arrest_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="Growth_Arrest_equals_1"><name><text>Growth_Arrest_equals_1</text></name></place>
+<place id="JNK_equals_0"><name><text>JNK_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="JNK_equals_1"><name><text>JNK_equals_1</text></name></place>
+<place id="JUN_equals_0"><name><text>JUN_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="JUN_equals_1"><name><text>JUN_equals_1</text></name></place>
+<place id="MAP3K1_3_equals_0"><name><text>MAP3K1_3_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MAP3K1_3_equals_1"><name><text>MAP3K1_3_equals_1</text></name></place>
+<place id="MAX_equals_0"><name><text>MAX_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MAX_equals_1"><name><text>MAX_equals_1</text></name></place>
+<place id="MDM2_equals_0"><name><text>MDM2_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MDM2_equals_1"><name><text>MDM2_equals_1</text></name></place>
+<place id="MEK1_2_equals_0"><name><text>MEK1_2_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MEK1_2_equals_1"><name><text>MEK1_2_equals_1</text></name></place>
+<place id="MSK_equals_0"><name><text>MSK_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MSK_equals_1"><name><text>MSK_equals_1</text></name></place>
+<place id="MTK1_equals_0"><name><text>MTK1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MTK1_equals_1"><name><text>MTK1_equals_1</text></name></place>
+<place id="MYC_equals_0"><name><text>MYC_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="MYC_equals_1"><name><text>MYC_equals_1</text></name></place>
+<place id="PDK1_equals_0"><name><text>PDK1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="PDK1_equals_1"><name><text>PDK1_equals_1</text></name></place>
+<place id="PI3K_equals_0"><name><text>PI3K_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="PI3K_equals_1"><name><text>PI3K_equals_1</text></name></place>
+<place id="PKC_equals_0"><name><text>PKC_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="PKC_equals_1"><name><text>PKC_equals_1</text></name></place>
+<place id="PLCG_equals_0"><name><text>PLCG_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="PLCG_equals_1"><name><text>PLCG_equals_1</text></name></place>
+<place id="PPP2CA_equals_0"><name><text>PPP2CA_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="PPP2CA_equals_1"><name><text>PPP2CA_equals_1</text></name></place>
+<place id="PTEN_equals_0"><name><text>PTEN_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="PTEN_equals_1"><name><text>PTEN_equals_1</text></name></place>
+<place id="Proliferation_equals_0"><name><text>Proliferation_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="Proliferation_equals_1"><name><text>Proliferation_equals_1</text></name></place>
+<place id="RAF_equals_0"><name><text>RAF_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="RAF_equals_1"><name><text>RAF_equals_1</text></name></place>
+<place id="RAS_equals_0"><name><text>RAS_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="RAS_equals_1"><name><text>RAS_equals_1</text></name></place>
+<place id="RSK_equals_0"><name><text>RSK_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="RSK_equals_1"><name><text>RSK_equals_1</text></name></place>
+<place id="SMAD_equals_0"><name><text>SMAD_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="SMAD_equals_1"><name><text>SMAD_equals_1</text></name></place>
+<place id="SOS_equals_0"><name><text>SOS_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="SOS_equals_1"><name><text>SOS_equals_1</text></name></place>
+<place id="SPRY_equals_0"><name><text>SPRY_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="SPRY_equals_1"><name><text>SPRY_equals_1</text></name></place>
+<place id="TAK1_equals_0"><name><text>TAK1_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="TAK1_equals_1"><name><text>TAK1_equals_1</text></name></place>
+<place id="TAOK_equals_0"><name><text>TAOK_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="TAOK_equals_1"><name><text>TAOK_equals_1</text></name></place>
+<place id="TGFBR_equals_0"><name><text>TGFBR_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="TGFBR_equals_1"><name><text>TGFBR_equals_1</text></name></place>
+<place id="TGFBR_stimulus_equals_0"><name><text>TGFBR_stimulus_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="TGFBR_stimulus_equals_1"><name><text>TGFBR_stimulus_equals_1</text></name></place>
+<place id="p14_equals_0"><name><text>p14_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="p14_equals_1"><name><text>p14_equals_1</text></name></place>
+<place id="p21_equals_0"><name><text>p21_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="p21_equals_1"><name><text>p21_equals_1</text></name></place>
+<place id="p38_equals_0"><name><text>p38_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="p38_equals_1"><name><text>p38_equals_1</text></name></place>
+<place id="p53_equals_0"><name><text>p53_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="p53_equals_1"><name><text>p53_equals_1</text></name></place>
+<place id="p70_equals_0"><name><text>p70_equals_0</text></name><initialMarking><text>1</text></initialMarking></place>
+<place id="p70_equals_1"><name><text>p70_equals_1</text></name></place>
+<transition id="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0"><name><text>AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0</text></name></transition>
+<transition id="AKT_equals_1_to_AKT_equals_0_when_PDK1_equals_0"><name><text>AKT_equals_1_to_AKT_equals_0_when_PDK1_equals_0</text></name></transition>
+<transition id="AKT_equals_1_to_AKT_equals_0_when_PTEN_equals_1"><name><text>AKT_equals_1_to_AKT_equals_0_when_PTEN_equals_1</text></name></transition>
+<transition id="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1"><name><text>AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1</text></name></transition>
+<transition id="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1"><name><text>AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1</text></name></transition>
+<transition id="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0"><name><text>AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0</text></name></transition>
+<transition id="AP1_equals_1_to_AP1_equals_0_when_JUN_equals_0"><name><text>AP1_equals_1_to_AP1_equals_0_when_JUN_equals_0</text></name></transition>
+<transition id="ATF2_equals_0_to_ATF2_equals_1_when_JNK_equals_1"><name><text>ATF2_equals_0_to_ATF2_equals_1_when_JNK_equals_1</text></name></transition>
+<transition id="ATF2_equals_0_to_ATF2_equals_1_when_p38_equals_1"><name><text>ATF2_equals_0_to_ATF2_equals_1_when_p38_equals_1</text></name></transition>
+<transition id="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0"><name><text>ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0</text></name></transition>
+<transition id="ATM_equals_0_to_ATM_equals_1_when_DNA_damage_equals_1"><name><text>ATM_equals_0_to_ATM_equals_1_when_DNA_damage_equals_1</text></name></transition>
+<transition id="ATM_equals_1_to_ATM_equals_0_when_DNA_damage_equals_0"><name><text>ATM_equals_1_to_ATM_equals_0_when_DNA_damage_equals_0</text></name></transition>
+<transition id="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1"><name><text>Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1</text></name></transition>
+<transition id="Apoptosis_equals_1_to_Apoptosis_equals_0_when_BCL2_equals_1"><name><text>Apoptosis_equals_1_to_Apoptosis_equals_0_when_BCL2_equals_1</text></name></transition>
+<transition id="Apoptosis_equals_1_to_Apoptosis_equals_0_when_ERK_equals_1"><name><text>Apoptosis_equals_1_to_Apoptosis_equals_0_when_ERK_equals_1</text></name></transition>
+<transition id="Apoptosis_equals_1_to_Apoptosis_equals_0_when_FOXO3_equals_0"><name><text>Apoptosis_equals_1_to_Apoptosis_equals_0_when_FOXO3_equals_0</text></name></transition>
+<transition id="Apoptosis_equals_1_to_Apoptosis_equals_0_when_p53_equals_0"><name><text>Apoptosis_equals_1_to_Apoptosis_equals_0_when_p53_equals_0</text></name></transition>
+<transition id="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1"><name><text>BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1</text></name></transition>
+<transition id="BCL2_equals_1_to_BCL2_equals_0_when_AKT_equals_0"><name><text>BCL2_equals_1_to_BCL2_equals_0_when_AKT_equals_0</text></name></transition>
+<transition id="BCL2_equals_1_to_BCL2_equals_0_when_CREB_equals_0"><name><text>BCL2_equals_1_to_BCL2_equals_0_when_CREB_equals_0</text></name></transition>
+<transition id="CREB_equals_0_to_CREB_equals_1_when_MSK_equals_1"><name><text>CREB_equals_0_to_CREB_equals_1_when_MSK_equals_1</text></name></transition>
+<transition id="CREB_equals_1_to_CREB_equals_0_when_MSK_equals_0"><name><text>CREB_equals_1_to_CREB_equals_0_when_MSK_equals_0</text></name></transition>
+<transition id="DUSP1_equals_0_to_DUSP1_equals_1_when_CREB_equals_1"><name><text>DUSP1_equals_0_to_DUSP1_equals_1_when_CREB_equals_1</text></name></transition>
+<transition id="DUSP1_equals_1_to_DUSP1_equals_0_when_CREB_equals_0"><name><text>DUSP1_equals_1_to_DUSP1_equals_0_when_CREB_equals_0</text></name></transition>
+<transition id="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1"><name><text>EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1</text></name></transition>
+<transition id="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"><name><text>EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0</text></name></transition>
+<transition id="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0"><name><text>EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0</text></name></transition>
+<transition id="EGFR_equals_1_to_EGFR_equals_0_when_GRB2_equals_1"><name><text>EGFR_equals_1_to_EGFR_equals_0_when_GRB2_equals_1</text></name></transition>
+<transition id="EGFR_equals_1_to_EGFR_equals_0_when_PKC_equals_1"><name><text>EGFR_equals_1_to_EGFR_equals_0_when_PKC_equals_1</text></name></transition>
+<transition id="ELK1_equals_0_to_ELK1_equals_1_when_ERK_equals_1"><name><text>ELK1_equals_0_to_ELK1_equals_1_when_ERK_equals_1</text></name></transition>
+<transition id="ELK1_equals_0_to_ELK1_equals_1_when_JNK_equals_1"><name><text>ELK1_equals_0_to_ELK1_equals_1_when_JNK_equals_1</text></name></transition>
+<transition id="ELK1_equals_0_to_ELK1_equals_1_when_p38_equals_1"><name><text>ELK1_equals_0_to_ELK1_equals_1_when_p38_equals_1</text></name></transition>
+<transition id="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0"><name><text>ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0</text></name></transition>
+<transition id="ERK_equals_0_to_ERK_equals_1_when_MEK1_2_equals_1"><name><text>ERK_equals_0_to_ERK_equals_1_when_MEK1_2_equals_1</text></name></transition>
+<transition id="ERK_equals_1_to_ERK_equals_0_when_MEK1_2_equals_0"><name><text>ERK_equals_1_to_ERK_equals_0_when_MEK1_2_equals_0</text></name></transition>
+<transition id="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"><name><text>FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0</text></name></transition>
+<transition id="FGFR3_equals_1_to_FGFR3_equals_0_when_FGFR3_stimulus_equals_0"><name><text>FGFR3_equals_1_to_FGFR3_equals_0_when_FGFR3_stimulus_equals_0</text></name></transition>
+<transition id="FGFR3_equals_1_to_FGFR3_equals_0_when_GRB2_equals_1"><name><text>FGFR3_equals_1_to_FGFR3_equals_0_when_GRB2_equals_1</text></name></transition>
+<transition id="FGFR3_equals_1_to_FGFR3_equals_0_when_PKC_equals_1"><name><text>FGFR3_equals_1_to_FGFR3_equals_0_when_PKC_equals_1</text></name></transition>
+<transition id="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1"><name><text>FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1</text></name></transition>
+<transition id="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1"><name><text>FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1</text></name></transition>
+<transition id="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0"><name><text>FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0</text></name></transition>
+<transition id="FOS_equals_1_to_FOS_equals_0_when_ERK_equals_0"><name><text>FOS_equals_1_to_FOS_equals_0_when_ERK_equals_0</text></name></transition>
+<transition id="FOS_equals_1_to_FOS_equals_0_when_RSK_equals_0"><name><text>FOS_equals_1_to_FOS_equals_0_when_RSK_equals_0</text></name></transition>
+<transition id="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1"><name><text>FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1</text></name></transition>
+<transition id="FOXO3_equals_1_to_FOXO3_equals_0_when_AKT_equals_1"><name><text>FOXO3_equals_1_to_FOXO3_equals_0_when_AKT_equals_1</text></name></transition>
+<transition id="FOXO3_equals_1_to_FOXO3_equals_0_when_JNK_equals_0"><name><text>FOXO3_equals_1_to_FOXO3_equals_0_when_JNK_equals_0</text></name></transition>
+<transition id="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0"><name><text>FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0</text></name></transition>
+<transition id="FRS2_equals_1_to_FRS2_equals_0_when_FGFR3_equals_0"><name><text>FRS2_equals_1_to_FRS2_equals_0_when_FGFR3_equals_0</text></name></transition>
+<transition id="FRS2_equals_1_to_FRS2_equals_0_when_GRB2_equals_1"><name><text>FRS2_equals_1_to_FRS2_equals_0_when_GRB2_equals_1</text></name></transition>
+<transition id="FRS2_equals_1_to_FRS2_equals_0_when_SPRY_equals_1"><name><text>FRS2_equals_1_to_FRS2_equals_0_when_SPRY_equals_1</text></name></transition>
+<transition id="GAB1_equals_0_to_GAB1_equals_1_when_GRB2_equals_1"><name><text>GAB1_equals_0_to_GAB1_equals_1_when_GRB2_equals_1</text></name></transition>
+<transition id="GAB1_equals_0_to_GAB1_equals_1_when_PI3K_equals_1"><name><text>GAB1_equals_0_to_GAB1_equals_1_when_PI3K_equals_1</text></name></transition>
+<transition id="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0"><name><text>GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0</text></name></transition>
+<transition id="GADD45_equals_0_to_GADD45_equals_1_when_SMAD_equals_1"><name><text>GADD45_equals_0_to_GADD45_equals_1_when_SMAD_equals_1</text></name></transition>
+<transition id="GADD45_equals_0_to_GADD45_equals_1_when_p53_equals_1"><name><text>GADD45_equals_0_to_GADD45_equals_1_when_p53_equals_1</text></name></transition>
+<transition id="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0"><name><text>GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0</text></name></transition>
+<transition id="GRB2_equals_0_to_GRB2_equals_1_when_EGFR_equals_1"><name><text>GRB2_equals_0_to_GRB2_equals_1_when_EGFR_equals_1</text></name></transition>
+<transition id="GRB2_equals_0_to_GRB2_equals_1_when_FRS2_equals_1"><name><text>GRB2_equals_0_to_GRB2_equals_1_when_FRS2_equals_1</text></name></transition>
+<transition id="GRB2_equals_0_to_GRB2_equals_1_when_TGFBR_equals_1"><name><text>GRB2_equals_0_to_GRB2_equals_1_when_TGFBR_equals_1</text></name></transition>
+<transition id="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0"><name><text>GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0</text></name></transition>
+<transition id="Growth_Arrest_equals_0_to_Growth_Arrest_equals_1_when_p21_equals_1"><name><text>Growth_Arrest_equals_0_to_Growth_Arrest_equals_1_when_p21_equals_1</text></name></transition>
+<transition id="Growth_Arrest_equals_1_to_Growth_Arrest_equals_0_when_p21_equals_0"><name><text>Growth_Arrest_equals_1_to_Growth_Arrest_equals_0_when_p21_equals_0</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1</text></name></transition>
+<transition id="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"><name><text>JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1</text></name></transition>
+<transition id="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"><name><text>JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"><name><text>JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0</text></name></transition>
+<transition id="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"><name><text>JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"><name><text>JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"><name><text>JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="JUN_equals_0_to_JUN_equals_1_when_JNK_equals_1"><name><text>JUN_equals_0_to_JUN_equals_1_when_JNK_equals_1</text></name></transition>
+<transition id="JUN_equals_1_to_JUN_equals_0_when_JNK_equals_0"><name><text>JUN_equals_1_to_JUN_equals_0_when_JNK_equals_0</text></name></transition>
+<transition id="MAP3K1_3_equals_0_to_MAP3K1_3_equals_1_when_RAS_equals_1"><name><text>MAP3K1_3_equals_0_to_MAP3K1_3_equals_1_when_RAS_equals_1</text></name></transition>
+<transition id="MAP3K1_3_equals_1_to_MAP3K1_3_equals_0_when_RAS_equals_0"><name><text>MAP3K1_3_equals_1_to_MAP3K1_3_equals_0_when_RAS_equals_0</text></name></transition>
+<transition id="MAX_equals_0_to_MAX_equals_1_when_p38_equals_1"><name><text>MAX_equals_0_to_MAX_equals_1_when_p38_equals_1</text></name></transition>
+<transition id="MAX_equals_1_to_MAX_equals_0_when_p38_equals_0"><name><text>MAX_equals_1_to_MAX_equals_0_when_p38_equals_0</text></name></transition>
+<transition id="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1"><name><text>MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1</text></name></transition>
+<transition id="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0"><name><text>MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0</text></name></transition>
+<transition id="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0"><name><text>MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0</text></name></transition>
+<transition id="MDM2_equals_1_to_MDM2_equals_0_when_p14_equals_1"><name><text>MDM2_equals_1_to_MDM2_equals_0_when_p14_equals_1</text></name></transition>
+<transition id="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1"><name><text>MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1</text></name></transition>
+<transition id="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0"><name><text>MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0</text></name></transition>
+<transition id="MEK1_2_equals_1_to_MEK1_2_equals_0_when_AP1_equals_1"><name><text>MEK1_2_equals_1_to_MEK1_2_equals_0_when_AP1_equals_1</text></name></transition>
+<transition id="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0"><name><text>MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0</text></name></transition>
+<transition id="MEK1_2_equals_1_to_MEK1_2_equals_0_when_PPP2CA_equals_1"><name><text>MEK1_2_equals_1_to_MEK1_2_equals_0_when_PPP2CA_equals_1</text></name></transition>
+<transition id="MSK_equals_0_to_MSK_equals_1_when_ERK_equals_1"><name><text>MSK_equals_0_to_MSK_equals_1_when_ERK_equals_1</text></name></transition>
+<transition id="MSK_equals_0_to_MSK_equals_1_when_p38_equals_1"><name><text>MSK_equals_0_to_MSK_equals_1_when_p38_equals_1</text></name></transition>
+<transition id="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0"><name><text>MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0</text></name></transition>
+<transition id="MTK1_equals_0_to_MTK1_equals_1_when_GADD45_equals_1"><name><text>MTK1_equals_0_to_MTK1_equals_1_when_GADD45_equals_1</text></name></transition>
+<transition id="MTK1_equals_1_to_MTK1_equals_0_when_GADD45_equals_0"><name><text>MTK1_equals_1_to_MTK1_equals_0_when_GADD45_equals_0</text></name></transition>
+<transition id="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1"><name><text>MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1</text></name></transition>
+<transition id="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1"><name><text>MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1</text></name></transition>
+<transition id="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0"><name><text>MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0</text></name></transition>
+<transition id="MYC_equals_1_to_MYC_equals_0_when_MSK_equals_0"><name><text>MYC_equals_1_to_MYC_equals_0_when_MSK_equals_0</text></name></transition>
+<transition id="PDK1_equals_0_to_PDK1_equals_1_when_PI3K_equals_1"><name><text>PDK1_equals_0_to_PDK1_equals_1_when_PI3K_equals_1</text></name></transition>
+<transition id="PDK1_equals_1_to_PDK1_equals_0_when_PI3K_equals_0"><name><text>PDK1_equals_1_to_PDK1_equals_0_when_PI3K_equals_0</text></name></transition>
+<transition id="PI3K_equals_0_to_PI3K_equals_1_when_GAB1_equals_1"><name><text>PI3K_equals_0_to_PI3K_equals_1_when_GAB1_equals_1</text></name></transition>
+<transition id="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1"><name><text>PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1</text></name></transition>
+<transition id="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0"><name><text>PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0</text></name></transition>
+<transition id="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0"><name><text>PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0</text></name></transition>
+<transition id="PKC_equals_0_to_PKC_equals_1_when_PLCG_equals_1"><name><text>PKC_equals_0_to_PKC_equals_1_when_PLCG_equals_1</text></name></transition>
+<transition id="PKC_equals_1_to_PKC_equals_0_when_PLCG_equals_0"><name><text>PKC_equals_1_to_PKC_equals_0_when_PLCG_equals_0</text></name></transition>
+<transition id="PLCG_equals_0_to_PLCG_equals_1_when_EGFR_equals_1"><name><text>PLCG_equals_0_to_PLCG_equals_1_when_EGFR_equals_1</text></name></transition>
+<transition id="PLCG_equals_0_to_PLCG_equals_1_when_FGFR3_equals_1"><name><text>PLCG_equals_0_to_PLCG_equals_1_when_FGFR3_equals_1</text></name></transition>
+<transition id="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0"><name><text>PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0</text></name></transition>
+<transition id="PPP2CA_equals_0_to_PPP2CA_equals_1_when_p38_equals_1"><name><text>PPP2CA_equals_0_to_PPP2CA_equals_1_when_p38_equals_1</text></name></transition>
+<transition id="PPP2CA_equals_1_to_PPP2CA_equals_0_when_p38_equals_0"><name><text>PPP2CA_equals_1_to_PPP2CA_equals_0_when_p38_equals_0</text></name></transition>
+<transition id="PTEN_equals_0_to_PTEN_equals_1_when_p53_equals_1"><name><text>PTEN_equals_0_to_PTEN_equals_1_when_p53_equals_1</text></name></transition>
+<transition id="PTEN_equals_1_to_PTEN_equals_0_when_p53_equals_0"><name><text>PTEN_equals_1_to_PTEN_equals_0_when_p53_equals_0</text></name></transition>
+<transition id="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1"><name><text>Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1</text></name></transition>
+<transition id="Proliferation_equals_1_to_Proliferation_equals_0_when_MYC_equals_0"><name><text>Proliferation_equals_1_to_Proliferation_equals_0_when_MYC_equals_0</text></name></transition>
+<transition id="Proliferation_equals_1_to_Proliferation_equals_0_when_p21_equals_1"><name><text>Proliferation_equals_1_to_Proliferation_equals_0_when_p21_equals_1</text></name></transition>
+<transition id="Proliferation_equals_1_to_Proliferation_equals_0_when_p70_equals_0"><name><text>Proliferation_equals_1_to_Proliferation_equals_0_when_p70_equals_0</text></name></transition>
+<transition id="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1"><name><text>RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1</text></name></transition>
+<transition id="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1"><name><text>RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1</text></name></transition>
+<transition id="RAF_equals_1_to_RAF_equals_0_when_AKT_equals_1"><name><text>RAF_equals_1_to_RAF_equals_0_when_AKT_equals_1</text></name></transition>
+<transition id="RAF_equals_1_to_RAF_equals_0_when_ERK_equals_1"><name><text>RAF_equals_1_to_RAF_equals_0_when_ERK_equals_1</text></name></transition>
+<transition id="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0"><name><text>RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0</text></name></transition>
+<transition id="RAS_equals_0_to_RAS_equals_1_when_PLCG_equals_1"><name><text>RAS_equals_0_to_RAS_equals_1_when_PLCG_equals_1</text></name></transition>
+<transition id="RAS_equals_0_to_RAS_equals_1_when_SOS_equals_1"><name><text>RAS_equals_0_to_RAS_equals_1_when_SOS_equals_1</text></name></transition>
+<transition id="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0"><name><text>RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0</text></name></transition>
+<transition id="RSK_equals_0_to_RSK_equals_1_when_ERK_equals_1"><name><text>RSK_equals_0_to_RSK_equals_1_when_ERK_equals_1</text></name></transition>
+<transition id="RSK_equals_1_to_RSK_equals_0_when_ERK_equals_0"><name><text>RSK_equals_1_to_RSK_equals_0_when_ERK_equals_0</text></name></transition>
+<transition id="SMAD_equals_0_to_SMAD_equals_1_when_TGFBR_equals_1"><name><text>SMAD_equals_0_to_SMAD_equals_1_when_TGFBR_equals_1</text></name></transition>
+<transition id="SMAD_equals_1_to_SMAD_equals_0_when_TGFBR_equals_0"><name><text>SMAD_equals_1_to_SMAD_equals_0_when_TGFBR_equals_0</text></name></transition>
+<transition id="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0"><name><text>SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0</text></name></transition>
+<transition id="SOS_equals_1_to_SOS_equals_0_when_GRB2_equals_0"><name><text>SOS_equals_1_to_SOS_equals_0_when_GRB2_equals_0</text></name></transition>
+<transition id="SOS_equals_1_to_SOS_equals_0_when_RSK_equals_1"><name><text>SOS_equals_1_to_SOS_equals_0_when_RSK_equals_1</text></name></transition>
+<transition id="SPRY_equals_0_to_SPRY_equals_1_when_ERK_equals_1"><name><text>SPRY_equals_0_to_SPRY_equals_1_when_ERK_equals_1</text></name></transition>
+<transition id="SPRY_equals_1_to_SPRY_equals_0_when_ERK_equals_0"><name><text>SPRY_equals_1_to_SPRY_equals_0_when_ERK_equals_0</text></name></transition>
+<transition id="TAK1_equals_0_to_TAK1_equals_1_when_TGFBR_equals_1"><name><text>TAK1_equals_0_to_TAK1_equals_1_when_TGFBR_equals_1</text></name></transition>
+<transition id="TAK1_equals_1_to_TAK1_equals_0_when_TGFBR_equals_0"><name><text>TAK1_equals_1_to_TAK1_equals_0_when_TGFBR_equals_0</text></name></transition>
+<transition id="TAOK_equals_0_to_TAOK_equals_1_when_ATM_equals_1"><name><text>TAOK_equals_0_to_TAOK_equals_1_when_ATM_equals_1</text></name></transition>
+<transition id="TAOK_equals_1_to_TAOK_equals_0_when_ATM_equals_0"><name><text>TAOK_equals_1_to_TAOK_equals_0_when_ATM_equals_0</text></name></transition>
+<transition id="TGFBR_equals_0_to_TGFBR_equals_1_when_TGFBR_stimulus_equals_1"><name><text>TGFBR_equals_0_to_TGFBR_equals_1_when_TGFBR_stimulus_equals_1</text></name></transition>
+<transition id="TGFBR_equals_1_to_TGFBR_equals_0_when_TGFBR_stimulus_equals_0"><name><text>TGFBR_equals_1_to_TGFBR_equals_0_when_TGFBR_stimulus_equals_0</text></name></transition>
+<transition id="p14_equals_0_to_p14_equals_1_when_MYC_equals_1"><name><text>p14_equals_0_to_p14_equals_1_when_MYC_equals_1</text></name></transition>
+<transition id="p14_equals_1_to_p14_equals_0_when_MYC_equals_0"><name><text>p14_equals_1_to_p14_equals_0_when_MYC_equals_0</text></name></transition>
+<transition id="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1"><name><text>p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1</text></name></transition>
+<transition id="p21_equals_1_to_p21_equals_0_when_AKT_equals_1"><name><text>p21_equals_1_to_p21_equals_0_when_AKT_equals_1</text></name></transition>
+<transition id="p21_equals_1_to_p21_equals_0_when_p53_equals_0"><name><text>p21_equals_1_to_p21_equals_0_when_p53_equals_0</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1</text></name></transition>
+<transition id="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"><name><text>p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1</text></name></transition>
+<transition id="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"><name><text>p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"><name><text>p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0</text></name></transition>
+<transition id="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"><name><text>p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"><name><text>p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"><name><text>p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0</text></name></transition>
+<transition id="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1"><name><text>p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1</text></name></transition>
+<transition id="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0"><name><text>p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0</text></name></transition>
+<transition id="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1"><name><text>p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1</text></name></transition>
+<transition id="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1"><name><text>p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1</text></name></transition>
+<transition id="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0"><name><text>p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0</text></name></transition>
+<transition id="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0"><name><text>p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0</text></name></transition>
+<transition id="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1"><name><text>p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1</text></name></transition>
+<transition id="p70_equals_1_to_p70_equals_0_when_ERK_equals_0"><name><text>p70_equals_1_to_p70_equals_0_when_ERK_equals_0</text></name></transition>
+<transition id="p70_equals_1_to_p70_equals_0_when_PDK1_equals_0"><name><text>p70_equals_1_to_p70_equals_0_when_PDK1_equals_0</text></name></transition>
+<arc id="p1_t1" source="AKT_0" target="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0"/>
+<arc id="t1_p2" source="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0" target="AKT_equals_1"/>
+<arc id="p1_t19" source="AKT_0" target="BCL2_equals_1_to_BCL2_equals_0_when_AKT_equals_0"/>
+<arc id="p1_t45" source="AKT_0" target="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1"/>
+<arc id="t1_p64" source="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0" target="PDK1_equals_1"/>
+<arc id="t1_p73" source="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0" target="PTEN_equals_0"/>
+<arc id="p1_t85" source="AKT_0" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1"/>
+<arc id="p1_t87" source="AKT_0" target="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0"/>
+<arc id="p1_t99" source="AKT_0" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1"/>
+<arc id="p1_t101" source="AKT_0" target="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0"/>
+<arc id="p1_t122" source="AKT_0" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1"/>
+<arc id="p1_t123" source="AKT_0" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1"/>
+<arc id="p1_t147" source="AKT_0" target="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1"/>
+<arc id="t2_p1" source="AKT_equals_1_to_AKT_equals_0_when_PDK1_equals_0" target="AKT_0"/>
+<arc id="p2_t2" source="AKT_equals_1" target="AKT_equals_1_to_AKT_equals_0_when_PDK1_equals_0"/>
+<arc id="p2_t3" source="AKT_equals_1" target="AKT_equals_1_to_AKT_equals_0_when_PTEN_equals_1"/>
+<arc id="p2_t18" source="AKT_equals_1" target="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1"/>
+<arc id="p2_t46" source="AKT_equals_1" target="FOXO3_equals_1_to_FOXO3_equals_0_when_AKT_equals_1"/>
+<arc id="t2_p63" source="AKT_equals_1_to_AKT_equals_0_when_PDK1_equals_0" target="PDK1_equals_0"/>
+<arc id="p2_t86" source="AKT_equals_1" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0"/>
+<arc id="p2_t100" source="AKT_equals_1" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1"/>
+<arc id="p2_t124" source="AKT_equals_1" target="RAF_equals_1_to_RAF_equals_0_when_AKT_equals_1"/>
+<arc id="p2_t148" source="AKT_equals_1" target="p21_equals_1_to_p21_equals_0_when_AKT_equals_1"/>
+<arc id="t3_p1" source="AKT_equals_1_to_AKT_equals_0_when_PTEN_equals_1" target="AKT_0"/>
+<arc id="p3_t4" source="AP1_equals_0" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1"/>
+<arc id="p3_t5" source="AP1_equals_0" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1"/>
+<arc id="t3_p74" source="AKT_equals_1_to_AKT_equals_0_when_PTEN_equals_1" target="PTEN_equals_1"/>
+<arc id="p3_t89" source="AP1_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1"/>
+<arc id="p3_t90" source="AP1_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0"/>
+<arc id="t4_p4" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1" target="AP1_equals_1"/>
+<arc id="t4_p5" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1" target="ATF2_equals_0"/>
+<arc id="p4_t6" source="AP1_equals_1" target="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0"/>
+<arc id="p4_t7" source="AP1_equals_1" target="AP1_equals_1_to_AP1_equals_0_when_JUN_equals_0"/>
+<arc id="t4_p32" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1" target="FOS_equals_1"/>
+<arc id="t4_p48" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1" target="JUN_equals_1"/>
+<arc id="p4_t91" source="AP1_equals_1" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_AP1_equals_1"/>
+<arc id="t5_p4" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1" target="AP1_equals_1"/>
+<arc id="p5_t4" source="ATF2_equals_0" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1"/>
+<arc id="t5_p6" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1" target="ATF2_equals_1"/>
+<arc id="p5_t6" source="ATF2_equals_0" target="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0"/>
+<arc id="p5_t8" source="ATF2_equals_0" target="ATF2_equals_0_to_ATF2_equals_1_when_JNK_equals_1"/>
+<arc id="p5_t9" source="ATF2_equals_0" target="ATF2_equals_0_to_ATF2_equals_1_when_p38_equals_1"/>
+<arc id="t5_p48" source="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1" target="JUN_equals_1"/>
+<arc id="t6_p3" source="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0" target="AP1_equals_0"/>
+<arc id="t6_p5" source="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0" target="ATF2_equals_0"/>
+<arc id="p6_t5" source="ATF2_equals_1" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1"/>
+<arc id="p6_t10" source="ATF2_equals_1" target="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0"/>
+<arc id="t6_p31" source="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0" target="FOS_equals_0"/>
+<arc id="t7_p3" source="AP1_equals_1_to_AP1_equals_0_when_JUN_equals_0" target="AP1_equals_0"/>
+<arc id="p7_t11" source="ATM_equals_0" target="ATM_equals_0_to_ATM_equals_1_when_DNA_damage_equals_1"/>
+<arc id="t7_p47" source="AP1_equals_1_to_AP1_equals_0_when_JUN_equals_0" target="JUN_equals_0"/>
+<arc id="p7_t142" source="ATM_equals_0" target="TAOK_equals_1_to_TAOK_equals_0_when_ATM_equals_0"/>
+<arc id="p7_t165" source="ATM_equals_0" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1"/>
+<arc id="p7_t168" source="ATM_equals_0" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1"/>
+<arc id="p7_t169" source="ATM_equals_0" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0"/>
+<arc id="t8_p6" source="ATF2_equals_0_to_ATF2_equals_1_when_JNK_equals_1" target="ATF2_equals_1"/>
+<arc id="p8_t12" source="ATM_equals_1" target="ATM_equals_1_to_ATM_equals_0_when_DNA_damage_equals_0"/>
+<arc id="t8_p46" source="ATF2_equals_0_to_ATF2_equals_1_when_JNK_equals_1" target="JNK_equals_1"/>
+<arc id="p8_t141" source="ATM_equals_1" target="TAOK_equals_0_to_TAOK_equals_1_when_ATM_equals_1"/>
+<arc id="p8_t166" source="ATM_equals_1" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0"/>
+<arc id="p8_t167" source="ATM_equals_1" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1"/>
+<arc id="p8_t170" source="ATM_equals_1" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0"/>
+<arc id="t9_p6" source="ATF2_equals_0_to_ATF2_equals_1_when_p38_equals_1" target="ATF2_equals_1"/>
+<arc id="p9_t13" source="Apoptosis_equals_0" target="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1"/>
+<arc id="t9_p102" source="ATF2_equals_0_to_ATF2_equals_1_when_p38_equals_1" target="p38_equals_1"/>
+<arc id="t10_p5" source="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0" target="ATF2_equals_0"/>
+<arc id="p10_t14" source="Apoptosis_equals_1" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_BCL2_equals_1"/>
+<arc id="p10_t15" source="Apoptosis_equals_1" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_ERK_equals_1"/>
+<arc id="p10_t16" source="Apoptosis_equals_1" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_FOXO3_equals_0"/>
+<arc id="p10_t17" source="Apoptosis_equals_1" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_p53_equals_0"/>
+<arc id="t10_p45" source="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0" target="JNK_equals_0"/>
+<arc id="t10_p101" source="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0" target="p38_equals_0"/>
+<arc id="t11_p8" source="ATM_equals_0_to_ATM_equals_1_when_DNA_damage_equals_1" target="ATM_equals_1"/>
+<arc id="p11_t13" source="BCL2_equals_0" target="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1"/>
+<arc id="t11_p16" source="ATM_equals_0_to_ATM_equals_1_when_DNA_damage_equals_1" target="DNA_damage_equals_1"/>
+<arc id="p11_t18" source="BCL2_equals_0" target="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1"/>
+<arc id="t12_p7" source="ATM_equals_1_to_ATM_equals_0_when_DNA_damage_equals_0" target="ATM_equals_0"/>
+<arc id="p12_t14" source="BCL2_equals_1" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_BCL2_equals_1"/>
+<arc id="t12_p15" source="ATM_equals_1_to_ATM_equals_0_when_DNA_damage_equals_0" target="DNA_damage_equals_0"/>
+<arc id="p12_t19" source="BCL2_equals_1" target="BCL2_equals_1_to_BCL2_equals_0_when_AKT_equals_0"/>
+<arc id="p12_t20" source="BCL2_equals_1" target="BCL2_equals_1_to_BCL2_equals_0_when_CREB_equals_0"/>
+<arc id="t13_p10" source="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1" target="Apoptosis_equals_1"/>
+<arc id="t13_p11" source="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1" target="BCL2_equals_0"/>
+<arc id="p13_t20" source="CREB_equals_0" target="BCL2_equals_1_to_BCL2_equals_0_when_CREB_equals_0"/>
+<arc id="p13_t21" source="CREB_equals_0" target="CREB_equals_0_to_CREB_equals_1_when_MSK_equals_1"/>
+<arc id="p13_t24" source="CREB_equals_0" target="DUSP1_equals_1_to_DUSP1_equals_0_when_CREB_equals_0"/>
+<arc id="t13_p25" source="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1" target="ERK_equals_0"/>
+<arc id="t13_p34" source="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1" target="FOXO3_equals_1"/>
+<arc id="p13_t40" source="CREB_equals_0" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="p13_t42" source="CREB_equals_0" target="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0"/>
+<arc id="t13_p104" source="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1" target="p53_equals_1"/>
+<arc id="t14_p9" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_BCL2_equals_1" target="Apoptosis_equals_0"/>
+<arc id="t14_p12" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_BCL2_equals_1" target="BCL2_equals_1"/>
+<arc id="p14_t18" source="CREB_equals_1" target="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1"/>
+<arc id="p14_t22" source="CREB_equals_1" target="CREB_equals_1_to_CREB_equals_0_when_MSK_equals_0"/>
+<arc id="p14_t23" source="CREB_equals_1" target="DUSP1_equals_0_to_DUSP1_equals_1_when_CREB_equals_1"/>
+<arc id="p14_t41" source="CREB_equals_1" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="t15_p9" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_ERK_equals_1" target="Apoptosis_equals_0"/>
+<arc id="p15_t12" source="DNA_damage_equals_0" target="ATM_equals_1_to_ATM_equals_0_when_DNA_damage_equals_0"/>
+<arc id="t15_p26" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_ERK_equals_1" target="ERK_equals_1"/>
+<arc id="t16_p9" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_FOXO3_equals_0" target="Apoptosis_equals_0"/>
+<arc id="p16_t11" source="DNA_damage_equals_1" target="ATM_equals_0_to_ATM_equals_1_when_DNA_damage_equals_1"/>
+<arc id="t16_p33" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_FOXO3_equals_0" target="FOXO3_equals_0"/>
+<arc id="t17_p9" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_p53_equals_0" target="Apoptosis_equals_0"/>
+<arc id="p17_t23" source="DUSP1_equals_0" target="DUSP1_equals_0_to_DUSP1_equals_1_when_CREB_equals_1"/>
+<arc id="p17_t64" source="DUSP1_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"/>
+<arc id="p17_t65" source="DUSP1_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"/>
+<arc id="p17_t66" source="DUSP1_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"/>
+<arc id="p17_t67" source="DUSP1_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"/>
+<arc id="p17_t74" source="DUSP1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t17_p103" source="Apoptosis_equals_1_to_Apoptosis_equals_0_when_p53_equals_0" target="p53_equals_0"/>
+<arc id="p17_t150" source="DUSP1_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"/>
+<arc id="p17_t151" source="DUSP1_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"/>
+<arc id="p17_t152" source="DUSP1_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"/>
+<arc id="p17_t153" source="DUSP1_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"/>
+<arc id="p17_t160" source="DUSP1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t18_p2" source="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1" target="AKT_equals_1"/>
+<arc id="t18_p12" source="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1" target="BCL2_equals_1"/>
+<arc id="t18_p14" source="BCL2_equals_0_to_BCL2_equals_1_when_AKT_equals_1_and_CREB_equals_1" target="CREB_equals_1"/>
+<arc id="p18_t24" source="DUSP1_equals_1" target="DUSP1_equals_1_to_DUSP1_equals_0_when_CREB_equals_0"/>
+<arc id="p18_t68" source="DUSP1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p18_t69" source="DUSP1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p18_t70" source="DUSP1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p18_t71" source="DUSP1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p18_t72" source="DUSP1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p18_t73" source="DUSP1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="p18_t75" source="DUSP1_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p18_t76" source="DUSP1_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p18_t77" source="DUSP1_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p18_t78" source="DUSP1_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p18_t154" source="DUSP1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p18_t155" source="DUSP1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p18_t156" source="DUSP1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p18_t157" source="DUSP1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p18_t158" source="DUSP1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p18_t159" source="DUSP1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="p18_t161" source="DUSP1_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p18_t162" source="DUSP1_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p18_t163" source="DUSP1_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p18_t164" source="DUSP1_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t19_p1" source="BCL2_equals_1_to_BCL2_equals_0_when_AKT_equals_0" target="AKT_0"/>
+<arc id="t19_p11" source="BCL2_equals_1_to_BCL2_equals_0_when_AKT_equals_0" target="BCL2_equals_0"/>
+<arc id="p19_t25" source="EGFR_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1"/>
+<arc id="p19_t26" source="EGFR_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="p19_t61" source="EGFR_equals_0" target="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0"/>
+<arc id="p19_t113" source="EGFR_equals_0" target="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0"/>
+<arc id="t20_p11" source="BCL2_equals_1_to_BCL2_equals_0_when_CREB_equals_0" target="BCL2_equals_0"/>
+<arc id="t20_p13" source="BCL2_equals_1_to_BCL2_equals_0_when_CREB_equals_0" target="CREB_equals_0"/>
+<arc id="p20_t27" source="EGFR_equals_1" target="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0"/>
+<arc id="p20_t28" source="EGFR_equals_1" target="EGFR_equals_1_to_EGFR_equals_0_when_GRB2_equals_1"/>
+<arc id="p20_t29" source="EGFR_equals_1" target="EGFR_equals_1_to_EGFR_equals_0_when_PKC_equals_1"/>
+<arc id="p20_t58" source="EGFR_equals_1" target="GRB2_equals_0_to_GRB2_equals_1_when_EGFR_equals_1"/>
+<arc id="p20_t111" source="EGFR_equals_1" target="PLCG_equals_0_to_PLCG_equals_1_when_EGFR_equals_1"/>
+<arc id="t21_p14" source="CREB_equals_0_to_CREB_equals_1_when_MSK_equals_1" target="CREB_equals_1"/>
+<arc id="p21_t25" source="EGFR_stimulus_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1"/>
+<arc id="p21_t27" source="EGFR_stimulus_equals_0" target="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0"/>
+<arc id="t21_p58" source="CREB_equals_0_to_CREB_equals_1_when_MSK_equals_1" target="MSK_equals_1"/>
+<arc id="t22_p13" source="CREB_equals_1_to_CREB_equals_0_when_MSK_equals_0" target="CREB_equals_0"/>
+<arc id="p22_t26" source="EGFR_stimulus_equals_1" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="t22_p57" source="CREB_equals_1_to_CREB_equals_0_when_MSK_equals_0" target="MSK_equals_0"/>
+<arc id="t23_p14" source="DUSP1_equals_0_to_DUSP1_equals_1_when_CREB_equals_1" target="CREB_equals_1"/>
+<arc id="t23_p18" source="DUSP1_equals_0_to_DUSP1_equals_1_when_CREB_equals_1" target="DUSP1_equals_1"/>
+<arc id="p23_t30" source="ELK1_equals_0" target="ELK1_equals_0_to_ELK1_equals_1_when_ERK_equals_1"/>
+<arc id="p23_t31" source="ELK1_equals_0" target="ELK1_equals_0_to_ELK1_equals_1_when_JNK_equals_1"/>
+<arc id="p23_t32" source="ELK1_equals_0" target="ELK1_equals_0_to_ELK1_equals_1_when_p38_equals_1"/>
+<arc id="p23_t42" source="ELK1_equals_0" target="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0"/>
+<arc id="t24_p13" source="DUSP1_equals_1_to_DUSP1_equals_0_when_CREB_equals_0" target="CREB_equals_0"/>
+<arc id="t24_p17" source="DUSP1_equals_1_to_DUSP1_equals_0_when_CREB_equals_0" target="DUSP1_equals_0"/>
+<arc id="p24_t33" source="ELK1_equals_1" target="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0"/>
+<arc id="p24_t40" source="ELK1_equals_1" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="p25_t13" source="ERK_equals_0" target="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1"/>
+<arc id="t25_p20" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1" target="EGFR_equals_1"/>
+<arc id="t25_p21" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1" target="EGFR_stimulus_equals_0"/>
+<arc id="p25_t33" source="ERK_equals_0" target="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0"/>
+<arc id="p25_t34" source="ERK_equals_0" target="ERK_equals_0_to_ERK_equals_1_when_MEK1_2_equals_1"/>
+<arc id="t25_p41" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1" target="GRB2_equals_0"/>
+<arc id="p25_t43" source="ERK_equals_0" target="FOS_equals_1_to_FOS_equals_0_when_ERK_equals_0"/>
+<arc id="t25_p67" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1" target="PKC_equals_0"/>
+<arc id="t25_p88" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1" target="SPRY_equals_1"/>
+<arc id="p25_t96" source="ERK_equals_0" target="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0"/>
+<arc id="p25_t122" source="ERK_equals_0" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1"/>
+<arc id="p25_t123" source="ERK_equals_0" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1"/>
+<arc id="p25_t131" source="ERK_equals_0" target="RSK_equals_1_to_RSK_equals_0_when_ERK_equals_0"/>
+<arc id="p25_t138" source="ERK_equals_0" target="SPRY_equals_1_to_SPRY_equals_0_when_ERK_equals_0"/>
+<arc id="p25_t172" source="ERK_equals_0" target="p70_equals_1_to_p70_equals_0_when_ERK_equals_0"/>
+<arc id="p26_t15" source="ERK_equals_1" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_ERK_equals_1"/>
+<arc id="t26_p20" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="EGFR_equals_1"/>
+<arc id="t26_p22" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="EGFR_stimulus_equals_1"/>
+<arc id="p26_t30" source="ERK_equals_1" target="ELK1_equals_0_to_ELK1_equals_1_when_ERK_equals_1"/>
+<arc id="p26_t35" source="ERK_equals_1" target="ERK_equals_1_to_ERK_equals_0_when_MEK1_2_equals_0"/>
+<arc id="p26_t40" source="ERK_equals_1" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="t26_p41" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="GRB2_equals_0"/>
+<arc id="p26_t41" source="ERK_equals_1" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="t26_p67" source="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="PKC_equals_0"/>
+<arc id="p26_t94" source="ERK_equals_1" target="MSK_equals_0_to_MSK_equals_1_when_ERK_equals_1"/>
+<arc id="p26_t125" source="ERK_equals_1" target="RAF_equals_1_to_RAF_equals_0_when_ERK_equals_1"/>
+<arc id="p26_t130" source="ERK_equals_1" target="RSK_equals_0_to_RSK_equals_1_when_ERK_equals_1"/>
+<arc id="p26_t137" source="ERK_equals_1" target="SPRY_equals_0_to_SPRY_equals_1_when_ERK_equals_1"/>
+<arc id="p26_t171" source="ERK_equals_1" target="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1"/>
+<arc id="t27_p19" source="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0" target="EGFR_equals_0"/>
+<arc id="t27_p21" source="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0" target="EGFR_stimulus_equals_0"/>
+<arc id="p27_t36" source="FGFR3_equals_0" target="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="p27_t49" source="FGFR3_equals_0" target="FRS2_equals_1_to_FRS2_equals_0_when_FGFR3_equals_0"/>
+<arc id="t27_p87" source="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0" target="SPRY_equals_0"/>
+<arc id="p27_t113" source="FGFR3_equals_0" target="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0"/>
+<arc id="t28_p19" source="EGFR_equals_1_to_EGFR_equals_0_when_GRB2_equals_1" target="EGFR_equals_0"/>
+<arc id="p28_t37" source="FGFR3_equals_1" target="FGFR3_equals_1_to_FGFR3_equals_0_when_FGFR3_stimulus_equals_0"/>
+<arc id="p28_t38" source="FGFR3_equals_1" target="FGFR3_equals_1_to_FGFR3_equals_0_when_GRB2_equals_1"/>
+<arc id="p28_t39" source="FGFR3_equals_1" target="FGFR3_equals_1_to_FGFR3_equals_0_when_PKC_equals_1"/>
+<arc id="t28_p42" source="EGFR_equals_1_to_EGFR_equals_0_when_GRB2_equals_1" target="GRB2_equals_1"/>
+<arc id="p28_t48" source="FGFR3_equals_1" target="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0"/>
+<arc id="p28_t112" source="FGFR3_equals_1" target="PLCG_equals_0_to_PLCG_equals_1_when_FGFR3_equals_1"/>
+<arc id="t29_p19" source="EGFR_equals_1_to_EGFR_equals_0_when_PKC_equals_1" target="EGFR_equals_0"/>
+<arc id="p29_t37" source="FGFR3_stimulus_equals_0" target="FGFR3_equals_1_to_FGFR3_equals_0_when_FGFR3_stimulus_equals_0"/>
+<arc id="t29_p68" source="EGFR_equals_1_to_EGFR_equals_0_when_PKC_equals_1" target="PKC_equals_1"/>
+<arc id="t30_p24" source="ELK1_equals_0_to_ELK1_equals_1_when_ERK_equals_1" target="ELK1_equals_1"/>
+<arc id="t30_p26" source="ELK1_equals_0_to_ELK1_equals_1_when_ERK_equals_1" target="ERK_equals_1"/>
+<arc id="p30_t36" source="FGFR3_stimulus_equals_1" target="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="p31_t6" source="FOS_equals_0" target="AP1_equals_1_to_AP1_equals_0_when_ATF2_equals_0_and_FOS_equals_0"/>
+<arc id="t31_p24" source="ELK1_equals_0_to_ELK1_equals_1_when_JNK_equals_1" target="ELK1_equals_1"/>
+<arc id="p31_t40" source="FOS_equals_0" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="p31_t41" source="FOS_equals_0" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="t31_p46" source="ELK1_equals_0_to_ELK1_equals_1_when_JNK_equals_1" target="JNK_equals_1"/>
+<arc id="p32_t4" source="FOS_equals_1" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1"/>
+<arc id="t32_p24" source="ELK1_equals_0_to_ELK1_equals_1_when_p38_equals_1" target="ELK1_equals_1"/>
+<arc id="p32_t42" source="FOS_equals_1" target="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0"/>
+<arc id="p32_t43" source="FOS_equals_1" target="FOS_equals_1_to_FOS_equals_0_when_ERK_equals_0"/>
+<arc id="p32_t44" source="FOS_equals_1" target="FOS_equals_1_to_FOS_equals_0_when_RSK_equals_0"/>
+<arc id="t32_p102" source="ELK1_equals_0_to_ELK1_equals_1_when_p38_equals_1" target="p38_equals_1"/>
+<arc id="p33_t16" source="FOXO3_equals_0" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_FOXO3_equals_0"/>
+<arc id="t33_p23" source="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0" target="ELK1_equals_0"/>
+<arc id="t33_p25" source="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0" target="ERK_equals_0"/>
+<arc id="t33_p45" source="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0" target="JNK_equals_0"/>
+<arc id="p33_t45" source="FOXO3_equals_0" target="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1"/>
+<arc id="t33_p101" source="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0" target="p38_equals_0"/>
+<arc id="p34_t13" source="FOXO3_equals_1" target="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1"/>
+<arc id="t34_p26" source="ERK_equals_0_to_ERK_equals_1_when_MEK1_2_equals_1" target="ERK_equals_1"/>
+<arc id="p34_t46" source="FOXO3_equals_1" target="FOXO3_equals_1_to_FOXO3_equals_0_when_AKT_equals_1"/>
+<arc id="p34_t47" source="FOXO3_equals_1" target="FOXO3_equals_1_to_FOXO3_equals_0_when_JNK_equals_0"/>
+<arc id="t34_p56" source="ERK_equals_0_to_ERK_equals_1_when_MEK1_2_equals_1" target="MEK1_2_equals_1"/>
+<arc id="t35_p25" source="ERK_equals_1_to_ERK_equals_0_when_MEK1_2_equals_0" target="ERK_equals_0"/>
+<arc id="p35_t48" source="FRS2_equals_0" target="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0"/>
+<arc id="t35_p55" source="ERK_equals_1_to_ERK_equals_0_when_MEK1_2_equals_0" target="MEK1_2_equals_0"/>
+<arc id="p35_t61" source="FRS2_equals_0" target="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0"/>
+<arc id="t36_p28" source="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="FGFR3_equals_1"/>
+<arc id="t36_p30" source="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="FGFR3_stimulus_equals_1"/>
+<arc id="t36_p41" source="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="GRB2_equals_0"/>
+<arc id="p36_t49" source="FRS2_equals_1" target="FRS2_equals_1_to_FRS2_equals_0_when_FGFR3_equals_0"/>
+<arc id="p36_t50" source="FRS2_equals_1" target="FRS2_equals_1_to_FRS2_equals_0_when_GRB2_equals_1"/>
+<arc id="p36_t51" source="FRS2_equals_1" target="FRS2_equals_1_to_FRS2_equals_0_when_SPRY_equals_1"/>
+<arc id="p36_t59" source="FRS2_equals_1" target="GRB2_equals_0_to_GRB2_equals_1_when_FRS2_equals_1"/>
+<arc id="t36_p67" source="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0" target="PKC_equals_0"/>
+<arc id="t37_p27" source="FGFR3_equals_1_to_FGFR3_equals_0_when_FGFR3_stimulus_equals_0" target="FGFR3_equals_0"/>
+<arc id="t37_p29" source="FGFR3_equals_1_to_FGFR3_equals_0_when_FGFR3_stimulus_equals_0" target="FGFR3_stimulus_equals_0"/>
+<arc id="p37_t52" source="GAB1_equals_0" target="GAB1_equals_0_to_GAB1_equals_1_when_GRB2_equals_1"/>
+<arc id="p37_t53" source="GAB1_equals_0" target="GAB1_equals_0_to_GAB1_equals_1_when_PI3K_equals_1"/>
+<arc id="p37_t107" source="GAB1_equals_0" target="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0"/>
+<arc id="p37_t108" source="GAB1_equals_0" target="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0"/>
+<arc id="t38_p27" source="FGFR3_equals_1_to_FGFR3_equals_0_when_GRB2_equals_1" target="FGFR3_equals_0"/>
+<arc id="t38_p42" source="FGFR3_equals_1_to_FGFR3_equals_0_when_GRB2_equals_1" target="GRB2_equals_1"/>
+<arc id="p38_t54" source="GAB1_equals_1" target="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0"/>
+<arc id="p38_t105" source="GAB1_equals_1" target="PI3K_equals_0_to_PI3K_equals_1_when_GAB1_equals_1"/>
+<arc id="t39_p27" source="FGFR3_equals_1_to_FGFR3_equals_0_when_PKC_equals_1" target="FGFR3_equals_0"/>
+<arc id="p39_t55" source="GADD45_equals_0" target="GADD45_equals_0_to_GADD45_equals_1_when_SMAD_equals_1"/>
+<arc id="p39_t56" source="GADD45_equals_0" target="GADD45_equals_0_to_GADD45_equals_1_when_p53_equals_1"/>
+<arc id="t39_p68" source="FGFR3_equals_1_to_FGFR3_equals_0_when_PKC_equals_1" target="PKC_equals_1"/>
+<arc id="p39_t98" source="GADD45_equals_0" target="MTK1_equals_1_to_MTK1_equals_0_when_GADD45_equals_0"/>
+<arc id="t40_p13" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="CREB_equals_0"/>
+<arc id="t40_p24" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="ELK1_equals_1"/>
+<arc id="t40_p26" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="ERK_equals_1"/>
+<arc id="t40_p32" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="FOS_equals_1"/>
+<arc id="p40_t57" source="GADD45_equals_1" target="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0"/>
+<arc id="t40_p82" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="RSK_equals_1"/>
+<arc id="p40_t97" source="GADD45_equals_1" target="MTK1_equals_0_to_MTK1_equals_1_when_GADD45_equals_1"/>
+<arc id="t41_p14" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="CREB_equals_1"/>
+<arc id="p41_t25" source="GRB2_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1"/>
+<arc id="t41_p26" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="ERK_equals_1"/>
+<arc id="p41_t26" source="GRB2_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="t41_p32" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="FOS_equals_1"/>
+<arc id="p41_t36" source="GRB2_equals_0" target="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="p41_t48" source="GRB2_equals_0" target="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0"/>
+<arc id="p41_t54" source="GRB2_equals_0" target="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0"/>
+<arc id="p41_t58" source="GRB2_equals_0" target="GRB2_equals_0_to_GRB2_equals_1_when_EGFR_equals_1"/>
+<arc id="p41_t59" source="GRB2_equals_0" target="GRB2_equals_0_to_GRB2_equals_1_when_FRS2_equals_1"/>
+<arc id="p41_t60" source="GRB2_equals_0" target="GRB2_equals_0_to_GRB2_equals_1_when_TGFBR_equals_1"/>
+<arc id="t41_p82" source="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1" target="RSK_equals_1"/>
+<arc id="p41_t135" source="GRB2_equals_0" target="SOS_equals_1_to_SOS_equals_0_when_GRB2_equals_0"/>
+<arc id="t42_p13" source="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0" target="CREB_equals_0"/>
+<arc id="t42_p23" source="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0" target="ELK1_equals_0"/>
+<arc id="p42_t28" source="GRB2_equals_1" target="EGFR_equals_1_to_EGFR_equals_0_when_GRB2_equals_1"/>
+<arc id="t42_p31" source="FOS_equals_1_to_FOS_equals_0_when_CREB_equals_0_and_ELK1_equals_0" target="FOS_equals_0"/>
+<arc id="p42_t38" source="GRB2_equals_1" target="FGFR3_equals_1_to_FGFR3_equals_0_when_GRB2_equals_1"/>
+<arc id="p42_t50" source="GRB2_equals_1" target="FRS2_equals_1_to_FRS2_equals_0_when_GRB2_equals_1"/>
+<arc id="p42_t52" source="GRB2_equals_1" target="GAB1_equals_0_to_GAB1_equals_1_when_GRB2_equals_1"/>
+<arc id="p42_t61" source="GRB2_equals_1" target="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0"/>
+<arc id="p42_t134" source="GRB2_equals_1" target="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0"/>
+<arc id="t43_p25" source="FOS_equals_1_to_FOS_equals_0_when_ERK_equals_0" target="ERK_equals_0"/>
+<arc id="t43_p31" source="FOS_equals_1_to_FOS_equals_0_when_ERK_equals_0" target="FOS_equals_0"/>
+<arc id="p43_t62" source="Growth_Arrest_equals_0" target="Growth_Arrest_equals_0_to_Growth_Arrest_equals_1_when_p21_equals_1"/>
+<arc id="t44_p31" source="FOS_equals_1_to_FOS_equals_0_when_RSK_equals_0" target="FOS_equals_0"/>
+<arc id="p44_t63" source="Growth_Arrest_equals_1" target="Growth_Arrest_equals_1_to_Growth_Arrest_equals_0_when_p21_equals_0"/>
+<arc id="t44_p81" source="FOS_equals_1_to_FOS_equals_0_when_RSK_equals_0" target="RSK_equals_0"/>
+<arc id="t45_p1" source="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1" target="AKT_0"/>
+<arc id="p45_t10" source="JNK_equals_0" target="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0"/>
+<arc id="p45_t33" source="JNK_equals_0" target="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0"/>
+<arc id="t45_p34" source="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1" target="FOXO3_equals_1"/>
+<arc id="t45_p46" source="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1" target="JNK_equals_1"/>
+<arc id="p45_t47" source="JNK_equals_0" target="FOXO3_equals_1_to_FOXO3_equals_0_when_JNK_equals_0"/>
+<arc id="p45_t64" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"/>
+<arc id="p45_t65" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"/>
+<arc id="p45_t66" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"/>
+<arc id="p45_t67" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"/>
+<arc id="p45_t68" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p45_t69" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p45_t70" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p45_t71" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p45_t72" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p45_t73" source="JNK_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="p45_t80" source="JNK_equals_0" target="JUN_equals_1_to_JUN_equals_0_when_JNK_equals_0"/>
+<arc id="t46_p2" source="FOXO3_equals_1_to_FOXO3_equals_0_when_AKT_equals_1" target="AKT_equals_1"/>
+<arc id="p46_t8" source="JNK_equals_1" target="ATF2_equals_0_to_ATF2_equals_1_when_JNK_equals_1"/>
+<arc id="p46_t31" source="JNK_equals_1" target="ELK1_equals_0_to_ELK1_equals_1_when_JNK_equals_1"/>
+<arc id="t46_p33" source="FOXO3_equals_1_to_FOXO3_equals_0_when_AKT_equals_1" target="FOXO3_equals_0"/>
+<arc id="p46_t45" source="JNK_equals_1" target="FOXO3_equals_0_to_FOXO3_equals_1_when_AKT_equals_0_and_JNK_equals_1"/>
+<arc id="p46_t74" source="JNK_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p46_t75" source="JNK_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p46_t76" source="JNK_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p46_t77" source="JNK_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p46_t78" source="JNK_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p46_t79" source="JNK_equals_1" target="JUN_equals_0_to_JUN_equals_1_when_JNK_equals_1"/>
+<arc id="p47_t7" source="JUN_equals_0" target="AP1_equals_1_to_AP1_equals_0_when_JUN_equals_0"/>
+<arc id="t47_p33" source="FOXO3_equals_1_to_FOXO3_equals_0_when_JNK_equals_0" target="FOXO3_equals_0"/>
+<arc id="t47_p45" source="FOXO3_equals_1_to_FOXO3_equals_0_when_JNK_equals_0" target="JNK_equals_0"/>
+<arc id="p47_t79" source="JUN_equals_0" target="JUN_equals_0_to_JUN_equals_1_when_JNK_equals_1"/>
+<arc id="p48_t4" source="JUN_equals_1" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_0_and_FOS_equals_1_and_JUN_equals_1"/>
+<arc id="p48_t5" source="JUN_equals_1" target="AP1_equals_0_to_AP1_equals_1_when_ATF2_equals_1_and_JUN_equals_1"/>
+<arc id="t48_p28" source="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0" target="FGFR3_equals_1"/>
+<arc id="t48_p36" source="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0" target="FRS2_equals_1"/>
+<arc id="t48_p41" source="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0" target="GRB2_equals_0"/>
+<arc id="p48_t80" source="JUN_equals_1" target="JUN_equals_1_to_JUN_equals_0_when_JNK_equals_0"/>
+<arc id="t48_p87" source="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0" target="SPRY_equals_0"/>
+<arc id="t49_p27" source="FRS2_equals_1_to_FRS2_equals_0_when_FGFR3_equals_0" target="FGFR3_equals_0"/>
+<arc id="t49_p35" source="FRS2_equals_1_to_FRS2_equals_0_when_FGFR3_equals_0" target="FRS2_equals_0"/>
+<arc id="p49_t68" source="MAP3K1_3_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p49_t69" source="MAP3K1_3_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p49_t70" source="MAP3K1_3_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p49_t74" source="MAP3K1_3_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p49_t75" source="MAP3K1_3_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p49_t76" source="MAP3K1_3_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p49_t77" source="MAP3K1_3_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p49_t81" source="MAP3K1_3_equals_0" target="MAP3K1_3_equals_0_to_MAP3K1_3_equals_1_when_RAS_equals_1"/>
+<arc id="p49_t89" source="MAP3K1_3_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1"/>
+<arc id="p49_t92" source="MAP3K1_3_equals_0" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0"/>
+<arc id="p49_t154" source="MAP3K1_3_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p49_t155" source="MAP3K1_3_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p49_t156" source="MAP3K1_3_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p49_t160" source="MAP3K1_3_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p49_t161" source="MAP3K1_3_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p49_t162" source="MAP3K1_3_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p49_t163" source="MAP3K1_3_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t50_p35" source="FRS2_equals_1_to_FRS2_equals_0_when_GRB2_equals_1" target="FRS2_equals_0"/>
+<arc id="t50_p42" source="FRS2_equals_1_to_FRS2_equals_0_when_GRB2_equals_1" target="GRB2_equals_1"/>
+<arc id="p50_t64" source="MAP3K1_3_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"/>
+<arc id="p50_t71" source="MAP3K1_3_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p50_t72" source="MAP3K1_3_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p50_t73" source="MAP3K1_3_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="p50_t78" source="MAP3K1_3_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p50_t82" source="MAP3K1_3_equals_1" target="MAP3K1_3_equals_1_to_MAP3K1_3_equals_0_when_RAS_equals_0"/>
+<arc id="p50_t90" source="MAP3K1_3_equals_1" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0"/>
+<arc id="p50_t150" source="MAP3K1_3_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"/>
+<arc id="p50_t157" source="MAP3K1_3_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p50_t158" source="MAP3K1_3_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p50_t159" source="MAP3K1_3_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="p50_t164" source="MAP3K1_3_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t51_p35" source="FRS2_equals_1_to_FRS2_equals_0_when_SPRY_equals_1" target="FRS2_equals_0"/>
+<arc id="p51_t83" source="MAX_equals_0" target="MAX_equals_0_to_MAX_equals_1_when_p38_equals_1"/>
+<arc id="t51_p88" source="FRS2_equals_1_to_FRS2_equals_0_when_SPRY_equals_1" target="SPRY_equals_1"/>
+<arc id="p51_t101" source="MAX_equals_0" target="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0"/>
+<arc id="t52_p38" source="GAB1_equals_0_to_GAB1_equals_1_when_GRB2_equals_1" target="GAB1_equals_1"/>
+<arc id="t52_p42" source="GAB1_equals_0_to_GAB1_equals_1_when_GRB2_equals_1" target="GRB2_equals_1"/>
+<arc id="p52_t84" source="MAX_equals_1" target="MAX_equals_1_to_MAX_equals_0_when_p38_equals_0"/>
+<arc id="p52_t99" source="MAX_equals_1" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1"/>
+<arc id="t53_p38" source="GAB1_equals_0_to_GAB1_equals_1_when_PI3K_equals_1" target="GAB1_equals_1"/>
+<arc id="t53_p66" source="GAB1_equals_0_to_GAB1_equals_1_when_PI3K_equals_1" target="PI3K_equals_1"/>
+<arc id="p53_t85" source="MDM2_equals_0" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1"/>
+<arc id="p53_t86" source="MDM2_equals_0" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0"/>
+<arc id="p53_t165" source="MDM2_equals_0" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1"/>
+<arc id="p53_t166" source="MDM2_equals_0" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0"/>
+<arc id="t54_p37" source="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0" target="GAB1_equals_0"/>
+<arc id="t54_p41" source="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0" target="GRB2_equals_0"/>
+<arc id="t54_p65" source="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0" target="PI3K_equals_0"/>
+<arc id="p54_t87" source="MDM2_equals_1" target="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0"/>
+<arc id="p54_t88" source="MDM2_equals_1" target="MDM2_equals_1_to_MDM2_equals_0_when_p14_equals_1"/>
+<arc id="p54_t168" source="MDM2_equals_1" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1"/>
+<arc id="p54_t170" source="MDM2_equals_1" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0"/>
+<arc id="p55_t35" source="MEK1_2_equals_0" target="ERK_equals_1_to_ERK_equals_0_when_MEK1_2_equals_0"/>
+<arc id="t55_p40" source="GADD45_equals_0_to_GADD45_equals_1_when_SMAD_equals_1" target="GADD45_equals_1"/>
+<arc id="t55_p84" source="GADD45_equals_0_to_GADD45_equals_1_when_SMAD_equals_1" target="SMAD_equals_1"/>
+<arc id="p55_t89" source="MEK1_2_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1"/>
+<arc id="p55_t90" source="MEK1_2_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0"/>
+<arc id="p56_t34" source="MEK1_2_equals_1" target="ERK_equals_0_to_ERK_equals_1_when_MEK1_2_equals_1"/>
+<arc id="t56_p40" source="GADD45_equals_0_to_GADD45_equals_1_when_p53_equals_1" target="GADD45_equals_1"/>
+<arc id="p56_t91" source="MEK1_2_equals_1" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_AP1_equals_1"/>
+<arc id="p56_t92" source="MEK1_2_equals_1" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0"/>
+<arc id="p56_t93" source="MEK1_2_equals_1" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_PPP2CA_equals_1"/>
+<arc id="t56_p104" source="GADD45_equals_0_to_GADD45_equals_1_when_p53_equals_1" target="p53_equals_1"/>
+<arc id="p57_t22" source="MSK_equals_0" target="CREB_equals_1_to_CREB_equals_0_when_MSK_equals_0"/>
+<arc id="t57_p39" source="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0" target="GADD45_equals_0"/>
+<arc id="t57_p83" source="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0" target="SMAD_equals_0"/>
+<arc id="p57_t94" source="MSK_equals_0" target="MSK_equals_0_to_MSK_equals_1_when_ERK_equals_1"/>
+<arc id="p57_t95" source="MSK_equals_0" target="MSK_equals_0_to_MSK_equals_1_when_p38_equals_1"/>
+<arc id="p57_t102" source="MSK_equals_0" target="MYC_equals_1_to_MYC_equals_0_when_MSK_equals_0"/>
+<arc id="t57_p103" source="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0" target="p53_equals_0"/>
+<arc id="t58_p20" source="GRB2_equals_0_to_GRB2_equals_1_when_EGFR_equals_1" target="EGFR_equals_1"/>
+<arc id="p58_t21" source="MSK_equals_1" target="CREB_equals_0_to_CREB_equals_1_when_MSK_equals_1"/>
+<arc id="t58_p42" source="GRB2_equals_0_to_GRB2_equals_1_when_EGFR_equals_1" target="GRB2_equals_1"/>
+<arc id="p58_t96" source="MSK_equals_1" target="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0"/>
+<arc id="p58_t99" source="MSK_equals_1" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1"/>
+<arc id="p58_t100" source="MSK_equals_1" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1"/>
+<arc id="t59_p36" source="GRB2_equals_0_to_GRB2_equals_1_when_FRS2_equals_1" target="FRS2_equals_1"/>
+<arc id="t59_p42" source="GRB2_equals_0_to_GRB2_equals_1_when_FRS2_equals_1" target="GRB2_equals_1"/>
+<arc id="p59_t68" source="MTK1_equals_0" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p59_t74" source="MTK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p59_t75" source="MTK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p59_t76" source="MTK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p59_t78" source="MTK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p59_t97" source="MTK1_equals_0" target="MTK1_equals_0_to_MTK1_equals_1_when_GADD45_equals_1"/>
+<arc id="p59_t154" source="MTK1_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p59_t160" source="MTK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p59_t161" source="MTK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p59_t162" source="MTK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p59_t164" source="MTK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t60_p42" source="GRB2_equals_0_to_GRB2_equals_1_when_TGFBR_equals_1" target="GRB2_equals_1"/>
+<arc id="p60_t65" source="MTK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"/>
+<arc id="p60_t69" source="MTK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p60_t70" source="MTK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p60_t71" source="MTK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p60_t77" source="MTK1_equals_1" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t60_p94" source="GRB2_equals_0_to_GRB2_equals_1_when_TGFBR_equals_1" target="TGFBR_equals_1"/>
+<arc id="p60_t98" source="MTK1_equals_1" target="MTK1_equals_1_to_MTK1_equals_0_when_GADD45_equals_0"/>
+<arc id="p60_t151" source="MTK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"/>
+<arc id="p60_t155" source="MTK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p60_t156" source="MTK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p60_t157" source="MTK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p60_t163" source="MTK1_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t61_p19" source="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0" target="EGFR_equals_0"/>
+<arc id="t61_p35" source="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0" target="FRS2_equals_0"/>
+<arc id="t61_p41" source="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0" target="GRB2_equals_0"/>
+<arc id="t61_p93" source="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0" target="TGFBR_equals_0"/>
+<arc id="p61_t99" source="MYC_equals_0" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1"/>
+<arc id="p61_t100" source="MYC_equals_0" target="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1"/>
+<arc id="p61_t119" source="MYC_equals_0" target="Proliferation_equals_1_to_Proliferation_equals_0_when_MYC_equals_0"/>
+<arc id="p61_t146" source="MYC_equals_0" target="p14_equals_1_to_p14_equals_0_when_MYC_equals_0"/>
+<arc id="t62_p44" source="Growth_Arrest_equals_0_to_Growth_Arrest_equals_1_when_p21_equals_1" target="Growth_Arrest_equals_1"/>
+<arc id="t62_p100" source="Growth_Arrest_equals_0_to_Growth_Arrest_equals_1_when_p21_equals_1" target="p21_equals_1"/>
+<arc id="p62_t101" source="MYC_equals_1" target="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0"/>
+<arc id="p62_t102" source="MYC_equals_1" target="MYC_equals_1_to_MYC_equals_0_when_MSK_equals_0"/>
+<arc id="p62_t118" source="MYC_equals_1" target="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1"/>
+<arc id="p62_t145" source="MYC_equals_1" target="p14_equals_0_to_p14_equals_1_when_MYC_equals_1"/>
+<arc id="p63_t2" source="PDK1_equals_0" target="AKT_equals_1_to_AKT_equals_0_when_PDK1_equals_0"/>
+<arc id="t63_p43" source="Growth_Arrest_equals_1_to_Growth_Arrest_equals_0_when_p21_equals_0" target="Growth_Arrest_equals_0"/>
+<arc id="t63_p99" source="Growth_Arrest_equals_1_to_Growth_Arrest_equals_0_when_p21_equals_0" target="p21_equals_0"/>
+<arc id="p63_t103" source="PDK1_equals_0" target="PDK1_equals_0_to_PDK1_equals_1_when_PI3K_equals_1"/>
+<arc id="p63_t173" source="PDK1_equals_0" target="p70_equals_1_to_p70_equals_0_when_PDK1_equals_0"/>
+<arc id="p64_t1" source="PDK1_equals_1" target="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0"/>
+<arc id="t64_p17" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1" target="DUSP1_equals_0"/>
+<arc id="t64_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1" target="JNK_equals_1"/>
+<arc id="t64_p50" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="p64_t104" source="PDK1_equals_1" target="PDK1_equals_1_to_PDK1_equals_0_when_PI3K_equals_0"/>
+<arc id="p64_t171" source="PDK1_equals_1" target="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1"/>
+<arc id="t65_p17" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1" target="DUSP1_equals_0"/>
+<arc id="t65_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1" target="JNK_equals_1"/>
+<arc id="p65_t54" source="PI3K_equals_0" target="GAB1_equals_1_to_GAB1_equals_0_when_GRB2_equals_0_and_PI3K_equals_0"/>
+<arc id="t65_p60" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1" target="MTK1_equals_1"/>
+<arc id="p65_t104" source="PI3K_equals_0" target="PDK1_equals_1_to_PDK1_equals_0_when_PI3K_equals_0"/>
+<arc id="p65_t105" source="PI3K_equals_0" target="PI3K_equals_0_to_PI3K_equals_1_when_GAB1_equals_1"/>
+<arc id="p65_t106" source="PI3K_equals_0" target="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1"/>
+<arc id="t66_p17" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1" target="DUSP1_equals_0"/>
+<arc id="t66_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1" target="JNK_equals_1"/>
+<arc id="p66_t53" source="PI3K_equals_1" target="GAB1_equals_0_to_GAB1_equals_1_when_PI3K_equals_1"/>
+<arc id="t66_p90" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1" target="TAK1_equals_1"/>
+<arc id="p66_t103" source="PI3K_equals_1" target="PDK1_equals_0_to_PDK1_equals_1_when_PI3K_equals_1"/>
+<arc id="p66_t107" source="PI3K_equals_1" target="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0"/>
+<arc id="p66_t108" source="PI3K_equals_1" target="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0"/>
+<arc id="t67_p17" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1" target="DUSP1_equals_0"/>
+<arc id="p67_t25" source="PKC_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1"/>
+<arc id="p67_t26" source="PKC_equals_0" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="p67_t36" source="PKC_equals_0" target="FGFR3_equals_0_to_FGFR3_equals_1_when_FGFR3_stimulus_equals_1_and_GRB2_equals_0_and_PKC_equals_0"/>
+<arc id="t67_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1" target="JNK_equals_1"/>
+<arc id="t67_p92" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="p67_t109" source="PKC_equals_0" target="PKC_equals_0_to_PKC_equals_1_when_PLCG_equals_1"/>
+<arc id="p67_t126" source="PKC_equals_0" target="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0"/>
+<arc id="t68_p18" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="DUSP1_equals_1"/>
+<arc id="p68_t29" source="PKC_equals_1" target="EGFR_equals_1_to_EGFR_equals_0_when_PKC_equals_1"/>
+<arc id="p68_t39" source="PKC_equals_1" target="FGFR3_equals_1_to_FGFR3_equals_0_when_PKC_equals_1"/>
+<arc id="t68_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="JNK_equals_1"/>
+<arc id="t68_p49" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t68_p59" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="MTK1_equals_0"/>
+<arc id="t68_p90" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="TAK1_equals_1"/>
+<arc id="t68_p92" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="p68_t110" source="PKC_equals_1" target="PKC_equals_1_to_PKC_equals_0_when_PLCG_equals_0"/>
+<arc id="p68_t122" source="PKC_equals_1" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1"/>
+<arc id="t69_p18" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="DUSP1_equals_1"/>
+<arc id="t69_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="JNK_equals_1"/>
+<arc id="t69_p49" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t69_p60" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="MTK1_equals_1"/>
+<arc id="t69_p90" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="TAK1_equals_1"/>
+<arc id="p69_t110" source="PLCG_equals_0" target="PKC_equals_1_to_PKC_equals_0_when_PLCG_equals_0"/>
+<arc id="p69_t111" source="PLCG_equals_0" target="PLCG_equals_0_to_PLCG_equals_1_when_EGFR_equals_1"/>
+<arc id="p69_t112" source="PLCG_equals_0" target="PLCG_equals_0_to_PLCG_equals_1_when_FGFR3_equals_1"/>
+<arc id="p69_t129" source="PLCG_equals_0" target="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0"/>
+<arc id="t70_p18" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="DUSP1_equals_1"/>
+<arc id="t70_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="JNK_equals_1"/>
+<arc id="t70_p49" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t70_p60" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="MTK1_equals_1"/>
+<arc id="t70_p92" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="p70_t109" source="PLCG_equals_1" target="PKC_equals_0_to_PKC_equals_1_when_PLCG_equals_1"/>
+<arc id="p70_t113" source="PLCG_equals_1" target="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0"/>
+<arc id="p70_t127" source="PLCG_equals_1" target="RAS_equals_0_to_RAS_equals_1_when_PLCG_equals_1"/>
+<arc id="t71_p18" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="DUSP1_equals_1"/>
+<arc id="t71_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="JNK_equals_1"/>
+<arc id="t71_p50" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t71_p60" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="MTK1_equals_1"/>
+<arc id="p71_t89" source="PPP2CA_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1"/>
+<arc id="p71_t90" source="PPP2CA_equals_0" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0"/>
+<arc id="p71_t114" source="PPP2CA_equals_0" target="PPP2CA_equals_0_to_PPP2CA_equals_1_when_p38_equals_1"/>
+<arc id="t72_p18" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="DUSP1_equals_1"/>
+<arc id="t72_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="JNK_equals_1"/>
+<arc id="t72_p50" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t72_p90" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="TAK1_equals_1"/>
+<arc id="p72_t93" source="PPP2CA_equals_1" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_PPP2CA_equals_1"/>
+<arc id="p72_t115" source="PPP2CA_equals_1" target="PPP2CA_equals_1_to_PPP2CA_equals_0_when_p38_equals_0"/>
+<arc id="p73_t1" source="PTEN_equals_0" target="AKT_equals_0_to_AKT_equals_1_when_PDK1_equals_1_and_PTEN_equals_0"/>
+<arc id="t73_p18" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="DUSP1_equals_1"/>
+<arc id="t73_p46" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="JNK_equals_1"/>
+<arc id="t73_p50" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t73_p92" source="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="p73_t116" source="PTEN_equals_0" target="PTEN_equals_0_to_PTEN_equals_1_when_p53_equals_1"/>
+<arc id="p74_t3" source="PTEN_equals_1" target="AKT_equals_1_to_AKT_equals_0_when_PTEN_equals_1"/>
+<arc id="t74_p17" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_0"/>
+<arc id="t74_p45" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="JNK_equals_0"/>
+<arc id="t74_p49" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t74_p59" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_0"/>
+<arc id="t74_p89" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAK1_equals_0"/>
+<arc id="t74_p91" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="p74_t117" source="PTEN_equals_1" target="PTEN_equals_1_to_PTEN_equals_0_when_p53_equals_0"/>
+<arc id="t75_p18" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="DUSP1_equals_1"/>
+<arc id="t75_p45" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="JNK_equals_0"/>
+<arc id="t75_p49" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t75_p59" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="MTK1_equals_0"/>
+<arc id="t75_p89" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="TAK1_equals_0"/>
+<arc id="p75_t118" source="Proliferation_equals_0" target="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1"/>
+<arc id="t76_p18" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_1"/>
+<arc id="t76_p45" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="JNK_equals_0"/>
+<arc id="t76_p49" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t76_p59" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_0"/>
+<arc id="t76_p91" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="p76_t119" source="Proliferation_equals_1" target="Proliferation_equals_1_to_Proliferation_equals_0_when_MYC_equals_0"/>
+<arc id="p76_t120" source="Proliferation_equals_1" target="Proliferation_equals_1_to_Proliferation_equals_0_when_p21_equals_1"/>
+<arc id="p76_t121" source="Proliferation_equals_1" target="Proliferation_equals_1_to_Proliferation_equals_0_when_p70_equals_0"/>
+<arc id="t77_p18" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_1"/>
+<arc id="t77_p45" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="JNK_equals_0"/>
+<arc id="t77_p49" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t77_p60" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_1"/>
+<arc id="t77_p89" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="TAK1_equals_0"/>
+<arc id="t77_p91" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="p77_t92" source="RAF_equals_0" target="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0"/>
+<arc id="p77_t122" source="RAF_equals_0" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1"/>
+<arc id="p77_t123" source="RAF_equals_0" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1"/>
+<arc id="t78_p18" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_1"/>
+<arc id="t78_p45" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="JNK_equals_0"/>
+<arc id="t78_p50" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_1"/>
+<arc id="t78_p59" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_0"/>
+<arc id="t78_p89" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAK1_equals_0"/>
+<arc id="p78_t89" source="RAF_equals_1" target="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1"/>
+<arc id="t78_p91" source="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="p78_t124" source="RAF_equals_1" target="RAF_equals_1_to_RAF_equals_0_when_AKT_equals_1"/>
+<arc id="p78_t125" source="RAF_equals_1" target="RAF_equals_1_to_RAF_equals_0_when_ERK_equals_1"/>
+<arc id="p78_t126" source="RAF_equals_1" target="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0"/>
+<arc id="t79_p46" source="JUN_equals_0_to_JUN_equals_1_when_JNK_equals_1" target="JNK_equals_1"/>
+<arc id="t79_p48" source="JUN_equals_0_to_JUN_equals_1_when_JNK_equals_1" target="JUN_equals_1"/>
+<arc id="p79_t82" source="RAS_equals_0" target="MAP3K1_3_equals_1_to_MAP3K1_3_equals_0_when_RAS_equals_0"/>
+<arc id="p79_t107" source="RAS_equals_0" target="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0"/>
+<arc id="p79_t126" source="RAS_equals_0" target="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0"/>
+<arc id="p79_t127" source="RAS_equals_0" target="RAS_equals_0_to_RAS_equals_1_when_PLCG_equals_1"/>
+<arc id="p79_t128" source="RAS_equals_0" target="RAS_equals_0_to_RAS_equals_1_when_SOS_equals_1"/>
+<arc id="t80_p45" source="JUN_equals_1_to_JUN_equals_0_when_JNK_equals_0" target="JNK_equals_0"/>
+<arc id="t80_p47" source="JUN_equals_1_to_JUN_equals_0_when_JNK_equals_0" target="JUN_equals_0"/>
+<arc id="p80_t81" source="RAS_equals_1" target="MAP3K1_3_equals_0_to_MAP3K1_3_equals_1_when_RAS_equals_1"/>
+<arc id="p80_t106" source="RAS_equals_1" target="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1"/>
+<arc id="p80_t123" source="RAS_equals_1" target="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1"/>
+<arc id="p80_t129" source="RAS_equals_1" target="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0"/>
+<arc id="p81_t44" source="RSK_equals_0" target="FOS_equals_1_to_FOS_equals_0_when_RSK_equals_0"/>
+<arc id="t81_p50" source="MAP3K1_3_equals_0_to_MAP3K1_3_equals_1_when_RAS_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t81_p80" source="MAP3K1_3_equals_0_to_MAP3K1_3_equals_1_when_RAS_equals_1" target="RAS_equals_1"/>
+<arc id="p81_t130" source="RSK_equals_0" target="RSK_equals_0_to_RSK_equals_1_when_ERK_equals_1"/>
+<arc id="p81_t134" source="RSK_equals_0" target="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0"/>
+<arc id="p82_t40" source="RSK_equals_1" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_0_and_ELK1_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="p82_t41" source="RSK_equals_1" target="FOS_equals_0_to_FOS_equals_1_when_CREB_equals_1_and_ERK_equals_1_and_RSK_equals_1"/>
+<arc id="t82_p49" source="MAP3K1_3_equals_1_to_MAP3K1_3_equals_0_when_RAS_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t82_p79" source="MAP3K1_3_equals_1_to_MAP3K1_3_equals_0_when_RAS_equals_0" target="RAS_equals_0"/>
+<arc id="p82_t131" source="RSK_equals_1" target="RSK_equals_1_to_RSK_equals_0_when_ERK_equals_0"/>
+<arc id="p82_t136" source="RSK_equals_1" target="SOS_equals_1_to_SOS_equals_0_when_RSK_equals_1"/>
+<arc id="t83_p52" source="MAX_equals_0_to_MAX_equals_1_when_p38_equals_1" target="MAX_equals_1"/>
+<arc id="p83_t57" source="SMAD_equals_0" target="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0"/>
+<arc id="t83_p102" source="MAX_equals_0_to_MAX_equals_1_when_p38_equals_1" target="p38_equals_1"/>
+<arc id="p83_t132" source="SMAD_equals_0" target="SMAD_equals_0_to_SMAD_equals_1_when_TGFBR_equals_1"/>
+<arc id="t84_p51" source="MAX_equals_1_to_MAX_equals_0_when_p38_equals_0" target="MAX_equals_0"/>
+<arc id="p84_t55" source="SMAD_equals_1" target="GADD45_equals_0_to_GADD45_equals_1_when_SMAD_equals_1"/>
+<arc id="t84_p101" source="MAX_equals_1_to_MAX_equals_0_when_p38_equals_0" target="p38_equals_0"/>
+<arc id="p84_t133" source="SMAD_equals_1" target="SMAD_equals_1_to_SMAD_equals_0_when_TGFBR_equals_0"/>
+<arc id="t85_p1" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1" target="AKT_0"/>
+<arc id="t85_p54" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1" target="MDM2_equals_1"/>
+<arc id="t85_p97" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1" target="p14_equals_0"/>
+<arc id="t85_p104" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1" target="p53_equals_1"/>
+<arc id="p85_t108" source="SOS_equals_0" target="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0"/>
+<arc id="p85_t129" source="SOS_equals_0" target="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0"/>
+<arc id="p85_t134" source="SOS_equals_0" target="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0"/>
+<arc id="t86_p2" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0" target="AKT_equals_1"/>
+<arc id="t86_p54" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0" target="MDM2_equals_1"/>
+<arc id="t86_p97" source="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0" target="p14_equals_0"/>
+<arc id="p86_t106" source="SOS_equals_1" target="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1"/>
+<arc id="p86_t128" source="SOS_equals_1" target="RAS_equals_0_to_RAS_equals_1_when_SOS_equals_1"/>
+<arc id="p86_t135" source="SOS_equals_1" target="SOS_equals_1_to_SOS_equals_0_when_GRB2_equals_0"/>
+<arc id="p86_t136" source="SOS_equals_1" target="SOS_equals_1_to_SOS_equals_0_when_RSK_equals_1"/>
+<arc id="t87_p1" source="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0" target="AKT_0"/>
+<arc id="p87_t27" source="SPRY_equals_0" target="EGFR_equals_1_to_EGFR_equals_0_when_EGFR_stimulus_equals_0_and_SPRY_equals_0"/>
+<arc id="p87_t48" source="SPRY_equals_0" target="FRS2_equals_0_to_FRS2_equals_1_when_FGFR3_equals_1_and_GRB2_equals_0_and_SPRY_equals_0"/>
+<arc id="t87_p53" source="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0" target="MDM2_equals_0"/>
+<arc id="t87_p103" source="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0" target="p53_equals_0"/>
+<arc id="p87_t137" source="SPRY_equals_0" target="SPRY_equals_0_to_SPRY_equals_1_when_ERK_equals_1"/>
+<arc id="p88_t25" source="SPRY_equals_1" target="EGFR_equals_0_to_EGFR_equals_1_when_EGFR_stimulus_equals_0_and_GRB2_equals_0_and_PKC_equals_0_and_SPRY_equals_1"/>
+<arc id="p88_t51" source="SPRY_equals_1" target="FRS2_equals_1_to_FRS2_equals_0_when_SPRY_equals_1"/>
+<arc id="t88_p53" source="MDM2_equals_1_to_MDM2_equals_0_when_p14_equals_1" target="MDM2_equals_0"/>
+<arc id="t88_p98" source="MDM2_equals_1_to_MDM2_equals_0_when_p14_equals_1" target="p14_equals_1"/>
+<arc id="p88_t138" source="SPRY_equals_1" target="SPRY_equals_1_to_SPRY_equals_0_when_ERK_equals_0"/>
+<arc id="t89_p3" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1" target="AP1_equals_0"/>
+<arc id="t89_p49" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t89_p56" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1" target="MEK1_2_equals_1"/>
+<arc id="t89_p71" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1" target="PPP2CA_equals_0"/>
+<arc id="p89_t74" source="TAK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p89_t75" source="TAK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p89_t77" source="TAK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t89_p78" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_0_and_PPP2CA_equals_0_and_RAF_equals_1" target="RAF_equals_1"/>
+<arc id="p89_t78" source="TAK1_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p89_t139" source="TAK1_equals_0" target="TAK1_equals_0_to_TAK1_equals_1_when_TGFBR_equals_1"/>
+<arc id="p89_t160" source="TAK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p89_t161" source="TAK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p89_t163" source="TAK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p89_t164" source="TAK1_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t90_p3" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0" target="AP1_equals_0"/>
+<arc id="t90_p50" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0" target="MAP3K1_3_equals_1"/>
+<arc id="t90_p56" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0" target="MEK1_2_equals_1"/>
+<arc id="p90_t66" source="TAK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"/>
+<arc id="p90_t68" source="TAK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p90_t69" source="TAK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="t90_p71" source="MEK1_2_equals_0_to_MEK1_2_equals_1_when_AP1_equals_0_and_MAP3K1_3_equals_1_and_PPP2CA_equals_0" target="PPP2CA_equals_0"/>
+<arc id="p90_t72" source="TAK1_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p90_t140" source="TAK1_equals_1" target="TAK1_equals_1_to_TAK1_equals_0_when_TGFBR_equals_0"/>
+<arc id="p90_t152" source="TAK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"/>
+<arc id="p90_t154" source="TAK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p90_t155" source="TAK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p90_t158" source="TAK1_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="t91_p4" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_AP1_equals_1" target="AP1_equals_1"/>
+<arc id="t91_p55" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_AP1_equals_1" target="MEK1_2_equals_0"/>
+<arc id="p91_t74" source="TAOK_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t76" source="TAOK_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t77" source="TAOK_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t78" source="TAOK_equals_0" target="JNK_equals_1_to_JNK_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t141" source="TAOK_equals_0" target="TAOK_equals_0_to_TAOK_equals_1_when_ATM_equals_1"/>
+<arc id="p91_t160" source="TAOK_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t162" source="TAOK_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t163" source="TAOK_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p91_t164" source="TAOK_equals_0" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="t92_p49" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t92_p55" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0" target="MEK1_2_equals_0"/>
+<arc id="p92_t67" source="TAOK_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"/>
+<arc id="p92_t68" source="TAOK_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p92_t70" source="TAOK_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p92_t73" source="TAOK_equals_1" target="JNK_equals_0_to_JNK_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="t92_p77" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_MAP3K1_3_equals_0_and_RAF_equals_0" target="RAF_equals_0"/>
+<arc id="p92_t142" source="TAOK_equals_1" target="TAOK_equals_1_to_TAOK_equals_0_when_ATM_equals_0"/>
+<arc id="p92_t153" source="TAOK_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"/>
+<arc id="p92_t154" source="TAOK_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p92_t156" source="TAOK_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p92_t159" source="TAOK_equals_1" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="t93_p55" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_PPP2CA_equals_1" target="MEK1_2_equals_0"/>
+<arc id="p93_t61" source="TGFBR_equals_0" target="GRB2_equals_1_to_GRB2_equals_0_when_EGFR_equals_0_and_FRS2_equals_0_and_TGFBR_equals_0"/>
+<arc id="t93_p72" source="MEK1_2_equals_1_to_MEK1_2_equals_0_when_PPP2CA_equals_1" target="PPP2CA_equals_1"/>
+<arc id="p93_t133" source="TGFBR_equals_0" target="SMAD_equals_1_to_SMAD_equals_0_when_TGFBR_equals_0"/>
+<arc id="p93_t140" source="TGFBR_equals_0" target="TAK1_equals_1_to_TAK1_equals_0_when_TGFBR_equals_0"/>
+<arc id="p93_t143" source="TGFBR_equals_0" target="TGFBR_equals_0_to_TGFBR_equals_1_when_TGFBR_stimulus_equals_1"/>
+<arc id="t94_p26" source="MSK_equals_0_to_MSK_equals_1_when_ERK_equals_1" target="ERK_equals_1"/>
+<arc id="t94_p58" source="MSK_equals_0_to_MSK_equals_1_when_ERK_equals_1" target="MSK_equals_1"/>
+<arc id="p94_t60" source="TGFBR_equals_1" target="GRB2_equals_0_to_GRB2_equals_1_when_TGFBR_equals_1"/>
+<arc id="p94_t132" source="TGFBR_equals_1" target="SMAD_equals_0_to_SMAD_equals_1_when_TGFBR_equals_1"/>
+<arc id="p94_t139" source="TGFBR_equals_1" target="TAK1_equals_0_to_TAK1_equals_1_when_TGFBR_equals_1"/>
+<arc id="p94_t144" source="TGFBR_equals_1" target="TGFBR_equals_1_to_TGFBR_equals_0_when_TGFBR_stimulus_equals_0"/>
+<arc id="t95_p58" source="MSK_equals_0_to_MSK_equals_1_when_p38_equals_1" target="MSK_equals_1"/>
+<arc id="t95_p102" source="MSK_equals_0_to_MSK_equals_1_when_p38_equals_1" target="p38_equals_1"/>
+<arc id="p95_t144" source="TGFBR_stimulus_equals_0" target="TGFBR_equals_1_to_TGFBR_equals_0_when_TGFBR_stimulus_equals_0"/>
+<arc id="t96_p25" source="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0" target="ERK_equals_0"/>
+<arc id="t96_p57" source="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0" target="MSK_equals_0"/>
+<arc id="t96_p101" source="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0" target="p38_equals_0"/>
+<arc id="p96_t143" source="TGFBR_stimulus_equals_1" target="TGFBR_equals_0_to_TGFBR_equals_1_when_TGFBR_stimulus_equals_1"/>
+<arc id="t97_p40" source="MTK1_equals_0_to_MTK1_equals_1_when_GADD45_equals_1" target="GADD45_equals_1"/>
+<arc id="t97_p60" source="MTK1_equals_0_to_MTK1_equals_1_when_GADD45_equals_1" target="MTK1_equals_1"/>
+<arc id="p97_t85" source="p14_equals_0" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1"/>
+<arc id="p97_t86" source="p14_equals_0" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_1_and_p14_equals_0"/>
+<arc id="p97_t145" source="p14_equals_0" target="p14_equals_0_to_p14_equals_1_when_MYC_equals_1"/>
+<arc id="t98_p39" source="MTK1_equals_1_to_MTK1_equals_0_when_GADD45_equals_0" target="GADD45_equals_0"/>
+<arc id="t98_p59" source="MTK1_equals_1_to_MTK1_equals_0_when_GADD45_equals_0" target="MTK1_equals_0"/>
+<arc id="p98_t88" source="p14_equals_1" target="MDM2_equals_1_to_MDM2_equals_0_when_p14_equals_1"/>
+<arc id="p98_t146" source="p14_equals_1" target="p14_equals_1_to_p14_equals_0_when_MYC_equals_0"/>
+<arc id="t99_p1" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1" target="AKT_0"/>
+<arc id="t99_p52" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1" target="MAX_equals_1"/>
+<arc id="t99_p58" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1" target="MSK_equals_1"/>
+<arc id="t99_p62" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_0_and_MAX_equals_1_and_MSK_equals_1" target="MYC_equals_1"/>
+<arc id="p99_t63" source="p21_equals_0" target="Growth_Arrest_equals_1_to_Growth_Arrest_equals_0_when_p21_equals_0"/>
+<arc id="p99_t118" source="p21_equals_0" target="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1"/>
+<arc id="p99_t147" source="p21_equals_0" target="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1"/>
+<arc id="t100_p2" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1" target="AKT_equals_1"/>
+<arc id="t100_p58" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1" target="MSK_equals_1"/>
+<arc id="t100_p62" source="MYC_equals_0_to_MYC_equals_1_when_AKT_equals_1_and_MSK_equals_1" target="MYC_equals_1"/>
+<arc id="p100_t62" source="p21_equals_1" target="Growth_Arrest_equals_0_to_Growth_Arrest_equals_1_when_p21_equals_1"/>
+<arc id="p100_t120" source="p21_equals_1" target="Proliferation_equals_1_to_Proliferation_equals_0_when_p21_equals_1"/>
+<arc id="p100_t148" source="p21_equals_1" target="p21_equals_1_to_p21_equals_0_when_AKT_equals_1"/>
+<arc id="p100_t149" source="p21_equals_1" target="p21_equals_1_to_p21_equals_0_when_p53_equals_0"/>
+<arc id="t101_p1" source="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0" target="AKT_0"/>
+<arc id="p101_t10" source="p38_equals_0" target="ATF2_equals_1_to_ATF2_equals_0_when_JNK_equals_0_and_p38_equals_0"/>
+<arc id="p101_t33" source="p38_equals_0" target="ELK1_equals_1_to_ELK1_equals_0_when_ERK_equals_0_and_JNK_equals_0_and_p38_equals_0"/>
+<arc id="t101_p51" source="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0" target="MAX_equals_0"/>
+<arc id="t101_p61" source="MYC_equals_1_to_MYC_equals_0_when_AKT_equals_0_and_MAX_equals_0" target="MYC_equals_0"/>
+<arc id="p101_t84" source="p38_equals_0" target="MAX_equals_1_to_MAX_equals_0_when_p38_equals_0"/>
+<arc id="p101_t96" source="p38_equals_0" target="MSK_equals_1_to_MSK_equals_0_when_ERK_equals_0_and_p38_equals_0"/>
+<arc id="p101_t115" source="p38_equals_0" target="PPP2CA_equals_1_to_PPP2CA_equals_0_when_p38_equals_0"/>
+<arc id="p101_t150" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1"/>
+<arc id="p101_t151" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1"/>
+<arc id="p101_t152" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1"/>
+<arc id="p101_t153" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1"/>
+<arc id="p101_t154" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p101_t155" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1"/>
+<arc id="p101_t156" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1"/>
+<arc id="p101_t157" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1"/>
+<arc id="p101_t158" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1"/>
+<arc id="p101_t159" source="p38_equals_0" target="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1"/>
+<arc id="p101_t169" source="p38_equals_0" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0"/>
+<arc id="p101_t170" source="p38_equals_0" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0"/>
+<arc id="p102_t9" source="p38_equals_1" target="ATF2_equals_0_to_ATF2_equals_1_when_p38_equals_1"/>
+<arc id="p102_t32" source="p38_equals_1" target="ELK1_equals_0_to_ELK1_equals_1_when_p38_equals_1"/>
+<arc id="t102_p57" source="MYC_equals_1_to_MYC_equals_0_when_MSK_equals_0" target="MSK_equals_0"/>
+<arc id="t102_p61" source="MYC_equals_1_to_MYC_equals_0_when_MSK_equals_0" target="MYC_equals_0"/>
+<arc id="p102_t83" source="p38_equals_1" target="MAX_equals_0_to_MAX_equals_1_when_p38_equals_1"/>
+<arc id="p102_t95" source="p38_equals_1" target="MSK_equals_0_to_MSK_equals_1_when_p38_equals_1"/>
+<arc id="p102_t114" source="p38_equals_1" target="PPP2CA_equals_0_to_PPP2CA_equals_1_when_p38_equals_1"/>
+<arc id="p102_t160" source="p38_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p102_t161" source="p38_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0"/>
+<arc id="p102_t162" source="p38_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p102_t163" source="p38_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p102_t164" source="p38_equals_1" target="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0"/>
+<arc id="p102_t165" source="p38_equals_1" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1"/>
+<arc id="p102_t167" source="p38_equals_1" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1"/>
+<arc id="p103_t17" source="p53_equals_0" target="Apoptosis_equals_1_to_Apoptosis_equals_0_when_p53_equals_0"/>
+<arc id="p103_t57" source="p53_equals_0" target="GADD45_equals_1_to_GADD45_equals_0_when_SMAD_equals_0_and_p53_equals_0"/>
+<arc id="t103_p64" source="PDK1_equals_0_to_PDK1_equals_1_when_PI3K_equals_1" target="PDK1_equals_1"/>
+<arc id="t103_p66" source="PDK1_equals_0_to_PDK1_equals_1_when_PI3K_equals_1" target="PI3K_equals_1"/>
+<arc id="p103_t87" source="p53_equals_0" target="MDM2_equals_1_to_MDM2_equals_0_when_AKT_equals_0_and_p53_equals_0"/>
+<arc id="p103_t117" source="p53_equals_0" target="PTEN_equals_1_to_PTEN_equals_0_when_p53_equals_0"/>
+<arc id="p103_t149" source="p53_equals_0" target="p21_equals_1_to_p21_equals_0_when_p53_equals_0"/>
+<arc id="p103_t165" source="p53_equals_0" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1"/>
+<arc id="p103_t166" source="p53_equals_0" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0"/>
+<arc id="p103_t167" source="p53_equals_0" target="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1"/>
+<arc id="p104_t13" source="p53_equals_1" target="Apoptosis_equals_0_to_Apoptosis_equals_1_when_BCL2_equals_0_and_ERK_equals_0_and_FOXO3_equals_1_and_p53_equals_1"/>
+<arc id="p104_t56" source="p53_equals_1" target="GADD45_equals_0_to_GADD45_equals_1_when_p53_equals_1"/>
+<arc id="t104_p63" source="PDK1_equals_1_to_PDK1_equals_0_when_PI3K_equals_0" target="PDK1_equals_0"/>
+<arc id="t104_p65" source="PDK1_equals_1_to_PDK1_equals_0_when_PI3K_equals_0" target="PI3K_equals_0"/>
+<arc id="p104_t85" source="p53_equals_1" target="MDM2_equals_0_to_MDM2_equals_1_when_AKT_equals_0_and_p14_equals_0_and_p53_equals_1"/>
+<arc id="p104_t116" source="p53_equals_1" target="PTEN_equals_0_to_PTEN_equals_1_when_p53_equals_1"/>
+<arc id="p104_t147" source="p53_equals_1" target="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1"/>
+<arc id="p104_t168" source="p53_equals_1" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1"/>
+<arc id="p104_t169" source="p53_equals_1" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0"/>
+<arc id="p104_t170" source="p53_equals_1" target="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0"/>
+<arc id="t105_p38" source="PI3K_equals_0_to_PI3K_equals_1_when_GAB1_equals_1" target="GAB1_equals_1"/>
+<arc id="t105_p66" source="PI3K_equals_0_to_PI3K_equals_1_when_GAB1_equals_1" target="PI3K_equals_1"/>
+<arc id="p105_t121" source="p70_equals_0" target="Proliferation_equals_1_to_Proliferation_equals_0_when_p70_equals_0"/>
+<arc id="p105_t171" source="p70_equals_0" target="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1"/>
+<arc id="t106_p66" source="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1" target="PI3K_equals_1"/>
+<arc id="t106_p80" source="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1" target="RAS_equals_1"/>
+<arc id="t106_p86" source="PI3K_equals_0_to_PI3K_equals_1_when_RAS_equals_1_and_SOS_equals_1" target="SOS_equals_1"/>
+<arc id="p106_t118" source="p70_equals_1" target="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1"/>
+<arc id="p106_t172" source="p70_equals_1" target="p70_equals_1_to_p70_equals_0_when_ERK_equals_0"/>
+<arc id="p106_t173" source="p70_equals_1" target="p70_equals_1_to_p70_equals_0_when_PDK1_equals_0"/>
+<arc id="t107_p37" source="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0" target="GAB1_equals_0"/>
+<arc id="t107_p65" source="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0" target="PI3K_equals_0"/>
+<arc id="t107_p79" source="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_RAS_equals_0" target="RAS_equals_0"/>
+<arc id="t108_p37" source="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0" target="GAB1_equals_0"/>
+<arc id="t108_p65" source="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0" target="PI3K_equals_0"/>
+<arc id="t108_p85" source="PI3K_equals_1_to_PI3K_equals_0_when_GAB1_equals_0_and_SOS_equals_0" target="SOS_equals_0"/>
+<arc id="t109_p68" source="PKC_equals_0_to_PKC_equals_1_when_PLCG_equals_1" target="PKC_equals_1"/>
+<arc id="t109_p70" source="PKC_equals_0_to_PKC_equals_1_when_PLCG_equals_1" target="PLCG_equals_1"/>
+<arc id="t110_p67" source="PKC_equals_1_to_PKC_equals_0_when_PLCG_equals_0" target="PKC_equals_0"/>
+<arc id="t110_p69" source="PKC_equals_1_to_PKC_equals_0_when_PLCG_equals_0" target="PLCG_equals_0"/>
+<arc id="t111_p20" source="PLCG_equals_0_to_PLCG_equals_1_when_EGFR_equals_1" target="EGFR_equals_1"/>
+<arc id="t111_p70" source="PLCG_equals_0_to_PLCG_equals_1_when_EGFR_equals_1" target="PLCG_equals_1"/>
+<arc id="t112_p28" source="PLCG_equals_0_to_PLCG_equals_1_when_FGFR3_equals_1" target="FGFR3_equals_1"/>
+<arc id="t112_p70" source="PLCG_equals_0_to_PLCG_equals_1_when_FGFR3_equals_1" target="PLCG_equals_1"/>
+<arc id="t113_p19" source="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0" target="EGFR_equals_0"/>
+<arc id="t113_p27" source="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0" target="FGFR3_equals_0"/>
+<arc id="t113_p69" source="PLCG_equals_1_to_PLCG_equals_0_when_EGFR_equals_0_and_FGFR3_equals_0" target="PLCG_equals_0"/>
+<arc id="t114_p72" source="PPP2CA_equals_0_to_PPP2CA_equals_1_when_p38_equals_1" target="PPP2CA_equals_1"/>
+<arc id="t114_p102" source="PPP2CA_equals_0_to_PPP2CA_equals_1_when_p38_equals_1" target="p38_equals_1"/>
+<arc id="t115_p71" source="PPP2CA_equals_1_to_PPP2CA_equals_0_when_p38_equals_0" target="PPP2CA_equals_0"/>
+<arc id="t115_p101" source="PPP2CA_equals_1_to_PPP2CA_equals_0_when_p38_equals_0" target="p38_equals_0"/>
+<arc id="t116_p74" source="PTEN_equals_0_to_PTEN_equals_1_when_p53_equals_1" target="PTEN_equals_1"/>
+<arc id="t116_p104" source="PTEN_equals_0_to_PTEN_equals_1_when_p53_equals_1" target="p53_equals_1"/>
+<arc id="t117_p73" source="PTEN_equals_1_to_PTEN_equals_0_when_p53_equals_0" target="PTEN_equals_0"/>
+<arc id="t117_p103" source="PTEN_equals_1_to_PTEN_equals_0_when_p53_equals_0" target="p53_equals_0"/>
+<arc id="t118_p62" source="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1" target="MYC_equals_1"/>
+<arc id="t118_p76" source="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1" target="Proliferation_equals_1"/>
+<arc id="t118_p99" source="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1" target="p21_equals_0"/>
+<arc id="t118_p106" source="Proliferation_equals_0_to_Proliferation_equals_1_when_MYC_equals_1_and_p21_equals_0_and_p70_equals_1" target="p70_equals_1"/>
+<arc id="t119_p61" source="Proliferation_equals_1_to_Proliferation_equals_0_when_MYC_equals_0" target="MYC_equals_0"/>
+<arc id="t119_p75" source="Proliferation_equals_1_to_Proliferation_equals_0_when_MYC_equals_0" target="Proliferation_equals_0"/>
+<arc id="t120_p75" source="Proliferation_equals_1_to_Proliferation_equals_0_when_p21_equals_1" target="Proliferation_equals_0"/>
+<arc id="t120_p100" source="Proliferation_equals_1_to_Proliferation_equals_0_when_p21_equals_1" target="p21_equals_1"/>
+<arc id="t121_p75" source="Proliferation_equals_1_to_Proliferation_equals_0_when_p70_equals_0" target="Proliferation_equals_0"/>
+<arc id="t121_p105" source="Proliferation_equals_1_to_Proliferation_equals_0_when_p70_equals_0" target="p70_equals_0"/>
+<arc id="t122_p1" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1" target="AKT_0"/>
+<arc id="t122_p25" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1" target="ERK_equals_0"/>
+<arc id="t122_p68" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1" target="PKC_equals_1"/>
+<arc id="t122_p78" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_PKC_equals_1" target="RAF_equals_1"/>
+<arc id="t123_p1" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1" target="AKT_0"/>
+<arc id="t123_p25" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1" target="ERK_equals_0"/>
+<arc id="t123_p78" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1" target="RAF_equals_1"/>
+<arc id="t123_p80" source="RAF_equals_0_to_RAF_equals_1_when_AKT_equals_0_and_ERK_equals_0_and_RAS_equals_1" target="RAS_equals_1"/>
+<arc id="t124_p2" source="RAF_equals_1_to_RAF_equals_0_when_AKT_equals_1" target="AKT_equals_1"/>
+<arc id="t124_p77" source="RAF_equals_1_to_RAF_equals_0_when_AKT_equals_1" target="RAF_equals_0"/>
+<arc id="t125_p26" source="RAF_equals_1_to_RAF_equals_0_when_ERK_equals_1" target="ERK_equals_1"/>
+<arc id="t125_p77" source="RAF_equals_1_to_RAF_equals_0_when_ERK_equals_1" target="RAF_equals_0"/>
+<arc id="t126_p67" source="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0" target="PKC_equals_0"/>
+<arc id="t126_p77" source="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0" target="RAF_equals_0"/>
+<arc id="t126_p79" source="RAF_equals_1_to_RAF_equals_0_when_PKC_equals_0_and_RAS_equals_0" target="RAS_equals_0"/>
+<arc id="t127_p70" source="RAS_equals_0_to_RAS_equals_1_when_PLCG_equals_1" target="PLCG_equals_1"/>
+<arc id="t127_p80" source="RAS_equals_0_to_RAS_equals_1_when_PLCG_equals_1" target="RAS_equals_1"/>
+<arc id="t128_p80" source="RAS_equals_0_to_RAS_equals_1_when_SOS_equals_1" target="RAS_equals_1"/>
+<arc id="t128_p86" source="RAS_equals_0_to_RAS_equals_1_when_SOS_equals_1" target="SOS_equals_1"/>
+<arc id="t129_p69" source="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0" target="PLCG_equals_0"/>
+<arc id="t129_p79" source="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0" target="RAS_equals_0"/>
+<arc id="t129_p85" source="RAS_equals_1_to_RAS_equals_0_when_PLCG_equals_0_and_SOS_equals_0" target="SOS_equals_0"/>
+<arc id="t130_p26" source="RSK_equals_0_to_RSK_equals_1_when_ERK_equals_1" target="ERK_equals_1"/>
+<arc id="t130_p82" source="RSK_equals_0_to_RSK_equals_1_when_ERK_equals_1" target="RSK_equals_1"/>
+<arc id="t131_p25" source="RSK_equals_1_to_RSK_equals_0_when_ERK_equals_0" target="ERK_equals_0"/>
+<arc id="t131_p81" source="RSK_equals_1_to_RSK_equals_0_when_ERK_equals_0" target="RSK_equals_0"/>
+<arc id="t132_p84" source="SMAD_equals_0_to_SMAD_equals_1_when_TGFBR_equals_1" target="SMAD_equals_1"/>
+<arc id="t132_p94" source="SMAD_equals_0_to_SMAD_equals_1_when_TGFBR_equals_1" target="TGFBR_equals_1"/>
+<arc id="t133_p83" source="SMAD_equals_1_to_SMAD_equals_0_when_TGFBR_equals_0" target="SMAD_equals_0"/>
+<arc id="t133_p93" source="SMAD_equals_1_to_SMAD_equals_0_when_TGFBR_equals_0" target="TGFBR_equals_0"/>
+<arc id="t134_p42" source="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0" target="GRB2_equals_1"/>
+<arc id="t134_p81" source="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0" target="RSK_equals_0"/>
+<arc id="t134_p86" source="SOS_equals_0_to_SOS_equals_1_when_GRB2_equals_1_and_RSK_equals_0" target="SOS_equals_1"/>
+<arc id="t135_p41" source="SOS_equals_1_to_SOS_equals_0_when_GRB2_equals_0" target="GRB2_equals_0"/>
+<arc id="t135_p85" source="SOS_equals_1_to_SOS_equals_0_when_GRB2_equals_0" target="SOS_equals_0"/>
+<arc id="t136_p82" source="SOS_equals_1_to_SOS_equals_0_when_RSK_equals_1" target="RSK_equals_1"/>
+<arc id="t136_p85" source="SOS_equals_1_to_SOS_equals_0_when_RSK_equals_1" target="SOS_equals_0"/>
+<arc id="t137_p26" source="SPRY_equals_0_to_SPRY_equals_1_when_ERK_equals_1" target="ERK_equals_1"/>
+<arc id="t137_p88" source="SPRY_equals_0_to_SPRY_equals_1_when_ERK_equals_1" target="SPRY_equals_1"/>
+<arc id="t138_p25" source="SPRY_equals_1_to_SPRY_equals_0_when_ERK_equals_0" target="ERK_equals_0"/>
+<arc id="t138_p87" source="SPRY_equals_1_to_SPRY_equals_0_when_ERK_equals_0" target="SPRY_equals_0"/>
+<arc id="t139_p90" source="TAK1_equals_0_to_TAK1_equals_1_when_TGFBR_equals_1" target="TAK1_equals_1"/>
+<arc id="t139_p94" source="TAK1_equals_0_to_TAK1_equals_1_when_TGFBR_equals_1" target="TGFBR_equals_1"/>
+<arc id="t140_p89" source="TAK1_equals_1_to_TAK1_equals_0_when_TGFBR_equals_0" target="TAK1_equals_0"/>
+<arc id="t140_p93" source="TAK1_equals_1_to_TAK1_equals_0_when_TGFBR_equals_0" target="TGFBR_equals_0"/>
+<arc id="t141_p8" source="TAOK_equals_0_to_TAOK_equals_1_when_ATM_equals_1" target="ATM_equals_1"/>
+<arc id="t141_p92" source="TAOK_equals_0_to_TAOK_equals_1_when_ATM_equals_1" target="TAOK_equals_1"/>
+<arc id="t142_p7" source="TAOK_equals_1_to_TAOK_equals_0_when_ATM_equals_0" target="ATM_equals_0"/>
+<arc id="t142_p91" source="TAOK_equals_1_to_TAOK_equals_0_when_ATM_equals_0" target="TAOK_equals_0"/>
+<arc id="t143_p94" source="TGFBR_equals_0_to_TGFBR_equals_1_when_TGFBR_stimulus_equals_1" target="TGFBR_equals_1"/>
+<arc id="t143_p96" source="TGFBR_equals_0_to_TGFBR_equals_1_when_TGFBR_stimulus_equals_1" target="TGFBR_stimulus_equals_1"/>
+<arc id="t144_p93" source="TGFBR_equals_1_to_TGFBR_equals_0_when_TGFBR_stimulus_equals_0" target="TGFBR_equals_0"/>
+<arc id="t144_p95" source="TGFBR_equals_1_to_TGFBR_equals_0_when_TGFBR_stimulus_equals_0" target="TGFBR_stimulus_equals_0"/>
+<arc id="t145_p62" source="p14_equals_0_to_p14_equals_1_when_MYC_equals_1" target="MYC_equals_1"/>
+<arc id="t145_p98" source="p14_equals_0_to_p14_equals_1_when_MYC_equals_1" target="p14_equals_1"/>
+<arc id="t146_p61" source="p14_equals_1_to_p14_equals_0_when_MYC_equals_0" target="MYC_equals_0"/>
+<arc id="t146_p97" source="p14_equals_1_to_p14_equals_0_when_MYC_equals_0" target="p14_equals_0"/>
+<arc id="t147_p1" source="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1" target="AKT_0"/>
+<arc id="t147_p100" source="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1" target="p21_equals_1"/>
+<arc id="t147_p104" source="p21_equals_0_to_p21_equals_1_when_AKT_equals_0_and_p53_equals_1" target="p53_equals_1"/>
+<arc id="t148_p2" source="p21_equals_1_to_p21_equals_0_when_AKT_equals_1" target="AKT_equals_1"/>
+<arc id="t148_p99" source="p21_equals_1_to_p21_equals_0_when_AKT_equals_1" target="p21_equals_0"/>
+<arc id="t149_p99" source="p21_equals_1_to_p21_equals_0_when_p53_equals_0" target="p21_equals_0"/>
+<arc id="t149_p103" source="p21_equals_1_to_p21_equals_0_when_p53_equals_0" target="p53_equals_0"/>
+<arc id="t150_p17" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1" target="DUSP1_equals_0"/>
+<arc id="t150_p50" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t150_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MAP3K1_3_equals_1" target="p38_equals_1"/>
+<arc id="t151_p17" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1" target="DUSP1_equals_0"/>
+<arc id="t151_p60" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1" target="MTK1_equals_1"/>
+<arc id="t151_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_MTK1_equals_1" target="p38_equals_1"/>
+<arc id="t152_p17" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1" target="DUSP1_equals_0"/>
+<arc id="t152_p90" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1" target="TAK1_equals_1"/>
+<arc id="t152_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAK1_equals_1" target="p38_equals_1"/>
+<arc id="t153_p17" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1" target="DUSP1_equals_0"/>
+<arc id="t153_p92" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="t153_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_0_and_TAOK_equals_1" target="p38_equals_1"/>
+<arc id="t154_p18" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="DUSP1_equals_1"/>
+<arc id="t154_p49" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t154_p59" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="MTK1_equals_0"/>
+<arc id="t154_p90" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="TAK1_equals_1"/>
+<arc id="t154_p92" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="t154_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_1_and_TAOK_equals_1" target="p38_equals_1"/>
+<arc id="t155_p18" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="DUSP1_equals_1"/>
+<arc id="t155_p49" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t155_p60" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="MTK1_equals_1"/>
+<arc id="t155_p90" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="TAK1_equals_1"/>
+<arc id="t155_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_1" target="p38_equals_1"/>
+<arc id="t156_p18" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="DUSP1_equals_1"/>
+<arc id="t156_p49" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="MAP3K1_3_equals_0"/>
+<arc id="t156_p60" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="MTK1_equals_1"/>
+<arc id="t156_p92" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="t156_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAOK_equals_1" target="p38_equals_1"/>
+<arc id="t157_p18" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="DUSP1_equals_1"/>
+<arc id="t157_p50" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t157_p60" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="MTK1_equals_1"/>
+<arc id="t157_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_1" target="p38_equals_1"/>
+<arc id="t158_p18" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="DUSP1_equals_1"/>
+<arc id="t158_p50" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t158_p90" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="TAK1_equals_1"/>
+<arc id="t158_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAK1_equals_1" target="p38_equals_1"/>
+<arc id="t159_p18" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="DUSP1_equals_1"/>
+<arc id="t159_p50" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="MAP3K1_3_equals_1"/>
+<arc id="t159_p92" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="TAOK_equals_1"/>
+<arc id="t159_p102" source="p38_equals_0_to_p38_equals_1_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_TAOK_equals_1" target="p38_equals_1"/>
+<arc id="t160_p17" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_0"/>
+<arc id="t160_p49" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t160_p59" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_0"/>
+<arc id="t160_p89" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAK1_equals_0"/>
+<arc id="t160_p91" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="t160_p101" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_0_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="p38_equals_0"/>
+<arc id="t161_p18" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="DUSP1_equals_1"/>
+<arc id="t161_p49" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t161_p59" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="MTK1_equals_0"/>
+<arc id="t161_p89" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="TAK1_equals_0"/>
+<arc id="t161_p101" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAK1_equals_0" target="p38_equals_0"/>
+<arc id="t162_p18" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_1"/>
+<arc id="t162_p49" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t162_p59" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_0"/>
+<arc id="t162_p91" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="t162_p101" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_0_and_TAOK_equals_0" target="p38_equals_0"/>
+<arc id="t163_p18" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_1"/>
+<arc id="t163_p49" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_0"/>
+<arc id="t163_p60" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_1"/>
+<arc id="t163_p89" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="TAK1_equals_0"/>
+<arc id="t163_p91" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="t163_p101" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_0_and_MTK1_equals_1_and_TAK1_equals_0_and_TAOK_equals_0" target="p38_equals_0"/>
+<arc id="t164_p18" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="DUSP1_equals_1"/>
+<arc id="t164_p50" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MAP3K1_3_equals_1"/>
+<arc id="t164_p59" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="MTK1_equals_0"/>
+<arc id="t164_p89" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAK1_equals_0"/>
+<arc id="t164_p91" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="TAOK_equals_0"/>
+<arc id="t164_p101" source="p38_equals_1_to_p38_equals_0_when_DUSP1_equals_1_and_MAP3K1_3_equals_1_and_MTK1_equals_0_and_TAK1_equals_0_and_TAOK_equals_0" target="p38_equals_0"/>
+<arc id="t165_p7" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1" target="ATM_equals_0"/>
+<arc id="t165_p53" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1" target="MDM2_equals_0"/>
+<arc id="t165_p102" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1" target="p38_equals_1"/>
+<arc id="t165_p104" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_0_and_MDM2_equals_0_and_p38_equals_1" target="p53_equals_1"/>
+<arc id="t166_p8" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0" target="ATM_equals_1"/>
+<arc id="t166_p53" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0" target="MDM2_equals_0"/>
+<arc id="t166_p104" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_MDM2_equals_0" target="p53_equals_1"/>
+<arc id="t167_p8" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1" target="ATM_equals_1"/>
+<arc id="t167_p102" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1" target="p38_equals_1"/>
+<arc id="t167_p104" source="p53_equals_0_to_p53_equals_1_when_ATM_equals_1_and_p38_equals_1" target="p53_equals_1"/>
+<arc id="t168_p7" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1" target="ATM_equals_0"/>
+<arc id="t168_p54" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1" target="MDM2_equals_1"/>
+<arc id="t168_p103" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_MDM2_equals_1" target="p53_equals_0"/>
+<arc id="t169_p7" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0" target="ATM_equals_0"/>
+<arc id="t169_p101" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0" target="p38_equals_0"/>
+<arc id="t169_p103" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_0_and_p38_equals_0" target="p53_equals_0"/>
+<arc id="t170_p8" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0" target="ATM_equals_1"/>
+<arc id="t170_p54" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0" target="MDM2_equals_1"/>
+<arc id="t170_p101" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0" target="p38_equals_0"/>
+<arc id="t170_p103" source="p53_equals_1_to_p53_equals_0_when_ATM_equals_1_and_MDM2_equals_1_and_p38_equals_0" target="p53_equals_0"/>
+<arc id="t171_p26" source="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1" target="ERK_equals_1"/>
+<arc id="t171_p64" source="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1" target="PDK1_equals_1"/>
+<arc id="t171_p106" source="p70_equals_0_to_p70_equals_1_when_ERK_equals_1_and_PDK1_equals_1" target="p70_equals_1"/>
+<arc id="t172_p25" source="p70_equals_1_to_p70_equals_0_when_ERK_equals_0" target="ERK_equals_0"/>
+<arc id="t172_p105" source="p70_equals_1_to_p70_equals_0_when_ERK_equals_0" target="p70_equals_0"/>
+<arc id="t173_p63" source="p70_equals_1_to_p70_equals_0_when_PDK1_equals_0" target="PDK1_equals_0"/>
+<arc id="t173_p105" source="p70_equals_1_to_p70_equals_0_when_PDK1_equals_0" target="p70_equals_0"/>
+</page><name><text>MAPKbis-PT-5310</text></name></net></pnml>

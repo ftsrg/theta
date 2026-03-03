@@ -1,0 +1,78 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var instance_a : bool
+	var instance_b : bool
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		instance_a := false
+		instance_b := false
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+		havoc instance_a
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_t1
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l1 {
+		instance_b := instance_a
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_l1 -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}

@@ -20,8 +20,8 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
 import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ArgStructuralEqualityTest {
 
@@ -48,9 +48,11 @@ public class ArgStructuralEqualityTest {
         var arg2 = createArg(true);
         var arg3 = createArg(false);
 
-        Assert.assertNotEquals("Reference-based equality", arg1, arg2);
-        Assert.assertTrue("Structural equality (true)", ArgStructuralEquality.equals(arg1, arg2));
-        Assert.assertFalse("Structural equality (false)", ArgStructuralEquality.equals(arg1, arg3));
+        Assertions.assertNotEquals(arg1, arg2, "Reference-based equality");
+        Assertions.assertTrue(
+                ArgStructuralEquality.equals(arg1, arg2), "Structural equality (true)");
+        Assertions.assertFalse(
+                ArgStructuralEquality.equals(arg1, arg3), "Structural equality (false)");
     }
 
     @Test
@@ -59,14 +61,14 @@ public class ArgStructuralEqualityTest {
         var arg2 = createArg(true);
         var arg3 = createArg(false);
 
-        Assert.assertNotEquals("Reference-based hashcode", arg1.hashCode(), arg2.hashCode());
-        Assert.assertEquals(
-                "Structural hashcode (true)",
+        Assertions.assertNotEquals(arg1.hashCode(), arg2.hashCode(), "Reference-based hashcode");
+        Assertions.assertEquals(
                 ArgStructuralEquality.hashCode(arg1),
-                ArgStructuralEquality.hashCode(arg2));
-        Assert.assertNotEquals(
-                "Structural hashcode (false)",
+                ArgStructuralEquality.hashCode(arg2),
+                "Structural hashcode (true)");
+        Assertions.assertNotEquals(
                 ArgStructuralEquality.hashCode(arg1),
-                ArgStructuralEquality.hashCode(arg3));
+                ArgStructuralEquality.hashCode(arg3),
+                "Structural hashcode (false)");
     }
 }

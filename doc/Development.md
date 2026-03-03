@@ -1,6 +1,6 @@
 # Development guide
 
-Theta is written in Java 17 using
+Theta is written in Java 21 using
 * [Gradle](https://gradle.org/) as a build system,
 * [Git](https://git-scm.com/) and [GitHub](https://github.com/FTSRG/theta) for version control,
 * [GitHub actions](https://github.com/ftsrg/theta/actions) for continuous integration,

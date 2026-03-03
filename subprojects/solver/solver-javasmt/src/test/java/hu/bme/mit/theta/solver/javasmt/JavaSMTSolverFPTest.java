@@ -20,10 +20,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -36,31 +33,24 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.kframework.mpfr.BigFloat;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 
-@RunWith(Parameterized.class)
 public class JavaSMTSolverFPTest {
-
-    @Parameterized.Parameter(0)
     public Class<?> exprType;
-
-    @Parameterized.Parameter(1)
     public Expr<?> expected;
-
-    @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    @Parameters(name = "expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return FpTestUtils.GetOperations().collect(Collectors.toUnmodifiableList());
     }
 
-    @Test
-    public void testOperationEquals() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expected: {1}, actual: {2}")
+    public void testOperationEquals(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        initJavaSMTSolverFPTest(exprType, expected, actual);
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -68,19 +58,19 @@ public class JavaSMTSolverFPTest {
 
         // Type checks
         assertTrue(
+                exprType.isInstance(actual),
                 "The type of actual is "
                         + actual.getClass().getName()
                         + " instead of "
-                        + exprType.getName(),
-                exprType.isInstance(actual));
+                        + exprType.getName());
         assertEquals(
+                expected.getType(),
+                actual.getType(),
                 "The type of expected ("
                         + expected.getType()
                         + ") must match the type of actual ("
                         + actual.getType()
-                        + ")",
-                expected.getType(),
-                actual.getType());
+                        + ")");
 
         // Equality check
         final Solver solver =
@@ -113,5 +103,11 @@ public class JavaSMTSolverFPTest {
         }
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
+    }
+
+    public void initJavaSMTSolverFPTest(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        this.exprType = exprType;
+        this.expected = expected;
+        this.actual = actual;
     }
 }

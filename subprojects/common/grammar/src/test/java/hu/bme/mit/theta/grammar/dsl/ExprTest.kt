@@ -44,24 +44,15 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.ExprUtils.simplify
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class ExprTest {
-
-  @Parameterized.Parameter(0) lateinit var memory: Expr<*>
-
-  @Parameterized.Parameter(1) lateinit var serialized: String
-
-  @Parameterized.Parameter(2) lateinit var decls: Map<Symbol, Decl<*>>
 
   companion object {
 
     @JvmStatic
-    @Parameterized.Parameters
     fun data(): Collection<Array<Any>> {
       val x = Var("x", Int())
       val p = Param("p", Int())
@@ -296,24 +287,27 @@ class ExprTest {
     }
   }
 
-  @Test
-  fun testSerialize() {
-    Assert.assertEquals(serialized, memory.toString())
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testSerialize(memory: Expr<*>, serialized: String, decls: Map<Symbol, Decl<*>>) {
+    Assertions.assertEquals(serialized, memory.toString())
   }
 
-  @Test
-  fun testDeserialize() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testDeserialize(memory: Expr<*>, serialized: String, decls: Map<Symbol, Decl<*>>) {
     if (decls.any { it.value is ParamDecl }) return
     val symbolTable = SymbolTable()
     decls.forEach { symbolTable.add(it.key) }
     val env = Env()
     decls.forEach { env.define(it.key, it.value) }
     val expr = simplify(ExpressionWrapper(SimpleScope(symbolTable), serialized).instantiate(env))
-    Assert.assertEquals(simplify(memory), expr)
+    Assertions.assertEquals(simplify(memory), expr)
   }
 
-  @Test
-  fun testRoundTrip() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testRoundTrip(memory: Expr<*>, serialized: String, decls: Map<Symbol, Decl<*>>) {
     if (decls.any { it.value is ParamDecl }) return
     val symbolTable = SymbolTable()
     decls.forEach { symbolTable.add(it.key) }
@@ -321,7 +315,7 @@ class ExprTest {
     decls.forEach { env.define(it.key, it.value) }
     val expr =
       simplify(ExpressionWrapper(SimpleScope(symbolTable), memory.toString()).instantiate(env))
-    Assert.assertEquals(simplify(memory), expr)
+    Assertions.assertEquals(simplify(memory), expr)
   }
 
   data class NamedSymbol(val _name: String) : Symbol {
