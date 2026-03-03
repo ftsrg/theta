@@ -31,7 +31,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -51,7 +50,6 @@ constructor(
   parseContext: ParseContext,
   checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
-  private val logger: Logger = NullLogger.getInstance(),
   private val acceptUnreliableSafe: Boolean,
   initValues: Boolean = false,
 ) :
@@ -70,7 +68,7 @@ constructor(
           "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop" in
             (e.message ?: "")
         ) {
-          logger.info(
+          Logger.info(
             "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
           )
           XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, true)
@@ -79,17 +77,17 @@ constructor(
     } else {
       XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
     },
-    MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
+    MEPipelineCheckerConstructorArguments(checkerFactory, passes),
   ) {
 
   override fun check(
     input: UnitPrec?
   ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>> =
     super.check(input).also {
-      logger.mainStep("XcfaPipelineChecker result: $it")
+      Logger.mainStep("XcfaPipelineChecker result: $it")
       if (it.isSafe && modelAdapter.model.unsafeUnrollUsed && !acceptUnreliableSafe) {
-        logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
-        logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
+        Logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
+        Logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
         throw NotSolvableException()
       }
     }

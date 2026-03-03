@@ -649,7 +649,9 @@ data class DebugConfig(
   @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
   var stacktrace: Boolean = false,
   @Parameter(names = ["--loglevel"], description = "Detailedness of logging")
-  var logLevel: Logger.Level = Logger.Level.RESULT,
+  var logLevel: Logger.LegacyLevel = Logger.LegacyLevel.RESULT,
+  @Parameter(names = ["--grep", "-grep"], description = "Log type pattern for the new logger API")
+  var grep: String? = null,
   @Parameter(
     names = ["--arg-debug"],
     description = "ARG debug mode (use the web-based debugger for ARG visualization)",

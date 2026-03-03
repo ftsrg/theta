@@ -48,6 +48,11 @@ public class CSimpleTypeFactory {
     }
 
     public static NamedType NamedType(
+            final String namedType, ParseContext parseContext) {
+        return new NamedType(parseContext, namedType, Logger.INSTANCE);
+    }
+
+    public static NamedType NamedType(
             final String namedType, ParseContext parseContext, Logger uniqueWarningLogger) {
         return new NamedType(parseContext, namedType, uniqueWarningLogger);
     }

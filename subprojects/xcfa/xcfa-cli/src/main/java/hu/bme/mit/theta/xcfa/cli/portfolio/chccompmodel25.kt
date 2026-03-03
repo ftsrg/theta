@@ -34,10 +34,8 @@ fun chcCompPortfolioModel25(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   val baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)

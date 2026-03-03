@@ -32,8 +32,7 @@ import java.util.List;
 
 public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public SMTInterpolSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public SMTInterpolSmtLibSolverInstaller() {
     }
 
     @Override
@@ -53,8 +52,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
                                                 .toAbsolutePath()
                                                 .toString())
                                 .getChannel()) {
-            logger.write(
-                    Logger.Level.MAINSTEP,
+            Logger.mainStep(
                     "Starting download (%s)...\n",
                     getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
@@ -62,7 +60,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

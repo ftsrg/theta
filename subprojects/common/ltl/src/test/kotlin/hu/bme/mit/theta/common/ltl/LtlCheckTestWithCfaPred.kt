@@ -26,7 +26,6 @@ import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2HoafFromDir
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
@@ -40,9 +39,11 @@ class LtlCheckTestWithCfaPred {
 
   private val itpSolverFactory = Z3LegacySolverFactory.getInstance()
   private val abstractionSolver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
-  private val logger: Logger = ConsoleLogger(Logger.Level.INFO)
 
   companion object {
+    @JvmStatic
+    fun initLogger() = Logger.initOld(Logger.LegacyLevel.INFO)
+
     fun data() =
       listOf(
         arrayOf("wave_flags", "F G(x)", false),
@@ -115,10 +116,9 @@ class LtlCheckTestWithCfaPred {
         dataAnalysis,
         ltlExpr,
         itpSolverFactory,
-        logger,
         searchStrategy,
         refinerStrategy,
-        Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa"), logger),
+        Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa")),
         variables,
         nextSideFunction = NextSideFunctions.Alternating(),
       )

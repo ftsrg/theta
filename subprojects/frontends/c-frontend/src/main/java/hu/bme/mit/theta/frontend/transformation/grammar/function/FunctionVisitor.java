@@ -25,7 +25,7 @@ import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
+import static hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -123,6 +123,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
         parseContext.getMetadata().create(varDecl.getName(), "cName", name);
         declaration.addVarDecl(varDecl);
+    }
+
+    public FunctionVisitor(final ParseContext parseContext) {
+        this(parseContext, Logger.INSTANCE);
     }
 
     public FunctionVisitor(final ParseContext parseContext, Logger uniqueWarningLogger) {

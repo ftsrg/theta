@@ -40,35 +40,32 @@ data class CexTree(val proofNode: ProofNode) : Cex {
 class HornChecker(
   private val relations: List<Relation>,
   private val hornSolverFactory: SolverFactory,
-  private val logger: Logger,
 ) : SafetyChecker<Invariant, CexTree, UnitPrec> {
 
   override fun check(prec: UnitPrec?): SafetyResult<Invariant, CexTree> {
     val solver = hornSolverFactory.createHornSolver()
-    logger.write(Logger.Level.MAINSTEP, "Starting encoding\n")
+    Logger.mainStep("Starting encoding\n")
     solver.add(relations)
-    logger.write(
-      Logger.Level.DETAIL,
+    Logger.detail(
       "Relations:\n\t${
             relations.joinToString("\n\t") {
                 it.constDecl.toString()
             }
         }\n",
     )
-    logger.write(
-      Logger.Level.DETAIL,
+    Logger.detail(
       "Rules:\n\t${
             solver.assertions.joinToString("\n\t") {
                 it.toString().replace(Regex("[\r\n\t ]+"), " ")
             }
         }\n",
     )
-    logger.write(Logger.Level.MAINSTEP, "Added constraints to solver\n")
+    Logger.mainStep("Added constraints to solver\n")
     solver.check()
-    logger.write(Logger.Level.MAINSTEP, "Check() finished (result: ${solver.status})\n")
+    Logger.mainStep("Check() finished (result: ${solver.status})\n")
     return when (solver.status) {
       SolverStatus.SAT -> {
-        logger.write(Logger.Level.MAINSTEP, "Proof (model) found\n")
+        Logger.mainStep("Proof (model) found\n")
         val model = solver.model.toMap()
         SafetyResult.safe(
           Invariant(relations.associateWith { model[it.constDecl] as? Expr<BoolType> ?: True() })
@@ -76,13 +73,13 @@ class HornChecker(
       }
 
       SolverStatus.UNSAT -> {
-        logger.write(Logger.Level.MAINSTEP, "Counterexample found\n")
+        Logger.mainStep("Counterexample found\n")
         val proof = solver.proof
         SafetyResult.unsafe(CexTree(proof), Invariant(emptyMap()))
       }
 
       else -> {
-        logger.write(Logger.Level.MAINSTEP, "No solution found.\n")
+        Logger.mainStep("No solution found.\n")
         SafetyResult.unknown()
       }
     }

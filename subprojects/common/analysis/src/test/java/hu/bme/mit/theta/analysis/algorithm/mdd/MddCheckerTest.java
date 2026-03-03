@@ -28,7 +28,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -179,13 +178,12 @@ public class MddCheckerTest {
     public void testWithIterationStrategy(MddChecker.IterationStrategy iterationStrategy)
             throws Exception {
 
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final SafetyResult<MddProof, Trace<ExplState, ExprAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final var monolithicExpr = new MonolithicExpr(initExpr, tranExpr, propExpr);
             final MddChecker checker =
-                    new MddChecker(monolithicExpr, solverPool, logger, iterationStrategy);
+                    new MddChecker(monolithicExpr, solverPool, iterationStrategy);
             status = checker.check(null);
         }
 

@@ -50,8 +50,6 @@ internal fun postVerificationLogging(
   mcm: MCM?,
   parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ) {
   val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
 
@@ -69,7 +67,7 @@ internal fun postVerificationLogging(
       xcfa != null &&
       ((config.frontendConfig.specConfig as CHCFrontendConfig).model || forceEnabledOutput)
   ) {
-    writeChcAnswer(config, xcfa, safetyResult, logger)
+    writeChcAnswer(config, xcfa, safetyResult)
   }
 
   // we only want to log the files if the current configuration is not --in-process or portfolio
@@ -81,21 +79,21 @@ internal fun postVerificationLogging(
     try {
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
-      logger.info("Writing post-verification artifacts to directory ${resultFolder.absolutePath}")
+      Logger.info("Writing post-verification artifacts to directory ${resultFolder.absolutePath}")
 
       // TODO eliminate the need for the instanceof check
       if (
         (forceEnabledOutput || config.outputConfig.argConfig.enabled) &&
           safetyResult.proof is ARG<out State, out Action>
       ) {
-        writeArgAsProof(resultFolder, safetyResult, logger)
+        writeArgAsProof(resultFolder, safetyResult)
       }
 
       if (
         forceEnabledOutput ||
           config.outputConfig.argConfig.enabled && safetyResult.proof is LocationInvariants
       ) {
-        writeArgAsLocInvs(resultFolder, safetyResult.proof as LocationInvariants, logger)
+        writeArgAsLocInvs(resultFolder, safetyResult.proof as LocationInvariants)
       }
 
       when {
@@ -106,7 +104,6 @@ internal fun postVerificationLogging(
             safetyResult,
             resultFolder,
             ltlSpecification,
-            logger,
           )
         }
 
@@ -116,13 +113,13 @@ internal fun postVerificationLogging(
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
               concretizeTrace(trace, config, parseContext)
 
-            writeTraceAsDot(resultFolder, concrTrace, logger)
+            writeTraceAsDot(resultFolder, concrTrace)
 
-            writeTraceAsPlantuml(resultFolder, trace, logger)
+            writeTraceAsPlantuml(resultFolder, trace)
 
-            writeTraceAsOptimizedPlantuml(resultFolder, concrTrace, logger)
+            writeTraceAsOptimizedPlantuml(resultFolder, concrTrace)
 
-            writeTraceAsCinPlantUml(resultFolder, concrTrace, logger)
+            writeTraceAsCinPlantUml(resultFolder, concrTrace)
           }
 
           try {
@@ -139,10 +136,9 @@ internal fun postVerificationLogging(
                 parseContext,
                 witnessFile,
                 ltlSpecification,
-                logger = logger,
               )
           } catch (e: Exception) {
-            logger.info("Could not emit witness as GraphML file: ${e.stackTraceToString()}")
+            Logger.info("Could not emit witness as GraphML file: ${e.stackTraceToString()}")
           }
 
           try {
@@ -160,17 +156,16 @@ internal fun postVerificationLogging(
                 yamlWitnessFile,
                 ltlSpecification,
                 (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
-                logger,
               )
           } catch (e: Exception) {
-            logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
+            Logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
           }
         }
 
         else -> {}
       }
     } catch (e: Throwable) {
-      logger.info("Could not output files: ${e.stackTraceToString()}")
+      Logger.info("Could not output files: ${e.stackTraceToString()}")
     }
   }
 }
@@ -219,21 +214,20 @@ private fun writeSequenceTrace(
   sequenceFile.appendText("@enduml\n")
 }
 
-private fun writeArgAsProof(resultFolder: File, safetyResult: SafetyResult<*, *>, logger: Logger) {
+private fun writeArgAsProof(resultFolder: File, safetyResult: SafetyResult<*, *>) {
   try {
     val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
     val g: Graph =
       ArgVisualizer.getDefault().visualize(safetyResult.proof as ARG<out State, out Action>)
     argFile.writeText(GraphvizWriter.getInstance().writeString(g))
   } catch (e: Exception) {
-    logger.info("Could not emit ARG as DOT file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit ARG as DOT file: ${e.stackTraceToString()}")
   }
 }
 
 private fun writeArgAsLocInvs(
   resultFolder: File,
   locationInvariants: LocationInvariants,
-  logger: Logger,
 ) {
   try {
     val invFile = File(resultFolder, "invariants.txt")
@@ -245,7 +239,7 @@ private fun writeArgAsLocInvs(
       }
     }
   } catch (e: Exception) {
-    logger.info("Could not emit invariants file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit invariants file: ${e.stackTraceToString()}")
   }
 }
 
@@ -253,7 +247,6 @@ private fun writeChcAnswer(
   config: XcfaConfig<*, *>,
   xcfa: XCFA,
   safetyResult: SafetyResult<*, *>,
-  logger: Logger,
 ) {
   try {
     val resultFolder = config.outputConfig.resultFolder
@@ -261,13 +254,13 @@ private fun writeChcAnswer(
     val chcAnswer = writeModel(xcfa, safetyResult)
     val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
     if (chcAnswerFile.exists()) {
-      logger.info("CHC answer/model already written to file $chcAnswerFile, not overwriting")
+      Logger.info("CHC answer/model already written to file $chcAnswerFile, not overwriting")
     } else {
       chcAnswerFile.writeText(chcAnswer)
-      logger.info("CHC answer/model written to file $chcAnswerFile")
+      Logger.info("CHC answer/model written to file $chcAnswerFile")
     }
   } catch (e: Exception) {
-    logger.info("Could not write CHC answer to file: ${e.stackTraceToString()}")
+    Logger.info("Could not write CHC answer to file: ${e.stackTraceToString()}")
   }
 }
 
@@ -277,7 +270,6 @@ private fun writeSvcompWitness(
   safetyResult: SafetyResult<*, *>,
   resultFolder: File,
   ltlSpecification: String,
-  logger: Logger,
 ) {
   try {
     val witnessWriter =
@@ -301,47 +293,44 @@ private fun writeSvcompWitness(
         witnessFile,
         ltlSpecification,
         (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
-        logger,
       )
     } else {
-      logger.info(
+      Logger.info(
         "No suitable SV-COMP witness writer found for the given property (${config.inputConfig.property.inputProperty}), category (${if (parseContext.multiThreading) "concurrency" else "not concurrency"}) and safety result ($safetyResult)."
       )
     }
   } catch (e: Exception) {
-    logger.info("Could not emit witness in the required SV-COMP format: ${e.stackTraceToString()}")
+    Logger.info("Could not emit witness in the required SV-COMP format: ${e.stackTraceToString()}")
   }
 }
 
 private fun writeTraceAsDot(
   resultFolder: File,
   concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
-  logger: Logger,
 ) {
   try {
     val traceFile = File(resultFolder, "trace.dot")
     val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
   } catch (e: Exception) {
-    logger.info("Could not emit trace as DOT file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit trace as DOT file: ${e.stackTraceToString()}")
   }
 }
 
-private fun writeTraceAsPlantuml(resultFolder: File, trace: Cex?, logger: Logger) {
+private fun writeTraceAsPlantuml(resultFolder: File, trace: Cex?) {
   try {
     val sequenceFile = File(resultFolder, "trace.plantuml")
     writeSequenceTrace(sequenceFile, trace as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
       act.label.getFlatLabels().map(XcfaLabel::toString)
     }
   } catch (e: Exception) {
-    logger.info("Could not emit trace as PlantUML file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit trace as PlantUML file: ${e.stackTraceToString()}")
   }
 }
 
 private fun writeTraceAsOptimizedPlantuml(
   resultFolder: File,
   concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
-  logger: Logger,
 ) {
   try {
     val optSequenceFile = File(resultFolder, "trace-optimized.plantuml")
@@ -349,14 +338,13 @@ private fun writeTraceAsOptimizedPlantuml(
       act.label.getFlatLabels().map(XcfaLabel::toString)
     }
   } catch (e: Exception) {
-    logger.info("Could not emit optimized trace as PlantUML file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit optimized trace as PlantUML file: ${e.stackTraceToString()}")
   }
 }
 
 private fun writeTraceAsCinPlantUml(
   resultFolder: File,
   concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
-  logger: Logger,
 ) {
   try {
     val cSequenceFile = File(resultFolder, "trace-c.plantuml")
@@ -366,6 +354,6 @@ private fun writeTraceAsCinPlantUml(
       (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
     }
   } catch (e: Exception) {
-    logger.info("Could not emit C trace as PlantUML file: ${e.stackTraceToString()}")
+    Logger.info("Could not emit C trace as PlantUML file: ${e.stackTraceToString()}")
   }
 }

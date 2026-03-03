@@ -92,8 +92,7 @@ class XstsCliTracegen :
     traceDirPath: File,
     xsts: XSTS,
   ) {
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "Successfully generated a summary of ${abstractResult.sourceTraces.size} traces in ${totalTimeMs}ms\n",
     )
 
@@ -105,7 +104,7 @@ class XstsCliTracegen :
         inputOptions.model.name +
         ".abstract-trace-summary.png"
     // GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-    // logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+    // Logger.subStep("Abstract trace summary was visualized in ${visFile}\n")
 
     // trace concretization
     if (generateTraces) {
@@ -132,14 +131,14 @@ class XstsCliTracegen :
               traceCount +
               ".trace"
           )
-        logger.write(Logger.Level.SUBSTEP, "Writing trace into file: %s%n", traceFile.path)
+        Logger.subStep("Writing trace into file: %s%n", traceFile.path)
         PrintWriter(traceFile).use { printWriter -> printWriter.write(trace.toString()) }
         traceCount++
 
-        logger.write(Logger.Level.SUBSTEP, "---------------------------%n")
+        Logger.subStep("---------------------------%n")
       }
       val reportFile = File(traceDirPath.absolutePath + File.separator + "report.txt")
-      logger.write(Logger.Level.MAINSTEP, "Writing report into file: %s%n", reportFile.path)
+      Logger.mainStep("Writing report into file: %s%n", reportFile.path)
 
       PrintWriter(reportFile).use { printWriter -> printWriter.write(report) }
     }
@@ -210,7 +209,6 @@ class XstsCliTracegen :
     val sw = Stopwatch.createStarted()
     val checker: XstsTracegenConfig<out State, out Action, out Prec> =
       XstsTracegenBuilder(Z3SolverFactory.getInstance(), true)
-        .logger(logger)
         .setGetFullTraces(false)
         .build(xsts)
     val result = checker.check()

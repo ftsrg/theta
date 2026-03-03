@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
 import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
@@ -58,16 +58,27 @@ public class SmtLibSolverFPTest {
 
     @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
+        if (!Logger.isEnabled("ERROR")) {
+            Logger.init("ERROR");
+        }
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
 
-            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-            try {
-                solverManager.install(SOLVER, VERSION, VERSION, null, false);
+            solverManager = SmtLibSolverManager.create(home);
+            var installedVersions = solverManager.getInstalledVersions(SOLVER);
+            if (!installedVersions.contains(VERSION)) {
+                try {
+                    solverManager.install(SOLVER, VERSION, VERSION, null, false);
+                    solverInstalled = true;
+                } catch (SmtLibSolverInstallerException e) {
+                    Logger.error("Failed to install %s %s: %s", SOLVER, VERSION, e.getMessage());
+                    solverInstalled = false;
+                }
+            } else {
                 solverInstalled = true;
-            } catch (SmtLibSolverInstallerException e) {
             }
         }
+        assertTrue(solverInstalled, "Solver " + SOLVER + " " + VERSION + " must be installed to run these tests");
     }
 
     @AfterAll

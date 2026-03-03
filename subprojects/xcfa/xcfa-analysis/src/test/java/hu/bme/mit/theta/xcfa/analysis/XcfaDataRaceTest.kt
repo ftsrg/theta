@@ -34,9 +34,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
@@ -50,12 +48,19 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class XcfaDataRaceTest {
 
   companion object {
+
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+    }
 
     @JvmStatic
     fun data(): Collection<Array<Any>> {
@@ -79,7 +84,7 @@ class XcfaDataRaceTest {
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
     val dataRacePossible = isDataRacePossible(xcfa)
     Assertions.assertEquals(expectedDataRacePossible, dataRacePossible)
   }
@@ -95,7 +100,7 @@ class XcfaDataRaceTest {
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -116,7 +121,6 @@ class XcfaDataRaceTest {
           ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs())
         ),
         StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-        ConsoleLogger(Logger.Level.DETAIL),
         lts,
         errorDetector,
       )
@@ -136,7 +140,6 @@ class XcfaDataRaceTest {
         ),
         precRefiner,
         PruneStrategy.FULL,
-        NullLogger.getInstance(),
       ) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
@@ -157,7 +160,7 @@ class XcfaDataRaceTest {
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+      getXcfaFromC(stream!!, ParseContext(), false, property).first
     DataRaceToReachabilityPass.enabled = false
 
     val ocChecker =
@@ -166,7 +169,7 @@ class XcfaDataRaceTest {
         property = property.verifiedProperty,
         decisionProcedure = OcDecisionProcedureType.BASIC,
         smtSolver = "Z3:4.13",
-        logger = NullLogger.getInstance(),
+        logger = Logger,
         conflictInput = null,
         outputConflictClauses = false,
         nonPermissiveValidation = false,

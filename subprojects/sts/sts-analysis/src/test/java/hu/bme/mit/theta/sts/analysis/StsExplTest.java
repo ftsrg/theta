@@ -43,9 +43,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -56,14 +54,18 @@ import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 import java.util.Collections;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class StsExplTest {
 
+    @BeforeAll
+    public static void initLogger() {
+        Logger.initOld(Logger.LegacyLevel.VERBOSE);
+    }
+
     @Test
     public void test() {
-
-        final Logger logger = new ConsoleLogger(Level.VERBOSE);
 
         final VarDecl<IntType> vx = Var("x", Int());
         final Expr<IntType> x = vx.getRef();
@@ -103,7 +105,6 @@ public class StsExplTest {
         final ArgAbstractor<ExplState, StsAction, ExplPrec> abstractor =
                 BasicArgAbstractor.builder(argBuilder)
                         .waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs()))
-                        .logger(logger)
                         .build();
 
         final ExprTraceChecker<VarsRefutation> exprTraceChecker =
@@ -114,11 +115,10 @@ public class StsExplTest {
                 SingleExprTraceRefiner.create(
                         exprTraceChecker,
                         JoiningPrecRefiner.create(new VarsRefToExplPrec()),
-                        PruneStrategy.LAZY,
-                        logger);
+                        PruneStrategy.LAZY);
 
         final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec>
-                checker = ArgCegarChecker.create(abstractor, refiner, logger);
+                checker = ArgCegarChecker.create(abstractor, refiner);
 
         final SafetyResult<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>> safetyStatus =
                 checker.check(prec);

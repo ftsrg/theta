@@ -116,7 +116,7 @@ class XstsCliLtlCegar :
     totalTimeMs: Long,
   ) {
     if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
+      Logger.result(status.toString())
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
@@ -163,10 +163,9 @@ class XstsCliLtlCegar :
           configBuilder.dataAnalysis,
           ltlOptions.ltlExpression,
           abstractionSolverFactory,
-          logger,
           ltlOptions.searchStrategy,
           ltlOptions.refinerStrategy,
-          Ltl2BuchiThroughHoaf(ExternalLtl2Hoaf(ltlOptions.ltl2BuchiCommand), logger),
+          Ltl2BuchiThroughHoaf(ExternalLtl2Hoaf(ltlOptions.ltl2BuchiCommand)),
           xsts.vars,
           xsts.initFormula,
           ltlOptions.envtranSeparation.getNextsideFunction(),
@@ -188,10 +187,9 @@ class XstsCliLtlCegar :
           configBuilder.dataAnalysis,
           ltlOptions.ltlExpression,
           abstractionSolverFactory,
-          logger,
           ltlOptions.searchStrategy,
           ltlOptions.refinerStrategy,
-          Ltl2BuchiThroughHoaf(ExternalLtl2Hoaf(ltlOptions.ltl2BuchiCommand), logger),
+          Ltl2BuchiThroughHoaf(ExternalLtl2Hoaf(ltlOptions.ltl2BuchiCommand)),
           xsts.vars,
           xsts.initFormula,
           NextSideFunctions.Alternating(),

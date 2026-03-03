@@ -46,7 +46,6 @@ fun getBoundedChecker(
   xcfa: XCFA,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
 
   val boundedConfig = config.backendConfig.specConfig as BoundedConfig
@@ -67,7 +66,6 @@ fun getBoundedChecker(
         tryGetSolver(boundedConfig.indConfig.indSolver, boundedConfig.indConfig.validateIndSolver)
           ?.createSolver(),
       kindEnabled = { !boundedConfig.indConfig.disable },
-      logger = logger,
       needProof = true,
     )
   }
@@ -77,7 +75,6 @@ fun getBoundedChecker(
     xcfa,
     parseContext,
     baseChecker,
-    logger,
     boundedConfig.cegar,
     boundedConfig.reversed,
     boundedConfig.bmcConfig.bmcSolver,
@@ -90,7 +87,6 @@ internal fun getPipelineChecker(
   xcfa: XCFA,
   parseContext: ParseContext,
   baseChecker: (MonolithicExpr) -> SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec>,
-  logger: Logger,
   cegar: Boolean = false,
   reversed: Boolean = false,
   cegarSolver: String = "Z3",
@@ -117,7 +113,6 @@ internal fun getPipelineChecker(
     parseContext,
     baseChecker,
     passes,
-    logger,
     config.outputConfig.acceptUnreliableSafe,
   )
 }

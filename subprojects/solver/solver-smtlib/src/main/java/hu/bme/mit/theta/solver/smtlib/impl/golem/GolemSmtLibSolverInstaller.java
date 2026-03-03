@@ -36,8 +36,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     private final List<SemVer.VersionDecoder> versions;
 
-    public GolemSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public GolemSmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -80,7 +79,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                 "https://github.com/usi-verification-and-security/golem/releases/download/v%s/golem-%s",
                                 version, archStr));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.INSTANCE.mainStep("Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extractTarbomb(inputStream, installDir, CompressionType.TARBZ2);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
@@ -88,7 +87,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.INSTANCE.mainStep("Download finished\n");
     }
 
     @Override

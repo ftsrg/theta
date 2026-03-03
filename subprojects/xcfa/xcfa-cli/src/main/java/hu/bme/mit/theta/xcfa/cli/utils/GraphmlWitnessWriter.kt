@@ -212,7 +212,6 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
-    logger: Logger,
   ) {
     // TODO eliminate the need for the instanceof check
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
@@ -230,7 +229,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
         val xml = graphmlWitness.toPrettyXml()
         witnessfile.writeText(xml)
       } catch (e: Exception) {
-        logger.info("Could not emit witness, keeping target only: ${e.message}")
+        Logger.warnOnce("Could not emit witness, keeping target only: ${e.message}")
         val lastLabel =
           (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>)
             .actions

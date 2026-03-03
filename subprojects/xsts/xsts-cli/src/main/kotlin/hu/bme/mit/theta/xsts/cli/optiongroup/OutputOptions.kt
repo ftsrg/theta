@@ -28,8 +28,8 @@ import java.io.File
 class OutputOptions :
   OptionGroup(name = "Output options", help = "Options related to output and statistics") {
 
-  val logLevel: Logger.Level by
-    option(help = "Detailedness of logging").enum<Logger.Level>().default(Logger.Level.SUBSTEP)
+  val logLevel: Logger.LegacyLevel by
+    option(help = "Detailedness of logging").enum<Logger.LegacyLevel>().default(Logger.LegacyLevel.SUBSTEP)
   val benchmarkMode: Boolean by
     option("--benchmark", help = "Quiet mode, output will be just the result metrics")
       .boolean()

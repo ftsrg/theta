@@ -50,7 +50,7 @@ class XstsCliMdd :
     totalTimeMs: Long,
   ) {
     if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
+      Logger.result(status.toString())
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
@@ -85,7 +85,7 @@ class XstsCliMdd :
       SolverPool(solverFactory).use { solverPool ->
         val checker =
           createChecker(xsts, solverFactory) {
-            MddChecker(it, solverPool, logger, iterationStrategy)
+            MddChecker(it, solverPool, iterationStrategy)
           }
         checker.check(null)
       }

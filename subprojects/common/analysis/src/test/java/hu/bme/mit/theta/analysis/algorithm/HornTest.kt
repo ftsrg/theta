@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.algorithm
 
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.plus
@@ -40,7 +39,7 @@ class HornTest {
     inv(p1.ref) += inv(p0.ref).expr + Eq(p1.ref, Add(p0.ref, Int(1)))
     !(inv(p0.ref) with Eq(p0.ref, Int(5)))
 
-    val checker = HornChecker(listOf(inv), Z3SolverFactory.getInstance(), NullLogger.getInstance())
+    val checker = HornChecker(listOf(inv), Z3SolverFactory.getInstance())
     Assertions.assertTrue(checker.check().isUnsafe)
   }
 
@@ -55,7 +54,7 @@ class HornTest {
     inv(p1.ref) += inv(p0.ref).expr + Eq(p1.ref, Add(p0.ref, Int(2)))
     !(inv(p0.ref) with Eq(p0.ref, Int(5)))
 
-    val checker = HornChecker(listOf(inv), Z3SolverFactory.getInstance(), NullLogger.getInstance())
+    val checker = HornChecker(listOf(inv), Z3SolverFactory.getInstance())
     Assertions.assertTrue(checker.check().isSafe)
   }
 }

@@ -31,17 +31,16 @@ fun getSolver(name: String, validate: Boolean): SolverFactory =
     SolverManager.resolveSolverFactory(name)
   }
 
-fun registerAllSolverManagers(home: String, logger: Logger) {
+fun registerAllSolverManagers(home: String) {
   SolverManager.closeAll()
-  // register solver managers
   SolverManager.registerSolverManager(Z3SolverManager.create())
-  logger.write(Logger.Level.INFO, "Registered Legacy-Z3 SolverManager\n")
+  Logger.info("Registered Legacy-Z3 SolverManager")
   SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
-  logger.write(Logger.Level.INFO, "Registered Z3 SolverManager\n")
+  Logger.info("Registered Z3 SolverManager")
   SolverManager.registerSolverManager(JavaSMTSolverManager.create())
-  logger.write(Logger.Level.INFO, "Registered JavaSMT SolverManager\n")
+  Logger.info("Registered JavaSMT SolverManager")
   val homePath = Path.of(home)
-  val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
+  val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath)
   SolverManager.registerSolverManager(smtLibSolverManager)
-  logger.write(Logger.Level.INFO, "Registered SMT-LIB SolverManager\n")
+  Logger.info("Registered SMT-LIB SolverManager")
 }

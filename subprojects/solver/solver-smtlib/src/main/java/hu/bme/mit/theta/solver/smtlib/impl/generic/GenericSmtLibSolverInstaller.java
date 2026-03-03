@@ -33,8 +33,7 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
     private Path solverPath;
     private String[] solverArgs;
 
-    public GenericSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public GenericSmtLibSolverInstaller() {
     }
 
     @Override

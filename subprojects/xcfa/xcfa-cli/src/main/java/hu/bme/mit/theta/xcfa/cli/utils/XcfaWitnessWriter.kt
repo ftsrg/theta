@@ -91,7 +91,6 @@ interface XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType? = null,
-    logger: Logger,
   )
 
   fun writeTrivialCorrectnessWitness(

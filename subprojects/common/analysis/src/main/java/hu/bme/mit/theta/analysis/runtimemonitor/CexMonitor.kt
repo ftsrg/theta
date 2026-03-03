@@ -31,17 +31,17 @@ import hu.bme.mit.theta.common.logging.Logger
  * think analysis should NOT be stopped by this monitor, disable it and check results.
  */
 class CexMonitor<S : State?, A : Action?>
-constructor(private val logger: Logger, private val arg: ARG<S, A>) : Monitor {
+constructor(private val arg: ARG<S, A>) : Monitor {
 
   private val cexHashStorage = CexHashStorage<S, A>()
   var lastCex: ArgTrace<S, A>? = null
 
   fun checkIfNewCexFound(): Boolean {
     return if (arg.cexs.anyMatch { cex -> !cexHashStorage.contains(cex) }) {
-      logger.write(Logger.Level.VERBOSE, "Counterexample hash check: new cex found successfully\n")
+      Logger.verbose("Counterexample hash check: new cex found successfully\n")
       true
     } else {
-      logger.write(Logger.Level.INFO, "Counterexample hash check: NO new cex found\n")
+      Logger.info("Counterexample hash check: NO new cex found\n")
       false
     }
   }

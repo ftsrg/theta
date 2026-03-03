@@ -41,14 +41,12 @@ internal fun postTraceGenerationLogging(
   mcm: MCM?,
   parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ) {
   val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
 
   /*
   val abstractSummary = result.summary
-  logger.write(
+  Logger.write(
     Logger.Level.MAINSTEP,
     "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n",
   )
@@ -58,7 +56,7 @@ internal fun postTraceGenerationLogging(
   resultFolder.mkdirs()
 
   if (forceEnabledOutput && parseContext != null) {
-    logger.write(
+    Logger.write(
       Logger.Level.MAINSTEP,
       "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
     )
@@ -68,7 +66,7 @@ internal fun postTraceGenerationLogging(
         val visFile =
           resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
         GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+        Logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
     */
     var concreteTraces = 1
     for (abstractTrace in result.summary.sourceTraces) {
@@ -92,17 +90,17 @@ internal fun postTraceGenerationLogging(
             parseContext,
           )
 
-        logger.write(
+        Logger.write(
           Logger.Level.RESULT,
           "Concrete trace exported to ${concreteTraceFile}, ${yamlWitnessFile} and ${concreteDotFile}\n",
         )
         concreteTraces++
       } catch (e: IllegalArgumentException) {
-        logger.write(Logger.Level.SUBSTEP, e.toString())
-        logger.write(Logger.Level.SUBSTEP, "\nContinuing concretization with next trace...\n")
+        Logger.write(Logger.Level.SUBSTEP, e.toString())
+        Logger.write(Logger.Level.SUBSTEP, "\nContinuing concretization with next trace...\n")
       }
     }
-    logger.write(
+    Logger.write(
       Logger.Level.RESULT,
       "\nSuccessfully generated ${concreteTraces-1} concrete traces.\n",
     )

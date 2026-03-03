@@ -39,7 +39,7 @@ class XstsCliIC3 :
 
   private fun printResult(status: SafetyResult<InvariantProof, *>, xsts: XSTS, totalTimeMs: Long) {
     if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
+      Logger.result(status.toString())
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
@@ -71,7 +71,6 @@ class XstsCliIC3 :
           propagateOpt,
           filterOpt,
           true,
-          logger,
         )
       }
     val result = checker.check()

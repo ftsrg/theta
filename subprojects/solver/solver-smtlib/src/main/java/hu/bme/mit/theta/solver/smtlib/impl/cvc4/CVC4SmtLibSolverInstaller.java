@@ -38,8 +38,7 @@ import java.util.List;
 @Deprecated
 public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public CVC4SmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public CVC4SmtLibSolverInstaller() {
     }
 
     @Override
@@ -59,8 +58,7 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                                 .toAbsolutePath()
                                                 .toString())
                                 .getChannel()) {
-            logger.write(
-                    Logger.Level.MAINSTEP,
+            Logger.mainStep(
                     "Starting download (%s)...\n",
                     getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
@@ -69,7 +67,7 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

@@ -30,7 +30,6 @@ fun getOcChecker(
   xcfa: XCFA,
   mcm: MCM,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<EmptyProof, Cex, XcfaPrec<*>> {
   val ocConfig = config.backendConfig.specConfig as OcConfig
   val ocChecker =
@@ -39,7 +38,7 @@ fun getOcChecker(
       property = config.inputConfig.property.verifiedProperty,
       decisionProcedure = ocConfig.decisionProcedure,
       smtSolver = ocConfig.smtSolver,
-      logger = logger,
+      logger = Logger,
       conflictInput = ocConfig.inputConflictClauseFile,
       outputConflictClauses = ocConfig.outputConflictClauses,
       nonPermissiveValidation = ocConfig.nonPermissiveValidation,

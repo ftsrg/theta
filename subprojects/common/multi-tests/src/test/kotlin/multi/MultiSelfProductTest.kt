@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.multi.MultiStatePredicate
 import hu.bme.mit.theta.analysis.multi.NextSideFunctions
 import hu.bme.mit.theta.analysis.multi.builder.stmt.StmtMultiBuilder
 import hu.bme.mit.theta.analysis.multi.config.StmtMultiConfigBuilder
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.Solver
@@ -38,8 +37,12 @@ import org.junit.jupiter.api.Test
 
 class MultiSelfProductTest {
 
-  val logger: Logger = ConsoleLogger(Logger.Level.SUBSTEP)
   val solver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
+
+  companion object {
+    @JvmStatic
+    fun initLogger() = Logger.initOld(Logger.LegacyLevel.SUBSTEP)
+  }
 
   @Test
   fun test() {
@@ -86,7 +89,7 @@ class MultiSelfProductTest {
         dataInitPrec,
         dataInitPrec,
         Z3LegacySolverFactory.getInstance(),
-        logger,
+        Logger,
       )
     val result = multiConfigBuilder.build().check()
 

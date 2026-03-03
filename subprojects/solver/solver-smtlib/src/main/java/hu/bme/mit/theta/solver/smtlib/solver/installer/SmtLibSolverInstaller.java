@@ -52,10 +52,7 @@ public interface SmtLibSolverInstaller {
 
     abstract class Default implements SmtLibSolverInstaller {
 
-        protected final Logger logger;
-
-        public Default(final Logger logger) {
-            this.logger = logger;
+        public Default() {
         }
 
         @Override
@@ -92,7 +89,7 @@ public interface SmtLibSolverInstaller {
             }
 
             try {
-                logger.write(Logger.Level.MAINSTEP, "Beginning installation...\n");
+                Logger.mainStep("Beginning installation...\n");
 
                 Files.createDirectory(installDir);
 
@@ -127,7 +124,7 @@ public interface SmtLibSolverInstaller {
                     installSolver(installDir, version);
                 }
 
-                logger.write(Logger.Level.MAINSTEP, "Installation finished\n");
+                Logger.mainStep("Installation finished\n");
             } catch (SmtLibSolverInstallerException e) {
                 uninstall(home, version);
                 throw e;
@@ -150,13 +147,13 @@ public interface SmtLibSolverInstaller {
             }
 
             try {
-                logger.write(Logger.Level.MAINSTEP, "Beginning uninstallation...\n");
+                Logger.mainStep("Beginning uninstallation...\n");
 
                 uninstallSolver(installDir, version);
 
                 deleteDirectory(installDir.toFile());
 
-                logger.write(Logger.Level.MAINSTEP, "Uninstallation finished\n");
+                Logger.mainStep("Uninstallation finished\n");
             } catch (IOException e) {
                 throw new SmtLibSolverInstallerException(
                         String.format("Error: %s", e.getMessage()), e);

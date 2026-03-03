@@ -47,8 +47,6 @@ fun getXcfaFromC(
   parseContext: ParseContext,
   collectStatistics: Boolean,
   property: XcfaProperty,
-  warningLogger: Logger,
-  logger: Logger = warningLogger,
 ): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
   val input = CharStreams.fromStream(stream)
   val lexer = CLexer(input)
@@ -57,11 +55,11 @@ fun getXcfaFromC(
   parser.errorHandler = BailErrorStrategy()
   val context = parser.compilationUnit()
 
-  val program = context.accept(FunctionVisitor(parseContext, warningLogger))
+  val program = context.accept(FunctionVisitor(parseContext))
   check(program is CProgram)
-  logger.benchmark("ParsingResult Success")
+  Logger.benchmark("ParsingResult Success")
 
-  val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
+  val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property)
   val builder = frontendXcfaBuilder.buildXcfa(program)
   val xcfa = builder.build()
 
@@ -95,7 +93,6 @@ fun getExpressionFromC(
   parseContext: ParseContext,
   collectStatistics: Boolean,
   checkOverflow: Boolean,
-  warningLogger: Logger,
   vars: Iterable<VarDecl<*>>,
 ): Expr<BoolType> {
   val input = CharStreams.fromString(value)
@@ -122,8 +119,8 @@ fun getExpressionFromC(
         ArrayDeque(listOf(variables)),
         mapOf(),
         null,
-        TypeVisitor(null, TypedefVisitor(null), parseContext, warningLogger),
-        warningLogger,
+        TypeVisitor(null, TypedefVisitor(null), parseContext),
+        Logger,
       )
     )
 

@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xcfa2chc
 
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls
@@ -50,7 +50,7 @@ class TestChcUtils {
     private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 
     private val SOLVERS: List<Pair<String, String>> =
-      listOf(Pair("z3", "4.12.6"), Pair("z3", "4.13.0"))
+      listOf(Pair("z3", "4.13.0"), Pair("z3", "4.14.0"))
 
     @JvmStatic
     fun solvers(): List<Arguments?> {
@@ -60,10 +60,11 @@ class TestChcUtils {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.initOld(Logger.LegacyLevel.VERBOSE)
       if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val home = SmtLibSolverManager.HOME
 
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+        solverManager = SmtLibSolverManager.create(home)
         for ((solver, version) in SOLVERS) {
 
           try {

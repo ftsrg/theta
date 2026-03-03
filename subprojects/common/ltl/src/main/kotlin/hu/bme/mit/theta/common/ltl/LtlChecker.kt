@@ -51,7 +51,6 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaSbeLts
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
 import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
 import hu.bme.mit.theta.common.cfa.buchi.Ltl2BuchiTransformer
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -74,7 +73,6 @@ class LtlChecker<
   dataAnalysis: Analysis<DataS, in CfaAction, DataP>,
   ltl: String,
   solverFactory: SolverFactory,
-  logger: Logger,
   searchStrategy: LoopCheckerSearchStrategy,
   refinerStrategy: ASGTraceCheckerStrategy,
   ltl2BuchiTransformer: Ltl2BuchiTransformer,
@@ -127,7 +125,6 @@ class LtlChecker<
         product.lts,
         buchiPredicate(buchiAutomaton),
         searchStrategy,
-        logger,
       )
     val refiner:
       SingleASGTraceRefiner<
@@ -139,7 +136,6 @@ class LtlChecker<
         refinerStrategy,
         solverFactory,
         JoiningPrecRefiner.create(multiRefToPrec),
-        logger,
         initExpr,
       )
     val visualizer =
@@ -150,7 +146,7 @@ class LtlChecker<
         { it.toString() },
         { "" },
       )
-    checker = CegarChecker.create(abstractor, refiner, logger, visualizer)
+    checker = CegarChecker.create(abstractor, refiner, visualizer)
   }
 
   private fun buchiPredicate(

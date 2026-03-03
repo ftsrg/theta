@@ -65,7 +65,6 @@ fun getHornChecker(
   xcfa: XCFA,
   mcm: MCM,
   config: XcfaConfig<*, *>,
-  logger: Logger,
   parseContext: ParseContext,
 ): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
@@ -87,7 +86,6 @@ fun getHornChecker(
     HornChecker(
       relations = chc,
       hornSolverFactory = getSolver(hornConfig.solver, hornConfig.validateSolver),
-      logger = logger,
     )
   }
 
@@ -110,7 +108,7 @@ fun getHornChecker(
         try {
           getProperTrace(xcfa, result as SafetyResult<Invariant, CexTree>, vars)
         } catch (t: Throwable) {
-          logger.writeln(
+          Logger.writeln(
             Logger.Level.INFO,
             "Could not get proper trace: ${t.stackTraceToString()}\n",
           )
@@ -134,7 +132,7 @@ fun getHornChecker(
       }
     }
   } catch (t: Throwable) {
-    logger.benchmark(
+    Logger.benchmark(
       "Error initializing XCFA procedure as CHC, falling back to monolithic (due to %s)",
       t.message,
     )
@@ -211,7 +209,6 @@ fun getHornChecker(
           }
         }
       },
-      logger,
     )
       as SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
   }

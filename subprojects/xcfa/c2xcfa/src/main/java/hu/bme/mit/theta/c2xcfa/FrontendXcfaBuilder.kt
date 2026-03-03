@@ -67,7 +67,6 @@ import java.util.stream.Collectors
 class FrontendXcfaBuilder(
   val parseContext: ParseContext,
   val property: XcfaProperty,
-  val uniqueWarningLogger: Logger,
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
@@ -175,7 +174,7 @@ class FrontendXcfaBuilder(
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
-      XcfaProcedureBuilder(funcDecl.name, CPasses(property, parseContext, uniqueWarningLogger))
+      XcfaProcedureBuilder(funcDecl.name, CPasses(property, parseContext))
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
     if (param.size > 0 && builder.name.equals("main")) {
@@ -190,7 +189,7 @@ class FrontendXcfaBuilder(
     } else {
       // TODO we assume later that there is always a ret var, but this should change
       val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-      val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext, uniqueWarningLogger)
+      val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext)
       signedIntType.setSigned(true)
       parseContext.metadata.create(toAdd.ref, "cType", signedIntType)
       builder.addParam(toAdd, ParamDirection.OUT)

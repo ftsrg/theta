@@ -46,8 +46,6 @@ import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.unit.UnitState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpSolver;
@@ -129,10 +127,9 @@ public class XstsConfigBuilder {
                     ArgRefiner<XstsState<S>, XstsAction, P> createRefiner(
                             ExprTraceChecker<R> traceChecker,
                             RefutationToPrec<P, R> refToPrec,
-                            PruneStrategy pruneStrategy,
-                            Logger logger) {
+                            PruneStrategy pruneStrategy) {
                 return MultiExprTraceRefiner.create(
-                        traceChecker, JoiningPrecRefiner.create(refToPrec), pruneStrategy, logger);
+                        traceChecker, JoiningPrecRefiner.create(refToPrec), pruneStrategy);
             }
         };
 
@@ -152,10 +149,9 @@ public class XstsConfigBuilder {
                 ArgRefiner<XstsState<S>, XstsAction, P> createRefiner(
                         ExprTraceChecker<R> traceChecker,
                         RefutationToPrec<P, R> refToPrec,
-                        PruneStrategy pruneStrategy,
-                        Logger logger) {
+                        PruneStrategy pruneStrategy) {
             return SingleExprTraceRefiner.create(
-                    traceChecker, JoiningPrecRefiner.create(refToPrec), pruneStrategy, logger);
+                    traceChecker, JoiningPrecRefiner.create(refToPrec), pruneStrategy);
         }
     }
 
@@ -220,7 +216,6 @@ public class XstsConfigBuilder {
         OFF
     }
 
-    private Logger logger = NullLogger.getInstance();
     private final SolverFactory abstractionSolverFactory;
     private final SolverFactory refinementSolverFactory;
     private final Domain domain;
@@ -242,11 +237,6 @@ public class XstsConfigBuilder {
         this.refinement = refinement;
         this.abstractionSolverFactory = abstractionSolverFactory;
         this.refinementSolverFactory = refinementSolverFactory;
-    }
-
-    public XstsConfigBuilder logger(final Logger logger) {
-        this.logger = logger;
-        return this;
     }
 
     public XstsConfigBuilder search(final Search search) {
@@ -363,8 +353,7 @@ public class XstsConfigBuilder {
                             negProp,
                             refinementSolverFactory.createItpSolver()),
                     getItpRefToPrec(),
-                    pruneStrategy,
-                    logger);
+                    pruneStrategy);
         }
 
         public abstract P getInitPrec();
@@ -379,11 +368,10 @@ public class XstsConfigBuilder {
                     BasicArgAbstractor.builder(argBuilder)
                             .waitlist(PriorityWaitlist.create(search.comparator))
                             .stopCriterion(refinement.getStopCriterion())
-                            .logger(logger)
                             .build();
             final ArgRefiner<XstsState<S>, XstsAction, P> refiner = getRefiner();
             final SafetyChecker<ARG<XstsState<S>, XstsAction>, Trace<XstsState<S>, XstsAction>, P>
-                    checker = ArgCegarChecker.create(abstractor, refiner, logger);
+                    checker = ArgCegarChecker.create(abstractor, refiner);
             return XstsConfig.create(checker, getInitPrec());
         }
 
@@ -450,8 +438,7 @@ public class XstsConfigBuilder {
                                 negProp,
                                 refinementSolverFactory.createUCSolver()),
                         JoiningPrecRefiner.create(new VarsRefToExplPrec()),
-                        pruneStrategy,
-                        logger);
+                        pruneStrategy);
             }
             return super.getRefiner();
         }

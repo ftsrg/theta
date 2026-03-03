@@ -33,7 +33,6 @@ package hu.bme.mit.theta.sts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
@@ -48,12 +47,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class StsIc3Test {
     public String filePath;
     public boolean isSafe;
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.initOld(Logger.LegacyLevel.VERBOSE);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -83,8 +88,6 @@ public class StsIc3Test {
 
         initStsIc3Test(filePath, isSafe);
 
-        final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
-
         final STS sts;
         if (filePath.endsWith("aag")) {
             sts = AigerToSts.createSts(AigerParser.parse(filePath));
@@ -108,11 +111,9 @@ public class StsIc3Test {
                                         true,
                                         true,
                                         true,
-                                        true,
-                                        logger),
+                                        true),
                         List.of(),
-                        List.of(),
-                        logger);
+                        List.of());
         Assertions.assertEquals(isSafe, checker.check().isSafe());
     }
 

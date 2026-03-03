@@ -48,21 +48,18 @@ class XstsCliBounded :
       override fun buildChecker(
         monolithicExpr: MonolithicExpr,
         solverFactory: SolverFactory,
-        logger: Logger,
-      ) = buildBMC(monolithicExpr, solverFactory.createSolver(), logger)
+      ) = buildBMC(monolithicExpr, solverFactory.createSolver())
     },
     KINDUCTION {
 
       override fun buildChecker(
         monolithicExpr: MonolithicExpr,
         solverFactory: SolverFactory,
-        logger: Logger,
       ) =
         buildKIND(
           monolithicExpr,
           solverFactory.createSolver(),
           solverFactory.createSolver(),
-          logger,
         )
     },
     IMC {
@@ -70,20 +67,17 @@ class XstsCliBounded :
       override fun buildChecker(
         monolithicExpr: MonolithicExpr,
         solverFactory: SolverFactory,
-        logger: Logger,
       ) =
         buildIMC(
           monolithicExpr,
           solverFactory.createSolver(),
           solverFactory.createItpSolver(),
-          logger,
         )
     };
 
     abstract fun buildChecker(
       monolithicExpr: MonolithicExpr,
       solverFactory: SolverFactory,
-      logger: Logger,
     ): BoundedChecker
   }
 
@@ -95,7 +89,7 @@ class XstsCliBounded :
     totalTimeMs: Long,
   ) {
     if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
+      Logger.result(status.toString())
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
@@ -119,7 +113,7 @@ class XstsCliBounded :
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
     val checker =
-      createChecker(xsts, solverFactory) { variant.buildChecker(it, solverFactory, logger) }
+      createChecker(xsts, solverFactory) { variant.buildChecker(it, solverFactory) }
     val result = checker.check()
     sw.stop()
     printResult(

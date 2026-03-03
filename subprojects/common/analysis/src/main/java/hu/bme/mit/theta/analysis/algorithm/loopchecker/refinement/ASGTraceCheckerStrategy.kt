@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus.Feasible
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -42,8 +41,7 @@ enum class ASGTraceCheckerStrategy {
       trace: ASGTrace<S, A>,
       solverFactory: SolverFactory,
       init: Expr<BoolType>,
-      logger: Logger,
-    ) = DirectRefinementASGTraceCheckerStrategy(trace, solverFactory, init, logger).check()
+    ) = DirectRefinementASGTraceCheckerStrategy(trace, solverFactory, init).check()
   },
   BOUNDED_UNROLLING {
 
@@ -51,15 +49,14 @@ enum class ASGTraceCheckerStrategy {
       trace: ASGTrace<S, A>,
       solverFactory: SolverFactory,
       init: Expr<BoolType>,
-      logger: Logger,
     ): ExprTraceStatus<ItpRefutation> {
       try {
-        return BoundedUnrollingASGTraceCheckerStrategy(trace, solverFactory, init, 100, logger)
+        return BoundedUnrollingASGTraceCheckerStrategy(trace, solverFactory, init, 100)
           .check()
       } catch (t: TraceCheckingFailedException) {
-        logger.write(Logger.Level.INFO, "${t.message}\n")
-        logger.write(Logger.Level.INFO, "Falling back to default strategy $default\n")
-        return default.check(trace, solverFactory, init, logger)
+        Logger.info("${t.message}\n")
+        Logger.info("Falling back to default strategy $default\n")
+        return default.check(trace, solverFactory, init)
       }
     }
   };
@@ -73,7 +70,6 @@ enum class ASGTraceCheckerStrategy {
     trace: ASGTrace<S, A>,
     solverFactory: SolverFactory,
     init: Expr<BoolType> = True(),
-    logger: Logger = NullLogger.getInstance(),
   ): ExprTraceStatus<ItpRefutation>
 }
 
@@ -81,7 +77,6 @@ abstract class AbstractASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
   private val trace: ASGTrace<S, A>,
   solverFactory: SolverFactory,
   private val init: Expr<BoolType>,
-  private val logger: Logger,
 ) {
   protected val solver: ItpSolver = solverFactory.createItpSolver()
   protected val stateCount = trace.length() + 1
@@ -123,7 +118,7 @@ abstract class AbstractASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
   }
 
   private fun infeasibleAsLoopIsUnreachable(satPrefix: Int): ExprTraceStatus<ItpRefutation> {
-    logger.write(Logger.Level.INFO, "Loop was unreachable%n")
+    Logger.info("Loop was unreachable%n")
     solver.add(
       unreachableMarker,
       PathUtils.unfold(trace.getState(satPrefix + 1).toExpr(), indexings[satPrefix + 1]),
@@ -147,8 +142,7 @@ abstract class AbstractASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
       val itpFolded: Expr<BoolType> = PathUtils.foldin(interpolantExpr, indexing)
       return ExprTraceStatus.infeasible(ItpRefutation.binary(itpFolded, satPrefix, stateCount))
     } catch (e: IllegalArgumentException) {
-      logger.write(
-        Logger.Level.INFO,
+      Logger.info(
         "Interpolant expression: %s; indexing: %s%n",
         interpolantExpr,
         indexing,
@@ -166,6 +160,6 @@ abstract class AbstractASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
     )
 
   protected fun logInterpolant(expr: Expr<BoolType>) {
-    logger.write(Logger.Level.INFO, "Interpolant : $expr%n")
+    Logger.info("Interpolant : $expr%n")
   }
 }

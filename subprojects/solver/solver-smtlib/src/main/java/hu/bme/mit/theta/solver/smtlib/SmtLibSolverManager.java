@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.*;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.smtlib.impl.bitwuzla.BitwuzlaSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
@@ -71,7 +70,7 @@ public final class SmtLibSolverManager extends SolverManager {
     private final Set<SolverBase> instantiatedSolvers;
     private boolean closed = false;
 
-    private SmtLibSolverManager(final Path home, final Logger logger) {
+    private SmtLibSolverManager(final Path home) {
         checkNotNull(home);
         checkArgument(Files.exists(home), "Home directory does not exist");
 
@@ -83,8 +82,8 @@ public final class SmtLibSolverManager extends SolverManager {
                             genericInstallerDeclaration.get1(),
                             genericInstallerDeclaration
                                     .get2()
-                                    .getDeclaredConstructor(Logger.class)
-                                    .newInstance(logger));
+                                    .getDeclaredConstructor()
+                                    .newInstance());
 
             this.installers =
                     Stream.concat(
@@ -96,9 +95,8 @@ public final class SmtLibSolverManager extends SolverManager {
                                                             return Tuple2.of(
                                                                     p.getKey(),
                                                                     p.getValue()
-                                                                            .getDeclaredConstructor(
-                                                                                    Logger.class)
-                                                                            .newInstance(logger));
+                                                                            .getDeclaredConstructor()
+                                                                            .newInstance());
                                                         } catch (InstantiationException
                                                                 | IllegalAccessException
                                                                 | InvocationTargetException
@@ -156,9 +154,9 @@ public final class SmtLibSolverManager extends SolverManager {
         return versionArr[part];
     }
 
-    public static SmtLibSolverManager create(final Path home, final Logger logger)
+    public static SmtLibSolverManager create(final Path home)
             throws IOException {
-        return new SmtLibSolverManager(createIfNotExists(home), logger);
+        return new SmtLibSolverManager(createIfNotExists(home));
     }
 
     private static Path createIfNotExists(final Path path) throws IOException {
