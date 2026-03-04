@@ -38,10 +38,10 @@ import hu.bme.mit.theta.analysis.algorithm.Checker;
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.AbstractMonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -78,7 +78,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 public class CarCegarChecker<S extends ExprState, A extends ExprAction>
-    implements SafetyChecker<EmptyProof, Trace<S, A>, UnitPrec> {
+    implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
   private MonolithicExpr monolithicExpr;
   private final List<OverFrame> forwardOverFrames;
   private final List<UnderFrame> backwardUnderFrames;
@@ -107,8 +107,6 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
         monolithicExpr,
         forwardTrace,
         solverFactory,
-        valToState,
-        biValToAction,
         true,
         true,
         true,
@@ -123,8 +121,6 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
       MonolithicExpr monolithicExpr,
       boolean forwardTrace,
       SolverFactory solverFactory,
-      Function<Valuation, S> valToState,
-      BiFunction<Valuation, Valuation, A> biValToAction,
       boolean formerFramesOpt,
       boolean unSatOpt,
       boolean notBOpt,
@@ -155,22 +151,29 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
   }
 
   @Override
-  public SafetyResult<EmptyProof, Trace<S, A>> check(UnitPrec prec) {
+  public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
+    /*
     var predPrec = PredPrec.of(monolithicExpr.getInitExpr()); // todo use unitprec
     predPrec = predPrec.join(PredPrec.of(monolithicExpr.getPropExpr()));
     final Function<MonolithicExpr, PredPrec> initprec = monolithicExpr ->
         PredPrec.of(Arrays.asList(
             monolithicExpr.getPropExpr(),
             monolithicExpr.getInitExpr()
-        ));
+        ));*/
 
-    //currentPrec = initPrec(monolithicExpr);
-    final var abstractModel = createAbstract(monolithicExpr, initprec);
+    final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
+        ExprTraceFwBinItpChecker.create(
+            monolithicExpr.getInitExpr(),
+            Not(monolithicExpr.getPropExpr()),
+            solverFactory.createItpSolver());
+    AbstractHelper helper = new AbstractHelper(monolithicExpr -> exprTraceFwBinItpChecker);
+
+    MonolithicExpr abstractModel = helper.createPrec(monolithicExpr);
     var checker =
         new CarChecker<>(
             abstractModel,
             true,
-            Z3LegacySolverFactory.getInstance(),
+            Z3LegacySolverFactory.getInstance(), //todo use solverfactory
             formerFramesOpt,
             unSatOpt,
             notBOpt,
@@ -180,10 +183,10 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
             coverOpt,
             logger);
     while(true){
-      logger.write(Logger.Level.SUBSTEP, "Current prec: %s\n", predPrec);
-      final var abstractMonolithicExpr =
-          AbstractMonolithicExprKt.createAbstract(monolithicExpr, predPrec);
-      checker.setMonolithicExpr(abstractMonolithicExpr);
+      logger.write(Logger.Level.SUBSTEP, "Current prec: %s\n", helper.currentPrec);
+
+      //final var abstractMonolithicExpr = AbstractMonolithicExprKt.createAbstract(monolithicExpr, predPrec);
+      //checker.setMonolithicExpr(abstractMonolithicExpr);
       var result = checker.check();
       if (result.isSafe()) {
         logger.write(Logger.Level.MAINSTEP, "Model is safe, stopping CEGAR");
@@ -197,7 +200,7 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
         if(checker.getValuations().size()>0){
           List<PredState> states = new ArrayList<>();
           for (var v : checker.getValuations()) {
-            states.add(activationLiteralsToPredicates(v));
+            states.add(helper.activationLiteralsToPredicates(v));
           }
 
           var actions = cex.getActions();
@@ -206,49 +209,33 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
         }else{
           trace = cex;
         }
-        final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
+
+        /*final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
             ExprTraceFwBinItpChecker.create(
                 monolithicExpr.getInitExpr(),
                 Not(monolithicExpr.getPropExpr()),
-                solverFactory.createItpSolver());
+                solverFactory.createItpSolver());*/
         if (trace != null) {
           logger.write(Logger.Level.VERBOSE, "\tFound trace: %s\n", trace);
           final ExprTraceStatus<ItpRefutation> concretizationResult =
               exprTraceFwBinItpChecker.check(trace);
           if (concretizationResult.isFeasible()) {
             logger.write(Logger.Level.MAINSTEP, "Model is unsafe, stopping CEGAR\n");
-
             return result;
           } else {
             final var ref = concretizationResult.asInfeasible().getRefutation();
             final var newPred = ref.get(ref.getPruneIndex());
             checker.prune(ref.getPruneIndex(), false);
             final var newPrec = PredPrec.of(newPred);
-            predPrec = predPrec.join(newPrec);
+            helper.currentPrec = helper.currentPrec.join(newPrec);
             logger.write(Logger.Level.INFO, "Added new predicate " + newPrec + "\n");
+            final var abstractMonolithicExpr = helper.createAbstract(monolithicExpr, helper.currentPrec);
+            checker.setMonolithicExpr(abstractMonolithicExpr);
           }
         }
       }
     }
 
-  }
-  private PredState activationLiteralsToPredicates(Valuation valuation) {
-    Map<Decl<?>, LitExpr<?>> map = new HashMap<>(valuation.toMap());
-
-
-
-    // Transform each entry into predicates
-    List<Expr<BoolType>> predicates = new ArrayList<>();
-    for (var entry : map.entrySet()) {
-      BoolLitExpr boolExpr = (BoolLitExpr) entry.getValue();
-      if (boolExpr.getValue()) {
-        predicates.add(AbstractMonolithicExprKt.literalToPred.get(entry.getKey()));
-      } else {
-        predicates.add(Not((AbstractMonolithicExprKt.literalToPred.get(entry.getKey()))));
-      }
-    }
-
-    return PredState.of(predicates);
   }
 
 
