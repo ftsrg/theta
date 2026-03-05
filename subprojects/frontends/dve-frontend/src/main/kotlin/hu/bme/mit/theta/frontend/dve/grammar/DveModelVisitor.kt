@@ -52,13 +52,51 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
 
         for (decl in ctx.topDecl()) {
             when {
-                decl.varDecl() != null -> globalVars += buildScalarDecl(decl.varDecl())
+                decl.varDecl() != null -> globalVars += buildScalarDecls(decl.varDecl())
                 decl.arrayDecl() != null -> globalVars += buildArrayDecl(decl.arrayDecl())
                 decl.channelDecl() != null -> channels += buildChannelDecl(decl.channelDecl())
             }
         }
 
         val processes = ctx.processDecl().map { buildProcess(it) }
+
+        val declaredChannelNames = channels.map { it.name }.toMutableSet()
+        val channelsByName = channels.associateBy { it.name }.toMutableMap()
+        for (proc in processes) {
+            for (trans in proc.transitions) {
+                val sync = trans.sync ?: continue
+                val chName = when (sync) {
+                    is DveSyncAction.Send -> sync.channelName
+                    is DveSyncAction.Receive -> sync.channelName
+                }
+                val fieldCount = when (sync) {
+                    is DveSyncAction.Send -> sync.values.size
+                    is DveSyncAction.Receive -> sync.variables.size
+                }
+                if (chName !in declaredChannelNames) {
+                    val ch = DveChannelDecl(
+                        name = chName,
+                        typedFields = List(fieldCount) { DveVariableType.INT },
+                        bufferSize = 0,
+                    )
+                    channels += ch
+                    channelsByName[chName] = ch
+                    declaredChannelNames += chName
+                } else if (fieldCount > 0) {
+                    val existing = channelsByName[chName]!!
+                    if (existing.typedFields.size < fieldCount) {
+                        val upgraded = DveChannelDecl(
+                            name = chName,
+                            typedFields = List(fieldCount) { DveVariableType.INT },
+                            bufferSize = existing.bufferSize,
+                        )
+                        channels[channels.indexOf(existing)] = upgraded
+                        channelsByName[chName] = upgraded
+                    }
+                }
+            }
+        }
+
         val system = buildSystemDecl(ctx.systemDecl())
 
         return DveModel(
@@ -73,14 +111,20 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
     // Variable and array declarations
     // -------------------------------------------------------------------------
 
-    private fun buildScalarDecl(ctx: dveParser.VarDeclContext): DveVarOrArrayDecl.Scalar =
-        DveVarOrArrayDecl.Scalar(
-            DveVariableDecl(
-                name = ctx.ID().text,
-                type = buildVarType(ctx.varType()),
-                initialValue = ctx.expr()?.let { buildExpr(it) },
+    private fun buildScalarDecls(ctx: dveParser.VarDeclContext): List<DveVarOrArrayDecl.Scalar> {
+        val type = buildVarType(ctx.varType())
+        val ids = ctx.ID()          // List<TerminalNode> after grammar regeneration
+        val exprs = ctx.expr()      // List<ExprContext>
+        return ids.mapIndexed { i, id ->
+            DveVarOrArrayDecl.Scalar(
+                DveVariableDecl(
+                    name = id.text,
+                    type = type,
+                    initialValue = exprs.getOrNull(i)?.let { buildExpr(it) },
+                )
             )
-        )
+        }
+    }
 
     private fun buildArrayDecl(ctx: dveParser.ArrayDeclContext): DveVarOrArrayDecl.Array =
         DveVarOrArrayDecl.Array(
@@ -99,20 +143,24 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
     // Channel declarations
     // -------------------------------------------------------------------------
 
-    private fun buildChannelDecl(ctx: dveParser.ChannelDeclContext): DveChannelDecl =
+    private fun buildChannelDecl(ctx: dveParser.ChannelDeclContext): List<DveChannelDecl> =
         when (ctx) {
+            is dveParser.BareChannelContext ->
+                ctx.ID().map { id ->
+                    DveChannelDecl(name = id.text, typedFields = emptyList(), bufferSize = 0)
+                }
             is dveParser.SyncNoDataChannelContext ->
-                DveChannelDecl(
+                listOf(DveChannelDecl(
                     name = ctx.ID().text,
                     typedFields = emptyList(),
                     bufferSize = ctx.INT_LITERAL().text.toInt(),
-                )
+                ))
             is dveParser.TypedChannelContext ->
-                DveChannelDecl(
+                listOf(DveChannelDecl(
                     name = ctx.ID().text,
                     typedFields = ctx.varTypeList().varType().map { buildVarType(it) },
                     bufferSize = ctx.INT_LITERAL().text.toInt(),
-                )
+                ))
             else -> error("Unknown channel decl: $ctx")
         }
 
@@ -127,7 +175,7 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
         val localVars = buildList {
             body.localDecl().forEach { ld ->
                 when {
-                    ld.varDecl() != null -> add(buildScalarDecl(ld.varDecl()))
+                    ld.varDecl() != null -> addAll(buildScalarDecls(ld.varDecl()))
                     ld.arrayDecl() != null -> add(buildArrayDecl(ld.arrayDecl()))
                 }
             }
@@ -287,6 +335,8 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
                 }
                 DveExpression.UnaryExpr(op, buildAtom(ctx.atom()))
             }
+            is dveParser.NotExprContext ->
+                DveExpression.UnaryExpr(DveUnaryOp.NOT, buildExpr(ctx.expr()))
             is dveParser.IntLitContext ->
                 DveExpression.LiteralExpr(ctx.INT_LITERAL().text.toInt())
             is dveParser.SimpleRefContext ->

@@ -27,13 +27,13 @@ model
 topDecl
     : varDecl SEMI
     | arrayDecl SEMI
-    | channelDecl SEMI
+    | channelDecl
     ;
 
 // ---- Variable declarations -------------------------------------------------
 
 varDecl
-    : varType ID (ASSIGN expr)?
+    : varType ID (ASSIGN expr)? (COMMA ID (ASSIGN expr)?)*
     ;
 
 arrayDecl
@@ -50,8 +50,9 @@ varType
 // channel name {0};                    — synchronous, no data
 // channel name {byte, int} [cap];      — typed fields, capacity >= 0
 channelDecl
-    : CHANNEL ID LBRACE INT_LITERAL RBRACE                                       # syncNoDataChannel
-    | CHANNEL ID LBRACE varTypeList RBRACE LBRACKET INT_LITERAL RBRACKET         # typedChannel
+    : CHANNEL ID (COMMA ID)* SEMI                                               # bareChannel
+    | CHANNEL ID LBRACE INT_LITERAL RBRACE SEMI                                 # syncNoDataChannel
+    | CHANNEL ID LBRACE varTypeList RBRACE LBRACKET INT_LITERAL RBRACKET SEMI   # typedChannel
     ;
 
 varTypeList
@@ -179,6 +180,7 @@ expr
 // resolution is deferred to a post-parse semantic pass.
 atom
     : (BANG | MINUS | BITNOT) atom               # unaryExpr
+    | NOT LPAREN expr RPAREN                      # notExpr
     | INT_LITERAL                                 # intLit
     | ID                                          # simpleRef
     | ID LBRACKET expr RBRACKET                   # arrayRef
@@ -217,6 +219,8 @@ CHANNEL  : 'channel'  ;
 SYSTEM   : 'system'   ;
 ASYNC    : 'async'    ;
 PROPERTY : 'property' ;
+
+NOT      : 'not'      ;
 
 ID          : [a-zA-Z_][a-zA-Z0-9_]* ;
 INT_LITERAL : [0-9]+                  ;

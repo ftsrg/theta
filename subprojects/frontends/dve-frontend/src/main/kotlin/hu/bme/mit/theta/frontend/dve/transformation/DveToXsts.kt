@@ -23,11 +23,13 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr
 import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.dve.model.*
 import hu.bme.mit.theta.xsts.XSTS
@@ -35,9 +37,14 @@ import hu.bme.mit.theta.xsts.XSTS
 /** Transforms a [DveModel] into an [XSTS]. */
 object DveToXsts {
 
+    enum class PropType {
+        ASSERTIONS,
+        FULL_EXPLORATION,
+    }
+
     fun transform(
         model: DveModel,
-        extraProp: Expr<BoolType>? = null,
+        propType: PropType = PropType.ASSERTIONS,
     ): XSTS {
         if (model.system.propertyProcessName != null)
             throw UnsupportedOperationException(
@@ -48,7 +55,7 @@ object DveToXsts {
 
         val ctx = TransformContext(model)
         ctx.build()
-        val prop = ctx.buildProp(extraProp)
+        val prop = ctx.buildProp(propType)
 
         return XSTS(
             ctx.allStateVars.toSet(),
@@ -396,21 +403,20 @@ private class TransformContext(private val model: DveModel) {
         cond: Expr<BoolType>, lhs: VarDecl<*>, rhs: Expr<*>,
     ): Stmt = IfStmt.of(cond, AssignStmt.create<IntType>(lhs, rhs as Expr<IntType>))
 
-    fun buildProp(extraProp: Expr<BoolType>?): Expr<BoolType> {
+    fun buildProp(propType: DveToXsts.PropType): Expr<BoolType> {
+        if (propType == DveToXsts.PropType.FULL_EXPLORATION) return True()
         val terms = mutableListOf<Expr<BoolType>>()
         for (proc in model.processes) {
             val pc    = pcVars[proc.name]!!
             for (assertion in proc.assertions) {
                 if (assertion.stateName !in proc.states) continue
                 val expr = dveExprToBool(assertion.expression, proc.name)
-                // property: !(pc == s && !expr)
                 terms += BoolExprs.Not(
                     BoolExprs.And(Eq(pc.ref, stateLit(proc.name, assertion.stateName)),
                                   BoolExprs.Not(expr)))
             }
         }
-        if (extraProp != null) terms += extraProp
-        return if (terms.isEmpty()) BoolExprs.True() else SmartBoolExprs.And(terms)
+        return if (terms.isEmpty()) True() else SmartBoolExprs.And(terms)
     }
 
 
@@ -436,6 +442,11 @@ private class TransformContext(private val model: DveModel) {
     ): Stmt {
         val slots = findArraySlots(procCtx, arrName)
         if (slots.isEmpty()) throw IllegalArgumentException("Unknown array: $procCtx.$arrName")
+        if (idxExpr is IntLitExpr) {
+            val i = idxExpr.value.toInt()
+            val slot = if (i in slots.indices) slots[i] else slots.last()
+            return AssignStmt.of(slot, rhs as Expr<IntType>)
+        }
         return SequenceStmt.of(slots.mapIndexed { i, slot ->
             buildConditionalAssign(Eq(idxExpr, iLit(i)), slot, rhs)
         })
@@ -526,6 +537,10 @@ private class TransformContext(private val model: DveModel) {
     private fun buildArrayRead(procCtx: String?, arrName: String, idxExpr: Expr<*>): Expr<IntType> {
         val slots = findArraySlots(procCtx, arrName)
         if (slots.isEmpty()) throw IllegalArgumentException("Unknown array: $procCtx.$arrName")
+        if (idxExpr is IntLitExpr) {
+            val i = idxExpr.value.toInt()
+            return if (i in slots.indices) slots[i].ref else slots.last().ref
+        }
         var result: Expr<IntType> = slots.last().ref
         for (i in slots.size - 2 downTo 0)
             result = Exprs.Ite(Eq(idxExpr, iLit(i)), slots[i].ref, result)

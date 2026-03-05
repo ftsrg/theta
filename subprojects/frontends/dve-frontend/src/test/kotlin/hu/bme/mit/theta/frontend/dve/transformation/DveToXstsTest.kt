@@ -50,13 +50,12 @@ class DveToXstsTest {
     private fun parseInline(src: String): DveModel =
         DveParser.parse(src.trimIndent().byteInputStream())
 
-    private fun transform(resource: String, extraProp: Expr<BoolType>? = null): XSTS =
-        DveToXsts.transform(parse(resource), extraProp)
+    private fun transform(resource: String): XSTS =
+        DveToXsts.transform(parse(resource))
 
     private fun transformInline(
         src: String,
-        extraProp: Expr<BoolType>? = null,
-    ): XSTS = DveToXsts.transform(parseInline(src), extraProp)
+    ): XSTS = DveToXsts.transform(parseInline(src))
 
     /** All variable names in the XSTS (state vars + data vars). */
     private fun XSTS.varNames(): Set<String> = (vars + stateVars + ctrlVars).map { it.name }.toSet()
@@ -318,20 +317,6 @@ class DveToXstsTest {
             system async;
         """)
         assertTrue(xsts.prop is TrueExpr, "Expected True() when no assertions and no extra prop")
-    }
-
-    @Test
-    fun `extraProp True is included in property`() {
-        val extraProp = True()
-        val xsts = transformInline("""
-            process P {
-                state s0;
-                init s0;
-            }
-            system async;
-        """, extraProp = extraProp)
-        // With no assertions, extraProp becomes the property
-        assertTrue(xsts.prop is TrueExpr)
     }
 
     // -------------------------------------------------------------------------

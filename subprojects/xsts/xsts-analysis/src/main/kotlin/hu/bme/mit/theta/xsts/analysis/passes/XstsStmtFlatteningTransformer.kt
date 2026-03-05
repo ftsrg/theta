@@ -106,7 +106,7 @@ object XstsStmtFlatteningTransformer {
 
   fun XSTS.events(): List<Event<VarDecl<*>>> {
 
-    val flattened = flattenStmts(SequenceStmt.of(listOf(env, tran)), 5)
+    val flattened = flattenStmts(SequenceStmt.of(listOf(env, tran)), 2)
     return flattened
       .map {
         object : Event<VarDecl<*>> {

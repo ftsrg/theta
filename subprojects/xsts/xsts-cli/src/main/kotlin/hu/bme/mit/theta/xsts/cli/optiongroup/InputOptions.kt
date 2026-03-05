@@ -22,6 +22,8 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import hu.bme.mit.theta.frontend.dve.DveParser
+import hu.bme.mit.theta.frontend.dve.transformation.DveToXsts
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
 import hu.bme.mit.theta.frontend.petrinet.model.PropType
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
@@ -31,15 +33,10 @@ import hu.bme.mit.theta.xsts.analysis.passes.XstsStmtFlatteningTransformer
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 
-class InputOptions :
+class  InputOptions :
   OptionGroup(name = "Input options", help = "Options related to model and property input") {
   val model: File by
-    option(
-        "--model",
-        "--input",
-        help =
-          "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input",
-      )
+    option("--model", "--input", help = "Path of the input model (XSTS, DVE, or Pnml).")
       .file(mustExist = true, canBeDir = false)
       .required()
   private val property: File? by
@@ -47,10 +44,7 @@ class InputOptions :
   private val inlineProperty: String? by
     option(help = "Input property as a string. Ignored if --property is defined")
   private val flattenDepth: Int by
-    option(
-        help =
-          "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening."
-      )
+    option(help = "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening.")
       .int()
       .default(0)
   private val initialmarking: String by
@@ -59,8 +53,14 @@ class InputOptions :
     option(help = "Property type for Petri-nets. Has priority over --property.")
       .enum<PropType>()
       .default(PropType.FULL_EXPLORATION)
+  private val dvePropType: DveToXsts.PropType by
+    option(help = "Property type for DVE models. ASSERTIONS uses assert statements; FULL_EXPLORATION enumerates the whole state space.")
+      .enum<DveToXsts.PropType>()
+      .default(DveToXsts.PropType.ASSERTIONS)
 
   fun isPnml() = model.path.endsWith("pnml")
+
+  fun isDve() = model.path.endsWith("dve")
 
   fun getPetrinetProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
 
@@ -74,6 +74,10 @@ class InputOptions :
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
       return PetriNetToXSTS.createXSTS(petriNet, propertyStream, getPetrinetProperty())
     }
+    if (isDve()) {
+      val dveModel = model.inputStream().use { DveParser.parse(it) }
+      return DveToXsts.transform(dveModel, dvePropType)
+    }
     val parsedXsts =
       XstsDslManager.createXsts(
         SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
@@ -81,6 +85,6 @@ class InputOptions :
     return XstsStmtFlatteningTransformer.transform(parsedXsts, flattenDepth)
   }
 
-  fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/
+  fun loadPetriNet(): MutableList<PetriNet> =
     mutableListOf(XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking))
 }
