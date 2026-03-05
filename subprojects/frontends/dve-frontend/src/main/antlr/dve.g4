@@ -152,29 +152,34 @@ systemType
     ;
 
 // ---- Expressions -----------------------------------------------------------
-// Listed lowest-to-highest precedence (ANTLR4 resolves left-recursive rules
-// by treating earlier alternatives as having lower precedence).
+// Listed highest-to-lowest precedence (ANTLR4 left-recursive rules assign
+// higher precedence to earlier alternatives, so * / % must come first and
+// || must come last — matching standard C operator precedence).
 
 expr
-    : expr OR   expr                             # logOrExpr
-    | expr AND  expr                             # logAndExpr
-    | expr BITOR  expr                           # bitOrExpr
-    | expr BITXOR expr                           # bitXorExpr
-    | expr BITAND expr                           # bitAndExpr
-    | expr (EQ2 | NEQ) expr                      # eqExpr
-    | expr (LT | LEQ | GT | GEQ) expr            # relExpr
-    | expr (SHL | SHR) expr                      # shiftExpr
+    : expr (STAR | DIV | MOD) expr               # mulExpr
     | expr (PLUS | MINUS) expr                   # addExpr
-    | expr (STAR | DIV | MOD) expr               # mulExpr
-    | (BANG | MINUS | BITNOT) expr               # unaryExpr
+    | expr (SHL | SHR) expr                      # shiftExpr
+    | expr (LT | LEQ | GT | GEQ) expr            # relExpr
+    | expr (EQ2 | NEQ) expr                      # eqExpr
+    | expr BITAND expr                           # bitAndExpr
+    | expr BITXOR expr                           # bitXorExpr
+    | expr BITOR  expr                           # bitOrExpr
+    | expr AND  expr                             # logAndExpr
+    | expr OR   expr                             # logOrExpr
     | atom                                       # atomExpr
     ;
 
-// Atoms: literals, references, qualified accesses, parentheses.
+// Atoms and unary operators.
+// Unary operators are placed here (not in expr) so that they bind tighter
+// than any binary operator — avoiding ANTLR4's "primary at precedence 0"
+// pitfall where `(BANG|MINUS|BITNOT) expr` in a left-recursive rule would
+// greedily consume the entire remainder (e.g. parsing `-x == 0` as `-(x==0)`).
 // ID.ID is syntactically ambiguous (var ref vs process state test);
 // resolution is deferred to a post-parse semantic pass.
 atom
-    : INT_LITERAL                                 # intLit
+    : (BANG | MINUS | BITNOT) atom               # unaryExpr
+    | INT_LITERAL                                 # intLit
     | ID                                          # simpleRef
     | ID LBRACKET expr RBRACKET                   # arrayRef
     | ID DOT ID                                   # qualifiedRef

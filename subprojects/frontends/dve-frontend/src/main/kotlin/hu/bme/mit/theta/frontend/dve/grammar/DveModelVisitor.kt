@@ -29,9 +29,6 @@ import hu.bme.mit.theta.frontend.dve.model.*
  *  1. Pre-scan: collect every process name → set of state names before visiting.
  *  2. Main visit: resolve every [dveParser.QualifiedRefContext] and
  *     [dveParser.QualifiedArrayRefContext] using the collected state sets.
- *
- * Private helpers are prefixed with `build` rather than `visit` to avoid
- * shadowing the ANTLR-generated visitor methods in [dveBaseVisitor].
  */
 class DveModelVisitor : dveBaseVisitor<Any>() {
 
@@ -276,20 +273,20 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
                 }
                 DveExpression.BinaryExpr(buildExpr(ctx.expr(0)), op, buildExpr(ctx.expr(1)))
             }
-            is dveParser.UnaryExprContext -> {
-                val op = when {
-                    ctx.BANG() != null -> DveUnaryOp.NOT
-                    ctx.BITNOT() != null -> DveUnaryOp.BITNOT
-                    else -> DveUnaryOp.NEG
-                }
-                DveExpression.UnaryExpr(op, buildExpr(ctx.expr()))
-            }
             is dveParser.AtomExprContext -> buildAtom(ctx.atom())
             else -> error("Unknown expr: $ctx")
         }
 
     private fun buildAtom(ctx: dveParser.AtomContext): DveExpression =
         when (ctx) {
+            is dveParser.UnaryExprContext -> {
+                val op = when {
+                    ctx.BANG() != null -> DveUnaryOp.NOT
+                    ctx.BITNOT() != null -> DveUnaryOp.BITNOT
+                    else -> DveUnaryOp.NEG
+                }
+                DveExpression.UnaryExpr(op, buildAtom(ctx.atom()))
+            }
             is dveParser.IntLitContext ->
                 DveExpression.LiteralExpr(ctx.INT_LITERAL().text.toInt())
             is dveParser.SimpleRefContext ->
