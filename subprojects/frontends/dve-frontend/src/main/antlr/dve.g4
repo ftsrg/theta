@@ -166,8 +166,8 @@ expr
     | expr BITAND expr                           # bitAndExpr
     | expr BITXOR expr                           # bitXorExpr
     | expr BITOR  expr                           # bitOrExpr
-    | expr AND  expr                             # logAndExpr
-    | expr OR   expr                             # logOrExpr
+    | expr (AND | AND_KW)  expr                  # logAndExpr
+    | expr (OR  | OR_KW)   expr                  # logOrExpr
     | atom                                       # atomExpr
     ;
 
@@ -181,6 +181,7 @@ expr
 atom
     : (BANG | MINUS | BITNOT) atom               # unaryExpr
     | NOT LPAREN expr RPAREN                      # notExpr
+    | NOT atom                                    # notPrefixExpr
     | INT_LITERAL                                 # intLit
     | ID                                          # simpleRef
     | ID LBRACKET expr RBRACKET                   # arrayRef
@@ -221,6 +222,8 @@ ASYNC    : 'async'    ;
 PROPERTY : 'property' ;
 
 NOT      : 'not'      ;
+AND_KW   : 'and'      ;
+OR_KW    : 'or'       ;
 
 ID          : [a-zA-Z_][a-zA-Z0-9_]* ;
 INT_LITERAL : [0-9]+                  ;

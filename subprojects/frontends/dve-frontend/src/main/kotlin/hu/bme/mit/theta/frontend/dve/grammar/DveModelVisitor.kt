@@ -337,6 +337,8 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
             }
             is dveParser.NotExprContext ->
                 DveExpression.UnaryExpr(DveUnaryOp.NOT, buildExpr(ctx.expr()))
+            is dveParser.NotPrefixExprContext ->
+                DveExpression.UnaryExpr(DveUnaryOp.NOT, buildAtom(ctx.atom()))
             is dveParser.IntLitContext ->
                 DveExpression.LiteralExpr(ctx.INT_LITERAL().text.toInt())
             is dveParser.SimpleRefContext ->
