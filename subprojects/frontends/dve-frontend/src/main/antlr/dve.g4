@@ -37,7 +37,11 @@ varDecl
     ;
 
 arrayDecl
-    : varType ID LBRACKET INT_LITERAL RBRACKET (ASSIGN LBRACE exprList RBRACE)?
+    : varType arrayItem (COMMA arrayItem)*
+    ;
+
+arrayItem
+    : ID LBRACKET INT_LITERAL RBRACKET (ASSIGN LBRACE exprList RBRACE)?
     ;
 
 varType
@@ -71,8 +75,8 @@ processBody
     ;
 
 localDecl
-    : varDecl SEMI
-    | arrayDecl SEMI
+    : CONST? varDecl SEMI
+    | CONST? arrayDecl SEMI
     ;
 
 stateDecl

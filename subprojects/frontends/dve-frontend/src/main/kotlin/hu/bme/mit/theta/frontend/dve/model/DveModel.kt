@@ -144,7 +144,8 @@ sealed class DveLValue {
 data class DveVariableDecl(
   val name: String,
   val type: DveVariableType,
-  val initialValue: DveExpression? = null
+  val initialValue: DveExpression? = null,
+  val isConst: Boolean = false,
 )
 
 /**
@@ -156,7 +157,8 @@ data class DveArrayDecl(
   val name: String,
   val type: DveVariableType,
   val size: Int,
-  val initialValues: List<DveExpression>? = null
+  val initialValues: List<DveExpression>? = null,
+  val isConst: Boolean = false,
 )
 
 /**

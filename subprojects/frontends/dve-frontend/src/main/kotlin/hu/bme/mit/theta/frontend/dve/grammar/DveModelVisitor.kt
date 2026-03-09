@@ -51,9 +51,10 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
         val channels = mutableListOf<DveChannelDecl>()
 
         for (decl in ctx.topDecl()) {
+            val isConst = decl.CONST() != null
             when {
-                decl.varDecl() != null -> globalVars += buildScalarDecls(decl.varDecl())
-                decl.arrayDecl() != null -> globalVars += buildArrayDecl(decl.arrayDecl())
+                decl.varDecl() != null -> globalVars += buildScalarDecls(decl.varDecl(), isConst)
+                decl.arrayDecl() != null -> globalVars += buildArrayDecls(decl.arrayDecl(), isConst)
                 decl.channelDecl() != null -> channels += buildChannelDecl(decl.channelDecl())
             }
         }
@@ -111,7 +112,7 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
     // Variable and array declarations
     // -------------------------------------------------------------------------
 
-    private fun buildScalarDecls(ctx: dveParser.VarDeclContext): List<DveVarOrArrayDecl.Scalar> {
+    private fun buildScalarDecls(ctx: dveParser.VarDeclContext, isConst: Boolean = false): List<DveVarOrArrayDecl.Scalar> {
         val type = buildVarType(ctx.varType())
         val ids = ctx.ID()          // List<TerminalNode> after grammar regeneration
         val exprs = ctx.expr()      // List<ExprContext>
@@ -121,20 +122,26 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
                     name = id.text,
                     type = type,
                     initialValue = exprs.getOrNull(i)?.let { buildExpr(it) },
+                    isConst = isConst,
                 )
             )
         }
     }
 
-    private fun buildArrayDecl(ctx: dveParser.ArrayDeclContext): DveVarOrArrayDecl.Array =
-        DveVarOrArrayDecl.Array(
-            DveArrayDecl(
-                name = ctx.ID().text,
-                type = buildVarType(ctx.varType()),
-                size = ctx.INT_LITERAL().text.toInt(),
-                initialValues = ctx.exprList()?.expr()?.map { buildExpr(it) },
+    private fun buildArrayDecls(ctx: dveParser.ArrayDeclContext, isConst: Boolean = false): List<DveVarOrArrayDecl.Array> {
+        val type = buildVarType(ctx.varType())
+        return ctx.arrayItem().map { item ->
+            DveVarOrArrayDecl.Array(
+                DveArrayDecl(
+                    name = item.ID().text,
+                    type = type,
+                    size = item.INT_LITERAL().text.toInt(),
+                    initialValues = item.exprList()?.expr()?.map { buildExpr(it) },
+                    isConst = isConst,
+                )
             )
-        )
+        }
+    }
 
     private fun buildVarType(ctx: dveParser.VarTypeContext): DveVariableType =
         if (ctx.BYTE() != null) DveVariableType.BYTE else DveVariableType.INT
@@ -174,9 +181,10 @@ class DveModelVisitor : dveBaseVisitor<Any>() {
 
         val localVars = buildList {
             body.localDecl().forEach { ld ->
+                val isConst = ld.CONST() != null
                 when {
-                    ld.varDecl() != null -> addAll(buildScalarDecls(ld.varDecl()))
-                    ld.arrayDecl() != null -> add(buildArrayDecl(ld.arrayDecl()))
+                    ld.varDecl() != null -> addAll(buildScalarDecls(ld.varDecl(), isConst))
+                    ld.arrayDecl() != null -> addAll(buildArrayDecls(ld.arrayDecl(), isConst))
                 }
             }
         }

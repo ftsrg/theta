@@ -77,6 +77,9 @@ private class TransformContext(private val model: DveModel) {
     val chanVars = mutableMapOf<String, VarDecl<IntType>>()
     val dataVars = mutableListOf<VarDecl<IntType>>()
 
+    /** Const scalar variables inlined as integer literals (not added to varMap/dataVars). */
+    private val constScalars = mutableMapOf<String, Int>()
+
     val ctrlVars: List<VarDecl<EnumType>> get() = pcVars.values.toList()
     val allStateVars: List<VarDecl<*>> get() = pcVars.values.toList() + dataVars + chanVars.values.toList()
 
@@ -87,10 +90,32 @@ private class TransformContext(private val model: DveModel) {
 
     fun build() {
         declareStateVariables()
+        collectConsts()
         declareDataVariables()
         declareChannelVariables()
         buildInit()
         buildTrans()
+    }
+
+    /** Evaluates all const declarations (global then per-process) into [constScalars]. */
+    private fun collectConsts() {
+        for (decl in model.globalVariables) collectConst(decl, null)
+        for (proc in model.processes)
+            for (decl in proc.variables) collectConst(decl, proc.name)
+    }
+
+    private fun collectConst(decl: DveVarOrArrayDecl, processName: String?) {
+        when (decl) {
+            is DveVarOrArrayDecl.Scalar -> {
+                if (!decl.decl.isConst) return
+                val init = decl.decl.initialValue
+                require(init is DveExpression.LiteralExpr) {
+                    "Const '${decl.decl.name}' initializer must be an integer literal, got: $init"
+                }
+                constScalars[varKey(processName, decl.decl.name)] = init.value
+            }
+            is DveVarOrArrayDecl.Array -> Unit
+        }
     }
 
     private fun declareStateVariables() {
@@ -111,11 +136,13 @@ private class TransformContext(private val model: DveModel) {
     private fun declareVarOrArray(decl: DveVarOrArrayDecl, processName: String?) {
         when (decl) {
             is DveVarOrArrayDecl.Scalar -> {
+                if (decl.decl.isConst) return
                 val v = Decls.Var(varXstsName(processName, decl.decl.name), IntType.getInstance())
                 varMap[varKey(processName, decl.decl.name)] = v
                 dataVars += v
             }
             is DveVarOrArrayDecl.Array -> {
+                if (decl.decl.isConst) return
                 for (i in 0 until decl.decl.size) {
                     val v = Decls.Var(varXstsName(processName, decl.decl.name, i), IntType.getInstance())
                     varMap[varKey(processName, decl.decl.name, i)] = v
@@ -171,11 +198,13 @@ private class TransformContext(private val model: DveModel) {
     ) {
         when (decl) {
             is DveVarOrArrayDecl.Scalar -> {
+                if (decl.decl.isConst) return
                 val v    = varMap[varKey(processName, decl.decl.name)]!!
                 val init = decl.decl.initialValue?.let { translateExpr(it, null) } ?: iLit(0)
                 fExprs += Eq(v.ref, init)
             }
             is DveVarOrArrayDecl.Array -> {
+                if (decl.decl.isConst) return
                 for (i in 0 until decl.decl.size) {
                     val v    = varMap[varKey(processName, decl.decl.name, i)]!!
                     val init = decl.decl.initialValues?.getOrNull(i)
@@ -457,7 +486,10 @@ private class TransformContext(private val model: DveModel) {
         is DveExpression.LiteralExpr     -> iLit(expr.value)
         is DveExpression.VarRefExpr      -> {
             val procCtx = expr.processName ?: contextProcess
-            lookupVar(procCtx, expr.varName)?.ref
+            val constVal = constScalars[varKey(procCtx, expr.varName)]
+                ?: constScalars[varKey(null, expr.varName)]
+            if (constVal != null) iLit(constVal)
+            else lookupVar(procCtx, expr.varName)?.ref
                 ?: throw IllegalArgumentException("Undeclared variable: ${expr.processName}.${expr.varName}")
         }
         is DveExpression.ArrayAccessExpr -> {
