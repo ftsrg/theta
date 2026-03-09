@@ -351,11 +351,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         private final Stack<MddExpressionRepresentation> stack;
 
-        // Incremental enumeration state: tracks whether the solver has a
-        // persistent push level with the base expression + accumulated negations
+        // Tracks whether the solver has a persistent push level with the
+        // base expression + accumulated negations for the current level
         private boolean enumerationActive = false;
-        private int solverPushDepth = 0;
-        private final Stack<Boolean> enumerationStateStack = new Stack<>();
 
         private Traverser(
                 MddExpressionRepresentation rootRepresentation,
@@ -380,15 +378,16 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return new Traverser(rootRepresentation, True(), solverPool);
         }
 
-        public MddExpressionRepresentation moveUp() {
-            //            throw new UnsupportedOperationException();
-            Preconditions.checkState(stack.size() > 0);
+        private void stopEnumeration() {
             if (enumerationActive && solver != null) {
                 solver.pop();
-                solverPushDepth--;
+                enumerationActive = false;
             }
+        }
+
+        public MddExpressionRepresentation moveUp() {
+            Preconditions.checkState(stack.size() > 0);
             setCurrentRepresentation(stack.pop());
-            enumerationActive = enumerationStateStack.pop();
             return currentRepresentation;
         }
 
@@ -413,7 +412,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     if (!enumerationActive) {
                         solver.add(currentRepresentation.expr);
                     }
-                    //                    solver.add(constraint);
                     solver.add(Eq(currentRepresentation.decl.getRef(), litExpr));
                     solver.check();
                     status = solver.getStatus();
@@ -436,15 +434,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         public QueryResult queryEdge() {
             if (!currentRepresentation.explicitRepresentation.isComplete()) {
 
-                if (solver == null) {
-                    solver = solverPool.requestSolver();
-                    enumerationActive = false;
-                }
+                if (solver == null) solver = solverPool.requestSolver();
 
                 if (!enumerationActive) {
-                    // First call for this representation: push base expr + existing negations
                     solver.push();
-                    solverPushDepth++;
                     solver.add(currentRepresentation.expr);
                     for (var cur =
                                     currentRepresentation
@@ -458,7 +451,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                         LitExprConverter.toLitExpr(
                                                 cur.key(), currentRepresentation.decl.getType())));
                     }
-                    // Add constraint only after enough edges to justify the cost
                     if (currentRepresentation.explicitRepresentation.getCacheView().size() >= 5) {
                         solver.add(constraint);
                         constraintApplied = true;
@@ -499,9 +491,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                                     .getCacheView()
                                                     .keySet());
                             if (remaining.isEmpty()) {
-                                solver.pop();
-                                solverPushDepth--;
-                                enumerationActive = false;
+                                stopEnumeration();
                                 currentRepresentation.explicitRepresentation.setComplete();
                                 return QueryResult.failed();
                             } else {
@@ -510,8 +500,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                 newValue = cur.elem();
                             }
                         } else {
-                            // only visited once per node, because of the negated assignment that is
-                            // pushed to the solver
                             final IntSetView cachedKeys =
                                     currentRepresentation
                                             .explicitRepresentation
@@ -535,10 +523,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     cacheModel(modelToCache);
                     return QueryResult.singleEdge(LitExprConverter.toInt(literal));
                 } else {
-                    // No more edges - clean up enumeration state
-                    solver.pop();
-                    solverPushDepth--;
-                    enumerationActive = false;
+                    stopEnumeration();
                     if (constraintApplied && !Objects.equals(constraint, True())) {
                         return QueryResult.constrainedFailed();
                     } else {
@@ -557,8 +542,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 Preconditions.checkArgument(
                         childNode.getRepresentation() instanceof MddExpressionRepresentation);
                 stack.push(currentRepresentation);
-                enumerationStateStack.push(enumerationActive);
-                enumerationActive = false;
+                stopEnumeration();
                 setCurrentRepresentation(
                         (MddExpressionRepresentation) childNode.getRepresentation());
                 return childNode;
@@ -679,11 +663,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         @Override
         public void close() {
             if (solver != null) {
-                while (solverPushDepth > 0) {
-                    solver.pop();
-                    solverPushDepth--;
-                }
-                enumerationActive = false;
+                stopEnumeration();
                 solverPool.returnSolver(this.solver);
                 this.solver = null;
             }
@@ -873,7 +853,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     this.constrainedFailed = true;
                 }
             }
-            if (parent == null) traverser.close();
+            traverser.close();
             return false;
         }
 
