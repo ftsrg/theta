@@ -36,10 +36,6 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     private final List<SemVer.VersionDecoder> versions;
 
-    private final YicesSmtLibSolverInstaller yicesInstaller =
-            new YicesSmtLibSolverInstaller(logger);
-    private static final String YICES_VERSION = "1.0.40";
-
     public EldaricaSmtLibSolverInstaller(final Logger logger) {
         super(logger);
 
@@ -62,8 +58,6 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     @Override
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
-        final var yicesPath = getInstallDir(installDir, "yices");
-        yicesInstaller.installSolver(yicesPath, "1.0.40"); // dependency
 
         final var semVer = SemVer.of(version);
         String archStr = null;
@@ -100,8 +94,6 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     @Override
     protected void uninstallSolver(Path installDir, String version) {
-        final var yicesPath = getInstallDir(installDir, "yices");
-        yicesInstaller.uninstallSolver(yicesPath, YICES_VERSION);
         // Default uninstall is suitable
     }
 
@@ -119,9 +111,8 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
             throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
-        final var yicesPath = installDir.resolve("yices").resolve("bin");
         return EldaricaSmtLibSolverFactory.create(
-                solverFilePath, solverArgs, yicesPath, version.equals("2.1"));
+                solverFilePath, solverArgs, version.equals("2.1"));
     }
 
     @Override

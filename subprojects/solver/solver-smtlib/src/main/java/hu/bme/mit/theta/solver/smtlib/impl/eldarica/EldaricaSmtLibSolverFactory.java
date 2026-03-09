@@ -30,19 +30,17 @@ import java.util.Map;
 
 public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
-    private final Path yicesPath;
     private final boolean needsModelWrapping;
 
     private EldaricaSmtLibSolverFactory(
-            Path solverPath, String[] args, Path yicesPath, boolean needsModelWrapping) {
+            Path solverPath, String[] args, boolean needsModelWrapping) {
         super(solverPath, args);
-        this.yicesPath = yicesPath;
         this.needsModelWrapping = needsModelWrapping;
     }
 
     public static EldaricaSmtLibSolverFactory create(
-            Path solverPath, String[] args, Path yicesPath, boolean needsModelWrapping) {
-        return new EldaricaSmtLibSolverFactory(solverPath, args, yicesPath, needsModelWrapping);
+            Path solverPath, String[] args, boolean needsModelWrapping) {
+        return new EldaricaSmtLibSolverFactory(solverPath, args, needsModelWrapping);
     }
 
     @Override
@@ -66,7 +64,7 @@ public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
                 new GenericSmtLibOneshotSolverBinary(
                         solverPath,
                         args,
-                        Map.of("PATH", System.getenv("PATH") + ":" + yicesPath.toAbsolutePath()));
+                        Map.of("PATH", System.getenv("PATH")));
 
         return new GenericHornSolver(
                 symbolTable,
