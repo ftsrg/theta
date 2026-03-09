@@ -17,11 +17,10 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
-import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.hash.HashIntObjMap;
-import com.koloboke.collect.map.hash.HashIntObjMaps;
+import java.io.Closeable;
+import java.util.*;
+
 import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -44,8 +43,10 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-import java.io.Closeable;
-import java.util.*;
+
+import com.google.common.base.Preconditions;
+import com.koloboke.collect.map.hash.HashIntObjMap;
+import com.koloboke.collect.map.hash.HashIntObjMaps;
 
 public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNode> {
 

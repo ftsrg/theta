@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
+import java.util.Set;
+import java.util.Stack;
+
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
@@ -22,8 +25,6 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
-import java.util.Set;
-import java.util.Stack;
 
 /**
  * A utility class for collecting all vectors from a subtree represented by a symbolic node. Only

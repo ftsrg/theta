@@ -15,7 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
-import com.google.common.base.Preconditions;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
@@ -27,9 +30,8 @@ import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+
+import com.google.common.base.Preconditions;
 
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 

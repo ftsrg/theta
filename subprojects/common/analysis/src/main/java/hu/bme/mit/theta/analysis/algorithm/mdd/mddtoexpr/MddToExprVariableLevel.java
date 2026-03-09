@@ -18,9 +18,9 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
-import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.ObjObjMap;
-import com.koloboke.collect.map.hash.HashObjObjMaps;
+import java.util.ArrayList;
+import java.util.List;
+
 import hu.bme.mit.delta.collections.IntStatistics;
 import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -31,8 +31,10 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import java.util.ArrayList;
-import java.util.List;
+
+import com.google.common.base.Preconditions;
+import com.koloboke.collect.map.ObjObjMap;
+import com.koloboke.collect.map.hash.HashObjObjMaps;
 
 public class MddToExprVariableLevel implements MddToExpr {
 
