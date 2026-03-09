@@ -25,8 +25,8 @@ model
     ;
 
 topDecl
-    : varDecl SEMI
-    | arrayDecl SEMI
+    : CONST? varDecl SEMI
+    | CONST? arrayDecl SEMI
     | channelDecl
     ;
 
@@ -204,6 +204,7 @@ exprList
 // Lexer rules — keywords must appear before ID
 // ============================================================================
 
+CONST    : 'const'    ;
 BYTE     : 'byte'     ;
 INT      : 'int'      ;
 PROCESS  : 'process'  ;

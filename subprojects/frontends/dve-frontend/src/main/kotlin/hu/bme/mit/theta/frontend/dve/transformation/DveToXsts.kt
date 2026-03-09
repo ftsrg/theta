@@ -484,6 +484,10 @@ private class TransformContext(private val model: DveModel) {
         DveBinaryOp.MUL -> Mul(translateExpr(expr.left, contextProcess), translateExpr(expr.right, contextProcess))
         DveBinaryOp.DIV -> Div(translateExpr(expr.left, contextProcess), translateExpr(expr.right, contextProcess))
         DveBinaryOp.MOD -> Mod(translateExpr(expr.left, contextProcess), translateExpr(expr.right, contextProcess))
+        // Boolean-valued operators used in arithmetic context (C semantics: yields 0 or 1)
+        DveBinaryOp.LT, DveBinaryOp.LEQ, DveBinaryOp.GT, DveBinaryOp.GEQ,
+        DveBinaryOp.EQ, DveBinaryOp.NEQ, DveBinaryOp.AND, DveBinaryOp.OR ->
+            Exprs.Ite(translateBinaryBoolExpr(expr, contextProcess), iLit(1), iLit(0))
         else -> throw UnsupportedOperationException("Operator ${expr.op} used in integer context.")
     }
 
