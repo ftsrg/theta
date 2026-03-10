@@ -51,6 +51,11 @@ class XstsCliMdd :
       .enum<MddExpressionRepresentation.MddToExprStrategy>()
       .default(MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL)
 
+  private val proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy by
+    option(help = "The MDD to expression conversion strategy for the proof invariant")
+      .enum<MddExpressionRepresentation.MddToExprStrategy>()
+      .default(MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL)
+
   private val traceTimeout: Long by
     option(help = "The timeout for trace generation in seconds (0 for no timeout)")
       .long()
@@ -103,6 +108,7 @@ class XstsCliMdd :
               logger,
               iterationStrategy,
               mddToExprStrategy = mddToExprStrategy,
+              proofMddToExprStrategy = proofMddToExprStrategy,
               traceTimeout = traceTimeout,
             )
           }

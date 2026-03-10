@@ -59,6 +59,7 @@ fun getMddChecker(
       logger,
       iterationStrategy = mddConfig.iterationStrategy,
       mddToExprStrategy = mddConfig.mddToExprStrategy,
+      proofMddToExprStrategy = mddConfig.proofMddToExprStrategy,
       traceTimeout = mddConfig.traceTimeout,
     )
   }

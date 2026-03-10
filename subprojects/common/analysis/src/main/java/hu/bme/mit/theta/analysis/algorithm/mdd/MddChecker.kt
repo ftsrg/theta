@@ -62,6 +62,8 @@ constructor(
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
   private val mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+  private val proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   enum class IterationStrategy {
@@ -234,13 +236,13 @@ constructor(
       try {
         logger.mainStep("Starting trace generation.\n")
         val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics)
+        return SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofMddToExprStrategy), statistics)
       } catch (e: TimeoutException) {
         logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace),
+          MddProof.of(stateSpace, proofMddToExprStrategy),
           statistics,
         )
       } catch (e: InterruptedException) {
@@ -248,7 +250,7 @@ constructor(
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace),
+          MddProof.of(stateSpace, proofMddToExprStrategy),
           statistics,
         )
       } catch (e: ExecutionException) {
@@ -257,7 +259,7 @@ constructor(
         executor.shutdownNow()
       }
     } else {
-      result = SafetyResult.safe(MddProof.of(stateSpace), statistics)
+      result = SafetyResult.safe(MddProof.of(stateSpace, proofMddToExprStrategy), statistics)
     }
     return result
   }

@@ -15,26 +15,38 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
-import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
 public class MddProof implements InvariantProof {
 
     private final MddHandle stateSpace;
+    private final MddExpressionRepresentation.MddToExprStrategy toExprStrategy;
     private Long size = null;
     private Expr<BoolType> invariant = null;
 
-    private MddProof(MddHandle stateSpace) {
+    private MddProof(
+            MddHandle stateSpace,
+            MddExpressionRepresentation.MddToExprStrategy toExprStrategy) {
+        Preconditions.checkArgument(toExprStrategy != MddExpressionRepresentation.MddToExprStrategy.NONE && toExprStrategy != MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL, "Must use a strategy that provides a precise invariant.");
         this.stateSpace = stateSpace;
+        this.toExprStrategy = toExprStrategy;
     }
 
     public static MddProof of(MddHandle stateSpace) {
-        return new MddProof(stateSpace);
+        return new MddProof(
+                stateSpace, MddExpressionRepresentation.MddToExprStrategy.VECTOR_LEVEL);
+    }
+
+    public static MddProof of(
+            MddHandle stateSpace,
+            MddExpressionRepresentation.MddToExprStrategy toExprStrategy) {
+        return new MddProof(stateSpace, toExprStrategy);
     }
 
     public Long size() {
@@ -51,11 +63,7 @@ public class MddProof implements InvariantProof {
     @Override
     public Expr<BoolType> getInvariant() {
         if (invariant == null) {
-            invariant =
-                    SmartBoolExprs.Or(
-                            MddValuationCollector.collect(stateSpace).stream()
-                                    .map(Valuation::toExpr)
-                                    .toList());
+            invariant = toExprStrategy.toExpr(stateSpace);
         }
         return invariant;
     }

@@ -554,6 +554,12 @@ data class MddConfig(
   )
   var mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+  @Parameter(
+    names = ["--proof-mdd-to-expr-strategy"],
+    description = "MDD to expression conversion strategy for the proof invariant",
+  )
+  var proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
