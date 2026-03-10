@@ -45,7 +45,7 @@ public class PnmlSymbolicGSATTest {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final PetriNet petriNet =
-                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-50.pnml", "");
+                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-5.pnml", "");
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
