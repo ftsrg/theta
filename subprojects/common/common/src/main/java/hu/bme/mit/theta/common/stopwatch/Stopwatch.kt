@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.common.stopwatch
 
-import CgroupStopwatch
+import hu.bme.mit.theta.common.stopwatch.CgroupStopwatch
 
 interface Stopwatch {
 
