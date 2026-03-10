@@ -327,17 +327,20 @@ public class Ic3Checker
 
         if (propagateOpt) {
             for (int j = 1; j < currentFrameNumber; j++) {
-                for (var c : frames.get(j).getExprs()) {
-                    try (var wpp = new WithPushPop(solver)) {
-                        frames.get(j)
-                                .getExprs()
-                                .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                        getConjuncts(monolithicExpr.getTransExpr())
-                                .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                        solver.track(
-                                PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
-                        if (solver.check().isUnsat()) {
-                            frames.get(j + 1).refine(c);
+                try (var wpp = new WithPushPop(solver)) {
+                    frames.get(j)
+                            .getExprs()
+                            .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                    getConjuncts(monolithicExpr.getTransExpr())
+                            .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+
+                    for (var c : frames.get(j).getExprs()) {
+                        try (var wpp2 = new WithPushPop(solver)) {
+                            solver.track(
+                                    PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
+                            if (solver.check().isUnsat()) {
+                                frames.get(j + 1).refine(c);
+                            }
                         }
                     }
                 }
