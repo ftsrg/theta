@@ -27,14 +27,14 @@ import org.antlr.v4.runtime.CommonTokenStream
 
 object DveParser {
 
-    fun parse(input: InputStream): DveModel {
-        val charStream = CharStreams.fromStream(input)
-        val lexer = dveLexer(charStream)
-        val tokens = CommonTokenStream(lexer)
-        val parser = dveParser(tokens)
-        val tree = parser.model()
-        return DveModelVisitor().visitModel(tree)
-    }
+  fun parse(input: InputStream): DveModel {
+    val charStream = CharStreams.fromStream(input)
+    val lexer = dveLexer(charStream)
+    val tokens = CommonTokenStream(lexer)
+    val parser = dveParser(tokens)
+    val tree = parser.model()
+    return DveModelVisitor().visitModel(tree)
+  }
 
-    fun parse(path: Path): DveModel = path.toFile().inputStream().use { parse(it) }
+  fun parse(path: Path): DveModel = path.toFile().inputStream().use { parse(it) }
 }

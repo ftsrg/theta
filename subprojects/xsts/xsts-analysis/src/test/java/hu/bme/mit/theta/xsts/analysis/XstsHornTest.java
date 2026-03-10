@@ -368,12 +368,12 @@ public class XstsHornTest {
                         false,
                         "golem:0.5.0"
                     },
-//                    {
-//                        "src/test/resources/model/count_up_down.xsts",
-//                        "src/test/resources/property/count_up_down2.prop",
-//                        true,
-//                        "eldarica:2.2"
-//                    },
+                    //                    {
+                    //                        "src/test/resources/model/count_up_down.xsts",
+                    //                        "src/test/resources/property/count_up_down2.prop",
+                    //                        true,
+                    //                        "eldarica:2.2"
+                    //                    },
                     {
                         "src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down2.prop",

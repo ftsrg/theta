@@ -33,7 +33,7 @@ import hu.bme.mit.theta.xsts.analysis.passes.XstsStmtFlatteningTransformer
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 
-class  InputOptions :
+class InputOptions :
   OptionGroup(name = "Input options", help = "Options related to model and property input") {
   val model: File by
     option("--model", "--input", help = "Path of the input model (XSTS, DVE, or Pnml).")
@@ -44,7 +44,10 @@ class  InputOptions :
   private val inlineProperty: String? by
     option(help = "Input property as a string. Ignored if --property is defined")
   private val flattenDepth: Int by
-    option(help = "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening.")
+    option(
+        help =
+          "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening."
+      )
       .int()
       .default(0)
   private val initialmarking: String by
@@ -54,7 +57,10 @@ class  InputOptions :
       .enum<PropType>()
       .default(PropType.FULL_EXPLORATION)
   private val dvePropType: DveToXsts.PropType by
-    option(help = "Property type for DVE models. ASSERTIONS uses assert statements; FULL_EXPLORATION enumerates the whole state space.")
+    option(
+        help =
+          "Property type for DVE models. ASSERTIONS uses assert statements; FULL_EXPLORATION enumerates the whole state space."
+      )
       .enum<DveToXsts.PropType>()
       .default(DveToXsts.PropType.ASSERTIONS)
 

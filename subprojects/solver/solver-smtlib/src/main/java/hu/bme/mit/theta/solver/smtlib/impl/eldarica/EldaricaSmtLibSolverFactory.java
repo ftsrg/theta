@@ -62,9 +62,7 @@ public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary =
                 new GenericSmtLibOneshotSolverBinary(
-                        solverPath,
-                        args,
-                        Map.of("PATH", System.getenv("PATH")));
+                        solverPath, args, Map.of("PATH", System.getenv("PATH")));
 
         return new GenericHornSolver(
                 symbolTable,

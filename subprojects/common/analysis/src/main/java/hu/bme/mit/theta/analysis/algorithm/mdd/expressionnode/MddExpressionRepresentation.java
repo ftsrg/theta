@@ -18,9 +18,11 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-import java.io.Closeable;
-import java.util.*;
-
+import com.google.common.base.Preconditions;
+import com.koloboke.collect.map.hash.HashIntObjMap;
+import com.koloboke.collect.map.hash.HashIntObjMaps;
+import com.koloboke.collect.set.hash.HashIntSet;
+import com.koloboke.collect.set.hash.HashIntSets;
 import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -43,12 +45,8 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
-import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.hash.HashIntObjMap;
-import com.koloboke.collect.map.hash.HashIntObjMaps;
-import com.koloboke.collect.set.hash.HashIntSet;
-import com.koloboke.collect.set.hash.HashIntSets;
+import java.io.Closeable;
+import java.util.*;
 
 public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNode> {
 
@@ -479,7 +477,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
                 // Lazily add constraint once the 5th edge has been cached
                 if (!constraintApplied
-                        && currentRepresentation.explicitRepresentation.getCacheView().size() >= 5) {
+                        && currentRepresentation.explicitRepresentation.getCacheView().size()
+                                >= 5) {
                     solver.add(constraint);
                     constraintApplied = true;
                 }
@@ -535,10 +534,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         modelToCache = extendedModel;
                     }
                     // Incrementally add negation for the newly found edge
-                    solver.add(
-                            Neq(
-                                    currentRepresentation.decl.getRef(),
-                                    literal));
+                    solver.add(Neq(currentRepresentation.decl.getRef(), literal));
                     cacheModel(modelToCache);
                     return QueryResult.singleEdge(LitExprConverter.toInt(literal));
                 } else {

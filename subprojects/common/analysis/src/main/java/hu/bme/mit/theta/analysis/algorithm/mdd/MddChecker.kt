@@ -236,7 +236,11 @@ constructor(
       try {
         logger.mainStep("Starting trace generation.\n")
         val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofMddToExprStrategy), statistics)
+        return SafetyResult.unsafe(
+          trace,
+          MddProof.of(stateSpace, proofMddToExprStrategy),
+          statistics,
+        )
       } catch (e: TimeoutException) {
         logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)

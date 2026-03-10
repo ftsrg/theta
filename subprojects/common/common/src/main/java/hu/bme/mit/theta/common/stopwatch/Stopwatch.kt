@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.common.stopwatch
 
-import hu.bme.mit.theta.common.stopwatch.CgroupStopwatch
-
 interface Stopwatch {
 
   fun start()

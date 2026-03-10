@@ -31,21 +31,22 @@ public class MddProof implements InvariantProof {
     private Expr<BoolType> invariant = null;
 
     private MddProof(
-            MddHandle stateSpace,
-            MddExpressionRepresentation.MddToExprStrategy toExprStrategy) {
-        Preconditions.checkArgument(toExprStrategy != MddExpressionRepresentation.MddToExprStrategy.NONE && toExprStrategy != MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL, "Must use a strategy that provides a precise invariant.");
+            MddHandle stateSpace, MddExpressionRepresentation.MddToExprStrategy toExprStrategy) {
+        Preconditions.checkArgument(
+                toExprStrategy != MddExpressionRepresentation.MddToExprStrategy.NONE
+                        && toExprStrategy
+                                != MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+                "Must use a strategy that provides a precise invariant.");
         this.stateSpace = stateSpace;
         this.toExprStrategy = toExprStrategy;
     }
 
     public static MddProof of(MddHandle stateSpace) {
-        return new MddProof(
-                stateSpace, MddExpressionRepresentation.MddToExprStrategy.VECTOR_LEVEL);
+        return new MddProof(stateSpace, MddExpressionRepresentation.MddToExprStrategy.VECTOR_LEVEL);
     }
 
     public static MddProof of(
-            MddHandle stateSpace,
-            MddExpressionRepresentation.MddToExprStrategy toExprStrategy) {
+            MddHandle stateSpace, MddExpressionRepresentation.MddToExprStrategy toExprStrategy) {
         return new MddProof(stateSpace, toExprStrategy);
     }
 

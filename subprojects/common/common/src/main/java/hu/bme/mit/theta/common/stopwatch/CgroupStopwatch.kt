@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit
 /**
  * A lightweight, fault-tolerant stopwatch that measures CPU time usage via Linux cgroup accounting.
  *
- * Reads CPU time from the cgroup the process is already in (detected via /proc/self/cgroup),
- * so it works under benchexec or any other cgroup manager without needing to create sub-cgroups.
+ * Reads CPU time from the cgroup the process is already in (detected via /proc/self/cgroup), so it
+ * works under benchexec or any other cgroup manager without needing to create sub-cgroups.
  *
  * If cgroups are unavailable or permission is denied, it silently falls back to returning 0 for all
  * measurements.
@@ -76,11 +76,11 @@ class CgroupStopwatch : Stopwatch {
   /**
    * Finds the cgroup directory the current process belongs to by reading /proc/self/cgroup.
    *
-   * For cgroup v2, /proc/self/cgroup contains a line like "0::/some/path" and the
-   * cgroup dir is /sys/fs/cgroup/some/path.
+   * For cgroup v2, /proc/self/cgroup contains a line like "0::/some/path" and the cgroup dir is
+   * /sys/fs/cgroup/some/path.
    *
-   * For cgroup v1, we look for the cpuacct controller line like "N:cpuacct:/some/path"
-   * and the cgroup dir is /sys/fs/cgroup/cpuacct/some/path.
+   * For cgroup v1, we look for the cpuacct controller line like "N:cpuacct:/some/path" and the
+   * cgroup dir is /sys/fs/cgroup/cpuacct/some/path.
    */
   private fun findCurrentCgroupDir(): File? {
     return try {
@@ -96,11 +96,13 @@ class CgroupStopwatch : Stopwatch {
         val dir = File("/sys/fs/cgroup$path")
         if (dir.exists() && File(dir, "cpu.stat").exists()) dir else null
       } else if (version == 1) {
-        // cgroup v1: find cpuacct controller line, format "N:cpuacct,cpu:/path" or "N:cpuacct:/path"
-        val line = lines.firstOrNull { entry ->
-          val controllers = entry.split(":").getOrNull(1) ?: ""
-          controllers.split(",").any { it == "cpuacct" }
-        } ?: return null
+        // cgroup v1: find cpuacct controller line, format "N:cpuacct,cpu:/path" or
+        // "N:cpuacct:/path"
+        val line =
+          lines.firstOrNull { entry ->
+            val controllers = entry.split(":").getOrNull(1) ?: ""
+            controllers.split(",").any { it == "cpuacct" }
+          } ?: return null
         val path = line.split(":").getOrNull(2) ?: return null
         val dir = File("/sys/fs/cgroup/cpuacct$path")
         if (dir.exists() && File(dir, "cpuacct.usage").exists()) dir else null

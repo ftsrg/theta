@@ -18,12 +18,6 @@ package hu.bme.mit.theta.analysis.utils;
 import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
 import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
-import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
@@ -33,6 +27,11 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.decl.Decl;
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 public class MddHandleVisualizer {
 
