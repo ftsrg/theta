@@ -47,6 +47,8 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
+import com.koloboke.collect.set.hash.HashIntSet;
+import com.koloboke.collect.set.hash.HashIntSets;
 
 public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNode> {
 
@@ -177,11 +179,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public MddNode get(int key) {
         final var cached = explicitRepresentation.getCacheView().get(key);
         if (cached != null || this.explicitRepresentation.isComplete()) return cached;
-        // TODO: this way null values are never cached and have to be recomputed every time
+        if (explicitRepresentation.isNegativelyCached(key)) return null;
 
         final MutableValuation val = new MutableValuation();
         final LitExpr<?> litExpr = LitExprConverter.toLitExpr(key, decl.getType());
         if (litExpr.isInvalid()) {
+            explicitRepresentation.cacheNegative(key);
             return null;
         }
 
@@ -220,6 +223,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             }
         }
         if (!mddVariable.isNullOrZero(childNode)) explicitRepresentation.cacheNode(key, childNode);
+        if (childNode == null) explicitRepresentation.cacheNegative(key);
         return childNode;
     }
 
@@ -295,12 +299,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public static class ExplicitRepresentation {
         private final HashIntObjMap<MddNode> cache;
         private final GrowingIntArray edgeOrdering;
+        private final HashIntSet negativeCache;
         private MddNode defaultValue;
         private boolean complete;
 
         public ExplicitRepresentation() {
             this.cache = HashIntObjMaps.newUpdatableMap();
             this.edgeOrdering = new GrowingIntArray(100, 100);
+            this.negativeCache = HashIntSets.newUpdatableSet();
             this.defaultValue = null;
             this.complete = false;
         }
@@ -313,6 +319,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             }
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
+        }
+
+        public void cacheNegative(int key) {
+            negativeCache.add(key);
+        }
+
+        public boolean isNegativelyCached(int key) {
+            return negativeCache.contains(key);
         }
 
         public void cacheDefault(MddNode defaultValue) {
@@ -400,7 +414,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             .contains(assignment)
                     || currentRepresentation.explicitRepresentation.getCacheView().defaultValue()
                             != null) return true;
-            else if (!currentRepresentation.explicitRepresentation.isComplete()) {
+            if (currentRepresentation.explicitRepresentation.isNegativelyCached(assignment))
+                return false;
+            if (!currentRepresentation.explicitRepresentation.isComplete()) {
 
                 if (solver == null) solver = solverPool.requestSolver();
 
@@ -422,6 +438,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 if (status.isSat()) {
                     cacheModel(model);
                     return true;
+                } else {
+                    currentRepresentation.explicitRepresentation.cacheNegative(assignment);
                 }
             }
             return false;
