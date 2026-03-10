@@ -536,10 +536,18 @@ public final class ExprSimplifier {
             return leftLit.sub(rightLit);
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return Rat(0, 1);
-            }
+        if (rightOp instanceof RatLitExpr rightLit
+                && rightLit.getNum().compareTo(BigInteger.ZERO) == 0) {
+            return leftOp;
+        }
+
+        if (leftOp instanceof RatLitExpr leftLit
+                && leftLit.getNum().compareTo(BigInteger.ZERO) == 0) {
+            return RatNegExpr.of(rightOp);
+        }
+
+        if (leftOp.equals(rightOp)) {
+            return Rat(0, 1);
         }
 
         return expr.with(leftOp, rightOp);
@@ -798,10 +806,18 @@ public final class ExprSimplifier {
             return leftLit.sub(rightLit);
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return Int(BigInteger.ZERO);
-            }
+        if (rightOp instanceof IntLitExpr rightLit
+                && rightLit.getValue().compareTo(BigInteger.ZERO) == 0) {
+            return leftOp;
+        }
+
+        if (leftOp instanceof IntLitExpr leftLit
+                && leftLit.getValue().compareTo(BigInteger.ZERO) == 0) {
+            return IntNegExpr.of(rightOp);
+        }
+
+        if (leftOp.equals(rightOp)) {
+            return Int(BigInteger.ZERO);
         }
 
         return expr.with(leftOp, rightOp);
@@ -876,6 +892,15 @@ public final class ExprSimplifier {
                 return expr.with(leftOp, rightOp);
             }
             return leftLit.div(rightLit);
+        }
+
+        if (rightOp instanceof IntLitExpr rightLit
+                && rightLit.getValue().compareTo(BigInteger.ONE) == 0) {
+            return leftOp;
+        }
+
+        if (leftOp.equals(rightOp)) {
+            return Int(BigInteger.ONE);
         }
 
         return expr.with(leftOp, rightOp);
@@ -1196,10 +1221,18 @@ public final class ExprSimplifier {
             return leftLit.sub(rightLit);
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return Bv(new boolean[expr.getType().getSize()]);
-            }
+        final BvLitExpr ZEROS = Bv(new boolean[expr.getType().getSize()]);
+
+        if (rightOp instanceof BvLitExpr rightLit && rightLit.equals(ZEROS)) {
+            return leftOp;
+        }
+
+        if (leftOp instanceof BvLitExpr leftLit && leftLit.equals(ZEROS)) {
+            return BvNegExpr.of(rightOp);
+        }
+
+        if (leftOp.equals(rightOp)) {
+            return ZEROS;
         }
 
         return expr.with(leftOp, rightOp);
