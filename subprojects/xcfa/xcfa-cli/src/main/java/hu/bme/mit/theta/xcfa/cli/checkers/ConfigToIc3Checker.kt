@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
@@ -65,7 +66,7 @@ fun getIc3Checker(
     )
   }
 
-  val passes = mutableListOf<MonolithicExprPass<EmptyProof>>()
+  val passes = mutableListOf<MonolithicExprPass<PredState>>()
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
     passes.add(L2SMEPass())
   }
