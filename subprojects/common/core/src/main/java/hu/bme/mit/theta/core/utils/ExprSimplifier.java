@@ -24,13 +24,12 @@ import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
-import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
@@ -68,9 +67,9 @@ public final class ExprSimplifier {
 
     @SuppressWarnings("unchecked")
     public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
-        if (expr.isInvalid()) {
-            return new InvalidLitExpr<>(expr.getType());
-        }
+//        if (expr.isInvalid()) {
+//            return new InvalidLitExpr<>(expr.getType());
+//        }
         return (Expr<T>) TABLE.dispatch(expr, valuation);
     }
 
@@ -423,7 +422,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyAnd(final AndExpr expr, final Valuation val) {
-        final Set<Expr<BoolType>> ops = Containers.createSet();
+        final Set<Expr<BoolType>> ops = CollectionUtil.createSet();
 
         if (expr.getOps().isEmpty()) {
             return True();
@@ -453,7 +452,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
-        final Set<Expr<BoolType>> ops = Containers.createSet();
+        final Set<Expr<BoolType>> ops = CollectionUtil.createSet();
 
         if (expr.getOps().isEmpty()) {
             return True();

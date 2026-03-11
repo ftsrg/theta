@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3legacy.FuncDecl;
 import com.microsoft.z3legacy.Status;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -72,7 +72,7 @@ final class Z3Solver implements UCSolver, Solver {
         this.z3Solver = z3Solver;
 
         assertions = new StackImpl<>();
-        assumptions = Containers.createMap();
+        assumptions = CollectionUtil.createMap();
     }
 
     ////
@@ -238,7 +238,7 @@ final class Z3Solver implements UCSolver, Solver {
 
         public Z3Model(final com.microsoft.z3legacy.Model z3Model) {
             this.z3Model = z3Model;
-            constToExpr = Containers.createMap();
+            constToExpr = CollectionUtil.createMap();
         }
 
         @Override

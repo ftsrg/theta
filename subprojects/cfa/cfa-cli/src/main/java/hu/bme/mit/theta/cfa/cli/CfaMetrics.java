@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.cfa.cli;
 
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -72,7 +72,7 @@ public final class CfaMetrics {
     }
 
     public static int getCfaComponents(final CFA cfa) {
-        final Set<CFA.Loc> visited = Containers.createSet();
+        final Set<CFA.Loc> visited = CollectionUtil.createSet();
         int components = 0;
 
         for (final CFA.Loc loc : cfa.getLocs()) {

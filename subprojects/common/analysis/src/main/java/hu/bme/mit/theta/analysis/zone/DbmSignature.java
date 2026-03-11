@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import java.util.Iterator;
@@ -43,7 +43,7 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
         final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder =
                 ImmutableMap.builder();
 
-        final Set<VarDecl<RatType>> addedVars = Containers.createSet();
+        final Set<VarDecl<RatType>> addedVars = CollectionUtil.createSet();
 
         indexToVarBuilder.add(ZeroVar.getInstance());
         varToIndexBuilder.put(ZeroVar.getInstance(), addedVars.size());

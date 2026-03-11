@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -45,7 +45,7 @@ public final class AutomaticItpRefToProd2ExplPredPrec
         this.exprSplitter = checkNotNull(exprSplitter);
         this.autoExpl = autoExpl;
 
-        this.atomCount = Containers.createMap();
+        this.atomCount = CollectionUtil.createMap();
     }
 
     public static AutomaticItpRefToProd2ExplPredPrec create(

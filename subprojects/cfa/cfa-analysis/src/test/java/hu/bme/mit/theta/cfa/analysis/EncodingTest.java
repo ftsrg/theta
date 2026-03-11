@@ -22,7 +22,7 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaSbeLts;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.io.FileInputStream;
@@ -46,7 +46,7 @@ public class EncodingTest {
     }
 
     private Set<String> getNextLocs(CfaLts lts, String loc) {
-        Set<String> locs = Containers.createSet();
+        Set<String> locs = CollectionUtil.createSet();
         SS ss = new SS();
         for (var act : lts.getEnabledActionsFor(CfaState.of(getLocByName(loc), ss))) {
             locs.add(act.getTarget().getName());

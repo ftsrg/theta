@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
@@ -42,7 +42,7 @@ public final class PredPrec implements Prec {
 
     private PredPrec(final Iterable<Expr<BoolType>> preds) {
         checkNotNull(preds);
-        this.predToNegMap = Containers.createMap();
+        this.predToNegMap = CollectionUtil.createMap();
 
         for (final Expr<BoolType> pred : preds) {
             if (pred instanceof BoolLitExpr) {

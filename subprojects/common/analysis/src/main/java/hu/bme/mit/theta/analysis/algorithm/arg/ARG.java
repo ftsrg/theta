@@ -23,7 +23,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -38,7 +38,7 @@ public final class ARG<S extends State, A extends Action> implements Proof {
     private final PartialOrd<S> partialOrd;
 
     private ARG(final PartialOrd<S> partialOrd) {
-        initNodes = Containers.createSet();
+        initNodes = CollectionUtil.createSet();
         this.partialOrd = partialOrd;
         this.initialized = false;
     }

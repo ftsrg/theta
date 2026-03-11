@@ -20,4 +20,6 @@ plugins {
 
 dependencies {
     implementation(Deps.nuprocess)
+    implementation(files(rootDir.resolve(Deps.delta)))
+    implementation(Deps.fastutil)
 }

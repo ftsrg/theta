@@ -22,7 +22,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import com.google.common.collect.Sets;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.clock.constr.*;
 import hu.bme.mit.theta.core.clock.op.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -458,7 +458,7 @@ final class DBM {
     }
 
     public Collection<ClockConstr> getConstrs() {
-        final Collection<ClockConstr> result = Containers.createSet();
+        final Collection<ClockConstr> result = CollectionUtil.createSet();
 
         for (final VarDecl<RatType> leftVar : signature) {
             for (final VarDecl<RatType> rightVar : signature) {

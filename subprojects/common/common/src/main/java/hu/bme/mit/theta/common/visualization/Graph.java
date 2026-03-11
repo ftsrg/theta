@@ -18,7 +18,7 @@ package hu.bme.mit.theta.common.visualization;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +44,7 @@ public final class Graph {
     public Graph(final String id, final String label) {
         this.id = checkNotNull(id);
         this.label = checkNotNull(label);
-        this.nodes = Containers.createMap();
+        this.nodes = CollectionUtil.createMap();
         this.edges = new ArrayList<>();
     }
 

@@ -22,7 +22,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
@@ -51,7 +51,7 @@ public class PetriNetToXSTS {
 
     public static XSTS createXSTS(
             final PetriNet net, final InputStream propStream, final PropType propType) {
-        final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
+        final Map<String, VarDecl<IntType>> placeIdToVar = CollectionUtil.createMap();
 
         final List<Expr<BoolType>> initExprs = new ArrayList<>();
         // Create a variable for each place and initialize them

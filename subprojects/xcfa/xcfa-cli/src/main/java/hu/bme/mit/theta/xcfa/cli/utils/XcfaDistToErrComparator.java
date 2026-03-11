@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
@@ -98,7 +98,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
     static Map<XcfaLocation, Integer> calculateDistancesToError(
             final XCFA cfa, final XcfaLocation errLoc) {
         List<XcfaLocation> queue = new LinkedList<>();
-        final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
+        final Map<XcfaLocation, Integer> distancesToError = CollectionUtil.createMap();
         queue.add(errLoc);
         distancesToError.put(errLoc, 0);
         int distance = 1;

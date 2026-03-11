@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
@@ -36,7 +36,7 @@ public final class StmtUtils {
      * @return Variables
      */
     public static Set<VarDecl<?>> getVars(final Stmt stmt) {
-        final Set<VarDecl<?>> vars = Containers.createSet();
+        final Set<VarDecl<?>> vars = CollectionUtil.createSet();
         stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
         return vars;
     }
@@ -48,7 +48,7 @@ public final class StmtUtils {
      * @return Variables
      */
     public static Set<VarDecl<?>> getVars(final Iterable<? extends Stmt> stmts) {
-        final Set<VarDecl<?>> vars = Containers.createSet();
+        final Set<VarDecl<?>> vars = CollectionUtil.createSet();
         stmts.forEach(s -> s.accept(VarCollectorStmtVisitor.getInstance(), vars));
         return vars;
     }
@@ -60,7 +60,7 @@ public final class StmtUtils {
      * @return Variables
      */
     public static Set<VarDecl<?>> getWrittenVars(final Stmt stmt) {
-        final Set<VarDecl<?>> vars = Containers.createSet();
+        final Set<VarDecl<?>> vars = CollectionUtil.createSet();
         stmt.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars);
         return vars;
     }
@@ -72,7 +72,7 @@ public final class StmtUtils {
      * @return Variables
      */
     public static Set<VarDecl<?>> getWrittenVars(final Iterable<? extends Stmt> stmts) {
-        final Set<VarDecl<?>> vars = Containers.createSet();
+        final Set<VarDecl<?>> vars = CollectionUtil.createSet();
         stmts.forEach(s -> s.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars));
         return vars;
     }

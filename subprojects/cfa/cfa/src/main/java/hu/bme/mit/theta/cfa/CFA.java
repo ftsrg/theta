@@ -22,7 +22,7 @@ import static java.lang.String.format;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -53,7 +53,7 @@ public final class CFA {
                 edges.stream()
                         .flatMap(e -> StmtUtils.getVars(e.getStmt()).stream())
                         .collect(toImmutableSet());
-        Set<String> varNames = Containers.createSet();
+        Set<String> varNames = CollectionUtil.createSet();
         for (var v : vars) {
             checkArgument(
                     !varNames.contains(v.getName()),
@@ -203,10 +203,10 @@ public final class CFA {
         private static int UNNAMED_LOC_LABEL = 0;
 
         private Builder() {
-            locs = Containers.createSet();
-            locNames = Containers.createSet();
+            locs = CollectionUtil.createSet();
+            locNames = CollectionUtil.createSet();
             edges = new LinkedList<>();
-            acceptingEdges = Containers.createSet();
+            acceptingEdges = CollectionUtil.createSet();
             built = false;
         }
 

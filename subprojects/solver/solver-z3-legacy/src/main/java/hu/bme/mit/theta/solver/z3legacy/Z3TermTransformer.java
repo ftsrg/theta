@@ -35,7 +35,7 @@ import com.microsoft.z3legacy.enumerations.Z3_decl_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -120,7 +120,7 @@ final class Z3TermTransformer {
         this.symbolTable = symbolTable;
         this.typeSymbolTable = typeSymbolTable;
 
-        environment = Containers.createMap();
+        environment = CollectionUtil.createMap();
 
         this.addFunc("deref", dereference());
         this.addFunc("ref", reference());

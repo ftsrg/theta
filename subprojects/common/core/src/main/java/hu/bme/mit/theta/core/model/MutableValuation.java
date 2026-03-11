@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -28,7 +29,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,8 +38,7 @@ public final class MutableValuation extends Valuation {
     private final Map<Decl<?>, LitExpr<?>> declToExpr;
 
     public MutableValuation() {
-        // LinkedHashMap is used for deterministic order
-        this.declToExpr = new LinkedHashMap<>();
+        this.declToExpr = CollectionUtil.createMap();
     }
 
     public static MutableValuation copyOf(final Valuation val) {

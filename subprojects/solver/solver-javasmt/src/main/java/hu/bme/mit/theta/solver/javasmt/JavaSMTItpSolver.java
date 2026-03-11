@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -139,7 +139,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
                                 termList, indexList.stream().mapToInt(i -> i).toArray());
             }
 
-            Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
+            Map<ItpMarker, Expr<BoolType>> itpMap = CollectionUtil.createMap();
             for (int i = 0; i < interpolants.size(); i++) {
                 BooleanFormula term = interpolants.get(i);
                 Expr<BoolType> expr = (Expr<BoolType>) termTransformer.toExpr(term);

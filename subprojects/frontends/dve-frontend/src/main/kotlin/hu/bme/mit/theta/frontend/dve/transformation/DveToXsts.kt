@@ -76,7 +76,6 @@ private class TransformContext(private val model: DveModel) {
   val chanVars = mutableMapOf<String, VarDecl<IntType>>()
   val dataVars = mutableListOf<VarDecl<IntType>>()
 
-  /** Const scalar variables inlined as integer literals (not added to varMap/dataVars). */
   private val constScalars = mutableMapOf<String, Int>()
 
   val ctrlVars: List<VarDecl<EnumType>>

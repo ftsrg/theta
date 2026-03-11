@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -72,7 +72,7 @@ public final class ExprUtils {
      * @return Set of atoms
      */
     public static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
-        final Set<Expr<BoolType>> atoms = Containers.createSet();
+        final Set<Expr<BoolType>> atoms = CollectionUtil.createSet();
         collectAtoms(expr, atoms);
         return atoms;
     }
@@ -172,7 +172,7 @@ public final class ExprUtils {
      * @return Set of variables appearing in the expression
      */
     public static Set<ParamDecl<?>> getParams(final Expr<?> expr) {
-        final Set<ParamDecl<?>> vars = Containers.createSet();
+        final Set<ParamDecl<?>> vars = CollectionUtil.createSet();
         collectParams(expr, vars);
         return vars;
     }
@@ -184,7 +184,7 @@ public final class ExprUtils {
      * @return Set of variables appearing in the expressions
      */
     public static Set<ParamDecl<?>> getParams(final Iterable<? extends Expr<?>> exprs) {
-        final Set<ParamDecl<?>> vars = Containers.createSet();
+        final Set<ParamDecl<?>> vars = CollectionUtil.createSet();
         collectParams(exprs, vars);
         return vars;
     }
@@ -226,7 +226,7 @@ public final class ExprUtils {
      * @return Set of variables appearing in the expression
      */
     public static Set<VarDecl<?>> getVars(final Expr<?> expr) {
-        final Set<VarDecl<?>> vars = Containers.createSet();
+        final Set<VarDecl<?>> vars = CollectionUtil.createSet();
         collectVars(expr, vars);
         return vars;
     }
@@ -238,7 +238,7 @@ public final class ExprUtils {
      * @return Set of variables appearing in the expressions
      */
     public static Set<VarDecl<?>> getVars(final Iterable<? extends Expr<?>> exprs) {
-        final Set<VarDecl<?>> vars = Containers.createSet();
+        final Set<VarDecl<?>> vars = CollectionUtil.createSet();
         collectVars(exprs, vars);
         return vars;
     }

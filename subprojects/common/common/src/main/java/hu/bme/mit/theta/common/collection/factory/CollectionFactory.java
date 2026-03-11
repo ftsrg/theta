@@ -13,13 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.container.factory;
+package hu.bme.mit.theta.common.collection.factory;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface ContainerFactory {
+public interface CollectionFactory {
 
     <K, V> Map<K, V> createMap();
 

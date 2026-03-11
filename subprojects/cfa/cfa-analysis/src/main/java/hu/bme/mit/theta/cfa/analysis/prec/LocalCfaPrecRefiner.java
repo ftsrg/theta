@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.Map;
 
 public final class LocalCfaPrecRefiner<
@@ -60,7 +60,7 @@ public final class LocalCfaPrecRefiner<
         // joining them to the old precision of the location
 
         final LocalCfaPrec<P> genPrec = (LocalCfaPrec<P>) prec;
-        final Map<Loc, P> runningPrecs = Containers.createMap();
+        final Map<Loc, P> runningPrecs = CollectionUtil.createMap();
         for (final CfaState<S> state : trace.getStates()) {
             runningPrecs.put(state.getLoc(), genPrec.getPrec(state.getLoc()));
         }

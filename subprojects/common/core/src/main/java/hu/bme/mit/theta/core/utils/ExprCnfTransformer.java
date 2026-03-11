@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -57,7 +57,7 @@ final class ExprCnfTransformer {
 
         private CnfTransformationHelper() {
             nextCnfVarId = 0;
-            representatives = Containers.createMap();
+            representatives = CollectionUtil.createMap();
         }
 
         public Expr<BoolType> transform(

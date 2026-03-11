@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -116,7 +116,7 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
         final ExplState concreteExpl = itpExplState.getConcrState();
         final ExplState abstractExpl = itpExplState.getAbstrState();
 
-        final Collection<Decl<?>> newVars = Containers.createSet();
+        final Collection<Decl<?>> newVars = CollectionUtil.createSet();
         newVars.addAll(interpolant.getDecls());
         newVars.addAll(abstractExpl.getDecls());
         final ImmutableValuation.Builder builder = ImmutableValuation.builder();

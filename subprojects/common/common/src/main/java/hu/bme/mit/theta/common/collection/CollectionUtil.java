@@ -13,54 +13,55 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.container;
+package hu.bme.mit.theta.common.collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.container.factory.ContainerFactory;
-import hu.bme.mit.theta.common.container.factory.LinkedHashContainerFactory;
+import hu.bme.mit.theta.common.collection.factory.CollectionFactory;
+import hu.bme.mit.theta.common.collection.factory.FastUtilCollectionFactory;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public class Containers {
+public class CollectionUtil {
 
-    private static ContainerFactory containerFactory = new LinkedHashContainerFactory();
+    private static CollectionFactory collectionFactory = new FastUtilCollectionFactory();
 
-    public static void setContainerFactory(final ContainerFactory containerFactory) {
-        checkNotNull(containerFactory);
-        Containers.containerFactory = containerFactory;
+    public static void setCollectionFactory(final CollectionFactory collectionFactory) {
+        checkNotNull(collectionFactory);
+        CollectionUtil.collectionFactory = collectionFactory;
     }
 
     public static <K, V> Map<K, V> createMap() {
-        return containerFactory.createMap();
+        return collectionFactory.createMap();
     }
 
     public static <K, V> Map<K, V> createMap(int initialCapacity) {
-        return containerFactory.createMap(initialCapacity);
+        return collectionFactory.createMap(initialCapacity);
     }
 
     public static <K, V> Map<K, V> createMap(int initialCapacity, float loadFactor) {
-        return containerFactory.createMap(initialCapacity, loadFactor);
+        return collectionFactory.createMap(initialCapacity, loadFactor);
     }
 
     public static <K, V> Map<K, V> createMap(Map<? extends K, ? extends V> m) {
-        return containerFactory.createMap(m);
+        return collectionFactory.createMap(m);
     }
 
     public static <E> Set<E> createSet() {
-        return containerFactory.createSet();
+        return collectionFactory.createSet();
     }
 
     public static <E> Set<E> createSet(int initialCapacity) {
-        return containerFactory.createSet(initialCapacity);
+        return collectionFactory.createSet(initialCapacity);
     }
 
     public static <E> Set<E> createSet(int initialCapacity, float loadFactor) {
-        return containerFactory.createSet(initialCapacity, loadFactor);
+        return collectionFactory.createSet(initialCapacity, loadFactor);
     }
 
     public static <E> Set<E> createSet(Collection<? extends E> c) {
-        return containerFactory.createSet(c);
+        return collectionFactory.createSet(c);
     }
 }

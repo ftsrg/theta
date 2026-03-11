@@ -18,7 +18,8 @@ package hu.bme.mit.theta.common;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
+
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -56,7 +57,7 @@ public final class DispatchTable2<P, R> {
         private boolean built;
 
         private Builder() {
-            cases = Containers.createMap();
+            cases = CollectionUtil.createMap();
             defaultCase = null;
             built = false;
         }

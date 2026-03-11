@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
@@ -86,7 +86,7 @@ public class MddNodeVisualizer {
     public Graph visualize(final MddNode rootNode) {
         final Graph graph = new Graph(SYMBOLIC_NODE_ID, SYMBOLIC_NODE_LABEL);
 
-        final Set<MddNode> traversed = Containers.createSet();
+        final Set<MddNode> traversed = CollectionUtil.createSet();
 
         traverse(graph, rootNode, traversed);
 

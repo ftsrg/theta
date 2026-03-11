@@ -18,7 +18,7 @@ package hu.bme.mit.theta.frontend.petrinet.pnml;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
 import java.io.IOException;
 import java.util.*;
@@ -74,7 +74,7 @@ public class XMLPnmlToPetrinet {
         final Element pageElement =
                 pageList.getLength() == 1 ? (Element) pageList.item(0) : netElement;
 
-        final Map<String, Identified> idMap = Containers.createMap();
+        final Map<String, Identified> idMap = CollectionUtil.createMap();
         final List<Place> places = new ArrayList<>();
         final List<Transition> transitions = new ArrayList<>();
 

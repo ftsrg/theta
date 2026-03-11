@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -49,7 +49,7 @@ public class MddValuationCollector {
      */
     public static Set<Valuation> collect(MddHandle node) {
         final Stack<Assignment> assignments = new Stack<>();
-        final Set<Valuation> valuations = Containers.createSet();
+        final Set<Valuation> valuations = CollectionUtil.createSet();
 
         collect(node, assignments, valuations);
 

@@ -22,7 +22,7 @@ import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 import static java.lang.String.format;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -49,7 +49,7 @@ public final class STS {
         this.init = checkNotNull(init);
         this.trans = checkNotNull(trans);
         this.prop = checkNotNull(prop);
-        final Set<VarDecl<?>> tmpVars = Containers.createSet();
+        final Set<VarDecl<?>> tmpVars = CollectionUtil.createSet();
         ExprUtils.collectVars(init, tmpVars);
         ExprUtils.collectVars(trans, tmpVars);
         ExprUtils.collectVars(prop, tmpVars);
@@ -104,8 +104,8 @@ public final class STS {
         private Expr<BoolType> prop;
 
         private Builder() {
-            init = Containers.createSet();
-            trans = Containers.createSet();
+            init = CollectionUtil.createSet();
+            trans = CollectionUtil.createSet();
             prop = null;
         }
 

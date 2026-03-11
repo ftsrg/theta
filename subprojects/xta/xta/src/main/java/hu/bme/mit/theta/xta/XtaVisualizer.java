@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xta;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
@@ -42,7 +42,7 @@ public final class XtaVisualizer {
 
     public static Graph visualize(final XtaSystem system) {
         final Graph graph = new Graph("System", XTA_LABEL);
-        final Map<Object, String> ids = Containers.createMap();
+        final Map<Object, String> ids = CollectionUtil.createMap();
         for (final XtaProcess process : system.getProcesses()) {
             traverseProcess(process, graph, ids);
         }
@@ -51,7 +51,7 @@ public final class XtaVisualizer {
 
     public static Graph visualize(final XtaProcess process) {
         final Graph graph = new Graph(process.getName(), XTA_LABEL);
-        final Map<Object, String> ids = Containers.createMap();
+        final Map<Object, String> ids = CollectionUtil.createMap();
         traverseProcess(process, graph, ids);
         return graph;
     }

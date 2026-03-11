@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cfa.analysis.lts;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.Collection;
 import java.util.Map;
 
@@ -33,7 +33,7 @@ public final class CfaCachedLts implements CfaLts {
 
     public CfaCachedLts(final CfaLts lts) {
         this.lts = lts;
-        this.actionCache = Containers.createMap();
+        this.actionCache = CollectionUtil.createMap();
     }
 
     @Override

@@ -36,7 +36,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.common.container.Containers
+import hu.bme.mit.theta.common.collection.CollectionUtil
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
@@ -78,9 +78,10 @@ constructor(
     MddExpressionRepresentation.setMddToExprStrategy(mddToExprStrategy)
 
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
-    val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
+    val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
 
     variableOrdering.forEach {
       Preconditions.checkArgument(
@@ -90,7 +91,7 @@ constructor(
     }
 
     Preconditions.checkArgument(
-      variableOrdering.size == Containers.createSet(variableOrdering).size,
+      variableOrdering.size == CollectionUtil.createSet(variableOrdering).size,
       "Variable ordering contains duplicates",
     )
     val identityExprs = mutableListOf<Expr<BoolType>>()

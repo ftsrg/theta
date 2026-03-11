@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -82,7 +82,7 @@ final class JavaSMTSolver implements UCSolver, Solver {
         this.solver = solver;
 
         assertions = new StackImpl<>();
-        assumptions = Containers.createMap();
+        assumptions = CollectionUtil.createMap();
     }
 
     ////
@@ -245,7 +245,7 @@ final class JavaSMTSolver implements UCSolver, Solver {
 
         public JavaSMTModel(final Model model) {
             this.model = model;
-            constToExpr = Containers.createMap();
+            constToExpr = CollectionUtil.createMap();
         }
 
         @Override

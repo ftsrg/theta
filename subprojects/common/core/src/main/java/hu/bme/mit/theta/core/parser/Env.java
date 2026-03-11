@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -79,7 +79,7 @@ public final class Env {
 
         private Frame(final Frame parent) {
             this.parent = parent;
-            symbolToValue = Containers.createMap();
+            symbolToValue = CollectionUtil.createMap();
         }
 
         public void define(final String symbol, final Object value) {
