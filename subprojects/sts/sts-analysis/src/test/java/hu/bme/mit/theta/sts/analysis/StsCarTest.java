@@ -104,7 +104,6 @@ public class StsCarTest {
                         sts,
                         monolithicExpr ->
                                 new CarChecker(monolithicExpr,
-                        true,
                                     Z3LegacySolverFactory.getInstance(),
                                     false,
                                     true,

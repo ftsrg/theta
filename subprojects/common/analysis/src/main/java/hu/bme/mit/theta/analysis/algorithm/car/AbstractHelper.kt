@@ -16,9 +16,14 @@
 
 package hu.bme.mit.theta.analysis.algorithm.car
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.pred.PredState
@@ -83,25 +88,6 @@ class AbstractHelper @JvmOverloads constructor(
       .forEach { decl ->
         repeat(model.transOffsetIndex[decl]) { indexingBuilder = indexingBuilder.inc(decl) }
       }
-
-    //    val transExpr = if(model.split.size > 1) {
-    //      Or(model.split.map {
-    //        val vars = ExprUtils.getVars(it)
-    //        var sub = BasicExprSubstitution.Builder()
-    //        for (v in vars) {
-    //          sub = sub.put(Eq(v.getConstDecl(model.transOffsetIndex.get(v)).ref,
-    // v.getConstDecl(0).ref), False())
-    //          sub = sub.put(Eq(v.getConstDecl(0).ref,
-    // v.getConstDecl(model.transOffsetIndex.get(v)).ref), False())
-    //        }
-    //        val identityRemovedExpr = sub.build().apply(PathUtils.unfold(it, 0))
-    //        val remainingConstants = ExprUtils.getConstants(identityRemovedExpr)
-    //        val affectedVars = vars.filter { v -> v.getConstDecl(0) in remainingConstants
-    // }.toList()
-    //        And(And(lambdaList.filter { lit ->  }), And(lambdaPrimeList), it)
-    //      })
-    //    }
-
     val transOffsetIndex = indexingBuilder.build()
     return MonolithicExpr(
       initExpr = And(And(lambdaList), model.initExpr),
@@ -127,6 +113,16 @@ class AbstractHelper @JvmOverloads constructor(
         },
     )
   }
+  fun getConcretisationResult(cex: Trace<ExplState, ExprAction>): ExprTraceStatus<ItpRefutation?>? {
+    val trace =
+      cex.let {
+        Trace.of(
+          it.states.map(this::activationLiteralsToPredicates),
+          it.actions.map { concreteModel.action() },
+        )
+      }
+    return traceCheckerFactory(concreteModel).check(trace)
+  }
   fun activationLiteralsToPredicates(valuation: Valuation) =
     PredState.of(
       valuation.toMap().minus(concreteModel.ctrlVars.toSet()).map {
@@ -136,4 +132,5 @@ class AbstractHelper @JvmOverloads constructor(
         }
       }
     )
+
 }

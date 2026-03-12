@@ -33,6 +33,10 @@ package hu.bme.mit.theta.sts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.car.CarCegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.car.CarChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -53,6 +57,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 public class StsCarCegarTest {
     public String filePath;
     public boolean isSafe;
@@ -67,9 +73,7 @@ public class StsCarCegarTest {
                     {"src/test/resources/counter.system", true},
                     {"src/test/resources/counter_bad.system", false},
                     {"src/test/resources/counter_parametric.system", true},
-
-                    //                {"src/test/resources/loop.system", true},
-
+                    {"src/test/resources/loop.system", true},
                     {"src/test/resources/loop_bad.system", false},
                     {"src/test/resources/multipleinitial.system", false},
                     {"src/test/resources/readerswriters.system", true},
@@ -97,14 +101,14 @@ public class StsCarCegarTest {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-
         final var checker =
                 new StsPipelineChecker<>(
                         sts,
                         monolithicExpr ->
                                 new CarCegarChecker(monolithicExpr,
-                        true,
                                     Z3LegacySolverFactory.getInstance(),
+                                    ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                        Z3LegacySolverFactory.getInstance()),
                                     false,
                                     true,
                                     true,

@@ -71,7 +71,6 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
   private final boolean propagateOpt;
   private final boolean filterOpt;
   private int currentFrameNumber;
-  private final boolean forwardTrace;
   private final boolean propertyOpt;
 
   private final boolean curFrameopt = false;
@@ -103,12 +102,10 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
   public CarChecker(
       MonolithicExpr monolithicExpr,
-      boolean forwardTrace,
       SolverFactory solverFactory,
       Logger logger) {
     this(
         monolithicExpr,
-        forwardTrace,
         solverFactory,
         true,
         true,
@@ -122,7 +119,6 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
   public CarChecker(
       MonolithicExpr monolithicExpr,
-      boolean forwardTrace,
       SolverFactory solverFactory,
       boolean formerFramesOpt,
       boolean unSatOpt,
@@ -138,7 +134,6 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     this.notBOpt = notBOpt;
     this.propagateOpt = propagateOpt;
     this.filterOpt = filterOpt;
-    this.forwardTrace = forwardTrace;
     this.propertyOpt = propertyOpt;
     this.logger = logger;
     this.coverOpt = coverOpt;
@@ -545,7 +540,6 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     checkArgument(status.isFeasible(), "Infeasible trace.");
 
     Trace<Valuation, ? extends Action> trace = status.asFeasible().getValuations();
-    if (!forwardTrace) trace = trace.reverse();
     valuations = new ArrayList<>();
     valuations =
         trace.getStates().stream()
