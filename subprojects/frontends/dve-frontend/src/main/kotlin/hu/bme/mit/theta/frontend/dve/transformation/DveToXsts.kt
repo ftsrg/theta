@@ -72,6 +72,7 @@ object DveToXsts {
 private class TransformContext(private val model: DveModel) {
 
   val pcVars = mutableMapOf<String, VarDecl<EnumType>>()
+  val singleStateProcesses = mutableSetOf<String>()
   val varMap = mutableMapOf<String, VarDecl<IntType>>()
   val chanVars = mutableMapOf<String, VarDecl<IntType>>()
   val dataVars = mutableListOf<VarDecl<IntType>>()
@@ -121,6 +122,10 @@ private class TransformContext(private val model: DveModel) {
 
   private fun declareStateVariables() {
     for (proc in model.processes) {
+      if (proc.states.size <= 1) {
+        singleStateProcesses += proc.name
+        continue
+      }
       val enumType = EnumType.of("${proc.name}_State", proc.states)
       val pc = Decls.Var("${proc.name}_state", enumType)
       pcVars[proc.name] = pc
@@ -170,6 +175,7 @@ private class TransformContext(private val model: DveModel) {
     val fExprs = mutableListOf<Expr<BoolType>>()
 
     for (proc in model.processes) {
+      if (proc.name in singleStateProcesses) continue
       val pc = pcVars[proc.name]!!
       val lit = stateLit(proc.name, proc.initialState)
       fExprs += Eq(pc.ref, lit)
@@ -257,6 +263,12 @@ private class TransformContext(private val model: DveModel) {
   private fun buildAnyCommittedExpr(): Expr<BoolType>? {
     val terms = mutableListOf<Expr<BoolType>>()
     for (proc in model.processes) {
+      if (proc.name in singleStateProcesses) {
+        // A single-state process is always in its only state;
+        // if that state is committed, it's always committed.
+        if (proc.committedStates.isNotEmpty()) terms += True()
+        continue
+      }
       val pc = pcVars[proc.name]!!
       for (state in proc.committedStates) terms += Eq(pc.ref, stateLit(proc.name, state))
     }
@@ -268,12 +280,14 @@ private class TransformContext(private val model: DveModel) {
     trans: DveTransition,
     anyCommitted: Expr<BoolType>?,
   ): Stmt {
-    val pc = pcVars[proc.name]!!
     require(trans.sourceState in proc.states && trans.targetState in proc.states) {
       "Transition in process '${proc.name}' references unknown state(s): '${trans.sourceState}' -> '${trans.targetState}'"
     }
 
-    var guard: Expr<BoolType> = Eq(pc.ref, stateLit(proc.name, trans.sourceState))
+    val isSingleState = proc.name in singleStateProcesses
+    var guard: Expr<BoolType> =
+      if (isSingleState) True()
+      else Eq(pcVars[proc.name]!!.ref, stateLit(proc.name, trans.sourceState))
     if (trans.guard != null)
       guard = SmartBoolExprs.And(guard, dveExprToBool(trans.guard, proc.name))
     if (trans.sourceState !in proc.committedStates && anyCommitted != null)
@@ -281,7 +295,8 @@ private class TransformContext(private val model: DveModel) {
 
     val stmts = mutableListOf<Stmt>()
     stmts += AssumeStmt.of(guard)
-    stmts += AssignStmt.of(pc, stateLit(proc.name, trans.targetState))
+    if (!isSingleState)
+      stmts += AssignStmt.of(pcVars[proc.name]!!, stateLit(proc.name, trans.targetState))
     for (effect in trans.effects) stmts += buildAssignment(effect, proc.name)
     return SequenceStmt.of(stmts)
   }
@@ -295,8 +310,8 @@ private class TransformContext(private val model: DveModel) {
   ): Stmt {
     val sSend = sTrans.sync as DveSyncAction.Send
     val rRecv = rTrans.sync as DveSyncAction.Receive
-    val sPC = pcVars[sProc.name]!!
-    val rPC = pcVars[rProc.name]!!
+    val sSingle = sProc.name in singleStateProcesses
+    val rSingle = rProc.name in singleStateProcesses
     require(sTrans.sourceState in sProc.states && sTrans.targetState in sProc.states) {
       "Transition in process '${sProc.name}' references unknown state(s): '${sTrans.sourceState}' -> '${sTrans.targetState}'"
     }
@@ -304,11 +319,13 @@ private class TransformContext(private val model: DveModel) {
       "Transition in process '${rProc.name}' references unknown state(s): '${rTrans.sourceState}' -> '${rTrans.targetState}'"
     }
 
-    var guard: Expr<BoolType> =
-      SmartBoolExprs.And(
-        Eq(sPC.ref, stateLit(sProc.name, sTrans.sourceState)),
-        Eq(rPC.ref, stateLit(rProc.name, rTrans.sourceState)),
-      )
+    val sGuard: Expr<BoolType> =
+      if (sSingle) True()
+      else Eq(pcVars[sProc.name]!!.ref, stateLit(sProc.name, sTrans.sourceState))
+    val rGuard: Expr<BoolType> =
+      if (rSingle) True()
+      else Eq(pcVars[rProc.name]!!.ref, stateLit(rProc.name, rTrans.sourceState))
+    var guard: Expr<BoolType> = SmartBoolExprs.And(sGuard, rGuard)
     if (sTrans.guard != null)
       guard = SmartBoolExprs.And(guard, dveExprToBool(sTrans.guard, sProc.name))
     if (rTrans.guard != null)
@@ -329,11 +346,13 @@ private class TransformContext(private val model: DveModel) {
         }
       }
 
-    stmts += AssignStmt.of(sPC, stateLit(sProc.name, sTrans.targetState))
+    if (!sSingle)
+      stmts += AssignStmt.of(pcVars[sProc.name]!!, stateLit(sProc.name, sTrans.targetState))
     for (effect in sTrans.effects) stmts += buildAssignment(effect, sProc.name)
     for ((i, lval) in rRecv.variables.withIndex()) if (i < tmpVars.size)
       stmts += buildLvalueAssignment(lval, tmpVars[i].ref, rProc.name)
-    stmts += AssignStmt.of(rPC, stateLit(rProc.name, rTrans.targetState))
+    if (!rSingle)
+      stmts += AssignStmt.of(pcVars[rProc.name]!!, stateLit(rProc.name, rTrans.targetState))
     for (effect in rTrans.effects) stmts += buildAssignment(effect, rProc.name)
     return SequenceStmt.of(stmts)
   }
@@ -345,17 +364,16 @@ private class TransformContext(private val model: DveModel) {
     anyCommitted: Expr<BoolType>?,
   ): Stmt {
     val send = trans.sync as DveSyncAction.Send
-    val pc = pcVars[proc.name]!!
+    val isSingleState = proc.name in singleStateProcesses
     val countVar = chanVars["${ch.name}.count"]!!
     require(trans.sourceState in proc.states && trans.targetState in proc.states) {
       "Transition in process '${proc.name}' references unknown state(s): '${trans.sourceState}' -> '${trans.targetState}'"
     }
 
-    var guard: Expr<BoolType> =
-      SmartBoolExprs.And(
-        Eq(pc.ref, stateLit(proc.name, trans.sourceState)),
-        Lt(countVar.ref, iLit(ch.bufferSize)),
-      )
+    val pcGuard: Expr<BoolType> =
+      if (isSingleState) True()
+      else Eq(pcVars[proc.name]!!.ref, stateLit(proc.name, trans.sourceState))
+    var guard: Expr<BoolType> = SmartBoolExprs.And(pcGuard, Lt(countVar.ref, iLit(ch.bufferSize)))
     if (trans.guard != null)
       guard = SmartBoolExprs.And(guard, dveExprToBool(trans.guard, proc.name))
     if (trans.sourceState !in proc.committedStates && anyCommitted != null)
@@ -375,7 +393,8 @@ private class TransformContext(private val model: DveModel) {
       }
     }
     stmts += AssignStmt.of(countVar, Add(countVar.ref, iLit(1)) as Expr<IntType>)
-    stmts += AssignStmt.of(pc, stateLit(proc.name, trans.targetState))
+    if (!isSingleState)
+      stmts += AssignStmt.of(pcVars[proc.name]!!, stateLit(proc.name, trans.targetState))
     for (effect in trans.effects) stmts += buildAssignment(effect, proc.name)
     return SequenceStmt.of(stmts)
   }
@@ -387,17 +406,16 @@ private class TransformContext(private val model: DveModel) {
     anyCommitted: Expr<BoolType>?,
   ): Stmt {
     val recv = trans.sync as DveSyncAction.Receive
-    val pc = pcVars[proc.name]!!
+    val isSingleState = proc.name in singleStateProcesses
     val countVar = chanVars["${ch.name}.count"]!!
     require(trans.sourceState in proc.states && trans.targetState in proc.states) {
       "Transition in process '${proc.name}' references unknown state(s): '${trans.sourceState}' -> '${trans.targetState}'"
     }
 
-    var guard: Expr<BoolType> =
-      SmartBoolExprs.And(
-        Eq(pc.ref, stateLit(proc.name, trans.sourceState)),
-        Gt(countVar.ref, iLit(0)),
-      )
+    val pcGuard: Expr<BoolType> =
+      if (isSingleState) True()
+      else Eq(pcVars[proc.name]!!.ref, stateLit(proc.name, trans.sourceState))
+    var guard: Expr<BoolType> = SmartBoolExprs.And(pcGuard, Gt(countVar.ref, iLit(0)))
     if (trans.guard != null)
       guard = SmartBoolExprs.And(guard, dveExprToBool(trans.guard, proc.name))
     if (trans.sourceState !in proc.committedStates && anyCommitted != null)
@@ -426,7 +444,8 @@ private class TransformContext(private val model: DveModel) {
       }
     }
     stmts += AssignStmt.of(countVar, Sub(countVar.ref, iLit(1)) as Expr<IntType>)
-    stmts += AssignStmt.of(pc, stateLit(proc.name, trans.targetState))
+    if (!isSingleState)
+      stmts += AssignStmt.of(pcVars[proc.name]!!, stateLit(proc.name, trans.targetState))
     for (effect in trans.effects) stmts += buildAssignment(effect, proc.name)
     return SequenceStmt.of(stmts)
   }
@@ -438,14 +457,22 @@ private class TransformContext(private val model: DveModel) {
     if (propType == DveToXsts.PropType.FULL_EXPLORATION) return True()
     val terms = mutableListOf<Expr<BoolType>>()
     for (proc in model.processes) {
-      val pc = pcVars[proc.name]!!
       for (assertion in proc.assertions) {
         if (assertion.stateName !in proc.states) continue
         val expr = dveExprToBool(assertion.expression, proc.name)
-        terms +=
-          BoolExprs.Not(
-            BoolExprs.And(Eq(pc.ref, stateLit(proc.name, assertion.stateName)), BoolExprs.Not(expr))
-          )
+        if (proc.name in singleStateProcesses) {
+          // Single-state process is always in its only state, so the assertion always applies
+          terms += expr
+        } else {
+          val pc = pcVars[proc.name]!!
+          terms +=
+            BoolExprs.Not(
+              BoolExprs.And(
+                Eq(pc.ref, stateLit(proc.name, assertion.stateName)),
+                BoolExprs.Not(expr),
+              )
+            )
+        }
       }
     }
     return if (terms.isEmpty()) True() else SmartBoolExprs.And(terms)
@@ -557,15 +584,18 @@ private class TransformContext(private val model: DveModel) {
       is DveExpression.VarRefExpr -> Neq(translateExpr(expr, contextProcess), iLit(0))
       is DveExpression.ArrayAccessExpr -> Neq(translateExpr(expr, contextProcess), iLit(0))
       is DveExpression.ProcessStateExpr -> {
-        val pc =
-          pcVars[expr.processName]
+        val proc =
+          model.processes.find { it.name == expr.processName }
             ?: throw IllegalArgumentException("Unknown process: ${expr.processName}")
-        if (
-          expr.stateName !in
-            (model.processes.find { it.name == expr.processName }?.states ?: emptyList())
-        )
+        if (expr.stateName !in proc.states)
           throw IllegalArgumentException("Unknown state: ${expr.processName}.${expr.stateName}")
-        Eq(pc.ref, stateLit(expr.processName, expr.stateName))
+        if (expr.processName in singleStateProcesses) {
+          // Single-state process is always in its only state
+          if (expr.stateName == proc.states.single()) True() else BoolExprs.False()
+        } else {
+          val pc = pcVars[expr.processName]!!
+          Eq(pc.ref, stateLit(expr.processName, expr.stateName))
+        }
       }
       is DveExpression.UnaryExpr ->
         when (expr.op) {
