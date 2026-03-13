@@ -22,6 +22,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.frontend.dve.DveParser
 import hu.bme.mit.theta.frontend.dve.transformation.DveToXsts
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
@@ -68,6 +69,10 @@ class InputOptions :
 
   fun isDve() = model.path.endsWith("dve")
 
+  /** Mapping from XSTS variable declarations to original source-format names. Empty if not available. */
+  var variableTraceability: Map<VarDecl<*>, String> = emptyMap()
+    private set
+
   fun getPetrinetProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
 
   fun loadXsts(): XSTS {
@@ -82,7 +87,9 @@ class InputOptions :
     }
     if (isDve()) {
       val dveModel = model.inputStream().use { DveParser.parse(it) }
-      return DveToXsts.transform(dveModel, dvePropType)
+      val result = DveToXsts.transformWithNames(dveModel, dvePropType)
+      variableTraceability = result.variableTraceability
+      return result.xsts
     }
     val parsedXsts =
       XstsDslManager.createXsts(

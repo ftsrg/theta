@@ -42,7 +42,21 @@ object DveToXsts {
     FULL_EXPLORATION,
   }
 
-  fun transform(model: DveModel, propType: PropType = PropType.ASSERTIONS): XSTS {
+  /**
+   * Result of a DVE-to-XSTS transformation.
+   *
+   * @param xsts the resulting XSTS model
+   * @param variableTraceability mapping from XSTS variable declarations to original source-format names
+   */
+  data class TransformResult(val xsts: XSTS, val variableTraceability: Map<VarDecl<*>, String>)
+
+  fun transform(model: DveModel, propType: PropType = PropType.ASSERTIONS): XSTS =
+    transformWithNames(model, propType).xsts
+
+  fun transformWithNames(
+    model: DveModel,
+    propType: PropType = PropType.ASSERTIONS,
+  ): TransformResult {
     if (model.system.propertyProcessName != null)
       throw UnsupportedOperationException(
         "Property processes (Büchi/LTL liveness) are not supported."
@@ -56,16 +70,18 @@ object DveToXsts {
     ctx.build()
     val prop = ctx.buildProp(propType)
 
-    return XSTS(
-      ctx.allStateVars.toSet(),
-      ctx.localVars.toSet(),
-      ctx.ctrlVars.toSet(),
-      NonDetStmt.of(listOf()),
-      ctx.tranStmt,
-      NonDetStmt.of(listOf()),
-      ctx.initFormula,
-      prop,
-    )
+    val xsts =
+      XSTS(
+        ctx.allStateVars.toSet(),
+        ctx.localVars.toSet(),
+        ctx.ctrlVars.toSet(),
+        NonDetStmt.of(listOf()),
+        ctx.tranStmt,
+        NonDetStmt.of(listOf()),
+        ctx.initFormula,
+        prop,
+      )
+    return TransformResult(xsts, ctx.variableTraceability.toMap())
   }
 }
 
@@ -76,6 +92,7 @@ private class TransformContext(private val model: DveModel) {
   val varMap = mutableMapOf<String, VarDecl<IntType>>()
   val chanVars = mutableMapOf<String, VarDecl<IntType>>()
   val dataVars = mutableListOf<VarDecl<IntType>>()
+  val variableTraceability = mutableMapOf<VarDecl<*>, String>()
 
   private val constScalars = mutableMapOf<String, Int>()
 
@@ -127,8 +144,10 @@ private class TransformContext(private val model: DveModel) {
         continue
       }
       val enumType = EnumType.of("${proc.name}_State", proc.states)
-      val pc = Decls.Var("${proc.name}_state", enumType)
+      val xstsName = "${proc.name}_state"
+      val pc = Decls.Var(xstsName, enumType)
       pcVars[proc.name] = pc
+      variableTraceability[pc] = xstsName
     }
   }
 
@@ -141,16 +160,20 @@ private class TransformContext(private val model: DveModel) {
     when (decl) {
       is DveVarOrArrayDecl.Scalar -> {
         if (decl.decl.isConst) return
-        val v = Decls.Var(varXstsName(processName, decl.decl.name), IntType.getInstance())
+        val xstsName = varXstsName(processName, decl.decl.name)
+        val v = Decls.Var(xstsName, IntType.getInstance())
         varMap[varKey(processName, decl.decl.name)] = v
         dataVars += v
+        variableTraceability[v] = varDveName(processName, decl.decl.name)
       }
       is DveVarOrArrayDecl.Array -> {
         if (decl.decl.isConst) return
         for (i in 0 until decl.decl.size) {
-          val v = Decls.Var(varXstsName(processName, decl.decl.name, i), IntType.getInstance())
+          val xstsName = varXstsName(processName, decl.decl.name, i)
+          val v = Decls.Var(xstsName, IntType.getInstance())
           varMap[varKey(processName, decl.decl.name, i)] = v
           dataVars += v
+          variableTraceability[v] = varDveName(processName, decl.decl.name, i)
         }
       }
     }
@@ -159,12 +182,16 @@ private class TransformContext(private val model: DveModel) {
   private fun declareChannelVariables() {
     for (ch in model.channels) {
       if (ch.bufferSize > 0) {
-        val countVar = Decls.Var("${ch.name}_count", IntType.getInstance())
+        val countXstsName = "${ch.name}_count"
+        val countVar = Decls.Var(countXstsName, IntType.getInstance())
         chanVars["${ch.name}.count"] = countVar
+        variableTraceability[countVar] = "${ch.name}.count"
         for (slot in 0 until ch.bufferSize) {
           for (field in ch.typedFields.indices) {
-            val sv = Decls.Var("${ch.name}_slot${slot}_field${field}", IntType.getInstance())
+            val slotXstsName = "${ch.name}_slot${slot}_field${field}"
+            val sv = Decls.Var(slotXstsName, IntType.getInstance())
             chanVars["${ch.name}.slot${slot}.field${field}"] = sv
+            variableTraceability[sv] = "${ch.name}.slot${slot}.field${field}"
           }
         }
       }
@@ -686,6 +713,11 @@ private class TransformContext(private val model: DveModel) {
     fun varXstsName(processName: String?, varName: String, index: Int? = null): String {
       val base = if (processName != null) "${processName}_${varName}" else varName
       return if (index != null) "${base}_$index" else base
+    }
+
+    fun varDveName(processName: String?, varName: String, index: Int? = null): String {
+      val base = if (processName != null) "${processName}.${varName}" else varName
+      return if (index != null) "${base}[$index]" else base
     }
 
     fun iLit(value: Int): hu.bme.mit.theta.core.type.inttype.IntLitExpr = IntExprs.Int(value)
