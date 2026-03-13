@@ -27,11 +27,9 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 typealias S = XstsState<ExplState>
 
@@ -89,32 +87,12 @@ class XstsCliBounded :
 
   private val variant by option().enum<Variant>().default(Variant.BMC)
 
-  private fun printResult(
-    status: SafetyResult<EmptyProof, Trace<S, XstsAction>>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
-    if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
-      return
-    }
-    printCommonResult(status, xsts, totalTimeMs)
+  override fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {
     val stats = status.stats.orElse(BoundedStatistics(0)) as BoundedStatistics
     listOf(stats.iterations).forEach(writer::cell)
-    writer.newRow()
   }
 
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
-    registerSolverManagers()
+  override fun doRun() {
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
@@ -122,11 +100,7 @@ class XstsCliBounded :
       createChecker(xsts, solverFactory) { variant.buildChecker(it, solverFactory, logger) }
     val result = checker.check()
     sw.stop()
-    printResult(
-      result as SafetyResult<EmptyProof, Trace<S, XstsAction>>,
-      xsts,
-      sw.elapsed(TimeUnit.MILLISECONDS),
-    )
+    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
   }
 }

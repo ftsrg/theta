@@ -22,8 +22,6 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.long
 import com.google.common.base.Stopwatch
-import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
@@ -35,11 +33,8 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.XstsAction
-import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.io.File
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 class XstsCliMdd :
   XstsCliMonolithicBaseCommand(
@@ -48,7 +43,7 @@ class XstsCliMdd :
   ) {
 
   private val ordering: File? by
-    option(help = "Path to a file containing variable ordering (variable names, one per line)")
+    option(help = "Path to a file containing variable ordering (one name per line)")
       .file(mustExist = true, canBeDir = false, mustBeReadable = true)
 
   private val dumpOrdering: Boolean by
@@ -103,16 +98,7 @@ class XstsCliMdd :
     return result
   }
 
-  private fun printResult(
-    status: SafetyResult<InvariantProof, out Trace<XstsState<*>, XstsAction>>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
-    if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
-      return
-    }
-    printCommonResult(status, xsts, totalTimeMs)
+  override fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {
     val stats =
       status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0, 0, 0)) as MddAnalysisStatistics
     listOf(
@@ -123,20 +109,9 @@ class XstsCliMdd :
         stats.cacheSize,
       )
       .forEach(writer::cell)
-    writer.newRow()
   }
 
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
-    registerSolverManagers()
+  override fun doRun() {
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
@@ -160,7 +135,7 @@ class XstsCliMdd :
         checker.check(null)
       }
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
   }
 

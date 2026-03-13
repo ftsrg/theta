@@ -17,13 +17,10 @@ package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.asg.ASG
-import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.multi.MultiSide
@@ -34,17 +31,14 @@ import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.cfa.analysis.CfaState
 import hu.bme.mit.theta.common.cfa.buchi.hoa.ExternalLtl2Hoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.ltl.LtlChecker
 import hu.bme.mit.theta.common.ltl.cli.LtlCliOptions
 import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsState
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*
 import hu.bme.mit.theta.xsts.passes.XstsNormalizerPass
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 private typealias NSF<D> =
   NextSideFunctions.NextSideFunction<
@@ -105,21 +99,12 @@ class XstsCliLtlCegar :
   private val refinement: Refinement by
     option(help = "Refinement strategy to use").enum<Refinement>().default(Refinement.SEQ_ITP)
   private val predsplit: PredSplit by option().enum<PredSplit>().default(PredSplit.ATOMS)
-  private val refinementSolver: String? by option(help = "Use a different solver for abstraction")
-  private val abstractionSolver: String? by option(help = "Use a different solver for refinement")
+  private val refinementSolver: String? by option(help = "Use a different solver for refinement")
+  private val abstractionSolver: String? by option(help = "Use a different solver for abstraction")
   private val initprec: InitPrec by option().enum<InitPrec>().default(InitPrec.EMPTY)
   private val ltlOptions by XstsLtlCliOptions()
 
-  private fun printResult(
-    status: SafetyResult<out ASG<*, *>?, out ASGTrace<*, *>?>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
-    if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
-      return
-    }
-    printCommonResult(status, xsts, totalTimeMs)
+  override fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {
     val stats = status.stats.orElse(CegarStatistics(0, 0, 0, 0)) as CegarStatistics
     listOf(
         stats.algorithmTimeMs,
@@ -131,20 +116,9 @@ class XstsCliLtlCegar :
         0,
       )
       .forEach(writer::cell)
-    writer.newRow()
   }
 
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
-    registerSolverManagers()
+  override fun doRun() {
     val abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver ?: solver)
     val refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver ?: solver)
     val xsts = XstsNormalizerPass.transform(inputOptions.loadXsts())
@@ -174,7 +148,7 @@ class XstsCliLtlCegar :
       val sw = Stopwatch.createStarted()
       val result = checker.check(configBuilder.initPrec, configBuilder.initPrec)
       sw.stop()
-      printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+      printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
       writeCex(result, xsts)
     }
     if (domain in setOf(Domain.PRED_CART, Domain.PRED_SPLIT, Domain.PRED_BOOL)) {
@@ -199,7 +173,7 @@ class XstsCliLtlCegar :
       val sw = Stopwatch.createStarted()
       val result = checker.check(configBuilder.initPrec, configBuilder.initPrec)
       sw.stop()
-      printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+      printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
       writeCex(result, xsts)
     }
   }

@@ -39,7 +39,6 @@ import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenConfig
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 class XstsCliTracegen :
   XstsCliBaseCommand(
@@ -168,16 +167,7 @@ class XstsCliTracegen :
     //    }
   }
 
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
+  override fun doRun() {
     val traceDirPath: File =
       if (traceDir == null) {
         File(inputOptions.model.parent + File.separator + "traces")
@@ -185,7 +175,6 @@ class XstsCliTracegen :
         traceDir!!
       }
 
-    registerSolverManagers()
     val solverFactory = SolverManager.resolveSolverFactory(solver)
 
     val modelFile = inputOptions.model

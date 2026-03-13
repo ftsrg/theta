@@ -19,14 +19,9 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.google.common.base.Stopwatch
-import hu.bme.mit.theta.analysis.algorithm.InvariantProof
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.xsts.XSTS
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 class XstsCliIC3 :
   XstsCliMonolithicBaseCommand(name = "IC3", help = "Model checking using the IC3 algorithm.") {
@@ -37,26 +32,7 @@ class XstsCliIC3 :
   private val propagateOpt: Boolean by option().boolean().default(true)
   private val filterOpt: Boolean by option().boolean().default(true)
 
-  private fun printResult(status: SafetyResult<InvariantProof, *>, xsts: XSTS, totalTimeMs: Long) {
-    if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
-      return
-    }
-    printCommonResult(status, xsts, totalTimeMs)
-    writer.newRow()
-  }
-
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
-    registerSolverManagers()
+  override fun doRun() {
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
@@ -76,7 +52,7 @@ class XstsCliIC3 :
       }
     val result = checker.check()
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
   }
 }
