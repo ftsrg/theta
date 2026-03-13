@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.deprecated
 import com.github.ajalt.clikt.parameters.options.option
@@ -24,7 +25,7 @@ import com.github.ajalt.clikt.parameters.options.versionOption
 class XstsCliMainCommand : CliktCommand() {
 
   init {
-    versionOption(javaClass.`package`.implementationVersion ?: "unknown")
+    versionOption(javaClass.`package`.implementationVersion ?: "unknown") { it }
   }
 
   val algorithm by
@@ -43,7 +44,7 @@ class XstsCliMainCommand : CliktCommand() {
   override fun run() = Unit
 }
 
-fun main(args: Array<String>) =
+fun main(args: Array<String>): kotlin.Unit =
   XstsCliMainCommand()
     .subcommands(
       XstsCliCegar(),

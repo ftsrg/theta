@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+
+<!-- config -->
+
+  <rundefinition name="Theta-software-Integration-Test">
+    <tasks name="unreach-call">
+      <propertyfile>properties/unreach-call.prp</propertyfile>
+      <include>svcomp25/btor2c-lazyMod.bit-vector.c.yml</include>
+      <include>svcomp25/Dubois-015.c.yml</include>
+      <include>svcomp25/integerpromotion-2.c.yml</include>
+      <include>svcomp25/integerpromotion-3.c.yml</include>
+      <include>svcomp25/interleave_bits.i.yml</include>
+      <include>svcomp25/modulus-2.i.yml</include>
+      <include>svcomp25/num_conversion_1.c.yml</include>
+      <include>svcomp25/num_conversion_2.c.yml</include>
+      <include>svcomp25/test_locks_14-2.c.yml</include>
+      <include>svcomp25/test_locks_15-1.c.yml</include>
+      <include>svcomp25/test_locks_5.c.yml</include>
+      <include>svcomp25/test_locks_6.c.yml</include>
+      <include>svcomp25/test_locks_7.c.yml</include>
+      <include>svcomp25/test_locks_8.c.yml</include>
+      <include>svcomp25/test_locks_9.c.yml</include>
+      <include>svcomp25/test_while_int.c_1.i.yml</include>
+      <include>svcomp25/test_while_int.i.yml</include>
+      <include>svcomp25/trex02-1.c.yml</include>
+      <include>svcomp25/trex02-2.c.yml</include>
+      <include>svcomp25/trex03-1.c.yml</include>
+      <include>svcomp25/trex03-2.c.yml</include>
+      <include>svcomp25/trex04_abstracted.c.yml</include>
+      <include>svcomp25/trex04.c.yml</include>
+      <include>svcomp25/underapprox_1-1.c.yml</include>
+      <include>svcomp25/while_infinite_loop_1.c.yml</include>
+    </tasks>
+
+    <tasks name="termination">
+      <propertyfile>properties/termination.prp</propertyfile>
+      <include>svcomp25/AlternKonv.c.yml</include>
+      <include>svcomp25/Division-2.c.yml</include>
+      <include>svcomp25/LeikeHeizmann-WST2014-Ex9.c.yml</include>
+      <include>svcomp25/NO_01.c.yml</include>
+      <include>svcomp25/Thun-2.c.yml</include>
+      <include>svcomp25/b.05.c.yml</include>
+      <include>svcomp25/dijkstra1-both-nt.c.yml</include>
+      <include>svcomp25/dijkstra2-both-nt.c.yml</include>
+      <include>svcomp25/ex3a.c.yml</include>
+      <include>svcomp25/ComplInterv2.c.yml</include>
+      <include>svcomp25/ConvLower.c.yml</include>
+      <include>svcomp25/Ex02.c.yml</include>
+      <include>svcomp25/Ex03.c.yml</include>
+      <include>svcomp25/Ex06.c.yml</include>
+      <include>svcomp25/Flip.c.yml</include>
+      <include>svcomp25/Flip2.c.yml</include>
+      <include>svcomp25/GCD-1.c.yml</include>
+      <include>svcomp25/GCD2.c.yml</include>
+      <include>svcomp25/IntPath.c.yml</include>
+      <include>svcomp25/Loop-2.c.yml</include>
+      <include>svcomp25/MinusBuiltIn.c.yml</include>
+      <include>svcomp25/MirrorIntervSim.c.yml</include>
+    </tasks>
+  </rundefinition>
+
+</benchmark>

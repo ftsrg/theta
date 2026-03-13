@@ -31,15 +31,15 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.eliminateIte;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ExprIteEliminatorTest {
 
@@ -48,7 +48,7 @@ public class ExprIteEliminatorTest {
     private Expr<IntType> x, y, z, t;
     private Expr<IntType> i1, i2, i3, i4, i5;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         // Create constants

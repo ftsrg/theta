@@ -49,18 +49,18 @@ object Deps {
     val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
     val javasmt = "org.sosy-lab:java-smt:5.0.1-523-g9001c0ea4" // hardcoded because deps also hardcoded
-    val javasmtDeps = listOf(
-        "org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1",
-        z3,
-        "org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c",
-        "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4",
-        "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc",
-        "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae",
-        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08"
+    val javasmtDeps = mapOf(
+        "org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1" to setOf("libmathsat5j.so", "mathsat5j.dll", "mathsat.dll", "mpir.dll"),
+        "org.sosy-lab:javasmt-solver-z3:4.14.0" to setOf("libz3.dll", "libz3.dylib", "libz3.so", "libz3java.dll", "libz3java.dylib", "libz3java.so"),
+        "org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c" to setOf("libopensmtj.so"),
+        "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4" to setOf("libcvc4.so", "libcvc4jni.so", "libcvc4parser.so"),
+        "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc" to setOf("libcvc5jni.dll", "libcvc5jni.so"),
+        "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae" to setOf("libbitwuzlaj.dll", "libbitwuzlaj.so"),
+        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08" to setOf() // no deps
     )
     val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
-    val jcommander = "com.beust:jcommander:${Versions.jcommander}"
+    val jcommander = "org.jcommander:jcommander:${Versions.jcommander}"
 
     val pnmlCore = "fr.lip6.pnml:fr.lip6.pnml.framework.coremodel:${Versions.pnmlFramework}"
     val pnmlPtnet = "fr.lip6.pnml:fr.lip6.pnml.framework.ptnet:${Versions.pnmlFramework}"
@@ -78,17 +78,12 @@ object Deps {
 
     val axiomApi = "org.apache.ws.commons.axiom:axiom-api:${Versions.axiom}"
     val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
-    val jing = "com.thaiopensource:jing:${Versions.jing}"
+    val jing = "org.relaxng:jing:${Versions.jing}"
 
     val delta = "lib/hu.bme.mit.delta-0.0.1-all.jar"
-    val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
 
     val hoaf = "lib/jhoafparser-1.1.1.jar"
 
-    val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
-
-    val junit4 = "junit:junit:${Versions.junit4}"
-    val junit4engine = "org.junit.vintage:junit-vintage-engine"
     val junit5 = "org.junit.jupiter:junit-jupiter-api:${Versions.junit}"
     val junit5param = "org.junit.jupiter:junit-jupiter-params:${Versions.junit}"
     val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
@@ -111,4 +106,6 @@ object Deps {
     val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
+
+  val hawtjni = "org.fusesource.hawtjni:hawtjni-runtime:${Versions.hawtjni}"
 }

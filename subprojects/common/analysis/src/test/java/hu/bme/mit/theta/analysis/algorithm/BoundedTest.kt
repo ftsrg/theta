@@ -28,8 +28,8 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class BoundedTest {
 
@@ -73,7 +73,7 @@ class BoundedTest {
         logger = ConsoleLogger(Logger.Level.VERBOSE),
       )
     val safetyResult: SafetyResult<*, *> = checker.check()
-    Assert.assertTrue(safetyResult.isUnsafe())
+    Assertions.assertTrue(safetyResult.isUnsafe())
   }
 
   @Test
@@ -90,6 +90,6 @@ class BoundedTest {
         logger = ConsoleLogger(Logger.Level.VERBOSE),
       )
     val safetyResult: SafetyResult<*, *> = checker.check()
-    Assert.assertTrue(safetyResult.isSafe())
+    Assertions.assertTrue(safetyResult.isSafe())
   }
 }

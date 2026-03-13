@@ -30,8 +30,8 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Collections;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ExprStatesTest {
 
@@ -44,13 +44,13 @@ public class ExprStatesTest {
         final Expr<BoolType> expr = Geq(vx.getRef(), Int(0));
         final VarIndexing idx = VarIndexingFactory.indexing(0);
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 1,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 1).size());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 5,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 5).size());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 10,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 10).size());
     }
@@ -61,19 +61,19 @@ public class ExprStatesTest {
                 BoolExprs.And(Geq(vx.getRef(), Int(0)), Geq(Int(3), vx.getRef()));
         final VarIndexing idx = VarIndexingFactory.indexing(0);
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 2,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 2).size());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 4).size());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 10).size());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4,
                 ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 0).size());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4, ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx).size());
     }
 }

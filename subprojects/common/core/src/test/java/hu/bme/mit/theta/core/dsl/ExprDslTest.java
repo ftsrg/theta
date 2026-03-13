@@ -43,26 +43,15 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExprDslTest {
-
-    @Parameter(value = 0)
     public String actual;
-
-    @Parameter(value = 1)
     public Expr<Type> expected;
-
-    @Parameter(value = 2)
     public Collection<Decl<?>> decls;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -96,14 +85,22 @@ public class ExprDslTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String actual, Expr<Type> expected, Collection<Decl<?>> decls) {
+        initExprDslTest(actual, expected, decls);
         final CoreDslManager manager = new CoreDslManager();
 
         if (decls != null) {
             decls.forEach(decl -> manager.declare(decl));
         }
 
-        Assert.assertEquals(expected, manager.parseExpr(actual));
+        Assertions.assertEquals(expected, manager.parseExpr(actual));
+    }
+
+    public void initExprDslTest(String actual, Expr<Type> expected, Collection<Decl<?>> decls) {
+        this.actual = actual;
+        this.expected = expected;
+        this.decls = decls;
     }
 }

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+
+<!-- config -->
+
+  <rundefinition name="Theta-plc-Integration-Test">
+    <tasks name="default">
+      <propertyfile>properties/default.prp</propertyfile>
+      <include>plcverif/ArrayAssignment.scl-noreduction.theta.yml</include>
+      <include>plcverif/BasicCode.scl-noreduction.theta.yml</include>
+      <include>plcverif/CPC_FB_WS.scl-noreduction.theta.yml</include>
+      <include>plcverif/ImplicitFbInstance.scl-noreduction.theta.yml</include>
+      <include>plcverif/SclGotoStatement.scl-noreduction.theta.yml</include>
+      <include>plcverif/SclReturnStatement.scl-noreduction.theta.yml</include>
+      <include>plcverif/SimpleCode.scl-noreduction.theta.yml</include>
+      <include>plcverif/SimpleCounterexample.scl-noreduction.theta.yml</include>
+      <include>plcverif/StlJumps.scl-noreduction.theta.yml</include>
+    </tasks>
+  </rundefinition>
+
+</benchmark>
