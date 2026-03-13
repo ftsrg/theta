@@ -31,8 +31,6 @@ import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.util.concurrent.TimeUnit
 
-typealias S = XstsState<ExplState>
-
 class XstsCliBounded :
   XstsCliMonolithicBaseCommand(
     name = "BOUNDED",
