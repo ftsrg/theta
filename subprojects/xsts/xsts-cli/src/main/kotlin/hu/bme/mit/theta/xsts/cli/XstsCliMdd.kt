@@ -23,16 +23,15 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.long
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
-import hu.bme.mit.theta.xsts.XSTS
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -79,22 +78,22 @@ class XstsCliMdd :
       "Variable ordering cannot be used with CEGAR (predicate abstraction modifies variables)"
     }
     val varsByName = monolithicExpr.vars.associateBy { it.name }
-    val result = file.readLines()
-      .map { it.trim() }
-      .takeWhile { it != "#END" }
-      .filter { it.isNotBlank() && !it.startsWith("#") }
-      .map { name ->
-        val xstsName = name.replace(".", "_").replace("[", "_").replace("]", "")
-        varsByName[xstsName]
-          ?: throw IllegalArgumentException(
-            "Variable '$name' (normalized: '$xstsName') from ordering file not found in model. Available variables: ${varsByName.keys}"
-          )
-      }
-      .reversed()
+    val result =
+      file
+        .readLines()
+        .map { it.trim() }
+        .takeWhile { it != "#END" }
+        .filter { it.isNotBlank() && !it.startsWith("#") }
+        .map { name ->
+          val xstsName = name.replace(".", "_").replace("[", "_").replace("]", "")
+          varsByName[xstsName]
+            ?: throw IllegalArgumentException(
+              "Variable '$name' (normalized: '$xstsName') from ordering file not found in model. Available variables: ${varsByName.keys}"
+            )
+        }
+        .reversed()
     val missing = monolithicExpr.vars.toSet() - result.toSet()
-    require(missing.isEmpty()) {
-      "Ordering file is missing variables: ${missing.map { it.name }}"
-    }
+    require(missing.isEmpty()) { "Ordering file is missing variables: ${missing.map { it.name }}" }
     return result
   }
 

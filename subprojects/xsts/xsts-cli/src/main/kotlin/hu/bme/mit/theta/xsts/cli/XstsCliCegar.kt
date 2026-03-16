@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -73,7 +73,8 @@ class XstsCliCegar :
   }
 
   private fun writeVisualStatus(
-    status: SafetyResult<out ARG<*, *>?, out hu.bme.mit.theta.analysis.Trace<out State?, out Action?>?>
+    status:
+      SafetyResult<out ARG<*, *>?, out hu.bme.mit.theta.analysis.Trace<out State?, out Action?>?>
   ) {
     if (outputOptions.visualize == null) return
     val graph =

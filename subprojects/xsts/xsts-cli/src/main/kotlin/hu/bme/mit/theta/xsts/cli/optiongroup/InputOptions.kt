@@ -69,7 +69,10 @@ class InputOptions :
 
   fun isDve() = model.path.endsWith("dve")
 
-  /** Mapping from XSTS variable declarations to original source-format names. Empty if not available. */
+  /**
+   * Mapping from XSTS variable declarations to original source-format names. Empty if not
+   * available.
+   */
   var variableTraceability: Map<VarDecl<*>, String> = emptyMap()
     private set
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.collection.factory.CollectionFactory;
 import hu.bme.mit.theta.common.collection.factory.FastUtilCollectionFactory;
+import hu.bme.mit.theta.common.collection.factory.LinkedHashCollectionFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -26,7 +27,7 @@ import java.util.Set;
 
 public class CollectionUtil {
 
-    private static CollectionFactory collectionFactory = new FastUtilCollectionFactory();
+    private static CollectionFactory collectionFactory = new LinkedHashCollectionFactory();
 
     public static void setCollectionFactory(final CollectionFactory collectionFactory) {
         checkNotNull(collectionFactory);

@@ -46,7 +46,8 @@ object DveToXsts {
    * Result of a DVE-to-XSTS transformation.
    *
    * @param xsts the resulting XSTS model
-   * @param variableTraceability mapping from XSTS variable declarations to original source-format names
+   * @param variableTraceability mapping from XSTS variable declarations to original source-format
+   *   names
    */
   data class TransformResult(val xsts: XSTS, val variableTraceability: Map<VarDecl<*>, String>)
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -105,11 +105,7 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
 
   protected open fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {}
 
-  protected fun printBenchmarkResult(
-    status: SafetyResult<*, *>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
+  protected fun printBenchmarkResult(status: SafetyResult<*, *>, xsts: XSTS, totalTimeMs: Long) {
     if (!outputOptions.benchmarkMode) {
       logger.writeln(Logger.Level.RESULT, status.toString())
       return
