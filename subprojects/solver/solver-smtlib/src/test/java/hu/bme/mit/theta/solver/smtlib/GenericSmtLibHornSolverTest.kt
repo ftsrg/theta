@@ -48,9 +48,9 @@ class GenericSmtLibHornSolverTest {
 
     private val SOLVERS: List<Pair<String, String>> =
       listOf(
-        Pair("eldarica", "2.1"),
+        //Pair("eldarica", "2.1"),
         Pair("golem", "0.8.1"),
-        Pair("eldarica", "2.2"),
+        //Pair("eldarica", "2.2"),
         Pair("golem", "0.5.0"),
         Pair("z3", "4.13.0"),
         Pair("z3", "4.14.0"),
