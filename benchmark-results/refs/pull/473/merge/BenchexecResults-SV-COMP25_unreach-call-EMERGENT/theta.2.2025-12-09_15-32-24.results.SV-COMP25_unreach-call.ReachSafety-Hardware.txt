@@ -1,0 +1,35 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Hardware
+date:                    Tue, 2025-12-09 15:32:24 UTC
+tool:                    Theta 6.27.15
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio EMERGENT --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmoqczp
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3242.824 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Hardware
+Run set 1 of 6 with options '--svcomp --portfolio EMERGENT --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                       status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+hardware-verification-array/btor2c-lazyMod.safe_arbitrated_fifos_n2d8w8.yml                     ERROR (frontend failed, after parsing finished)        3.89        1.41        None
+hardware-verification-array/btor2c-lazyMod.safe_linked_list_fifo_n2d4.yml                       ERROR (frontend failed, after parsing finished)        4.76        1.83        None
+hardware-verification-array/btor2c-lazyMod.unknown_ridecore_array.yml                           TIMEOUT                         41.46       13.28        None
+hardware-verification-array/btor2c-lazyMod.unsafe_arbitrated_fifos_n2d8w8.yml                   ERROR (frontend failed, after parsing finished)        3.97        1.45        None
+hardware-verification-array/btor2c-lazyMod.unsafe_linked_list_fifo_n2d4.yml                     ERROR (frontend failed, after parsing finished)        5.21        1.97        None
+hardware-verification-array/btor2c-lazyMod.unsafe_ridecore_array.yml                            TIMEOUT                         40.97       15.01        None

@@ -1,0 +1,160 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-XCSP
+date:                    Tue, 2025-12-09 14:10:38 UTC
+tool:                    Theta 6.27.15
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmoqczp
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3314.698 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-XCSP
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------
+AllInterval-005.yml        false(unreach-call)             16.21        6.00        None
+AllInterval-006.yml        false(unreach-call)             21.68        7.61        None
+AllInterval-007.yml        false(unreach-call)             28.87        9.56        None
+AllInterval-008.yml        false(unreach-call)             36.72       11.64        None
+AllInterval-009.yml        TIMEOUT                         44.02       12.50        None
+AllInterval-010.yml        
+AllInterval-011.yml        
+AllInterval-012.yml        
+AllInterval-013.yml        
+AllInterval-014.yml        
+AllInterval-015.yml        
+AllInterval-016.yml        
+AllInterval-017.yml        
+AllInterval-018.yml        
+AllInterval-019.yml        
+AllInterval-020.yml        
+AllInterval-025.yml        
+AllInterval-030.yml        
+AllInterval-035.yml        
+CostasArray-10.yml         
+CostasArray-11.yml         
+CostasArray-12.yml         
+CostasArray-13.yml         
+CostasArray-14.yml         
+CostasArray-15.yml         
+CostasArray-16.yml         
+CostasArray-17.yml         
+Dubois-015.yml             
+Dubois-016.yml             
+Dubois-017.yml             
+Dubois-018.yml             
+Dubois-019.yml             
+Dubois-020.yml             
+Dubois-021.yml             
+Dubois-022.yml             
+Dubois-023.yml             
+Dubois-024.yml             
+Dubois-025.yml             
+Dubois-026.yml             
+Dubois-027.yml             
+Dubois-028.yml             
+Dubois-029.yml             
+Dubois-030.yml             
+Dubois-035.yml             
+Dubois-040.yml             
+Dubois-045.yml             
+Dubois-050.yml             
+Dubois-055.yml             
+Dubois-060.yml             
+Dubois-065.yml             
+Dubois-070.yml             
+Dubois-075.yml             
+Dubois-080.yml             
+Dubois-085.yml             
+Dubois-090.yml             
+Dubois-095.yml             
+Dubois-100.yml             
+Haystacks-06.yml           
+Haystacks-07.yml           
+Haystacks-08.yml           
+Haystacks-09.yml           
+Haystacks-10.yml           
+Haystacks-11.yml           
+Haystacks-12.yml           
+Haystacks-13.yml           
+Haystacks-14.yml           
+Haystacks-15.yml           
+Haystacks-16.yml           
+Haystacks-17.yml           
+Haystacks-18.yml           
+Haystacks-19.yml           
+aim-100-1-6-sat-1.yml      
+aim-100-1-6-sat-2.yml      
+aim-100-1-6-sat-3.yml      
+aim-100-1-6-sat-4.yml      
+aim-100-1-6-unsat-1.yml    
+aim-100-1-6-unsat-2.yml    
+aim-100-1-6-unsat-3.yml    
+aim-100-1-6-unsat-4.yml    
+aim-100-2-0-sat-1.yml      
+aim-100-2-0-sat-2.yml      
+aim-100-2-0-sat-3.yml      
+aim-100-2-0-sat-4.yml      
+aim-100-2-0-unsat-1.yml    
+aim-100-2-0-unsat-2.yml    
+aim-100-2-0-unsat-3.yml    
+aim-100-2-0-unsat-4.yml    
+aim-100-3-4-sat-1.yml      
+aim-100-3-4-sat-2.yml      
+aim-100-3-4-sat-3.yml      
+aim-100-3-4-sat-4.yml      
+aim-100-6-0-sat-1.yml      
+aim-100-6-0-sat-2.yml      
+aim-100-6-0-sat-3.yml      
+aim-100-6-0-sat-4.yml      
+aim-200-1-6-sat-1.yml      
+aim-200-1-6-sat-2.yml      
+aim-200-1-6-sat-3.yml      
+aim-200-1-6-sat-4.yml      
+aim-200-1-6-unsat-1.yml    
+aim-200-1-6-unsat-2.yml    
+aim-200-1-6-unsat-3.yml    
+aim-200-1-6-unsat-4.yml    
+aim-200-2-0-sat-1.yml      
+aim-200-2-0-sat-2.yml      
+aim-200-2-0-sat-3.yml      
+aim-200-2-0-sat-4.yml      
+aim-200-2-0-unsat-1.yml    
+aim-200-2-0-unsat-2.yml    
+aim-200-2-0-unsat-3.yml    
+aim-200-2-0-unsat-4.yml    
+aim-200-3-4-sat-1.yml      
+aim-200-3-4-sat-2.yml      
+aim-200-3-4-sat-3.yml      
+aim-200-3-4-sat-4.yml      
+aim-200-6-0-sat-1.yml      
+aim-200-6-0-sat-2.yml      
+aim-200-6-0-sat-3.yml      
+aim-200-6-0-sat-4.yml      
+----------------------------------------------------------------------------------------
+Run set 1                  done                           104.28       56.11           -
+
+Statistics:              5 Files
+  correct:               4
+    correct true:        0
+    correct false:       4
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               1
+  Score:                 4 (max: 5)
