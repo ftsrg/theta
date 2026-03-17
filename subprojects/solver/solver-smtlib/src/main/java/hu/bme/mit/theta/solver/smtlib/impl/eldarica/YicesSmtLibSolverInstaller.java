@@ -60,7 +60,7 @@ public class YicesSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         final var downloadUrl =
                 URI.create(
                         String.format(
-                                "https://yices.csl.sri.com/old/binaries/yices-%s-x86_64-unknown-linux-gnu-static-gmp.tar.gz",
+                                "https://web.archive.org/web/20240607070523if_/https://yices.csl.sri.com/old/binaries/yices-%s-x86_64-unknown-linux-gnu-static-gmp.tar.gz",
                                 version));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
