@@ -58,10 +58,15 @@ open class FormalismPipelineChecker<
     val result = pipeline.check(input)
     return if (result.isSafe)
       SafetyResult.safe(modelAdapter.proofToModelProof(result.proof), result.stats.orElse(null))
-    else
+    else if (result.isUnsafe)
       SafetyResult.unsafe(
         modelAdapter.traceToModelTrace(result.asUnsafe().cex),
         modelAdapter.proofToModelProof(result.proof),
+        result.stats.orElse(null),
+      )
+    else
+      SafetyResult.unknown(
+        result.proof?.let { modelAdapter.proofToModelProof(it) },
         result.stats.orElse(null),
       )
   }
