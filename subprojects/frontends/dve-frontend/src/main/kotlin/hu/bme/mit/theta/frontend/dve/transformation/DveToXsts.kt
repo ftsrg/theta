@@ -129,14 +129,58 @@ private class TransformContext(private val model: DveModel) {
       is DveVarOrArrayDecl.Scalar -> {
         if (!decl.decl.isConst) return
         val init = decl.decl.initialValue
-        require(init is DveExpression.LiteralExpr) {
-          "Const '${decl.decl.name}' initializer must be an integer literal, got: $init"
-        }
-        constScalars[varKey(processName, decl.decl.name)] = init.value
+        requireNotNull(init) { "Const '${decl.decl.name}' has no initializer" }
+        constScalars[varKey(processName, decl.decl.name)] = constEval(init, processName)
       }
       is DveVarOrArrayDecl.Array -> Unit
     }
   }
+
+  /** Compile-time evaluation of constant integer expressions. */
+  private fun constEval(expr: DveExpression, processName: String?): Int =
+    when (expr) {
+      is DveExpression.LiteralExpr -> expr.value
+      is DveExpression.VarRefExpr -> {
+        val key = expr.processName ?: processName
+        constScalars[varKey(key, expr.varName)]
+          ?: constScalars[varKey(null, expr.varName)]
+          ?: throw IllegalArgumentException(
+            "Const initializer references unknown constant: ${expr.varName}"
+          )
+      }
+      is DveExpression.UnaryExpr ->
+        when (expr.op) {
+          DveUnaryOp.NEG -> -constEval(expr.operand, processName)
+          DveUnaryOp.NOT -> if (constEval(expr.operand, processName) == 0) 1 else 0
+          DveUnaryOp.BITNOT -> constEval(expr.operand, processName).inv()
+        }
+      is DveExpression.BinaryExpr -> {
+        val l = constEval(expr.left, processName)
+        val r = constEval(expr.right, processName)
+        when (expr.op) {
+          DveBinaryOp.ADD -> l + r
+          DveBinaryOp.SUB -> l - r
+          DveBinaryOp.MUL -> l * r
+          DveBinaryOp.DIV -> l / r
+          DveBinaryOp.MOD -> l % r
+          DveBinaryOp.EQ -> if (l == r) 1 else 0
+          DveBinaryOp.NEQ -> if (l != r) 1 else 0
+          DveBinaryOp.LT -> if (l < r) 1 else 0
+          DveBinaryOp.LEQ -> if (l <= r) 1 else 0
+          DveBinaryOp.GT -> if (l > r) 1 else 0
+          DveBinaryOp.GEQ -> if (l >= r) 1 else 0
+          DveBinaryOp.AND -> if (l != 0 && r != 0) 1 else 0
+          DveBinaryOp.OR -> if (l != 0 || r != 0) 1 else 0
+          DveBinaryOp.BITAND -> l and r
+          DveBinaryOp.BITOR -> l or r
+          DveBinaryOp.BITXOR -> l xor r
+          DveBinaryOp.SHL -> l shl r
+          DveBinaryOp.SHR -> l shr r
+        }
+      }
+      else ->
+        throw IllegalArgumentException("Unsupported expression in const initializer: $expr")
+    }
 
   private fun declareStateVariables() {
     for (proc in model.processes) {
@@ -148,7 +192,7 @@ private class TransformContext(private val model: DveModel) {
       val xstsName = "${proc.name}_state"
       val pc = Decls.Var(xstsName, enumType)
       pcVars[proc.name] = pc
-      variableTraceability[pc] = xstsName
+      variableTraceability[pc] = "${proc.name}.state"
     }
   }
 
