@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 
 fun MonolithicExpr.orderVars(): List<VarDecl<*>> {
-  val orderedVars = orderVarsFromRandomStartingPoints(this.vars, this.events, 10)
+  val orderedVars = orderVarsFromRandomStartingPoints(this.vars, this.events, 50)
   return orderedVars.filter { !it.name.contains("_messageQueueOf") } +
     orderedVars.filter { it.name.contains("_messageQueueOf") }
 }

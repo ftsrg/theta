@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import hu.bme.mit.theta.xcfa.cli.params.MddConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 fun getMddChecker(
   xcfa: XCFA,
@@ -51,32 +50,17 @@ fun getMddChecker(
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
 
-  val stmts =
-    xcfa.procedures
-      .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
-      .toSet()
   val solverPool = SolverPool(refinementSolverFactory)
-  val iterationStrategy = mddConfig.iterationStrategy
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     MddChecker(
       monolithicExpr,
       solverPool,
       logger,
-      iterationStrategy,
-      //      variableOrdering =
-      //        orderVarsFromRandomStartingPoints(
-      //          monolithicExpr.vars,
-      //          stmts
-      //            .map {
-      //              object : Event<VarDecl<*>> {
-      //                override fun getAffectedVars(): List<VarDecl<*>> =
-      //                  StmtUtils.getWrittenVars(it).toList()
-      //              }
-      //            }
-      //            .toList(),
-      //          20,
-      //        ),
+      iterationStrategy = mddConfig.iterationStrategy,
+      mddToExprStrategy = mddConfig.mddToExprStrategy,
+      proofMddToExprStrategy = mddConfig.proofMddToExprStrategy,
+      traceTimeout = mddConfig.traceTimeout,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

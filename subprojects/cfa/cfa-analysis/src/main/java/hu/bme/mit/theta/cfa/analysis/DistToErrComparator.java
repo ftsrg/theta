@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeCompara
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +82,7 @@ public class DistToErrComparator implements ArgNodeComparator {
 
     static Map<Loc, Integer> calculateDistancesToError(final CFA cfa, final Loc errLoc) {
         List<Loc> queue = new LinkedList<>();
-        final Map<Loc, Integer> distancesToError = Containers.createMap();
+        final Map<Loc, Integer> distancesToError = CollectionUtil.createMap();
         queue.add(errLoc);
         distancesToError.put(errLoc, 0);
         int distance = 1;

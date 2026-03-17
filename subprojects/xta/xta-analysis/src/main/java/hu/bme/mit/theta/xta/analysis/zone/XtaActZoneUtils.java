@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -36,7 +36,7 @@ public final class XtaActZoneUtils {
 
     public static Set<VarDecl<RatType>> pre(
             final Set<VarDecl<RatType>> activeVars, final XtaAction action) {
-        final Set<VarDecl<RatType>> result = Containers.createSet();
+        final Set<VarDecl<RatType>> result = CollectionUtil.createSet();
 
         final List<Loc> sourceLocs = action.getSourceLocs();
         final List<Loc> targetLocs = action.getTargetLocs();

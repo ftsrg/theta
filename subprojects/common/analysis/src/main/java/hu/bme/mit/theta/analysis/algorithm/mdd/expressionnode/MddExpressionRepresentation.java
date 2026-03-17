@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,18 +16,20 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
+import com.koloboke.collect.set.hash.HashIntSet;
+import com.koloboke.collect.set.hash.HashIntSets;
 import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.java.mdd.MddGraph;
+import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprUtilKt;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -36,7 +38,6 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -58,6 +59,40 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     private final SolverPool solverPool;
     private final boolean transExpr;
+    private static MddToExprStrategy mddToExprStrategy = MddToExprStrategy.VARIABLE_LEVEL;
+
+    public enum MddToExprStrategy {
+        NONE {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return True();
+            }
+        },
+        NODE_LEVEL {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return MddToExprUtilKt.toExprNodeLevel(handle);
+            }
+        },
+        VARIABLE_LEVEL {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return MddToExprUtilKt.toApproximationExprVariableLevel(handle);
+            }
+        },
+        VECTOR_LEVEL {
+            @Override
+            public Expr<BoolType> toExpr(MddHandle handle) {
+                return MddToExprUtilKt.toExprVectorLevel(handle);
+            }
+        };
+
+        public abstract Expr<BoolType> toExpr(MddHandle handle);
+    }
+
+    public static void setMddToExprStrategy(MddToExprStrategy strategy) {
+        mddToExprStrategy = strategy;
+    }
 
     private MddExpressionRepresentation(
             final Expr<BoolType> expr,
@@ -142,11 +177,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public MddNode get(int key) {
         final var cached = explicitRepresentation.getCacheView().get(key);
         if (cached != null || this.explicitRepresentation.isComplete()) return cached;
-        // TODO: this way null values are never cached and have to be recomputed every time
+        if (explicitRepresentation.isNegativelyCached(key)) return null;
 
         final MutableValuation val = new MutableValuation();
         final LitExpr<?> litExpr = LitExprConverter.toLitExpr(key, decl.getType());
         if (litExpr.isInvalid()) {
+            explicitRepresentation.cacheNegative(key);
             return null;
         }
 
@@ -185,6 +221,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             }
         }
         if (!mddVariable.isNullOrZero(childNode)) explicitRepresentation.cacheNode(key, childNode);
+        if (childNode == null) explicitRepresentation.cacheNegative(key);
         return childNode;
     }
 
@@ -200,54 +237,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     @Override
     public RecursiveIntObjCursor<? extends MddNode> cursor(RecursiveIntObjMapView<?> constraint) {
-        Preconditions.checkArgument(constraint instanceof MddNode);
-        final MddNode mddNodeConstraint = (MddNode) constraint;
-        final List<Expr<BoolType>> exprs = new ArrayList<>();
+        Preconditions.checkArgument(constraint instanceof MddHandle);
+        final MddHandle mddHandle = (MddHandle) constraint;
 
-        if (mddVariable.getLower().isPresent() && !mddNodeConstraint.isTerminal()) {
-            MddVariable variable = mddVariable.getLower().get();
-            MddNode mddNode =
-                    mddNodeConstraint.defaultValue() == null
-                            ? mddNodeConstraint.get(mddNodeConstraint.statistics().lowestValue())
-                            : mddNodeConstraint.defaultValue();
-            while (true) {
+        final var constraintExpr = mddToExprStrategy.toExpr(mddHandle);
 
-                // This is needed because the constraint node might contain level-skips: if the
-                // domain is bounded, then default values are detected
-                if (mddNode.isTerminal()) break;
-
-                final IntStatistics statistics = mddNode.statistics();
-                final Decl<?> decl = variable.getTraceInfo(Decl.class);
-                final LitExpr<?> lowerBound =
-                        LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
-                final LitExpr<?> upperBound =
-                        LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if (decl.getType().getDomainSize().isInfinite()
-                        && decl.getType() instanceof Ordered) { // TODO delete
-                    if (lowerBound.equals(upperBound)) {
-                        exprs.add(Eq(decl.getRef(), lowerBound));
-                    } else {
-                        exprs.add(
-                                And(
-                                        Geq(decl.getRef(), lowerBound),
-                                        Leq(decl.getRef(), upperBound)));
-                    }
-                }
-
-                if (variable.getLower().isEmpty()
-                        || variable.getLower().get().getLower().isEmpty()) {
-                    break;
-                } else {
-                    variable = variable.getLower().get().getLower().get();
-                    mddNode =
-                            mddNode.get(
-                                    statistics.lowestValue()); // TODO we assume here that all edges
-                    // point to the same node
-                }
-            }
-        }
-        //        System.out.println(exprs);
-        return new Cursor(null, Traverser.create(this, And(exprs), solverPool));
+        return new Cursor(null, Traverser.create(this, constraintExpr, solverPool));
     }
 
     @Override
@@ -302,12 +297,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public static class ExplicitRepresentation {
         private final HashIntObjMap<MddNode> cache;
         private final GrowingIntArray edgeOrdering;
+        private final HashIntSet negativeCache;
         private MddNode defaultValue;
         private boolean complete;
 
         public ExplicitRepresentation() {
             this.cache = HashIntObjMaps.newUpdatableMap();
             this.edgeOrdering = new GrowingIntArray(100, 100);
+            this.negativeCache = HashIntSets.newUpdatableSet();
             this.defaultValue = null;
             this.complete = false;
         }
@@ -320,6 +317,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             }
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
+        }
+
+        public void cacheNegative(int key) {
+            negativeCache.add(key);
+        }
+
+        public boolean isNegativelyCached(int key) {
+            return negativeCache.contains(key);
         }
 
         public void cacheDefault(MddNode defaultValue) {
@@ -352,11 +357,16 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         private MddExpressionRepresentation currentRepresentation;
         private final Expr<BoolType> constraint;
+        private boolean constraintApplied;
 
         private final SolverPool solverPool;
         private Solver solver;
 
         private final Stack<MddExpressionRepresentation> stack;
+
+        // Tracks whether the solver has a persistent push level with the
+        // base expression + accumulated negations for the current level
+        private boolean enumerationActive = false;
 
         private Traverser(
                 MddExpressionRepresentation rootRepresentation,
@@ -366,6 +376,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             this.stack = new Stack<>();
             this.constraint = constraint;
             this.currentRepresentation = rootRepresentation;
+            this.constraintApplied = false;
         }
 
         public static Traverser create(
@@ -380,8 +391,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return new Traverser(rootRepresentation, True(), solverPool);
         }
 
+        private void stopEnumeration() {
+            if (enumerationActive && solver != null) {
+                solver.pop();
+                enumerationActive = false;
+            }
+        }
+
         public MddExpressionRepresentation moveUp() {
-            //            throw new UnsupportedOperationException();
             Preconditions.checkState(stack.size() > 0);
             setCurrentRepresentation(stack.pop());
             return currentRepresentation;
@@ -395,7 +412,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             .contains(assignment)
                     || currentRepresentation.explicitRepresentation.getCacheView().defaultValue()
                             != null) return true;
-            else if (!currentRepresentation.explicitRepresentation.isComplete()) {
+            if (currentRepresentation.explicitRepresentation.isNegativelyCached(assignment))
+                return false;
+            if (!currentRepresentation.explicitRepresentation.isComplete()) {
 
                 if (solver == null) solver = solverPool.requestSolver();
 
@@ -405,8 +424,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         LitExprConverter.toLitExpr(
                                 assignment, currentRepresentation.decl.getType());
                 try (WithPushPop wpp = new WithPushPop(solver)) {
-                    solver.add(currentRepresentation.expr);
-                    solver.add(constraint);
+                    if (!enumerationActive) {
+                        solver.add(currentRepresentation.expr);
+                    }
                     solver.add(Eq(currentRepresentation.decl.getRef(), litExpr));
                     solver.check();
                     status = solver.getStatus();
@@ -416,6 +436,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 if (status.isSat()) {
                     cacheModel(model);
                     return true;
+                } else {
+                    currentRepresentation.explicitRepresentation.cacheNegative(assignment);
                 }
             }
             return false;
@@ -431,31 +453,39 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
                 if (solver == null) solver = solverPool.requestSolver();
 
-                final Valuation model;
-                final SolverStatus status;
-                try (var wpp = new WithPushPop(solver)) {
-
+                if (!enumerationActive) {
+                    solver.push();
                     solver.add(currentRepresentation.expr);
-                    solver.add(constraint);
-                    final var negatedAssignments = new ArrayList<Expr<BoolType>>();
                     for (var cur =
                                     currentRepresentation
                                             .explicitRepresentation
                                             .getCacheView()
                                             .cursor();
                             cur.moveNext(); ) {
-                        negatedAssignments.add(
+                        solver.add(
                                 Neq(
                                         currentRepresentation.decl.getRef(),
                                         LitExprConverter.toLitExpr(
                                                 cur.key(), currentRepresentation.decl.getType())));
                     }
-                    solver.add(And(negatedAssignments));
-
-                    solver.check();
-                    status = solver.getStatus();
-                    model = status.isSat() ? solver.getModel() : null;
+                    if (currentRepresentation.explicitRepresentation.getCacheView().size() >= 5) {
+                        solver.add(constraint);
+                        constraintApplied = true;
+                    }
+                    enumerationActive = true;
                 }
+
+                // Lazily add constraint once the 5th edge has been cached
+                if (!constraintApplied
+                        && currentRepresentation.explicitRepresentation.getCacheView().size()
+                                >= 5) {
+                    solver.add(constraint);
+                    constraintApplied = true;
+                }
+
+                solver.check();
+                final SolverStatus status = solver.getStatus();
+                final Valuation model = status.isSat() ? solver.getModel() : null;
 
                 if (status.isSat()) {
                     final Decl<?> decl = currentRepresentation.decl;
@@ -479,6 +509,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                                     .getCacheView()
                                                     .keySet());
                             if (remaining.isEmpty()) {
+                                stopEnumeration();
                                 currentRepresentation.explicitRepresentation.setComplete();
                                 return QueryResult.failed();
                             } else {
@@ -487,8 +518,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                 newValue = cur.elem();
                             }
                         } else {
-                            // only visited once per node, because of the negated assignment that is
-                            // pushed to the solver
                             final IntSetView cachedKeys =
                                     currentRepresentation
                                             .explicitRepresentation
@@ -504,10 +533,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         extendedModel.put(decl, literal);
                         modelToCache = extendedModel;
                     }
+                    // Incrementally add negation for the newly found edge
+                    solver.add(Neq(currentRepresentation.decl.getRef(), literal));
                     cacheModel(modelToCache);
                     return QueryResult.singleEdge(LitExprConverter.toInt(literal));
                 } else {
-                    if (!Objects.equals(constraint, True())) {
+                    stopEnumeration();
+                    if (constraintApplied && !Objects.equals(constraint, True())) {
                         return QueryResult.constrainedFailed();
                     } else {
                         currentRepresentation.explicitRepresentation.setComplete();
@@ -525,6 +557,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 Preconditions.checkArgument(
                         childNode.getRepresentation() instanceof MddExpressionRepresentation);
                 stack.push(currentRepresentation);
+                stopEnumeration();
                 setCurrentRepresentation(
                         (MddExpressionRepresentation) childNode.getRepresentation());
                 return childNode;
@@ -615,7 +648,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
                         assert !representation.mddVariable.isNullOrZero(childNode)
                                 : "This would mean the model returned by the solver is incorrect";
-                        if (literal.isPresent())
+                        if (literal.isPresent()
+                                && !representation.explicitRepresentation.isComplete())
                             representation.explicitRepresentation.cacheNode(
                                     LitExprConverter.toInt(literal.get()), childNode);
                         // TODO update domainSize
@@ -644,6 +678,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         @Override
         public void close() {
             if (solver != null) {
+                stopEnumeration();
                 solverPool.returnSolver(this.solver);
                 this.solver = null;
             }

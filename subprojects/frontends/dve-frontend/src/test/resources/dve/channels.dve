@@ -1,0 +1,21 @@
+// Synchronous channel rendezvous between two processes
+
+channel sync_ch {0};
+
+process Sender {
+    state s0, s1;
+    init s0;
+    trans
+        s0 -> s1 { sync sync_ch!; },
+        s1 -> s0 {};
+}
+
+process Receiver {
+    state r0, r1;
+    init r0;
+    trans
+        r0 -> r1 { sync sync_ch?; },
+        r1 -> r0 {};
+}
+
+system async;

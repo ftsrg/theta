@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
@@ -60,7 +60,7 @@ public final class ArgNode<S extends State, A extends Action> {
         inEdge = Optional.empty();
         outEdges = new ArrayList<>();
         coveringNode = Optional.empty();
-        coveredNodes = Containers.createSet();
+        coveredNodes = CollectionUtil.createSet();
         expanded = false;
     }
 

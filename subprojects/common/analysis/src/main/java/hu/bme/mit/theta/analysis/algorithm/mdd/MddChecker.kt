@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,12 +30,13 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.common.container.Containers
+import hu.bme.mit.theta.common.collection.CollectionUtil
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
@@ -59,6 +60,10 @@ constructor(
   private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   private val traceTimeout: Long = 10,
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
+  private val mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+  private val proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   enum class IterationStrategy {
@@ -70,10 +75,13 @@ constructor(
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
+    MddExpressionRepresentation.setMddToExprStrategy(mddToExprStrategy)
+
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
-    val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
+    val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
 
     variableOrdering.forEach {
       Preconditions.checkArgument(
@@ -83,7 +91,7 @@ constructor(
     }
 
     Preconditions.checkArgument(
-      variableOrdering.size == Containers.createSet(variableOrdering).size,
+      variableOrdering.size == CollectionUtil.createSet(variableOrdering).size,
       "Variable ordering contains duplicates",
     )
     val identityExprs = mutableListOf<Expr<BoolType>>()
@@ -229,13 +237,17 @@ constructor(
       try {
         logger.mainStep("Starting trace generation.\n")
         val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics)
+        return SafetyResult.unsafe(
+          trace,
+          MddProof.of(stateSpace, proofMddToExprStrategy),
+          statistics,
+        )
       } catch (e: TimeoutException) {
         logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace),
+          MddProof.of(stateSpace, proofMddToExprStrategy),
           statistics,
         )
       } catch (e: InterruptedException) {
@@ -243,7 +255,7 @@ constructor(
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace),
+          MddProof.of(stateSpace, proofMddToExprStrategy),
           statistics,
         )
       } catch (e: ExecutionException) {
@@ -252,7 +264,7 @@ constructor(
         executor.shutdownNow()
       }
     } else {
-      result = SafetyResult.safe(MddProof.of(stateSpace), statistics)
+      result = SafetyResult.safe(MddProof.of(stateSpace, proofMddToExprStrategy), statistics)
     }
     return result
   }
