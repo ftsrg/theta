@@ -25,23 +25,19 @@ model
     ;
 
 topDecl
-    : CONST? varDecl SEMI
-    | CONST? arrayDecl SEMI
+    : CONST? varOrArrayDecl SEMI
     | channelDecl
     ;
 
 // ---- Variable declarations -------------------------------------------------
 
-varDecl
-    : varType ID (ASSIGN expr)? (COMMA ID (ASSIGN expr)?)*
+varOrArrayDecl
+    : varType varOrArrayItem (COMMA varOrArrayItem)*
     ;
 
-arrayDecl
-    : varType arrayItem (COMMA arrayItem)*
-    ;
-
-arrayItem
-    : ID LBRACKET INT_LITERAL RBRACKET (ASSIGN LBRACE exprList RBRACE)?
+varOrArrayItem
+    : ID LBRACKET INT_LITERAL RBRACKET (ASSIGN LBRACE exprList RBRACE)?  # arrayItemDecl
+    | ID (ASSIGN expr)?                                                   # scalarItemDecl
     ;
 
 varType
@@ -75,8 +71,7 @@ processBody
     ;
 
 localDecl
-    : CONST? varDecl SEMI
-    | CONST? arrayDecl SEMI
+    : CONST? varOrArrayDecl SEMI
     ;
 
 stateDecl

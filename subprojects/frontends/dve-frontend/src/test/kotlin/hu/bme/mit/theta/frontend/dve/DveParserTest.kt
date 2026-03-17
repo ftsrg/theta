@@ -312,6 +312,56 @@ class DveParserTest {
   }
 
   @Test
+  fun `mixed scalar and array declaration in process`() {
+    val src =
+      """
+            process P {
+                byte list[3], len, i;
+                state s0;
+                init s0;
+                trans s0 -> s0 { guard len == 0; };
+            }
+            system async;
+        """
+        .trimIndent()
+    val m = DveParser.parse(src.byteInputStream())
+    val proc = m.processes[0]
+    assertEquals(3, proc.variables.size)
+    // list[3] is an array
+    val arr = proc.variables[0] as DveVarOrArrayDecl.Array
+    assertEquals("list", arr.decl.name)
+    assertEquals(3, arr.decl.size)
+    // len and i are scalars
+    val len = proc.variables[1] as DveVarOrArrayDecl.Scalar
+    assertEquals("len", len.decl.name)
+    val i = proc.variables[2] as DveVarOrArrayDecl.Scalar
+    assertEquals("i", i.decl.name)
+  }
+
+  @Test
+  fun `process-local pure array declaration`() {
+    val src =
+      """
+            process P {
+                byte recbuf[3], nakd[3];
+                state s0;
+                init s0;
+            }
+            system async;
+        """
+        .trimIndent()
+    val m = DveParser.parse(src.byteInputStream())
+    val proc = m.processes[0]
+    assertEquals(2, proc.variables.size)
+    val a1 = proc.variables[0] as DveVarOrArrayDecl.Array
+    assertEquals("recbuf", a1.decl.name)
+    assertEquals(3, a1.decl.size)
+    val a2 = proc.variables[1] as DveVarOrArrayDecl.Array
+    assertEquals("nakd", a2.decl.name)
+    assertEquals(3, a2.decl.size)
+  }
+
+  @Test
   fun `array access in expression`() {
     val src =
       """
