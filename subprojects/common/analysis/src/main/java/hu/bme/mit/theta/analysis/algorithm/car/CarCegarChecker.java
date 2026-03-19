@@ -32,28 +32,22 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 
-
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import kotlin.jvm.functions.Function1;
 
-
 import java.util.*;
-
-
 
 public class CarCegarChecker<S extends ExprState, A extends ExprAction>
     implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
   private MonolithicExpr monolithicExpr;
   private final Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> traceCheckerFactory;
   private final SolverFactory solverFactory;
-  private final UCSolver solver;
   private final boolean formerFramesOpt;
   private final boolean unSatOpt;
   private final boolean notBOpt;
   private final boolean propagateOpt;
   private final boolean filterOpt;
-
   private final boolean coverOpt;
   private final boolean propertyOpt;
   private final Logger logger;
@@ -81,7 +75,6 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
     this.coverOpt = coverOpt;
     this.logger = logger;
     this.solverFactory = solverFactory;
-    solver = solverFactory.createUCSolver();
   }
 
   @Override
@@ -114,7 +107,7 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
             helper.getConcretisationResult(result.asUnsafe().getCex());
         if (concretizationResult.isFeasible()) {
           logger.write(Logger.Level.MAINSTEP, "Model is unsafe, stopping CEGAR\n");
-          return result;
+          return result; //todo add concrete result
         } else {
           final var ref = concretizationResult.asInfeasible().getRefutation();
           final var newPred = ref.get(ref.getPruneIndex());

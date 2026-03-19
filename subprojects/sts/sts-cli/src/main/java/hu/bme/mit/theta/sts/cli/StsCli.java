@@ -32,6 +32,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
+import hu.bme.mit.theta.analysis.algorithm.car.CarCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.car.CarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
@@ -188,7 +190,54 @@ public class StsCli {
                                 true,
                                 logger));
             }
-        };
+        },
+        CAR {
+            @Override
+            Function<
+                MonolithicExpr,
+                SafetyChecker<
+                    ? extends InvariantProof,
+                    Trace<ExplState, ExprAction>,
+                    UnitPrec>>
+            getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                    new CarChecker(monolithicExpr,
+                        solverFactory,
+                        false,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true,
+                        logger));
+            }
+        },
+        CARCEGAR {
+            @Override
+            Function<
+                MonolithicExpr,
+                SafetyChecker<
+                    ? extends InvariantProof,
+                    Trace<ExplState, ExprAction>,
+                    UnitPrec>>
+            getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                    new CarCegarChecker(monolithicExpr,
+                        solverFactory,
+                        ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                            Z3LegacySolverFactory.getInstance()),
+                        false,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true,
+                        logger));
+            }
+        },
+        ;
 
         abstract Function<
                         MonolithicExpr,

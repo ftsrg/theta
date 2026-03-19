@@ -99,12 +99,10 @@ public class Ic3Checker
         // check if init violates prop
         var firstTrace = checkFirst();
         if (firstTrace != null) {
-            final var result = SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
-            return result;
+            return SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
         }
         while (true) {
-            final Collection<Expr<BoolType>> counterExample =
-                    checkCurrentFrame(Not(monolithicExpr.getPropExpr()));
+            final Collection<Expr<BoolType>> counterExample = checkCurrentFrame(Not(monolithicExpr.getPropExpr()));
             if (counterExample != null) {
                 var proofObligationsList =
                         tryBlock(
