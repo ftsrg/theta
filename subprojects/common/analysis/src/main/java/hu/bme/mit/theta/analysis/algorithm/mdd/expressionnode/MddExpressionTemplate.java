@@ -28,7 +28,9 @@ import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.model.BasicExprSubstitution;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ExprSubstitution;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -51,19 +53,20 @@ public class MddExpressionTemplate implements MddNode.Template {
     private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
             new UnaryOperationCache();
 
-    private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
+    /** Returns a model if SAT, null if UNSAT. */
+    private static Valuation checkSat(Expr<BoolType> expr, SolverPool solverPool) {
         Boolean cached = satCache.getOrNull(expr);
         if (cached != null) {
-            return cached;
+            return cached ? ImmutableValuation.empty() : null;
         }
         if (lazySolver == null) lazySolver = solverPool.requestSolver();
-        boolean res;
+        Valuation model;
         try (var wpp = new WithPushPop(lazySolver)) {
             lazySolver.add(expr);
-            res = lazySolver.check().isSat();
+            model = lazySolver.check().isSat() ? lazySolver.getModel() : null;
         }
-        satCache.addToCache(expr, res);
-        return res;
+        satCache.addToCache(expr, model != null);
+        return model;
     }
 
     private MddExpressionTemplate(
@@ -107,22 +110,15 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
 
-        //        // TODO: we might not need this
-        //        // Check if terminal 1
-        //        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
-        //            if (canonizedExpr instanceof FalseExpr) {
-        //                return mddVariable.getMddGraph().getTerminalZeroNode();
-        //            } /*else {
-        //                final MddGraph<Expr> mddGraph = (MddGraph<Expr>)
-        // mddVariable.getMddGraph();
-        //                return mddGraph.getNodeFor(canonizedExpr);
-        //            }*/
-        //        }
-
         // Check if terminal 0
-        if (!knownSat
-                && (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool))) {
+        final Valuation satModel;
+        if (knownSat) {
+            satModel = null;
+        } else if (canonizedExpr instanceof FalseExpr) {
             return null;
+        } else {
+            satModel = checkSat(canonizedExpr, solverPool);
+            if (satModel == null) return null;
         }
 
         // Check if default
@@ -182,7 +178,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                 if (underConstants.contains(decl) || underConstants.contains(nextDecl)) {
                     // Check if expr and not(x' = x) is sat
                     final var andExpr = And(expr, Neq(decl.getRef(), nextDecl.getRef()));
-                    if (!isSat(andExpr, solverPool)) {
+                    if (checkSat(andExpr, solverPool) == null) {
                         identityNeeded = true;
                     }
                 } else {
@@ -215,6 +211,6 @@ public class MddExpressionTemplate implements MddNode.Template {
         }
 
         return MddExpressionRepresentation.of(
-                canonizedExpr, decl, mddVariable, solverPool, transExpr);
+                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
     }
 }
