@@ -202,6 +202,7 @@ constructor(
       )
 
     logger.write(Logger.Level.MAINSTEP, "%s\n", statistics)
+    logger.write(Logger.Level.INFO, "Solver check() calls: ${solverPool.checkCount}\n")
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {

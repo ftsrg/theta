@@ -16,7 +16,12 @@
 package hu.bme.mit.theta.solver;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,6 +31,8 @@ public class SolverPool implements AutoCloseable {
     private static final int GROWING = 5;
 
     private int created = 0;
+    private long checkCount = 0;
+    private static final boolean TRACE_CHECKS = false;
 
     private final LinkedList<Solver> available;
     private final List<Solver> all;
@@ -48,7 +55,7 @@ public class SolverPool implements AutoCloseable {
         this.available = new LinkedList<>();
         this.all = new ArrayList<>();
         for (int i = 0; i < STARTING_SIZE; i++) {
-            final var solver = solverFactory.createSolver();
+            final var solver = new CountingSolver(solverFactory.createSolver());
             this.available.add(solver);
             this.all.add(solver);
         }
@@ -63,18 +70,15 @@ public class SolverPool implements AutoCloseable {
     public void returnSolver(Solver solver) {
         Preconditions.checkState(
                 solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
-        //        System.out.println("Returned solver");
         this.available.add(solver);
     }
 
     private void createNewSolvers() {
         for (int i = 0; i < GROWING; i++) {
-            final var solver = solverFactory.createSolver();
+            final var solver = new CountingSolver(solverFactory.createSolver());
             this.available.add(solver);
             this.all.add(solver);
         }
-        //        System.out.println(created + " solvers created");
-        //        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
     }
 
@@ -82,18 +86,96 @@ public class SolverPool implements AutoCloseable {
         return this.created;
     }
 
+    public long getCheckCount() {
+        return checkCount;
+    }
+
     @Override
     public void close() throws Exception {
-        //        System.out.println(all.size() - available.size() + " solvers not returned");
         if (closingMode == ClosingMode.ALL) {
             for (Solver solver : all) solver.close();
-            //            System.out.println("Closed " + all.size() + " solvers");
         } else {
             for (Solver solver : available) solver.close();
-            //            System.out.println("Closed " + available.size() + " solvers");
         }
         this.available.clear();
         this.all.clear();
         this.created = 0;
+    }
+
+    private class CountingSolver implements Solver {
+
+        private final Solver wrapped;
+
+        CountingSolver(Solver wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public SolverStatus check() {
+            checkCount++;
+            if (TRACE_CHECKS) {
+                var caller = Thread.currentThread().getStackTrace()[2];
+                System.err.println(
+                        "SolverPool.check() #"
+                                + checkCount
+                                + " from "
+                                + caller.getClassName()
+                                + "."
+                                + caller.getMethodName()
+                                + ":"
+                                + caller.getLineNumber());
+            }
+            return wrapped.check();
+        }
+
+        @Override
+        public void add(Expr<BoolType> assertion) {
+            wrapped.add(assertion);
+        }
+
+        @Override
+        public void push() {
+            wrapped.push();
+        }
+
+        @Override
+        public void pop(int n) {
+            wrapped.pop(n);
+        }
+
+        @Override
+        public void reset() {
+            wrapped.reset();
+        }
+
+        @Override
+        public SolverStatus getStatus() {
+            return wrapped.getStatus();
+        }
+
+        @Override
+        public Valuation getModel() {
+            return wrapped.getModel();
+        }
+
+        @Override
+        public Collection<Expr<BoolType>> getAssertions() {
+            return wrapped.getAssertions();
+        }
+
+        @Override
+        public ImmutableMap<String, String> getStatistics() {
+            return wrapped.getStatistics();
+        }
+
+        @Override
+        public Expr<BoolType> simplify(Expr<BoolType> expr) {
+            return wrapped.simplify(expr);
+        }
+
+        @Override
+        public void close() throws Exception {
+            wrapped.close();
+        }
     }
 }
