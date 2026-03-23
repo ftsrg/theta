@@ -103,12 +103,6 @@ public class StsIc3Test {
                                 new Ic3Checker(
                                         monolithicExpr,
                                         Z3LegacySolverFactory.getInstance(),
-                                        true,
-                                        true,
-                                        true,
-                                        true,
-                                        true,
-                                        true,
                                         logger),
                         List.of(),
                         List.of(),

@@ -171,12 +171,6 @@ public class CfaCli {
                         new Ic3Checker(
                                 monolithicExpr,
                                 solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
                                 logger));
             }
         };

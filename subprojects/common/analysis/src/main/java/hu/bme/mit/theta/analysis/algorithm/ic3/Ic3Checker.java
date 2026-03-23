@@ -47,6 +47,8 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import org.jspecify.annotations.Nullable;
+
 import java.util.*;
 
 public class Ic3Checker
@@ -55,36 +57,20 @@ public class Ic3Checker
     private final List<Frame> frames;
     private final SolverFactory solverFactory;
     private final UCSolver solver;
-    private final boolean formerFramesOpt;
-    private final boolean unSatOpt;
-    private final boolean notBOpt;
-    private final boolean propagateOpt;
-    private final boolean filterOpt;
+    private final IC3Optimizations optimizations;
     private int currentFrameNumber;
-    private final boolean propertyOpt;
     private final Logger logger;
 
     public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
-        this(monolithicExpr, solverFactory, true, true, true, true, true, true, logger);
+        this(monolithicExpr, solverFactory, new IC3Optimizations(true,true,true,true, true,true), logger);
     }
 
     public Ic3Checker(
-            MonolithicExpr monolithicExpr,
-            SolverFactory solverFactory,
-            boolean formerFramesOpt,
-            boolean unSatOpt,
-            boolean notBOpt,
-            boolean propagateOpt,
-            boolean filterOpt,
-            boolean propertyOpt,
-            Logger logger) {
+        MonolithicExpr monolithicExpr,
+        SolverFactory solverFactory, IC3Optimizations optimizations,
+        Logger logger) {
         this.monolithicExpr = monolithicExpr;
-        this.formerFramesOpt = formerFramesOpt;
-        this.unSatOpt = unSatOpt;
-        this.notBOpt = notBOpt;
-        this.propagateOpt = propagateOpt;
-        this.filterOpt = filterOpt;
-        this.propertyOpt = propertyOpt;
+        this.optimizations = optimizations;
         this.logger = logger;
         this.solverFactory = solverFactory;
         frames = new ArrayList<>();
@@ -102,22 +88,16 @@ public class Ic3Checker
             return SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
         }
         while (true) {
-            final Collection<Expr<BoolType>> counterExample = checkCurrentFrame(Not(monolithicExpr.getPropExpr()));
+            final ProofObligation counterExample = checkCurrentFrameForInterSections(Not(monolithicExpr.getPropExpr()));
             if (counterExample != null) {
-                var proofObligationsList =
-                        tryBlock(
-                                new ProofObligation(
-                                        new HashSet<>(counterExample), currentFrameNumber));
+                var proofObligationsList = tryBlock(counterExample);
                 if (proofObligationsList != null) {
                     var trace = makeTrace(proofObligationsList);
-                    final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
-                    return result;
+                    return SafetyResult.unsafe(trace, EmptyProof.getInstance());
                 }
             } else {
                 if (propagate()) {
-                    final SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> result =
-                            SafetyResult.safe(EmptyProof.getInstance());
-                    return result;
+                    return SafetyResult.safe(EmptyProof.getInstance());
                 }
             }
         }
@@ -140,10 +120,10 @@ public class Ic3Checker
                 frames.get(proofObligation.getTime() - 1)
                         .getExprs()
                         .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                if (notBOpt) {
+                if (optimizations.isNotBOpt()) {
                     solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())), 0));
                 }
-                if (proofObligation.getTime() > 2 && formerFramesOpt) { // lehet, hogy 1, vagy 2??
+                if (proofObligation.getTime() > 2 && optimizations.isFormerFramesOpt()) { // lehet, hogy 1, vagy 2??
                     solver.track(
                             PathUtils.unfold(
                                     Not(And(frames.get(proofObligation.getTime() - 2).getExprs())),
@@ -170,7 +150,7 @@ public class Ic3Checker
                             .map(varDecl -> varDecl.getConstDecl(0))
                             .filter(model.toMap()::containsKey)
                             .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                    if (filterOpt) {
+                    if (optimizations.isFilterOpt()) {
                         var vars = new HashSet<>(filteredModel.toMap().keySet());
                         for (var var : vars) {
                             if (!(var.getType() instanceof BoolType)) {
@@ -205,7 +185,7 @@ public class Ic3Checker
 
                 final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
                 newCore.addAll(proofObligation.getExpressions());
-                if (unSatOpt) {
+                if (optimizations.isUnSatOpt()) {
                     for (Expr<BoolType> i : proofObligation.getExpressions()) {
                         if (!unSatCore.contains(
                                 PathUtils.unfold(i, monolithicExpr.getTransOffsetIndex()))) {
@@ -237,92 +217,73 @@ public class Ic3Checker
     }
 
     public Trace<ExplState, ExprAction> checkFirst() {
-        try (var wpp = new WithPushPop(solver)) {
-            solver.track(
-                    PathUtils.unfold(monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
-            solver.track(
-                    PathUtils.unfold(
-                            Not(monolithicExpr.getPropExpr()), VarIndexingFactory.indexing(0)));
-            if (solver.check().isSat()) {
-                return Trace.of(
-                        List.of(
-                                ExplState.of(
-                                        PathUtils.extractValuation(
-                                                solver.getModel(),
-                                                VarIndexingFactory.indexing(0),
-                                                monolithicExpr.getVars()))),
-                        List.of());
-            }
+        Trace<ExplState, ExprAction> intersection = checkIfFaultyIntersectsInit();
+        if (intersection != null) return intersection;
+        if (optimizations.isPropertyOpt()) {
+            return checkIfFaultyReachableInOneStep();
         }
-        if (propertyOpt) {
-            try (var wpp = new WithPushPop(solver)) {
-                solver.track(
-                        PathUtils.unfold(
-                                monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
-                solver.track(
-                        PathUtils.unfold(
-                                monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)));
-                solver.track(
-                        PathUtils.unfold(
-                                Not(monolithicExpr.getPropExpr()),
-                                monolithicExpr.getTransOffsetIndex()));
-                if (solver.check().isSat()) {
-                    return Trace.of(
-                            List.of(
-                                    ExplState.of(
-                                            PathUtils.extractValuation(
-                                                    solver.getModel(),
-                                                    VarIndexingFactory.indexing(0),
-                                                    monolithicExpr.getVars())),
-                                    ExplState.of(
-                                            PathUtils.extractValuation(
-                                                    solver.getModel(),
-                                                    monolithicExpr.getTransOffsetIndex(),
-                                                    monolithicExpr.getVars()))),
-                            List.of(MonolithicExprKt.action(monolithicExpr)));
-                } else {
-                    return null;
-                }
-            }
+        return null;
+    }
+
+    private @Nullable Trace<ExplState, ExprAction> checkIfFaultyReachableInOneStep() {
+        final Valuation model = frames.getFirst().checkIfTargetIsReachableValuation(Not(monolithicExpr.getPropExpr()));
+        if (model != null) {
+            return Trace.of(
+                List.of(
+                    ExplState.of(
+                        PathUtils.extractValuation(
+                            model,
+                            VarIndexingFactory.indexing(0),
+                            monolithicExpr.getVars())),
+                    ExplState.of(
+                        PathUtils.extractValuation(
+                            model,
+                            monolithicExpr.getTransOffsetIndex(),
+                            monolithicExpr.getVars()))),
+                List.of(MonolithicExprKt.action(monolithicExpr)));
         } else {
             return null;
         }
+
+
     }
 
-    public Collection<Expr<BoolType>> checkCurrentFrame(Expr<BoolType> target) {
-        if (propertyOpt) {
-            try (var wpp = new WithPushPop(solver)) {
-                frames.get(currentFrameNumber)
-                        .getExprs()
-                        .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                getConjuncts(monolithicExpr.getTransExpr())
-                        .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                solver.track(PathUtils.unfold(target, monolithicExpr.getTransOffsetIndex()));
-                if (solver.check().isSat()) {
-                    final Valuation model = solver.getModel();
-                    final MutableValuation filteredModel = new MutableValuation();
-                    monolithicExpr.getVars().stream()
-                            .map(varDecl -> varDecl.getConstDecl(0))
-                            .filter(model.toMap()::containsKey)
-                            .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                    return getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
-                } else {
-                    return null;
-                }
-            }
-        } else {
-            return frames.get(currentFrameNumber).check(target);
+    private @Nullable Trace<ExplState, ExprAction> checkIfFaultyIntersectsInit() {
+        Valuation model = frames.getFirst().checkIfTargetIsReachableValuation(Not(monolithicExpr.getPropExpr()));
+        if (model != null) {
+            return Trace.of(
+                List.of(
+                    ExplState.of(
+                        PathUtils.extractValuation(
+                            model,
+                            VarIndexingFactory.indexing(0),
+                            monolithicExpr.getVars()))),
+                List.of());
         }
+        return null;
+    }
+
+    public ProofObligation checkCurrentFrameForInterSections(Expr<BoolType> target) {
+        final Set<Expr<BoolType>> interSection;
+        if (optimizations.isPropertyOpt()) {
+            interSection = frames.get(currentFrameNumber).checkIfTargetIsReachable(target);
+        } else {
+            interSection = frames.get(currentFrameNumber).checkIfContains(target);
+        }
+        if (interSection == null){
+            return null;
+        }
+        return new ProofObligation(interSection, currentFrameNumber);
     }
 
     public boolean propagate() {
         frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr));
         currentFrameNumber++;
-        if (propertyOpt) {
+        if (optimizations.isPropertyOpt()) {
             frames.get(currentFrameNumber).refine(monolithicExpr.getPropExpr());
         }
 
-        if (propagateOpt) {
+        if (optimizations.isPropertyOpt()) {
             for (int j = 1; j < currentFrameNumber; j++) {
                 for (var c : frames.get(j).getExprs()) {
                     try (var wpp = new WithPushPop(solver)) {
@@ -360,7 +321,7 @@ public class Ic3Checker
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(currentProofObligation.getExpressions()));
         }
-        if (propertyOpt) {
+        if (optimizations.isPropertyOpt()) {
             abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(Not(monolithicExpr.getPropExpr())));
         }

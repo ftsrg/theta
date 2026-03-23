@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
@@ -54,26 +53,53 @@ public class Frame {
         return exprs;
     }
 
-    public Collection<Expr<BoolType>> check(Expr<BoolType> target) {
-        try (var wpp = new WithPushPop(solver)) {
-            solver.track(PathUtils.unfold(target, 0));
-            for (Expr<BoolType> ex : exprs) {
-                solver.track(PathUtils.unfold(ex, 0));
-            }
-            SolverStatus status = solver.check();
+    private Set<Expr<BoolType>> convertValuationToExpression(Valuation model) {
+        if (model != null) {
+            final MutableValuation filteredModel = new MutableValuation();
+            monolithicExpr.getVars().stream() //todo what does this do?
+                .map(varDecl -> varDecl.getConstDecl(0))
+                .filter(model.toMap()::containsKey)
+                .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+            return new HashSet<>(getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0)));
+        } else {
+            return null;
+        }
+    }
 
-            if (status.isSat()) {
-                final Valuation model = solver.getModel();
-                final MutableValuation filteredModel = new MutableValuation();
-                monolithicExpr.getVars().stream()
-                        .map(varDecl -> varDecl.getConstDecl(0))
-                        .filter(model.toMap()::containsKey)
-                        .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                return getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
+    public Valuation checkIfTargetIsReachableValuation(Expr<BoolType> target) {
+        try (var wpp = new WithPushPop(solver)) {
+            exprs.forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+            getConjuncts(monolithicExpr.getTransExpr())
+                .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+            solver.track(PathUtils.unfold(target, monolithicExpr.getTransOffsetIndex()));
+            if (solver.check().isSat()) {
+                return solver.getModel();
             } else {
                 return null;
             }
         }
+    }
+
+    public Set<Expr<BoolType>> checkIfTargetIsReachable(Expr<BoolType> target) {
+        final Valuation model = checkIfTargetIsReachableValuation(target);
+        return convertValuationToExpression(model);
+    }
+
+    public Valuation checkIfContainsValuation(Expr<BoolType> target) {
+        try (var wpp = new WithPushPop(solver)) {
+            solver.track(PathUtils.unfold(target, 0));
+            exprs.forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+            if (solver.check().isSat()) {
+                return solver.getModel();
+            } else {
+                return null;
+            }
+        }
+    }
+
+    public Set<Expr<BoolType>> checkIfContains(Expr<BoolType> target) {
+        final Valuation model = checkIfContainsValuation(target);
+        return  convertValuationToExpression(model);
     }
 
     public boolean equalsParent() {

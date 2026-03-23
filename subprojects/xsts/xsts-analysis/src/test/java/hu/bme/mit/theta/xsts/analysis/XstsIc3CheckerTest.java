@@ -261,12 +261,6 @@ public class XstsIc3CheckerTest {
                                 new Ic3Checker(
                                         monolithicExpr,
                                         Z3LegacySolverFactory.getInstance(),
-                                        true,
-                                        true,
-                                        true,
-                                        true,
-                                        true,
-                                        true,
                                         logger));
         final SafetyResult<?, ?> status = checker.check(null);
 

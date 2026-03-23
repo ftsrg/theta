@@ -182,12 +182,6 @@ public class StsCli {
                         new Ic3Checker(
                                 monolithicExpr,
                                 solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
                                 logger));
             }
         },
