@@ -122,6 +122,21 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
     }
 
+    public static MddExpressionRepresentation of(
+            final Expr<BoolType> expr,
+            final Decl<?> decl,
+            final MddVariable mddVariable,
+            final SolverPool solverPool,
+            final boolean transExpr,
+            final Valuation satModel) {
+        final var repr =
+                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
+        if (satModel != null) {
+            repr.getLazyTraverser().cacheModel(satModel);
+        }
+        return repr;
+    }
+
     public static MddExpressionRepresentation ofDefault(
             final Expr<BoolType> expr,
             final Decl<?> decl,
@@ -586,7 +601,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         //            pushedNegatedAssignments = 0;
         //        }
 
-        private void cacheModel(Valuation valuation) {
+        void cacheModel(Valuation valuation) {
             MddExpressionRepresentation representation = currentRepresentation;
 
             while (true) {
