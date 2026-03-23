@@ -32,6 +32,10 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -209,7 +213,65 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
         }
 
+        final LitExpr<?> determinedValue = findDeterminedValue(canonizedExpr, decl);
+        if (determinedValue != null) {
+            final int key = LitExprConverter.toInt(determinedValue);
+            final Expr<BoolType> substitutedExpr =
+                    ExprUtils.simplify(
+                            canonizedExpr,
+                            ImmutableValuation.builder().put(decl, determinedValue).build());
+
+            final MddNode childNode;
+            if (mddVariable.getLower().isPresent()) {
+                childNode =
+                        mddVariable
+                                .getLower()
+                                .get()
+                                .checkInNode(
+                                        MddExpressionTemplate.ofKnownSat(
+                                                substitutedExpr,
+                                                o -> (Decl) o,
+                                                solverPool,
+                                                transExpr));
+            } else {
+                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+                childNode = mddGraph.getNodeFor(substitutedExpr);
+            }
+
+            return MddExpressionRepresentation.ofDetermined(
+                    canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
+        }
+
         return MddExpressionRepresentation.of(
                 canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+    }
+
+    private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
+        if (expr instanceof EqExpr<?> eq) {
+            return extractLiteralForDecl(eq, decl);
+        }
+        if (expr instanceof AndExpr and) {
+            for (var op : and.getOps()) {
+                if (op instanceof EqExpr<?> eq) {
+                    final LitExpr<?> lit = extractLiteralForDecl(eq, decl);
+                    if (lit != null) return lit;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static LitExpr<?> extractLiteralForDecl(EqExpr<?> eq, Decl<?> decl) {
+        if (eq.getLeftOp() instanceof RefExpr<?> ref
+                && ref.getDecl().equals(decl)
+                && eq.getRightOp() instanceof LitExpr<?> lit) {
+            return lit;
+        }
+        if (eq.getRightOp() instanceof RefExpr<?> ref
+                && ref.getDecl().equals(decl)
+                && eq.getLeftOp() instanceof LitExpr<?> lit) {
+            return lit;
+        }
+        return null;
     }
 }

@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -151,6 +152,23 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return representation;
     }
 
+    public static MddExpressionRepresentation ofDetermined(
+            final Expr<BoolType> expr,
+            final Decl<?> decl,
+            final MddVariable mddVariable,
+            final SolverPool solverPool,
+            final int key,
+            final MddNode childNode,
+            final boolean transExpr) {
+        final MddExpressionRepresentation representation =
+                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
+        if (!mddVariable.isNullOrZero(childNode)) {
+            representation.explicitRepresentation.cacheNode(key, childNode);
+        }
+        representation.explicitRepresentation.setComplete();
+        return representation;
+    }
+
     public Expr<BoolType> getExpr() {
         return expr;
     }
@@ -222,6 +240,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
             if (canonizedExpr instanceof FalseExpr) {
                 childNode = null;
+            } else if (canonizedExpr instanceof TrueExpr) {
+                childNode = mddGraph.getNodeFor(True());
             } else {
                 var solver = solverPool.requestSolver();
                 try (var wpp = new WithPushPop(solver)) {
