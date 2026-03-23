@@ -94,7 +94,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
                 new IntObjMapViews.Transforming<>(
                         node,
                         (n, key) -> {
-                            if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
+                            if (key == null || n == null) return AbstractNextStateDescriptor.terminalEmpty();
                             else
                                 return MddNodeNextStateDescriptor.of(
                                         n.get(key),
@@ -114,6 +114,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         return new IntObjMapViews.Transforming<>(
                 node,
                 outerNode ->
+                        outerNode == null ? IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()) :
                         new ConstrainedIntObjMapView<>(
                                 new IntObjMapViews.Transforming<>(
                                         outerNode,
