@@ -51,12 +51,16 @@ object DveToXsts {
    */
   data class TransformResult(val xsts: XSTS, val variableTraceability: Map<VarDecl<*>, String>)
 
-  fun transform(model: DveModel, propType: PropType = PropType.ASSERTIONS): XSTS =
-    transformWithNames(model, propType).xsts
+  fun transform(
+    model: DveModel,
+    propType: PropType = PropType.ASSERTIONS,
+    simplifySingleStateProcesses: Boolean = true,
+  ): XSTS = transformWithNames(model, propType, simplifySingleStateProcesses).xsts
 
   fun transformWithNames(
     model: DveModel,
     propType: PropType = PropType.ASSERTIONS,
+    simplifySingleStateProcesses: Boolean = true,
   ): TransformResult {
     if (model.system.propertyProcessName != null)
       throw UnsupportedOperationException(
@@ -67,7 +71,7 @@ object DveToXsts {
         "Synchronous system composition (system sync) is not yet supported."
       )
 
-    val ctx = TransformContext(model)
+    val ctx = TransformContext(model, simplifySingleStateProcesses)
     ctx.build()
     val prop = ctx.buildProp(propType)
 
@@ -86,7 +90,10 @@ object DveToXsts {
   }
 }
 
-private class TransformContext(private val model: DveModel) {
+private class TransformContext(
+  private val model: DveModel,
+  private val simplifySingleStateProcesses: Boolean = true,
+) {
 
   val pcVars = mutableMapOf<String, VarDecl<EnumType>>()
   val singleStateProcesses = mutableSetOf<String>()
@@ -184,7 +191,7 @@ private class TransformContext(private val model: DveModel) {
 
   private fun declareStateVariables() {
     for (proc in model.processes) {
-      if (proc.states.size <= 1) {
+      if (simplifySingleStateProcesses && proc.states.size <= 1) {
         singleStateProcesses += proc.name
         continue
       }

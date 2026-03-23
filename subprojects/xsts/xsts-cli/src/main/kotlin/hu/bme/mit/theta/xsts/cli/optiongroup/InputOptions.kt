@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xsts.cli.optiongroup
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
@@ -64,6 +65,13 @@ class InputOptions :
       )
       .enum<DveToXsts.PropType>()
       .default(DveToXsts.PropType.ASSERTIONS)
+  private val dveSimplifySingleStateProcesses: Boolean by
+    option(
+        "--dve-simplify-single-state",
+        help =
+          "Simplify single-state processes by eliminating their state variable.",
+      )
+      .flag("--no-dve-simplify-single-state", default = true)
 
   fun isPnml() = model.path.endsWith("pnml")
 
@@ -90,7 +98,7 @@ class InputOptions :
     }
     if (isDve()) {
       val dveModel = model.inputStream().use { DveParser.parse(it) }
-      val result = DveToXsts.transformWithNames(dveModel, dvePropType)
+      val result = DveToXsts.transformWithNames(dveModel, dvePropType, dveSimplifySingleStateProcesses)
       variableTraceability = result.variableTraceability
       return result.xsts
     }
