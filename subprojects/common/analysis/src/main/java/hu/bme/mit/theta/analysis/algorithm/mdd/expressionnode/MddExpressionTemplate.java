@@ -53,7 +53,6 @@ public class MddExpressionTemplate implements MddNode.Template {
     private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
             new UnaryOperationCache();
 
-    /** Returns a model if SAT, null if UNSAT. */
     private static Valuation checkSat(Expr<BoolType> expr, SolverPool solverPool) {
         Boolean cached = satCache.getOrNull(expr);
         if (cached != null) {
