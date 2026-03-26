@@ -22,15 +22,27 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.solver.SolverStatus
 
+/**
+ * An OC checker for XCFA event graphs. It is technically a wrapper around core OC checker
+ * implementations.
+ */
 internal interface XcfaOcChecker : OcChecker<XcfaEvent> {
 
+  /** Returns the result status of the verification problem (SAT/UNSAT). */
   val status: SolverStatus?
 
+  /**
+   * Returns a model of the verification problem, that is an assignment to all variables in the
+   * verification problem, if the result is SAT, otherwise null.
+   */
   val model: Valuation?
 
+  /** Add constraints to the underlying solver based on the given event graph. */
   fun initialize(eg: XcfaToEventGraph.EventGraph)
 
+  /** Exclude the given conflict from the search space of the underlying solver. */
   fun addConflict(conflict: Reason)
 
+  /** Print statistics of the verification process. */
   fun printStatistics(logger: Logger)
 }
