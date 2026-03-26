@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.OcConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -34,7 +34,7 @@ fun getOcChecker(
 ): SafetyChecker<EmptyProof, Cex, XcfaPrec<*>> {
   val ocConfig = config.backendConfig.specConfig as OcConfig
   val ocChecker =
-    XcfaOcChecker(
+    XcfaOcSafetyChecker(
       xcfa = xcfa,
       property = config.inputConfig.property.verifiedProperty,
       decisionProcedure = ocConfig.decisionProcedure,

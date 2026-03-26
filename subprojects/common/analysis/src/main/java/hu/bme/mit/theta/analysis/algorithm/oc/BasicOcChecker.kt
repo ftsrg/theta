@@ -22,7 +22,7 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
+class BasicOcChecker<E : Event>(smtSolver: String) : DerivingOcChecker<E>() {
   override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
   private var relations: GlobalRelation? = null
 

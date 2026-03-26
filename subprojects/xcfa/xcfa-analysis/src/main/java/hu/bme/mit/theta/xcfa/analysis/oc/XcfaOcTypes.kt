@@ -27,12 +27,14 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(
-  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>
+  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> XcfaOcChecker
 ) {
 
-  IDL({ solver, mcm -> IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC) }),
-  BASIC({ solver, _ -> BasicOcChecker(solver) }),
-  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }),
+  IDL({ solver, mcm ->
+    XcfaSmtOcChecker(IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC))
+  }),
+  BASIC({ solver, _ -> XcfaSmtOcChecker(BasicOcChecker(solver)) }),
+  PROPAGATOR({ _, _ -> XcfaSmtOcChecker(UserPropagatorOcChecker()) }),
 }
 
 internal class XcfaEvent(

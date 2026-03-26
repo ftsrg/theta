@@ -26,11 +26,11 @@ import java.io.File
 import kotlin.time.measureTime
 
 internal class XcfaOcCorrectnessValidator(
-  private val ocChecker: OcChecker<E>,
+  ocChecker: SmtOcChecker<E>,
   private val inputConflictClauseFile: String,
   private val permissive: Boolean = true,
   private val logger: Logger,
-) : OcChecker<E>() {
+) : XcfaSmtOcChecker(ocChecker) {
 
   private var clauseValidationTime = 0L
   private lateinit var nonOcSolver: Solver

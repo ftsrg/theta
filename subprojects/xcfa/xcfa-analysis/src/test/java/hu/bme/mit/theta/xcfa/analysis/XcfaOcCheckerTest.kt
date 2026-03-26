@@ -24,7 +24,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
-import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -69,7 +69,7 @@ class XcfaOcCheckerTest {
       getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
     val ocChecker =
-      XcfaOcChecker(
+      XcfaOcSafetyChecker(
         xcfa = xcfa,
         property = property.verifiedProperty,
         decisionProcedure = decisionProcedure,

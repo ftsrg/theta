@@ -45,7 +45,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
-import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
@@ -161,7 +161,7 @@ class XcfaDataRaceTest {
     DataRaceToReachabilityPass.enabled = false
 
     val ocChecker =
-      XcfaOcChecker(
+      XcfaOcSafetyChecker(
         xcfa = xcfa,
         property = property.verifiedProperty,
         decisionProcedure = OcDecisionProcedureType.BASIC,

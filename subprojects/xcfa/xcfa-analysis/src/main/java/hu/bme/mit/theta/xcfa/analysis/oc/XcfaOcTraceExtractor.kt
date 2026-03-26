@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -36,7 +35,7 @@ import java.util.*
 /** Extracts an error trace from the given model. */
 internal class XcfaOcTraceExtractor(
   private val xcfa: XCFA,
-  private val ocChecker: OcChecker<E>,
+  private val ocChecker: XcfaOcChecker,
   eventGraph: XcfaToEventGraph.EventGraph,
 ) {
 
@@ -47,8 +46,8 @@ internal class XcfaOcTraceExtractor(
 
   internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
     get() {
-      check(ocChecker.solver.status.isSat)
-      val model = ocChecker.solver.model ?: error("No model found for trace extraction.")
+      check(ocChecker.status!!.isSat)
+      val model = ocChecker.model ?: error("No model found for trace extraction.")
       val stateList = mutableListOf<XcfaState<PtrState<ExplState>>>()
       val actionList = mutableListOf<XcfaAction>()
       val valuation = model.toMap()

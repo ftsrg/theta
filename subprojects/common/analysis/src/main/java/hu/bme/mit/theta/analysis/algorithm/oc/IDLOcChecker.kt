@@ -30,7 +30,7 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 
 class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = false) :
-  OcChecker<E>() {
+  SmtOcChecker<E>() {
   override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
 
   private var clkGlobalCnt = 0

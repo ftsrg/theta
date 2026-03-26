@@ -14,23 +14,19 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.analysis.oc
+package hu.bme.mit.theta.analysis.algorithm.oc
 
-import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
-import hu.bme.mit.theta.analysis.algorithm.oc.Reason
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolType
 
-internal interface XcfaOcChecker : OcChecker<XcfaEvent> {
+/** Important! Empty collection is converted to true (not false). */
+internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> =
+  when (size) {
+    0 -> BoolExprs.True()
+    1 -> first()
+    else -> BoolExprs.And(this)
+  }
 
-  val status: SolverStatus?
-
-  val model: Valuation?
-
-  fun initialize(eg: XcfaToEventGraph.EventGraph)
-
-  fun addConflict(conflict: Reason)
-
-  fun printStatistics(logger: Logger)
-}
+internal inline fun <reified T> Array<Array<T?>>.copy(): Array<Array<T?>> =
+  Array(size) { i -> Array(size) { j -> this[i][j] } }

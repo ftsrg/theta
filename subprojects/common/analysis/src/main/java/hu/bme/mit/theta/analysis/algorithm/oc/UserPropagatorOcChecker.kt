@@ -25,7 +25,7 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import java.util.*
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 
-class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
+class UserPropagatorOcChecker<E : Event> : DerivingOcChecker<E>() {
 
   private lateinit var writes: Map<VarDecl<*>, List<E>>
   private lateinit var rfs: Map<VarDecl<*>, Set<Relation<E>>>
