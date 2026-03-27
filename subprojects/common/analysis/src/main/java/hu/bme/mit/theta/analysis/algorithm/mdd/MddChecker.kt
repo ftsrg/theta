@@ -123,6 +123,9 @@ constructor(
     val stateSig = stateOrder.defaultSetSignature
     val transSig = transOrder.defaultSetSignature
 
+    val solverCountBefore = solverPool.checkCount
+    val ssgTime = Stopwatch.createStarted()
+
     val initExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
     val initNode =
       stateSig.topVariableHandle.checkInNode(
@@ -150,7 +153,8 @@ constructor(
       stateSig.topVariableHandle.checkInNode(
         MddExpressionTemplate.of(negatedPropExpr, { it as Decl<*> }, solverPool)
       )
-    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
+//    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
+    val targetedNextStates = nextStates
 
     logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
     val stateSpaceProvider =
@@ -166,8 +170,6 @@ constructor(
         }
       }
 
-    val ssgTime = Stopwatch.createStarted()
-
     val stateSpace =
       stateSpaceProvider.compute(
         MddNodeInitializer.of(initNode),
@@ -176,9 +178,48 @@ constructor(
       )
 
     ssgTime.stop()
-    totalTime.stop()
 
-    logger.write(Logger.Level.INFO, "Enumerated state-space in: ${ssgTime.elapsedMillis()}\n")
+    val solverCheckCount = solverPool.checkCount - solverCountBefore
+
+    logger.write(Logger.Level.INFO, "Enumerated state-space in: ${ssgTime.elapsedMillis() / 1000}.${ssgTime.elapsedMillis() % 1000} s\n")
+    logger.write(Logger.Level.INFO, "Solver check() calls: $solverCheckCount\n")
+
+    // Rerun with structural (solverless) nodes to measure time without solver overhead
+    val structDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+    for (transNode in transNodes) {
+      val structTransNode =
+        MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+      structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
+    }
+    val structNextStates: AbstractNextStateDescriptor =
+      OrNextStateDescriptor.create(structDescriptors)
+
+    stateSpaceProvider.clear()
+    val rerunProvider =
+      when (iterationStrategy) {
+        IterationStrategy.BFS -> BfsProvider(stateSig.variableOrder)
+        IterationStrategy.SAT -> SimpleSaturationProvider(stateSig.variableOrder)
+        IterationStrategy.GSAT -> GeneralizedSaturationProvider(stateSig.variableOrder)
+      }
+
+    val rerunSolverCountBefore = solverPool.checkCount
+    val rerunTime = Stopwatch.createStarted()
+    val rerunStateSpace = rerunProvider.compute(
+      MddNodeInitializer.of(initNode),
+      structNextStates,
+      stateSig.topVariableHandle,
+    )
+    rerunTime.stop()
+    val rerunSolverCheckCount = solverPool.checkCount - rerunSolverCountBefore
+    val rerunStateSpaceSize = MddInterpreter.calculateNonzeroCount(rerunStateSpace)
+
+    val solverTimeMs = ssgTime.elapsedMillis() - rerunTime.elapsedMillis()
+    logger.write(Logger.Level.INFO, "Rerun (structural) in: ${rerunTime.elapsedMillis() / 1000}.${rerunTime.elapsedMillis() % 1000} s\n")
+    logger.write(Logger.Level.INFO, "Rerun solver check() calls: $rerunSolverCheckCount\n")
+    logger.write(Logger.Level.INFO, "Rerun state space size: $rerunStateSpaceSize\n")
+    logger.write(Logger.Level.INFO, "Estimated solver time: ${solverTimeMs / 1000}.${solverTimeMs % 1000} s\n")
+
+    totalTime.stop()
 
     val propViolating = stateSpace.intersection(propNode) as MddHandle
 
@@ -202,7 +243,6 @@ constructor(
       )
 
     logger.write(Logger.Level.MAINSTEP, "%s\n", statistics)
-    logger.write(Logger.Level.INFO, "Solver check() calls: ${solverPool.checkCount}\n")
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
