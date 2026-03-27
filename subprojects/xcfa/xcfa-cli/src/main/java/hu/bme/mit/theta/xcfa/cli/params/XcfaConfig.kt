@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2025-2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ data class CFrontendConfig(
     names = ["--cir-dir", "--cir-directory"],
     description = "Folder with clang and mapper binaries",
   )
-  var cirDir: File = File("."),
+  var cirDir: File = File("./clang/bin"),
 ) : SpecFrontendConfig
 
 data class CHCFrontendConfig(
