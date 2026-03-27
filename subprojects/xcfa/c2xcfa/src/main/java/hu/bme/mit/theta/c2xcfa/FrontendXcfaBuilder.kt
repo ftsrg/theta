@@ -20,6 +20,7 @@ package hu.bme.mit.theta.c2xcfa
 import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.clock.op.ClockOps.Reset
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -44,6 +45,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -155,6 +157,11 @@ class FrontendXcfaBuilder(
       )
       if (type is CClock) {
         builder.addClock(globalVar)
+        initStmtList.add(
+          ClockOpLabel(
+            Reset(cast(globalVar.wrappedVar, Rat()), 0)
+          )
+        )
       }
       if (type is CArray) {
         initStmtList.add(
