@@ -55,6 +55,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.timed.getActiveClocks
+import hu.bme.mit.theta.xcfa.analysis.timed.getInvariants
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVarsWithNeededMutexes
 import hu.bme.mit.theta.xcfa.isWritten
@@ -110,20 +112,33 @@ fun getCoreXcfaLts() =
             )
           )
         } else if (!proc.value.paramsInitialized) {
+          val threadLocalClocks = s.xcfa?.let { xcfa ->
+              xcfa.clocks.filter { it.threadLocal }.map { it.wrappedVar }
+          } ?: emptyList()
+          val procClocks = proc.value.procedure?.clocks ?: emptyList()
           val lookup = proc.value.foldVarLookup()
-          val newClocksResetLabel = SequenceLabel(
-            listOf(
-              s.xcfa?.clocks?.filter { it.threadLocal }?.map { it.wrappedVar } ?: emptyList(),
-              proc.value.procedure?.clocks ?: emptyList()
-            ).flatten().map { ClockOpLabel(Reset(lookup[it] as VarDecl<RatType>, 0)) }
+          val newClockResetLabels = SequenceLabel(
+              (threadLocalClocks + procClocks)
+                  .map { ClockOpLabel(Reset(cast(lookup[it], Rat()), 0)) }
           )
+          val invariantLabels = SequenceLabel(getInvariants(s.processes
+              .map { Pair(
+                  it.value.locs.peek(),
+                  it.value.foldVarLookup()
+              )}.toMap()
+          ))
           listOf(
             XcfaAction(
               proc.key,
               XcfaEdge(
                 proc.value.locs.peek(),
                 proc.value.locs.peek(),
-                SequenceLabel(listOf(proc.value.paramStmts.peek().first, newClocksResetLabel)),
+                SequenceLabel(listOf(
+                    proc.value.paramStmts.peek().first,
+                    newClockResetLabels,
+                    ClockDelayLabel(getActiveClocks(s)),
+                    invariantLabels,
+                )),
                 proc.value.locs.peek().metadata,
               ),
               nextCnt = s.sGlobal.nextCnt,
@@ -202,36 +217,17 @@ fun getCoreXcfaLts() =
                     if (s.processes.any { !it.value.paramsInitialized }) {
                       StmtLabel(Assume(False()))
                     } else {
-                      val activeClocks: MutableSet<VarDecl<RatType>> = mutableSetOf()
-                      val (threadLocalClocks, globalClocks) = s.xcfa?.clocks?.partition { it.threadLocal }
-                        ?.let {
-                          Pair(
-                            it.first.map { cast(it.wrappedVar, Rat()) },
-                            it.second.map { cast(it.wrappedVar, Rat()) }
-                          )
-                        }
-                        ?: Pair(listOf(), listOf())
-                      activeClocks.addAll(globalClocks)
-                      s.processes.values.forEach { processState ->
-                        val localClocks = processState.procedure?.clocks ?: setOf()
-                        activeClocks.addAll(
-                          processState.foldVarLookup()
-                            .filterKeys { localClocks.contains(it) || threadLocalClocks.contains(it) }
-                            .map { cast(it.value, Rat()) }
-                        )
-                      }
-                      val invariants = mutableListOf<XcfaLabel>()
-                      invariants.addAll(
-                        s.processes.mapNotNull { (pid, processState) ->
-                            val loc = if (pid == proc.key) edge.target
-                              else processState.locs.peek()
-                            if (loc.invariant !is TrueConstr) {
-                              ClockOpLabel(Guard((loc.invariant))).changeVars(processState.foldVarLookup())
-                            } else null
-                          }
+                        val invariants = getInvariants(s.processes
+                          .map { (pid, processState) -> Pair(
+                              if (pid == proc.key) edge.target else processState.locs.peek(),
+                              processState.foldVarLookup()
+                          )}.toMap()
                       )
                       SequenceLabel(
-                        listOf(ClockDelayLabel(activeClocks), SequenceLabel(invariants)),
+                        listOf(
+                            ClockDelayLabel(getActiveClocks(s)),
+                            SequenceLabel(invariants)
+                        ),
                         label.metadata
                       )
                     }
