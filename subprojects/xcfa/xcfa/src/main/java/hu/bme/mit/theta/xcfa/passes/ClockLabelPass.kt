@@ -20,10 +20,8 @@ import hu.bme.mit.theta.core.clock.constr.ClockConstrs
 import hu.bme.mit.theta.core.clock.op.ClockOps
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatType
@@ -73,15 +71,11 @@ class ClockLabelPass(val timed : Boolean) : ProcedurePass {
 
                                 "theta_clock_assume" -> {
                                     val expr = invokeLabel.params[1]
-                                    val clockExpr = if (expr is IteExpr) {
-                                        check(expr.then.equals(IntExprs.Int(1)) && expr.`else`.equals(IntExprs.Int(0)))
-                                        expr.cond
+                                    val clockConstr = if (expr.type is IntType) {
+                                        ClockConstrs.fromIntExpr(expr as Expr<IntType>)
                                     } else {
-                                        expr
+                                        ClockConstrs.fromExpr(expr as Expr<BoolType>)
                                     }
-                                    check(clockExpr.type is BoolType && clockExpr.ops.all { it.type is RatType })
-                                    val clockConstr = ClockConstrs.fromExpr(clockExpr as Expr<BoolType>)
-
                                     listOf(ClockOpLabel(ClockOps.Guard(clockConstr), metadata))
                                 }
 
@@ -92,8 +86,7 @@ class ClockLabelPass(val timed : Boolean) : ProcedurePass {
                                 "theta_elapsed_time" -> {
                                     val clockRef = invokeLabel.params[1]
                                     check(clockRef is RefExpr && clockRef.type is RatType)
-                                    val threadClock = clockRef.decl as VarDecl<RatType>
-                                    check(threadClock.name == "thread_clock")
+                                    val clock = clockRef.decl as VarDecl<RatType>
 
                                     val minTimeExpr = invokeLabel.params[2]
                                     val maxTimeExpr = invokeLabel.params[3]
@@ -102,9 +95,9 @@ class ClockLabelPass(val timed : Boolean) : ProcedurePass {
                                     val maxTime = (simplify(maxTimeExpr) as IntLitExpr).value.intValueExact()
 
                                     listOf(
-                                        ClockOpLabel(ClockOps.Guard(ClockConstrs.Geq(threadClock, minTime)), metadata),
-                                        ClockOpLabel(ClockOps.Guard(ClockConstrs.Leq(threadClock, maxTime)), metadata),
-                                        ClockOpLabel(ClockOps.Reset(threadClock, 0), metadata),
+                                        ClockOpLabel(ClockOps.Guard(ClockConstrs.Geq(clock, minTime)), metadata),
+                                        ClockOpLabel(ClockOps.Guard(ClockConstrs.Leq(clock, maxTime)), metadata),
+                                        ClockOpLabel(ClockOps.Reset(clock, 0), metadata),
                                     )
                                 }
 
