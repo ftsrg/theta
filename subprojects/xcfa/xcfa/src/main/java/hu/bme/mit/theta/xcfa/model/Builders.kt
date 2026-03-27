@@ -124,6 +124,13 @@ constructor(
       else -> vars
     }
 
+  fun getClocks(): Set<VarDecl<RatType>> =
+      when {
+          this::optimized.isInitialized -> optimized.clocks
+          this::partlyOptimized.isInitialized -> partlyOptimized.clocks
+          else -> clocks
+      }
+
   fun VarDecl<*>.isAtomic() =
     when {
       this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
