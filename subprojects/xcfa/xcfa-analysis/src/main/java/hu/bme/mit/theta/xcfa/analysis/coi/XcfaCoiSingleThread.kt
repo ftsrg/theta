@@ -80,7 +80,7 @@ class XcfaCoiSingleThread(xcfa: XCFA) : XcfaCoi(xcfa) {
     val toVisit = realObservers.toMutableList()
     val visited = mutableSetOf<XcfaEdge>()
     while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeFirst()
+      val visiting = toVisit.removeAt(0)
       visited.add(visiting)
       val toAdd = directObservers[visiting] ?: emptySet()
       toVisit.addAll(toAdd.filter { it !in visited })

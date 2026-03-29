@@ -56,7 +56,6 @@ public class XcfaTraceConcretizer {
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext) {
-
         trace =
                 Trace.of(
                         trace.getStates().stream()
