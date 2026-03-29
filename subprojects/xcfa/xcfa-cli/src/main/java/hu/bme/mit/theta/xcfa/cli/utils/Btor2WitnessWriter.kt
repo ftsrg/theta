@@ -22,11 +22,12 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
-import hu.bme.mit.theta.xcfa.witnesses.WaypointType
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer.btor2ConcreteTrace
+import hu.bme.mit.theta.xcfa.witnesses.Btor2Witness
 import java.io.File
-/*
+
 class Btor2WitnessWriter : XcfaWitnessWriter {
+  override val extension: String = "sat"
 
   override fun writeWitness(
     safetyResult: SafetyResult<*, *>,
@@ -39,125 +40,53 @@ class Btor2WitnessWriter : XcfaWitnessWriter {
     architecture: ArchitectureConfig.ArchitectureType?,
     logger: Logger,
   ) {
-      val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val concrTrace =
+      btor2ConcreteTrace ?: throw RuntimeException("Concrete Trace from Btor2 missing")
 
-    if (safetyResult.isUnsafe) {
-      try {
-        val trace =
-          safetyResult.asUnsafe().cex.let {
-            if (it is HackyAsgTrace<*>) {
-              val actions = (it as HackyAsgTrace<*>).trace.actions
-              val explStates = (it as HackyAsgTrace<*>).trace.states
-              val states =
-                (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
-                  state as XcfaState<PtrState<*>>
-                  state.withState(PtrState(explStates[i]))
-                }
+    val witness = Btor2Witness(badProperty = "b0")
+    val regex = """T0::_::input_\w+\s+#b([01]+)""".toRegex()
 
-              Trace.of(states, actions)
-            } else if (it is ASGTrace<*, *>) {
-              (it as ASGTrace<*, *>).toTrace()
-            } else {
-              it
-            }
-          }
-        if (trace is Trace<*, *>) {
-          val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-            XcfaTraceConcretizer.concretize(
-              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-              cexSolverFactory,
-              parseContext,
-            )
+    var iter = 0
+    var inputIter = 0
 
-          var witness =
-            violationWitnessFromConcreteTrace(
-              concrTrace,
-              metadata,
-              inputFile,
-              property,
-              parseContext,
-              witnessfile,
-            )
+    for (state in btor2ConcreteTrace.states) {
+      val values = regex.findAll(state.sGlobal.toString()).map { it.groupValues[1] }.toList()
 
-          if (witness.content.isEmpty()) {
-            logger.benchmark("Encountered empty witness, trying best-effort witness now.")
-            val bestEffortWitness =
-              generateBestEffortWitness(
-                safetyResult,
-                property,
-                inputFile,
-                parseContext,
-                witnessfile,
-                ltlSpecification,
-                architecture,
-              )
-            witnessfile.writeText(bestEffortWitness)
-          } else {
-            witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
-          }
+      if (!values.isEmpty()) {
+        for (value in values) {
+          witness.addInput(iter, inputIter, value)
+          inputIter++
         }
-      } catch (e: Exception) {
-        logger.benchmark(
-          "Could not emit witness, writing reachability witness with target only if possible"
-        )
-        val bestEffortWitness =
-          generateBestEffortWitness(
-            safetyResult,
-            property,
-            inputFile,
-            parseContext,
-            witnessfile,
-            ltlSpecification,
-            architecture,
-          )
-        witnessfile.writeText(bestEffortWitness)
-      }
-    } else if (safetyResult.isSafe) {
-      try {
-        val witness =
-          YamlWitness(
-            entryType = EntryType.INVARIANTS,
-            metadata = metadata,
-            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
-          )
-
-        witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
-      } catch (e: Exception) {
-        logger.info("Could not emit witness, outputting empty witness")
+        iter++
+        inputIter = 0
       }
     }
+
+    // Serialize the populated witness to the provided file
+    witness.serialize(witnessfile)
+    logger.write(
+      Logger.Level.INFO,
+      "BTOR2 witness successfully serialized to ${witnessfile.absolutePath}\n",
+    )
   }
 
-  val witnessTrace =
-    traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
+  override fun writeTrivialCorrectnessWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ) {
+    TODO("Not yet implemented")
+  }
 
-  val content =
-    (0..(witnessTrace.length()))
-      .flatMap {
-        listOfNotNull(
-          witnessTrace.states[it]?.toSegment(
-            witnessTrace.actions.getOrNull(it - 1),
-            witnessTrace.actions.getOrNull(it),
-            inputFile,
-            parseContext = parseContext,
-            violation =
-            witnessTrace.states[it].violation ||
-              witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
-          ),
-          witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
-        )
-      }
-      .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
-      .let { list ->
-        list.filter {
-          !functionReturnOnly ||
-            it.type == WaypointType.TARGET ||
-            it.type == WaypointType.FUNCTION_RETURN
-        }
-      }
-      .map { ContentItem(it) }
-
-  return YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = content)
-
+  override fun generateEmptyViolationWitness(
+    inputFile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String {
+    TODO("Not yet implemented")
+  }
 }
-*/

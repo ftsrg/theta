@@ -188,11 +188,8 @@ data class CHCFrontendConfig(
   var model: Boolean = false,
 ) : SpecFrontendConfig
 
-data class BTOR2FrontendConfig (
-  @Parameter(
-    names = ["--optimization"],
-    description = "Runs frontend with all given optimizations"
-  )
+data class BTOR2FrontendConfig(
+  @Parameter(names = ["--optimization"], description = "Runs frontend with all given optimizations")
   var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 

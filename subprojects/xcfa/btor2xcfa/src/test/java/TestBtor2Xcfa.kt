@@ -13,19 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
-import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
-import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.UniqueWarningLogger
-import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
-import hu.bme.mit.theta.xcfa.model.toDot
-import java.io.File
-import org.antlr.v4.runtime.BailErrorStrategy
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
-import org.junit.jupiter.api.Test
 
 /*
  *  Copyright 2025 Budapest University of Technology and Economics

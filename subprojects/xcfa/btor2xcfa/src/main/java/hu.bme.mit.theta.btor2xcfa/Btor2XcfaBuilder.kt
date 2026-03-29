@@ -28,8 +28,6 @@ import hu.bme.mit.theta.xcfa.passes.Btor2EmptyPass
 import hu.bme.mit.theta.xcfa.passes.Btor2Passes
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 
-
-
 object Btor2XcfaBuilder {
 
   private var i: Int = 1
@@ -48,10 +46,11 @@ object Btor2XcfaBuilder {
     val xcfaBuilder = XcfaBuilder("Btor2XCFA")
     parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
 
-    val procBuilder = XcfaProcedureBuilder(
-      "main",
-      if (btor2Passes) Btor2Passes(parseContext, uniqueLogger) else Btor2EmptyPass()
-    )
+    val procBuilder =
+      XcfaProcedureBuilder(
+        "main",
+        if (btor2Passes) Btor2Passes(parseContext, uniqueLogger) else Btor2EmptyPass(),
+      )
 
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()
@@ -167,43 +166,7 @@ object Btor2XcfaBuilder {
         lastLoc = newLoc
       }
     }
-    /*
-      procBuilder.createErrorLoc()
-      // Add properties
-      procBuilder.addEdge(
-          XcfaEdge(
-              lastLoc,
-              procBuilder.errorLoc.get(),
-              SequenceLabel(
-                  Btor2Circuit.properties.values
-                      .filter {
-                        it is Btor2Bad
-                      }
-                      .map { StmtLabel(AssumeStmt.of(it.getExpr())) }
-                      .toList()
-              ),
-          EmptyMetaData,
-        )
-      )
 
-      newLoc = nextLoc(false, false, false)
-      procBuilder.addEdge(
-          XcfaEdge(
-              lastLoc,
-              newLoc,
-              SequenceLabel(
-                  Btor2Circuit.properties.values
-                      .filter {
-                        it is Btor2Bad
-                      }
-                      .map { StmtLabel(AssumeStmt.of(BoolExprs.Not(it.getExpr()))) }
-                      .toList()
-              ),
-              EmptyMetaData,
-          )
-      )
-      lastLoc = newLoc
-    */
     // Close circuit (update state values with nexts, havoc otherwise)
     var nexts = Btor2Circuit.states.values.filter { it is Btor2Next }.toList()
     var statesWithNext = nexts.map { (it as Btor2Next).state }.toSet()

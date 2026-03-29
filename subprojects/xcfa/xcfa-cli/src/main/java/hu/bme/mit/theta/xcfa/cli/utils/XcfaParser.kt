@@ -106,7 +106,13 @@ fun getXcfa(
 
       InputType.BTOR2 -> {
         val btor2Frontend = config.frontendConfig.specConfig as BTOR2FrontendConfig
-        parseBTOR2(config.inputConfig.input!!, btor2Frontend.btor2Passes, parseContext, logger, uniqueWarningLogger)
+        parseBTOR2(
+          config.inputConfig.input!!,
+          btor2Frontend.btor2Passes,
+          parseContext,
+          logger,
+          uniqueWarningLogger,
+        )
       }
     }
   } catch (e: Exception) {

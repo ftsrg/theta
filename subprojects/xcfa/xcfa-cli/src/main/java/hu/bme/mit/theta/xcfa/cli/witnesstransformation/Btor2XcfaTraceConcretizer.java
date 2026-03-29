@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -47,11 +48,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import kotlin.Triple;
 
-/**
- * Similar to CfaTraceConcretizer Takes a trace given by an unsafe result and uses and SMT solver to
- * output a concrete counterexample
- */
-public class XcfaTraceConcretizer {
+public class Btor2XcfaTraceConcretizer {
+    public static Trace<XcfaState<ExplState>, XcfaAction> btor2ConcreteTrace;
+
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
@@ -223,32 +222,6 @@ public class XcfaTraceConcretizer {
                             ExplState.of(
                                     ImmutableValuation.from(
                                             valuations.getState(i).toMap().entrySet().stream()
-                                                    .filter(
-                                                            it ->
-                                                                    varSoFar.contains(it.getKey())
-                                                                            && (parseContext
-                                                                                            .getMetadata()
-                                                                                            .getMetadataValue(
-                                                                                                    it.getKey()
-                                                                                                            .getName(),
-                                                                                                    "cName")
-                                                                                            .isPresent()
-                                                                                    || parseContext
-                                                                                            .getMetadata()
-                                                                                            .getMetadataValue(
-                                                                                                    revLookup
-                                                                                                            .getOrDefault(
-                                                                                                                    (VarDecl<
-                                                                                                                                    ?>)
-                                                                                                                            it
-                                                                                                                                    .getKey(),
-                                                                                                                    (VarDecl<
-                                                                                                                                    ?>)
-                                                                                                                            it
-                                                                                                                                    .getKey())
-                                                                                                            .getName(),
-                                                                                                    "cName")
-                                                                                            .isPresent()))
                                                     .collect(
                                                             Collectors.toMap(
                                                                     Map.Entry<Decl<?>, LitExpr<?>>
@@ -256,18 +229,16 @@ public class XcfaTraceConcretizer {
                                                                     Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
-                    //                    if (flatLabel.getMetadata().isSubstantial()) {
                     var accesses = collectVarsWithAccessType(flatLabel);
                     varSoFar.addAll(
                             accesses.entrySet().stream()
                                     .filter(it -> isWritten(it.getValue()))
                                     .map(it -> it.getKey())
                                     .toList());
-                    //                    }
                 }
             }
         }
-
-        return Trace.of(cfaStates, sbeActions);
+        btor2ConcreteTrace = Trace.of(cfaStates, sbeActions);
+        return btor2ConcreteTrace;
     }
 }

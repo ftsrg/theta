@@ -51,6 +51,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
@@ -394,11 +395,22 @@ internal fun concretizeTrace(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
 ): Trace<XcfaState<ExplState>, XcfaAction> =
-  XcfaTraceConcretizer.concretize(
-    trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-    getSolver(
-      config.outputConfig.witnessConfig.concretizerSolver,
-      config.outputConfig.witnessConfig.validateConcretizerSolver,
-    ),
-    parseContext,
-  )
+  if (config.frontendConfig.inputType == InputType.BTOR2) {
+    Btor2XcfaTraceConcretizer.concretize(
+      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+      getSolver(
+        config.outputConfig.witnessConfig.concretizerSolver,
+        config.outputConfig.witnessConfig.validateConcretizerSolver,
+      ),
+      parseContext,
+    )
+  } else {
+    XcfaTraceConcretizer.concretize(
+      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+      getSolver(
+        config.outputConfig.witnessConfig.concretizerSolver,
+        config.outputConfig.witnessConfig.validateConcretizerSolver,
+      ),
+      parseContext,
+    )
+  }
