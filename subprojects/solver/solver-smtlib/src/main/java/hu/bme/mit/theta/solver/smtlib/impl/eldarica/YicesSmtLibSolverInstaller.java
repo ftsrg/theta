@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class YicesSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         final var downloadUrl =
                 URI.create(
                         String.format(
-                                "https://yices.csl.sri.com/old/binaries/yices-%s-x86_64-unknown-linux-gnu-static-gmp.tar.gz",
+                                "https://web.archive.org/web/20240607070523if_/https://yices.csl.sri.com/old/binaries/yices-%s-x86_64-unknown-linux-gnu-static-gmp.tar.gz",
                                 version));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
