@@ -185,11 +185,6 @@ constructor(
     val solverCheckCount = solverPool.checkCount - solverCountBefore
     logger.write(Logger.Level.INFO, "Solver check() calls: $solverCheckCount\n")
 
-    if (solverMeasurements) {
-      stateSpaceProvider.clear()
-      structuralRerun(transNodes, transSig, initNode, stateSig, ssgTime.elapsedMillis())
-    }
-
     totalTime.stop()
 
     val propViolating = stateSpace.intersection(propNode) as MddHandle
@@ -214,6 +209,11 @@ constructor(
       )
 
     logger.write(Logger.Level.MAINSTEP, "%s\n", statistics)
+
+    if (solverMeasurements) {
+      stateSpaceProvider.clear()
+      structuralRerun(transNodes, transSig, initNode, stateSig, ssgTime.elapsedMillis())
+    }
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
