@@ -32,7 +32,6 @@ public class SolverPool implements AutoCloseable {
 
     private int created = 0;
     private long checkCount = 0;
-    private static final boolean TRACE_CHECKS = false;
 
     private final LinkedList<Solver> available;
     private final List<Solver> all;
@@ -113,18 +112,6 @@ public class SolverPool implements AutoCloseable {
         @Override
         public SolverStatus check() {
             checkCount++;
-            if (TRACE_CHECKS) {
-                var caller = Thread.currentThread().getStackTrace()[2];
-                System.err.println(
-                        "SolverPool.check() #"
-                                + checkCount
-                                + " from "
-                                + caller.getClassName()
-                                + "."
-                                + caller.getMethodName()
-                                + ":"
-                                + caller.getLineNumber());
-            }
             return wrapped.check();
         }
 

@@ -44,6 +44,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.PathUtils
@@ -154,8 +155,9 @@ constructor(
       stateSig.topVariableHandle.checkInNode(
         MddExpressionTemplate.of(negatedPropExpr, { it as Decl<*> }, solverPool)
       )
-    //    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
-    val targetedNextStates = nextStates
+    val targetedNextStates =
+      if (monolithicExpr.propExpr == True()) nextStates
+      else OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
 
     logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
     val stateSpaceProvider =

@@ -904,31 +904,6 @@ final class Z3TermTransformer {
                 (term, model, vars) -> {
                     final com.microsoft.z3legacy.Expr[] args = term.getArgs();
                     checkArgument(args.length == 3, "Number of arguments must be three");
-                    //                    if
-                    // (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
-                    //                        // ternary operator is on enum types
-                    //                        // if either arg is a literal, we need special
-                    // handling to get its type
-                    //                        // (references' decl kind is Z3_OP_UNINTERPRETED,
-                    // literals' decl kind is
-                    //                        // Z3_OP_DT_CONSTRUCTOR)
-                    //                        int litIndex = -1;
-                    //                        for (int i = 0; i < 3; i++) {
-                    //                            if (args[i].getFuncDecl()
-                    //                                .getDeclKind()
-                    //                                .equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))
-                    // litIndex = i;
-                    //                        }
-                    //                        if (litIndex > -1) {
-                    //                            int refIndex = Math.abs(litIndex - 1);
-                    //                            final Expr<?> refOp = transform(args[refIndex],
-                    // model, vars);
-                    ////                            final Expr<EnumType> litExpr =
-                    ////                                transformEnumLit(args[litIndex], (EnumType)
-                    // refOp.getType());
-                    ////                            return function.apply(refOp, litExpr);
-                    //                        }
-                    //                    }
                     final Expr<?> op1 = transform(args[0], model, vars);
                     final Expr<?> op2 = transform(args[1], model, vars);
                     final Expr<?> op3 = transform(args[2], model, vars);
