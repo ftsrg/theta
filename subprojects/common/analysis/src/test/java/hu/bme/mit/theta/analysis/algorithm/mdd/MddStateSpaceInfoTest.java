@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntStatistics;
@@ -42,16 +42,14 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@Ignore
-@RunWith(value = Parameterized.class)
+@Disabled
 public class MddStateSpaceInfoTest {
 
     private static final VarDecl<IntType> X = Decls.Var("x", IntType.getInstance());
@@ -66,49 +64,33 @@ public class MddStateSpaceInfoTest {
     private static final LitExpr<EnumType> GREEN = colorType.litFromShortName("green");
     private static final LitExpr<EnumType> BLUE = colorType.litFromShortName("blue");
 
-    @Parameterized.Parameter(value = 0)
-    public List<VarDecl<?>> varOrder;
-
-    @Parameterized.Parameter(value = 1)
-    public Expr<BoolType> stateSpaceExpr;
-
-    @Parameterized.Parameter(value = 2)
-    public Long expectedSize;
-
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[][] {
-                    {
+    static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of(
                         List.of(X, Y),
                         And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0))), // x = 0, y = 0
-                        1L
-                    },
-                    {
+                        1L),
+                Arguments.of(
                         List.of(A, B),
                         Eq(A.getRef(), False()), // a = 0
-                        2L
-                    },
-                    {
+                        2L),
+                Arguments.of(
                         List.of(A, B),
                         Eq(B.getRef(), False()), // y = 0
-                        2L
-                    },
-                    {
+                        2L),
+                Arguments.of(
                         List.of(A, B),
                         True(), // true
-                        4L
-                    },
-                    {
+                        4L),
+                Arguments.of(
                         List.of(X, Y),
                         Or(
                                 And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0))),
                                 And(
                                         Eq(X.getRef(), Int(1)),
                                         Eq(Y.getRef(), Int(1)))), // x = 0, y = 0 or x = 1, y = 1
-                        4L
-                    },
-                    {
+                        4L),
+                Arguments.of(
                         List.of(X, Y),
                         Or(
                                 And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0))),
@@ -117,19 +99,18 @@ public class MddStateSpaceInfoTest {
                                         Eq(X.getRef(), Int(2)),
                                         Eq(
                                                 Y.getRef(),
-                                                Int(2)))), // x = 0, y = 0 or x = 1, y = 1 or x
-                        // = 2, y = 3
-                        9L
-                    },
-                    {List.of(A, C), And(A.getRef(), Eq(C.getRef(), RED)), 1L},
-                    {List.of(A, C), A.getRef(), 3L},
-                    {List.of(A, C), True(), 6L},
-                    {List.of(C, A), True(), 6L},
-                });
+                                                Int(2)))), // x = 0, y = 0 or x = 1, y = 1 or x = 2, y = 2
+                        9L),
+                Arguments.of(List.of(A, C), And(A.getRef(), Eq(C.getRef(), RED)), 1L),
+                Arguments.of(List.of(A, C), A.getRef(), 3L),
+                Arguments.of(List.of(A, C), True(), 6L),
+                Arguments.of(List.of(C, A), True(), 6L));
     }
 
-    @Test
-    public void test() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> stateSpaceExpr, Long expectedSize)
+            throws Exception {
 
         try (final SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddGraph<Expr> mddGraph =
