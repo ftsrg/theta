@@ -181,7 +181,6 @@ constructor(
 
     val solverCheckCount = solverPool.checkCount - solverCountBefore
 
-    logger.write(Logger.Level.INFO, "Enumerated state-space in: ${ssgTime.elapsedMillis() / 1000}.${ssgTime.elapsedMillis() % 1000} s\n")
     logger.write(Logger.Level.INFO, "Solver check() calls: $solverCheckCount\n")
 
     // Rerun with structural (solverless) nodes to measure time without solver overhead
@@ -214,10 +213,10 @@ constructor(
     val rerunStateSpaceSize = MddInterpreter.calculateNonzeroCount(rerunStateSpace)
 
     val solverTimeMs = ssgTime.elapsedMillis() - rerunTime.elapsedMillis()
-    logger.write(Logger.Level.INFO, "Rerun (structural) in: ${rerunTime.elapsedMillis() / 1000}.${rerunTime.elapsedMillis() % 1000} s\n")
+    logger.write(Logger.Level.INFO, "Rerun (structural) in: ${rerunTime.elapsedMillis()}\n")
     logger.write(Logger.Level.INFO, "Rerun solver check() calls: $rerunSolverCheckCount\n")
     logger.write(Logger.Level.INFO, "Rerun state space size: $rerunStateSpaceSize\n")
-    logger.write(Logger.Level.INFO, "Estimated solver time: ${solverTimeMs / 1000}.${solverTimeMs % 1000} s\n")
+    logger.write(Logger.Level.INFO, "Estimated solver time: ${solverTimeMs}\n")
 
     totalTime.stop()
 
