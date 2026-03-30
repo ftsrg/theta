@@ -39,7 +39,6 @@ import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.function.Function;
@@ -52,8 +51,6 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final boolean transExpr;
     private final boolean knownSat;
 
-    private static Solver lazySolver;
-
     private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
             new UnaryOperationCache();
 
@@ -62,11 +59,13 @@ public class MddExpressionTemplate implements MddNode.Template {
         if (cached != null) {
             return cached ? ImmutableValuation.empty() : null;
         }
-        if (lazySolver == null) lazySolver = solverPool.requestSolver();
-        Valuation model;
-        try (var wpp = new WithPushPop(lazySolver)) {
-            lazySolver.add(expr);
-            model = lazySolver.check().isSat() ? lazySolver.getModel() : null;
+        final var solver = solverPool.requestSolver();
+        final Valuation model;
+        try (var wpp = new WithPushPop(solver)) {
+            solver.add(expr);
+            model = solver.check().isSat() ? solver.getModel() : null;
+        } finally {
+            solverPool.returnSolver(solver);
         }
         satCache.addToCache(expr, model != null);
         return model;
@@ -242,8 +241,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                     canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
         }
 
-        return MddExpressionRepresentation.of(
-                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+        return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
     }
 
     private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
