@@ -18,9 +18,7 @@ package hu.bme.mit.theta.common.collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.collection.factory.CollectionFactory;
-import hu.bme.mit.theta.common.collection.factory.FastUtilCollectionFactory;
 import hu.bme.mit.theta.common.collection.factory.LinkedHashCollectionFactory;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;

@@ -70,8 +70,7 @@ class XstsCliMdd :
       .default(10)
 
   private val solverMeasurements: Boolean by
-    option(help = "Perform a structural rerun to estimate solver time overhead")
-      .flag()
+    option(help = "Perform a structural rerun to estimate solver time overhead").flag()
 
   private fun loadOrdering(monolithicExpr: MonolithicExpr): List<VarDecl<*>> {
     val file = ordering ?: return monolithicExpr.orderVars()

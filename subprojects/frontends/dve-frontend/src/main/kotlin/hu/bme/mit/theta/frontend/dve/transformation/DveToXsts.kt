@@ -185,8 +185,7 @@ private class TransformContext(
           DveBinaryOp.SHR -> l shr r
         }
       }
-      else ->
-        throw IllegalArgumentException("Unsupported expression in const initializer: $expr")
+      else -> throw IllegalArgumentException("Unsupported expression in const initializer: $expr")
     }
 
   private fun declareStateVariables() {

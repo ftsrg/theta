@@ -154,7 +154,7 @@ constructor(
       stateSig.topVariableHandle.checkInNode(
         MddExpressionTemplate.of(negatedPropExpr, { it as Decl<*> }, solverPool)
       )
-//    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
+    //    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
     val targetedNextStates = nextStates
 
     logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
@@ -292,7 +292,8 @@ constructor(
         MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
       structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
     }
-    val structNextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(structDescriptors)
+    val structNextStates: AbstractNextStateDescriptor =
+      OrNextStateDescriptor.create(structDescriptors)
 
     val rerunProvider =
       when (iterationStrategy) {

@@ -68,8 +68,7 @@ class InputOptions :
   private val dveSimplifySingleStateProcesses: Boolean by
     option(
         "--dve-simplify-single-state",
-        help =
-          "Simplify single-state processes by eliminating their state variable.",
+        help = "Simplify single-state processes by eliminating their state variable.",
       )
       .flag("--no-dve-simplify-single-state", default = true)
 
@@ -98,7 +97,8 @@ class InputOptions :
     }
     if (isDve()) {
       val dveModel = model.inputStream().use { DveParser.parse(it) }
-      val result = DveToXsts.transformWithNames(dveModel, dvePropType, dveSimplifySingleStateProcesses)
+      val result =
+        DveToXsts.transformWithNames(dveModel, dvePropType, dveSimplifySingleStateProcesses)
       variableTraceability = result.variableTraceability
       return result.xsts
     }
