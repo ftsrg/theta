@@ -69,6 +69,10 @@ class XstsCliMdd :
       .long()
       .default(10)
 
+  private val solverMeasurements: Boolean by
+    option(help = "Perform a structural rerun to estimate solver time overhead")
+      .flag()
+
   private fun loadOrdering(monolithicExpr: MonolithicExpr): List<VarDecl<*>> {
     val file = ordering ?: return monolithicExpr.orderVars()
     require(!livenessToSafety) {
@@ -129,6 +133,7 @@ class XstsCliMdd :
               mddToExprStrategy = mddToExprStrategy,
               proofMddToExprStrategy = proofMddToExprStrategy,
               traceTimeout = traceTimeout,
+              solverMeasurements = solverMeasurements,
             )
           }
         checker.check(null)

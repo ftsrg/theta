@@ -562,6 +562,11 @@ data class MddConfig(
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
+  @Parameter(
+    names = ["--solver-measurements"],
+    description = "Perform a structural rerun to estimate solver time overhead",
+  )
+  var solverMeasurements: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

@@ -64,6 +64,7 @@ constructor(
     MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
   private val proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  private val solverMeasurements: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   enum class IterationStrategy {
@@ -180,43 +181,45 @@ constructor(
     ssgTime.stop()
 
     val solverCheckCount = solverPool.checkCount - solverCountBefore
-
     logger.write(Logger.Level.INFO, "Solver check() calls: $solverCheckCount\n")
 
-    // Rerun with structural (solverless) nodes to measure time without solver overhead
-    val structDescriptors = mutableListOf<AbstractNextStateDescriptor>()
-    for (transNode in transNodes) {
-      val structTransNode =
-        MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
-      structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
-    }
-    val structNextStates: AbstractNextStateDescriptor =
-      OrNextStateDescriptor.create(structDescriptors)
-
-    stateSpaceProvider.clear()
-    val rerunProvider =
-      when (iterationStrategy) {
-        IterationStrategy.BFS -> BfsProvider(stateSig.variableOrder)
-        IterationStrategy.SAT -> SimpleSaturationProvider(stateSig.variableOrder)
-        IterationStrategy.GSAT -> GeneralizedSaturationProvider(stateSig.variableOrder)
+    if (solverMeasurements) {
+      // Rerun with structural (solverless) nodes to measure time without solver overhead
+      val structDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+      for (transNode in transNodes) {
+        val structTransNode =
+          MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+        structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
       }
+      val structNextStates: AbstractNextStateDescriptor =
+        OrNextStateDescriptor.create(structDescriptors)
 
-    val rerunSolverCountBefore = solverPool.checkCount
-    val rerunTime = Stopwatch.createStarted()
-    val rerunStateSpace = rerunProvider.compute(
-      MddNodeInitializer.of(initNode),
-      structNextStates,
-      stateSig.topVariableHandle,
-    )
-    rerunTime.stop()
-    val rerunSolverCheckCount = solverPool.checkCount - rerunSolverCountBefore
-    val rerunStateSpaceSize = MddInterpreter.calculateNonzeroCount(rerunStateSpace)
+      stateSpaceProvider.clear()
+      val rerunProvider =
+        when (iterationStrategy) {
+          IterationStrategy.BFS -> BfsProvider(stateSig.variableOrder)
+          IterationStrategy.SAT -> SimpleSaturationProvider(stateSig.variableOrder)
+          IterationStrategy.GSAT -> GeneralizedSaturationProvider(stateSig.variableOrder)
+        }
 
-    val solverTimeMs = ssgTime.elapsedMillis() - rerunTime.elapsedMillis()
-    logger.write(Logger.Level.INFO, "Rerun (structural) in: ${rerunTime.elapsedMillis()}\n")
-    logger.write(Logger.Level.INFO, "Rerun solver check() calls: $rerunSolverCheckCount\n")
-    logger.write(Logger.Level.INFO, "Rerun state space size: $rerunStateSpaceSize\n")
-    logger.write(Logger.Level.INFO, "Estimated solver time: ${solverTimeMs}\n")
+      val rerunSolverCountBefore = solverPool.checkCount
+      val rerunTime = Stopwatch.createStarted()
+      val rerunStateSpace =
+        rerunProvider.compute(
+          MddNodeInitializer.of(initNode),
+          structNextStates,
+          stateSig.topVariableHandle,
+        )
+      rerunTime.stop()
+      val rerunSolverCheckCount = solverPool.checkCount - rerunSolverCountBefore
+      val rerunStateSpaceSize = MddInterpreter.calculateNonzeroCount(rerunStateSpace)
+
+      val solverTimeMs = ssgTime.elapsedMillis() - rerunTime.elapsedMillis()
+      logger.write(Logger.Level.INFO, "Rerun (structural) in: ${rerunTime.elapsedMillis()}\n")
+      logger.write(Logger.Level.INFO, "Rerun solver check() calls: $rerunSolverCheckCount\n")
+      logger.write(Logger.Level.INFO, "Rerun state space size: $rerunStateSpaceSize\n")
+      logger.write(Logger.Level.INFO, "Estimated solver time: ${solverTimeMs}\n")
+    }
 
     totalTime.stop()
 
