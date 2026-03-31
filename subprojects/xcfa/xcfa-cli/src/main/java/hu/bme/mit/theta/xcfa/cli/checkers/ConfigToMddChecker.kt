@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
@@ -31,6 +32,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
@@ -66,6 +68,9 @@ fun getMddChecker(
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
 
+  if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
+    passes.add(L2SMEPass())
+  }
   if (mddConfig.cegar) {
     passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(refinementSolverFactory)))
   }
