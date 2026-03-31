@@ -1,0 +1,9 @@
+1 sort bitvec 1
+2 sort bitvec 2
+3 input 2 a
+4 input 2 b
+5 add 2 3 4
+6 ult 1 5 3
+7 ult 1 5 4
+8 or 1 6 7
+9 bad 8

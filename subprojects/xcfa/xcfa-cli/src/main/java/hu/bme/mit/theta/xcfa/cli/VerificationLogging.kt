@@ -165,6 +165,29 @@ internal fun postVerificationLogging(
           } catch (e: Exception) {
             logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
           }
+          if (config.frontendConfig.inputType == InputType.BTOR2) {
+            try {
+              val btor2SatWitnessFile = File(resultFolder, "witness.sat")
+              Btor2WitnessWriter()
+                .writeWitness(
+                  safetyResult,
+                  config.outputConfig.witnessConfig.inputFileForWitness
+                    ?: config.inputConfig.input!!,
+                  config.inputConfig.property,
+                  getSolver(
+                    config.outputConfig.witnessConfig.concretizerSolver,
+                    config.outputConfig.witnessConfig.validateConcretizerSolver,
+                  ),
+                  parseContext,
+                  btor2SatWitnessFile,
+                  ltlSpecification,
+                  null,
+                  logger,
+                )
+            } catch (e: Exception) {
+              logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
+            }
+          }
         }
 
         else -> {}

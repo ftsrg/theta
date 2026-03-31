@@ -112,7 +112,7 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
         val visited = mutableSetOf<XcfaEdge>()
 
         while (toVisit.isNotEmpty()) {
-          val visiting = toVisit.removeFirst()
+          val visiting = toVisit.removeAt(0)
           if (isRealObserver(visiting)) return true
 
           visited.add(visiting)
