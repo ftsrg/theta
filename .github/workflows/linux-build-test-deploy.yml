@@ -245,7 +245,7 @@ jobs:
         uses: ./.github/actions/create-release
         with:
           message: ${{ inputs.message }}
-          dry-run: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
+          dry-run: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master' }}
 
   deploy-zenodo:
     needs: [create-archives]
