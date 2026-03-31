@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -86,7 +86,7 @@ public final class LuZoneState implements ExprState {
         Expr<BoolType> result = expr;
         if (result == null) {
             // TODO create class for mapping
-            final Map<VarDecl<?>, ParamDecl<?>> mapping = Containers.createMap();
+            final Map<VarDecl<?>, ParamDecl<?>> mapping = CollectionUtil.createMap();
             final Expr<BoolType> zoneExpr = ExprUtils.close(zone.toExpr(), mapping);
             final Collection<Expr<BoolType>> conjuncts = new ArrayList<>();
 

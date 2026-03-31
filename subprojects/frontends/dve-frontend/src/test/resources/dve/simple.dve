@@ -1,0 +1,12 @@
+// Minimal model: one process, two states, one transition
+
+process Counter {
+    byte count = 0;
+    state idle, running;
+    init idle;
+    trans
+        idle    -> running { guard count < 5; effect count = count + 1; },
+        running -> idle    {};
+}
+
+system async;

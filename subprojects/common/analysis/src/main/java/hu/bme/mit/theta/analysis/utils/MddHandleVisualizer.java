@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
@@ -86,7 +86,7 @@ public class MddHandleVisualizer {
     public Graph visualize(final MddHandle rootNode) {
         final Graph graph = new Graph(SYMBOLIC_NODE_ID, SYMBOLIC_NODE_LABEL);
 
-        final Set<MddHandle> traversed = Containers.createSet();
+        final Set<MddHandle> traversed = CollectionUtil.createSet();
 
         traverse(graph, rootNode, traversed);
 
@@ -139,10 +139,10 @@ public class MddHandleVisualizer {
                         node.getVariableHandle().getVariable().get().getTraceInfo(Decl.class);
                 for (var cursor = node.cursor(); cursor.moveNext(); ) {
 
-                    traverse(graph, cursor.value(), traversed);
+                    traverse(graph, (MddHandle) cursor.value(), traversed);
 
                     final String sourceId = NODE_ID_PREFIX + idFor(node);
-                    final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
+                    final String targetId = NODE_ID_PREFIX + idFor((MddHandle) cursor.value());
                     final EdgeAttributes eAttributes =
                             EdgeAttributes.builder()
                                     .label(

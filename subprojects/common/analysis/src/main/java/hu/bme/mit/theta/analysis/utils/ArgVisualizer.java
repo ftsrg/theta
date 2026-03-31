@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
@@ -83,7 +83,7 @@ public final class ArgVisualizer<S extends State, A extends Action>
     public Graph visualize(final ARG<? extends S, ? extends A> arg) {
         final Graph graph = new Graph(ARG_ID, ARG_LABEL);
 
-        final Set<ArgNode<? extends S, ? extends A>> traversed = Containers.createSet();
+        final Set<ArgNode<? extends S, ? extends A>> traversed = CollectionUtil.createSet();
 
         for (final ArgNode<? extends S, ? extends A> initNode :
                 arg.getInitNodes().collect(Collectors.toSet())) {
