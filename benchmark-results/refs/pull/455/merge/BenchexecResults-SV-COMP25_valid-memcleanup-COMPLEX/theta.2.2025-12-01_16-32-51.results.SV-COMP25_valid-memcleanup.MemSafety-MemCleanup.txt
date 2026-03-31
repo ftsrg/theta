@@ -1,0 +1,127 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memcleanup.MemSafety-MemCleanup
+date:                    Mon, 2025-12-01 16:32:51 UTC
+tool:                    Theta 6.27.12
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.143 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup.MemSafety-MemCleanup
+Run set 3 of 6 with options '--svcomp --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                             status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+list-ext-properties/simple-ext.yml                                                                    ERROR (frontend failed, before parsing finished)        2.73        1.33        None
+memsafety/global-atexit-1.yml                                                                         TIMEOUT                         41.10       20.40        None
+memsafety/global-atexit-2.yml                                                                         TIMEOUT                         41.31       16.73        None
+memsafety/global-atexit-3.yml                                                                         TIMEOUT                         40.13       17.31        None
+memsafety/global-atexit.yml                                                                           TIMEOUT                         41.76       18.84        None
+memsafety-bftpd/bftpd_1.yml                                                                           ERROR (frontend failed, before parsing finished)        3.22        1.14        None
+memsafety-bftpd/bftpd_2.yml                                                                           ERROR (frontend failed, before parsing finished)        3.08        1.12        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_calloc_45_bad.yml                  ERROR (frontend failed, before parsing finished)        3.04        1.08        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_calloc_68_bad.yml                  ERROR (frontend failed, before parsing finished)        2.99        1.04        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_45_bad.yml                  ERROR (frontend failed, before parsing finished)        3.03        1.07        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_68_bad.yml                  ERROR (frontend failed, before parsing finished)        2.58        0.92        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_realloc_45_bad.yml                 ERROR (frontend failed, before parsing finished)        3.07        1.08        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_realloc_68_bad.yml                 ERROR (frontend failed, before parsing finished)        2.97        1.06        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_calloc_45_bad.yml                      ERROR (frontend failed, before parsing finished)        2.97        1.05        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_calloc_68_bad.yml                      ERROR (frontend failed, before parsing finished)        3.00        1.05        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_malloc_45_bad.yml                      ERROR (frontend failed, before parsing finished)        2.91        1.05        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_malloc_68_bad.yml                      ERROR (frontend failed, before parsing finished)        3.07        1.07        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_realloc_45_bad.yml                     ERROR (frontend failed, before parsing finished)        3.00        1.07        None
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_realloc_68_bad.yml                     ERROR (frontend failed, before parsing finished)        3.15        1.11        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_calloc_45_bad.yml     ERROR (frontend failed, before parsing finished)        2.98        1.08        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_calloc_68_bad.yml     ERROR (frontend failed, before parsing finished)        2.87        1.03        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_malloc_45_bad.yml     ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_malloc_68_bad.yml     ERROR (frontend failed, before parsing finished)        2.75        0.99        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_45_bad.yml    ERROR (frontend failed, before parsing finished)        2.77        1.00        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_68_bad.yml    ERROR (frontend failed, before parsing finished)        2.87        1.03        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_calloc_45_bad.yml            ERROR (frontend failed, before parsing finished)        2.54        0.91        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_calloc_68_bad.yml            ERROR (frontend failed, before parsing finished)        2.50        0.90        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_malloc_45_bad.yml            ERROR (frontend failed, before parsing finished)        2.97        1.06        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_malloc_68_bad.yml            ERROR (frontend failed, before parsing finished)        2.92        1.04        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_realloc_45_bad.yml           ERROR (frontend failed, before parsing finished)        2.84        1.03        None
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_realloc_68_bad.yml           ERROR (frontend failed, before parsing finished)        3.12        1.10        None
+heap-manipulation/bubble_sort_linux-2.yml                                                             ERROR (frontend failed, before parsing finished)        3.27        1.18        None
+heap-manipulation/dll_of_dll-2.yml                                                                    ERROR (frontend failed, before parsing finished)        3.24        1.13        None
+heap-manipulation/merge_sort-1.yml                                                                    ERROR (frontend failed, before parsing finished)        3.13        1.12        None
+heap-manipulation/sll_to_dll_rev-1.yml                                                                ERROR (frontend failed, before parsing finished)        2.93        1.05        None
+heap-manipulation/tree-4.yml                                                                          ERROR (frontend failed, before parsing finished)        3.17        1.14        None
+forester-heap/dll-01-1.yml                                                                            ERROR (frontend failed, before parsing finished)        3.02        1.07        None
+forester-heap/dll-circular-1.yml                                                                      ERROR (frontend failed, before parsing finished)        2.90        1.04        None
+forester-heap/dll-optional-2.yml                                                                      ERROR (frontend failed, before parsing finished)        3.30        1.19        None
+forester-heap/dll-queue-2.yml                                                                         ERROR (frontend failed, before parsing finished)        2.78        1.00        None
+forester-heap/dll-simple-white-blue-1.yml                                                             ERROR (frontend failed, before parsing finished)        3.12        1.14        None
+forester-heap/dll-sorted-1.yml                                                                        ERROR (frontend failed, before parsing finished)        2.94        1.06        None
+forester-heap/dll-token-2.yml                                                                         ERROR (frontend failed, before parsing finished)        2.84        1.05        None
+forester-heap/sll-buckets-2.yml                                                                       ERROR (frontend failed, before parsing finished)        3.15        1.12        None
+forester-heap/sll-circular-2.yml                                                                      ERROR (frontend failed, before parsing finished)        2.91        1.03        None
+forester-heap/sll-optional-2.yml                                                                      ERROR (frontend failed, before parsing finished)        3.12        1.12        None
+forester-heap/sll-queue-2.yml                                                                         ERROR (frontend failed, before parsing finished)        2.94        1.04        None
+forester-heap/sll-rb-sentinel-2.yml                                                                   ERROR (frontend failed, before parsing finished)        3.10        1.12        None
+forester-heap/sll-simple-white-blue-2.yml                                                             ERROR (frontend failed, before parsing finished)        2.88        1.04        None
+forester-heap/sll-sorted-1.yml                                                                        ERROR (frontend failed, before parsing finished)        2.88        1.01        None
+forester-heap/sll-token-1.yml                                                                         ERROR (frontend failed, before parsing finished)        2.85        1.02        None
+list-properties/alternating_list-2.yml                                                                ERROR (frontend failed, before parsing finished)        2.82        1.01        None
+list-properties/list-2.yml                                                                            ERROR (frontend failed, before parsing finished)        2.98        1.05        None
+list-properties/list_flag-1.yml                                                                       ERROR (frontend failed, before parsing finished)        2.95        1.05        None
+list-properties/list_search-1.yml                                                                     ERROR (frontend failed, before parsing finished)        3.14        1.11        None
+list-properties/list_search-2.yml                                                                     ERROR (frontend failed, before parsing finished)        3.54        1.24        None
+list-properties/simple-1.yml                                                                          ERROR (frontend failed, before parsing finished)        2.71        0.96        None
+list-properties/splice-1.yml                                                                          ERROR (frontend failed, before parsing finished)        3.17        1.13        None
+list-ext3-properties/dll_nullified-1.yml                                                              ERROR (frontend failed, before parsing finished)        2.97        1.05        None
+list-ext3-properties/sll_length_check-1.yml                                                           ERROR (frontend failed, before parsing finished)        2.81        1.00        None
+list-ext3-properties/sll_nondet_insert-1.yml                                                          ERROR (frontend failed, before parsing finished)        3.03        1.08        None
+list-ext3-properties/sll_of_sll_nondet_append-2.yml                                                   ERROR (frontend failed, before parsing finished)        2.98        1.06        None
+verifythis/tree_del_iter.yml                                                                          ERROR (frontend failed, before parsing finished)        1.89        0.72        None
+verifythis/linked-list-removal.yml                                                                    ERROR (frontend failed, before parsing finished)        2.14        0.78        None
+verifythis/tree_del_rec.yml                                                                           ERROR (frontend failed, before parsing finished)        1.91        0.72        None
+verifythis/tree_max.yml                                                                               ERROR (frontend failed, before parsing finished)        1.75        0.68        None
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 3                                                                                             done                           180.97      145.96           -
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination
+Run set 6 of 6: skipped
+
+Statistics:             66 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              66
+  Score:                 0 (max: 69)

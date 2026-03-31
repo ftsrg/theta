@@ -1,0 +1,12 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/list-ext3-properties/dll_nullified-2.i --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/list-ext3-properties/dll_nullified-2.i' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32 --input sv-benchmarks/c/list-ext3-properties/dll_nullified-2.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.saveTypedef(CParser.java:224), java.lang.ClassCastException: class org.antlr.v4.runtime.tree.TerminalNodeImpl cannot be cast to class hu.bme.mit.theta.c.frontend.dsl.gen.CParser$DirectDeclaratorContext (org.antlr.v4.runtime.tree.TerminalNodeImpl and hu.bme.mit.theta.c.frontend.dsl.gen.CParser$DirectDeclaratorContext are in unnamed module of loader 'app'))
+Error: class java.lang.ClassCastException class org.antlr.v4.runtime.tree.TerminalNodeImpl cannot be cast to class hu.bme.mit.theta.c.frontend.dsl.gen.CParser$DirectDeclaratorContext (org.antlr.v4.runtime.tree.TerminalNodeImpl and hu.bme.mit.theta.c.frontend.dsl.gen.CParser$DirectDeclaratorContext are in unnamed module of loader 'app') (hu.bme.mit.theta.c.frontend.dsl.gen.CParser#saveTypedef:224, hu.bme.mit.theta.c.frontend.dsl.gen.CParser#declaration:2869)

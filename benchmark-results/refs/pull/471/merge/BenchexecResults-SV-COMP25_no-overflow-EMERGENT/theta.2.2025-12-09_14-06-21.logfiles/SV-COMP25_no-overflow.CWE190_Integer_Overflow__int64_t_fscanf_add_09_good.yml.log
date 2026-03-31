@@ -1,0 +1,242 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 1117 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Using portfolio: PTR
+
+Current configuration: EXPL_PRED_STMT-NWT_IT_WP-Z3-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/no-overflow.prp, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL_PRED_STMT, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: [ARR]
+subprocess: 
+subprocess: Frontend finished:   (in 1326 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 2 -> [2, 2]
+subprocess: Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+subprocess: Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [TimeoutOrNotSolvableError, SolverError])
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: EXPL_PRED_STMT-NWT_IT_WP-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/no-overflow.prp, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL_PRED_STMT, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 419 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: EXPL_PRED_STMT-SEQ_ITP-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/no-overflow.prp, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL_PRED_STMT, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 319 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: IC3-cegar-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/no-overflow.prp, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=IC3, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=100000, inProcess=false, parseInProcess=true, memlimit=0, specConfig=Ic3Config(solver=Z3, validateSolver=false, reversed=true, cegar=true, initPrec=EMPTY)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 285 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Caught exception: java.lang.IllegalArgumentException
+Handling exception as Anything
+Current configuration: MDD-cegar-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/no-overflow.prp, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=MDD, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=50000, inProcess=false, parseInProcess=true, memlimit=0, specConfig=MddConfig(solver=Z3, validateSolver=false, iterationStrategy=GSAT, reversed=false, cegar=true, initPrec=EMPTY)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 295 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Caught exception: java.lang.IllegalArgumentException
+Handling exception as Anything
+Current configuration: Complex-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=PORTFOLIO, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=0, inProcess=false, parseInProcess=true, memlimit=0, specConfig=PortfolioConfig(portfolio=COMPLEX)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 278 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Using portfolio: PTR
+
+Current configuration: KIND-Z3:new-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:new, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3:new, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: [ARR]
+subprocess: 
+subprocess: Frontend finished:   (in 1278 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 2 -> [2, 2]
+subprocess: Exception in thread "main" java.lang.IllegalArgumentException
+subprocess: 	at com.google.common.base.Preconditions.checkArgument(Preconditions.java:131)
+subprocess: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter.getMonolithicExpr(XcfaSingleThreadToMonolithicAdapter.kt:81)
+subprocess: 	at hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker.<init>(FormalismPipelineChecker.kt:54)
+subprocess: 	at hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker.<init>(FormalismPipelineChecker.kt:49)
+subprocess: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker.<init>(XcfaPipelineChecker.kt:58)
+subprocess: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker.<init>(XcfaPipelineChecker.kt:48)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToBoundedCheckerKt.getPipelineChecker(ConfigToBoundedChecker.kt:114)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToBoundedCheckerKt.getBoundedChecker(ConfigToBoundedChecker.kt:75)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:54)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:270)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=1))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: PRED_CART-BW_BIN_ITP-Z3-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=BW_BIN_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: [ARR]
+subprocess: 
+subprocess: Frontend finished:   (in 1274 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 2 -> [2, 2]
+subprocess: Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+subprocess: Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [TimeoutOrNotSolvableError, SolverError])
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: KIND-Z3:new-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:new, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3:new, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 273 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Caught exception: java.lang.IllegalArgumentException
+Handling exception as Anything
+Current configuration: PRED_CART-BW_BIN_ITP-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=BW_BIN_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 272 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: EXPL-NWT_IT_WP-Z3:new-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3:new, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3:new, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 275 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: BMC-Z3:new-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=150000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:new, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 314 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Caught exception: java.lang.IllegalArgumentException
+Handling exception as Anything
+Current configuration: Complex-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=PORTFOLIO, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=0, inProcess=false, parseInProcess=true, memlimit=0, specConfig=PortfolioConfig(portfolio=COMPLEX)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 369 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Using portfolio: PTR
+
+Current configuration: KIND-Z3:new-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:new, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3:new, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: [ARR]
+subprocess: 
+subprocess: Frontend finished:   (in 1368 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 2 -> [2, 2]
+subprocess: Exception in thread "main" java.lang.IllegalArgumentException
+subprocess: 	at com.google.common.base.Preconditions.checkArgument(Preconditions.java:131)
+subprocess: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter.getMonolithicExpr(XcfaSingleThreadToMonolithicAdapter.kt:81)
+subprocess: 	at hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker.<init>(FormalismPipelineChecker.kt:54)
+subprocess: 	at hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker.<init>(FormalismPipelineChecker.kt:49)
+subprocess: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker.<init>(XcfaPipelineChecker.kt:58)
+subprocess: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker.<init>(XcfaPipelineChecker.kt:48)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToBoundedCheckerKt.getPipelineChecker(ConfigToBoundedChecker.kt:114)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToBoundedCheckerKt.getBoundedChecker(ConfigToBoundedChecker.kt:75)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:54)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:270)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=1))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: PRED_CART-BW_BIN_ITP-Z3-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=BW_BIN_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: [ARR]
+subprocess: 
+subprocess: Frontend finished:   (in 1436 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 2 -> [2, 2]
+subprocess: Process failed! (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getCoreXcfaLts$lambda$12(XcfaAnalysis.kt:137), java.lang.IllegalStateException: No such method time.)
+subprocess: Error: class java.lang.IllegalStateException No such method time. (hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getCoreXcfaLts$lambda$12:137, hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt#getXcfaLts$lambda$14:209)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [TimeoutOrNotSolvableError, SolverError])
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: KIND-Z3:new-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:new, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3:new, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: [ARR]
+
+Frontend finished:   (in 243 ms)
+ParsingResult Success
+Alias graph size: 2 -> [2, 2]
+Caught exception: java.lang.IllegalArgumentException
+Handling exception as Anything
+Current configuration: PRED_CART-BW_BIN_ITP-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=BW_BIN_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
