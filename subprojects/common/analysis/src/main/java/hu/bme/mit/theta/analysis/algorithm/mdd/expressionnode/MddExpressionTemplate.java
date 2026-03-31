@@ -241,7 +241,8 @@ public class MddExpressionTemplate implements MddNode.Template {
                     canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
         }
 
-        return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+        return MddExpressionRepresentation.of(
+                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
     }
 
     private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {

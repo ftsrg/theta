@@ -99,7 +99,8 @@ public class MddStateSpaceInfoTest {
                                         Eq(X.getRef(), Int(2)),
                                         Eq(
                                                 Y.getRef(),
-                                                Int(2)))), // x = 0, y = 0 or x = 1, y = 1 or x = 2, y = 2
+                                                Int(2)))), // x = 0, y = 0 or x = 1, y = 1 or x
+                        // = 2, y = 2
                         9L),
                 Arguments.of(List.of(A, C), And(A.getRef(), Eq(C.getRef(), RED)), 1L),
                 Arguments.of(List.of(A, C), A.getRef(), 3L),
