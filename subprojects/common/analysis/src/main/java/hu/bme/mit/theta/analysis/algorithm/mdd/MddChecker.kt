@@ -61,9 +61,9 @@ constructor(
   private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   private val traceTimeout: Long = 10,
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
-  private val mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+  private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
-  private val proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+  private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   private val solverMeasurements: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
@@ -77,7 +77,7 @@ constructor(
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    MddExpressionRepresentation.setMddToExprStrategy(mddToExprStrategy)
+    MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
 
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
@@ -249,17 +249,13 @@ constructor(
       try {
         logger.mainStep("Starting trace generation.\n")
         val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(
-          trace,
-          MddProof.of(stateSpace, proofMddToExprStrategy),
-          statistics,
-        )
+        return SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
       } catch (e: TimeoutException) {
         logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace, proofMddToExprStrategy),
+          MddProof.of(stateSpace, proofStrategy),
           statistics,
         )
       } catch (e: InterruptedException) {
@@ -267,7 +263,7 @@ constructor(
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace, proofMddToExprStrategy),
+          MddProof.of(stateSpace, proofStrategy),
           statistics,
         )
       } catch (e: ExecutionException) {
@@ -276,7 +272,7 @@ constructor(
         executor.shutdownNow()
       }
     } else {
-      result = SafetyResult.safe(MddProof.of(stateSpace, proofMddToExprStrategy), statistics)
+      result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)
     }
     return result
   }

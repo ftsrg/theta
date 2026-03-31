@@ -58,8 +58,8 @@ fun getMddChecker(
       solverPool,
       logger,
       iterationStrategy = mddConfig.iterationStrategy,
-      mddToExprStrategy = mddConfig.mddToExprStrategy,
-      proofMddToExprStrategy = mddConfig.proofMddToExprStrategy,
+      lookAheadStrategy = mddConfig.lookAheadStrategy,
+      proofStrategy = mddConfig.proofStrategy,
       traceTimeout = mddConfig.traceTimeout,
       solverMeasurements = mddConfig.solverMeasurements,
     )

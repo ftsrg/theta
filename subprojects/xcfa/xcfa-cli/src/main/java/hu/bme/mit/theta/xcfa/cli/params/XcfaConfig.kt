@@ -549,16 +549,16 @@ data class MddConfig(
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   @Parameter(
-    names = ["--mdd-to-expr-strategy"],
+    names = ["--look-ahead-strategy"],
     description = "MDD to expression conversion strategy",
   )
-  var mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+  var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
   @Parameter(
-    names = ["--proof-mdd-to-expr-strategy"],
+    names = ["--proof-strategy"],
     description = "MDD to expression conversion strategy for the proof invariant",
   )
-  var proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy =
+  var proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,

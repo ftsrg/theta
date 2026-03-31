@@ -54,12 +54,12 @@ class XstsCliMdd :
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
 
-  private val mddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy by
+  private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy by
     option(help = "The MDD to expression conversion strategy")
       .enum<MddExpressionRepresentation.MddToExprStrategy>()
       .default(MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL)
 
-  private val proofMddToExprStrategy: MddExpressionRepresentation.MddToExprStrategy by
+  private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy by
     option(help = "The MDD to expression conversion strategy for the proof invariant")
       .enum<MddExpressionRepresentation.MddToExprStrategy>()
       .default(MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL)
@@ -129,8 +129,8 @@ class XstsCliMdd :
               logger,
               iterationStrategy,
               variableOrdering = variableOrdering,
-              mddToExprStrategy = mddToExprStrategy,
-              proofMddToExprStrategy = proofMddToExprStrategy,
+              lookAheadStrategy = lookAheadStrategy,
+              proofStrategy = proofStrategy,
               traceTimeout = traceTimeout,
               solverMeasurements = solverMeasurements,
             )

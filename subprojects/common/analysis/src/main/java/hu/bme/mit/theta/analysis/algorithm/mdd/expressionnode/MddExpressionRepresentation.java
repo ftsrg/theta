@@ -60,7 +60,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     private final SolverPool solverPool;
     private final boolean transExpr;
-    private static MddToExprStrategy mddToExprStrategy = MddToExprStrategy.VARIABLE_LEVEL;
+    private static MddToExprStrategy lookAheadStrategy = MddToExprStrategy.VARIABLE_LEVEL;
 
     public enum MddToExprStrategy {
         NONE {
@@ -91,8 +91,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         public abstract Expr<BoolType> toExpr(MddHandle handle);
     }
 
-    public static void setMddToExprStrategy(MddToExprStrategy strategy) {
-        mddToExprStrategy = strategy;
+    public static void setLookAheadStrategy(MddToExprStrategy strategy) {
+        lookAheadStrategy = strategy;
     }
 
     private MddExpressionRepresentation(
@@ -275,7 +275,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         Preconditions.checkArgument(constraint instanceof MddHandle);
         final MddHandle mddHandle = (MddHandle) constraint;
 
-        final var constraintExpr = mddToExprStrategy.toExpr(mddHandle);
+        final var constraintExpr = lookAheadStrategy.toExpr(mddHandle);
 
         return new Cursor(null, Traverser.create(this, constraintExpr, solverPool));
     }
