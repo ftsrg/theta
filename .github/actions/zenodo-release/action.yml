@@ -35,7 +35,7 @@ runs:
           --token '${{inputs.token}}' \
           --record-id '${{inputs.prevrecord}}' \
           --tool '${{inputs.tool}}' \
-          --file 'upload/${{inputs.tool}}.zip' \
+          --file 'upload/${{inputs.artifact}}.zip' \
           --metadata '${{github.action_path}}/metadata.json' \
           --cleanup-drafts
       shell: bash
