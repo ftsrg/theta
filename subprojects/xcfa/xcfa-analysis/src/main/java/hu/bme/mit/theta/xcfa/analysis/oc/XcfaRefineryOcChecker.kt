@@ -17,6 +17,8 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
+import hu.bme.mit.theta.analysis.algorithm.oc.Event
+import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.GlobalRelation
 import hu.bme.mit.theta.analysis.algorithm.oc.Reason
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
@@ -24,6 +26,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.xcfa.utils.READ
 
 internal class XcfaRefineryOcChecker : XcfaOcChecker {
 
@@ -43,6 +46,85 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     // add rf-related constraints to the refinery problem here
 
     // do not add po and ws relation constraints here!
+
+    val refineryCode = buildString {
+      append(generateMetamodel())
+      append(generateEvents(eg))
+      append(generateRelations(eg))
+    }
+
+    println("--- REFINERY CODE ---")
+    println(refineryCode)
+    println("-------------------------------")
+  }
+
+  private fun generateMetamodel(): String {
+    return """
+            class Event {
+                int index
+                boolean isRead
+                real value
+            }
+
+            pred hb(Event a, Event b).
+            default !hb(*, *). 
+            
+            pred po(Event a, Event b).
+            default !po(*, *). 
+            
+            pred rf(Event w, Event r).
+            default !rf(*, *).
+
+            propagation rule rfIsHb(Event w, Event r) <->
+                rf(w, r) ==> hb(w, r).
+
+            propagation rule hbTransitive(Event a, Event b, Event c) <->
+                hb(a, b), hb(b, c) ==> hb(a, c).
+
+            error pred cycle(Event e) <-> hb(e, e).
+
+            error pred rfBadTypes(Event w, Event r) <->
+                rf(w, r), (isRead(w) || !isRead(r)).
+
+            error pred rfValuesNotEqual(Event w, Event r) <->
+                rf(w, r), (value(w) != value(r)).
+
+            error pred readFromSeveralWriters(Event r, Event w1, Event w2) <->
+                rf(w1, r), rf(w2, r), w1 != w2.
+
+        """.trimIndent()
+  }
+
+  private fun generateEvents(eg: XcfaToEventGraph.EventGraph): String {
+    val sb = StringBuilder("\n% Events\n")
+
+    eg.events.values.flatMap { it.values }.flatten().forEach { event ->
+      val id = "e${event.id}"
+      val type = if (event.type == EventType.READ) "true" else "false"
+
+      sb.append("Event($id).\n")
+      sb.append("index($id, ${event.id}).\n")
+      sb.append("isRead($id, $type).\n")
+      sb.append("value($id, ${event.const}).\n")
+    }
+
+    return sb.toString()
+  }
+
+  private fun generateRelations(eg: XcfaToEventGraph.EventGraph): String {
+    val sb = StringBuilder("\n% Relations\n")
+
+    eg.pos.forEach { rel ->
+        sb.append("po(e${rel.from.id}, e${rel.to.id}).\n")
+    }
+
+    eg.rfs.forEach { (varDecl, relations) ->
+        relations.forEach { rel ->
+            sb.append("?rf(e${rel.from.id}, e${rel.to.id}).\n")
+        }
+    }
+
+    return sb.toString()
   }
 
   override fun addConflict(conflict: Reason) {

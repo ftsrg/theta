@@ -35,7 +35,7 @@ enum class OcDecisionProcedureType(
   }),
   BASIC({ solver, _ -> XcfaSmtOcChecker(BasicOcChecker(solver)) }),
   PROPAGATOR({ _, _ -> XcfaSmtOcChecker(UserPropagatorOcChecker()) }),
-  REFINERY({ _, _ -> XcfaRefineryOcChecker() }),
+  REFINERY({ _, _ -> XcfaRefineryOcChecker() })
 }
 
 internal class XcfaEvent(
