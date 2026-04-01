@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xsts.XSTS
+import kotlin.collections.listOf
 
 object XstsStmtFlatteningTransformer {
 
@@ -49,12 +50,13 @@ object XstsStmtFlatteningTransformer {
     )
   }
 
-  private fun cartesianProduct(vararg sets: Set<*>): Set<kotlin.collections.List<*>> =
-    sets
-      .fold(listOf(listOf<Any?>())) { acc, set ->
-        acc.flatMap { list -> set.map { element -> list + element } }
-      }
-      .toSet()
+  private fun cartesianProduct(vararg sets: Set<*>): Set<List<*>> {
+    var combinations: Sequence<List<*>> = sequenceOf(listOf<Any?>())
+    for (set in sets) {
+      combinations = combinations.flatMap { prefix -> set.map { element -> prefix + element } }
+    }
+    return combinations.toSet()
+  }
 
   private fun flattenStmts(stmt: Stmt, maxDepth: Int = -1, currentDepth: Int = 0): Set<Stmt> {
     if (maxDepth != -1 && currentDepth > maxDepth) {
