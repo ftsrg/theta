@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.prod2;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static java.util.Collections.singleton;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -26,6 +27,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 
 public abstract class Prod2State<S1 extends State, S2 extends State> implements ExprState {
 
@@ -66,6 +68,19 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
             }
         }
         return result;
+    }
+
+    public static <S1 extends State, S2 extends State> Collection<Prod2State<S1, S2>> cartesianOrBottom(
+            final Collection<? extends S1> states1, final Collection<? extends S2> states2) {
+        final Optional<? extends S1> bottom1 = states1.stream().filter(State::isBottom).findAny();
+        if (bottom1.isPresent()) {
+            return singleton(Prod2State.bottom1(bottom1.get()));
+        }
+        final Optional<? extends S2> bottom2 = states2.stream().filter(State::isBottom).findAny();
+        if (bottom2.isPresent()) {
+            return singleton(Prod2State.bottom2(bottom2.get()));
+        }
+        return cartesian(states1, states2);
     }
 
     public abstract S1 getState1();

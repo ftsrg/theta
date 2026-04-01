@@ -22,8 +22,12 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec
+import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
+import hu.bme.mit.theta.analysis.zone.ZonePrec
+import hu.bme.mit.theta.analysis.zone.ZoneState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
@@ -206,21 +210,38 @@ fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getIte(
   }
 }
 
-fun <S : ExprState> S.patch(writeTriples: WriteTriples): S =
-  when (this) {
-    is PredState -> PredState.of(preds.map { it.patch(writeTriples) }) as S
-    is ExplState -> this
-    is UnitState -> this
-    is PtrState<*> ->
-      (this as PtrState<ExprState>).copy(innerState = innerState.patch(writeTriples)) as S
-    else -> error("State $this is not supported")
-  }
+fun <S : ExprState> S.patch(writeTriples: WriteTriples): S {
+    return when (this) {
+        is PredState -> PredState.of(preds.map { it.patch(writeTriples) }) as S
+        is ExplState -> this
+        is UnitState -> this
+        is ZoneState -> this
+        is Prod2State<*,*> -> {
+            if (this.isBottom1 && this.state1 is ExprState) {
+                return this.with1((state1 as ExprState).patch(writeTriples)) as S
+            } else if (this.isBottom2 && this.state2 is ExprState) {
+                return this.with2((state2 as ExprState).patch(writeTriples)) as S
+            } else if (this.state1 is ExprState && this.state2 is ExprState) {
+                return Prod2State.of((state1 as ExprState).patch(writeTriples), (state2 as ExprState).patch(writeTriples)) as S
+            } else {
+                error("State $this is not supported")
+            }
+        }
+
+        is PtrState<*> ->
+            (this as PtrState<ExprState>).copy(innerState = innerState.patch(writeTriples)) as S
+
+        else -> error("State $this is not supported")
+    }
+}
 
 fun <P : Prec> P.patch(writeTriples: WriteTriples): P =
   when (this) {
     is PredPrec -> PredPrec.of(preds.map { it.patch(writeTriples) }) as P
     is ExplPrec -> this
     is UnitPrec -> this
+    is ZonePrec -> this
+    is Prod2Prec<*,*> -> Prod2Prec.of(prec1.patch(writeTriples), prec2.patch(writeTriples)) as P
     else -> error("Prec $this is not supported")
   }
 
@@ -236,16 +257,32 @@ fun <P : Prec> P.repatch(): P =
     is PredPrec -> PredPrec.of(preds.map { it.repatch() }) as P
     is ExplPrec -> this
     is UnitPrec -> this
+    is ZonePrec -> this
+    is Prod2Prec<*,*> -> Prod2Prec.of(prec1.repatch(), prec2.repatch()) as P
     else -> error("Prec $this is not supported")
   }
 
-fun <S : ExprState> S.repatch(): S =
-  when (this) {
-    is PredState -> PredState.of(preds.map(Expr<BoolType>::repatch)) as S
-    is ExplState -> this
-    is UnitState -> this
-    else -> error("State $this is not supported")
-  }
+fun <S : ExprState> S.repatch(): S {
+    return when (this) {
+        is PredState -> PredState.of(preds.map(Expr<BoolType>::repatch)) as S
+        is ExplState -> this
+        is UnitState -> this
+        is ZoneState -> this
+        is Prod2State<*,*> -> {
+            if (this.isBottom1 && this.state1 is ExprState) {
+                return this.with1((state1 as ExprState).repatch()) as S
+            } else if (this.isBottom2 && this.state2 is ExprState) {
+                return this.with2((state2 as ExprState).repatch()) as S
+            } else if (this.state1 is ExprState && this.state2 is ExprState) {
+                return Prod2State.of((state1 as ExprState).repatch(), (state2 as ExprState).repatch()) as S
+            } else {
+                error("State $this is not supported")
+            }
+        }
+
+        else -> error("State $this is not supported")
+    }
+}
 
 private fun <T : Type> Expr<T>.repatch(): Expr<T> =
   when (this) {

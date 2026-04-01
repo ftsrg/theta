@@ -30,6 +30,10 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
+import hu.bme.mit.theta.analysis.prod2.Prod2InitFunc
+import hu.bme.mit.theta.analysis.prod2.Prod2Ord
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec
+import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
@@ -37,6 +41,9 @@ import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
 import hu.bme.mit.theta.analysis.unit.*
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
+import hu.bme.mit.theta.analysis.zone.ZoneOrd
+import hu.bme.mit.theta.analysis.zone.ZonePrec
+import hu.bme.mit.theta.analysis.zone.ZoneState
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.clock.op.ClockOps.Reset
@@ -52,6 +59,10 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.timed.DataClockXcfaActionPartition
+import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneInitFunc
+import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneTransFunc
+import hu.bme.mit.theta.xcfa.analysis.timed.addVarsAndClocks
 import hu.bme.mit.theta.xcfa.analysis.timed.getActiveClocks
 import hu.bme.mit.theta.xcfa.analysis.timed.getInvariants
 import hu.bme.mit.theta.xcfa.getFlatLabels
@@ -393,6 +404,15 @@ private fun <S : ExprState, P : Prec> getXcfaTransFunc(
     }
 }
 
+private fun <S : ExprState, P : Prec> getProd2DataZoneTransFunc(
+    dataTransFunc : TransFunc<S, ExprAction, P>,
+    zoneTransFunc : TransFunc<ZoneState, ExprAction, ZonePrec>,
+) = TransFunc<Prod2State<S, ZoneState>, ExprAction, Prod2Prec<P, ZonePrec>> { state, action, prec ->
+    val (dataAction, clockAction) = DataClockXcfaActionPartition.getPartition(action as XcfaAction)
+    Prod2State.cartesianOrBottom(
+        dataTransFunc.getSuccStates(state.state1, dataAction, prec.prec1),
+        zoneTransFunc.getSuccStates(state.state2, clockAction, prec.prec2)
+    )
 }
 
 private fun getLookups(
@@ -436,6 +456,35 @@ class ExplXcfaAnalysis(
     ),
   )
 
+class ExplZoneXcfaAnalysis(
+    xcfa: XCFA,
+    solver: Solver,
+    maxEnum: Int,
+    partialOrd: PartialOrd<ExplState>,
+    isHavoc: Boolean,
+) : XcfaAnalysis<Prod2State<ExplState, ZoneState>, PtrPrec<Prod2Prec<ExplPrec, ZonePrec>>>(
+    corePartialOrd = getPartialOrder(
+        Prod2Ord.create(
+            partialOrd, ZoneOrd.getInstance()
+        ).getPtrPartialOrd()
+    ),
+    coreInitFunc = getXcfaInitFunc(
+        xcfa,
+        Prod2InitFunc.create(
+            getExplInitFunc(solver),
+            XcfaZoneInitFunc(xcfa.initProcedures.map { it.first.initLoc })
+        ),
+    ),
+    coreTransFunc = getXcfaTransFunc(
+        getProd2DataZoneTransFunc(
+            getExplTransFunc(solver, maxEnum),
+            XcfaZoneTransFunc() as TransFunc<ZoneState, ExprAction, ZonePrec>
+        ),
+        { s, a, p -> p.p.addVarsAndClocks(s, getLookups(s, a)) },
+        isHavoc,
+    )
+)
+
 /// PRED
 
 private fun getPredInitFunc(
@@ -462,6 +511,36 @@ class PredXcfaAnalysis(
         isHavoc,
     ),
   )
+
+class PredZoneXcfaAnalysis(
+    xcfa: XCFA,
+    predAbstractor: PredAbstractor,
+    partialOrd: PartialOrd<PredState>,
+    isHavoc: Boolean,
+) : XcfaAnalysis<Prod2State<PredState, ZoneState>, PtrPrec<Prod2Prec<PredPrec, ZonePrec>>>(
+    corePartialOrd = getPartialOrder(
+        Prod2Ord.create(
+            partialOrd, ZoneOrd.getInstance()
+        ).getPtrPartialOrd()
+    ),
+    coreInitFunc = getXcfaInitFunc(
+        xcfa,
+        Prod2InitFunc.create(
+            getPredInitFunc(predAbstractor),
+            XcfaZoneInitFunc(xcfa.initProcedures.map { it.first.initLoc })
+        ),
+    ),
+    coreTransFunc = getXcfaTransFunc(
+        getProd2DataZoneTransFunc(
+            getPredTransFunc(predAbstractor),
+            XcfaZoneTransFunc() as TransFunc<ZoneState, ExprAction, ZonePrec>
+        ),
+        { s, a, p -> p.p.addVarsAndClocks(s, getFoldedLookups(s, a)) },
+        isHavoc,
+    )
+)
+
+/// UNIT
 
 private fun getUnitXcfaPartialOrd(xcfa: XCFA): PartialOrd<XcfaState<PtrState<UnitState>>> {
   val ptrPartialOrd = UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd()

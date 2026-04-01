@@ -16,6 +16,10 @@
 
 package hu.bme.mit.theta.xcfa.analysis.timed
 
+import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.zone.ZonePrec
 import hu.bme.mit.theta.core.clock.constr.TrueConstr
 import hu.bme.mit.theta.core.clock.op.ClockOps.Guard
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -23,6 +27,7 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.addVars
 import hu.bme.mit.theta.xcfa.analysis.foldVarLookup
 import hu.bme.mit.theta.xcfa.model.ClockOpLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -53,4 +58,14 @@ fun getInvariants(locsToLookups: Map<XcfaLocation, Map<VarDecl<*>, VarDecl<*>>>)
         .mapKeys { (loc, _) -> loc.invariant }
         .filter { (invariant, _) -> invariant !is TrueConstr }
         .map { (invariant, lookup) -> ClockOpLabel(Guard(invariant)).changeVars(lookup) }
+}
+
+fun <P : Prec> PtrPrec<Prod2Prec<P, ZonePrec>>.addVarsAndClocks(
+    s : XcfaState<*>,
+    lookups : Collection<Map<VarDecl<*>, VarDecl<*>>>,
+): PtrPrec<Prod2Prec<P, ZonePrec>> {
+    return PtrPrec(Prod2Prec.of(
+        this.innerPrec.prec1.addVars(lookups),
+        ZonePrec.of(getActiveClocks(s))
+    ))
 }
