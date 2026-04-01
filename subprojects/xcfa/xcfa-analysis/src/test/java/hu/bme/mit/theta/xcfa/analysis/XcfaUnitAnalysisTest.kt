@@ -15,8 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.analysis
 
+import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
@@ -26,6 +29,7 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.concurrent.TimeUnit
 
 class XcfaUnitAnalysisTest {
 
@@ -41,6 +45,8 @@ class XcfaUnitAnalysisTest {
         arrayOf("/04multithread.c", 40, SafetyResult<*, *>::isUnsafe),
         arrayOf("/05assignment_safe.c", 16, SafetyResult<*, *>::isSafe),
         arrayOf("/05assignment_safe.c", 2, this::isUnknown),
+        arrayOf("/06spuriousrace_untimed.c", 35, SafetyResult<*, *>::isUnsafe),
+        arrayOf("/07spuriousrace_timed.c", 35, this::isUnknown),
       )
     }
 
@@ -52,6 +58,8 @@ class XcfaUnitAnalysisTest {
   @MethodSource("data")
   fun testNoporBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing NOPOR on $filepath...")
+    val logger = ConsoleLogger(INFO)
+    val stopwatch = Stopwatch.createStarted()
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
     ConeOfInfluence = XcfaCoiMultiThread(xcfa)
@@ -60,6 +68,10 @@ class XcfaUnitAnalysisTest {
     val checker = getBoundedXcfaChecker(xcfa, ErrorDetection.ERROR_LOCATION, bound, solver)
     val safetyResult = checker.check()
 
+    logger.write(
+      INFO,
+      "$filepath finished in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms\n",
+    )
     Assertions.assertTrue(verdict(safetyResult))
   }
 
@@ -67,6 +79,8 @@ class XcfaUnitAnalysisTest {
   @MethodSource("data")
   fun testSporBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing SPOR on $filepath...")
+    val logger = ConsoleLogger(INFO)
+    val stopwatch = Stopwatch.createStarted()
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
     ConeOfInfluence = XcfaCoiMultiThread(xcfa)
@@ -76,6 +90,10 @@ class XcfaUnitAnalysisTest {
     val checker = getBoundedXcfaChecker(xcfa, lts, ErrorDetection.ERROR_LOCATION, bound, solver)
     val safetyResult = checker.check()
 
+    logger.write(
+      INFO,
+      "$filepath finished in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms\n",
+    )
     Assertions.assertTrue(verdict(safetyResult))
   }
 }
