@@ -245,7 +245,7 @@ jobs:
         uses: ./.github/actions/create-release
         with:
           message: ${{ inputs.message }}
-          dry-run: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
+          dry-run: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master' }}
 
   deploy-zenodo:
     needs: [create-archives]
@@ -253,15 +253,18 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        tool: [Theta, EmergenTheta, Thorn, ThetaCHC]
         include:
-          - tool: Theta-svcomp
+          - tool: Theta
+            artifact: Theta-svcomp
             record: 14194483
-          - tool: EmergenTheta-svcomp
+          - tool: EmergenTheta
+            artifact: EmergenTheta-svcomp
             record: 15536866
-          - tool: Thorn-svcomp
+          - tool: Thorn
+            artifact: Thorn-svcomp
             record: 14194485
-          - tool: Theta-chccomp
+          - tool: ThetaCHC
+            artifact: Theta-chccomp
             record: 15537027
     steps:
       - name: Checkout repository
@@ -269,9 +272,10 @@ jobs:
       - name: Create zenodo release and deploy tools
         uses: ./.github/actions/zenodo-release
         with:
-          tool: ${{matrix.tool}}
-          prevrecord: ${{matrix.record}}
-          token: ${{secrets.zenodo_token}}
+          tool: ${{ matrix.tool }}
+          artifact: ${{ matrix.artifact }}
+          prevrecord: ${{ matrix.record }}
+          token: ${{ secrets.zenodo_token }}
 
   deploy-maven:
     needs: test-linux

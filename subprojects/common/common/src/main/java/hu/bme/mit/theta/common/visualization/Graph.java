@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package hu.bme.mit.theta.common.visualization;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +44,7 @@ public final class Graph {
     public Graph(final String id, final String label) {
         this.id = checkNotNull(id);
         this.label = checkNotNull(label);
-        this.nodes = Containers.createMap();
+        this.nodes = CollectionUtil.createMap();
         this.edges = new ArrayList<>();
     }
 

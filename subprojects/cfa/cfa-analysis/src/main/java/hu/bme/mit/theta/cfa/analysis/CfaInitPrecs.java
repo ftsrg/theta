@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -33,9 +33,9 @@ public final class CfaInitPrecs {
     private CfaInitPrecs() {}
 
     public static LocalCfaPrec<PredPrec> collectAssumesLocal(CFA cfa) {
-        Map<CFA.Loc, PredPrec> precs = Containers.createMap();
+        Map<CFA.Loc, PredPrec> precs = CollectionUtil.createMap();
         for (CFA.Loc l : cfa.getLocs()) {
-            Set<Expr<BoolType>> exprs = Containers.createSet();
+            Set<Expr<BoolType>> exprs = CollectionUtil.createSet();
             for (CFA.Edge e : l.getInEdges()) {
                 CFA.Edge running = e;
                 while (running != null) {
@@ -56,7 +56,7 @@ public final class CfaInitPrecs {
     }
 
     public static GlobalCfaPrec<PredPrec> collectAssumesGlobal(CFA cfa) {
-        Set<Expr<BoolType>> assumes = Containers.createSet();
+        Set<Expr<BoolType>> assumes = CollectionUtil.createSet();
         for (CFA.Edge e : cfa.getEdges()) {
             if (e.getStmt() instanceof AssumeStmt) {
                 AssumeStmt assumeStmt = (AssumeStmt) e.getStmt();

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.EmptyProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
@@ -50,7 +50,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 
 public class Ic3Checker
-        implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
+        implements SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> {
     private final MonolithicExpr monolithicExpr;
     private final List<Frame> frames;
     private final SolverFactory solverFactory;
@@ -95,11 +95,11 @@ public class Ic3Checker
     }
 
     @Override
-    public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
+    public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
         // check if init violates prop
         var firstTrace = checkFirst();
         if (firstTrace != null) {
-            final var result = SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
+            final var result = SafetyResult.unsafe(firstTrace, PredState.of(True()));
             return result;
         }
         while (true) {
@@ -112,15 +112,14 @@ public class Ic3Checker
                                         new HashSet<>(counterExample), currentFrameNumber));
                 if (proofObligationsList != null) {
                     var trace = makeTrace(proofObligationsList);
-                    final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
+                    final var result = SafetyResult.unsafe(trace, PredState.of(True()));
                     return result;
                 }
             } else {
-                if (propagate()) {
-                    final SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> result =
-                            SafetyResult.safe(EmptyProof.getInstance());
-                    return result;
-                }
+                var propagateResult = propagate();
+                if (propagateResult >= 0)
+                    return SafetyResult.safe(
+                            PredState.of(And(frames.get(propagateResult).getExprs())));
             }
         }
     }
@@ -317,7 +316,10 @@ public class Ic3Checker
         }
     }
 
-    public boolean propagate() {
+    /*
+     * returns index of the first frame that is equal to its previous one, or -1 if there is no such frame
+     */
+    public int propagate() {
         frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr));
         currentFrameNumber++;
         if (propertyOpt) {
@@ -326,28 +328,29 @@ public class Ic3Checker
 
         if (propagateOpt) {
             for (int j = 1; j < currentFrameNumber; j++) {
-                for (var c : frames.get(j).getExprs()) {
-                    try (var wpp = new WithPushPop(solver)) {
-                        frames.get(j)
-                                .getExprs()
-                                .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                        getConjuncts(monolithicExpr.getTransExpr())
-                                .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                        solver.track(
-                                PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
-                        if (solver.check().isUnsat()) {
-                            frames.get(j + 1).refine(c);
+                try (var wpp = new WithPushPop(solver)) {
+                    frames.get(j).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                    getConjuncts(monolithicExpr.getTransExpr())
+                            .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+
+                    for (var c : frames.get(j).getExprs()) {
+                        try (var wpp2 = new WithPushPop(solver)) {
+                            solver.track(
+                                    PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
+                            if (solver.check().isUnsat()) {
+                                frames.get(j + 1).refine(c);
+                            }
                         }
                     }
                 }
                 if (frames.get(j + 1).equalsParent()) {
-                    return true;
+                    return j + 1;
                 }
             }
         } else if (currentFrameNumber > 1 && frames.get(currentFrameNumber - 1).equalsParent()) {
-            return true;
+            return currentFrameNumber - 1;
         }
-        return false;
+        return -1;
     }
 
     public Trace<ExplState, ExprAction> makeTrace(

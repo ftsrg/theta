@@ -29,6 +29,7 @@ include(
     "frontends/petrinet-model",
     "frontends/petrinet-analysis",
     "frontends/petrinet-xsts",
+    "frontends/dve-frontend",
     "frontends/chc-frontend",
     "frontends/llvm",
 
