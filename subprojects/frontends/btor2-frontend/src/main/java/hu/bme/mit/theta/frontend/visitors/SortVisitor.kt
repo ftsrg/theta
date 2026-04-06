@@ -19,14 +19,16 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
 
-class SortVisitor : Btor2BaseVisitor<Btor2Sort>() {
+class SortVisitor(
+  private val circuit: Btor2Circuit
+) : Btor2BaseVisitor<Btor2Sort>() {
   override fun visitSort(ctx: Btor2Parser.SortContext): Btor2Sort {
     return this.visitBitvec_sort(ctx.bitvec_sort())
   }
 
   override fun visitBitvec_sort(ctx: Btor2Parser.Bitvec_sortContext): Btor2Sort {
     var sort = Btor2BitvecSort(ctx.id.NUM().text.toUInt(), ctx.width.text.toUInt())
-    Btor2Circuit.addSort(sort)
+    circuit.addSort(sort)
     return sort
   }
 }

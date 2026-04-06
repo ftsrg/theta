@@ -18,10 +18,11 @@ package hu.bme.mit.theta.frontend.visitors
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
-import hu.bme.mit.theta.frontend.models.Btor2Circuit.nodes
 import kotlin.math.abs
 
-class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
+class OperationVisitor(
+  private val circuit: Btor2Circuit
+) : Btor2BaseVisitor<Btor2Node>() {
   val idVisitor = IdVisitor()
 
   override fun visitOperation(ctx: Btor2Parser.OperationContext): Btor2Node {
@@ -32,7 +33,8 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
   override fun visitExt(ctx: Btor2Parser.ExtContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
     val op =
       when (ctx.operator.text) {
         "sext" -> Btor2ExtOperator.SEXT
@@ -40,33 +42,35 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         else -> throw RuntimeException("Extension operator unknown")
       }
 
-    val opd = nodes[ctx.opd1.text.toUInt()] as Btor2Node
+    val opd = circuit.nodes[ctx.opd1.text.toUInt()] as Btor2Node
     val w = ctx.w.text.toUInt()
 
     check(sort.width == (opd.sort as Btor2BitvecSort).width + w)
     val node = Btor2ExtOperation(nid, sort, op, opd, w)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitSlice(ctx: Btor2Parser.SliceContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
-    val opd = nodes[ctx.opd1.text.toUInt()] as Btor2Node
+    val opd = circuit.nodes[ctx.opd1.text.toUInt()] as Btor2Node
     val u = ctx.u.text.toBigInteger()
     val l = ctx.l.text.toBigInteger()
 
     val node = Btor2SliceOperation(nid, sort, opd, u, l)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitBinop(ctx: Btor2Parser.BinopContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
     val opd1_id = ctx.opd1.text.toInt()
     val opd2_id = ctx.opd2.text.toInt()
@@ -74,8 +78,8 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
     val opd1_negated = opd1_id < 0
     val opd2_negated = opd2_id < 0
 
-    val opd1 = nodes[abs(opd1_id).toUInt()] as Btor2Node
-    val opd2 = nodes[abs(opd2_id).toUInt()] as Btor2Node
+    val opd1 = circuit.nodes[abs(opd1_id).toUInt()] as Btor2Node
+    val opd2 = circuit.nodes[abs(opd2_id).toUInt()] as Btor2Node
 
     val op =
       when (ctx.BINOP().text) {
@@ -124,16 +128,16 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
 
     if (op is Btor2ComparisonOperator) {
       val node = Btor2Comparison(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
-      Btor2Circuit.addNode(node)
+      circuit.addNode(node)
       return node
     } else if (op is Btor2BinaryOperator) {
       val node = Btor2BinaryOperation(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
-      Btor2Circuit.addNode(node)
+      circuit.addNode(node)
       return node
     } else if (op is Btor2BooleanOperator) {
       // Boolean operators are not operations, but comparisons
       val node = Btor2Boolean(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
-      Btor2Circuit.addNode(node)
+      circuit.addNode(node)
       return node
     } else {
       throw RuntimeException("Binary operator unknown")
@@ -143,7 +147,8 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
   override fun visitUnop(ctx: Btor2Parser.UnopContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
     val op =
       when (ctx.UNARYOP().text) {
@@ -157,17 +162,18 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         else -> throw RuntimeException("Unary operator unknown")
       }
 
-    val opd = nodes[ctx.opd1.text.toUInt()] as Btor2Node
+    val opd = circuit.nodes[ctx.opd1.text.toUInt()] as Btor2Node
 
     val node = Btor2UnaryOperation(nid, sort, op, opd)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitTerop(ctx: Btor2Parser.TeropContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
     val op =
       when (ctx.TERNARYOP().text) {
         "ite" -> Btor2TernaryOperator.ITE
@@ -181,12 +187,12 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
     val opd2Index = abs(ctx.opd2.text.toInt()).toUInt()
     val opd3Index = abs(ctx.opd3.text.toInt()).toUInt()
 
-    val opd1 = nodes[opd1Index] as Btor2Node
-    val opd2 = nodes[opd2Index] as Btor2Node
-    val opd3 = nodes[opd3Index] as Btor2Node
+    val opd1 = circuit.nodes[opd1Index] as Btor2Node
+    val opd2 = circuit.nodes[opd2Index] as Btor2Node
+    val opd3 = circuit.nodes[opd3Index] as Btor2Node
 
     val node = Btor2TernaryOperation(nid, sort, op, opd1, opd2, opd3, negated1, negated2, negated3)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 }

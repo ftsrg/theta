@@ -48,7 +48,7 @@ interface Btor2NodeVisitor<R, P> {
   fun visit(node: Btor2Const, param: P): R
 }
 
-object Btor2Circuit {
+class Btor2Circuit {
   private val _nodes = mutableMapOf<UInt, Btor2Node>()
   private val _sorts = mutableMapOf<UInt, Btor2Sort>()
   private val _constants = mutableMapOf<UInt, Btor2Const>()

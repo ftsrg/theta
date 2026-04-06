@@ -20,7 +20,9 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
 import kotlin.math.abs
 
-class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
+class StateVisitor (
+  private val circuit: Btor2Circuit
+) : Btor2BaseVisitor<Btor2Node>() {
   private val idVisitor = IdVisitor()
 
   override fun visitStateful(ctx: Btor2Parser.StatefulContext): Btor2Node {
@@ -31,59 +33,63 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
   override fun visitState(ctx: Btor2Parser.StateContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort = Btor2Circuit.sorts[sid] as Btor2Sort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
     val node = Btor2State(nid, sort, null, null)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitInput(ctx: Btor2Parser.InputContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort = Btor2Circuit.sorts[sid] as Btor2Sort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
     val node = Btor2Input(nid, sort, null, null)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitInit(ctx: Btor2Parser.InitContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort = Btor2Circuit.sorts[sid]!!
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
-    val param1 = Btor2Circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
-    val param2 = Btor2Circuit.nodes[ctx.param2.NUM().text.toUInt()] as Btor2Node
+    val param1 = circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
+    val param2 = circuit.nodes[ctx.param2.NUM().text.toUInt()] as Btor2Node
 
     check((param1.sort as Btor2BitvecSort).width == (param2.sort as Btor2BitvecSort).width)
     val node = Btor2Init(nid, sort, param1, param2)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitNext(ctx: Btor2Parser.NextContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort = Btor2Circuit.sorts[sid] as Btor2Sort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
 
     val param2_id = ctx.param2.text.toInt()
 
     val param2_negated = param2_id < 0
-    val param1 = Btor2Circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
-    val param2 = Btor2Circuit.nodes[abs(param2_id).toUInt()] as Btor2Node
+    val param1 = circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
+    val param2 = circuit.nodes[abs(param2_id).toUInt()] as Btor2Node
     val node = Btor2Next(nid, sort, param1, param2, param2_negated)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   // Only adding bads
   override fun visitProperty(ctx: Btor2Parser.PropertyContext): Btor2Node {
     val nid = idVisitor.visit(ctx.id)
-    val node = Btor2Bad(nid, null, Btor2Circuit.nodes[ctx.param.NUM().text.toUInt()] as Btor2Node)
+    val node = Btor2Bad(nid, null, circuit.nodes[ctx.param.NUM().text.toUInt()] as Btor2Node)
     when (ctx.property_type.text) {
       "bad" -> {
-        Btor2Circuit.addNode(node)
+        circuit.addNode(node)
         return node
       }
       else ->

@@ -18,10 +18,11 @@ package hu.bme.mit.theta.frontend.visitors
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
-import hu.bme.mit.theta.frontend.models.Btor2Circuit.sorts
 import java.math.BigInteger
 
-class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
+class ConstantVisitor(
+  private val circuit: Btor2Circuit
+) : Btor2BaseVisitor<Btor2Const>() {
   val idVisitor = IdVisitor()
 
   override fun visitConstantNode(ctx: Btor2Parser.ConstantNodeContext): Btor2Const {
@@ -32,45 +33,49 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
   override fun visitConstant(ctx: Btor2Parser.ConstantContext): Btor2Const {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
     val value = ctx.NUM().text.toString()
     val size = sort.width.toInt()
     val binArray = BooleanArray(size) { index -> (value[index] - '0') == 1 }
     var node = Btor2Const(nid, binArray, sort)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitConstant_d(ctx: Btor2Parser.Constant_dContext): Btor2Const {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
     val value = ctx.NUM().toString()
     val size = sort.width.toInt()
     val binArray =
       BigInteger(value, 10).toString(2).padStart(size, '0').map { it == '1' }.toBooleanArray()
     var node = Btor2Const(nid, binArray, sort)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitConstant_h(ctx: Btor2Parser.Constant_hContext): Btor2Const {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
     val value = ctx.NUM().toString()
     val size = sort.width.toInt()
     val binArray =
       BigInteger(value, 16).toString(2).padStart(size, '0').map { it == '1' }.toBooleanArray()
     var node = Btor2Const(nid, binArray, sort)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 
   override fun visitFilled_constant(ctx: Btor2Parser.Filled_constantContext): Btor2Const {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
-    val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
+    val sort = circuit.sorts[sid] as? Btor2BitvecSort
+      ?: error("Sort with id $sid not found")
     val value =
       when (ctx.fill.text) {
         "one" -> {
@@ -90,7 +95,7 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         }
       }
     var node = Btor2Const(nid, value, sort)
-    Btor2Circuit.addNode(node)
+    circuit.addNode(node)
     return node
   }
 }
