@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xsts.cli.optiongroup.InputOptions
 import hu.bme.mit.theta.xsts.cli.optiongroup.OutputOptions
 import java.io.File
 import java.io.PrintWriter
+import kotlin.system.exitProcess
 
 abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
   CliktCommand(name = name) {
@@ -72,6 +73,18 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
     }
   }
 
+  protected abstract fun doRun()
+
+  final override fun run() {
+    try {
+      registerSolverManagers()
+      doRun()
+    } catch (e: Exception) {
+      printError(e)
+      exitProcess(1)
+    }
+  }
+
   fun printError(exception: Exception) {
     val message = exception.message ?: ""
     val exceptionName = exception.javaClass.simpleName
@@ -98,7 +111,19 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
       .forEach(writer::cell)
   }
 
-  fun registerSolverManagers() {
+  protected open fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {}
+
+  protected fun printBenchmarkResult(status: SafetyResult<*, *>, xsts: XSTS, totalTimeMs: Long) {
+    if (!outputOptions.benchmarkMode) {
+      Logger.result(status.toString())
+      return
+    }
+    printCommonResult(status, xsts, totalTimeMs)
+    printExtraBenchmarkCells(status)
+    writer.newRow()
+  }
+
+  private fun registerSolverManagers() {
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create())
     SolverManager.registerSolverManager(SmtLibSolverManager.create(smtHome.toPath()))

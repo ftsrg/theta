@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.core.model
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.common.Utils
-import hu.bme.mit.theta.common.container.Containers
+import hu.bme.mit.theta.common.collection.CollectionUtil
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import java.util.*
@@ -63,7 +63,7 @@ class BasicExprSubstitution private constructor(builder: Builder) : ExprSubstitu
   @Volatile private var hashCode = 0
 
   override val mappedExprs: MutableCollection<Expr<*>> =
-    Containers.createSet(builder.exprToExpr.keys)
+    CollectionUtil.createSet(builder.exprToExpr.keys)
   private val exprToExpr: MutableMap<Expr<*>, Expr<*>> = builder.exprToExpr
 
   override fun <ExprType : Type> eval(expr: Expr<ExprType>): Optional<Expr<ExprType>> {
@@ -102,7 +102,7 @@ class BasicExprSubstitution private constructor(builder: Builder) : ExprSubstitu
     return result
   }
 
-  class Builder(val exprToExpr: MutableMap<Expr<*>, Expr<*>> = Containers.createMap()) {
+  class Builder(val exprToExpr: MutableMap<Expr<*>, Expr<*>> = CollectionUtil.createMap()) {
 
     private var built = false
 

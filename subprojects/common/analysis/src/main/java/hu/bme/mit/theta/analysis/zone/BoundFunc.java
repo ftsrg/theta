@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.clock.constr.AndConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.FailClockConstrVisitor;
@@ -60,8 +60,8 @@ public final class BoundFunc {
 
     public BoundFunc merge(final BoundFunc that) {
         checkNotNull(that);
-        final Map<VarDecl<RatType>, Integer> varToLower = Containers.createMap(this.varToLower);
-        final Map<VarDecl<RatType>, Integer> varToUpper = Containers.createMap(this.varToUpper);
+        final Map<VarDecl<RatType>, Integer> varToLower = CollectionUtil.createMap(this.varToLower);
+        final Map<VarDecl<RatType>, Integer> varToUpper = CollectionUtil.createMap(this.varToUpper);
 
         that.varToLower.forEach((c, b) -> varToLower.merge(c, b, Integer::max));
         that.varToUpper.forEach((c, b) -> varToUpper.merge(c, b, Integer::max));
@@ -178,14 +178,14 @@ public final class BoundFunc {
 
         private Builder() {
             this.boundFunction = null;
-            this.varToLower = Containers.createMap();
-            this.varToUpper = Containers.createMap();
+            this.varToLower = CollectionUtil.createMap();
+            this.varToUpper = CollectionUtil.createMap();
         }
 
         private Builder(final BoundFunc boundFunction) {
             this.boundFunction = null;
-            this.varToLower = Containers.createMap(boundFunction.varToLower);
-            this.varToUpper = Containers.createMap(boundFunction.varToUpper);
+            this.varToLower = CollectionUtil.createMap(boundFunction.varToLower);
+            this.varToUpper = CollectionUtil.createMap(boundFunction.varToUpper);
         }
 
         public Builder remove(final VarDecl<RatType> varDecl) {

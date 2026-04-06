@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
@@ -31,6 +32,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
@@ -39,7 +41,6 @@ import hu.bme.mit.theta.xcfa.cli.params.MddConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 fun getMddChecker(
   xcfa: XCFA,
@@ -50,22 +51,24 @@ fun getMddChecker(
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
 
-  val stmts =
-    xcfa.procedures
-      .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
-      .toSet()
   val solverPool = SolverPool(refinementSolverFactory)
-  val iterationStrategy = mddConfig.iterationStrategy
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     MddChecker(
       monolithicExpr,
       solverPool,
-      iterationStrategy,
+      iterationStrategy = mddConfig.iterationStrategy,
+      lookAheadStrategy = mddConfig.lookAheadStrategy,
+      proofStrategy = mddConfig.proofStrategy,
+      traceTimeout = mddConfig.traceTimeout,
+      solverMeasurements = mddConfig.solverMeasurements,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
 
+  if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
+    passes.add(L2SMEPass())
+  }
   if (mddConfig.cegar) {
     passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(refinementSolverFactory)))
   }

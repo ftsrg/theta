@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,22 +16,24 @@
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.long
 import com.google.common.base.Stopwatch
-import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
-import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.XstsAction
-import hu.bme.mit.theta.xsts.analysis.XstsState
+import java.io.File
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 class XstsCliMdd :
   XstsCliMonolithicBaseCommand(
@@ -39,21 +41,66 @@ class XstsCliMdd :
     help = "Model checking of XSTS using MDDs (Multi-value Decision Diagrams)",
   ) {
 
+  private val ordering: File? by
+    option(help = "Path to a file containing variable ordering (one name per line)")
+      .file(mustExist = true, canBeDir = false, mustBeReadable = true)
+
+  private val dumpOrdering: Boolean by
+    option("--dump-ordering", help = "Dump the computed variable ordering to <model>.ordering")
+      .flag()
+
   private val iterationStrategy: MddChecker.IterationStrategy by
     option(help = "The state space enumeration algorithm to use")
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
 
-  private fun printResult(
-    status: SafetyResult<InvariantProof, out Trace<XstsState<*>, XstsAction>>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
-    if (!outputOptions.benchmarkMode) {
-      Logger.result(status.toString())
-      return
+  private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy by
+    option(help = "The MDD to expression conversion strategy")
+      .enum<MddExpressionRepresentation.MddToExprStrategy>()
+      .default(MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL)
+
+  private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy by
+    option(help = "The MDD to expression conversion strategy for the proof invariant")
+      .enum<MddExpressionRepresentation.MddToExprStrategy>()
+      .default(MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL)
+
+  private val traceTimeout: Long by
+    option(help = "The timeout for trace generation in seconds (0 for no timeout)")
+      .long()
+      .default(10)
+
+  private val solverMeasurements: Boolean by
+    option(help = "Perform a structural rerun to estimate solver time overhead").flag()
+
+  private fun loadOrdering(monolithicExpr: MonolithicExpr): List<VarDecl<*>> {
+    val file = ordering ?: return monolithicExpr.orderVars()
+    require(!livenessToSafety) {
+      "Variable ordering cannot be used with liveness-to-safety transformation (L2S modifies variables)"
     }
-    printCommonResult(status, xsts, totalTimeMs)
+    require(!cegar) {
+      "Variable ordering cannot be used with CEGAR (predicate abstraction modifies variables)"
+    }
+    val varsByName = monolithicExpr.vars.associateBy { it.name }
+    val result =
+      file
+        .readLines()
+        .map { it.trim() }
+        .takeWhile { it != "#END" }
+        .filter { it.isNotBlank() && !it.startsWith("#") }
+        .map { name ->
+          val xstsName = name.replace(".", "_").replace("[", "_").replace("]", "")
+          varsByName[xstsName]
+            ?: throw IllegalArgumentException(
+              "Variable '$name' (normalized: '$xstsName') from ordering file not found in model. Available variables: ${varsByName.keys}"
+            )
+        }
+        .reversed()
+    val missing = monolithicExpr.vars.toSet() - result.toSet()
+    require(missing.isEmpty()) { "Ordering file is missing variables: ${missing.map { it.name }}" }
+    return result
+  }
+
+  override fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {
     val stats =
       status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0, 0, 0)) as MddAnalysisStatistics
     listOf(
@@ -64,20 +111,9 @@ class XstsCliMdd :
         stats.cacheSize,
       )
       .forEach(writer::cell)
-    writer.newRow()
   }
 
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
-    registerSolverManagers()
+  override fun doRun() {
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
@@ -85,12 +121,33 @@ class XstsCliMdd :
       SolverPool(solverFactory).use { solverPool ->
         val checker =
           createChecker(xsts, solverFactory) {
-            MddChecker(it, solverPool, iterationStrategy)
+            val variableOrdering = loadOrdering(it)
+            dumpOrdering(variableOrdering)
+            MddChecker(
+              it,
+              solverPool,
+              iterationStrategy,
+              variableOrdering = variableOrdering,
+              lookAheadStrategy = lookAheadStrategy,
+              proofStrategy = proofStrategy,
+              traceTimeout = traceTimeout,
+              solverMeasurements = solverMeasurements,
+            )
           }
         checker.check(null)
       }
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
+  }
+
+  private fun dumpOrdering(variableOrdering: List<VarDecl<*>>) {
+    if (!dumpOrdering) return
+    val file = File("${inputOptions.model.path}.ordering")
+    val traceability = inputOptions.variableTraceability
+    // Ordering is stored reversed internally; reverse back for top-down file format
+    val lines = variableOrdering.reversed().map { v -> traceability[v] ?: v.name }
+    file.writeText(lines.joinToString("\n") + "\n")
+    Logger.mainStep("Variable ordering dumped to ${file.path}")
   }
 }

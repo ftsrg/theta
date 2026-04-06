@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -116,7 +116,7 @@ public class Prod2ExplPredAbstractors {
                     final Valuation valuation = PathUtils.extractValuation(model, stateIndexing);
                     final ExplState explState = valuationToState.apply(valuation);
 
-                    final Set<Expr<BoolType>> newStatePreds = Containers.createSet();
+                    final Set<Expr<BoolType>> newStatePreds = CollectionUtil.createSet();
                     final List<Expr<BoolType>> feedback = new LinkedList<>();
                     feedback.add(True());
                     for (int i = 0; i < preds.size(); ++i) {

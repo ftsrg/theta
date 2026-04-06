@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
@@ -26,6 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
@@ -63,7 +63,7 @@ fun getIc3Checker(
     )
   }
 
-  val passes = mutableListOf<MonolithicExprPass<EmptyProof>>()
+  val passes = mutableListOf<MonolithicExprPass<PredState>>()
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
     passes.add(L2SMEPass())
   }

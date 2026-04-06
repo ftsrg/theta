@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,18 +30,20 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.common.container.Containers
+import hu.bme.mit.theta.common.collection.CollectionUtil
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
@@ -58,6 +60,11 @@ constructor(
   private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   private val traceTimeout: Long = 10,
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
+  private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+  private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  private val solverMeasurements: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   enum class IterationStrategy {
@@ -69,10 +76,13 @@ constructor(
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
+    MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
+
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
-    val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
+    val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
 
     variableOrdering.forEach {
       Preconditions.checkArgument(
@@ -82,7 +92,7 @@ constructor(
     }
 
     Preconditions.checkArgument(
-      variableOrdering.size == Containers.createSet(variableOrdering).size,
+      variableOrdering.size == CollectionUtil.createSet(variableOrdering).size,
       "Variable ordering contains duplicates",
     )
     val identityExprs = mutableListOf<Expr<BoolType>>()
@@ -114,6 +124,9 @@ constructor(
     val stateSig = stateOrder.defaultSetSignature
     val transSig = transOrder.defaultSetSignature
 
+    val solverCountBefore = solverPool.checkCount
+    val ssgTime = Stopwatch.createStarted()
+
     val initExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
     val initNode =
       stateSig.topVariableHandle.checkInNode(
@@ -141,7 +154,9 @@ constructor(
       stateSig.topVariableHandle.checkInNode(
         MddExpressionTemplate.of(negatedPropExpr, { it as Decl<*> }, solverPool)
       )
-    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
+    val targetedNextStates =
+      if (monolithicExpr.propExpr == True()) nextStates
+      else OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
 
     Logger.info("Created next-state node, starting fixed point calculation\n")
     val stateSpaceProvider =
@@ -157,8 +172,6 @@ constructor(
         }
       }
 
-    val ssgTime = Stopwatch.createStarted()
-
     val stateSpace =
       stateSpaceProvider.compute(
         MddNodeInitializer.of(initNode),
@@ -167,9 +180,12 @@ constructor(
       )
 
     ssgTime.stop()
-    totalTime.stop()
 
     Logger.info("Enumerated state-space in: ${ssgTime.elapsedMillis()}\n")
+    val solverCheckCount = solverPool.checkCount - solverCountBefore
+    Logger.info("Solver check() calls: $solverCheckCount\n")
+
+    totalTime.stop()
 
     val propViolating = stateSpace.intersection(propNode) as MddHandle
 
@@ -193,6 +209,11 @@ constructor(
       )
 
     Logger.mainStep("%s\n", statistics)
+
+    if (solverMeasurements) {
+      stateSpaceProvider.clear()
+      structuralRerun(transNodes, transSig, initNode, stateSig, ssgTime.elapsedMillis())
+    }
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
@@ -228,13 +249,13 @@ constructor(
       try {
         Logger.mainStep("Starting trace generation.\n")
         val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics)
+        return SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
       } catch (e: TimeoutException) {
         Logger.mainStep("Trace generation timed out, returning empty trace!\n")
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace),
+          MddProof.of(stateSpace, proofStrategy),
           statistics,
         )
       } catch (e: InterruptedException) {
@@ -242,7 +263,7 @@ constructor(
         future.cancel(true)
         return SafetyResult.unsafe(
           Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace),
+          MddProof.of(stateSpace, proofStrategy),
           statistics,
         )
       } catch (e: ExecutionException) {
@@ -251,8 +272,50 @@ constructor(
         executor.shutdownNow()
       }
     } else {
-      result = SafetyResult.safe(MddProof.of(stateSpace), statistics)
+      result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)
     }
     return result
+  }
+
+  private fun structuralRerun(
+    transNodes: List<MddHandle>,
+    transSig: hu.bme.mit.delta.java.mdd.MddSignature,
+    initNode: MddHandle,
+    stateSig: hu.bme.mit.delta.java.mdd.MddSignature,
+    ssgTimeMs: Long,
+  ) {
+    val structDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+    for (transNode in transNodes) {
+      val structTransNode =
+        MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+      structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
+    }
+    val structNextStates: AbstractNextStateDescriptor =
+      OrNextStateDescriptor.create(structDescriptors)
+
+    val rerunProvider =
+      when (iterationStrategy) {
+        IterationStrategy.BFS -> BfsProvider(stateSig.variableOrder)
+        IterationStrategy.SAT -> SimpleSaturationProvider(stateSig.variableOrder)
+        IterationStrategy.GSAT -> GeneralizedSaturationProvider(stateSig.variableOrder)
+      }
+
+    val rerunSolverCountBefore = solverPool.checkCount
+    val rerunTime = Stopwatch.createStarted()
+    val rerunStateSpace =
+      rerunProvider.compute(
+        MddNodeInitializer.of(initNode),
+        structNextStates,
+        stateSig.topVariableHandle,
+      )
+    rerunTime.stop()
+    val rerunSolverCheckCount = solverPool.checkCount - rerunSolverCountBefore
+    val rerunStateSpaceSize = MddInterpreter.calculateNonzeroCount(rerunStateSpace)
+
+    val solverTimeMs = ssgTimeMs - rerunTime.elapsedMillis()
+    Logger.info("Rerun (structural) in: ${rerunTime.elapsedMillis()}\n")
+    Logger.info("Rerun solver check() calls: $rerunSolverCheckCount\n")
+    Logger.info("Rerun state space size: $rerunStateSpaceSize\n")
+    Logger.info("Estimated solver time: ${solverTimeMs}\n")
   }
 }

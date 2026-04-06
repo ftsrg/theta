@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -87,7 +87,7 @@ final class StsDslHelper {
             final Scope scope,
             final Substitution assignment,
             final List<? extends ConstDeclContext> constDeclCtxs) {
-        final Map<Decl<?>, Expr<?>> declToExpr = Containers.createMap();
+        final Map<Decl<?>, Expr<?>> declToExpr = CollectionUtil.createMap();
         for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
             addDef(scope, assignment, declToExpr, constDeclCtx);
         }
