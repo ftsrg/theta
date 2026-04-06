@@ -47,10 +47,8 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
     val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
     val value = ctx.NUM().toString()
     val size = sort.width.toInt()
-    val binArray = BigInteger(value, 10).toString(2)
-      .padStart(size, '0')
-      .map { it == '1' }
-      .toBooleanArray()
+    val binArray =
+      BigInteger(value, 10).toString(2).padStart(size, '0').map { it == '1' }.toBooleanArray()
     var node = Btor2Const(nid, binArray, sort)
     Btor2Circuit.addNode(node)
     return node
@@ -62,10 +60,8 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
     val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
     val value = ctx.NUM().toString()
     val size = sort.width.toInt()
-    val binArray = BigInteger(value, 16).toString(2)
-      .padStart(size, '0')
-      .map { it == '1' }
-      .toBooleanArray()
+    val binArray =
+      BigInteger(value, 16).toString(2).padStart(size, '0').map { it == '1' }.toBooleanArray()
     var node = Btor2Const(nid, binArray, sort)
     Btor2Circuit.addNode(node)
     return node
