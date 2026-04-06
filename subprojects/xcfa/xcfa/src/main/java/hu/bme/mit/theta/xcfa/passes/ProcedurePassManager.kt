@@ -100,6 +100,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
+    listOf(PrecisionableGlobalVarCounterPass()),
   )
 
 class NontermValidationPasses(

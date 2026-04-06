@@ -195,7 +195,12 @@ fun getCegarChecker(
                         .map {
                           it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
                         }
-                        .reduce { a, b -> a + b }
+                        .reduce { a, b ->
+                          // in case multiple threads use the same function, there can be conflicts
+                          val aEntries = a.entries.filter { it.value !in b.values }
+                          val bEntries = b.entries.filter { it.value !in a.values }
+                          (aEntries + bEntries).associate { it.key to it.value }
+                        }
                     when (s) {
                       is ExplState -> {
                         if (s.isBottom) {

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 
 object PorLogger {
   lateinit var globalVars: Set<VarDecl<*>>
+  var precisionableGlobalVarCount: Int? = null
   val exploredActions = mutableListOf<Long>()
   val precGlobalVarSizes = mutableListOf<Int>()
   var virtualExplorationTimeMs: Long = 0
@@ -35,7 +36,7 @@ object PorLogger {
   fun printStatistics() {
     System.err.println("POR explored actions (per iteration): $exploredActions")
     System.err.println("Precision global variables (per iteration): $precGlobalVarSizes")
-    System.err.println("Number of global variables: ${globalVars.size}")
+    System.err.println("Number of global variables: $precisionableGlobalVarCount")
     System.err.println("POR algorithm time (ms): ${if (porTime == 0L) sporTime else porTime}")
     System.err.println("SPOR algorithm time (ms): $sporTime")
     System.err.println("DPOR Virtual exploration (ms): $virtualExplorationTimeMs")

@@ -246,6 +246,7 @@ open class XcfaDporLts(protected open val xcfa: XCFA) : LTS<S, A> {
           while (
             stack.isNotEmpty() &&
               (last.node.isSubsumed ||
+                last.node.isTarget ||
                 (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
           ) { // until the last is covered/not feasible, or it has no more action to be explored
             if (stack.size >= 2) {
