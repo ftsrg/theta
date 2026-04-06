@@ -23,7 +23,7 @@ import hu.bme.mit.theta.frontend.models.*
 
 class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
 
-  private val circuit = Btor2Circuit()
+  val circuit = Btor2Circuit()
 
   private val sortVisitor = SortVisitor(circuit)
   private val constantVisitor = ConstantVisitor(circuit)

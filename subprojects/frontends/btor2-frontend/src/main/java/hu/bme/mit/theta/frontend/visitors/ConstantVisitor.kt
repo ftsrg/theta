@@ -38,7 +38,7 @@ class ConstantVisitor(
     val value = ctx.NUM().text.toString()
     val size = sort.width.toInt()
     val binArray = BooleanArray(size) { index -> (value[index] - '0') == 1 }
-    var node = Btor2Const(nid, binArray, sort)
+    val node = Btor2Const(nid, binArray, sort)
     circuit.addNode(node)
     return node
   }
@@ -52,7 +52,7 @@ class ConstantVisitor(
     val size = sort.width.toInt()
     val binArray =
       BigInteger(value, 10).toString(2).padStart(size, '0').map { it == '1' }.toBooleanArray()
-    var node = Btor2Const(nid, binArray, sort)
+    val node = Btor2Const(nid, binArray, sort)
     circuit.addNode(node)
     return node
   }
@@ -66,7 +66,7 @@ class ConstantVisitor(
     val size = sort.width.toInt()
     val binArray =
       BigInteger(value, 16).toString(2).padStart(size, '0').map { it == '1' }.toBooleanArray()
-    var node = Btor2Const(nid, binArray, sort)
+    val node = Btor2Const(nid, binArray, sort)
     circuit.addNode(node)
     return node
   }
@@ -94,7 +94,7 @@ class ConstantVisitor(
           throw RuntimeException("Constant with filler shorthand needs to be one/ones/zero")
         }
       }
-    var node = Btor2Const(nid, value, sort)
+    val node = Btor2Const(nid, value, sort)
     circuit.addNode(node)
     return node
   }

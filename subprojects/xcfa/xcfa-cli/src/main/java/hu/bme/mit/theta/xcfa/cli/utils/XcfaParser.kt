@@ -278,7 +278,7 @@ private fun parseBTOR2(
 
   context.accept(visitor)
 
-  val xcfa = Btor2XcfaBuilder.btor2xcfa(btor2Passes, parseContext, uniqueLogger)
+  val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
   logger.write(Logger.Level.VERBOSE, xcfa.toDot())
   return xcfa
 }
