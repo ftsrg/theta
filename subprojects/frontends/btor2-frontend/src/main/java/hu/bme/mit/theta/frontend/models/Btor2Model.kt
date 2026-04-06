@@ -90,7 +90,6 @@ object Btor2Circuit {
   }
 }
 
-// sortID lookup in Btor2Sort
 abstract class Btor2Node(id: UInt, btor2Sort: Btor2Sort? = null) {
   abstract val nid: UInt
   abstract val sort: Btor2Sort?
@@ -109,6 +108,6 @@ abstract class Btor2Sort(sid: UInt, width: UInt) {
   abstract val width: UInt
 }
 
-// Ezt egyelőre nem használjuk mert csak bitvektoraink vannak
+// TODO: Add support for arrays
 data class Btor2BitvecSort(override val sid: UInt, override val width: UInt) :
   Btor2Sort(sid, width)

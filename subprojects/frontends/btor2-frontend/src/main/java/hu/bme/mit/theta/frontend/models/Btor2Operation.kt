@@ -378,7 +378,6 @@ data class Btor2Boolean(
   }
 }
 
-// Ehhez a nidhez vezetünk be egy változót, bekötjük
 data class Btor2TernaryOperation(
   override val nid: UInt,
   override val sort: Btor2Sort,

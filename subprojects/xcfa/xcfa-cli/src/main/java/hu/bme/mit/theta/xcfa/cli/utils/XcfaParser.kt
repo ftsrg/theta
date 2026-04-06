@@ -267,9 +267,8 @@ private fun parseBTOR2(
   uniqueLogger: Logger,
 ): XCFA {
   val visitor = Btor2Visitor()
-  val btor2File = input
 
-  val inputBTOR2 = btor2File.readLines().joinToString("\n")
+  val inputBTOR2 = input.readLines().joinToString("\n")
   val cinput = CharStreams.fromString(inputBTOR2)
   val lexer = Btor2Lexer(cinput)
   val tokens = CommonTokenStream(lexer)
@@ -280,6 +279,6 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder.btor2xcfa(btor2Passes, parseContext, uniqueLogger)
-  // logger.write(Logger.Level.MAINSTEP, xcfa.toDot())
+  logger.write(Logger.Level.VERBOSE, xcfa.toDot())
   return xcfa
 }
