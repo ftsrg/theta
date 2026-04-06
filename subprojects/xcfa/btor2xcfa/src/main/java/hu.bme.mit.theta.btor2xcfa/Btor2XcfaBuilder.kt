@@ -32,7 +32,12 @@ class Btor2XcfaBuilder {
 
   private var i: Int = 1
 
-  fun btor2xcfa(circuit: Btor2Circuit, btor2Passes: Boolean, parseContext: ParseContext, uniqueLogger: Logger): XCFA {
+  fun btor2xcfa(
+    circuit: Btor2Circuit,
+    btor2Passes: Boolean,
+    parseContext: ParseContext,
+    uniqueLogger: Logger,
+  ): XCFA {
     check(circuit.properties.isNotEmpty(), { "Circuit has no error property" })
 
     // would be nice to check that no operand node (i.e. right side node) is later than it's
@@ -54,9 +59,7 @@ class Btor2XcfaBuilder {
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()
 
-    circuit.nodes.forEach() {
-      it.value.getVar()?.let { varDecl -> procBuilder.addVar(varDecl) }
-    }
+    circuit.nodes.forEach() { it.value.getVar()?.let { varDecl -> procBuilder.addVar(varDecl) } }
 
     var lastLoc = procBuilder.initLoc
     var newLoc = nextLoc(false, false, false)

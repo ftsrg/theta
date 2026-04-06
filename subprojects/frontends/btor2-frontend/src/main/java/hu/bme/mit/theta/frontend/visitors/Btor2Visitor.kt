@@ -32,7 +32,6 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
 
   private val logger = ConsoleLogger(Logger.Level.VERBOSE)
 
-
   override fun visitLine(ctx: Btor2Parser.LineContext?): Btor2Circuit {
     for (child in ctx?.children!!) {
       child.accept(this)
