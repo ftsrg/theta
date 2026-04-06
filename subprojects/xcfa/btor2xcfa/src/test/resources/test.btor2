@@ -1,7 +1,7 @@
 1 sort bitvec 1
 2 sort bitvec 2
 3 input 2 a
-4 input 2 b
+4 consth 2 2       ; <-- Replaced input 'b' with a 2-bit hex constant (value: 2)
 5 add 2 3 4
 6 ult 1 5 3
 7 ult 1 5 4

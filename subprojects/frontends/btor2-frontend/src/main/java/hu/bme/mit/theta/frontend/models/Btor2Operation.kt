@@ -131,7 +131,6 @@ data class Btor2SliceOperation(
 
   override fun getExpr(): Expr<BvType> {
     val newU: BigInteger = u + BigInteger.valueOf(1)
-    // val newU: BigInteger = if (u == l) u + BigInteger.valueOf(1) else u
     return BvExtractExpr.create(getOperandRef(operand), IntLitExpr.of(l), IntLitExpr.of(newU))
   }
 

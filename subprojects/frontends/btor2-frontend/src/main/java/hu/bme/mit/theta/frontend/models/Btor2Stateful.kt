@@ -76,7 +76,7 @@ data class Btor2State(
   }
 
   override fun getStmt(): Stmt {
-    TODO("We might not even need this Stmt for states")
+    throw UnsupportedOperationException("States do not have associated statements")
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {
@@ -84,7 +84,6 @@ data class Btor2State(
   }
 }
 
-// Value was Btor2Const
 data class Btor2Init(
   override val nid: UInt,
   override val sort: Btor2Sort,
@@ -98,7 +97,7 @@ data class Btor2Init(
   }
 
   override fun getExpr(): Expr<*> {
-    TODO("Not yet implemented")
+    throw UnsupportedOperationException("Inits do not have associated expressions")
   }
 
   override fun getStmt(): Stmt {

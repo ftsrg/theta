@@ -45,14 +45,12 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
     val nid = idVisitor.visit(ctx.id)
     val sid = idVisitor.visit(ctx.sid())
     val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
-    val value = ctx.NUM().text.toBigInteger()
-    val size = sort.width.toLong().toBigInteger()
-    val binArray =
-      BooleanArray(size.toInt()) { index ->
-        ((value and ((BigInteger.ONE.shiftLeft(size.toInt())) - BigInteger.ONE)).shiftRight(
-          size.toInt() - 1 - index
-        ) and BigInteger.ONE) == BigInteger.ONE
-      }
+    val value = ctx.NUM().toString()
+    val size = sort.width.toInt()
+    val binArray = BigInteger(value, 10).toString(2)
+      .padStart(size, '0')
+      .map { it == '1' }
+      .toBooleanArray()
     var node = Btor2Const(nid, binArray, sort)
     Btor2Circuit.addNode(node)
     return node
@@ -64,12 +62,10 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
     val sort: Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
     val value = ctx.NUM().toString()
     val size = sort.width.toInt()
-    val binArray =
-      BooleanArray(size) { index ->
-        val hexDigit = value[index / 4]
-        val bitIndex = 3 - (index % 4)
-        ((hexDigit - '0') shr bitIndex and 1) == 1
-      }
+    val binArray = BigInteger(value, 16).toString(2)
+      .padStart(size, '0')
+      .map { it == '1' }
+      .toBooleanArray()
     var node = Btor2Const(nid, binArray, sort)
     Btor2Circuit.addNode(node)
     return node

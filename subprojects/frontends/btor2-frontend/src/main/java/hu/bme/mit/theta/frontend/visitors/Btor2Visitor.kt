@@ -17,6 +17,8 @@ package hu.bme.mit.theta.frontend.visitors
 
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.models.*
 
 class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
@@ -26,7 +28,7 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
   private val operationVisitor = OperationVisitor()
   private val statefulVisitor = StateVisitor()
 
-  // private val logger = ConsoleLogger(Logger.Level.VERBOSE)
+  private val logger = ConsoleLogger(Logger.Level.VERBOSE)
 
   override fun visitLine(ctx: Btor2Parser.LineContext?): Btor2Circuit {
     for (child in ctx?.children!!) {
@@ -37,26 +39,26 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
 
   override fun visitSort(ctx: Btor2Parser.SortContext?): Btor2Circuit {
     val result = sortVisitor.visit(ctx)
-    // logger.write(Logger.Level.VERBOSE, "Sort visited \t")
+    logger.write(Logger.Level.VERBOSE, "Sort visited \n")
     Btor2Circuit.addSort(result)
     return Btor2Circuit
   }
 
   override fun visitConstantNode(ctx: Btor2Parser.ConstantNodeContext): Btor2Circuit {
     val result = constantVisitor.visit(ctx)
-    // logger.write(Logger.Level.VERBOSE, "Constant visited \t")
+    logger.write(Logger.Level.VERBOSE, "Constant visited \n")
     return Btor2Circuit
   }
 
   override fun visitOperation(ctx: Btor2Parser.OperationContext): Btor2Circuit {
     val result = operationVisitor.visit(ctx)
-    // logger.write(Logger.Level.VERBOSE, "Operation visited \t")
+    logger.write(Logger.Level.VERBOSE, "Operation visited \n")
     return Btor2Circuit
   }
 
   override fun visitStateful(ctx: Btor2Parser.StatefulContext?): Btor2Circuit {
     val result = statefulVisitor.visit(ctx)
-    // logger.write(Logger.Level.VERBOSE, "Stateful visited \t")
+    logger.write(Logger.Level.VERBOSE, "Stateful visited \n")
     return Btor2Circuit
   }
 }

@@ -314,7 +314,7 @@ data class TracegenConfig(
 
 data class CegarAbstractorConfig(
   @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
-  var abstractionSolver: String = "mathsat:5.6.10",
+  var abstractionSolver: String = "Z3",
   @Parameter(
     names = ["--validate-abstraction-solver"],
     description =
@@ -339,7 +339,7 @@ data class CegarAbstractorConfig(
 
 data class CegarRefinerConfig(
   @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
-  var refinementSolver: String = "mathsat:5.6.10",
+  var refinementSolver: String = "Z3",
   @Parameter(
     names = ["--validate-refinement-solver"],
     description =
@@ -456,7 +456,7 @@ data class BMCConfig(
   @Parameter(names = ["--non-lf-path"], description = "Disable loop-freeness check")
   var nonLfPath: Boolean = false,
   @Parameter(names = ["--bmc-solver"], description = "BMC solver name")
-  var bmcSolver: String = "mathsat:5.6.10",
+  var bmcSolver: String = "Z3",
   @Parameter(
     names = ["--validate-bmc-solver"],
     description =
@@ -469,7 +469,7 @@ data class InductionConfig(
   @Parameter(names = ["--no-induction"], description = "Disable induction check")
   var disable: Boolean = false,
   @Parameter(names = ["--induction-solver", "--ind-solver"], description = "Induction solver name")
-  var indSolver: String = "mathsat:5.6.10",
+  var indSolver: String = "Z3",
   @Parameter(
     names = ["--validate-induction-solver"],
     description =
@@ -489,7 +489,7 @@ data class InterpolationConfig(
     names = ["--interpolation-solver", "--itp-solver"],
     description = "Interpolation solver name",
   )
-  var itpSolver: String = "mathsat:5.6.10",
+  var itpSolver: String = "Z3",
   @Parameter(
     names = ["--validate-interpolation-solver"],
     description =
@@ -541,7 +541,7 @@ data class PortfolioConfig(
 
 data class MddConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
-  var solver: String = "mathsat:5.6.10",
+  var solver: String = "Z3",
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
@@ -563,7 +563,7 @@ data class MddConfig(
 
 data class Ic3Config(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
-  var solver: String = "mathsat:5.6.10",
+  var solver: String = "Z3",
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
