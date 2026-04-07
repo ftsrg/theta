@@ -255,16 +255,16 @@ jobs:
       matrix:
         include:
           - tool: Theta
-            artifact: release-Theta-svcomp
+            artifact: Theta-svcomp
             record: 14194483
           - tool: EmergenTheta
-            artifact: release-EmergenTheta-svcomp
+            artifact: EmergenTheta-svcomp
             record: 15536866
           - tool: Thorn
-            artifact: release-Thorn-svcomp
+            artifact: Thorn-svcomp
             record: 14194485
           - tool: ThetaCHC
-            artifact: release-Theta-chccomp
+            artifact: Theta-chccomp
             record: 15537027
     steps:
       - name: Checkout repository
