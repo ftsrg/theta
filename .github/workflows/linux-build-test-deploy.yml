@@ -166,7 +166,7 @@ jobs:
       - name: Upload archive artifact
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:
-          name: ${{ matrix.toolName }}
+          name: release-${{ matrix.toolName }}
           path: ${{ matrix.toolName }}.zip
           if-no-files-found: error
 
@@ -233,7 +233,7 @@ jobs:
 
 
   deploy-release:
-    needs: [test-linux, create-archives]
+    needs: [create-archives]
     runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 21
@@ -255,16 +255,16 @@ jobs:
       matrix:
         include:
           - tool: Theta
-            artifact: Theta-svcomp
+            artifact: release-Theta-svcomp
             record: 14194483
           - tool: EmergenTheta
-            artifact: EmergenTheta-svcomp
+            artifact: release-EmergenTheta-svcomp
             record: 15536866
           - tool: Thorn
-            artifact: Thorn-svcomp
+            artifact: release-Thorn-svcomp
             record: 14194485
           - tool: ThetaCHC
-            artifact: Theta-chccomp
+            artifact: release-Theta-chccomp
             record: 15537027
     steps:
       - name: Checkout repository
