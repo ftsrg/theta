@@ -120,7 +120,6 @@ fun getExpressionFromC(
         mapOf(),
         null,
         TypeVisitor(null, TypedefVisitor(null), parseContext),
-        Logger,
       )
     )
 

@@ -108,8 +108,7 @@ fun getHornChecker(
         try {
           getProperTrace(xcfa, result as SafetyResult<Invariant, CexTree>, vars)
         } catch (t: Throwable) {
-          Logger.writeln(
-            Logger.Level.INFO,
+          Logger.info(
             "Could not get proper trace: ${t.stackTraceToString()}\n",
           )
           SafetyResult.unsafe(

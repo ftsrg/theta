@@ -31,9 +31,6 @@ import java.util.List;
 @Deprecated
 public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public BoolectorSmtLibSolverInstaller() {
-    }
-
     @Override
     protected String getSolverName() {
         return "boolector";

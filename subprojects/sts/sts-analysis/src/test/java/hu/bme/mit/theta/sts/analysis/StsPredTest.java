@@ -54,14 +54,12 @@ import org.junit.jupiter.api.Test;
 
 public class StsPredTest {
 
-    final Logger logger;
     final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
     final ItpSolver refinementSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
     STS sts = null;
 
     public StsPredTest() {
-        logger = null;
-        Logger.initOld(Logger.LegacyLevel.VERBOSE);
+        Logger.init(Logger.ALL);
     }
 
     @BeforeEach

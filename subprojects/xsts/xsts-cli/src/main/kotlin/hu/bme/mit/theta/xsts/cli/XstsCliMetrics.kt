@@ -31,7 +31,7 @@ class XstsCliMetrics : CliktCommand(name = "metrics") {
   private val inputOptions by InputOptions()
 
   override fun run() {
-    Logger.initOld(Logger.LegacyLevel.VERBOSE)
+    Logger.init(Logger.ALL)
     val xsts = inputOptions.loadXsts()
     Logger.result("Vars: %s%n", xsts.vars.size)
     Logger.result(

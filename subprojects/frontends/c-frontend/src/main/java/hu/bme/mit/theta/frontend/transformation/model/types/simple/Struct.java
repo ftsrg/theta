@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import static hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -34,7 +33,6 @@ public class Struct extends NamedType {
 
     private final Map<String, CDeclaration> fields;
     private final String name;
-    private final Logger uniqueWarningLogger;
 
     private boolean currentlyBeingBuilt;
     private static final Map<String, Struct> definedTypes = new LinkedHashMap<>();
@@ -43,9 +41,8 @@ public class Struct extends NamedType {
         return definedTypes.get(name);
     }
 
-    Struct(String name, ParseContext parseContext, Logger uniqueWarningLogger) {
-        super(parseContext, "struct", uniqueWarningLogger);
-        this.uniqueWarningLogger = uniqueWarningLogger;
+    Struct(String name, ParseContext parseContext) {
+        super(parseContext, "struct");
         fields = new LinkedHashMap<>();
         this.name = name;
         if (name != null) {
@@ -55,11 +52,10 @@ public class Struct extends NamedType {
     }
 
     private Struct(Struct from) {
-        super(from.parseContext, "struct", from.uniqueWarningLogger);
+        super(from.parseContext, "struct");
         fields = new LinkedHashMap<>();
         fields.putAll(from.fields);
         this.name = from.name;
-        this.uniqueWarningLogger = from.uniqueWarningLogger;
         currentlyBeingBuilt = false;
     }
 
@@ -70,8 +66,7 @@ public class Struct extends NamedType {
     @Override
     public CComplexType getActualType() {
         if (currentlyBeingBuilt) {
-            uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
+            Logger.warnOnce("self-embedded structs! Using long as a placeholder%n");
             return CComplexType.getSignedInt(parseContext);
         }
         currentlyBeingBuilt = true;

@@ -94,36 +94,36 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       }
     val traceToConcretize = Trace.of(states, actions)
 
-    Logger.write(Logger.LegacyLevel.INFO, "|  |  Trace length: %d%n", traceToConcretize.length())
-    Logger.write(Logger.LegacyLevel.DETAIL, "|  |  Trace: %s%n", traceToConcretize)
-    Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Checking trace...")
+    Logger.info("|  |  Trace length: %d%n", traceToConcretize.length())
+    Logger.detail("|  |  Trace: %s%n", traceToConcretize)
+    Logger.subStep("|  |  Checking trace...")
     val cexStatus = exprTraceChecker.check(traceToConcretize)
-    Logger.write(Logger.LegacyLevel.SUBSTEP, "done, result: %s%n", cexStatus)
+    Logger.subStep("done, result: %s%n", cexStatus)
     assert(cexStatus.isFeasible() || cexStatus.isInfeasible()) { "Unknown CEX status" }
     return if (cexStatus.isFeasible()) {
       RefinerResult.unsafe(traceToConcretize)
     } else {
       val refutation = cexStatus.asInfeasible().refutation
-      Logger.write(Logger.LegacyLevel.DETAIL, "|  |  |  Refutation: %s%n", refutation)
+      Logger.detail("|  |  |  Refutation: %s%n", refutation)
       val refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation)
       val pruneIndex = refutation.getPruneIndex()
       assert(0 <= pruneIndex) { "Pruning index must be non-negative" }
       assert(pruneIndex <= cexToConcretize.length()) { "Pruning index larger than cex length" }
       when (pruneStrategy) {
         PruneStrategy.LAZY -> {
-          Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex)
+          Logger.subStep("|  |  Pruning from index %d...", pruneIndex)
           val nodeToPrune = cexToConcretize.node(pruneIndex)
           nodePruner.prune(arg, nodeToPrune)
         }
 
         PruneStrategy.FULL -> {
-          Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex)
+          Logger.subStep("|  |  Pruning whole ARG", pruneIndex)
           arg.pruneAll()
         }
 
         else -> throw java.lang.UnsupportedOperationException("Unsupported pruning strategy")
       }
-      Logger.write(Logger.LegacyLevel.SUBSTEP, "done%n")
+      Logger.subStep("done%n")
       RefinerResult.spurious(refinedPrec)
     }
   }
@@ -144,13 +144,13 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       findPoppedState(traceToConcretize)?.let { (i, state) ->
         when (pruneStrategy) {
           PruneStrategy.LAZY -> {
-            Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning from index %d...", i)
+            Logger.subStep("|  |  Pruning from index %d...", i)
             val nodeToPrune = cexToConcretize.node(i)
             nodePruner.prune(arg, nodeToPrune)
           }
 
           PruneStrategy.FULL -> {
-            Logger.write(Logger.LegacyLevel.SUBSTEP, "|  |  Pruning whole ARG", i)
+            Logger.subStep("|  |  Pruning whole ARG", i)
             arg.pruneAll()
           }
 

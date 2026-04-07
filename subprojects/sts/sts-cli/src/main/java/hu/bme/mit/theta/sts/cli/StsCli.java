@@ -44,7 +44,6 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.LegacyLevel;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -269,13 +268,8 @@ public class StsCli {
 
     @Parameter(
             names = {"--loglevel"},
-            description = "Detailedness of logging")
-    Logger.LegacyLevel logLevel = LegacyLevel.SUBSTEP;
-
-    @Parameter(
-            names = {"--grep", "-grep"},
-            description = "Log type pattern for the new logger API")
-    String grep;
+            description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+    String logLevel = "ERROR|WARN|RESULT|BENCHMARK|MAINSTEP|SUBSTEP";
 
     @Parameter(
             names = {"--benchmark"},
@@ -310,11 +304,7 @@ public class StsCli {
     private void run() {
         try {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-            if (grep != null && !grep.isBlank()) {
-                Logger.init(grep);
-            } else {
-                Logger.initOld(logLevel);
-            }
+            Logger.init(logLevel);
         } catch (final ParameterException ex) {
             System.out.println("Invalid parameters, details:");
             System.out.println(ex.getMessage());

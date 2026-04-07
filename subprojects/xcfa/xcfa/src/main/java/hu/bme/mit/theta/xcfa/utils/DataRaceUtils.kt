@@ -16,9 +16,6 @@
 package hu.bme.mit.theta.xcfa.utils
 
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.INFO
-import hu.bme.mit.theta.common.logging.Logger.Level.MAINSTEP
-import hu.bme.mit.theta.common.logging.Logger.Level.VERBOSE
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
@@ -31,14 +28,13 @@ import hu.bme.mit.theta.xcfa.passes.loopEdges
  * @return true if there is any potential racing global variable or memory access that is not atomic
  *   where the variable/memory location is written at least once
  */
-fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
+fun isDataRacePossible(xcfa: XCFA): Boolean {
   try {
     if (xcfa.procedureBuilders.isEmpty()) {
-      // This may occur in portfolio, then this was already checked
       return true
     }
-    logger?.writeln(MAINSTEP, "Data race pre-check")
-    logger?.writeln(MAINSTEP, "| Collecting candidates for data race...")
+    Logger.mainStep("Data race pre-check")
+    Logger.mainStep("| Collecting candidates for data race...")
     val builder = xcfa.procedureBuilders.first().parent
     val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
     val nonConcurrent = initEdges + (finalEdges ?: setOf())
@@ -48,8 +44,8 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
       getPotentialRacingVars(builder, nonConcurrent, atomicLocations, multipleThreadsPerProcedure)
 
     if (potentialRacingVars.isNotEmpty()) {
-      logger?.writeln(MAINSTEP, "| Potential racing global variable found.")
-      logger?.writeln(INFO, "| Potential racing variables: $potentialRacingVars")
+      Logger.mainStep("| Potential racing global variable found.")
+      Logger.info("| Potential racing variables: $potentialRacingVars")
       return true
     }
 
@@ -86,7 +82,7 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
             val nonAtomic = nonAtomicMemoryAccess[partition]
             val write = writeMemoryAccess[partition]
             if (threads > 1 && nonAtomic && write) {
-              logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
+              Logger.mainStep("| Potential racing memory location found.")
               return true
             }
           }
@@ -95,10 +91,10 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
       accessedPartitions.forEach { p -> threadsAccessingMemory[p] += varAccessCount }
     }
 
-    logger?.writeln(MAINSTEP, "| No candidate for data race.")
+    Logger.mainStep("| No candidate for data race.")
     return false
   } catch (e: Exception) {
-    logger?.writeln(VERBOSE, "| Data race pre-check failed with exception: ${e.message}")
+    Logger.verbose("| Data race pre-check failed with exception: ${e.message}")
     return true
   }
 }

@@ -37,10 +37,7 @@ class XcfaCliNonTerminationVerifyTest {
 
     private val SMTLIB_HOME: Path = SmtLibSolverManager.HOME
     private val solvers =
-      listOf("z3:4.13.0", "eldarica:2.2", "golem:0.5.0", "mathsat:5.6.10", "cvc5:1.0.8")
-
-    @JvmStatic
-    fun initLogger() = Logger.initOld(Logger.LegacyLevel.VERBOSE)
+      listOf("z3:4.13.0", "eldarica:2.1", "golem:0.5.0", "mathsat:5.6.10", "cvc5:1.0.8")
 
     private fun installSolver(name: String) {
       try {
@@ -330,7 +327,7 @@ class XcfaCliNonTerminationVerifyTest {
     val params =
       arrayOf(
         "--solver",
-        "eldarica:2.2",
+        "eldarica:2.1",
         "--backend",
         "CHC",
         "--input-type",

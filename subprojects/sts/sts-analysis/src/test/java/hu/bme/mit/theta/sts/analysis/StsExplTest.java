@@ -61,7 +61,7 @@ public class StsExplTest {
 
     @BeforeAll
     public static void initLogger() {
-        Logger.initOld(Logger.LegacyLevel.VERBOSE);
+        Logger.init(Logger.ALL);
     }
 
     @Test

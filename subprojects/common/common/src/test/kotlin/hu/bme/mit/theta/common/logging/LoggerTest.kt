@@ -29,42 +29,39 @@ class LoggerTest {
 
     @BeforeEach
     fun setup() {
-        Logger.resetForTest()
+        Logger.close()
     }
 
     @AfterEach
     fun teardown() {
-        try {
-            Logger.close()
-        } catch (e: Exception) {
-        }
+        Logger.close()
     }
 
     @Test
     fun `pattern with OR enables only matching types`() {
         Logger.init("DEBUG|INFO")
-        assertTrue(Logger.isEnabled("debug"))
-        assertTrue(Logger.isEnabled("info"))
-        assertFalse(Logger.isEnabled("error"))
-        assertFalse(Logger.isEnabled("warn"))
+        assertTrue(Logger.isEnabled(Logger.Level.DEBUG))
+        assertTrue(Logger.isEnabled(Logger.Level.INFO))
+        assertFalse(Logger.isEnabled(Logger.Level.ERROR))
+        assertFalse(Logger.isEnabled(Logger.Level.WARN))
     }
 
     @Test
     fun `pattern with wildcard enables all types`() {
         Logger.init(".*")
-        assertTrue(Logger.isEnabled("debug"))
-        assertTrue(Logger.isEnabled("info"))
-        assertTrue(Logger.isEnabled("error"))
-        assertTrue(Logger.isEnabled("warn"))
-        assertTrue(Logger.isEnabled("result"))
+        assertTrue(Logger.isEnabled(Logger.Level.DEBUG))
+        assertTrue(Logger.isEnabled(Logger.Level.INFO))
+        assertTrue(Logger.isEnabled(Logger.Level.ERROR))
+        assertTrue(Logger.isEnabled(Logger.Level.WARN))
+        assertTrue(Logger.isEnabled(Logger.Level.RESULT))
     }
 
     @Test
     fun `pattern is case insensitive`() {
         Logger.init("debug|INFO|WaRn")
-        assertTrue(Logger.isEnabled("DEBUG"))
-        assertTrue(Logger.isEnabled("info"))
-        assertTrue(Logger.isEnabled("warn"))
+        assertTrue(Logger.isEnabled(Logger.Level.DEBUG))
+        assertTrue(Logger.isEnabled(Logger.Level.INFO))
+        assertTrue(Logger.isEnabled(Logger.Level.WARN))
     }
 
     @Test
@@ -260,9 +257,9 @@ class LoggerTest {
             executor.submit {
                 startLatch.await()
                 repeat(iterations) {
-                    if (!Logger.isEnabled("debug")) errors.incrementAndGet()
-                    if (!Logger.isEnabled("info")) errors.incrementAndGet()
-                    if (Logger.isEnabled("error")) errors.incrementAndGet()
+                    if (!Logger.isEnabled(Logger.Level.DEBUG)) errors.incrementAndGet()
+                    if (!Logger.isEnabled(Logger.Level.INFO)) errors.incrementAndGet()
+                    if (Logger.isEnabled(Logger.Level.ERROR)) errors.incrementAndGet()
                 }
             }
         }

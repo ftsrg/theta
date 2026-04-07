@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.pred.ExprSplitters
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2HoafFromDir
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xsts.XSTS
@@ -39,9 +38,6 @@ class LtlCheckTestWithXstsPred {
   private val abstractionSolver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
 
   companion object {
-    @JvmStatic
-    fun initLogger() = Logger.initOld(Logger.LegacyLevel.INFO)
-
     private fun data() =
       listOf(
         arrayOf("simple_types", "F G(color = Colors.Red)", false),

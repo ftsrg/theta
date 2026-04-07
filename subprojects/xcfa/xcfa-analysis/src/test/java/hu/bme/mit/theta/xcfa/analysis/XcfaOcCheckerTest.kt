@@ -50,7 +50,7 @@ class XcfaOcCheckerTest {
     @BeforeAll
     @JvmStatic
     fun registerSolver() {
-      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+      Logger.init(Logger.ALL)
       SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     }
   }
@@ -75,7 +75,6 @@ class XcfaOcCheckerTest {
         property = property.verifiedProperty,
         decisionProcedure = decisionProcedure,
         smtSolver = "Z3:4.13",
-        logger = Logger,
         conflictInput = null,
         outputConflictClauses = false,
         nonPermissiveValidation = false,

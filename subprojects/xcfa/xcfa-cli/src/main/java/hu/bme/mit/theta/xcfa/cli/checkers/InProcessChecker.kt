@@ -96,7 +96,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
     val heapSize =
       "-Xmx${if(config.backendConfig.memlimit == 0L) 1420L else config.backendConfig.memlimit/1024/1024 }m"
-    Logger.write(Logger.Level.INFO, "Starting process with $heapSize of heap\n")
+    Logger.info("Starting process with $heapSize of heap\n")
 
     val pb =
       NuProcessBuilder(

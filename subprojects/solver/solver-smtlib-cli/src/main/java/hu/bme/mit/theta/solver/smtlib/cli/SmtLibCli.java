@@ -38,13 +38,8 @@ public class SmtLibCli {
         @Parameter(names = "--home", description = "The path of the solver registry")
         String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
-        @Parameter(names = "--loglevel", description = "Log level pattern (e.g., MAINSTEP, RESULT, INFO)")
+        @Parameter(names = "--loglevel", description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
         String logLevel = "MAINSTEP";
-
-        @Parameter(
-                names = {"--grep", "-grep"},
-                description = "Log type pattern for the new logger API")
-        String grep;
 
         @Parameter(
                 names = "--stacktrace",
@@ -418,11 +413,7 @@ public class SmtLibCli {
 
         try {
             jc.parse(args);
-            if (mainParams.grep != null && !mainParams.grep.isBlank()) {
-                Logger.init(mainParams.grep);
-            } else {
-                Logger.init(mainParams.logLevel);
-            }
+            Logger.init(mainParams.logLevel);
         } catch (final ParameterException ex) {
             System.out.println("Invalid parameters, details:");
             System.out.println(ex.getMessage());

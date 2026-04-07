@@ -38,9 +38,6 @@ import java.util.List;
 @Deprecated
 public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public CVC4SmtLibSolverInstaller() {
-    }
-
     @Override
     protected String getSolverName() {
         return "cvc4";

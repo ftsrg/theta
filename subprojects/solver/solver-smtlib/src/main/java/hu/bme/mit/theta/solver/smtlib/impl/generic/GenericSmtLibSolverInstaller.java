@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
@@ -32,9 +31,6 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
 
     private Path solverPath;
     private String[] solverArgs;
-
-    public GenericSmtLibSolverInstaller() {
-    }
 
     @Override
     protected String getSolverName() {

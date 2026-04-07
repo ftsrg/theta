@@ -59,7 +59,7 @@ class XcfaDataRaceTest {
     @BeforeAll
     @JvmStatic
     fun init() {
-      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+      Logger.init(Logger.ALL)
     }
 
     @JvmStatic
@@ -169,7 +169,6 @@ class XcfaDataRaceTest {
         property = property.verifiedProperty,
         decisionProcedure = OcDecisionProcedureType.BASIC,
         smtSolver = "Z3:4.13",
-        logger = Logger,
         conflictInput = null,
         outputConflictClauses = false,
         nonPermissiveValidation = false,

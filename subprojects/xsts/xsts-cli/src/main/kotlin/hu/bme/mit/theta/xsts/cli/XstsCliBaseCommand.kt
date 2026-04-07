@@ -57,20 +57,14 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
   protected val solver: String by
     option(help = "The solver to use for the check").defaultLazy { defaultSolver }
   private val smtHome: File by option().file().default(SmtLibSolverManager.HOME.toFile())
-  private val logPattern: String? by
-    option("--log", help = "Log pattern for the new logger API (e.g., 'DEBUG|INFO|WARN')")
-  private val grepPattern: String? by
-    option("--grep", "-grep", help = "Log pattern for the new logger API")
+  private val logPattern: String by
+    option("--loglevel", help = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+      .default("ERROR|WARN|RESULT|BENCHMARK|MAINSTEP|SUBSTEP")
 
   protected val writer = BasicTableWriter(System.out, ",", "\"", "\"")
 
   init {
-    val pattern = grepPattern ?: logPattern
-    if (pattern != null) {
-      Logger.init(pattern)
-    } else {
-      Logger.initOld(outputOptions.logLevel)
-    }
+    Logger.init(logPattern)
   }
 
   protected abstract fun doRun()

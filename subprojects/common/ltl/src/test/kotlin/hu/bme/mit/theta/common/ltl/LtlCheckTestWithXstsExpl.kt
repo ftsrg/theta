@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2HoafFromDir
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
@@ -54,8 +53,6 @@ class LtlCheckTestWithXstsExpl {
         arrayOf("counter6to7", "G F(x=7)", true),
       )
 
-    @JvmStatic
-    fun initLogger() = Logger.initOld(Logger.LegacyLevel.VERBOSE)
   }
 
   @ParameterizedTest

@@ -29,7 +29,6 @@ import hu.bme.mit.theta.analysis.multi.stmt.ExprMultiState
 import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiAction
 import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiLts
 import hu.bme.mit.theta.analysis.unit.UnitState
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -81,7 +80,6 @@ sealed class StmtMultiConfigBuilder<
   private val rInitPrec: RPrec,
   private val dInitPrec: DataPrec,
   val solverFactory: SolverFactory,
-  val logger: Logger,
   val pruneStrategy: PruneStrategy = PruneStrategy.FULL,
 ) {
 
@@ -161,7 +159,6 @@ sealed class StmtMultiConfigBuilder<
     rInitPrec: RPrec,
     dInitPrec: DataPrec,
     solverFactory: SolverFactory,
-    logger: Logger,
     pruneStrategy: PruneStrategy = PruneStrategy.FULL,
     private val traceCheckerType: TraceCheckerType = TraceCheckerType.SEQ_ITP,
   ) :
@@ -190,7 +187,6 @@ sealed class StmtMultiConfigBuilder<
       rInitPrec,
       dInitPrec,
       solverFactory,
-      logger,
       pruneStrategy,
     ) {
 
@@ -252,7 +248,6 @@ sealed class StmtMultiConfigBuilder<
     rInitPrec: RPrec,
     dInitPrec: DataPrec,
     solverFactory: SolverFactory,
-    logger: Logger,
     pruneStrategy: PruneStrategy = PruneStrategy.FULL,
     private val traceCheckerType: TraceCheckerType = TraceCheckerType.UNSAT_CORE,
   ) :
@@ -281,7 +276,6 @@ sealed class StmtMultiConfigBuilder<
       rInitPrec,
       dInitPrec,
       solverFactory,
-      logger,
       pruneStrategy,
     ) {
 

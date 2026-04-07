@@ -49,7 +49,7 @@ class StsAbstractMonolithicTest() {
     @JvmStatic
     @BeforeAll
     fun initLogger() {
-      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+      Logger.init(Logger.ALL)
     }
 
     @JvmStatic
@@ -107,11 +107,9 @@ class StsAbstractMonolithicTest() {
 
   //    @Test
   //    public void testIc3() throws IOException {
-  //        final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
   //        final var solverFactory = Z3LegacySolverFactory.getInstance();
   //
   //        runTest(
-  //            logger,
   //            solverFactory,
   //            abstractMe -> new Ic3Checker<>(
   //                    abstractMe,
@@ -125,28 +123,25 @@ class StsAbstractMonolithicTest() {
   //                    true,
   //                    true,
   //                    true,
-  //                    true,
-  //                    logger)
+  //                    true)
   //        );
   //    }
   //
   //    @Test
   //    public void testBMC() throws IOException {
-  //        final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
   //        final var solverFactory = Z3LegacySolverFactory.getInstance();
   //
   //        runTest(
-  //                logger,
   //                solverFactory,
   //                abstractMe -> BoundedCheckerBuilderKt.buildBMC(
   //                        abstractMe,
   //                        solverFactory.createSolver(),
   //                        val -> abstractMe.getValToState().invoke(val),
   //                        (val1, val2) ->
-  //                                abstractMe.getBiValToAction().invoke(val1, val2),
-  //                        logger)
+  //                                abstractMe.getBiValToAction().invoke(val1, val2))
   //        );
   //    }
+
   @ParameterizedTest
   @MethodSource("data")
   @Throws(IOException::class)

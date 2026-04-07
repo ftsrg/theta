@@ -33,7 +33,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -207,7 +206,7 @@ private fun frontend(
   ) {
     val cConfig = config.backendConfig.specConfig as CegarConfig
     cConfig.abstractorConfig.search = Search.DFS
-    Logger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
+    Logger.info("Multithreaded program found, using DFS instead of ERR.")
   }
 
   Logger.benchmark(

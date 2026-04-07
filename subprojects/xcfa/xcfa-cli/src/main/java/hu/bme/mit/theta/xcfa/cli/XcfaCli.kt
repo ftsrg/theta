@@ -114,17 +114,7 @@ class XcfaCli(private val args: Array<String>) {
       return
     }
 
-    val legacyLevel = if (config.debugConfig.logLevel == Logger.LegacyLevel.DISABLE) {
-      Logger.LegacyLevel.RESULT
-    } else {
-      config.debugConfig.logLevel
-    }
-    val grep = config.debugConfig.grep
-    if (!grep.isNullOrBlank()) {
-      Logger.init(grep)
-    } else {
-      Logger.initOld(legacyLevel)
-    }
+    Logger.init(config.debugConfig.logLevel)
 
     runConfig(config, false)
   }

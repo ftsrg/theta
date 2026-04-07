@@ -49,7 +49,7 @@ public class XstsAbstractIc3CheckerTest {
 
     @BeforeAll
     public static void initLogger() {
-        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+        Logger.init(Logger.ALL);
     }
 
     public static Collection<Object[]> data() {

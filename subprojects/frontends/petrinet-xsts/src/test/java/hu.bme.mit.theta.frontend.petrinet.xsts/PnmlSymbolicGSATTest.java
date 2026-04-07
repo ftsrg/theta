@@ -41,7 +41,7 @@ public class PnmlSymbolicGSATTest {
 
     @BeforeAll
     public static void initLogger() {
-        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+        Logger.init(Logger.ALL);
     }
 
     @Test

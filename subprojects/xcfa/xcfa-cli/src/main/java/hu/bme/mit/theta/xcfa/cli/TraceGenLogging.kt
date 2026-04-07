@@ -46,18 +46,14 @@ internal fun postTraceGenerationLogging(
 
   /*
   val abstractSummary = result.summary
-  Logger.write(
-    Logger.Level.MAINSTEP,
-    "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n",
-  )
+  Logger.mainStep("Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n")
    */
 
   val resultFolder = config.outputConfig.resultFolder
   resultFolder.mkdirs()
 
   if (forceEnabledOutput && parseContext != null) {
-    Logger.write(
-      Logger.Level.MAINSTEP,
+    Logger.mainStep(
       "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
     )
     val modelName = config.inputConfig.input!!.name
@@ -66,7 +62,7 @@ internal fun postTraceGenerationLogging(
         val visFile =
           resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
         GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-        Logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+        Logger.subStep("Abstract trace summary was visualized in ${visFile}\n")
     */
     var concreteTraces = 1
     for (abstractTrace in result.summary.sourceTraces) {
@@ -90,18 +86,16 @@ internal fun postTraceGenerationLogging(
             parseContext,
           )
 
-        Logger.write(
-          Logger.Level.RESULT,
+        Logger.result(
           "Concrete trace exported to ${concreteTraceFile}, ${yamlWitnessFile} and ${concreteDotFile}\n",
         )
         concreteTraces++
       } catch (e: IllegalArgumentException) {
-        Logger.write(Logger.Level.SUBSTEP, e.toString())
-        Logger.write(Logger.Level.SUBSTEP, "\nContinuing concretization with next trace...\n")
+        Logger.subStep(e.toString())
+        Logger.subStep("\nContinuing concretization with next trace...\n")
       }
     }
-    Logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "\nSuccessfully generated ${concreteTraces-1} concrete traces.\n",
     )
   }

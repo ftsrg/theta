@@ -28,9 +28,6 @@ import java.util.List;
 @Deprecated
 public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public BitwuzlaSmtLibSolverInstaller() {
-    }
-
     @Override
     protected String getSolverName() {
         return "bitwuzla";

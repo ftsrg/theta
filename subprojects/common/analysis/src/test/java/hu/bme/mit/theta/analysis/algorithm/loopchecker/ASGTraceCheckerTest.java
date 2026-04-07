@@ -50,7 +50,7 @@ public class ASGTraceCheckerTest {
 
     @BeforeAll
     public static void initLogger() {
-        Logger.initOld(Logger.LegacyLevel.DETAIL);
+        Logger.init(Logger.ALL);
     }
 
     @Test

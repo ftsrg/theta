@@ -22,7 +22,6 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierConte
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierListContext;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.TypeSpecifierPointerContext;
 import hu.bme.mit.theta.common.logging.Logger;
-import static hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
@@ -41,7 +40,6 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     private final DeclarationVisitor declarationVisitor;
     private final TypedefVisitor typedefVisitor;
     private final ParseContext parseContext;
-    private final Logger uniqueWarningLogger;
 
     private static final List<String> standardTypes =
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
@@ -52,18 +50,9 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             DeclarationVisitor declarationVisitor,
             TypedefVisitor typedefVisitor,
             ParseContext parseContext) {
-        this(declarationVisitor, typedefVisitor, parseContext, Logger.INSTANCE);
-    }
-
-    public TypeVisitor(
-            DeclarationVisitor declarationVisitor,
-            TypedefVisitor typedefVisitor,
-            ParseContext parseContext,
-            Logger uniqueWarningLogger) {
         this.declarationVisitor = declarationVisitor;
         this.typedefVisitor = typedefVisitor;
         this.parseContext = parseContext;
-        this.uniqueWarningLogger = uniqueWarningLogger;
     }
 
     @Override
@@ -87,9 +76,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                         .filter(cType -> cType instanceof Enum)
                         .collect(Collectors.toList());
         if (enums.size() > 0) {
-            uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: enums are not yet supported! Using int instead.\n");
-            cSimpleTypes.add(NamedType("int", parseContext, uniqueWarningLogger));
+            Logger.warnOnce("enums are not yet supported! Using int instead%n");
+            cSimpleTypes.add(NamedType("int", parseContext));
             cSimpleTypes.removeAll(enums);
         }
         List<CSimpleType> namedElements =
@@ -105,7 +93,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                         .filter(o -> o instanceof NamedType)
                         .collect(Collectors.toList());
         if (namedElements.isEmpty()) {
-            namedElements.add(NamedType("int", parseContext, uniqueWarningLogger));
+            namedElements.add(NamedType("int", parseContext));
         }
         CSimpleType mainType =
                 namedElements.get(
@@ -118,7 +106,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
 
         if (mainType instanceof NamedType namedType
                 && shorthandTypes.contains(namedType.getNamedType())) {
-            mainType = NamedType("int", parseContext, uniqueWarningLogger);
+            mainType = NamedType("int", parseContext);
         } else {
             cSimpleTypes.remove(mainType);
         }
@@ -127,10 +115,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         // we didn't get explicit signedness
         if (type.isSigned() == null) {
             if (type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
-                uniqueWarningLogger.write(
-                        Level.INFO,
-                        "WARNING: signedness of the type char is implementation specific. Right now"
-                                + " it is interpreted as a signed char.\n");
+                Logger.warnOnce("signedness of the type char is implementation specific. Right now it is interpreted as a signed char%n");
             }
             type.setSigned(true);
         }
@@ -251,7 +236,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             if (ctx.Identifier() != null) {
                 name = ctx.Identifier().getText();
             }
-            Struct struct = CSimpleTypeFactory.Struct(name, parseContext, uniqueWarningLogger);
+            Struct struct = CSimpleTypeFactory.Struct(name, parseContext);
             for (CParser.StructDeclarationContext structDeclarationContext :
                     ctx.structDeclarationList().structDeclaration()) {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext =
@@ -274,9 +259,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             }
             return struct;
         } else {
-            uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: CompoundDefinitions are not yet implemented!\n");
-            return NamedType("int", parseContext, uniqueWarningLogger);
+            Logger.warnOnce("CompoundDefinitions are not yet implemented!%n");
+            return NamedType("int", parseContext);
         }
     }
 
@@ -287,7 +271,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             return Struct.getByName(text);
         } else {
             return NamedType(
-                    ctx.structOrUnion().getText() + " " + text, parseContext, uniqueWarningLogger);
+                    ctx.structOrUnion().getText() + " " + text, parseContext);
         }
     }
 
@@ -315,7 +299,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitEnumUsage(CParser.EnumUsageContext ctx) {
-        return NamedType("enum " + ctx.Identifier().getText(), parseContext, uniqueWarningLogger);
+        return NamedType("enum " + ctx.Identifier().getText(), parseContext);
     }
 
     @Override
@@ -327,7 +311,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public CSimpleType visitTypeSpecifierPointer(CParser.TypeSpecifierPointerContext ctx) {
         CSimpleType subtype =
                 ctx.typeSpecifier() == null
-                        ? NamedType("", parseContext, uniqueWarningLogger)
+                        ? NamedType("", parseContext)
                         : ctx.typeSpecifier().accept(this);
         if (subtype == null) {
             return null;
@@ -347,9 +331,9 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             case "unsigned":
                 return Unsigned();
             case "_Bool":
-                return NamedType("_Bool", parseContext, uniqueWarningLogger);
+                return NamedType("_Bool", parseContext);
             default:
-                return NamedType(ctx.getText(), parseContext, uniqueWarningLogger);
+                return NamedType(ctx.getText(), parseContext);
         }
     }
 
@@ -360,12 +344,12 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitTypeSpecifierFloat(CParser.TypeSpecifierFloatContext ctx) {
-        return NamedType("float", parseContext, uniqueWarningLogger);
+        return NamedType("float", parseContext);
     }
 
     @Override
     public CSimpleType visitTypeSpecifierDouble(CParser.TypeSpecifierDoubleContext ctx) {
-        return NamedType("double", parseContext, uniqueWarningLogger);
+        return NamedType("double", parseContext);
     }
 
     @Override
@@ -377,7 +361,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             return origin;
         } else {
             if (standardTypes.contains(ctx.getText())) {
-                return NamedType(ctx.getText(), parseContext, uniqueWarningLogger);
+                return NamedType(ctx.getText(), parseContext);
             } else {
                 return DeclaredName(ctx.getText());
             }

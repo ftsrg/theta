@@ -52,9 +52,6 @@ public interface SmtLibSolverInstaller {
 
     abstract class Default implements SmtLibSolverInstaller {
 
-        public Default() {
-        }
-
         @Override
         public final void install(final Path home, final String version, final String name)
                 throws SmtLibSolverInstallerException {

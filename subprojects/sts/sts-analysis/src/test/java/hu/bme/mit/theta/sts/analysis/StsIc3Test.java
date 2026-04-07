@@ -57,7 +57,7 @@ public class StsIc3Test {
 
     @BeforeAll
     public static void initLogger() {
-        Logger.initOld(Logger.LegacyLevel.VERBOSE);
+        Logger.init(Logger.ALL);
     }
 
     public static Collection<Object[]> data() {

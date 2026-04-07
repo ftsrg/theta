@@ -20,12 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.util.ChcUtilsKt;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
@@ -37,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -49,15 +46,6 @@ public class XstsHornTest {
     public String propPath;
     public boolean safe;
     public String solverString;
-
-    @BeforeAll
-    public static void initLogger() {
-        try {
-            Logger.init("GENERICSOLVER", null);
-        } catch (IllegalStateException ignored) {
-            // Logger may already be initialized by another test class in this task.
-        }
-    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -72,7 +60,7 @@ public class XstsHornTest {
                         "src/test/resources/model/trafficlight.xsts",
                         "src/test/resources/property/green_and_red.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/trafficlight.xsts",
@@ -90,7 +78,7 @@ public class XstsHornTest {
                     //                {"src/test/resources/model/trafficlight_v2.xsts",
                     //                        "src/test/resources/property/green_and_red.prop",
                     // true,
-                    //                        "eldarica:2.2"},
+                    //                        "eldarica:2.1"},
 
                     {
                         "src/test/resources/model/trafficlight_v2.xsts",
@@ -108,7 +96,7 @@ public class XstsHornTest {
                         "src/test/resources/model/counter5.xsts",
                         "src/test/resources/property/x_between_0_and_5.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/counter5.xsts",
@@ -126,7 +114,7 @@ public class XstsHornTest {
                         "src/test/resources/model/counter5.xsts",
                         "src/test/resources/property/x_eq_5.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/counter5.xsts",
@@ -138,18 +126,18 @@ public class XstsHornTest {
                         "src/test/resources/model/x_and_y.xsts",
                         "src/test/resources/property/x_geq_y.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/x_powers.xsts",
                         "src/test/resources/property/x_even.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
 
                     //                {"src/test/resources/model/cross_with.xsts",
                     // "src/test/resources/property/cross.prop",
-                    //                        false, "eldarica:2.2"},
+                    //                        false, "eldarica:2.1"},
 
                     //                { "src/test/resources/model/cross_with.xsts",
                     // "src/test/resources/property/cross.prop", false, "z3:4.13.0"},
@@ -160,7 +148,7 @@ public class XstsHornTest {
                     //
                     //                {"src/test/resources/model/cross_without.xsts",
                     //                        "src/test/resources/property/cross.prop", false,
-                    //                        "eldarica:2.2"},
+                    //                        "eldarica:2.1"},
 
                     //                { "src/test/resources/model/cross_without.xsts",
                     // "src/test/resources/property/cross.prop", false, "z3:4.13.0"},
@@ -173,7 +161,7 @@ public class XstsHornTest {
                         "src/test/resources/model/choices.xsts",
                         "src/test/resources/property/choices.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/choices.xsts",
@@ -191,7 +179,7 @@ public class XstsHornTest {
                         "src/test/resources/model/literals.xsts",
                         "src/test/resources/property/literals.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/literals.xsts",
@@ -208,7 +196,7 @@ public class XstsHornTest {
 
                     //                {"src/test/resources/model/cross3.xsts",
                     // "src/test/resources/property/cross.prop",
-                    //                        false, "eldarica:2.2"},
+                    //                        false, "eldarica:2.1"},
 
                     //                { "src/test/resources/model/cross3.xsts",
                     // "src/test/resources/property/cross.prop", false, "z3:4.13.0"},
@@ -221,7 +209,7 @@ public class XstsHornTest {
                         "src/test/resources/model/sequential.xsts",
                         "src/test/resources/property/sequential.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/sequential.xsts",
@@ -239,7 +227,7 @@ public class XstsHornTest {
                         "src/test/resources/model/sequential.xsts",
                         "src/test/resources/property/sequential2.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/sequential.xsts",
@@ -257,7 +245,7 @@ public class XstsHornTest {
                         "src/test/resources/model/on_off_statemachine.xsts",
                         "src/test/resources/property/on_off_statemachine.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/on_off_statemachine.xsts",
@@ -275,7 +263,7 @@ public class XstsHornTest {
                         "src/test/resources/model/on_off_statemachine.xsts",
                         "src/test/resources/property/on_off_statemachine2.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/on_off_statemachine.xsts",
@@ -293,7 +281,7 @@ public class XstsHornTest {
                         "src/test/resources/model/on_off_statemachine.xsts",
                         "src/test/resources/property/on_off_statemachine3.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/on_off_statemachine.xsts",
@@ -311,7 +299,7 @@ public class XstsHornTest {
                         "src/test/resources/model/counter50.xsts",
                         "src/test/resources/property/x_eq_5.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/counter50.xsts",
@@ -327,7 +315,7 @@ public class XstsHornTest {
                     },
 
                     //                { "src/test/resources/model/counter50.xsts",
-                    // "src/test/resources/property/x_eq_50.prop", false, "eldarica:2.2"},
+                    // "src/test/resources/property/x_eq_50.prop", false, "eldarica:2.1"},
 
                     {
                         "src/test/resources/model/counter50.xsts",
@@ -345,7 +333,7 @@ public class XstsHornTest {
                         "src/test/resources/model/counter50.xsts",
                         "src/test/resources/property/x_eq_51.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/counter50.xsts",
@@ -363,7 +351,7 @@ public class XstsHornTest {
                     //                {"src/test/resources/model/count_up_down.xsts",
                     //                        "src/test/resources/property/count_up_down.prop",
                     // false,
-                    //                        "eldarica:2.2"},
+                    //                        "eldarica:2.1"},
 
                     {
                         "src/test/resources/model/count_up_down.xsts",
@@ -381,7 +369,7 @@ public class XstsHornTest {
                         "src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down2.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/count_up_down.xsts",
@@ -399,7 +387,7 @@ public class XstsHornTest {
                         "src/test/resources/model/bhmr2007.xsts",
                         "src/test/resources/property/bhmr2007.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
 
                     //                { "src/test/resources/model/bhmr2007.xsts",
@@ -413,7 +401,7 @@ public class XstsHornTest {
                         "src/test/resources/model/css2003.xsts",
                         "src/test/resources/property/css2003.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/css2003.xsts",
@@ -429,17 +417,17 @@ public class XstsHornTest {
                     },
 
                     //                { "src/test/resources/model/ort.xsts",
-                    // "src/test/resources/property/x_gt_2.prop", false, "eldarica:2.2"},
+                    // "src/test/resources/property/x_gt_2.prop", false, "eldarica:2.1"},
 
                     //                { "src/test/resources/model/ort2.xsts",
-                    // "src/test/resources/property/ort2.prop", true, "eldarica:2.2"},
+                    // "src/test/resources/property/ort2.prop", true, "eldarica:2.1"},
 
                     //                { "src/test/resources/model/crossroad_composite.xsts",
                     // "src/test/resources/property/both_green.prop", true, "z3:4.13.0"}
 
                     //                {"src/test/resources/model/array_counter.xsts",
                     //                        "src/test/resources/property/array_10.prop", false,
-                    //                        "eldarica:2.2"},
+                    //                        "eldarica:2.1"},
 
                     {
                         "src/test/resources/model/array_counter.xsts",
@@ -455,7 +443,7 @@ public class XstsHornTest {
                     //                {"src/test/resources/model/array_constant.xsts",
                     //                        "src/test/resources/property/array_constant.prop",
                     // true,
-                    //                        "eldarica:2.2"},
+                    //                        "eldarica:2.1"},
 
                     {
                         "src/test/resources/model/array_constant.xsts",
@@ -473,7 +461,7 @@ public class XstsHornTest {
                         "src/test/resources/model/localvars.xsts",
                         "src/test/resources/property/localvars.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/localvars.xsts",
@@ -491,7 +479,7 @@ public class XstsHornTest {
                         "src/test/resources/model/localvars2.xsts",
                         "src/test/resources/property/localvars2.prop",
                         true,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     {
                         "src/test/resources/model/localvars2.xsts",
@@ -516,18 +504,18 @@ public class XstsHornTest {
                     //
                     //                {"src/test/resources/model/loopxy.xsts",
                     // "src/test/resources/property/loopxy.prop",
-                    //                        true, "eldarica:2.2"},
+                    //                        true, "eldarica:2.1"},
 
                     {
                         "src/test/resources/model/arraywrite_sugar.xsts",
                         "src/test/resources/property/arraywrite_sugar.prop",
                         false,
-                        "eldarica:2.2"
+                        "eldarica:2.1"
                     },
                     //
                     //                {"src/test/resources/model/if1.xsts",
                     // "src/test/resources/property/if1.prop", true,
-                    //                        "eldarica:2.2"},
+                    //                        "eldarica:2.1"},
 
                     //                {"src/test/resources/model/if2.xsts",
                     // "src/test/resources/property/if2.prop", false,
@@ -591,16 +579,7 @@ public class XstsHornTest {
             final var relations = XstsToRelationsKt.toRelations(xsts);
             System.err.println(ChcUtilsKt.toSMT2(relations));
             final var checker = new HornChecker(relations, solverFactory);
-            final SafetyResult<?, ?> status;
-            try {
-                status = checker.check();
-            } catch (SmtLibSolverBinaryException e) {
-                if (solverString.startsWith("eldarica:")) {
-                    Assumptions.assumeFalse(true, e::getMessage);
-                    return;
-                }
-                throw e;
-            }
+            final SafetyResult<?, ?> status = checker.check();
 
             if (safe) {
                 assertTrue(status.isSafe());

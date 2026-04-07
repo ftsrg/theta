@@ -97,8 +97,7 @@ class UnusedVarPass(val property: XcfaProperty? = null) :
       )
     val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
     if (!varsAndParams.containsAll(usedVars)) {
-      Logger.writeln(
-        Logger.LegacyLevel.INFO,
+      Logger.info(
         "WARNING: There are some used variables not present as declarations: " +
           usedVars.filter { it !in varsAndParams },
       )

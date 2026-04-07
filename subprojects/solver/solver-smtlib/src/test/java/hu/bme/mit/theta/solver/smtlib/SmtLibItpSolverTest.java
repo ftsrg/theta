@@ -69,7 +69,7 @@ public final class SmtLibItpSolverTest {
 
     @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        if (!Logger.isEnabled("ERROR")) {
+        if (!Logger.isEnabled(Logger.Level.ERROR)) {
             Logger.init("ERROR");
         }
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {

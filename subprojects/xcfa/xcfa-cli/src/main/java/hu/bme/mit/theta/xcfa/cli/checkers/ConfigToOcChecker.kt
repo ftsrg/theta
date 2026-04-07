@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
@@ -38,7 +37,6 @@ fun getOcChecker(
       property = config.inputConfig.property.verifiedProperty,
       decisionProcedure = ocConfig.decisionProcedure,
       smtSolver = ocConfig.smtSolver,
-      logger = Logger,
       conflictInput = ocConfig.inputConflictClauseFile,
       outputConflictClauses = ocConfig.outputConflictClauses,
       nonPermissiveValidation = ocConfig.nonPermissiveValidation,

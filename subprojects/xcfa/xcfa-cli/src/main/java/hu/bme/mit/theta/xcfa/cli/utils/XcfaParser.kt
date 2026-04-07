@@ -100,7 +100,7 @@ fun getXcfa(
     if (config.debugConfig.stacktrace) e.printStackTrace()
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
-    Logger.write(Logger.LegacyLevel.RESULT, "Frontend failed! ($location, $e)\n")
+    Logger.result("Frontend failed! ($location, $e)\n")
     exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
 
@@ -185,7 +185,7 @@ private fun parseC(
     } catch (e: Throwable) {
       if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
-        Logger.write(Logger.LegacyLevel.INFO, "Retrying parsing with bitvector arithmetic...\n")
+        Logger.info("Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
         val xcfa =
           getXcfaFromC(stream, parseContext, false, property).first
@@ -216,8 +216,7 @@ private fun parseChc(
           ChcPasses(parseContext),
         )
       } catch (e: UnsupportedOperationException) {
-        Logger.write(
-          Logger.LegacyLevel.INFO,
+        Logger.info(
           "Non-linear CHC found, retrying using backward transformation...\n",
         )
         chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)

@@ -159,10 +159,7 @@ class XstsCliTracegen :
     //      val cexsString = toCexs(concretizationResult)
     //      PrintWriter(File(concreteSummaryFile)).use { printWriter ->
     // printWriter.write(cexsString) }
-    //      logger.write(
-    //        Logger.Level.SUBSTEP,
-    //        "Concrete trace summary exported to ${concreteSummaryFile}\n",
-    //      )
+    //      Logger.subStep("Concrete trace summary exported to ${concreteSummaryFile}\n")
     //    }
   }
 

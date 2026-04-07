@@ -43,13 +43,15 @@ import org.junit.jupiter.params.provider.MethodSource
 class GenericSmtLibHornSolverTest {
   companion object {
 
+    private var solverInstalled = false
     private var solverManager: SmtLibSolverManager? = null
     private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 
     private val SOLVERS: List<Pair<String, String>> =
       listOf(
-        Pair("eldarica", "2.2"),
+        Pair("eldarica", "2.1"),
         Pair("golem", "0.8.1"),
+        Pair("eldarica", "2.2"),
         Pair("golem", "0.5.0"),
         Pair("z3", "4.13.0"),
         Pair("z3", "4.14.0"),
@@ -64,29 +66,38 @@ class GenericSmtLibHornSolverTest {
     @BeforeAll
     @JvmStatic
     fun init() {
-      if (!Logger.isEnabled("ERROR")) {
+      if (!Logger.isEnabled(Logger.Level.ERROR)) {
         Logger.init("ERROR")
       }
       if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val home = SmtLibSolverManager.HOME
 
         solverManager = SmtLibSolverManager.create(home)
+        var allInstalled = true
         for ((solver, version) in SOLVERS) {
           val installedVersions = solverManager!!.getInstalledVersions(solver)
           if (!installedVersions.contains(version)) {
-            solverManager!!.install(solver, version, version, null, false)
+            try {
+              solverManager!!.install(solver, version, version, null, false)
+            } catch (e: SmtLibSolverInstallerException) {
+              Logger.error("Failed to install %s %s: %s", solver, version, e.message)
+              allInstalled = false
+            }
           }
 
-          solverFactories.put(
-            Pair(solver, version),
-            solverManager!!.getSolverFactory(solver, version),
-          )
+          try {
+            solverFactories.put(
+              Pair(solver, version),
+              solverManager!!.getSolverFactory(solver, version),
+            )
+          } catch (e: Exception) {
+            Logger.error("Could not get solver factory for %s %s: %s", solver, version, e.message)
+            allInstalled = false
+          }
         }
-        Assertions.assertTrue(
-          solverFactories.keys.containsAll(SOLVERS),
-          "Required solvers not installed: " + SOLVERS.filter { !solverFactories.containsKey(it) }
-        )
+        solverInstalled = allInstalled
       }
+      Assertions.assertTrue(solverInstalled, "All solvers must be installed: $SOLVERS")
     }
 
     @AfterAll

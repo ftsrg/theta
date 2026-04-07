@@ -77,7 +77,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
         try (final var inputStream = getDownloadUrl(version).openStream()) {
-            Logger.INSTANCE.mainStep(
+            Logger.mainStep(
                     "Starting download (%s)...\n",
                     getDownloadUrl(version).toString());
             if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
@@ -112,7 +112,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                         new FileOutputStream(
                                         installDir.resolve("COPYING").toAbsolutePath().toString())
                                 .getChannel()) {
-            Logger.INSTANCE.mainStep(
+            Logger.mainStep(
                     "Starting license download (%s)...\n",
                     getLicenseDownloadUrl().toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
@@ -120,7 +120,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        Logger.INSTANCE.mainStep("Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

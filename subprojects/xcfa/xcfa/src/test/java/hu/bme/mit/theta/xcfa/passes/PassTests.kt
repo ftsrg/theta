@@ -68,7 +68,7 @@ class PassTests {
     @BeforeAll
     @JvmStatic
     fun init() {
-      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+      Logger.init(Logger.ALL)
     }
 
     @JvmStatic

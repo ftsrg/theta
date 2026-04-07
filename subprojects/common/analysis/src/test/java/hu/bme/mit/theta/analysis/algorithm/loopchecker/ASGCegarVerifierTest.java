@@ -73,7 +73,7 @@ public class ASGCegarVerifierTest {
 
     @BeforeAll
     public static void init() {
-        Logger.initOld(Logger.LegacyLevel.VERBOSE);
+        Logger.init(Logger.ALL);
         abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
         solverFactory = Z3LegacySolverFactory.getInstance();

@@ -25,7 +25,6 @@ import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import static hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -71,7 +70,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private final GlobalDeclUsageVisitor globalDeclUsageVisitor;
     private final TypeVisitor typeVisitor;
     private final TypedefVisitor typedefVisitor;
-    private final Logger uniqueWarningLogger;
 
     private final LinkedList<Tuple2<ParserRuleContext, Optional<CCompound>>>
             currentStatementContext = new LinkedList<>();
@@ -111,8 +109,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
-            uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: Variable already exists: " + name + "\n");
+            Logger.warnOnce("Variable already exists: %s%n", name);
             varDecl = peek.get2().get(name);
         }
         peek.get2().put(name, varDecl);
@@ -126,12 +123,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     public FunctionVisitor(final ParseContext parseContext) {
-        this(parseContext, Logger.INSTANCE);
-    }
-
-    public FunctionVisitor(final ParseContext parseContext, Logger uniqueWarningLogger) {
-        this.declarationVisitor = new DeclarationVisitor(parseContext, this, uniqueWarningLogger);
-        this.uniqueWarningLogger = uniqueWarningLogger;
+        this.declarationVisitor = new DeclarationVisitor(parseContext, this);
         this.typedefVisitor = declarationVisitor.getTypedefVisitor();
         this.typeVisitor = declarationVisitor.getTypeVisitor();
         variables = new ArrayDeque<>();
@@ -373,15 +365,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 new CExpr(
                         ctx.constantExpression()
                                 .accept(
-                                        new ExpressionVisitor(
+                                         new ExpressionVisitor(
                                                 atomicVariables,
                                                 parseContext,
                                                 this,
                                                 variables,
                                                 functions,
                                                 typedefVisitor,
-                                                typeVisitor,
-                                                uniqueWarningLogger)),
+                                                typeVisitor)),
                         parseContext);
         CCase cCase = new CCase(cexpr, ctx.statement().accept(this), parseContext);
         recordMetadata(ctx, cCase);
@@ -726,8 +717,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         variables,
                         functions,
                         typedefVisitor,
-                        typeVisitor,
-                        uniqueWarningLogger);
+                        typeVisitor);
         CCompound compound = new CCompound(parseContext);
         CCompound preStatements = new CCompound(parseContext);
         CCompound postStatements = new CCompound(parseContext);
@@ -853,8 +843,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         variables,
                         functions,
                         typedefVisitor,
-                        typeVisitor,
-                        uniqueWarningLogger);
+                        typeVisitor);
 
         Expr<?> iteExpr;
         if (!ctx.expression().isEmpty()) {

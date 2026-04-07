@@ -50,7 +50,7 @@ public class XstsAbstractMddCheckerTest {
 
     @BeforeAll
     public static void initLogger() {
-        Logger.initOld(Logger.LegacyLevel.SUBSTEP);
+        Logger.init(Logger.ALL);
     }
 
     public static Collection<Object[]> data() {

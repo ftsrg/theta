@@ -49,7 +49,7 @@ class XcfaMonolithicTest {
     @BeforeAll
     @JvmStatic
     fun init() {
-      Logger.initOld(Logger.LegacyLevel.VERBOSE)
+      Logger.init(Logger.ALL)
     }
 
     private fun genericTest(xcfa: XCFA, parseContext: ParseContext, monolithic: MonolithicExpr) {

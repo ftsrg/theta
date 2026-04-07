@@ -27,12 +27,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
@@ -50,7 +45,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
 
-        Logger.genericsolver("Starting SmtLibSolverBinary with command: %s", String.join(" ", processCmd));
+        Logger.solverDebug("Starting SmtLibSolverBinary with command: %s", String.join(" ", processCmd));
 
         final var solverProcessBuilder = new NuProcessBuilder(processCmd);
 
@@ -78,8 +73,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
     public String readResponse() {
         checkState(solverProcess.isRunning());
         try {
-            String response = processHandler.read().trim();
-            return response;
+            return processHandler.read().trim();
         } catch (InterruptedException e) {
             Logger.error("Interrupted while reading response: %s", e.getMessage());
             throw new SmtLibSolverBinaryException(e);
@@ -120,8 +114,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                 wait();
             }
 
-            String result = outputQueue.remove();
-            return result;
+            return outputQueue.remove();
         }
 
         @Override
@@ -155,7 +148,6 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
             if (!isPrincess) {
                 onInput(buffer);
-            } else {
             }
         }
 
@@ -165,6 +157,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
             final var buf = new byte[buffer.remaining()];
             buffer.get(buf);
             final var input = new String(buf, StandardCharsets.US_ASCII);
+            // System.out.println(input);
 
             for (var c : input.toCharArray()) {
                 if (readProcessor == null) {
@@ -172,7 +165,6 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                 }
 
                 readProcessor.step(c);
-
                 if (isCvc4) {
                     if (c == 'f') {
                         isFp = 1;
@@ -190,8 +182,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
                 if (readProcessor.isReady()) {
                     isFp = 0;
-                    String result = readProcessor.getResult();
-                    outputQueue.add(result);
+                    outputQueue.add(readProcessor.getResult());
                     notifyAll();
                     readProcessor = null;
                 }
@@ -227,17 +218,11 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                     } else if (Character.isAlphabetic(c)) {
                         sb.append(c);
                         status = ReadProcessor.ReadStatus.LINE;
-                    } else if (Character.isWhitespace(c)) {
-                        // Ignore leading whitespace in INIT state
-                    } else {
-                        // This case was missing! If Eldarica starts with something unexpected, it would get stuck
-                        sb.append(c); // Append unexpected char and treat as line
-                        status = ReadProcessor.ReadStatus.LINE;
                     }
                     break;
                 case LINE:
-                if (c == '\n') {
-                    status = ReadProcessor.ReadStatus.READY;
+                    if (c == '\n') {
+                        status = ReadProcessor.ReadStatus.READY;
                     } else {
                         sb.append(c);
                     }

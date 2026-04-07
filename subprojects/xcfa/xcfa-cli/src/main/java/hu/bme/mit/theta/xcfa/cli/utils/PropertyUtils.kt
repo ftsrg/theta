@@ -45,8 +45,7 @@ fun determineProperty(config: XcfaConfig<*, *>): XcfaProperty =
           propertyFile.name.endsWith("termination.prp") -> TERMINATION
 
           else -> {
-            Logger.write(
-              Logger.LegacyLevel.INFO,
+            Logger.info(
               "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
             )
             NO_ERROR
