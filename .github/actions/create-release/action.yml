@@ -53,7 +53,7 @@ runs:
       shell: bash
     - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
       shell: bash
-    - run: for i in $(find release -name "*zip"); do echo $i; unzip "$i" -d "upload/"; done
+    - run: for i in $(find release -name "*zip"); do echo $i; mv -v "$i" "upload/"; done
       shell: bash
     - name: List files for release
       id: files
