@@ -233,7 +233,7 @@ jobs:
 
 
   deploy-release:
-    needs: [test-linux, create-archives]
+    needs: [create-archives]
     runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 21

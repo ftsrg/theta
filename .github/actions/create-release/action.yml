@@ -49,6 +49,8 @@ runs:
       with:
         pattern: release-*
         path: release/
+    - run: mkdir -p upload
+      shell: bash
     - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
       shell: bash
     - run: for i in $(find release -name "*zip"); do echo $i; unzip "$i" -d "upload/"; done
