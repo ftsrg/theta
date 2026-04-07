@@ -45,8 +45,12 @@ class ZenodoReleaser:
 
     def get_draft_depositions(self) -> list:
         """Get all draft depositions for this record."""
+        # First, resolve the concept record ID from the record info
+        record_info = self.get_record_info()
+        concept_recid = record_info.get('conceptrecid', self.record_id)
+        
         url = f"{self.base_url}/deposit/depositions"
-        params = {"q": f"conceptrecid:{self.record_id}", "all_versions": "true"}
+        params = {"q": f"conceptrecid:{concept_recid}", "all_versions": "true"}
         response = self._make_request("GET", url, headers=self.headers, params=params)
         data = response.json()
         
@@ -78,12 +82,18 @@ class ZenodoReleaser:
             print("No existing drafts found.")
 
     def create_new_version(self) -> Dict[str, Any]:
-        """Create a new version of the record."""
+        """Create a new version of the record, reusing an existing draft if one exists."""
         print(f"Creating new version for record {self.record_id}")
         
         url = f"{self.base_url}/deposit/depositions/{self.record_id}/actions/newversion"
-        response = self._make_request("POST", url, headers=self.headers)
-        data = response.json()
+        try:
+            response = self._make_request("POST", url, headers=self.headers)
+            data = response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 400:
+                print("New version draft already exists, retrieving it...")
+                return self._get_existing_draft()
+            raise
         
         # Get the latest draft URL from the response
         latest_draft_url = data.get('links', {}).get('latest_draft')
@@ -95,6 +105,24 @@ class ZenodoReleaser:
         draft_data = draft_response.json()
         
         return draft_data
+
+    def _get_existing_draft(self) -> Dict[str, Any]:
+        """Retrieve an existing draft version and clear its files."""
+        drafts = self.get_draft_depositions()
+        if not drafts:
+            raise ValueError(
+                "Zenodo reports an existing draft but none could be found via the API. "
+                "Please check the Zenodo web UI for stuck drafts."
+            )
+        
+        draft = drafts[0]
+        print(f"Found existing draft {draft['id']}, cleaning up its files...")
+        self.delete_existing_files(draft)
+        
+        # Re-fetch the draft to get updated state
+        url = f"{self.base_url}/deposit/depositions/{draft['id']}"
+        response = self._make_request("GET", url, headers=self.headers)
+        return response.json()
 
     def update_metadata(self, deposition_data: Dict[str, Any], tool_name: str, metadata_file: Path) -> None:
         """Update the metadata for the deposition."""
