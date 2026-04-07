@@ -34,7 +34,6 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
     initNode: ASGNode<S, A>,
     stopAtLasso: Boolean,
     expand: NodeExpander<S, A>,
-    logger: Logger,
   ): Collection<ASGTrace<S, A>> {
     return expandThroughNode(
         emptyMap(),
@@ -43,7 +42,6 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
         0,
         stopAtLasso,
         expand,
-        logger,
       )
       .second!!
   }
@@ -55,44 +53,39 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
     targetsSoFar: Int,
     stopAtLasso: Boolean,
     expand: NodeExpander<S, A>,
-    logger: Logger,
   ): BacktrackResult<S, A> {
     val expandingNode: ASGNode<S, A> = incomingEdge.target
-    logger.write(
-      Logger.Level.VERBOSE,
+    Logger.verbose(
       "Expanding through %s edge to %s node with state %s%n",
       if (incomingEdge.accepting) "accepting" else "not accepting",
       if (expandingNode.accepting) "accepting" else "not accepting",
       expandingNode.state,
     )
     if (expandingNode.state.isBottom()) {
-      logger.write(Logger.Level.VERBOSE, "Node is a dead end since its bottom%n")
+      Logger.verbose("Node is a dead end since its bottom%n")
       return BacktrackResult(null, null)
     }
     val totalTargets =
       if (expandingNode.accepting || incomingEdge.accepting) targetsSoFar + 1 else targetsSoFar
     if (pathSoFar.containsKey(expandingNode) && pathSoFar[expandingNode]!! < totalTargets) {
-      logger.write(
-        Logger.Level.SUBSTEP,
+      Logger.subStep(
         "Found trace with a length of %d, building lasso...%n",
         pathSoFar.size,
       )
-      logger.write(Logger.Level.DETAIL, "Honda should be: %s", expandingNode.state)
+      Logger.detail("Honda should be: %s", expandingNode.state)
       pathSoFar.forEach { (node, targetsThatFar) ->
-        logger.write(
-          Logger.Level.VERBOSE,
+        Logger.verbose(
           "Node state %s | targets that far: %d%n",
           node.state,
           targetsThatFar,
         )
       }
       val lasso: ASGTrace<S, A> = ASGTrace(edgesSoFar + incomingEdge, expandingNode)
-      logger.write(Logger.Level.DETAIL, "Built the following lasso:%n")
-      lasso.print(logger, Logger.Level.DETAIL)
+      Logger.detail("Built the following lasso:%n%s", lasso.print())
       return BacktrackResult(null, listOf(lasso))
     }
     if (pathSoFar.containsKey(expandingNode)) {
-      logger.write(Logger.Level.VERBOSE, "Reached loop but no acceptance inside%n")
+      Logger.verbose("Reached loop but no acceptance inside%n")
       return BacktrackResult(setOf(expandingNode), null)
     }
     val needsTraversing =
@@ -113,7 +106,6 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
           totalTargets,
           stopAtLasso,
           expand,
-          logger,
         )
       results.add(result)
       if (stopAtLasso && result.second?.isNotEmpty() == true) break
@@ -132,11 +124,10 @@ object GdfsSearchStrategy : AbstractSearchStrategy() {
     initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-    logger: Logger,
   ): Collection<ASGTrace<S, A>> {
     for (initNode in initNodes) {
       val possibleTraces: Collection<ASGTrace<S, A>> =
-        expandFromInitNodeUntilTarget(initNode, true, expand, logger)
+        expandFromInitNodeUntilTarget(initNode, true, expand)
       if (!possibleTraces.isEmpty()) {
         return possibleTraces
       }
@@ -151,6 +142,5 @@ object FullSearchStrategy : AbstractSearchStrategy() {
     initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-    logger: Logger,
-  ) = initNodes.flatMap { expandFromInitNodeUntilTarget(it, false, expand, logger) }
+  ) = initNodes.flatMap { expandFromInitNodeUntilTarget(it, false, expand) }
 }

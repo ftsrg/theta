@@ -26,7 +26,6 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 
 typealias PipelineStep<Pr> = Pair<Int, MonolithicExprPassResult<Pr>>
 
@@ -43,13 +42,12 @@ constructor(
     (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
   val passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
   val validators: List<MonolithicExprPassValidator<in Pr>> = defaultValidators(),
-  val logger: Logger = NullLogger.getInstance(),
 ) : SafetyChecker<Pr, Trace<ExplState, ExprAction>, UnitPrec> {
 
   constructor(
     model: MonolithicExpr,
     args: MEPipelineCheckerConstructorArguments<Pr>,
-  ) : this(model, args.checkerFactory, args.passes, args.validators, args.logger)
+  ) : this(model, args.checkerFactory, args.passes, args.validators)
 
   companion object {
     fun defaultValidators(): List<MonolithicExprPassValidator<in InvariantProof>> =
@@ -128,5 +126,4 @@ constructor(
   val passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
   val validators: List<MonolithicExprPassValidator<in Pr>> =
     MonolithicExprPassPipelineChecker.defaultValidators(),
-  val logger: Logger = NullLogger.getInstance(),
 )

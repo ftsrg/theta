@@ -45,7 +45,6 @@ fun getIc3Checker(
   xcfa: XCFA,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
 
   val ic3Config = config.backendConfig.specConfig as Ic3Config
@@ -61,7 +60,6 @@ fun getIc3Checker(
       /* propagateOpt = */ true,
       /* filterOpt = */ true,
       /* propertyOpt = */ true,
-      /* logger = */ logger,
     )
   }
 
@@ -82,7 +80,6 @@ fun getIc3Checker(
     parseContext,
     baseChecker,
     passes,
-    logger,
     config.outputConfig.acceptUnreliableSafe,
   )
 }

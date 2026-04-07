@@ -33,8 +33,6 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
 import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
 import hu.bme.mit.theta.cfa.copyWithReplacingVars
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
@@ -50,7 +48,6 @@ import org.junit.jupiter.api.Test
 
 class MultiAlternatingTest {
 
-  val logger: Logger = ConsoleLogger(Logger.Level.SUBSTEP)
   val solver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
 
   @Test
@@ -113,7 +110,6 @@ class MultiAlternatingTest {
         dataInitPrec,
         dataInitPrec,
         Z3LegacySolverFactory.getInstance(),
-        logger,
       )
     val result = multiConfigBuilder.build().check()
 
@@ -181,7 +177,6 @@ class MultiAlternatingTest {
         dataInitPrec,
         dataInitPrec,
         Z3LegacySolverFactory.getInstance(),
-        logger,
       )
     val result = multiConfigBuilder.build().check()
 

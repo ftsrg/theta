@@ -22,14 +22,11 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
-import hu.bme.mit.theta.common.logging.Logger
 import java.io.File
 
 class OutputOptions :
   OptionGroup(name = "Output options", help = "Options related to output and statistics") {
 
-  val logLevel: Logger.Level by
-    option(help = "Detailedness of logging").enum<Logger.Level>().default(Logger.Level.SUBSTEP)
   val benchmarkMode: Boolean by
     option("--benchmark", help = "Quiet mode, output will be just the result metrics")
       .boolean()

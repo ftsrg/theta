@@ -30,8 +30,7 @@ import java.util.List;
 
 public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public PrincessSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public PrincessSmtLibSolverInstaller() {
     }
 
     @Override
@@ -54,7 +53,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
                                         "http://www.philipp.ruemmer.org/princess/princess-bin-%s.zip",
                                         version));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.mainStep("Starting download (%s)...\n", downloadUrl.toString());
 
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
@@ -63,7 +62,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

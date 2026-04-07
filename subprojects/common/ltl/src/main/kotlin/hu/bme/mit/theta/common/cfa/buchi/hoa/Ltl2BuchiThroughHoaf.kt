@@ -17,7 +17,6 @@ package hu.bme.mit.theta.common.cfa.buchi.hoa
 
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.common.cfa.buchi.Ltl2BuchiTransformer
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.ltl.dsl.gen.LTLGrammarLexer
@@ -26,7 +25,7 @@ import jhoafparser.parser.HOAFParser
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-class Ltl2BuchiThroughHoaf(private val converter: Ltl2Hoaf, private val logger: Logger) :
+class Ltl2BuchiThroughHoaf(private val converter: Ltl2Hoaf) :
   Ltl2BuchiTransformer {
 
   override fun transform(ltl: String, namedVariables: Map<String, VarDecl<*>>): CFA {
@@ -39,7 +38,7 @@ class Ltl2BuchiThroughHoaf(private val converter: Ltl2Hoaf, private val logger: 
     val swappedLtl = toStringVisitor.visitModel(modelContext)
     val negatedLtl = "!($swappedLtl)"
     val hoafExpression = converter.transform(negatedLtl)
-    val buchiBuilder = BuchiBuilder(logger, toStringVisitor.aps)
+    val buchiBuilder = BuchiBuilder(toStringVisitor.aps)
     HOAFParser.parseHOA(hoafExpression.byteInputStream(), buchiBuilder)
     return buchiBuilder.build()
   }

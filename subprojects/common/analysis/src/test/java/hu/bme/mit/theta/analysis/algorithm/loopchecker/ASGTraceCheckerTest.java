@@ -30,7 +30,6 @@ import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -44,9 +43,16 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class ASGTraceCheckerTest {
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.init(Logger.ALL);
+    }
+
     @Test
     public void testWithCounter3() throws IOException {
         XSTS xsts;
@@ -71,14 +77,12 @@ public class ASGTraceCheckerTest {
         final AcceptancePredicate<XstsState<PredState>, XstsAction> target =
                 new AcceptancePredicate<>(statePredicate::test);
         final PredPrec precision = PredPrec.of();
-        final Logger logger = new ConsoleLogger(Logger.Level.DETAIL);
         final ASGAbstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor =
                 new ASGAbstractor<>(
                         analysis,
                         lts,
                         target,
-                        LoopCheckerSearchStrategy.Companion.getDefault(),
-                        logger);
+                        LoopCheckerSearchStrategy.Companion.getDefault());
         ASG<XstsState<PredState>, XstsAction> ASG = new ASG<>(target);
         abstractor.check(ASG, precision);
         ASGTrace<XstsState<PredState>, XstsAction> trace = ASG.getTraces().iterator().next();
@@ -88,7 +92,7 @@ public class ASGTraceCheckerTest {
                         strat -> {
                             ExprTraceStatus<ItpRefutation> status =
                                     strat.check(
-                                            trace, solverFactory, xsts.getInitFormula(), logger);
+                                            trace, solverFactory, xsts.getInitFormula());
                             Assertions.assertTrue(status.isInfeasible());
                         });
     }

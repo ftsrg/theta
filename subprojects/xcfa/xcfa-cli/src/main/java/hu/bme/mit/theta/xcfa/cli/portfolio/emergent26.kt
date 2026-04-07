@@ -40,10 +40,8 @@ fun emergent26(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   var baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
@@ -420,7 +418,7 @@ fun emergent26(
       else -> LIN_INT
     }
 
-  logger.benchmark("Using portfolio: $mainTrait\n")
+  Logger.benchmark("Using portfolio: $mainTrait\n")
 
   val inProcessStm = getStm(mainTrait, true)
   val notInProcessStm = getStm(mainTrait, false)

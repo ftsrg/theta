@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
@@ -35,14 +34,18 @@ import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class PnmlSymbolicGSATTest {
 
+    @BeforeAll
+    public static void initLogger() {
+        Logger.init(Logger.ALL);
+    }
+
     @Test
     public void testPnmlSymbolicGSAT() throws Exception {
-
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final PetriNet petriNet =
                 XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-5.pnml", "");
@@ -63,10 +66,10 @@ public class PnmlSymbolicGSATTest {
                             new XstsPipelineChecker<>(
                                     xsts,
                                     monolithicExpr ->
-                                            new MddChecker(monolithicExpr, solverPool, logger));
+                                            new MddChecker(monolithicExpr, solverPool));
             status = pipeline.check();
-            logger.mainStep(status.toString());
-            logger.mainStep(
+            Logger.mainStep(status.toString());
+            Logger.mainStep(
                     "State space size: "
                             + ((MddAnalysisStatistics) status.getStats().get())
                                     .getStateSpaceSize());

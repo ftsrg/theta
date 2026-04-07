@@ -39,8 +39,7 @@ class DirectRefinementASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
   private val trace: ASGTrace<S, A>,
   solverFactory: SolverFactory,
   init: Expr<BoolType>,
-  logger: Logger,
-) : AbstractASGTraceCheckerStrategy<S, A>(trace, solverFactory, init, logger) {
+) : AbstractASGTraceCheckerStrategy<S, A>(trace, solverFactory, init) {
 
   override fun evaluateLoop(valuation: Valuation): ExprTraceStatus<ItpRefutation> {
     for (variable in variables) {

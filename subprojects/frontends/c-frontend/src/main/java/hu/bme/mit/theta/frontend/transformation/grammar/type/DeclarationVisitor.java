@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
@@ -40,17 +39,14 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
-    private final Logger uniqueWarningLogger;
 
     public DeclarationVisitor(
             ParseContext parseContext,
-            FunctionVisitor functionVisitor,
-            Logger uniqueWarningLogger) {
+            FunctionVisitor functionVisitor) {
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
-        this.uniqueWarningLogger = uniqueWarningLogger;
         this.typedefVisitor = new TypedefVisitor(this);
-        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext, uniqueWarningLogger);
+        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext);
     }
 
     public TypedefVisitor getTypedefVisitor() {
@@ -240,7 +236,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!\n");
+            Logger.warnOnce("variable args are not supported!%n");
             decl.setFunc(true);
             return decl;
         }

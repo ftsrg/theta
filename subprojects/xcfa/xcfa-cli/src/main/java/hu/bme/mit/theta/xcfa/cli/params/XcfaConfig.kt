@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceChecke
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -668,8 +667,8 @@ data class DebugConfig(
   var debug: Boolean = false,
   @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
   var stacktrace: Boolean = false,
-  @Parameter(names = ["--loglevel"], description = "Detailedness of logging")
-  var logLevel: Logger.Level = Logger.Level.RESULT,
+  @Parameter(names = ["--loglevel"], description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+  var logLevel: String = "ERROR|WARN|RESULT",
   @Parameter(
     names = ["--arg-debug"],
     description = "ARG debug mode (use the web-based debugger for ARG visualization)",

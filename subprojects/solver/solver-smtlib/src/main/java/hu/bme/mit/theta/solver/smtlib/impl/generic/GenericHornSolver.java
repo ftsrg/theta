@@ -28,6 +28,7 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
+import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
@@ -76,10 +77,14 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
     public SolverStatus check() {
         solverBinary.issueCommand("(check-sat)");
         final var response = solverBinary.readResponse().lines().toList();
+        if (response.isEmpty()) {
+            throw new SmtLibSolverBinaryException("Solver returned an empty response to '(check-sat)' (likely it failed to start).");
+        }
+        final var resultLine = response.get(0);
         status =
-                response.get(0).equals("sat")
+                resultLine.equals("sat")
                         ? SolverStatus.SAT
-                        : response.get(0).equals("unsat") ? SolverStatus.UNSAT : null;
+                        : resultLine.equals("unsat") ? SolverStatus.UNSAT : null;
         if (status == SolverStatus.SAT) {
             // we have a model
             final var sb = new StringBuilder();

@@ -34,7 +34,6 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -189,7 +188,7 @@ public class CfaTest {
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             SolverManager.registerSolverManager(
-                    SmtLibSolverManager.create(SmtLibSolverManager.HOME, NullLogger.getInstance()));
+                    SmtLibSolverManager.create(SmtLibSolverManager.HOME));
         }
 
         final SolverFactory solverFactory;

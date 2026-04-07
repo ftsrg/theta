@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
@@ -30,6 +29,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -37,37 +37,25 @@ class XcfaCliPortfolioTest {
   companion object {
     private object Portfolios {
       val complexPortfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        { xcfa: XCFA, mcm: MCM, parseContext: ParseContext, portfolioConfig: XcfaConfig<*, *> ->
+          complex26(xcfa, mcm, parseContext, portfolioConfig)
         }
 
       val emergentPortfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        { xcfa: XCFA, mcm: MCM, parseContext: ParseContext, portfolioConfig: XcfaConfig<*, *> ->
+          emergent26(xcfa, mcm, parseContext, portfolioConfig)
         }
 
       val hornPortfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          hornPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        { xcfa: XCFA, mcm: MCM, parseContext: ParseContext, portfolioConfig: XcfaConfig<*, *> ->
+          hornPortfolio(xcfa, mcm, parseContext, portfolioConfig)
         }
+    }
+
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      Logger.init(Logger.ALL)
     }
 
     private object Programs {
@@ -152,15 +140,7 @@ class XcfaCliPortfolioTest {
   @ParameterizedTest
   @MethodSource("data")
   fun testPortfolio(
-    portfolio:
-      (
-        xcfa: XCFA,
-        mcm: MCM,
-        parseContext: ParseContext,
-        portfolioConfig: XcfaConfig<*, *>,
-        logger: Logger,
-        uniqueLogger: Logger,
-      ) -> STM,
+    portfolio: (xcfa: XCFA, mcm: MCM, parseContext: ParseContext, portfolioConfig: XcfaConfig<*, *>) -> STM,
     program: Pair<XCFA, ParseContext>,
     check: (STM?, Exception?) -> Unit,
   ) {
@@ -171,8 +151,6 @@ class XcfaCliPortfolioTest {
           emptySet(),
           program.second,
           XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
-          NullLogger.getInstance(),
-          NullLogger.getInstance(),
         ) to null
       } catch (e: Exception) {
         System.err.println(e.stackTraceToString())

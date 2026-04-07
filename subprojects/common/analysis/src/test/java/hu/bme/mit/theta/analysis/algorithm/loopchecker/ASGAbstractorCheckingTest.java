@@ -37,7 +37,6 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
@@ -116,8 +115,7 @@ public class ASGAbstractorCheckingTest {
                         analysis,
                         lts,
                         target,
-                        LoopCheckerSearchStrategy.Companion.getDefault(),
-                        new ConsoleLogger(Logger.Level.DETAIL));
+                        LoopCheckerSearchStrategy.Companion.getDefault());
         ASG<XstsState<ExplState>, XstsAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
         Assertions.assertEquals(isLassoPresent, result.isUnsafe());
@@ -143,8 +141,7 @@ public class ASGAbstractorCheckingTest {
                         analysis,
                         lts,
                         target,
-                        LoopCheckerSearchStrategy.Companion.getDefault(),
-                        new ConsoleLogger(Logger.Level.DETAIL));
+                        LoopCheckerSearchStrategy.Companion.getDefault());
         ASG<CfaState<ExplState>, CfaAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
         Assertions.assertEquals(isLassoPresent, result.isUnsafe());

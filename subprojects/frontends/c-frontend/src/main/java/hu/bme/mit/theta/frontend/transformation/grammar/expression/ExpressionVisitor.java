@@ -30,7 +30,6 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -82,7 +81,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
     private final PostfixVisitor postfixVisitor;
-    private final Logger uniqueWarningLogger;
 
     public ExpressionVisitor(
             Set<VarDecl<?>> atomicVars,
@@ -91,8 +89,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables,
             Map<VarDecl<?>, CDeclaration> functions,
             TypedefVisitor typedefVisitor,
-            TypeVisitor typeVisitor,
-            Logger uniqueWarningLogger) {
+            TypeVisitor typeVisitor) {
         this.atomicVars = atomicVars;
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
@@ -100,7 +97,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         this.functions = functions;
         this.typedefVisitor = typedefVisitor;
         this.typeVisitor = typeVisitor;
-        this.uniqueWarningLogger = uniqueWarningLogger;
         postfixVisitor = new PostfixVisitor();
     }
 
@@ -548,9 +544,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     public Expr<?> visitUnaryExpressionSizeOrAlignOf(
             CParser.UnaryExpressionSizeOrAlignOfContext ctx) {
         if (ctx.Alignof() != null) {
-            uniqueWarningLogger.write(
-                    Level.INFO,
-                    "WARNING: alignof is not yet implemented, using a literal 0 instead.\n");
+            Logger.warnOnce("alignof is not yet implemented, using a literal 0 instead%n");
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             LitExpr<?> zero = signedInt.getNullValue();
             parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -587,9 +581,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 .getValue("" + Math.max(type.get().width() / 8, 1));
                 return value;
             } else {
-                uniqueWarningLogger.write(
-                        Level.INFO,
-                        "WARNING: sizeof got unknown type, using a literal 0 instead.\n");
+                Logger.warnOnce("sizeof got unknown type, using a literal 0 instead%n");
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 LitExpr<?> zero = signedInt.getNullValue();
                 parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -725,10 +717,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitGccPrettyFunc(CParser.GccPrettyFuncContext ctx) {
-        uniqueWarningLogger.write(
-                Level.INFO,
-                "WARNING: gcc intrinsic encountered in place of an expression, using a literal 0"
-                        + " instead.\n");
+        Logger.warnOnce("gcc intrinsic encountered in place of an expression, using a literal 0 instead%n");
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         LitExpr<?> zero = signedInt.getNullValue();
         parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -867,14 +856,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionCompoundStatement(
             PrimaryExpressionCompoundStatementContext ctx) {
-        uniqueWarningLogger.info("Primary expression compound statement");
+        Logger.infoOnce("Primary expression compound statement");
         return null;
     }
 
     @Override
     public Expr<?> visitPrimaryExpressionTypeInitializer(
             PrimaryExpressionTypeInitializerContext ctx) {
-        uniqueWarningLogger.info("Primary expression type initializer");
+        Logger.infoOnce("Primary expression type initializer");
         return null;
     }
 
@@ -898,7 +887,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         Expr<?> ret = signedInt.getUnitValue();
-        uniqueWarningLogger.write(Level.INFO, "WARNING: using int(1) as a string constant\n");
+        Logger.warnOnce("using int(1) as a string constant%n");
         parseContext.getMetadata().create(ret, "cType", signedInt);
         return ret;
     }

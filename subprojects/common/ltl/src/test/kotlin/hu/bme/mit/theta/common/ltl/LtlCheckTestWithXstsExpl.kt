@@ -24,8 +24,6 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2HoafFromDir
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
@@ -41,7 +39,6 @@ import org.junit.jupiter.params.provider.MethodSource
 class LtlCheckTestWithXstsExpl {
 
   private val solverFactory = Z3LegacySolverFactory.getInstance()
-  private val logger: Logger = ConsoleLogger(Logger.Level.VERBOSE)
 
   companion object {
     @JvmStatic
@@ -55,6 +52,7 @@ class LtlCheckTestWithXstsExpl {
         arrayOf("counter6to7", "G(x=7)", false),
         arrayOf("counter6to7", "G F(x=7)", true),
       )
+
   }
 
   @ParameterizedTest
@@ -95,10 +93,9 @@ class LtlCheckTestWithXstsExpl {
         configBuilder.dataAnalysis,
         ltlExpr,
         solverFactory,
-        logger,
         LoopCheckerSearchStrategy.GDFS,
         ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
-        Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa"), logger),
+        Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa")),
         xsts.vars,
         xsts.initFormula,
         NextSideFunctions.Alternating(),

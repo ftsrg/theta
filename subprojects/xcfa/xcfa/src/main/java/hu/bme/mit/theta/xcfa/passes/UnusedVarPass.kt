@@ -34,7 +34,7 @@ import hu.bme.mit.theta.xcfa.utils.isRead
  * Remove unused variables from the program. Requires the ProcedureBuilder to be `deterministic`
  * (@see DeterministicPass)
  */
-class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaProperty? = null) :
+class UnusedVarPass(val property: XcfaProperty? = null) :
   ProcedurePass {
 
   companion object {
@@ -97,8 +97,7 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaP
       )
     val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
     if (!varsAndParams.containsAll(usedVars)) {
-      uniqueWarningLogger.writeln(
-        Logger.Level.INFO,
+      Logger.info(
         "WARNING: There are some used variables not present as declarations: " +
           usedVars.filter { it !in varsAndParams },
       )

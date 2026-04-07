@@ -49,10 +49,7 @@ import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -87,7 +84,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 throw new UnsupportedOperationException(
                         "CEGAR can't provide a checker factory as it is not to be used in ME"
                                 + " pipeline");
@@ -101,10 +98,10 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildBMC(
-                                monolithicExpr, solverFactory.createSolver(), logger));
+                                monolithicExpr, solverFactory.createSolver()));
             }
         },
         KINDUCTION {
@@ -115,13 +112,12 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildKIND(
                                 monolithicExpr,
                                 solverFactory.createSolver(),
-                                solverFactory.createSolver(),
-                                logger));
+                                solverFactory.createSolver()));
             }
         },
         IMC {
@@ -132,13 +128,12 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildIMC(
                                 monolithicExpr,
                                 solverFactory.createSolver(),
-                                solverFactory.createItpSolver(),
-                                logger));
+                                solverFactory.createItpSolver()));
             }
         },
         MDD {
@@ -149,12 +144,11 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         new MddChecker(
                                 monolithicExpr,
                                 new SolverPool(solverFactory),
-                                logger,
                                 cfaCli.iterationStrategy));
             }
         },
@@ -166,7 +160,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         new Ic3Checker(
                                 monolithicExpr,
@@ -176,8 +170,7 @@ public class CfaCli {
                                 true,
                                 true,
                                 true,
-                                true,
-                                logger));
+                                true));
             }
         };
 
@@ -185,7 +178,7 @@ public class CfaCli {
                         MonolithicExpr,
                         SafetyChecker<
                                 ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
-                getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger);
+                getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory);
     }
 
     @Parameter(
@@ -290,8 +283,10 @@ public class CfaCli {
             description = "MDD iteration strategy")
     MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
 
-    @Parameter(names = "--loglevel", description = "Detailedness of logging")
-    Logger.Level logLevel = Level.SUBSTEP;
+    @Parameter(
+            names = "--loglevel",
+            description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+    String logLevel = "ERROR|WARN|RESULT|BENCHMARK|MAINSTEP|SUBSTEP";
 
     @Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
     Boolean benchmarkMode = false;
@@ -321,8 +316,6 @@ public class CfaCli {
     @Parameter(names = "--version", description = "Display version", help = true)
     boolean versionInfo = false;
 
-    private Logger logger;
-
     public CfaCli(final String[] args) {
         this.args = args;
         writer = new BasicTableWriter(System.out, ",", "\"", "\"");
@@ -336,7 +329,7 @@ public class CfaCli {
     private void run() {
         try {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+            Logger.init(logLevel);
         } catch (final ParameterException ex) {
             System.out.println("Invalid parameters, details:");
             System.out.println(ex.getMessage());
@@ -358,7 +351,7 @@ public class CfaCli {
             SolverManager.registerSolverManager(Z3SolverManager.create());
             if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
                 final var homePath = Path.of(home);
-                final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+                final var smtLibSolverManager = SmtLibSolverManager.create(homePath);
                 SolverManager.registerSolverManager(smtLibSolverManager);
             }
 
@@ -372,7 +365,7 @@ public class CfaCli {
             }
 
             if (metrics) {
-                CfaMetrics.printMetrics(logger, cfa);
+                CfaMetrics.printMetrics(cfa);
                 return;
             }
 
@@ -433,8 +426,7 @@ public class CfaCli {
                                                 algorithm
                                                         .getCheckerFactory(
                                                                 this,
-                                                                abstractionSolverFactory,
-                                                                logger)
+                                                                abstractionSolverFactory)
                                                         .apply(monolithicExpr),
                                         passes);
                 status = formalismChecker.check(null);
@@ -493,7 +485,6 @@ public class CfaCli {
                     .maxEnum(maxEnum)
                     .initPrec(initPrec)
                     .pruneStrategy(pruneStrategy)
-                    .logger(logger)
                     .build(cfa, errLoc);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -517,7 +508,7 @@ public class CfaCli {
 
     private void printResult(
             final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
-        logger.result(status.toString());
+        Logger.result(status.toString());
         final CegarStatistics stats =
                 (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
@@ -551,17 +542,16 @@ public class CfaCli {
             writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
             writer.newRow();
         } else {
-            logger.write(
-                    Level.RESULT,
+            Logger.result(
                     "%s occurred, message: %s%n",
                     ex.getClass().getSimpleName(),
                     message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));
-                logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+                Logger.result("Trace:%n%s%n", errors.toString());
             } else {
-                logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+                Logger.result("Use --stacktrace for stack trace%n");
             }
         }
     }

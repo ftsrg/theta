@@ -41,7 +41,6 @@ class XcfaOcChecker(
   property: ErrorDetection,
   decisionProcedure: OcDecisionProcedureType,
   smtSolver: String,
-  private val logger: Logger,
   conflictInput: String?,
   private val outputConflictClauses: Boolean,
   nonPermissiveValidation: Boolean,
@@ -74,46 +73,46 @@ class XcfaOcChecker(
   private val ocChecker: OcChecker<E> =
     decisionProcedure.checker(smtSolver, memoryModel).let { ocChecker ->
       if (conflictInput == null) ocChecker
-      else XcfaOcCorrectnessValidator(ocChecker, conflictInput, !nonPermissiveValidation, logger)
+      else XcfaOcCorrectnessValidator(ocChecker, conflictInput, !nonPermissiveValidation)
     }
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
     let {
-        logger.mainStep("Creating event graph...")
+        Logger.mainStep("Creating event graph...")
         val eg = XcfaToEventGraph(xcfa).create()
 
         if (eg.violations.isEmpty()) {
           return@let SafetyResult.safe(EmptyProof.getInstance())
         }
 
-        logger.mainStep("Adding constraints...")
+        Logger.mainStep("Adding constraints...")
         addToSolver(eg, ocChecker.solver)
         val (preservedPos, preservedWss) = memoryModel.filter(eg.events, eg.pos, eg.wss)
 
         // "Manually" add some conflicts
-        logger.info(
+        Logger.info(
           "Auto conflict time (ms): " +
             measureTime {
                 val conflicts =
-                  conflictFinder.findConflicts(eg.events, preservedPos, eg.rfs, logger)
+                  conflictFinder.findConflicts(eg.events, preservedPos, eg.rfs)
                 ocChecker.solver.add(conflicts.map { Not(it.expr) })
-                logger.info("Auto conflicts: ${conflicts.size}")
+                Logger.info("Auto conflicts: ${conflicts.size}")
               }
               .inWholeMilliseconds
         )
 
-        logger.mainStep("Start checking...")
+        Logger.mainStep("Start checking...")
         val status: SolverStatus?
         val checkerTime = measureTime {
           status = ocChecker.check(eg.events, eg.pos, preservedPos, eg.rfs, preservedWss)
         }
         if (ocChecker !is XcfaOcCorrectnessValidator)
-          logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
-        logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
+          Logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+        Logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
         ocChecker.solver.statistics.let {
-          logger.info("Solver statistics:")
-          it.forEach { (k, v) -> logger.info("$k: $v") }
+          Logger.info("Solver statistics:")
+          it.forEach { (k, v) -> Logger.info("$k: $v") }
         }
         when {
           status?.isUnsat == true -> {
@@ -136,7 +135,7 @@ class XcfaOcChecker(
                 try {
                   XcfaOcTraceExtractor(xcfa, ocChecker, eg).trace
                 } catch (e: Exception) {
-                  logger.info("OC checker trace extraction failed: ${e.message}")
+                  Logger.info("OC checker trace extraction failed: ${e.message}")
                   EmptyCex.getInstance()
                 }
               SafetyResult.unsafe(trace, EmptyProof.getInstance())
@@ -149,10 +148,10 @@ class XcfaOcChecker(
         }
       }
       .also {
-        logger.mainStep("OC checker result: $it")
+        Logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
-          logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
-          logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
+          Logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
+          Logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
           throw NotSolvableException()
         }
       }

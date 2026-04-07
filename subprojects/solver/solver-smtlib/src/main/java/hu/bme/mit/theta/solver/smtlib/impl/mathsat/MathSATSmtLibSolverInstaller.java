@@ -39,8 +39,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
 
     private final List<SemVer.VersionDecoder> versions;
 
-    public MathSATSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public MathSATSmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -138,7 +137,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
                                 archStr,
                                 OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.mainStep("Starting download (%s)...\n", downloadUrl.toString());
 
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             if (OsHelper.getOs().equals(WINDOWS)) {
@@ -155,7 +154,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

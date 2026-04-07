@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -68,19 +68,33 @@ public final class SmtLibSolverTest {
 
     @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
+        if (!Logger.isEnabled(Logger.Level.ERROR)) {
+            Logger.init("ERROR");
+        }
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
 
-            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-            try {
-                solverManager.install(SOLVER, VERSION, VERSION, null, false);
+            solverManager = SmtLibSolverManager.create(home);
+            var installedVersions = solverManager.getInstalledVersions(SOLVER);
+            if (!installedVersions.contains(VERSION)) {
+                try {
+                    solverManager.install(SOLVER, VERSION, VERSION, null, false);
+                    solverInstalled = true;
+                } catch (SmtLibSolverInstallerException e) {
+                    Logger.error("Failed to install %s %s: %s", SOLVER, VERSION, e.getMessage());
+                    solverInstalled = false;
+                }
+            } else {
                 solverInstalled = true;
-            } catch (SmtLibSolverInstallerException e) {
-                e.printStackTrace();
             }
 
-            solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
+            if (solverInstalled) {
+                solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
+            } else {
+                Logger.error("Could not get solver factory because solver was not installed");
+            }
         }
+        assertTrue(solverInstalled, "Solver " + SOLVER + " " + VERSION + " must be installed to run these tests");
     }
 
     @AfterAll

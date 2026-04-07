@@ -45,8 +45,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     private final List<SemVer.VersionDecoder> versions;
 
-    public CVC5SmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public CVC5SmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -78,8 +77,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
         try (final var inputStream = getDownloadUrl(version).openStream()) {
-            logger.write(
-                    Logger.Level.MAINSTEP,
+            Logger.mainStep(
                     "Starting download (%s)...\n",
                     getDownloadUrl(version).toString());
             if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
@@ -114,8 +112,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                         new FileOutputStream(
                                         installDir.resolve("COPYING").toAbsolutePath().toString())
                                 .getChannel()) {
-            logger.write(
-                    Logger.Level.MAINSTEP,
+            Logger.mainStep(
                     "Starting license download (%s)...\n",
                     getLicenseDownloadUrl().toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
@@ -123,7 +120,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

@@ -21,8 +21,6 @@ import hu.bme.mit.theta.analysis.pred.ExprSplitters
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2HoafFromDir
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xsts.XSTS
@@ -38,7 +36,6 @@ class LtlCheckTestWithXstsPred {
 
   private val itpSolverFactory = Z3LegacySolverFactory.getInstance()
   private val abstractionSolver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
-  private val logger: Logger = ConsoleLogger(Logger.Level.INFO)
 
   companion object {
     private fun data() =
@@ -140,10 +137,9 @@ class LtlCheckTestWithXstsPred {
         configBuilder.dataAnalysis,
         ltlExpr,
         itpSolverFactory,
-        logger,
         searchStrategy,
         refinerStrategy,
-        Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa"), logger),
+        Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa")),
         variables,
         xsts.initFormula,
       )

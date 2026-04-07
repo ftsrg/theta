@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -44,12 +43,10 @@ public class NamedType extends CSimpleType {
     protected final ParseContext parseContext;
 
     private final String namedType;
-    private final Logger uniqueWarningLogger;
 
-    NamedType(ParseContext parseContext, final String namedType, Logger uniqueWarningLogger) {
+    NamedType(ParseContext parseContext, final String namedType) {
         this.parseContext = parseContext;
         this.namedType = namedType;
-        this.uniqueWarningLogger = uniqueWarningLogger;
     }
 
     @Override
@@ -107,8 +104,7 @@ public class NamedType extends CSimpleType {
                 break;
             default:
                 {
-                    uniqueWarningLogger.write(
-                            Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
+                    Logger.warnOnce("Unknown simple type %s%n", namedType);
                     type = new CVoid(this, parseContext);
                     break;
                 }
@@ -184,7 +180,7 @@ public class NamedType extends CSimpleType {
 
     @Override
     public CSimpleType getBaseType() {
-        NamedType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
+        NamedType namedType = new NamedType(parseContext, getNamedType());
         namedType.setAtomic(this.isAtomic());
         namedType.setExtern(this.isExtern());
         namedType.setTypedef(this.isTypedef());
@@ -246,7 +242,7 @@ public class NamedType extends CSimpleType {
 
     @Override
     public CSimpleType copyOf() {
-        CSimpleType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
+        CSimpleType namedType = new NamedType(parseContext, getNamedType());
         setUpCopy(namedType);
         return namedType;
     }

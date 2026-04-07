@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -30,6 +29,7 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -37,6 +37,11 @@ public class XstsIc3CheckerTest {
     public String filePath;
     public String propPath;
     public boolean safe;
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.init(Logger.ALL);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -245,7 +250,6 @@ public class XstsIc3CheckerTest {
     @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
     public void runTest(String filePath, String propPath, boolean safe) throws Exception {
         initXstsIc3CheckerTest(filePath, propPath, safe);
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
         try (InputStream inputStream =
@@ -266,8 +270,7 @@ public class XstsIc3CheckerTest {
                                         true,
                                         true,
                                         true,
-                                        true,
-                                        logger));
+                                        true));
         final SafetyResult<?, ?> status = checker.check(null);
 
         if (safe) {

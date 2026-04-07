@@ -20,9 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
@@ -535,7 +532,7 @@ public class XstsHornTest {
                         == OsHelper.OperatingSystem
                                 .LINUX); // chc solvers are only properly on linux
         try (final var solverManager =
-                SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
+                SmtLibSolverManager.create(SMTLIB_HOME)) {
             String solverVersion = SmtLibSolverManager.getSolverVersion(solverString);
             String solverName = SmtLibSolverManager.getSolverName(solverString);
             if (solverManager.managesSolver(solverString)
@@ -557,11 +554,10 @@ public class XstsHornTest {
     public void test(String filePath, String propPath, boolean safe, String solverString)
             throws Exception {
         initXstsHornTest(filePath, propPath, safe, solverString);
-        final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(
                 hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
-        SolverManager.registerSolverManager(SmtLibSolverManager.create(SMTLIB_HOME, logger));
+        SolverManager.registerSolverManager(SmtLibSolverManager.create(SMTLIB_HOME));
         SolverManager.registerSolverManager(JavaSMTSolverManager.create());
 
         final SolverFactory solverFactory;
@@ -582,7 +578,7 @@ public class XstsHornTest {
         try {
             final var relations = XstsToRelationsKt.toRelations(xsts);
             System.err.println(ChcUtilsKt.toSMT2(relations));
-            final var checker = new HornChecker(relations, solverFactory, logger);
+            final var checker = new HornChecker(relations, solverFactory);
             final SafetyResult<?, ?> status = checker.check();
 
             if (safe) {

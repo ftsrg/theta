@@ -38,9 +38,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.pred.*;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -50,15 +48,19 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class StsPredTest {
 
-    final Logger logger = new ConsoleLogger(Level.VERBOSE);
     final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
     final ItpSolver refinementSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
     STS sts = null;
+
+    public StsPredTest() {
+        Logger.init(Logger.ALL);
+    }
 
     @BeforeEach
     public void setUp() {
@@ -96,7 +98,7 @@ public class StsPredTest {
                 ArgBuilder.create(lts, analysis, target);
 
         final ArgAbstractor<PredState, StsAction, PredPrec> abstractor =
-                BasicArgAbstractor.builder(argBuilder).logger(logger).build();
+                BasicArgAbstractor.builder(argBuilder).build();
 
         final ExprTraceChecker<ItpRefutation> exprTraceChecker =
                 ExprTraceFwBinItpChecker.create(
@@ -106,11 +108,10 @@ public class StsPredTest {
                 SingleExprTraceRefiner.create(
                         exprTraceChecker,
                         JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
-                        PruneStrategy.LAZY,
-                        logger);
+                        PruneStrategy.LAZY);
 
         final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec>
-                checker = ArgCegarChecker.create(abstractor, refiner, logger);
+                checker = ArgCegarChecker.create(abstractor, refiner);
 
         final SafetyResult<ARG<PredState, StsAction>, Trace<PredState, StsAction>> safetyStatus =
                 checker.check(prec);

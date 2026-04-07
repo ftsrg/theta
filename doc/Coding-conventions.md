@@ -41,6 +41,13 @@ See [Build.md](Build.md). For the formatting rules, check [java-common.gradle.kt
 * **AVOID** platform specific constructs. For example, prefer `System.lineSeparator()` over `\r\n` or `\n`.
 * **CONSIDER** using `getClass().getSimpleName()` to print the name of a class in its `toString()`. This way, if the class is renamed, `toString()` will also adapt.
 
+## Loggin
+* **DO** use the singleton `Logger` for all logging (e.g., `Logger.info(...)`, `Logger.mainStep(...)`).
+* **DO** use `*Once` variants (`warnOnce`, `infoOnce`, `errorOnce`) for messages that should only appear once.
+* **DO NOT** use `System.out.println` or `System.err.println` for logging.
+
+For details, see [Logging.md](Logging.md).
+
 # References
 
 1. Joshua Bloch: Effective Java (2nd edition)

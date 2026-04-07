@@ -27,8 +27,6 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.Formalism
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.sts.STS
 import hu.bme.mit.theta.sts.analysis.StsAction
 import hu.bme.mit.theta.sts.analysis.StsToMonolithicAdapter
@@ -41,9 +39,8 @@ constructor(
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
   validators: List<MonolithicExprPassValidator<in Pr>> =
     MonolithicExprPassPipelineChecker.defaultValidators(),
-  logger: Logger = NullLogger.getInstance(),
 ) :
   FormalismPipelineChecker<STS, ExplState, StsAction, Pr, InvariantProof>(
     StsToMonolithicAdapter(sts),
-    MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
+    MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators),
   )

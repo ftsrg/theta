@@ -35,28 +35,26 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
   projection: Function<in S?, *>?,
   waitlist: Waitlist<ArgNode<S, A>>,
   stopCriterion: StopCriterion<S, A>,
-  logger: Logger,
-) : BasicArgAbstractor<S, A, P>(argBuilder, projection, waitlist, stopCriterion, logger) {
+) : BasicArgAbstractor<S, A, P>(argBuilder, projection, waitlist, stopCriterion) {
 
   override fun check(arg: ARG<S, A>, prec: P): AbstractorResult {
-    logger.write(Logger.Level.DETAIL, "|  |  Precision: %s%n", prec)
+    Logger.detail("|  |  Precision: %s%n", prec)
 
     if (!arg.isInitialized) {
-      logger.write(Logger.Level.SUBSTEP, "|  |  (Re)initializing ARG...")
+      Logger.subStep("|  |  (Re)initializing ARG...")
       argBuilder.init(arg, prec)
-      logger.write(Logger.Level.SUBSTEP, "done%n")
+      Logger.subStep("done%n")
     }
 
     assert(arg.isInitialized)
 
-    logger.write(
-      Logger.Level.INFO,
+    Logger.info(
       "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n",
       arg.nodes.count(),
       arg.incompleteNodes.count(),
-      arg.unsafeNodes.count(),
+      arg.unsafeNodes.count()
     )
-    logger.write(Logger.Level.SUBSTEP, "|  |  Building ARG...")
+    Logger.subStep("|  |  Building ARG...")
 
     val reachedSet: Partition<ArgNode<S, A>, *> =
       Partition.of { n: ArgNode<S, A> -> projection.apply(n.state) }
@@ -84,9 +82,8 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
       }
     }
 
-    logger.write(Logger.Level.SUBSTEP, "done%n")
-    logger.write(
-      Logger.Level.INFO,
+    Logger.subStep("done%n")
+    Logger.info(
       "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n",
       arg.nodes.count(),
       arg.incompleteNodes.count(),
@@ -137,7 +134,7 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
     BasicArgAbstractor.Builder<S, A, P>(argBuilder) {
 
     override fun build(): BasicArgAbstractor<S, A, P> {
-      return XcfaArgAbstractor(argBuilder, projection, waitlist, stopCriterion, logger)
+      return XcfaArgAbstractor(argBuilder, projection, waitlist, stopCriterion)
     }
   }
 }

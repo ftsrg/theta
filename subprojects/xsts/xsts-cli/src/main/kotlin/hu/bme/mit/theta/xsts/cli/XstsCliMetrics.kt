@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
@@ -32,42 +31,35 @@ class XstsCliMetrics : CliktCommand(name = "metrics") {
   private val inputOptions by InputOptions()
 
   override fun run() {
-    val logger = ConsoleLogger(Logger.Level.VERBOSE)
+    Logger.init(Logger.ALL)
     val xsts = inputOptions.loadXsts()
-    logger.write(Logger.Level.RESULT, "Vars: %s%n", xsts.vars.size)
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result("Vars: %s%n", xsts.vars.size)
+    Logger.result(
       "  Bool vars: %s%n",
       xsts.vars.stream().filter { v: VarDecl<*> -> v.type is BoolType }.count(),
     )
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "  Int vars: %s%n",
       xsts.vars.stream().filter { v: VarDecl<*> -> v.type is IntType }.count(),
     )
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "  Bitvector vars: %s%n",
       xsts.vars.stream().filter { v: VarDecl<*> -> v.type is BvType }.count(),
     )
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "  Array vars: %s%n",
       xsts.vars.stream().filter { v: VarDecl<*> -> v.type is ArrayType<*, *> }.count(),
     )
-    logger.write(Logger.Level.RESULT, "  Ctrl vars: %s%n", xsts.ctrlVars.size)
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result("  Ctrl vars: %s%n", xsts.ctrlVars.size)
+    Logger.result(
       "Tran statements: %s%n",
       xsts.tran.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null),
     )
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "Env statements: %s%n",
       xsts.env.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null),
     )
-    logger.write(
-      Logger.Level.RESULT,
+    Logger.result(
       "Init statements: %s%n",
       xsts.init.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null),
     )

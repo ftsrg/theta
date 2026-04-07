@@ -17,7 +17,7 @@ package hu.bme.mit.theta.solver.smtlib
 
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
@@ -43,6 +43,7 @@ import org.junit.jupiter.params.provider.MethodSource
 class GenericSmtLibHornSolverTest {
   companion object {
 
+    private var solverInstalled = false
     private var solverManager: SmtLibSolverManager? = null
     private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 
@@ -65,24 +66,38 @@ class GenericSmtLibHornSolverTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      if (!Logger.isEnabled(Logger.Level.ERROR)) {
+        Logger.init("ERROR")
+      }
       if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val home = SmtLibSolverManager.HOME
 
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+        solverManager = SmtLibSolverManager.create(home)
+        var allInstalled = true
         for ((solver, version) in SOLVERS) {
-
-          try {
-            solverManager!!.install(solver, version, version, null, false)
-          } catch (e: SmtLibSolverInstallerException) {
-            e.printStackTrace()
+          val installedVersions = solverManager!!.getInstalledVersions(solver)
+          if (!installedVersions.contains(version)) {
+            try {
+              solverManager!!.install(solver, version, version, null, false)
+            } catch (e: SmtLibSolverInstallerException) {
+              Logger.error("Failed to install %s %s: %s", solver, version, e.message)
+              allInstalled = false
+            }
           }
 
-          solverFactories.put(
-            Pair(solver, version),
-            solverManager!!.getSolverFactory(solver, version),
-          )
+          try {
+            solverFactories.put(
+              Pair(solver, version),
+              solverManager!!.getSolverFactory(solver, version),
+            )
+          } catch (e: Exception) {
+            Logger.error("Could not get solver factory for %s %s: %s", solver, version, e.message)
+            allInstalled = false
+          }
         }
+        solverInstalled = allInstalled
       }
+      Assertions.assertTrue(solverInstalled, "All solvers must be installed: $SOLVERS")
     }
 
     @AfterAll

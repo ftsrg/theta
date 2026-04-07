@@ -30,7 +30,7 @@ open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
     ProcedurePassManager(this.passes + listOf(passes))
 }
 
-class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class CPasses(property: XcfaProperty, parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -96,7 +96,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(OverflowDetectionPass(property, parseContext)),
     listOf(
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger, property),
+      UnusedVarPass(property),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
@@ -105,7 +105,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
 class NontermValidationPasses(
   property: XcfaProperty,
   parseContext: ParseContext,
-  uniqueWarningLogger: Logger,
 ) :
   ProcedurePassManager(
     listOf(
@@ -138,13 +137,13 @@ class NontermValidationPasses(
       NondetFunctionPass(),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger, property),
+      UnusedVarPass(property),
       UnusedLocRemovalPass(),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
-class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class ChcPasses(parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -166,7 +165,7 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       //      NormalizePass(), // needed after lbe, TODO
       //      DeterministicPass(), // needed after lbe, TODO
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger),
+      UnusedVarPass(),
     ),
   )
 

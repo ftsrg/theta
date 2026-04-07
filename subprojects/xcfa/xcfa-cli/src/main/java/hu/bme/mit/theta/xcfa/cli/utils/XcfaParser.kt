@@ -52,8 +52,6 @@ import org.antlr.v4.runtime.CharStreams
 fun getXcfa(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
-  logger: Logger,
-  uniqueWarningLogger: Logger,
 ) =
   try {
     when (config.frontendConfig.inputType) {
@@ -63,8 +61,6 @@ fun getXcfa(
           config.inputConfig.input!!,
           chcConfig.chcTransformation,
           parseContext,
-          logger,
-          uniqueWarningLogger,
         )
       }
 
@@ -73,8 +69,6 @@ fun getXcfa(
           config.inputConfig.input!!,
           config.inputConfig.property,
           parseContext,
-          logger,
-          uniqueWarningLogger,
         )
       }
 
@@ -106,7 +100,7 @@ fun getXcfa(
     if (config.debugConfig.stacktrace) e.printStackTrace()
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
-    logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
+    Logger.result("Frontend failed! ($location, $e)\n")
     exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
 
@@ -151,8 +145,6 @@ private fun parseC(
   input: File,
   property: XcfaProperty,
   parseContext: ParseContext,
-  logger: Logger,
-  uniqueWarningLogger: Logger,
 ): XCFA {
   val input =
     if (input.name.endsWith(".yml")) {
@@ -162,25 +154,25 @@ private fun parseC(
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
               val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              Logger.result("Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             is YamlScalar -> {
               val inputFile = Path(input.parent).resolve(files.content).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              Logger.result("Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             else -> {
-              logger.info("Unexpected yml content: $files")
+              Logger.info("Unexpected yml content: $files")
               input
             }
           }
         } else {
-          logger.info("Unexpected yml content: $parsedYaml")
+          Logger.info("Unexpected yml content: $parsedYaml")
           input
         }
       } catch (ex: Exception) {
-        logger.info("Could not parse YAML data: ${ex.message}")
+        Logger.info("Could not parse YAML data: ${ex.message}")
         input
       }
     } else {
@@ -189,21 +181,21 @@ private fun parseC(
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
-      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+      getXcfaFromC(stream, parseContext, false, property).first
     } catch (e: Throwable) {
       if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
-        logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
+        Logger.info("Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
         val xcfa =
-          getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+          getXcfaFromC(stream, parseContext, false, property).first
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
         throw e
       }
     }
-  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
+  Logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 
@@ -211,8 +203,6 @@ private fun parseChc(
   input: File,
   chcTransformation: ChcFrontend.ChcTransformation,
   parseContext: ParseContext,
-  logger: Logger,
-  uniqueWarningLogger: Logger,
 ): XCFA {
   var chcFrontend: ChcFrontend
   val xcfaBuilder =
@@ -223,24 +213,23 @@ private fun parseChc(
       try {
         chcFrontend.buildXcfa(
           CharStreams.fromStream(FileInputStream(input)),
-          ChcPasses(parseContext, uniqueWarningLogger),
+          ChcPasses(parseContext),
         )
       } catch (e: UnsupportedOperationException) {
-        logger.write(
-          Logger.Level.INFO,
+        Logger.info(
           "Non-linear CHC found, retrying using backward transformation...\n",
         )
         chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
         chcFrontend.buildXcfa(
           CharStreams.fromStream(FileInputStream(input)),
-          ChcPasses(parseContext, uniqueWarningLogger),
+          ChcPasses(parseContext),
         )
       }
     } else {
       chcFrontend = ChcFrontend(chcTransformation)
       chcFrontend.buildXcfa(
         CharStreams.fromStream(FileInputStream(input)),
-        ChcPasses(parseContext, uniqueWarningLogger),
+        ChcPasses(parseContext),
       )
     }
   return xcfaBuilder.build()

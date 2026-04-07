@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.common.logging.Logger
 
 object NdfsSearchStrategy : ILoopCheckerSearchStrategy {
 
@@ -29,7 +28,6 @@ object NdfsSearchStrategy : ILoopCheckerSearchStrategy {
     initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-    logger: Logger,
   ): Collection<ASGTrace<S, A>> {
     for (node in initNodes) {
       for (edge in expand(node)) {

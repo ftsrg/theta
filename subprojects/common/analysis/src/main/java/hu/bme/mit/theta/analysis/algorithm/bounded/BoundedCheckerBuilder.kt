@@ -23,7 +23,6 @@ import hu.bme.mit.theta.solver.Solver
 fun buildBMC(
   monolithicExpr: MonolithicExpr,
   bmcSolver: Solver,
-  logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
   bmcEnabled: () -> Boolean = { true },
   lfPathOnly: () -> Boolean = { true },
@@ -38,7 +37,6 @@ fun buildBMC(
     { false },
     null,
     { false },
-    logger,
   )
 }
 
@@ -47,7 +45,6 @@ fun buildKIND(
   monolithicExpr: MonolithicExpr,
   bmcSolver: Solver,
   indSolver: Solver,
-  logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
   bmcEnabled: () -> Boolean = { true },
   lfPathOnly: () -> Boolean = { true },
@@ -63,7 +60,6 @@ fun buildKIND(
     { false },
     indSolver,
     kindEnabled,
-    logger,
   )
 }
 
@@ -72,7 +68,6 @@ fun buildIMC(
   monolithicExpr: MonolithicExpr,
   bmcSolver: Solver,
   itpSolver: ItpSolver,
-  logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
   bmcEnabled: () -> Boolean = { false },
   lfPathOnly: () -> Boolean = { true },
@@ -88,6 +83,5 @@ fun buildIMC(
     imcEnabled,
     null,
     { false },
-    logger,
   )
 }

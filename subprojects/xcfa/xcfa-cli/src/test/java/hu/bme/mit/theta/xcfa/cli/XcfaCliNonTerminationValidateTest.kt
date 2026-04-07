@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
@@ -42,7 +41,7 @@ class XcfaCliNonTerminationValidateTest {
 
     private fun installSolver(name: String) {
       try {
-        SmtLibSolverManager.create(SMTLIB_HOME, ConsoleLogger(Logger.Level.DETAIL)).use {
+        SmtLibSolverManager.create(SMTLIB_HOME).use {
           solverManager ->
           val solverVersion = SmtLibSolverManager.getSolverVersion(name)
           val solverName = SmtLibSolverManager.getSolverName(name)

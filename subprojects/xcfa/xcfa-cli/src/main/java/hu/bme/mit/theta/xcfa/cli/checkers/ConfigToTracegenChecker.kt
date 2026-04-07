@@ -43,7 +43,6 @@ fun getTracegenChecker(
   parseContext: ParseContext,
   mcm: MCM?,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
   val tracegenConfig = config.backendConfig.specConfig as TracegenConfig
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
@@ -76,7 +75,6 @@ fun getTracegenChecker(
       tracegenConfig.abstractorConfig.maxEnum,
       waitlist,
       StopCriterions.fullExploration(),
-      logger,
       lts,
       errorDetector,
       corePartialOrd,
@@ -84,7 +82,7 @@ fun getTracegenChecker(
       coi,
     ) as BasicArgAbstractor<ExprState, ExprAction, Prec>
 
-  val tracegenChecker = CegarTraceGenerationChecker.create(logger, abstractor, false)
+  val tracegenChecker = CegarTraceGenerationChecker.create(abstractor, false)
 
   return Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> { prec ->
     tracegenChecker.check(prec) as Result<AbstractTraceSummary<XcfaState<*>, XcfaAction>>

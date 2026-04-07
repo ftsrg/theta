@@ -46,7 +46,6 @@ fun getMddChecker(
   xcfa: XCFA,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
   val mddConfig = config.backendConfig.specConfig as MddConfig
 
@@ -58,7 +57,6 @@ fun getMddChecker(
     MddChecker(
       monolithicExpr,
       solverPool,
-      logger,
       iterationStrategy = mddConfig.iterationStrategy,
       lookAheadStrategy = mddConfig.lookAheadStrategy,
       proofStrategy = mddConfig.proofStrategy,
@@ -84,7 +82,6 @@ fun getMddChecker(
     parseContext,
     baseChecker,
     passes,
-    logger,
     config.outputConfig.acceptUnreliableSafe,
     true,
   )

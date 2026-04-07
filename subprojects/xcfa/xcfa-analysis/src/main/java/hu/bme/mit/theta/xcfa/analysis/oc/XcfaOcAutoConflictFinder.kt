@@ -34,13 +34,12 @@ internal fun interface XcfaOcAutoConflictFinder {
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<R>>,
-    logger: Logger,
   ): List<Reason>
 }
 
-internal val NoConflictFinder = XcfaOcAutoConflictFinder { _, _, _, _ -> emptyList() }
+internal val NoConflictFinder = XcfaOcAutoConflictFinder { _, _, _ -> emptyList() }
 
-internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs, logger ->
+internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs ->
   val po = { from: E, to: E -> if (from.clkId == to.clkId) true else ppos[from.clkId, to.clkId] }
   val flatRfs = rfs.values.flatten().toMutableList()
   val conflicts = mutableListOf<Reason>()
@@ -68,7 +67,7 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs
   }
 
   val rfCnt = conflicts.size
-  logger.info("RF conflicts: $rfCnt")
+  Logger.info("RF conflicts: $rfCnt")
 
   // Find WS and FR conflicts
   rfs.forEach { (v, vRfs) ->
@@ -87,7 +86,7 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs
     }
   }
 
-  logger.info("WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
+  Logger.info("WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
   conflicts
 }
 
@@ -97,7 +96,6 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
     events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
     ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
-    logger: Logger,
   ): List<Reason> {
     val conflicts = mutableListOf<Reason>()
     val po = { from: E, to: E -> if (from.clkId == to.clkId) true else ppos[from.clkId, to.clkId] }
@@ -183,7 +181,7 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
         conflict.reasons.all { it.from.clkId == clkId && it.to.clkId == clkId }
       }
 
-      logger.info("Conflicts with $i non-trivial edges: ${conflicts.size - conflictSize}")
+      Logger.info("Conflicts with $i non-trivial edges: ${conflicts.size - conflictSize}")
     }
 
     return conflicts

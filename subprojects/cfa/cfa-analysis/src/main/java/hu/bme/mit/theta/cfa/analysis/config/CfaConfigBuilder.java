@@ -51,8 +51,7 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrecRefiner;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrecRefiner;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
+
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import java.util.Set;
@@ -65,7 +64,6 @@ public class CfaConfigBuilder {
     private final SolverFactory refinementSolverFactory;
     private final Domain domain;
     private final Refinement refinement;
-    private Logger logger = NullLogger.getInstance();
     private Search search = Search.BFS;
     private PredSplit predSplit = PredSplit.WHOLE;
     private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
@@ -91,11 +89,6 @@ public class CfaConfigBuilder {
         this.refinement = refinement;
         this.abstractionSolverFactory = abstractionSolverFactory;
         this.refinementSolverFactory = refinementSolverFactory;
-    }
-
-    public CfaConfigBuilder logger(final Logger logger) {
-        this.logger = logger;
-        return this;
     }
 
     public CfaConfigBuilder search(final Search search) {
@@ -173,8 +166,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         BW_BIN_ITP {
@@ -190,8 +182,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         SEQ_ITP {
@@ -207,8 +198,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         MULTI_SEQ {
@@ -229,8 +219,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         UNSAT_CORE {
@@ -246,8 +235,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getVarsRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         UCB {
@@ -263,8 +251,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_WP {
@@ -285,8 +272,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_SP {
@@ -307,8 +293,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_WP_LV {
@@ -329,8 +314,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_SP_LV {
@@ -351,8 +335,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_IT_WP {
@@ -373,8 +356,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_IT_SP {
@@ -395,8 +377,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_IT_WP_LV {
@@ -417,8 +398,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         },
         NWT_IT_SP_LV {
@@ -439,8 +419,7 @@ public class CfaConfigBuilder {
                         builderStrategy
                                 .getPrecGranularity()
                                 .createRefiner(builderStrategy.getItpRefToPrec()),
-                        builderStrategy.getPruneStrategy(),
-                        builderStrategy.getLogger());
+                        builderStrategy.getPruneStrategy());
             }
         };
 
@@ -629,10 +608,6 @@ public class CfaConfigBuilder {
             return pruneStrategy;
         }
 
-        protected Logger getLogger() {
-            return logger;
-        }
-
         public abstract CfaPrec<P> createInitPrec();
 
         public CfaLts getLts(CFA.Loc errLoc) {
@@ -652,13 +627,12 @@ public class CfaConfigBuilder {
                     BasicArgAbstractor.builder(argBuilder)
                             .waitlist(PriorityWaitlist.create(search.getComp(cfa, errLoc)))
                             .stopCriterion(refinement.getStopCriterion())
-                            .logger(logger)
                             .build();
             final ArgRefiner<CfaState<S>, CfaAction, CfaPrec<P>> refiner =
                     refinement.getRefiner(this);
             final SafetyChecker<
                             ARG<CfaState<S>, CfaAction>, Trace<CfaState<S>, CfaAction>, CfaPrec<P>>
-                    checker = ArgCegarChecker.create(abstractor, refiner, logger);
+                    checker = ArgCegarChecker.create(abstractor, refiner);
             return CfaConfig.create(checker, createInitPrec());
         }
 

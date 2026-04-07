@@ -47,7 +47,6 @@ class XstsCliIC3 :
           propagateOpt,
           filterOpt,
           true,
-          logger,
         )
       }
     val result = checker.check()

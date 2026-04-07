@@ -30,7 +30,7 @@ class XstsCliChc :
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
-    val checker = HornChecker(xsts.toRelations(), solverFactory, logger)
+    val checker = HornChecker(xsts.toRelations(), solverFactory)
     val result = checker.check()
     sw.stop()
     printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))

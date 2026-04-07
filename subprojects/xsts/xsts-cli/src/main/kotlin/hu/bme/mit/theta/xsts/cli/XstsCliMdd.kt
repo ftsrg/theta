@@ -126,7 +126,6 @@ class XstsCliMdd :
             MddChecker(
               it,
               solverPool,
-              logger,
               iterationStrategy,
               variableOrdering = variableOrdering,
               lookAheadStrategy = lookAheadStrategy,
@@ -149,6 +148,6 @@ class XstsCliMdd :
     // Ordering is stored reversed internally; reverse back for top-down file format
     val lines = variableOrdering.reversed().map { v -> traceability[v] ?: v.name }
     file.writeText(lines.joinToString("\n") + "\n")
-    logger.writeln(Logger.Level.MAINSTEP, "Variable ordering dumped to ${file.path}")
+    Logger.mainStep("Variable ordering dumped to ${file.path}")
   }
 }

@@ -37,11 +37,10 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     private final List<SemVer.VersionDecoder> versions;
 
     private final YicesSmtLibSolverInstaller yicesInstaller =
-            new YicesSmtLibSolverInstaller(logger);
+            new YicesSmtLibSolverInstaller();
     private static final String YICES_VERSION = "1.0.40";
 
-    public EldaricaSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public EldaricaSmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -87,7 +86,7 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
                                 "https://github.com/uuverifiers/eldarica/releases/download/v%s/eldarica-bin-%s.%s",
                                 version, version, archStr));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.mainStep("Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
@@ -95,7 +94,7 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

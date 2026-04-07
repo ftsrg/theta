@@ -23,9 +23,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -61,12 +59,11 @@ public class CfaBoundedCheckerTest {
     @ParameterizedTest(name = "{index}: {0}, {1}")
     public void test(String filePath, boolean isSafe) throws Exception {
         initCfaBoundedCheckerTest(filePath, isSafe);
-        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             SolverManager.registerSolverManager(
-                    SmtLibSolverManager.create(SmtLibSolverManager.HOME, NullLogger.getInstance()));
+                    SmtLibSolverManager.create(SmtLibSolverManager.HOME));
         }
 
         final SolverFactory solverFactory;
@@ -88,8 +85,7 @@ public class CfaBoundedCheckerTest {
                                     BoundedCheckerBuilderKt.buildKIND(
                                             monolithicExpr,
                                             solverFactory.createSolver(),
-                                            solverFactory.createSolver(),
-                                            logger));
+                                            solverFactory.createSolver()));
             status = checker.check(null);
 
             Assertions.assertEquals(isSafe, status.isSafe());
