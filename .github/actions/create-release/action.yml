@@ -47,8 +47,13 @@ runs:
         path: jar/
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        path: upload/
+        pattern: release-*
+        path: release/
+    - run: mkdir -p upload
+      shell: bash
     - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
+      shell: bash
+    - run: for i in $(find release -name "*zip"); do echo $i; mv -v "$i" "upload/"; done
       shell: bash
     - name: List files for release
       id: files
@@ -56,7 +61,7 @@ runs:
       run: |
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "filelist<<$EOF" >> $GITHUB_OUTPUT
-        find upload -type f -exec basename {} \; | sort >> $GITHUB_OUTPUT
+        find upload -type f | sort >> $GITHUB_OUTPUT
         echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Debug release inputs
@@ -64,13 +69,13 @@ runs:
       run: |
         echo "DRY_RUN = ${{ inputs.dry-run }}"
         echo "MESSAGE = ${{ inputs.message }}"
-        echo "FILES = $(ls upload/)"
+        echo "FILES = ${{steps.files.outputs.filelist}}"
         echo "TAGNAME = ${{ steps.value.outputs.tagname }}"
     - name: Release
       if: inputs.dry-run == 'false'
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0
       with:
-        files: upload/*
+        files: ${{steps.files.outputs.filelist}}
         body: ${{steps.value.outputs.message}}
         name: ${{steps.value.outputs.tagname}}
         tag_name: ${{steps.value.outputs.tagname}}
