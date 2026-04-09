@@ -2,7 +2,7 @@ grammar XstsDsl;
 
 xsts:
     typeDeclarations+=typeDeclaration*
-    variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
+    variableDeclarations+=variableDeclaration*
     tran=tranSet
     init=initSet
     env=envSet
