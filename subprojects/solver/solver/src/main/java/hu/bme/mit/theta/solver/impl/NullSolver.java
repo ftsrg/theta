@@ -18,65 +18,121 @@ package hu.bme.mit.theta.solver.impl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.*;
+
 import java.util.Collection;
+import java.util.List;
 
-public final class NullSolver implements Solver {
+public final class NullSolver implements Solver, ItpSolver, UCSolver {
 
-    private NullSolver() {}
+    private final RuntimeException exception;
+
+    private NullSolver(final RuntimeException exception) {
+        this.exception = exception;
+    }
 
     private static class LazyHolder {
-
-        static final NullSolver INSTANCE = new NullSolver();
+        static final NullSolver INSTANCE =
+            new NullSolver(new UnsupportedOperationException());
     }
 
     public static NullSolver getInstance() {
         return LazyHolder.INSTANCE;
     }
 
+    public static NullSolver withException(final Throwable t) {
+        final RuntimeException ex =
+            (t instanceof RuntimeException)
+                ? (RuntimeException) t
+                : new RuntimeException(t);
+        return new NullSolver(ex);
+    }
+
+    private RuntimeException ex() {
+        return exception;
+    }
+
+    private <T> T fail() {
+        throw ex();
+    }
+
     @Override
     public void add(final Expr<BoolType> assertion) {
-        throw new UnsupportedOperationException();
+        throw ex();
     }
 
     @Override
     public SolverStatus check() {
-        throw new UnsupportedOperationException();
+        return fail();
     }
 
     @Override
     public void push() {
-        throw new UnsupportedOperationException();
+        throw ex();
     }
 
     @Override
     public void pop(final int n) {
-        throw new UnsupportedOperationException();
+        throw ex();
     }
 
     @Override
     public void reset() {
-        throw new UnsupportedOperationException();
+        throw ex();
     }
 
     @Override
     public SolverStatus getStatus() {
-        throw new UnsupportedOperationException();
+        return fail();
     }
 
     @Override
     public Valuation getModel() {
-        throw new UnsupportedOperationException();
+        return fail();
     }
 
     @Override
     public Collection<Expr<BoolType>> getAssertions() {
-        throw new UnsupportedOperationException();
+        return fail();
     }
 
     @Override
     public void close() throws Exception {
-        throw new UnsupportedOperationException();
+        throw ex();
+    }
+
+    @Override
+    public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
+        return fail();
+    }
+
+    @Override
+    public ItpMarker createMarker() {
+        return fail();
+    }
+
+    @Override
+    public void add(ItpMarker marker, Expr<BoolType> assertion) {
+        throw ex();
+    }
+
+    @Override
+    public Interpolant getInterpolant(ItpPattern pattern) {
+        return fail();
+    }
+
+    @Override
+    public Collection<? extends ItpMarker> getMarkers() {
+        return fail();
+    }
+
+    @Override
+    public void track(Expr<BoolType> assertion) {
+        throw ex();
+    }
+
+    @Override
+    public Collection<Expr<BoolType>> getUnsatCore() {
+        return fail();
     }
 }

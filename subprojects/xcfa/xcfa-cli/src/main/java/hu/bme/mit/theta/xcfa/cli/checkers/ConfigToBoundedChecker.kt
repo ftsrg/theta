@@ -31,7 +31,19 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.solver.Interpolant
+import hu.bme.mit.theta.solver.ItpMarker
+import hu.bme.mit.theta.solver.ItpMarkerTree
+import hu.bme.mit.theta.solver.ItpPattern
+import hu.bme.mit.theta.solver.ItpSolver
+import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.solver.UCSolver
+import hu.bme.mit.theta.solver.impl.NullSolver
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -56,16 +68,16 @@ fun getBoundedChecker(
       monolithicExpr = monolithicExpr,
       bmcSolver =
         tryGetSolver(boundedConfig.bmcConfig.bmcSolver, boundedConfig.bmcConfig.validateBMCSolver)
-          ?.createSolver(),
+          .createSolver(),
       bmcEnabled = { !boundedConfig.bmcConfig.disable },
       lfPathOnly = { !boundedConfig.bmcConfig.nonLfPath },
       itpSolver =
         tryGetSolver(boundedConfig.itpConfig.itpSolver, boundedConfig.itpConfig.validateItpSolver)
-          ?.createItpSolver(),
+          .createItpSolver(),
       imcEnabled = { !boundedConfig.itpConfig.disable },
       indSolver =
         tryGetSolver(boundedConfig.indConfig.indSolver, boundedConfig.indConfig.validateIndSolver)
-          ?.createSolver(),
+          .createSolver(),
       kindEnabled = { !boundedConfig.indConfig.disable },
       logger = logger,
       needProof = true,
@@ -103,7 +115,7 @@ internal fun getPipelineChecker(
   if (cegar) {
     passes.add(
       PredicateAbstractionMEPass(
-        createFwBinItpCheckerFactory(tryGetSolver(cegarSolver, cegarSolverValidate)!!)
+        createFwBinItpCheckerFactory(tryGetSolver(cegarSolver, cegarSolverValidate))
       )
     )
   }
@@ -122,10 +134,16 @@ internal fun getPipelineChecker(
   )
 }
 
-private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {
+private fun tryGetSolver(name: String, validate: Boolean): SolverFactory {
   return try {
     getSolver(name, validate)
-  } catch (_: Throwable) {
-    null
+  } catch (e: Throwable) {
+    object : SolverFactory {
+      private val stub = NullSolver.withException(e)
+      override fun createSolver() = stub
+      override fun createUCSolver() = stub
+      override fun createItpSolver() = stub
+    }
   }
 }
+
