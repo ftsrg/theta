@@ -190,7 +190,10 @@ data class CHCFrontendConfig(
 ) : SpecFrontendConfig
 
 data class BTOR2FrontendConfig(
-  @Parameter(names = ["--no-optimization"], description = "Runs frontend with all given optimizations")
+  @Parameter(
+    names = ["--no-optimization"],
+    description = "Runs frontend with all given optimizations",
+  )
   var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 
