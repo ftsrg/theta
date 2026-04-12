@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.charleskorn.kaml.YamlList
 import com.charleskorn.kaml.YamlMap
 import com.charleskorn.kaml.YamlNode
 import com.charleskorn.kaml.YamlScalar
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
+import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
@@ -29,14 +32,11 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.params.exitProcess
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
@@ -47,7 +47,9 @@ import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
 import kotlin.jvm.optionals.getOrNull
+import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 
 fun getXcfa(
   config: XcfaConfig<*, *>,
@@ -100,6 +102,17 @@ fun getXcfa(
             throw java.lang.Exception("Could not parse CFA: " + ex.message, ex)
           }
         }
+      }
+
+      InputType.BTOR2 -> {
+        val btor2Frontend = config.frontendConfig.specConfig as BTOR2FrontendConfig
+        parseBTOR2(
+          config.inputConfig.input!!,
+          btor2Frontend.btor2Passes,
+          parseContext,
+          logger,
+          uniqueWarningLogger,
+        )
       }
     }
   } catch (e: Exception) {
@@ -244,4 +257,28 @@ private fun parseChc(
       )
     }
   return xcfaBuilder.build()
+}
+
+private fun parseBTOR2(
+  input: File,
+  btor2Passes: Boolean,
+  parseContext: ParseContext,
+  logger: Logger,
+  uniqueLogger: Logger,
+): XCFA {
+  val visitor = Btor2Visitor()
+
+  val inputBTOR2 = input.readLines().joinToString("\n")
+  val cinput = CharStreams.fromString(inputBTOR2)
+  val lexer = Btor2Lexer(cinput)
+  val tokens = CommonTokenStream(lexer)
+  val parser = Btor2Parser(tokens)
+  parser.errorHandler = BailErrorStrategy()
+  val context = parser.btor2()
+
+  context.accept(visitor)
+
+  val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
+  logger.write(Logger.Level.VERBOSE, xcfa.toDot())
+  return xcfa
 }

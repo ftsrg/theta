@@ -161,6 +161,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.LITMUS -> null
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
+        InputType.BTOR2 -> BTOR2FrontendConfig() as T
       }
   }
 }
@@ -186,6 +187,14 @@ data class CHCFrontendConfig(
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
   @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
   var model: Boolean = false,
+) : SpecFrontendConfig
+
+data class BTOR2FrontendConfig(
+  @Parameter(
+    names = ["--no-optimization"],
+    description = "Runs frontend with all given optimizations",
+  )
+  var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config

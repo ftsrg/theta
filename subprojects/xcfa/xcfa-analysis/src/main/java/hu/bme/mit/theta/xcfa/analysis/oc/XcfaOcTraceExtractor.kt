@@ -127,7 +127,7 @@ internal class XcfaOcTraceExtractor(
     val finished = mutableListOf<E>() // topological order
     while (lastEvents.isNotEmpty()) { // DFS from startEvents as root nodes
       val stack = Stack<StackItem>()
-      stack.push(StackItem(lastEvents.removeFirst()))
+      stack.push(StackItem(lastEvents.removeAt(0)))
       while (stack.isNotEmpty()) {
         val top = stack.peek()
         if (top.eventsToVisit == null) {

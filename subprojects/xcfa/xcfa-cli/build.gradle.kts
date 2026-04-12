@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ dependencies {
     implementation(Deps.z3)
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
+    implementation(project(":theta-btor2-frontend"))
+    implementation(project(":theta-btor2xcfa"))
     testImplementation(kotlin("script-runtime"))
 }
 
