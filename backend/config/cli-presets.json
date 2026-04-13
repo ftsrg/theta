@@ -12,12 +12,52 @@
           "args": "--input %in --property %prop --backend PORTFOLIO"
         },
         {
-          "name": "Ordering Consistency",
-          "args": "--input %in --property %prop --backend OC --datarace-to-reachability"
+          "name": "CEGAR (explicit)",
+          "args": "--input %in --property %prop --backend CEGAR --domain EXPL"
+        },
+        {
+          "name": "CEGAR (predicate, cartesian)",
+          "args": "--input %in --property %prop --backend CEGAR --domain PRED_CART"
+        },
+        {
+          "name": "CEGAR (predicate, boolean)",
+          "args": "--input %in --property %prop --backend CEGAR --domain PRED_BOOL"
+        },
+        {
+          "name": "Liveness CEGAR",
+          "args": "--input %in --property %prop --backend LIVENESS_CEGAR"
+        },
+        {
+          "name": "Bounded model checking",
+          "args": "--input %in --property %prop --backend BMC"
+        },
+        {
+          "name": "k-induction",
+          "args": "--input %in --property %prop --backend KIND"
+        },
+        {
+          "name": "IMC",
+          "args": "--input %in --property %prop --backend IMC"
         },
         {
           "name": "CHC",
-          "args": "--input %in --backend CHC"
+          "args": "--input %in --property %prop --backend CHC"
+        },
+        {
+          "name": "Ordering consistency",
+          "args": "--input %in --property %prop --backend OC --datarace-to-reachability"
+        },
+        {
+          "name": "Lazy abstraction",
+          "args": "--input %in --property %prop --backend LAZY"
+        },
+        {
+          "name": "MDD",
+          "args": "--input %in --property %prop --backend MDD"
+        },
+        {
+          "name": "IC3",
+          "args": "--input %in --property %prop --backend IC3"
         }
       ]
     },
@@ -32,8 +72,44 @@
           "args": "--input %in --input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model"
         },
         {
-          "name": "CEGAR",
-          "args": "--input %in --input-type CHC --backend CEGAR --print-model"
+          "name": "CEGAR (explicit)",
+          "args": "--input %in --input-type CHC --backend CEGAR --domain EXPL --print-model"
+        },
+        {
+          "name": "CEGAR (predicate, cartesian)",
+          "args": "--input %in --input-type CHC --backend CEGAR --domain PRED_CART --print-model"
+        },
+        {
+          "name": "CEGAR (predicate, boolean)",
+          "args": "--input %in --input-type CHC --backend CEGAR --domain PRED_BOOL --print-model"
+        },
+        {
+          "name": "Liveness CEGAR",
+          "args": "--input %in --input-type CHC --backend LIVENESS_CEGAR --print-model"
+        },
+        {
+          "name": "Bounded model checking",
+          "args": "--input %in --input-type CHC --backend BMC --print-model"
+        },
+        {
+          "name": "k-induction",
+          "args": "--input %in --input-type CHC --backend KIND --print-model"
+        },
+        {
+          "name": "IMC",
+          "args": "--input %in --input-type CHC --backend IMC --print-model"
+        },
+        {
+          "name": "Lazy abstraction",
+          "args": "--input %in --input-type CHC --backend LAZY --print-model"
+        },
+        {
+          "name": "MDD",
+          "args": "--input %in --input-type CHC --backend MDD --print-model"
+        },
+        {
+          "name": "IC3",
+          "args": "--input %in --input-type CHC --backend IC3 --print-model"
         }
       ]
     },

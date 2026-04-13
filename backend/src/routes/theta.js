@@ -16,6 +16,33 @@ const config = require('../utils/config');
 const router = express.Router();
 
 /**
+ * Compare two version strings using semver-like ordering.
+ * Splits on '.', '-', and '_', compares segments numerically when possible.
+ * Returns negative if a < b, positive if a > b, 0 if equal.
+ */
+function compareVersions(a, b) {
+  const split = v => v.replace(/^v/i, '').split(/[.\-_]/);
+  const pa = split(a);
+  const pb = split(b);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const na = Number(pa[i]);
+    const nb = Number(pb[i]);
+    const isNumA = pa[i] !== undefined && !isNaN(na);
+    const isNumB = pb[i] !== undefined && !isNaN(nb);
+    if (isNumA && isNumB) {
+      if (na !== nb) return na - nb;
+    } else {
+      const sa = pa[i] || '';
+      const sb = pb[i] || '';
+      if (sa < sb) return -1;
+      if (sa > sb) return 1;
+    }
+  }
+  return 0;
+}
+
+/**
  * GET /api/theta/versions
  * Lists locally cached Theta versions
  */
@@ -48,7 +75,8 @@ router.get('/versions', async (req, res) => {
     }
     
     console.log(`[Theta] Found ${versions.length} cached version(s)`);
-    res.json({ versions: versions.reverse() });
+    versions.sort((a, b) => compareVersions(b.name, a.name));
+    res.json({ versions });
     
   } catch (err) {
     console.error('[Theta] Error listing versions:', err.message);
@@ -102,6 +130,7 @@ router.get('/releases', async (req, res) => {
         }
       }
       
+      releases.sort((a, b) => compareVersions(b.tag, a.tag));
       console.log(`[Releases] Retrieved ${releases.length} release(s) from GitHub`);
       res.json({ releases, source: 'github' });
       
@@ -150,8 +179,9 @@ router.get('/releases', async (req, res) => {
         }
       }
       
+      releases.sort((a, b) => compareVersions(b.tag, a.tag));
       console.log(`[Releases] Retrieved ${releases.length} cached release(s)`);
-      res.json({ releases: releases.reverse(), source: 'cache' });
+      res.json({ releases, source: 'cache' });
     }
     
   } catch (err) {
