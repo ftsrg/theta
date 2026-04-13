@@ -104,13 +104,13 @@ public class Ic3Checker
     }
 
     LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
-        final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<ProofObligation>();
+        final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<>();
         proofObligationsQueue.add(mainProofObligation);
         while (!proofObligationsQueue.isEmpty()) {
             final ProofObligation proofObligation = proofObligationsQueue.getLast();
 
             if (proofObligation.getTime() == 0) {
-                return proofObligationsQueue;
+                return proofObligationsQueue; //todo is it possible, that a non-trace proofobligation is present?
             }
 
             final Collection<Expr<BoolType>> b;
@@ -119,18 +119,17 @@ public class Ic3Checker
 
                 frames.get(proofObligation.getTime() - 1)
                         .getExprs()
-                        .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                        .forEach(ex -> solver.track(PathUtils.unfold(ex, 0))); //put frame - 1 expressions
                 if (optimizations.isNotBOpt()) {
                     solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())), 0));
                 }
-                if (proofObligation.getTime() > 2 && optimizations.isFormerFramesOpt()) { // lehet, hogy 1, vagy 2??
+                /*
+                if (proofObligation.getTime() > 2 && optimizations.isFormerFramesOpt()) {
                     solver.track(
                             PathUtils.unfold(
                                     Not(And(frames.get(proofObligation.getTime() - 2).getExprs())),
-                                    monolithicExpr
-                                            .getTransOffsetIndex())); // 2 vel korábbi frame-ban
-                    // levő dolgok
-                }
+                                    0));
+                }*/
 
                 getConjuncts(monolithicExpr.getTransExpr())
                         .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -249,7 +248,7 @@ public class Ic3Checker
     }
 
     private @Nullable Trace<ExplState, ExprAction> checkIfFaultyIntersectsInit() {
-        Valuation model = frames.getFirst().checkIfTargetIsReachableValuation(Not(monolithicExpr.getPropExpr()));
+        Valuation model = frames.getFirst().checkIfContainsValuation(Not(monolithicExpr.getPropExpr()));
         if (model != null) {
             return Trace.of(
                 List.of(

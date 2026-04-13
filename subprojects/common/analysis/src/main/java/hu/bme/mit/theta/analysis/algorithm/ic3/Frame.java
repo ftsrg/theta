@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
@@ -55,11 +56,10 @@ public class Frame {
 
     private Set<Expr<BoolType>> convertValuationToExpression(Valuation model) {
         if (model != null) {
-            final MutableValuation filteredModel = new MutableValuation();
-            monolithicExpr.getVars().stream() //todo what does this do?
-                .map(varDecl -> varDecl.getConstDecl(0))
-                .filter(model.toMap()::containsKey)
-                .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+            final Valuation filteredModel = PathUtils.extractValuation(
+                model,
+                VarIndexingFactory.indexing(0),
+                monolithicExpr.getVars());
             return new HashSet<>(getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0)));
         } else {
             return null;
