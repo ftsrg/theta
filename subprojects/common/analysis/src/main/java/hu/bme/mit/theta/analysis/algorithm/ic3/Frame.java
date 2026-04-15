@@ -54,18 +54,6 @@ public class Frame {
         return exprs;
     }
 
-    private Set<Expr<BoolType>> convertValuationToExpression(Valuation model) {
-        if (model != null) {
-            final Valuation filteredModel = PathUtils.extractValuation(
-                model,
-                VarIndexingFactory.indexing(0),
-                monolithicExpr.getVars());
-            return new HashSet<>(getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0)));
-        } else {
-            return null;
-        }
-    }
-
     public Valuation checkIfTargetIsReachableValuation(Expr<BoolType> target) {
         try (var wpp = new WithPushPop(solver)) {
             exprs.forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -80,11 +68,6 @@ public class Frame {
         }
     }
 
-    public Set<Expr<BoolType>> checkIfTargetIsReachable(Expr<BoolType> target) {
-        final Valuation model = checkIfTargetIsReachableValuation(target);
-        return convertValuationToExpression(model);
-    }
-
     public Valuation checkIfContainsValuation(Expr<BoolType> target) {
         try (var wpp = new WithPushPop(solver)) {
             solver.track(PathUtils.unfold(target, 0));
@@ -97,10 +80,7 @@ public class Frame {
         }
     }
 
-    public Set<Expr<BoolType>> checkIfContains(Expr<BoolType> target) {
-        final Valuation model = checkIfContainsValuation(target);
-        return  convertValuationToExpression(model);
-    }
+
 
     public boolean equalsParent() {
         if (this.parent.parent == null) {
