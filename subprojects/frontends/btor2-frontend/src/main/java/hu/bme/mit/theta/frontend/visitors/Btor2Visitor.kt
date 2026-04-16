@@ -17,11 +17,10 @@ package hu.bme.mit.theta.frontend.visitors
 
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.models.*
 
-class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
+class Btor2Visitor(val logger: Logger) : Btor2BaseVisitor<Btor2Circuit>() {
 
   val circuit = Btor2Circuit()
 
@@ -29,8 +28,6 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
   private val constantVisitor = ConstantVisitor(circuit)
   private val operationVisitor = OperationVisitor(circuit)
   private val statefulVisitor = StateVisitor(circuit)
-
-  private val logger = ConsoleLogger(Logger.Level.VERBOSE)
 
   override fun visitLine(ctx: Btor2Parser.LineContext?): Btor2Circuit {
     for (child in ctx?.children!!) {
