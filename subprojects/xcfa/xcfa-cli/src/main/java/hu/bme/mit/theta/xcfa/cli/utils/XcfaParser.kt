@@ -266,7 +266,7 @@ private fun parseBTOR2(
   logger: Logger,
   uniqueLogger: Logger,
 ): XCFA {
-  val visitor = Btor2Visitor()
+  val visitor = Btor2Visitor(logger)
 
   val inputBTOR2 = input.readLines().joinToString("\n")
   val cinput = CharStreams.fromString(inputBTOR2)
