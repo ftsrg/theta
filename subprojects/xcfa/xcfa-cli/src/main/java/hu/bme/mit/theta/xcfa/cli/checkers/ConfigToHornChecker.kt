@@ -79,7 +79,14 @@ fun getHornChecker(
   val xcfa =
     xcfa.optimizeFurther(
       ProcedurePassManager(
-        listOf(NoUninitVar(), HavocToUninitVar(), NoParallelEdgesPass(), EliminateSelfLoops())
+        listOf(
+          NormalizePass(),
+          DeterministicPass(),
+          NoUninitVar(),
+          HavocToUninitVar(),
+          NoParallelEdgesPass(),
+          EliminateSelfLoops(),
+        )
       )
     )
 
