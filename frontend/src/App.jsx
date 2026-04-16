@@ -9,6 +9,13 @@ import { api, setAuthRequiredHandler, setCsrfToken, getCsrfToken } from './api'
 import * as ConfigManager from './utils/configManager'
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || 'https://localhost:5175'
+const DEFAULT_CODE_PLACEHOLDER = '// select an example or start typing...'
+
+const hasMeaningfulCode = (value) => {
+  if (typeof value !== 'string') return false
+  const trimmed = value.trim()
+  return trimmed !== '' && trimmed !== DEFAULT_CODE_PLACEHOLDER
+}
 
 export default function App() {
   const theme = useTheme()
@@ -25,7 +32,10 @@ export default function App() {
   const [mode, setMode] = useState(initialMode)
   const [selectedExample, setSelectedExample] = useState(initialConfig.selectedExample || '')
   const [selectedProperty, setSelectedProperty] = useState(initialConfig.selectedProperty || '')
-  const [code, setCode] = useState(initialConfig.code || '// select an example or start typing...')
+  const [code, setCode] = useState(initialConfig.code || DEFAULT_CODE_PLACEHOLDER)
+  const [shouldHydrateExampleCode, setShouldHydrateExampleCode] = useState(() => {
+    return !hasMeaningfulCode(initialConfig.code) && !!initialConfig.selectedExample
+  })
   const [selectedRelease, setSelectedRelease] = useState(initialConfig.selectedRelease || '')
   const [selectedPreset, setSelectedPreset] = useState(initialConfig.selectedPreset || '')
   const [args, setArgs] = useState(initialConfig.args || '--input %in --property %prop --backend PORTFOLIO')
@@ -128,7 +138,25 @@ export default function App() {
     return () => clearInterval(iv)
   }, [])
 
-  useEffect(() => { if (selectedExample) api.get(`/api/examples/${selectedExample}`).then(r => setCode(r.data.content || '')) }, [selectedExample])
+  useEffect(() => {
+    if (!selectedExample || !shouldHydrateExampleCode) return
+
+    let cancelled = false
+    api.get(`/api/examples/${selectedExample}`)
+      .then(r => {
+        if (cancelled) return
+        setCode(r.data.content || '')
+        setShouldHydrateExampleCode(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setShouldHydrateExampleCode(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedExample, shouldHydrateExampleCode])
 
   const signedIn = !!authToken
   const openLogin = () => setLoginOpen(true)
@@ -138,7 +166,8 @@ export default function App() {
     
     // Load saved config for new mode
     const config = ConfigManager.loadConfig(m)
-    setCode(config.code || '// select an example or start typing...')
+    setCode(config.code || DEFAULT_CODE_PLACEHOLDER)
+    setShouldHydrateExampleCode(!hasMeaningfulCode(config.code) && !!config.selectedExample)
     setSelectedProperty(config.selectedProperty || '')
     setSelectedExample(config.selectedExample || '')
     setSelectedRelease(config.selectedRelease || '')
@@ -290,6 +319,7 @@ export default function App() {
     }
   }
   const onSelectExample = (path) => {
+    setShouldHydrateExampleCode(true)
     setSelectedExample(path)
     setVerificationValid(false)
     setWitnessData(null)
@@ -504,7 +534,8 @@ export default function App() {
         
         // If importing for current mode, apply immediately
         if (importedMode === mode) {
-          setCode(config.code || '// select an example or start typing...')
+          setCode(config.code || DEFAULT_CODE_PLACEHOLDER)
+          setShouldHydrateExampleCode(!hasMeaningfulCode(config.code) && !!config.selectedExample)
           setSelectedProperty(config.selectedProperty || '')
           setSelectedExample(config.selectedExample || '')
           setSelectedRelease(config.selectedRelease || '')
