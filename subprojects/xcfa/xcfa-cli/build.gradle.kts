@@ -88,5 +88,6 @@ archivePackaging {
         inputFlags = "--backend PORTFOLIO \\ \n--input-type CHC \\ \n--portfolio CHC-COMP \\ \n--print-model"
         solvers = listOf("cvc5:1.0.8", "mathsat:5.6.10")
         readmeTemplate = file("src/main/resources/archive-packaging/README-CHCCOMP.md")
+        scriptName = "chc"
     }
 }
