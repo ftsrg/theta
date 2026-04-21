@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -65,57 +66,61 @@ public class CAssignment extends CStatement {
         return visitor.visit(this, param);
     }
 
+    @SuppressWarnings("unchecked")
     public Expr<?> getrExpression() {
         Expr<?> ret = null;
         final var rExpression = rValue.getExpression();
         final var type = CComplexType.getType(lValue, parseContext);
+        final var castLValue = type.castTo(lValue);
+        final var castRValue = type.castTo(rExpression);
         switch (operator) {
             case "=":
                 return rExpression;
             case "*=":
-                ret = AbstractExprs.Mul(type.castTo(lValue), type.castTo(rExpression));
+                ret = AbstractExprs.Mul(castLValue, castRValue);
                 break;
             case "/=":
-                ret = AbstractExprs.Div(type.castTo(lValue), type.castTo(rExpression));
+                if (castLValue.getType() instanceof IntType
+                        && castRValue.getType() instanceof IntType) {
+                    ret = CIntegerSemantics.createIntDiv(castLValue, castRValue);
+                } else {
+                    ret = AbstractExprs.Div(castLValue, castRValue);
+                }
                 break;
             case "%=":
-                ret = AbstractExprs.Mod(type.castTo(lValue), type.castTo(rExpression));
+                if (castLValue.getType() instanceof IntType
+                        && castRValue.getType() instanceof IntType) {
+                    ret = CIntegerSemantics.createIntMod(castLValue, castRValue);
+                } else if (castLValue.getType() instanceof BvType
+                        && castRValue.getType() instanceof BvType) {
+                    ret = AbstractExprs.Rem(castLValue, castRValue);
+                } else {
+                    ret = AbstractExprs.Mod(castLValue, castRValue);
+                }
                 break;
             case "+=":
-                ret = AbstractExprs.Add(type.castTo(lValue), type.castTo(rExpression));
+                ret = AbstractExprs.Add(castLValue, castRValue);
                 break;
             case "-=":
-                ret = AbstractExprs.Sub(type.castTo(lValue), type.castTo(rExpression));
+                ret = AbstractExprs.Sub(castLValue, castRValue);
                 break;
             case "^=":
                 checkState(
                         lValue.getType() instanceof BvType
                                 && rExpression.getType() instanceof BvType);
-                ret =
-                        BvExprs.Xor(
-                                List.of(
-                                        (Expr<BvType>) type.castTo(lValue),
-                                        (Expr<BvType>) type.castTo(rExpression)));
+                ret = BvExprs.Xor(List.of((Expr<BvType>) castLValue, (Expr<BvType>) castRValue));
                 break;
             case "&=":
                 checkState(
                         lValue.getType() instanceof BvType
                                 && rExpression.getType() instanceof BvType);
-                ret =
-                        BvExprs.And(
-                                List.of(
-                                        (Expr<BvType>) type.castTo(lValue),
-                                        (Expr<BvType>) type.castTo(rExpression)));
+                ret = BvExprs.And(List.of((Expr<BvType>) castLValue, (Expr<BvType>) castRValue));
                 break;
             case "|=":
                 checkState(
                         lValue.getType() instanceof BvType
                                 && rExpression.getType() instanceof BvType);
-                ret =
-                        BvExprs.Or(
-                                List.of(
-                                        (Expr<BvType>) type.castTo(lValue),
-                                        (Expr<BvType>) type.castTo(rExpression)));
+                ret = BvExprs.Or(List.of((Expr<BvType>) castLValue, (Expr<BvType>) castRValue));
                 break;
             default:
                 throw new UnsupportedFrontendElementException("Unsupported operator: " + operator);

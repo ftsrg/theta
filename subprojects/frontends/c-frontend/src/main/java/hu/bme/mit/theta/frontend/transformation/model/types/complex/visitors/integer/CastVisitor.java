@@ -49,6 +49,10 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.csho
 import java.math.BigInteger;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
+    // We assume no undefined behavior in analyzed C programs.
+    // Therefore, we assume signed overflow does not occur, and signed casts can stay identity.
+    private static final boolean assumeNoSignedOverflow = true;
+
     private final ParseContext parseContext;
 
     public CastVisitor(ParseContext parseContext) {
@@ -67,7 +71,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(Fitsall type, Expr<?> param) {
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("fitsall");
@@ -82,7 +86,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("short");
@@ -104,7 +108,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("__int128");
@@ -126,7 +130,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("longlong");
@@ -155,7 +159,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("long");
@@ -170,7 +174,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("int");
@@ -192,7 +196,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
+        if (assumeNoSignedOverflow) {
             return Pos(param);
         }
         int width = parseContext.getArchitecture().getBitWidth("char");

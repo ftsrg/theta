@@ -17,8 +17,6 @@ package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -36,8 +34,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -57,6 +53,7 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CIntegerSemantics;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
@@ -449,7 +446,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     case "/":
                         if (leftExpr.getType() instanceof IntType
                                 && rightExpr.getType() instanceof IntType) {
-                            expr = createIntDiv(leftExpr, rightExpr);
+                            expr = CIntegerSemantics.createIntDiv(leftExpr, rightExpr);
                         } else {
                             expr = AbstractExprs.Div(leftExpr, rightExpr);
                         }
@@ -457,7 +454,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     case "%":
                         if (leftExpr.getType() instanceof IntType
                                 && rightExpr.getType() instanceof IntType) {
-                            expr = createIntMod(leftExpr, rightExpr);
+                            expr = CIntegerSemantics.createIntMod(leftExpr, rightExpr);
                         } else if (leftExpr.getType() instanceof BvType
                                 && rightExpr.getType() instanceof BvType) {
                             expr = AbstractExprs.Rem(leftExpr, rightExpr);
@@ -477,54 +474,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return expr;
         }
         return ctx.castExpression(0).accept(this);
-    }
-
-    /**
-     * Conversion from C (/) semantics to solver (div) semantics.
-     *
-     * @param a dividend
-     * @param b divisor
-     * @return expression representing C division semantics with solver operations
-     */
-    private Expr<?> createIntDiv(Expr<?> a, Expr<?> b) {
-        DivExpr<?> aDivB = Div(a, b);
-        return Ite(
-                Geq(a, Int(0)), // if (a >= 0)
-                aDivB, //   a div b
-                // else
-                Ite(
-                        Neq(Mod(a, b), Int(0)), //   if (a mod b != 0)
-                        Ite(
-                                Geq(b, Int(0)), //     if (b >= 0)
-                                Add(aDivB, Int(1)), //       a div b + 1
-                                //     else
-                                Sub(aDivB, Int(1)) //       a div b - 1
-                                ), //   else
-                        aDivB //     a div b
-                        ));
-    }
-
-    /**
-     * Conversion from C (%) semantics to solver (mod) semantics.
-     *
-     * @param a dividend
-     * @param b divisor
-     * @return expression representing C modulo semantics with solver operations
-     */
-    private Expr<?> createIntMod(Expr<?> a, Expr<?> b) {
-        ModExpr<?> aModB = Mod(a, b);
-        return Ite(
-                Eq(aModB, Int(0)),
-                aModB,
-                Ite(
-                        Geq(a, Int(0)), // if (a >= 0)
-                        aModB, //   a mod b
-                        // else
-                        Ite(
-                                Geq(b, Int(0)), //   if (b >= 0)
-                                Sub(aModB, b), //     a mod b - b
-                                Add(aModB, b) //     a mod b + b
-                                )));
     }
 
     @Override
