@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 public class IC3Optimizations {
-  private final boolean formerFramesOpt;
+
 
   public boolean isUnSatOpt() {
     return unSatOpt;
@@ -31,31 +31,35 @@ public class IC3Optimizations {
     return propagateOpt;
   }
 
+  public boolean isMICOpt() {
+    return MICOpt;
+  }
+
   public boolean isFilterOpt() {
     return filterOpt;
   }
+
 
   public boolean isPropertyOpt() {
     return propertyOpt;
   }
 
-  public boolean isFormerFramesOpt() {
-    return formerFramesOpt;
-  }
 
   private final boolean unSatOpt;
   private final boolean notBOpt;
   private final boolean propagateOpt;
   private final boolean filterOpt;
   private final boolean propertyOpt;
+  private final boolean MICOpt;
 
 
-  public IC3Optimizations(boolean formerFramesOpt, boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean propertyOpt) {
-    this.formerFramesOpt = formerFramesOpt;
+
+  public IC3Optimizations(boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean MICOpt, boolean propertyOpt) {
     this.unSatOpt = unSatOpt;
     this.notBOpt = notBOpt;
     this.propagateOpt = propagateOpt;
     this.filterOpt = filterOpt;
     this.propertyOpt = propertyOpt;
+    this.MICOpt = MICOpt;
   }
 }
