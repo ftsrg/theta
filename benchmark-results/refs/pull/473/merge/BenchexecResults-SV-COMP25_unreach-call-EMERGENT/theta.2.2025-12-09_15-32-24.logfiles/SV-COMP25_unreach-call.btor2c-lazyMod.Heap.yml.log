@@ -1,0 +1,26 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64 --input sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: [BITWISE]
+
+Frontend finished:   (in 6192 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Using portfolio: BITWISE
+
+Current configuration: EXPL_PRED_STMT-NWT_IT_WP-mathsat:5.6.12-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/unreach-call.prp, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=mathsat:5.6.12, validateAbstractionSolver=false, domain=EXPL_PRED_STMT, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=mathsat:5.6.12, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: [BITWISE]
+subprocess: 
+subprocess: Frontend finished:   (in 5511 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []

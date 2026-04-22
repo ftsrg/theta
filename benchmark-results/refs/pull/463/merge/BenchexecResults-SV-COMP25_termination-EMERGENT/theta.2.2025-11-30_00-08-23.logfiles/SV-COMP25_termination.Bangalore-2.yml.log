@@ -1,0 +1,84 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/termination-crafted/Bangalore-2.c --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/termination-crafted/Bangalore-2.c' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64 --input sv-benchmarks/c/termination-crafted/Bangalore-2.c --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 300 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Using portfolio: TERMINATION
+
+Current configuration: Termination-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore-2.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=PORTFOLIO, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=0, inProcess=false, parseInProcess=true, memlimit=0, specConfig=PortfolioConfig(portfolio=TERMINATION)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore-2.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 28 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Current configuration: LIVENESS_CEGAR-EXPL-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore-2.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=LIVENESS_CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=AsgCegarConfig(initPrec=ALLVARS, cexMonitor=CHECK, abstractorConfig=AsgCegarAbstractorConfig(abstractionSolver=Z3:4.13, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=NDFS), refinerConfig=AsgCegarRefinerConfig(refinementSolver=Z3:4.13, validateRefinementSolver=false, refinement=DIRECT_REFINEMENT, exprSplitter=WHOLE))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore-2.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 317 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:127), ErrorCodeException(code=201))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:127, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=201)
+Handling exception as AnythingButServerError
+Current configuration: LIVENESS_CEGAR-PREDCART-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore-2.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=LIVENESS_CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=AsgCegarConfig(initPrec=EMPTY, cexMonitor=CHECK, abstractorConfig=AsgCegarAbstractorConfig(abstractionSolver=Z3:4.13, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=NDFS), refinerConfig=AsgCegarRefinerConfig(refinementSolver=Z3:4.13, validateRefinementSolver=false, refinement=DIRECT_REFINEMENT, exprSplitter=WHOLE))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore-2.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 531 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:127), ErrorCodeException(code=201))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:127, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=201)
+Handling exception as AnythingButServerError
+Current configuration: LIVENESS_CEGAR-PREDBOOL-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore-2.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=LIVENESS_CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=AsgCegarConfig(initPrec=EMPTY, cexMonitor=CHECK, abstractorConfig=AsgCegarAbstractorConfig(abstractionSolver=Z3:4.13, validateAbstractionSolver=false, domain=PRED_BOOL, maxEnum=1, search=NDFS), refinerConfig=AsgCegarRefinerConfig(refinementSolver=Z3:4.13, validateRefinementSolver=false, refinement=DIRECT_REFINEMENT, exprSplitter=WHOLE))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore-2.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 564 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+subprocess: Process failed! (hu.bme.mit.theta.solver.z3.Z3TermTransformer.transform(Z3TermTransformer.java:412), java.lang.NullPointerException: Cannot invoke "com.microsoft.z3.Expr.isIntNum()" because "term" is null)
+subprocess: Error: class java.lang.NullPointerException Cannot invoke "com.microsoft.z3.Expr.isIntNum()" because "term" is null (hu.bme.mit.theta.solver.z3.Z3TermTransformer#transform:412, hu.bme.mit.theta.solver.z3.Z3TermTransformer#toExpr:346)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=221))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=221)
+Handling exception as AnythingButServerError
+Current configuration: BMC-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore-2.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:4.13, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore-2.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 493 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:127), ErrorCodeException(code=201))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:127, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=201)
+Handling exception as AnythingButServerError
+Current configuration: KIND-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore-2.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:4.13, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3:4.13, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore-2.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 569 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []

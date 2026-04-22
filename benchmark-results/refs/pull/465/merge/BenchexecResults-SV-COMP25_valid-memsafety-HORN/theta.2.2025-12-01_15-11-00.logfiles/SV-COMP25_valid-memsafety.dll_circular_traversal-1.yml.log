@@ -1,0 +1,12 @@
+Thorn/theta-start.sh sv-benchmarks/c/list-ext3-properties/dll_circular_traversal-1.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/list-ext3-properties/dll_circular_traversal-1.i' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32 --input sv-benchmarks/c/list-ext3-properties/dll_circular_traversal-1.i --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.lambda$visitUnaryExpressionSizeOrAlignOf$16(ExpressionVisitor.java:581), java.lang.NullPointerException: Cannot invoke "hu.bme.mit.theta.core.decl.VarDecl.getRef()" because the return value of "hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(String)" is null)
+Error: class java.lang.NullPointerException Cannot invoke "hu.bme.mit.theta.core.decl.VarDecl.getRef()" because the return value of "hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(String)" is null (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#lambda$visitUnaryExpressionSizeOrAlignOf$16:581, java.util.Optional#or:313)

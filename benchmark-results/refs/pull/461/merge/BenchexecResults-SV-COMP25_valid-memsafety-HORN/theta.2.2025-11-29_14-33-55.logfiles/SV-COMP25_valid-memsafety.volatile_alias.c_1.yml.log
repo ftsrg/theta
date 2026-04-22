@@ -1,0 +1,130 @@
+Thorn/theta-start.sh sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32 --input sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 335 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Using CHC portfolio
+
+Current configuration: Eldarica-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=eldarica:2.2, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 339 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+subprocess: Process failed! (hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer.toTerm(GenericSmtLibExprTransformer.java:303), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+subprocess: Error: class com.google.common.util.concurrent.UncheckedExecutionException com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly. (com.google.common.cache.LocalCache$Segment#get:2055, com.google.common.cache.LocalCache#get:3966)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Golem-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=golem:0.9.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 334 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+subprocess: Process failed! (hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer.toTerm(GenericSmtLibExprTransformer.java:303), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+subprocess: Error: class com.google.common.util.concurrent.UncheckedExecutionException com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly. (com.google.common.cache.LocalCache$Segment#get:2055, com.google.common.cache.LocalCache#get:3966)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Z3native-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=Z3:new, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 344 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+subprocess: Process failed! (hu.bme.mit.theta.solver.z3.Z3ExprTransformer.toTerm(Z3ExprTransformer.java:237), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+subprocess: Error: class com.google.common.util.concurrent.UncheckedExecutionException com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly. (com.google.common.cache.LocalCache$Segment#get:2055, com.google.common.cache.LocalCache#get:3966)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Z3-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=z3:4.15.3, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 335 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+subprocess: Error initializing XCFA procedure as CHC, falling back to monolithic (due to null)
+subprocess: Process failed! (hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller$Default.getSolverFactory(SmtLibSolverInstaller.java:196), java.lang.IllegalArgumentException)
+subprocess: Error: class java.lang.IllegalArgumentException - (com.google.common.base.Preconditions#checkArgument:131, hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller$Default#getSolverFactory:196)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [])
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Eldarica-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=eldarica:2.2, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 32 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer.toTerm(GenericSmtLibExprTransformer.java:303), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Error: class com.google.common.util.concurrent.UncheckedExecutionException com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly. (com.google.common.cache.LocalCache$Segment#get:2055, com.google.common.cache.LocalCache#get:3966)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Golem-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=300000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=golem:0.9.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 27 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer.toTerm(GenericSmtLibExprTransformer.java:303), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Error: class com.google.common.util.concurrent.UncheckedExecutionException com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly. (com.google.common.cache.LocalCache$Segment#get:2055, com.google.common.cache.LocalCache#get:3966)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Z3native-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=Z3:new, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 19 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.solver.z3.Z3ExprTransformer.toTerm(Z3ExprTransformer.java:237), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Error: class com.google.common.util.concurrent.UncheckedExecutionException com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly. (com.google.common.cache.LocalCache$Segment#get:2055, com.google.common.cache.LocalCache#get:3966)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=z3:4.15.3, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/volatile_alias.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 20 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Error initializing XCFA procedure as CHC, falling back to monolithic (due to null)
+Process failed! (hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller$Default.getSolverFactory(SmtLibSolverInstaller.java:196), java.lang.IllegalArgumentException)
+Error: class java.lang.IllegalArgumentException - (com.google.common.base.Preconditions#checkArgument:131, hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller$Default#getSolverFactory:196)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [])
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [])
+Process failed! (hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitProcess(ExitCodes.kt:51), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt#exitProcess:51, hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt#exitOnError:104)
