@@ -61,7 +61,9 @@ public class MixedArithmeticTest {
         final Expr<?> expr = harness.parseExpr("x | y");
 
         assertInstanceOf(IntType.class, expr.getType());
-        assertEquals(signedInt().getClass(), CComplexType.getType(expr, harness.parseContext).getClass());
+        assertEquals(
+                signedInt().getClass(),
+                CComplexType.getType(expr, harness.parseContext).getClass());
         assertTrue(containsNode(expr, BvOrExpr.class));
         assertTrue(containsNode(expr, IntToBvExpr.class));
         assertTrue(containsNode(expr, BvToIntExpr.class));

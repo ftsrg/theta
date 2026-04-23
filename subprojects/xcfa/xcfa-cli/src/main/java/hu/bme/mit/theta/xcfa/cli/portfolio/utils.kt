@@ -48,9 +48,7 @@ import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 
 @Suppress("UNCHECKED_CAST")
-fun XcfaConfig<*, *>.withFrontendArithmetic(
-  arithmetic: ArithmeticType,
-): XcfaConfig<*, *> {
+fun XcfaConfig<*, *>.withFrontendArithmetic(arithmetic: ArithmeticType): XcfaConfig<*, *> {
   if (frontendConfig.inputType != InputType.C) {
     return this
   }

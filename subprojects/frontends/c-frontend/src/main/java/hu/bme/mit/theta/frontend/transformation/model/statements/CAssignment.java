@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
@@ -110,11 +110,9 @@ public class CAssignment extends CStatement {
                                 List.of(CComplexType.getType(castLValue, parseContext)),
                                 parseContext);
                 Expr<BvType> shiftLeftExpr =
-                        CMixedSemantics.castToBitwiseOperand(
-                                castLValue, shiftType, parseContext);
+                        CMixedSemantics.castToBitwiseOperand(castLValue, shiftType, parseContext);
                 Expr<BvType> shiftRightExpr =
-                        CMixedSemantics.castToBitwiseOperand(
-                                castRValue, shiftType, parseContext);
+                        CMixedSemantics.castToBitwiseOperand(castRValue, shiftType, parseContext);
                 Expr<BvType> shiftResult;
                 if (operator.equals(">>=")) {
                     if (CMixedSemantics.getBitvectorType(shiftType).getSigned()) {

@@ -183,14 +183,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
-                        .map(
-                            expr ->
-                                CMixedSemantics.castToBitwiseOperand(
-                                    expr, smallestCommonType, parseContext))
+                            .map(
+                                    expr ->
+                                            CMixedSemantics.castToBitwiseOperand(
+                                                    expr, smallestCommonType, parseContext))
                             .collect(Collectors.toList());
             BvOrExpr or = BvExprs.Or(collect);
             parseContext.getMetadata().create(or, "cType", smallestCommonType);
-                return CMixedSemantics.castFromBitwiseResult(or, smallestCommonType, parseContext);
+            return CMixedSemantics.castFromBitwiseResult(or, smallestCommonType, parseContext);
         }
         return ctx.exclusiveOrExpression(0).accept(this);
     }
@@ -209,14 +209,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
-                        .map(
-                            expr ->
-                                CMixedSemantics.castToBitwiseOperand(
-                                    expr, smallestCommonType, parseContext))
+                            .map(
+                                    expr ->
+                                            CMixedSemantics.castToBitwiseOperand(
+                                                    expr, smallestCommonType, parseContext))
                             .collect(Collectors.toList());
             BvXorExpr xor = BvExprs.Xor(collect);
             parseContext.getMetadata().create(xor, "cType", smallestCommonType);
-                return CMixedSemantics.castFromBitwiseResult(xor, smallestCommonType, parseContext);
+            return CMixedSemantics.castFromBitwiseResult(xor, smallestCommonType, parseContext);
         }
         return ctx.andExpression(0).accept(this);
     }
@@ -235,14 +235,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
-                        .map(
-                            expr ->
-                                CMixedSemantics.castToBitwiseOperand(
-                                    expr, smallestCommonType, parseContext))
+                            .map(
+                                    expr ->
+                                            CMixedSemantics.castToBitwiseOperand(
+                                                    expr, smallestCommonType, parseContext))
                             .collect(Collectors.toList());
             BvAndExpr and = BvExprs.And(collect);
             parseContext.getMetadata().create(and, "cType", smallestCommonType);
-                return CMixedSemantics.castFromBitwiseResult(and, smallestCommonType, parseContext);
+            return CMixedSemantics.castFromBitwiseResult(and, smallestCommonType, parseContext);
         }
         return ctx.equalityExpression(0).accept(this);
     }
@@ -339,16 +339,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     getSmallestCommonType(
                             List.of(CComplexType.getType(accept, parseContext)), parseContext);
             Expr<BvType> expr =
-                CMixedSemantics.castToBitwiseOperand(
-                    accept, smallestCommonType, parseContext);
+                    CMixedSemantics.castToBitwiseOperand(accept, smallestCommonType, parseContext);
             for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
                 accept = ctx.additiveExpression(i).accept(this);
                 Expr<BvType> leftExpr =
-                CMixedSemantics.castToBitwiseOperand(
-                    expr, smallestCommonType, parseContext);
+                        CMixedSemantics.castToBitwiseOperand(
+                                expr, smallestCommonType, parseContext);
                 Expr<BvType> rightExpr =
-                CMixedSemantics.castToBitwiseOperand(
-                    accept, smallestCommonType, parseContext);
+                        CMixedSemantics.castToBitwiseOperand(
+                                accept, smallestCommonType, parseContext);
                 if (ctx.signs.get(i - 1).getText().equals(">>")) {
                     // TODO: is this sound?
                     if (CMixedSemantics.getBitvectorType(smallestCommonType).getSigned()) {
@@ -595,8 +594,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 return promotedOperand;
             case "~":
                 Expr<BvType> bitwiseOperand =
-                        CMixedSemantics.castToBitwiseOperand(
-                                promotedOperand, type, parseContext);
+                        CMixedSemantics.castToBitwiseOperand(promotedOperand, type, parseContext);
                 Expr<BvType> expr = BvExprs.Not(bitwiseOperand);
                 parseContext.getMetadata().create(expr, "cType", type);
                 return CMixedSemantics.castFromBitwiseResult(expr, type, parseContext);
