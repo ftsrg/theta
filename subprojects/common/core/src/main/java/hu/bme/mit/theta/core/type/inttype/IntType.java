@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ToBv;
+
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -26,6 +28,7 @@ import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
 import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntType
@@ -139,6 +142,10 @@ public final class IntType
         if (type instanceof RatType) {
             @SuppressWarnings("unchecked")
             final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
+            return result;
+        } else if (type instanceof BvType) {
+            @SuppressWarnings("unchecked")
+            final Expr<TargetType> result = (Expr<TargetType>) ToBv(op, (BvType) type);
             return result;
         } else {
             throw new ClassCastException("Int cannot be cast to " + type);

@@ -145,6 +145,7 @@ public final class ExprSimplifier {
                     .addCase(BvSubExpr.class, this::simplifyBvSub)
                     .addCase(BvPosExpr.class, this::simplifyBvPos)
                     .addCase(BvToIntExpr.class, this::simplifyBvToInt)
+                    .addCase(IntToBvExpr.class, this::simplifyIntToBv)
                     .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
                     .addCase(BvNegExpr.class, this::simplifyBvNeg)
                     .addCase(BvMulExpr.class, this::simplifyBvMul)
@@ -1248,6 +1249,23 @@ public final class ExprSimplifier {
                 return IntLitExpr.of(BvUtils.signedBvLitExprToBigInteger(opVal));
             } else {
                 return IntLitExpr.of(BvUtils.neutralBvLitExprToBigInteger(opVal));
+            }
+        }
+        return expr.with(op);
+    }
+
+    private Expr<BvType> simplifyIntToBv(final IntToBvExpr expr, final Valuation val) {
+        final var op = simplify(expr.getOp(), val);
+        if (op instanceof IntLitExpr opVal) {
+            if (expr.getType().getSigned()) {
+                return BvUtils.bigIntegerToSignedBvLitExpr(
+                        opVal.getValue(), expr.getType().getSize());
+            } else if (expr.getType().equals(BvType.of(expr.getType().getSize(), false))) {
+                return BvUtils.bigIntegerToUnsignedBvLitExpr(
+                        opVal.getValue(), expr.getType().getSize());
+            } else {
+                return BvUtils.bigIntegerToNeutralBvLitExpr(
+                        opVal.getValue(), expr.getType().getSize());
             }
         }
         return expr.with(op);

@@ -90,6 +90,23 @@ public final class Z3SolverTest {
     }
 
     @Test
+    public void testIntToBv() {
+        final var actual = BvExprs.ToBv(Int(-2), BvType(4, true));
+        final var expected = BvExprs.Bv(new boolean[] {true, true, true, false}, true);
+        final var unexpected = BvExprs.Bv(new boolean[] {false, false, true, false}, true);
+
+        solver.push();
+        solver.add(hu.bme.mit.theta.core.type.abstracttype.EqExpr.create2(expected, actual));
+        assertTrue(solver.check().isSat());
+        solver.pop();
+
+        solver.push();
+        solver.add(hu.bme.mit.theta.core.type.abstracttype.EqExpr.create2(unexpected, actual));
+        assertTrue(solver.check().isUnsat());
+        solver.pop();
+    }
+
+    @Test
     public void testTrack() {
         final UCSolver solver = Z3SolverFactory.getInstance().createUCSolver();
         final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());

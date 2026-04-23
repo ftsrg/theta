@@ -240,6 +240,7 @@ final class JavaSMTExprTransformer {
                         .addCase(BvAddExpr.class, this::transformBvAdd)
                         .addCase(BvSubExpr.class, this::transformBvSub)
                         .addCase(BvPosExpr.class, this::transformBvPos)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
                         .addCase(BvToIntExpr.class, this::transformBvToInt)
                         .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
                         .addCase(BvNegExpr.class, this::transformBvNeg)
@@ -706,6 +707,11 @@ final class JavaSMTExprTransformer {
 
     private Formula transformBvPos(final BvPosExpr expr) {
         return toTerm(expr.getOp());
+    }
+
+    private Formula transformIntToBv(final IntToBvExpr expr) {
+        return bitvectorFormulaManager.makeBitvector(
+                expr.getType().getSize(), (IntegerFormula) toTerm(expr.getOp()));
     }
 
     private Formula transformBvToInt(final BvToIntExpr expr) {

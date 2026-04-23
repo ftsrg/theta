@@ -182,6 +182,8 @@ final class Z3TermTransformer {
         this.addFunc("bvadd", this.exprMultiaryOperator(BvAddExpr::create));
         this.addFunc("bvsub", this.exprBinaryOperator(BvSubExpr::create));
         this.addFunc("bvpos", this.exprUnaryOperator(BvPosExpr::create));
+        this.addFunc("int_to_bv", this.exprIntToBvOperator());
+        this.addFunc("int2bv", this.exprIntToBvOperator());
         this.addFunc("ubv_to_int", this.exprUnaryOperator(BvToIntExpr::create));
         this.addFunc("sbv_to_int", this.exprUnaryOperator(BvToIntExpr::create));
         this.addFunc("bvneg", this.exprUnaryOperator(BvNegExpr::create));
@@ -853,6 +855,19 @@ final class Z3TermTransformer {
                     checkArgument(args.length == 1, "Number of arguments must be one");
                     final Expr<?> op = transform(args[0], model, vars);
                     return function.apply(op);
+                });
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>>
+            exprIntToBvOperator() {
+        return Tuple2.of(
+                1,
+                (term, model, vars) -> {
+                    final com.microsoft.z3legacy.Expr[] args = term.getArgs();
+                    checkArgument(args.length == 1, "Number of arguments must be one");
+                    final Expr<?> op = transform(args[0], model, vars);
+                    final BvType type = (BvType) transformSort(term.getSort());
+                    return IntToBvExpr.create(op, type);
                 });
     }
 

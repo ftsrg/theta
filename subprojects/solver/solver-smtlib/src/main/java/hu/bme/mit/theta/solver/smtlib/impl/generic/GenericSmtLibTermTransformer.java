@@ -111,6 +111,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
@@ -216,6 +217,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         // Bitvector
                         put("concat", exprMultiaryOperator(BvConcatExpr::create));
                         put("extract", exprBvExtractOperator());
+                        put("int_to_bv", exprIntToBvOperator());
                         put("zero_extend", exprBvExtendOperator(BvZExtExpr::create));
                         put("sign_extend", exprBvExtendOperator(BvSExtExpr::create));
                         put("bvadd", exprMultiaryOperator(BvAddExpr::create));
@@ -834,6 +836,17 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final var from = Integer.parseInt(params.get(1).numeral().getText());
             final var extractFrom = castBv(transformTerm(ops.get(0), model, vars));
             return BvExtractExpr.create(extractFrom, Int(from), Int(until));
+        };
+    }
+
+    private OperatorCreatorFunction exprIntToBvOperator() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 1, "One parameter expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var bvSize = Integer.parseInt(params.get(0).numeral().getText());
+            final var op = transformTerm(ops.get(0), model, vars);
+            return IntToBvExpr.create(op, BvType.of(bvSize));
         };
     }
 

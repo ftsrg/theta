@@ -174,6 +174,13 @@ public final class ExprWriter {
                         .addCase(BvSRemExpr.class, e -> infixBinary(e, " bvsrem "))
                         .addCase(BvPosExpr.class, e -> prefixUnary(e, "bvpos"))
                         .addCase(BvToIntExpr.class, e -> prefixUnary(e, "to_int"))
+                        .addCase(
+                                IntToBvExpr.class,
+                                e ->
+                                        String.format(
+                                                "to_bv[%d]%s",
+                                                e.getType().getSize(),
+                                                writeWithBrackets(e.getOp())))
                         .addCase(BvSignChangeExpr.class, e -> prefixUnary(e, "bvsign"))
                         .addCase(BvNegExpr.class, e -> prefixUnary(e, "bvneg"))
                         .addCase(BvAndExpr.class, e -> infixMultiary(e, " bvand "))

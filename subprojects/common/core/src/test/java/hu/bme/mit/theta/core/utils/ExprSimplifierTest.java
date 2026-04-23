@@ -33,6 +33,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ToBv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -60,6 +61,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToSignedBvLitExpr;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToUnsignedBvLitExpr;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -78,6 +81,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -367,6 +371,16 @@ public class ExprSimplifierTest {
         assertEquals(Int(-1), simplify(ToInt(Rat(-4, 3))));
         assertEquals(Int(-1), simplify(ToInt(Rat(4, -3))));
         assertEquals(Int(1), simplify(ToInt(Rat(-4, -3))));
+    }
+
+    @Test
+    public void testIntToBv() {
+        assertEquals(
+                bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(4), 16),
+                simplify(ToBv(Int(4), BvType(16, false))));
+        assertEquals(
+                bigIntegerToSignedBvLitExpr(BigInteger.valueOf(-4), 16),
+                simplify(ToBv(Int(-4), BvType(16, true))));
     }
 
     // Bitvectors

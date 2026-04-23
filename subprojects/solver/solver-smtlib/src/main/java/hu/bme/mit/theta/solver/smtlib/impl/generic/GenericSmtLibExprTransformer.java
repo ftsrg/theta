@@ -221,6 +221,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(BvAddExpr.class, this::transformBvAdd)
                 .addCase(BvSubExpr.class, this::transformBvSub)
                 .addCase(BvPosExpr.class, this::transformBvPos)
+                .addCase(IntToBvExpr.class, this::transformIntToBv)
                 .addCase(BvToIntExpr.class, this::transformBvToInt)
                 .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
                 .addCase(BvNegExpr.class, this::transformBvNeg)
@@ -702,6 +703,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformBvPos(final BvPosExpr expr) {
         return toTerm(expr.getOp());
+    }
+
+    protected String transformIntToBv(final IntToBvExpr expr) {
+        return String.format(
+                "((_ int_to_bv %d) %s)", expr.getType().getSize(), toTerm(expr.getOp()));
     }
 
     protected String transformBvToInt(final BvToIntExpr expr) {

@@ -136,6 +136,7 @@ final class Z3ExprTransformer {
                         .addCase(BvAddExpr.class, this::transformBvAdd)
                         .addCase(BvSubExpr.class, this::transformBvSub)
                         .addCase(BvPosExpr.class, this::transformBvPos)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
                         .addCase(BvToIntExpr.class, this::transformBvToInt)
                         .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
                         .addCase(BvNegExpr.class, this::transformBvNeg)
@@ -625,6 +626,11 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3legacy.Expr transformBvPos(final BvPosExpr expr) {
         return toTerm(expr.getOp());
+    }
+
+    private com.microsoft.z3legacy.Expr transformIntToBv(final IntToBvExpr expr) {
+        return context.mkInt2BV(
+                expr.getType().getSize(), (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp()));
     }
 
     private com.microsoft.z3legacy.Expr transformBvToInt(final BvToIntExpr expr) {

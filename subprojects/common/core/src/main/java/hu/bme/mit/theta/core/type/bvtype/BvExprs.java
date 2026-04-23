@@ -68,6 +68,11 @@ public final class BvExprs {
         return BvPosExpr.of(op);
     }
 
+    public static IntToBvExpr ToBv(
+            final Expr<hu.bme.mit.theta.core.type.inttype.IntType> op, final BvType type) {
+        return IntToBvExpr.of(op, type);
+    }
+
     public static BvToIntExpr ToInt(final Expr<BvType> op) {
         return BvToIntExpr.of(op);
     }

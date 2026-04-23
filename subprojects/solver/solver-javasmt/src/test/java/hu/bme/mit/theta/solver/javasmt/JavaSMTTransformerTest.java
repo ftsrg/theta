@@ -16,6 +16,9 @@
 package hu.bme.mit.theta.solver.javasmt;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ToBv;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
@@ -42,6 +45,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -182,5 +186,27 @@ public class JavaSMTTransformerTest {
     public void initJavaSMTTransformerTest(Expr<?> expr, Solvers solver) {
         this.expr = expr;
         this.solver = solver;
+    }
+
+    @Test
+    public void testIntToBvRoundtrip() throws Exception {
+        final var expr = ToBv(Int(14), BvType(4));
+        final JavaSMTSymbolTable javaSMTSymbolTable = new JavaSMTSymbolTable();
+        final var config = Configuration.fromCmdLineArguments(new String[] {});
+        final var logger = BasicLogManager.create(config);
+        final var shutdownManager = ShutdownManager.create();
+        try (final SolverContext context =
+                SolverContextFactory.createSolverContext(
+                        config, logger, shutdownManager.getNotifier(), Solvers.Z3)) {
+            final JavaSMTTransformationManager javaSMTExprTransformer =
+                    new JavaSMTTransformationManager(javaSMTSymbolTable, context);
+            final JavaSMTTermTransformer javaSMTTermTransformer =
+                    new JavaSMTTermTransformer(javaSMTSymbolTable, context);
+
+            final var expTerm = javaSMTExprTransformer.toTerm(expr);
+            final var expExpr = javaSMTTermTransformer.toExpr(expTerm);
+
+            Assertions.assertEquals(expr, expExpr);
+        }
     }
 }

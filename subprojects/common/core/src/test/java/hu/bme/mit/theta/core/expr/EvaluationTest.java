@@ -30,6 +30,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ToBv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -58,6 +60,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToSignedBvLitExpr;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToUnsignedBvLitExpr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -70,6 +74,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
@@ -229,6 +234,16 @@ public class EvaluationTest {
         for (int i = -10; i <= 10; ++i) {
             assertEquals(Rat(i, 1), evaluate(ToRat(Int(i))));
         }
+    }
+
+    @Test
+    public void testIntToBv() {
+        assertEquals(
+                bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(4), 16),
+                evaluate(ToBv(Int(4), BvType(16, false))));
+        assertEquals(
+                bigIntegerToSignedBvLitExpr(BigInteger.valueOf(-4), 16),
+                evaluate(ToBv(Int(-4), BvType(16, true))));
     }
 
     @Test

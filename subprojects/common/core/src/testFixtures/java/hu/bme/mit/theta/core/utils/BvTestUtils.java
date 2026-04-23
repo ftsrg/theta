@@ -69,6 +69,8 @@ public class BvTestUtils {
                     {BvPosExpr.class, SBv16(-5), Pos(SBv16(-5))},
                     {BvToIntExpr.class, Int(4), ToInt(SBv16(4))},
                     {BvToIntExpr.class, Int(-4), ToInt(SBv16(-4))},
+                    {IntToBvExpr.class, UBv16(4), ToBv(Int(4), BvType(16, false))},
+                    {IntToBvExpr.class, SBv16(-4), ToBv(Int(-4), BvType(16, true))},
                     {BvNegExpr.class, SBv16(5), Neg(SBv16(-5))},
                 });
     }

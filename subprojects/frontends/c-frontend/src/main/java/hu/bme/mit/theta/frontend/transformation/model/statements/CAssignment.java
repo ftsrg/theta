@@ -17,6 +17,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
@@ -103,6 +104,31 @@ public class CAssignment extends CStatement {
                 break;
             case "-=":
                 ret = AbstractExprs.Sub(castLValue, castRValue);
+                break;
+            case "<<=":
+            case ">>=":
+                checkState(castLValue.getType() instanceof BvType, "Shift expects bitvector lhs");
+                final var shiftType =
+                        CComplexType.getSmallestCommonType(
+                                List.of(CComplexType.getType(castLValue, parseContext)),
+                                parseContext);
+                checkState(
+                        shiftType.getSmtType() instanceof BvType,
+                        "Shift expects bitvector common type");
+                Expr<BvType> shiftLeftExpr =
+                        cast(shiftType.castTo(castLValue), (BvType) shiftType.getSmtType());
+                Expr<BvType> shiftRightExpr =
+                        cast(shiftType.castTo(castRValue), (BvType) shiftType.getSmtType());
+                if (operator.equals(">>=")) {
+                    if (shiftLeftExpr.getType().getSigned()) {
+                        ret = BvExprs.ArithShiftRight(shiftLeftExpr, shiftRightExpr);
+                    } else {
+                        ret = BvExprs.LogicShiftRight(shiftLeftExpr, shiftRightExpr);
+                    }
+                } else {
+                    ret = BvExprs.ShiftLeft(shiftLeftExpr, shiftRightExpr);
+                }
+                parseContext.getMetadata().create(ret, "cType", shiftType);
                 break;
             case "^=":
                 checkState(

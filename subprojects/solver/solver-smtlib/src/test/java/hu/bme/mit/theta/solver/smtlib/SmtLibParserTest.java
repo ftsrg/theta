@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.solver.smtlib;
 
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
@@ -76,5 +78,17 @@ public class SmtLibParserTest {
                 termTransformer.toExpr(response, BoolExprs.Bool(), new SmtLibModel(Map.of()));
 
         Assertions.assertNotNull(expr);
+    }
+
+    @Test
+    public void intToBvParseTest() {
+        final var response = "((_ int_to_bv 4) 14)";
+
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var expr =
+                termTransformer.toExpr(response, BvExprs.BvType(4), new SmtLibModel(Map.of()));
+
+        Assertions.assertEquals(BvExprs.ToBv(IntExprs.Int(14), BvExprs.BvType(4)), expr);
     }
 }

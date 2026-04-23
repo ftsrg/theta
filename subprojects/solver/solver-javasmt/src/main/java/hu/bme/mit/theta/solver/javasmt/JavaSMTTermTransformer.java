@@ -51,6 +51,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
@@ -280,6 +281,8 @@ final class JavaSMTTermTransformer {
                 "bv2int",
                 exprUnaryOperator(
                         t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, false)));
+        addOtherFunc("int_to_bv", exprIntToBvOperator());
+        addOtherFunc("int2bv", exprIntToBvOperator());
         addEnvFunc(
                 FunctionDeclarationKind.BV_MUL,
                 exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));
@@ -848,6 +851,21 @@ final class JavaSMTTermTransformer {
                     checkArgument(args.size() == 1, "Number of arguments must be one");
                     final Expr<?> op = transform(args.get(0), model, vars);
                     return function.apply(op);
+                });
+    }
+
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>>
+            exprIntToBvOperator() {
+        return Tuple2.of(
+                1,
+                (term, args, model, vars) -> {
+                    checkArgument(args.size() == 1, "Number of arguments must be one");
+                    final Expr<?> op = transform(args.get(0), model, vars);
+                    final BitvectorType type =
+                            (BitvectorType)
+                                    context.getFormulaManager()
+                                            .getFormulaType((BitvectorFormula) term);
+                    return IntToBvExpr.create(op, BvType.of(type.getSize()));
                 });
     }
 

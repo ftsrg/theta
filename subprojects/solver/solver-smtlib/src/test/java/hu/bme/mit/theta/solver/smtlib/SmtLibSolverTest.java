@@ -259,6 +259,27 @@ public final class SmtLibSolverTest {
     }
 
     @Test
+    public void testIntToBv() throws Exception {
+        final Solver solver = solverFactory.createSolver();
+
+        final var actual = BvExprs.ToBv(IntExprs.Int(-2), BvExprs.BvType(4, true));
+        final var expected = BvExprs.Bv(new boolean[] {true, true, true, false}, true);
+        final var unexpected = BvExprs.Bv(new boolean[] {false, false, true, false}, true);
+
+        solver.push();
+        solver.add(hu.bme.mit.theta.core.type.abstracttype.EqExpr.create2(expected, actual));
+        assertTrue(solver.check().isSat());
+        solver.pop();
+
+        solver.push();
+        solver.add(hu.bme.mit.theta.core.type.abstracttype.EqExpr.create2(unexpected, actual));
+        assertTrue(solver.check().isUnsat());
+        solver.pop();
+
+        solver.close();
+    }
+
+    @Test
     public void testBV1() {
         final Solver solver = solverFactory.createSolver();
 
