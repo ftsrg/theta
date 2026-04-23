@@ -169,7 +169,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
 data class CFrontendConfig(
   @Parameter(
     names = ["--arithmetic"],
-    description = "Arithmetic type (efficient, bitvector, integer)",
+    description = "Arithmetic type (efficient, mixed, bitvector, integer)",
   )
   var arithmetic: ArchitectureConfig.ArithmeticType = ArchitectureConfig.ArithmeticType.efficient,
   @Parameter(

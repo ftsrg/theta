@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
@@ -45,6 +46,31 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+
+@Suppress("UNCHECKED_CAST")
+fun XcfaConfig<*, *>.withFrontendArithmetic(
+  arithmetic: ArithmeticType,
+): XcfaConfig<*, *> {
+  if (frontendConfig.inputType != InputType.C) {
+    return this
+  }
+
+  val frontendConfig = frontendConfig as FrontendConfig<SpecFrontendConfig>
+  val cFrontendConfig =
+    when (val specConfig = frontendConfig.specConfig) {
+      null -> CFrontendConfig(arithmetic = arithmetic)
+      is CFrontendConfig -> specConfig.copy(arithmetic = arithmetic)
+      else -> return this
+    }
+
+  return XcfaConfig(
+    inputConfig = inputConfig,
+    frontendConfig = frontendConfig.copy(specConfig = cFrontendConfig),
+    backendConfig = backendConfig as BackendConfig<SpecBackendConfig>,
+    outputConfig = outputConfig,
+    debugConfig = debugConfig,
+  )
+}
 
 fun baseCegarConfig(
   xcfa: XCFA,

@@ -85,12 +85,15 @@ public class ArchitectureConfig {
      * Which parseContext.getArithmetic() type to use: - integer: bitvectors are not supported (e.g.
      * floats, bitwise ops). This is the most performant. - bitvector: every operation is handled
      * through BV primitives. This can handle virtually anything (in scope). This is not as
-     * performant as integer parseContext.getArithmetic(). - efficient: Integer when possible,
-     * bitvector when necessary - this is the default (and performance-wise best) option
+     * performant as integer parseContext.getArithmetic(). - mixed: keep the default Int
+     * representation, but temporarily convert to BV around BV-only operators. - efficient:
+     * Integer when possible, bitvector when necessary - this is the default (and
+     * performance-wise best) option
      */
     public enum ArithmeticType {
         integer,
         bitvector,
+        mixed,
         efficient
     }
 

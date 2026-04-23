@@ -153,7 +153,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         List<CParser.ExternalDeclarationContext> globalUsages =
                 globalDeclUsageVisitor.getGlobalUsages(ctx);
 
-        // if arithemetic is set on efficient, we change it to either bv or int arithmetic here
+        // if arithmetic is set on efficient, we change it to either bv or int arithmetic here
         if (parseContext.getArithmetic()
                 == ArithmeticType
                         .efficient) { // if it wasn't on efficient, the check returns manual

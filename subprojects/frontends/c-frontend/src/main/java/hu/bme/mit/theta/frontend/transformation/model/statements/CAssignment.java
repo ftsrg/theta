@@ -17,8 +17,6 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
@@ -107,46 +105,64 @@ public class CAssignment extends CStatement {
                 break;
             case "<<=":
             case ">>=":
-                checkState(castLValue.getType() instanceof BvType, "Shift expects bitvector lhs");
                 final var shiftType =
                         CComplexType.getSmallestCommonType(
                                 List.of(CComplexType.getType(castLValue, parseContext)),
                                 parseContext);
-                checkState(
-                        shiftType.getSmtType() instanceof BvType,
-                        "Shift expects bitvector common type");
                 Expr<BvType> shiftLeftExpr =
-                        cast(shiftType.castTo(castLValue), (BvType) shiftType.getSmtType());
+                        CMixedSemantics.castToBitwiseOperand(
+                                castLValue, shiftType, parseContext);
                 Expr<BvType> shiftRightExpr =
-                        cast(shiftType.castTo(castRValue), (BvType) shiftType.getSmtType());
+                        CMixedSemantics.castToBitwiseOperand(
+                                castRValue, shiftType, parseContext);
+                Expr<BvType> shiftResult;
                 if (operator.equals(">>=")) {
-                    if (shiftLeftExpr.getType().getSigned()) {
-                        ret = BvExprs.ArithShiftRight(shiftLeftExpr, shiftRightExpr);
+                    if (CMixedSemantics.getBitvectorType(shiftType).getSigned()) {
+                        shiftResult = BvExprs.ArithShiftRight(shiftLeftExpr, shiftRightExpr);
                     } else {
-                        ret = BvExprs.LogicShiftRight(shiftLeftExpr, shiftRightExpr);
+                        shiftResult = BvExprs.LogicShiftRight(shiftLeftExpr, shiftRightExpr);
                     }
                 } else {
-                    ret = BvExprs.ShiftLeft(shiftLeftExpr, shiftRightExpr);
+                    shiftResult = BvExprs.ShiftLeft(shiftLeftExpr, shiftRightExpr);
                 }
-                parseContext.getMetadata().create(ret, "cType", shiftType);
+                parseContext.getMetadata().create(shiftResult, "cType", shiftType);
+                ret = CMixedSemantics.castFromBitwiseResult(shiftResult, shiftType, parseContext);
                 break;
             case "^=":
-                checkState(
-                        lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
-                ret = BvExprs.Xor(List.of((Expr<BvType>) castLValue, (Expr<BvType>) castRValue));
+                ret =
+                        CMixedSemantics.castFromBitwiseResult(
+                                BvExprs.Xor(
+                                        List.of(
+                                                CMixedSemantics.castToBitwiseOperand(
+                                                        castLValue, type, parseContext),
+                                                CMixedSemantics.castToBitwiseOperand(
+                                                        castRValue, type, parseContext))),
+                                type,
+                                parseContext);
                 break;
             case "&=":
-                checkState(
-                        lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
-                ret = BvExprs.And(List.of((Expr<BvType>) castLValue, (Expr<BvType>) castRValue));
+                ret =
+                        CMixedSemantics.castFromBitwiseResult(
+                                BvExprs.And(
+                                        List.of(
+                                                CMixedSemantics.castToBitwiseOperand(
+                                                        castLValue, type, parseContext),
+                                                CMixedSemantics.castToBitwiseOperand(
+                                                        castRValue, type, parseContext))),
+                                type,
+                                parseContext);
                 break;
             case "|=":
-                checkState(
-                        lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
-                ret = BvExprs.Or(List.of((Expr<BvType>) castLValue, (Expr<BvType>) castRValue));
+                ret =
+                        CMixedSemantics.castFromBitwiseResult(
+                                BvExprs.Or(
+                                        List.of(
+                                                CMixedSemantics.castToBitwiseOperand(
+                                                        castLValue, type, parseContext),
+                                                CMixedSemantics.castToBitwiseOperand(
+                                                        castRValue, type, parseContext))),
+                                type,
+                                parseContext);
                 break;
             default:
                 throw new UnsupportedFrontendElementException("Unsupported operator: " + operator);
