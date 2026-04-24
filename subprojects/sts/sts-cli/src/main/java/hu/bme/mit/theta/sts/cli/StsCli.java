@@ -19,7 +19,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
@@ -224,10 +223,15 @@ public class StsCli {
     PredSplit predSplit = PredSplit.WHOLE;
 
     @Parameter(
-            names = {"--model"},
+            names = {"--model", "--input"},
             description = "Path of the input STS model",
             required = true)
     String model;
+
+    @Parameter(
+            names = {"--property"},
+            description = "Property placeholder (ignored)")
+    String property;
 
     @Parameter(
             names = {"--initprec"},

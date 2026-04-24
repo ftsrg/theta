@@ -63,4 +63,28 @@ public final class Tuple6<T1, T2, T3, T4, T5, T6> extends Tuple {
         final T6 result = (T6) elem(5);
         return result;
     }
+
+    public T1 component1() {
+        return get1();
+    }
+
+    public T2 component2() {
+        return get2();
+    }
+
+    public T3 component3() {
+        return get3();
+    }
+
+    public T4 component4() {
+        return get4();
+    }
+
+    public T5 component5() {
+        return get5();
+    }
+
+    public T6 component6() {
+        return get6();
+    }
 }

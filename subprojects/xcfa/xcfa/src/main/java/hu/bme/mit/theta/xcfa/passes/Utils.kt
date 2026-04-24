@@ -26,8 +26,8 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 import java.util.function.Function
 
@@ -38,7 +38,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
   var current = ArrayList<XcfaLabel>()
   for (label in label.labels) {
     if (function(label)) {
-      if (current.size > 0) {
+      if (current.isNotEmpty()) {
         newLabels.add(SequenceLabel(current))
         current = ArrayList()
       }
@@ -47,7 +47,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
       current.add(label)
     }
   }
-  if (current.size > 0) newLabels.add(SequenceLabel(current))
+  if (current.isNotEmpty()) newLabels.add(SequenceLabel(current))
 
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)
@@ -60,7 +60,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 
   val newEdges = ArrayList<XcfaEdge>()
   for ((i, label) in newLabels.withIndex()) {
-    newEdges.add(XcfaEdge(locations[i], locations[i + 1], label, metadata))
+    newEdges.add(XcfaEdge(locations[i], locations[i + 1], label, label.metadata))
   }
   return newEdges
 }
@@ -81,14 +81,16 @@ fun XcfaLabel.changeVars(
   if (varLut.isNotEmpty())
     when (this) {
       is InvokeLabel ->
-        InvokeLabel(name, params.map { it.changeVars(varLut, parseContext) }, metadata = metadata)
+        InvokeLabel(
+          name,
+          params.map { it.changeVars(varLut, parseContext) },
+          metadata = metadata,
+          isLibraryFunction = isLibraryFunction,
+        )
 
       is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
       is NondetLabel ->
         NondetLabel(labels.map { it.changeVars(varLut, parseContext) }.toSet(), metadata = metadata)
-
-      is ReadLabel ->
-        ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
 
       is SequenceLabel ->
         SequenceLabel(labels.map { it.changeVars(varLut, parseContext) }, metadata = metadata)
@@ -108,10 +110,33 @@ fun XcfaLabel.changeVars(
           choiceType = this.choiceType,
         )
 
-      is WriteLabel ->
-        WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
-
       is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
+
+      is FenceLabel -> {
+        when (this) {
+          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is MutexTryLockLabel ->
+            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
+          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
+          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
+          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
+          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
+          else -> this
+        }
+      }
+
+      is FenceLabel -> {
+        when (this) {
+          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is MutexTryLockLabel ->
+            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
+          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
+          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
+          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
+          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
+          else -> this
+        }
+      }
 
       is ClockOpLabel ->
         ClockOpLabel(this.op.accept(ClockOpSubstitutionVisitor(), Function { v -> v.changeVars(varLut) }))
@@ -207,3 +232,69 @@ fun addLabelToEdge(edge : XcfaEdge, newLabel: XcfaLabel) : XcfaEdge {
   newLabels.add(newLabel)
   return edge.withLabel(SequenceLabel(newLabels))
 }
+
+/**
+ * Find loop locations and edges starting from the loop head. The loop head is the target of the
+ * given backward edge.
+ */
+fun getLoopElements(backEdge: XcfaEdge): Pair<Set<XcfaLocation>, Set<XcfaEdge>> {
+  val loopStart = backEdge.target
+  val backSearch: (XcfaLocation) -> Pair<Set<XcfaLocation>, List<XcfaEdge>>? =
+    backSearch@{ startLoc ->
+      val locs = mutableSetOf<XcfaLocation>()
+      val edges = mutableListOf<XcfaEdge>()
+      val toVisit = mutableListOf(startLoc)
+      while (toVisit.isNotEmpty()) {
+        val current = toVisit.removeFirst()
+        if (current == loopStart) continue
+        if (current.incomingEdges.isEmpty()) return@backSearch null // not part of the loop
+        if (locs.add(current)) {
+          edges.addAll(current.incomingEdges)
+          toVisit.addAll(current.incomingEdges.map { it.source })
+        }
+      }
+      locs to edges
+    }
+
+  val locs = mutableSetOf(loopStart)
+  val edges = mutableSetOf<XcfaEdge>()
+  val nonLoopEdge =
+    loopStart.incomingEdges.filter { it != backEdge }.let { if (it.size != 1) null else it.first() }
+  loopStart.incomingEdges.forEach { incoming ->
+    if (incoming == nonLoopEdge) return@forEach
+    val (l, e) = backSearch(incoming.source) ?: return@forEach
+    locs.addAll(l)
+    edges.addAll(e)
+    edges.add(incoming)
+  }
+  return locs to edges
+}
+
+private fun getLoopEdges(initLoc: XcfaLocation): Set<XcfaEdge> {
+  val loopEdges = mutableSetOf<XcfaEdge>()
+  val visited = mutableSetOf<XcfaEdge>()
+  val stack = Stack<XcfaLocation>()
+  stack.push(initLoc)
+  while (stack.isNotEmpty()) {
+    val loc = stack.peek()
+    val edge = loc.outgoingEdges.firstOrNull { it !in visited }
+    if (edge == null) {
+      stack.pop()
+      continue
+    }
+    visited.add(edge)
+    if (edge.target in stack) {
+      val (_, edges) = getLoopElements(edge)
+      loopEdges.addAll(edges)
+    } else {
+      stack.push(edge.target)
+    }
+  }
+  return loopEdges
+}
+
+val XcfaProcedureBuilder.loopEdges: Set<XcfaEdge>
+  get() = getLoopEdges(initLoc)
+
+val XcfaProcedure.loopEdges: Set<XcfaEdge>
+  get() = getLoopEdges(initLoc)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,11 +32,10 @@ import static java.lang.String.format;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3legacy.*;
 import com.microsoft.z3legacy.enumerations.Z3_decl_kind;
-import com.microsoft.z3legacy.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -49,39 +48,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.*;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
@@ -142,15 +109,18 @@ final class Z3TermTransformer {
     private static final String PARAM_NAME_FORMAT = "_p%d";
 
     private final Z3SymbolTable symbolTable;
+    private final Z3TypeSymbolTable typeSymbolTable;
     private final Map<
                     Tuple2<String, Integer>,
                     TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>>
             environment;
 
-    public Z3TermTransformer(final Z3SymbolTable symbolTable) {
+    public Z3TermTransformer(
+            final Z3SymbolTable symbolTable, final Z3TypeSymbolTable typeSymbolTable) {
         this.symbolTable = symbolTable;
+        this.typeSymbolTable = typeSymbolTable;
 
-        environment = Containers.createMap();
+        environment = CollectionUtil.createMap();
 
         this.addFunc("deref", dereference());
         this.addFunc("ref", reference());
@@ -212,6 +182,8 @@ final class Z3TermTransformer {
         this.addFunc("bvadd", this.exprMultiaryOperator(BvAddExpr::create));
         this.addFunc("bvsub", this.exprBinaryOperator(BvSubExpr::create));
         this.addFunc("bvpos", this.exprUnaryOperator(BvPosExpr::create));
+        this.addFunc("ubv_to_int", this.exprUnaryOperator(BvToIntExpr::create));
+        this.addFunc("sbv_to_int", this.exprUnaryOperator(BvToIntExpr::create));
         this.addFunc("bvneg", this.exprUnaryOperator(BvNegExpr::create));
         this.addFunc("bvmul", this.exprMultiaryOperator(BvMulExpr::create));
         this.addFunc("bvudiv", this.exprBinaryOperator(BvUDivExpr::create));
@@ -376,6 +348,9 @@ final class Z3TermTransformer {
                 model,
                 "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
+        if (funcInterp == null) {
+            return null;
+        }
         final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
         pushParams(vars, paramDecls);
         final Expr<?> funcLitExpr = transformFuncInterp(funcInterp, model, vars);
@@ -386,13 +361,22 @@ final class Z3TermTransformer {
     public Expr<?> toArrayLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
+        if (funcInterp == null) {
+            return null;
+        }
         final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
                 createEntryExprs(funcInterp, model, vars);
         final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 
-        final ArraySort sort = (ArraySort) funcDecl.getRange();
-
-        return createArrayLitExpr(sort, entryExprs, elseExpr);
+        if (funcDecl.getRange() instanceof ArraySort sort) {
+            return createArrayLitExpr(sort, entryExprs, elseExpr);
+        } else {
+            return this.createIndexValueArrayLitExpr(
+                    transformSort(funcDecl.getDomain()[0]),
+                    transformSort(funcDecl.getRange()),
+                    entryExprs,
+                    elseExpr);
+        }
     }
 
     private Expr<?> createArrayLitExpr(
@@ -445,6 +429,10 @@ final class Z3TermTransformer {
             return transformArrLit(term, model, vars);
 
         } else if (term.isApp()) {
+            if (term.getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR)) {
+                final EnumType enumType = (EnumType) transformSort(term.getSort());
+                return transformEnumLit(term, enumType);
+            }
             return transformApp(term, model, vars);
 
         } else if (term.isQuantifier()) {
@@ -548,6 +536,28 @@ final class Z3TermTransformer {
             return environment.get(key1).apply(term, model, vars);
         } else if (environment.containsKey(key2)) {
             return environment.get(key2).apply(term, model, vars);
+        } else if ("as-array".equals(symbol)) {
+            final var termString = term.toString();
+            final var pattern = Pattern.compile("\\(_\\s+as-array\\s+\\S+!(\\S+)\\)");
+            final var matcher = pattern.matcher(termString);
+            if (matcher.find()) {
+                final var funcName = matcher.group(1);
+                final var funcDeclInModel = Arrays.stream(model.getFuncDecls());
+                final FuncDecl asArrayDecl =
+                        funcDeclInModel
+                                .filter(fd -> fd.getName().toString().equals(funcName))
+                                .findFirst()
+                                .orElseThrow(
+                                        () ->
+                                                new Z3Exception(
+                                                        format(
+                                                                "Function '%s' not found in the"
+                                                                        + " model.",
+                                                                funcName)));
+                return toArrayLitExpr(asArrayDecl, model, vars);
+            } else {
+                throw new Z3Exception("Could not parse as-array term: " + termString);
+            }
         } else {
             final Expr<?> funcExpr;
             if (symbolTable.definesSymbol(funcDecl)) {
@@ -739,6 +749,12 @@ final class Z3TermTransformer {
             final com.microsoft.z3legacy.BitVecSort bvSort =
                     (com.microsoft.z3legacy.BitVecSort) sort;
             return BvType(bvSort.getSize());
+        } else if (sort instanceof com.microsoft.z3legacy.ArraySort) {
+            return ArrayType.of(
+                    transformSort(((com.microsoft.z3legacy.ArraySort) sort).getDomain()),
+                    transformSort(((com.microsoft.z3legacy.ArraySort) sort).getRange()));
+        } else if (sort instanceof com.microsoft.z3legacy.DatatypeSort) {
+            return typeSymbolTable.getType(sort.getName().toString());
         } else {
             throw new AssertionError("Unsupported sort: " + sort);
         }
@@ -847,25 +863,6 @@ final class Z3TermTransformer {
                 (term, model, vars) -> {
                     final com.microsoft.z3legacy.Expr[] args = term.getArgs();
                     checkArgument(args.length == 2, "Number of arguments must be two");
-                    if (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
-                        // binary operator is on enum types
-                        // if either arg is a literal, we need special handling to get its type
-                        // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is
-                        // Z3_OP_DT_CONSTRUCTOR)
-                        int litIndex = -1;
-                        for (int i = 0; i < 2; i++) {
-                            if (args[i].getFuncDecl()
-                                    .getDeclKind()
-                                    .equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR)) litIndex = i;
-                        }
-                        if (litIndex > -1) {
-                            int refIndex = Math.abs(litIndex - 1);
-                            final Expr<?> refOp = transform(args[refIndex], model, vars);
-                            final Expr<EnumType> litExpr =
-                                    transformEnumLit(args[litIndex], (EnumType) refOp.getType());
-                            return function.apply(refOp, litExpr);
-                        }
-                    }
                     final Expr<?> op1 = transform(args[0], model, vars);
                     final Expr<?> op2 = transform(args[1], model, vars);
                     return function.apply(op1, op2);

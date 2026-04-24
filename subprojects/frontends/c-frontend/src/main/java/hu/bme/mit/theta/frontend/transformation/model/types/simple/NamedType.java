@@ -151,6 +151,9 @@ public class NamedType extends CSimpleType {
 
     @Override
     protected void patch(CSimpleType cSimpleType) {
+        for (int i = 0; i < getPointerLevel(); i++) {
+            cSimpleType.incrementPointer();
+        }
         switch (namedType) {
             case "__int128":
                 cSimpleType.set128(true);
@@ -170,6 +173,8 @@ public class NamedType extends CSimpleType {
                 cSimpleType.setBool(true);
                 break;
             case "int":
+                break;
+            case "":
                 break;
             default:
                 if (!cSimpleType.isTypedef()) {

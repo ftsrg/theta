@@ -26,8 +26,8 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Domain.*
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.BW_BIN_ITP
 import hu.bme.mit.theta.xcfa.cli.runConfig
-import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 fun chcCompPortfolio25(
   xcfa: XCFA,
@@ -171,19 +171,20 @@ fun chcCompPortfolio25(
 
     val complex25 =
       ConfigNode(
-        "Complex25-$inProcess",
+        "Complex-$inProcess",
         XcfaConfig(
           inputConfig =
-            InputConfig(
-              input = null,
-              xcfaWCtx = Triple(xcfa, mcm, parseContext),
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
               propertyFile = null,
               property = portfolioConfig.inputConfig.property,
             ),
           frontendConfig = portfolioConfig.frontendConfig,
           backendConfig =
             (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX25")
+              specConfig = PortfolioConfig("COMPLEX")
             ),
           outputConfig = baseCegarConfig.outputConfig,
           debugConfig = portfolioConfig.debugConfig,

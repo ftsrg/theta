@@ -122,6 +122,8 @@ fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
           newPrec
       }
 
+      is Prod2Prec<*, *> -> Prod2Prec.of(prec1.addVars(lookups), prec2.addVars(lookups)) as P
+
       is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
 
       is Prod2Prec<*,*> -> Prod2Prec.of(prec1.addVars(lookups), prec2.addVars(lookups)) as P

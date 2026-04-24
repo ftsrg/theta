@@ -24,8 +24,8 @@ import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ArgCexTest {
 
@@ -57,16 +57,16 @@ public class ArgCexTest {
         n6.setCoveringNode(n2);
         n8.setCoveringNode(n4);
 
-        Assert.assertEquals(8, arg.getNodes().count());
-        Assert.assertEquals(2, arg.getUnsafeNodes().count());
+        Assertions.assertEquals(8, arg.getNodes().count());
+        Assertions.assertEquals(2, arg.getUnsafeNodes().count());
 
         final List<Trace<State, Action>> cexs =
                 arg.getCexs().map(e -> e.toTrace()).collect(Collectors.toList());
 
-        Assert.assertEquals(2, cexs.size());
-        Assert.assertTrue(
+        Assertions.assertEquals(2, cexs.size());
+        Assertions.assertTrue(
                 cexs.contains(Trace.of(ImmutableList.of(s1, s2, s4), ImmutableList.of(act, act))));
-        Assert.assertTrue(
+        Assertions.assertTrue(
                 cexs.contains(Trace.of(ImmutableList.of(s1, s3, s7), ImmutableList.of(act, act))));
     }
 }

@@ -40,7 +40,6 @@ class EliminateSelfLoops : ProcedurePass {
         break
       }
     }
-    builder.metaData["noSelfLoops"] = Unit
     return builder
   }
 }

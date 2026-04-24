@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,18 +16,19 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
-import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
+import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class XcfaDslTest {
 
@@ -88,30 +89,30 @@ class XcfaDslTest {
     run {
       val xcfa = getSyncXcfa()
       val checker =
-        getChecker(
+        getSafetyChecker(
           xcfa,
           emptySet(),
           config,
           ParseContext(),
           NullLogger.getInstance(),
-          NullLogger.getInstance(),
+          UniqueWarningLogger(NullLogger.getInstance()),
         )
       val safetyResult = checker.check()
-      Assert.assertTrue(safetyResult.isSafe)
+      Assertions.assertTrue(safetyResult.isSafe)
     }
     run {
       val xcfa = getAsyncXcfa()
       val checker =
-        getChecker(
+        getSafetyChecker(
           xcfa,
           emptySet(),
           config,
           ParseContext(),
           NullLogger.getInstance(),
-          NullLogger.getInstance(),
+          UniqueWarningLogger(NullLogger.getInstance()),
         )
       val safetyResult = checker.check()
-      Assert.assertTrue(safetyResult.isUnsafe)
+      Assertions.assertTrue(safetyResult.isUnsafe)
     }
   }
 }

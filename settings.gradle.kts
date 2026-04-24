@@ -24,10 +24,12 @@ include(
     "common/ltl",
     "common/ltl-cli",
 
+    "frontends/btor2-frontend",
     "frontends/c-frontend",
     "frontends/petrinet-model",
     "frontends/petrinet-analysis",
     "frontends/petrinet-xsts",
+    "frontends/dve-frontend",
     "frontends/chc-frontend",
     "frontends/llvm",
 
@@ -42,6 +44,7 @@ include(
     "xcfa/xcfa",
     "xcfa/cat",
     "xcfa/c2xcfa",
+    "xcfa/btor2xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/llvm2xcfa",
     "xcfa/xcfa2chc",
@@ -57,6 +60,7 @@ include(
     "xsts/xsts-cli",
 
     "solver/solver",
+    "solver/solver-eldarica",
     "solver/solver-z3",
     "solver/solver-z3-legacy",
     "solver/solver-javasmt",

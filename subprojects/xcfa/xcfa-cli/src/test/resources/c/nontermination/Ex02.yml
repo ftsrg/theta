@@ -1,0 +1,39 @@
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "f1dccaba-2376-41a0-80d7-d8e767e49555"
+    creation_time: "2025-05-21T19:21:36Z"
+    producer:
+      name: "Theta"
+      version: "no version found"
+    task:
+      input_files:
+        - "Ex02.c"
+      input_file_hashes:
+        "Ex02.c": "afd40820c7a09c073d225c09c6690862ff04506300463cb312087d541b42d981"
+      specification: "TERMINATION"
+      data_model: "LP64"
+      language: "C"
+  content:
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(i == 4)"
+              format: "c_expression"
+            location:
+              file_name: "Ex02.c"
+              line: 7
+              column: 5
+            action: "follow"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(i == 5)"
+              format: "c_expression"
+            location:
+              file_name: "Ex02.c"
+              line: 10
+              column: 9
+            action: "cycle"

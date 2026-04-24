@@ -52,27 +52,16 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
-import kotlin.Unit;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ASGAbstractorCheckingTest {
-
-    @Parameterized.Parameter public String fileName;
-
-    @Parameterized.Parameter(1)
+    public String fileName;
     public String propFileName;
-
-    @Parameterized.Parameter(2)
     public String acceptingLocationName;
-
-    @Parameterized.Parameter(3)
     public boolean isLassoPresent;
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -88,8 +77,16 @@ public class ASGAbstractorCheckingTest {
                 });
     }
 
-    @Test
-    public void test() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(
+            String fileName,
+            String propFileName,
+            String acceptingLocationName,
+            boolean isLassoPresent)
+            throws IOException {
+        initASGAbstractorCheckingTest(
+                fileName, propFileName, acceptingLocationName, isLassoPresent);
         if (propFileName.isBlank() && !acceptingLocationName.isBlank()) testWithCfa();
         if (!propFileName.isBlank() && acceptingLocationName.isBlank()) testWithXsts();
     }
@@ -112,7 +109,7 @@ public class ASGAbstractorCheckingTest {
         final Predicate<XstsState<ExplState>> statePredicate =
                 new XstsStatePredicate<>(new ExplStatePredicate(xsts.getProp(), abstractionSolver));
         final AcceptancePredicate<XstsState<ExplState>, XstsAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<>(statePredicate::test);
         final ExplPrec precision = new XstsAllVarsInitPrec().createExpl(xsts);
         var abstractor =
                 new ASGAbstractor<>(
@@ -123,7 +120,7 @@ public class ASGAbstractorCheckingTest {
                         new ConsoleLogger(Logger.Level.DETAIL));
         ASG<XstsState<ExplState>, XstsAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
-        Assert.assertEquals(isLassoPresent, result.isUnsafe());
+        Assertions.assertEquals(isLassoPresent, result.isUnsafe());
     }
 
     private void testWithCfa() throws IOException {
@@ -140,7 +137,7 @@ public class ASGAbstractorCheckingTest {
         Predicate<CfaState<ExplState>> statePredicate =
                 cfaState -> cfaState.getLoc().getName().equals(acceptingLocationName);
         AcceptancePredicate<CfaState<ExplState>, CfaAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<>(statePredicate::test);
         ASGAbstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor =
                 new ASGAbstractor<>(
                         analysis,
@@ -150,6 +147,17 @@ public class ASGAbstractorCheckingTest {
                         new ConsoleLogger(Logger.Level.DETAIL));
         ASG<CfaState<ExplState>, CfaAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
-        Assert.assertEquals(isLassoPresent, result.isUnsafe());
+        Assertions.assertEquals(isLassoPresent, result.isUnsafe());
+    }
+
+    public void initASGAbstractorCheckingTest(
+            String fileName,
+            String propFileName,
+            String acceptingLocationName,
+            boolean isLassoPresent) {
+        this.fileName = fileName;
+        this.propFileName = propFileName;
+        this.acceptingLocationName = acceptingLocationName;
+        this.isLassoPresent = isLassoPresent;
     }
 }

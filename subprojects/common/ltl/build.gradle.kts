@@ -20,6 +20,7 @@ plugins {
 }
 
 dependencies {
+    implementation(files(rootDir.resolve(Deps.hoaf)))
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))

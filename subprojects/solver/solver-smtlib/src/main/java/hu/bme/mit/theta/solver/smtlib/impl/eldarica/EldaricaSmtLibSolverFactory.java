@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,15 +31,18 @@ import java.util.Map;
 public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
     private final Path yicesPath;
+    private final boolean needsModelWrapping;
 
-    private EldaricaSmtLibSolverFactory(Path solverPath, String[] args, Path yicesPath) {
+    private EldaricaSmtLibSolverFactory(
+            Path solverPath, String[] args, Path yicesPath, boolean needsModelWrapping) {
         super(solverPath, args);
         this.yicesPath = yicesPath;
+        this.needsModelWrapping = needsModelWrapping;
     }
 
     public static EldaricaSmtLibSolverFactory create(
-            Path solverPath, String[] args, Path yicesPath) {
-        return new EldaricaSmtLibSolverFactory(solverPath, args, yicesPath);
+            Path solverPath, String[] args, Path yicesPath, boolean needsModelWrapping) {
+        return new EldaricaSmtLibSolverFactory(solverPath, args, yicesPath, needsModelWrapping);
     }
 
     @Override
@@ -66,7 +69,11 @@ public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
                         Map.of("PATH", System.getenv("PATH") + ":" + yicesPath.toAbsolutePath()));
 
         return new GenericHornSolver(
-                symbolTable, transformationManager, termTransformer, solverBinary);
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                needsModelWrapping);
     }
 
     @Override

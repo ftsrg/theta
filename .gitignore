@@ -36,3 +36,5 @@ xcfa.json
 *.plantuml
 xcfa-*.smt2
 witness.yml
+invariants.txt
+*.salive

@@ -28,27 +28,18 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExprCnfCheckerTest {
 
     private static final Expr<BoolType> A = Const("a", Bool()).getRef();
     private static final Expr<BoolType> B = Const("b", Bool()).getRef();
     private static final Expr<BoolType> C = Const("c", Bool()).getRef();
-
-    @Parameter(value = 0)
     public Expr<BoolType> expr;
-
-    @Parameter(value = 1)
     public boolean expectedResult;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -81,8 +72,15 @@ public class ExprCnfCheckerTest {
                 });
     }
 
-    @Test
-    public void test() {
-        Assert.assertEquals(expectedResult, isExprCnf(expr));
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<BoolType> expr, boolean expectedResult) {
+        initExprCnfCheckerTest(expr, expectedResult);
+        Assertions.assertEquals(expectedResult, isExprCnf(expr));
+    }
+
+    public void initExprCnfCheckerTest(Expr<BoolType> expr, boolean expectedResult) {
+        this.expr = expr;
+        this.expectedResult = expectedResult;
     }
 }

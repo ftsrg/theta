@@ -17,20 +17,17 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import java.io.IOException
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class TestFrontendXcfaBuilder {
-
-  @Parameterized.Parameter(0) lateinit var filepath: String
 
   companion object {
 
     @JvmStatic
-    @Parameterized.Parameters
     fun data(): Collection<Array<Any>> {
       return listOf(
         arrayOf("/00assignment.c"),
@@ -57,26 +54,26 @@ class TestFrontendXcfaBuilder {
         arrayOf("/21namecollision.c"),
         arrayOf("/22nondet.c"),
         arrayOf("/23exotic.c"),
-        arrayOf("/24threadlocal.c"),
+        arrayOf("/24initializer.c"),
       )
     }
   }
 
-  @Test
+  private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+
+  @ParameterizedTest
+  @MethodSource("data")
   @Throws(IOException::class)
-  fun testReachability() {
-
+  fun testReachability(filepath: String) {
     val stream = javaClass.getResourceAsStream(filepath)
-
-    getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance())
+    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   @Throws(IOException::class)
-  fun testOverflow() {
-
+  fun testOverflow(filepath: String) {
     val stream = javaClass.getResourceAsStream(filepath)
-
-    getXcfaFromC(stream!!, ParseContext(), false, true, NullLogger.getInstance())
+    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
   }
 }

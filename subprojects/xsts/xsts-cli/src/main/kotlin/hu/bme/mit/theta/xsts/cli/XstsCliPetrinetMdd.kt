@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Stopwatch
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
@@ -32,6 +32,8 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
+import hu.bme.mit.theta.frontend.petrinet.analysis.PetriNetForceVarOrdering
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory
@@ -42,9 +44,7 @@ import hu.bme.mit.theta.xsts.cli.optiongroup.PetrinetDependencyOutputOptions
 import java.io.File
 import java.io.PrintStream
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
-import kotlin.system.exitProcess
 
 class XstsCliPetrinetMdd :
   XstsCliBaseCommand(
@@ -53,31 +53,41 @@ class XstsCliPetrinetMdd :
   ) {
 
   private val ordering: File? by
-    option(help = "Path of the input variable ordering")
+    option(help = "Path to a file containing variable ordering (one name per line)")
       .file(mustExist = true, canBeDir = false, mustBeReadable = true)
+  private val dumpOrdering: Boolean by
+    option("--dump-ordering", help = "Dump the computed variable ordering to <model>.ordering")
+      .flag()
   private val id: String by
     option(help = "ID of the input model. Used for symbolic output").default("")
   private val iterationStrategy: MddChecker.IterationStrategy by
-    option(help = "The state space generation algorithm to use")
+    option(help = "The state space enumeration algorithm to use")
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
   private val dependencyOutput by PetrinetDependencyOutputOptions()
 
   private fun loadOrdering(petriNet: PetriNet): List<Place> =
-    if (ordering == null)
-      petriNet.places.sortedWith { p1: Place, p2: Place ->
-        String.CASE_INSENSITIVE_ORDER.compare(p1.id.reversed(), p2.id.reversed())
-      }
+    if (ordering == null) PetriNetForceVarOrdering.orderVars(petriNet)
     else VariableOrderingFactory.fromFile(ordering, petriNet)
 
-  private fun petrinetAnalysis() {
-    checkArgument(inputOptions.pnProperty == PropType.FULL_EXPLORATION) {
+  private fun dumpOrdering(effectiveOrdering: List<Place>) {
+    if (!dumpOrdering) return
+    val file = File("${inputOptions.model.path}.ordering")
+    val lines = effectiveOrdering.map { it.id }
+    file.writeText(lines.joinToString("\n") + "\n")
+    logger.writeln(Logger.Level.MAINSTEP, "Variable ordering dumped to ${file.path}")
+  }
+
+  override fun doRun() {
+    if (!inputOptions.isPnml()) return
+    checkArgument(inputOptions.getPetrinetProperty() == PropType.FULL_EXPLORATION) {
       "Only full exploration is supported for dedicated PN mode. Use XSTS-based analysis for other properties."
     }
 
     val totalTimer = Stopwatch.createStarted()
     val petriNet = inputOptions.loadPetriNet()[0]
     val effectiveOrdering = loadOrdering(petriNet)
+    dumpOrdering(effectiveOrdering)
     val system = PtNetSystem(petriNet, effectiveOrdering)
     createDepGxl(system)
     createDepGxlGSat(system)
@@ -110,6 +120,8 @@ class XstsCliPetrinetMdd :
           provider.hitCount,
           provider.queryCount,
           provider.cacheSize,
+          ssgTimer.elapsedMillis(),
+          totalTimer.elapsedMillis(),
         )
       logger.writeln(Logger.Level.MAINSTEP, statistics.toString())
       logger.writeln(Logger.Level.RESULT, "(SafetyResult Safe)")
@@ -121,8 +133,8 @@ class XstsCliPetrinetMdd :
           system.name,
           MddInterpreter.calculateNonzeroCount(stateSpace),
           numberOfNodes(stateSpace),
-          totalTimer.elapsed(TimeUnit.MICROSECONDS),
-          ssgTimer.elapsed(TimeUnit.MICROSECONDS),
+          totalTimer.elapsedNanos(),
+          ssgTimer.elapsedNanos(),
           variableOrder.mddGraph.uniqueTableSize,
           unionProvider.cacheSize,
           unionProvider.queryCount,
@@ -176,15 +188,6 @@ class XstsCliPetrinetMdd :
     val file = dependencyOutput.depGxl ?: return
     file.createNewFile()
     with(PrintStream(file)) { print(PtNetDependency2Gxl.toGxl(system, false)) }
-  }
-
-  override fun run() {
-    try {
-      if (inputOptions.isPnml()) petrinetAnalysis()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
   }
 
   private fun numberOfNodes(root: MddHandle): Int {

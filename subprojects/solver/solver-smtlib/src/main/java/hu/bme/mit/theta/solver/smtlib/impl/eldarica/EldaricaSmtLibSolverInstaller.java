@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,10 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
         super(logger);
 
         versions = new ArrayList<>();
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("2.2"))
+                        .addString(LINUX, X64, "zip")
+                        .build());
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("2.1"))
                         .addString(LINUX, X64, "zip")
@@ -116,12 +120,13 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
         final var yicesPath = installDir.resolve("yices").resolve("bin");
-        return EldaricaSmtLibSolverFactory.create(solverFilePath, solverArgs, yicesPath);
+        return EldaricaSmtLibSolverFactory.create(
+                solverFilePath, solverArgs, yicesPath, version.equals("2.1"));
     }
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("2.1");
+        return Arrays.asList("2.1", "2.2");
     }
 
     private String getSolverBinaryName() {

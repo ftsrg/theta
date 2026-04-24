@@ -17,9 +17,9 @@ package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
+public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDeclaration>> {
     private final DeclarationVisitor declarationVisitor;
 
     public GlobalDeclUsageVisitor(DeclarationVisitor declarationVisitor) {
@@ -97,18 +97,24 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
         return null;
     }
 
-    public List<CParser.ExternalDeclarationContext> getGlobalUsages(
-            CParser.CompilationUnitContext ctx) {
-        globalUsages.clear();
-        usedContexts.clear();
+    @Override
+    public List<CDeclaration> visitTranslationUnit(CParser.TranslationUnitContext ctx) {
         for (CParser.ExternalDeclarationContext externalDeclarationContext :
-                ctx.translationUnit().externalDeclaration()) {
+                ctx.externalDeclaration()) {
             try {
                 externalDeclarationContext.accept(this);
             } catch (Throwable e) {
                 // we don't do anything, we'll throw an error later if something's missing
             }
         }
+        return null;
+    }
+
+    public List<CParser.ExternalDeclarationContext> getGlobalUsages(
+            CParser.CompilationUnitContext ctx) {
+        globalUsages.clear();
+        usedContexts.clear();
+        ctx.translationUnit().accept(this);
         checkState(globalUsages.containsKey("main"), "Main function not found!");
         Set<String> ret = new LinkedHashSet<>();
         Set<String> remaining = new LinkedHashSet<>();

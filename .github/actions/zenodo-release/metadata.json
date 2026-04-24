@@ -31,7 +31,7 @@
             },
             {
                 "name": "Somorjai, M\u00e1rk",
-                "affiliation": "Budapest University of Technology and Economics",
+                "affiliation": "LMU Munich",
                 "orcid": "0000-0001-7537-0469"
             },
             {
@@ -43,6 +43,16 @@
                 "name": "Telbisz, Csan\u00e1d",
                 "affiliation": "Budapest University of Technology and Economics",
                 "orcid": "0000-0002-6260-5908"
+            },
+            {
+                "name": "Kov\u00e1cs, D\u00e1niel",
+                "affiliation": "Budapest University of Technology and Economics",
+                "orcid": "0009-0009-7687-5958"
+            },
+            {
+                "name": "Rippl, Bal\u00e1zs R\u00f3bert",
+                "affiliation": "Budapest University of Technology and Economics",
+                "orcid": "0009-0006-6669-2304"
             }
         ],
         "custom": {
@@ -62,7 +72,7 @@
                 }
             ]
         },
-        "license": "cc-by-4.0",
+        "license": "apache2.0",
         "imprint_publisher": "Zenodo",
         "upload_type": "software"
     }

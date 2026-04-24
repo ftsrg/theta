@@ -82,4 +82,32 @@ public final class Tuple7<T1, T2, T3, T4, T5, T6, T7> extends Tuple {
         final T7 result = (T7) elem(6);
         return result;
     }
+
+    public T1 component1() {
+        return get1();
+    }
+
+    public T2 component2() {
+        return get2();
+    }
+
+    public T3 component3() {
+        return get3();
+    }
+
+    public T4 component4() {
+        return get4();
+    }
+
+    public T5 component5() {
+        return get5();
+    }
+
+    public T6 component6() {
+        return get6();
+    }
+
+    public T7 component7() {
+        return get7();
+    }
 }

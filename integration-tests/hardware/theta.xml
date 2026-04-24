@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+
+<!-- config -->
+
+  <rundefinition name="Theta-hardware-Integration-Test">
+    <tasks name="default">
+      <propertyfile>properties/default.prp</propertyfile>
+      <include>HWMCC24/split-ILA_AES_START_ENCRYPT_problemb0.aag.yml</include>
+      <include>HWMCC24/split-Problem02_label10b0.aag.yml</include>
+      <include>HWMCC24/split-a10-p23b0.aag.yml</include>
+      <include>HWMCC24/split-a10-p35b0.aag.yml</include>
+      <include>HWMCC24/split-a10-p41b0.aag.yml</include>
+      <include>HWMCC24/split-a10-p53b0.aag.yml</include>
+      <include>HWMCC24/split-a16-p085b0.aag.yml</include>
+      <include>HWMCC24/split-a16-p113b0.aag.yml</include>
+      <include>HWMCC24/split-a16-p152b0.aag.yml</include>
+      <include>HWMCC24/split-a19-p15b0.aag.yml</include>
+      <include>HWMCC24/split-cancel_var_through_overflowb0.aag.yml</include>
+      <include>HWMCC24/split-diffeqb0.aag.yml</include>
+      <include>HWMCC24/split-fib_30b0.aag.yml</include>
+      <include>HWMCC24/split-fib_37b0.aag.yml</include>
+      <include>HWMCC24/split-float8b0.aag.yml</include>
+      <include>HWMCC24/split-float_req_bl_1071b0.aag.yml</include>
+      <include>HWMCC24/split-float_req_bl_1092ab0.aag.yml</include>
+      <include>HWMCC24/split-gcdb0.aag.yml</include>
+      <include>HWMCC24/split-kalman_bit_width_smallb0.aag.yml</include>
+      <include>HWMCC24/split-mod3.c.v+sep-reducerb0.aag.yml</include>
+      <include>HWMCC24/split-phases_2-1b0.aag.yml</include>
+      <include>HWMCC24/split-processed_hl_arr_access_128_bvb0.aag.yml</include>
+      <include>HWMCC24/split-s3_srvr_1b.cilb0.aag.yml</include>
+      <include>HWMCC24/split-simple_vardep_1b0.aag.yml</include>
+      <include>HWMCC24/split-trex02-1b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p167b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p220b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p250b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p334b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p413b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p468b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p512b0.aag.yml</include>
+      <include>HWMCC24/split-yosyshq_appnote_123_cv32e40x-p683b0.aag.yml</include>
+      <include>HWMCC24/split-analog_estimation_convergenceb0.aag.yml</include>
+      <include>HWMCC24/split-cal178b0.aag.yml</include>
+      <include>HWMCC24/split-dspfilters_fastfir_second-p24b0.aag.yml</include>
+      <include>HWMCC24/split-h_Arbiterb0.aag.yml</include>
+      <include>HWMCC24/split-marlann_compute_cp_fail2-p1b0.aag.yml</include>
+      <include>HWMCC24/split-qspiflash_dualflexpress_divfive-p020b0.aag.yml</include>
+      <include>HWMCC24/split-qspiflash_dualflexpress_divthree-p132b0.aag.yml</include>
+      <include>HWMCC24/split-qspiflash_qflexpress_divfive-p025b0.aag.yml</include>
+      <include>HWMCC24/split-sw_ball2004_2b0.aag.yml</include>
+      <include>HWMCC24/split-vgasim_imgfifo-p020b0.aag.yml</include>
+      <include>HWMCC24/split-vgasim_imgfifo-p040b0.aag.yml</include>
+      <include>HWMCC24/split-vgasim_imgfifo-p061b0.aag.yml</include>
+      <include>HWMCC24/split-vis_arrays_bpbs_p2b0.aag.yml</include>
+      <include>HWMCC24/split-vis_arrays_vsa16a_p6b0.aag.yml</include>
+      <include>HWMCC24/split-zipcpu-busdelay-p09b0.aag.yml</include>
+      <include>HWMCC24/split-zipcpu-zipmmu-p12b0.aag.yml</include>
+      <include>HWMCC24/split-zipcpu-zipmmu-p27b0.aag.yml</include>
+      <include>HWMCC24/split-zipcpu-zipmmu-p49b0.aag.yml</include>
+      <include>HWMCC24/split-zipversa_composecrc_prf-p12b0.aag.yml</include>
+      <include>HWMCC24/split-rast-p10b0.aag.yml</include>
+      <include>HWMCC24/split-stack-p2b0.aag.yml</include>
+    </tasks>
+  </rundefinition>
+
+</benchmark>

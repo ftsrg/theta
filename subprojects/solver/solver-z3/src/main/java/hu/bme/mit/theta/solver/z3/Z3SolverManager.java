@@ -24,7 +24,8 @@ import java.util.Set;
 
 public final class Z3SolverManager extends SolverManager {
 
-    private static final String NAME = "Z3:4.13";
+    private static final String NAME = "Z3:new";
+    private static final String NAME_DEPRECATED = "Z3:4.13";
 
     private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
@@ -37,12 +38,12 @@ public final class Z3SolverManager extends SolverManager {
 
     @Override
     public boolean managesSolver(final String name) {
-        return NAME.equals(name);
+        return NAME.equals(name) || NAME_DEPRECATED.equals(name);
     }
 
     @Override
     public SolverFactory getSolverFactory(final String name) {
-        checkArgument(NAME.equals(name));
+        checkArgument(managesSolver(name));
         return new ManagedFactory(Z3SolverFactory.getInstance());
     }
 

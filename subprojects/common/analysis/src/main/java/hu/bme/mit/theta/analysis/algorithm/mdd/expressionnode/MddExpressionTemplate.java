@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +15,30 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.model.BasicExprSubstitution;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.ExprSubstitution;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.function.Function;
@@ -40,33 +49,44 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final Function<Object, Decl> extractDecl;
     private final SolverPool solverPool;
     private final boolean transExpr;
+    private final boolean knownSat;
 
-    private static Solver lazySolver;
+    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
+            new UnaryOperationCache();
 
-    private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
-        if (lazySolver == null) lazySolver = solverPool.requestSolver();
-        boolean res;
-        try (var wpp = new WithPushPop(lazySolver)) {
-            lazySolver.add(expr);
-            res = lazySolver.check().isSat();
+    private static Valuation checkSat(Expr<BoolType> expr, SolverPool solverPool) {
+        Boolean cached = satCache.getOrNull(expr);
+        if (cached != null) {
+            return cached ? ImmutableValuation.empty() : null;
         }
-        return res;
+        final var solver = solverPool.requestSolver();
+        final Valuation model;
+        try (var wpp = new WithPushPop(solver)) {
+            solver.add(expr);
+            model = solver.check().isSat() ? solver.getModel() : null;
+        } finally {
+            solverPool.returnSolver(solver);
+        }
+        satCache.addToCache(expr, model != null);
+        return model;
     }
 
     private MddExpressionTemplate(
             Expr<BoolType> expr,
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
-            boolean transExpr) {
+            boolean transExpr,
+            boolean knownSat) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
         this.transExpr = transExpr;
+        this.knownSat = knownSat;
     }
 
     public static MddExpressionTemplate of(
             Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false);
     }
 
     public static MddExpressionTemplate of(
@@ -74,7 +94,15 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false);
+    }
+
+    public static MddExpressionTemplate ofKnownSat(
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true);
     }
 
     @Override
@@ -84,21 +112,15 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
 
-        //        // TODO: we might not need this
-        //        // Check if terminal 1
-        //        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
-        //            if (canonizedExpr instanceof FalseExpr) {
-        //                return mddVariable.getMddGraph().getTerminalZeroNode();
-        //            } /*else {
-        //                final MddGraph<Expr> mddGraph = (MddGraph<Expr>)
-        // mddVariable.getMddGraph();
-        //                return mddGraph.getNodeFor(canonizedExpr);
-        //            }*/
-        //        }
-
         // Check if terminal 0
-        if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
+        final Valuation satModel;
+        if (knownSat) {
+            satModel = null;
+        } else if (canonizedExpr instanceof FalseExpr) {
             return null;
+        } else {
+            satModel = checkSat(canonizedExpr, solverPool);
+            if (satModel == null) return null;
         }
 
         // Check if default
@@ -111,7 +133,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                 .getLower()
                                 .get()
                                 .checkInNode(
-                                        new MddExpressionTemplate(
+                                        MddExpressionTemplate.ofKnownSat(
                                                 canonizedExpr,
                                                 o -> (Decl) o,
                                                 solverPool,
@@ -127,15 +149,46 @@ public class MddExpressionTemplate implements MddNode.Template {
         if (transExpr
                 && decl instanceof IndexedConstDecl<?> constDecl
                 && constDecl.getIndex() == 0) {
-            final Substitution sub =
+
+            // Distinction between under- and overapproximation is needed because of formulas like
+            // x' = x or x' = 4, where simplify can overapproximate
+
+            // First underapproximate by replacing x' = x with false (and also x = x')
+            final var nextDecl = extractDecl.apply(mddVariable.getLower().get().getTraceInfo());
+            final ExprSubstitution underApproxSub =
+                    new BasicExprSubstitution.Builder()
+                            .put(Eq(nextDecl.getRef(), decl.getRef()), False())
+                            .put(Eq(decl.getRef(), nextDecl.getRef()), False())
+                            .build();
+            final Expr<BoolType> underapproxExpr = underApproxSub.apply(expr);
+
+            // Then overapproximate by replacing x' with x everywhere
+            final Substitution overApproxSub =
                     BasicSubstitution.builder()
                             .put(
                                     extractDecl.apply(mddVariable.getLower().get().getTraceInfo()),
                                     decl.getRef())
                             .build();
-            final Expr<BoolType> identityContinuationExpr =
-                    ExprUtils.simplify(sub.apply(canonizedExpr));
-            if (!ExprUtils.getConstants(identityContinuationExpr).contains(decl)) {
+            final Expr<BoolType> overApproxExpr =
+                    ExprUtils.simplify(overApproxSub.apply(canonizedExpr));
+
+            boolean identityNeeded = false;
+
+            if (!ExprUtils.getConstants(overApproxExpr).contains(decl)) {
+                // If over and under mismatch then use solver to decide
+                final var underConstants = ExprUtils.getConstants(underapproxExpr);
+                if (underConstants.contains(decl) || underConstants.contains(nextDecl)) {
+                    // Check if expr and not(x' = x) is sat
+                    final var andExpr = And(expr, Neq(decl.getRef(), nextDecl.getRef()));
+                    if (checkSat(andExpr, solverPool) == null) {
+                        identityNeeded = true;
+                    }
+                } else {
+                    identityNeeded = true;
+                }
+            }
+
+            if (identityNeeded) {
                 final MddNode cont;
                 if (mddVariable.getLower().isPresent()
                         && mddVariable.getLower().get().getLower().isPresent()) {
@@ -146,20 +199,78 @@ public class MddExpressionTemplate implements MddNode.Template {
                                     .getLower()
                                     .get()
                                     .checkInNode(
-                                            new MddExpressionTemplate(
-                                                    identityContinuationExpr,
+                                            MddExpressionTemplate.ofKnownSat(
+                                                    overApproxExpr,
                                                     extractDecl,
                                                     solverPool,
                                                     transExpr));
                 } else {
                     final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                    cont = mddGraph.getNodeFor(identityContinuationExpr);
+                    cont = mddGraph.getNodeFor(overApproxExpr);
                 }
                 return new IdentityRepresentation(cont);
             }
         }
 
+        final LitExpr<?> determinedValue = findDeterminedValue(canonizedExpr, decl);
+        if (determinedValue != null) {
+            final int key = LitExprConverter.toInt(determinedValue);
+            final Expr<BoolType> substitutedExpr =
+                    ExprUtils.simplify(
+                            canonizedExpr,
+                            ImmutableValuation.builder().put(decl, determinedValue).build());
+
+            final MddNode childNode;
+            if (mddVariable.getLower().isPresent()) {
+                childNode =
+                        mddVariable
+                                .getLower()
+                                .get()
+                                .checkInNode(
+                                        MddExpressionTemplate.ofKnownSat(
+                                                substitutedExpr,
+                                                o -> (Decl) o,
+                                                solverPool,
+                                                transExpr));
+            } else {
+                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+                childNode = mddGraph.getNodeFor(substitutedExpr);
+            }
+
+            return MddExpressionRepresentation.ofDetermined(
+                    canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
+        }
+
         return MddExpressionRepresentation.of(
-                canonizedExpr, decl, mddVariable, solverPool, transExpr);
+                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+    }
+
+    private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
+        if (expr instanceof EqExpr<?> eq) {
+            return extractLiteralForDecl(eq, decl);
+        }
+        if (expr instanceof AndExpr and) {
+            for (var op : and.getOps()) {
+                if (op instanceof EqExpr<?> eq) {
+                    final LitExpr<?> lit = extractLiteralForDecl(eq, decl);
+                    if (lit != null) return lit;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static LitExpr<?> extractLiteralForDecl(EqExpr<?> eq, Decl<?> decl) {
+        if (eq.getLeftOp() instanceof RefExpr<?> ref
+                && ref.getDecl().equals(decl)
+                && eq.getRightOp() instanceof LitExpr<?> lit) {
+            return lit;
+        }
+        if (eq.getRightOp() instanceof RefExpr<?> ref
+                && ref.getDecl().equals(decl)
+                && eq.getLeftOp() instanceof LitExpr<?> lit) {
+            return lit;
+        }
+        return null;
     }
 }

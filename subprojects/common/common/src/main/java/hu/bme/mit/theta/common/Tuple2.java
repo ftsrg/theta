@@ -42,6 +42,14 @@ public final class Tuple2<T1, T2> extends Tuple {
         return result;
     }
 
+    public T1 component1() {
+        return get1();
+    }
+
+    public T2 component2() {
+        return get2();
+    }
+
     public <R> R unpackTo(final BiFunction<? super T1, ? super T2, R> function) {
         checkNotNull(function);
         return function.apply(get1(), get2());

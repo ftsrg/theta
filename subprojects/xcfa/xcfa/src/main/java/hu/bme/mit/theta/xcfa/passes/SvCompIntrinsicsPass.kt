@@ -33,14 +33,14 @@ class SvCompIntrinsicsPass : ProcedurePass {
       for (outgoingEdge in ArrayList(builder.initLoc.outgoingEdges)) {
         builder.removeEdge(outgoingEdge)
         val labels: MutableList<XcfaLabel> = ArrayList()
-        labels.add(FenceLabel(setOf("ATOMIC_BEGIN"), metadata = outgoingEdge.metadata))
+        labels.add(AtomicBeginLabel(outgoingEdge.metadata))
         labels.addAll((outgoingEdge.label as SequenceLabel).labels)
         builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels)))
       }
       for (incomingEdge in ArrayList(builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {
         builder.removeEdge(incomingEdge)
         val labels = ArrayList((incomingEdge.label as SequenceLabel).labels)
-        labels.add(FenceLabel(setOf("ATOMIC_END"), metadata = incomingEdge.metadata))
+        labels.add(AtomicEndLabel(incomingEdge.metadata))
         builder.addEdge(incomingEdge.withLabel(SequenceLabel(labels)))
       }
     }
@@ -57,12 +57,8 @@ class SvCompIntrinsicsPass : ProcedurePass {
             val invokeLabel = it.label.labels[0] as InvokeLabel
             val fence =
               when (invokeLabel.name) {
-                "__VERIFIER_atomic_begin" ->
-                  FenceLabel(setOf("ATOMIC_BEGIN"), metadata = invokeLabel.metadata)
-
-                "__VERIFIER_atomic_end" ->
-                  FenceLabel(setOf("ATOMIC_END"), metadata = invokeLabel.metadata)
-
+                "__VERIFIER_atomic_begin" -> AtomicBeginLabel(invokeLabel.metadata)
+                "__VERIFIER_atomic_end" -> AtomicEndLabel(invokeLabel.metadata)
                 else -> invokeLabel
               }
             labels.add(fence)

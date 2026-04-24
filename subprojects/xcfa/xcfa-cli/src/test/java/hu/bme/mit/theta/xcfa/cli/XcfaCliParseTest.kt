@@ -253,7 +253,8 @@ class XcfaCliParseTest {
     val temp = createTempDirectory()
     main(
       arrayOf(
-        "--enable-output",
+        "--output",
+        "ALL",
         "--input-type",
         "C",
         "--input",
@@ -288,7 +289,8 @@ class XcfaCliParseTest {
     val temp = createTempDirectory()
     main(
       arrayOf(
-        "--enable-output",
+        "--output",
+        "ALL",
         "--input-type",
         "C",
         "--input",

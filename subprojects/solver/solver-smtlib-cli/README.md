@@ -20,7 +20,7 @@ the [`solver-smtlib`](../solver-smtlib/README.md) project.
     * You can also [build](../../../doc/Build.md) the tool yourself. The runnable jar file will
       appear under _build/libs/_ with the name _theta-solver-smtlib-cli-\<VERSION\>-all.jar_, you
       can simply rename it to _theta-solver-smtlib-cli.jar_..
-2. Running the tool requires Java (JRE) 17.
+2. Running the tool requires Java (JRE) 21.
 3. The tool can be executed
    with `java -jar theta-solver-smtlib-cli.jar [MAIN ARGUMENTS] [COMMAND] [ARGUMENTS]`.
     * If no arguments are given, a help screen is displayed about the arguments and their possible

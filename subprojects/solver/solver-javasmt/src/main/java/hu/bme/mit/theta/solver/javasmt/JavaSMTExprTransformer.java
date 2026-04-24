@@ -50,41 +50,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
@@ -154,28 +120,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.sosy_lab.java_smt.api.ArrayFormula;
-import org.sosy_lab.java_smt.api.ArrayFormulaManager;
-import org.sosy_lab.java_smt.api.BitvectorFormula;
-import org.sosy_lab.java_smt.api.BitvectorFormulaManager;
-import org.sosy_lab.java_smt.api.BooleanFormula;
-import org.sosy_lab.java_smt.api.BooleanFormulaManager;
-import org.sosy_lab.java_smt.api.EnumerationFormula;
-import org.sosy_lab.java_smt.api.EnumerationFormulaManager;
-import org.sosy_lab.java_smt.api.FloatingPointFormula;
-import org.sosy_lab.java_smt.api.FloatingPointFormulaManager;
-import org.sosy_lab.java_smt.api.FloatingPointRoundingMode;
-import org.sosy_lab.java_smt.api.Formula;
-import org.sosy_lab.java_smt.api.FormulaType;
+import org.sosy_lab.java_smt.api.*;
 import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
-import org.sosy_lab.java_smt.api.FunctionDeclaration;
-import org.sosy_lab.java_smt.api.IntegerFormulaManager;
-import org.sosy_lab.java_smt.api.NumeralFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
-import org.sosy_lab.java_smt.api.QuantifiedFormulaManager;
-import org.sosy_lab.java_smt.api.RationalFormulaManager;
-import org.sosy_lab.java_smt.api.SolverContext;
 
 final class JavaSMTExprTransformer {
 
@@ -292,6 +240,7 @@ final class JavaSMTExprTransformer {
                         .addCase(BvAddExpr.class, this::transformBvAdd)
                         .addCase(BvSubExpr.class, this::transformBvSub)
                         .addCase(BvPosExpr.class, this::transformBvPos)
+                        .addCase(BvToIntExpr.class, this::transformBvToInt)
                         .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
                         .addCase(BvNegExpr.class, this::transformBvNeg)
                         .addCase(BvMulExpr.class, this::transformBvMul)
@@ -759,6 +708,11 @@ final class JavaSMTExprTransformer {
         return toTerm(expr.getOp());
     }
 
+    private Formula transformBvToInt(final BvToIntExpr expr) {
+        return bitvectorFormulaManager.toIntegerFormula(
+                (BitvectorFormula) toTerm(expr.getOp()), expr.isSigned());
+    }
+
     private Formula transformBvSignChange(final BvSignChangeExpr expr) {
         return (BitvectorFormula) toTerm(expr.getOp());
     }
@@ -795,21 +749,21 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.smod(leftOpTerm, rightOpTerm);
+        return bitvectorFormulaManager.smodulo(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformBvURem(final BvURemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, false);
+        return bitvectorFormulaManager.remainder(leftOpTerm, rightOpTerm, false);
     }
 
     private Formula transformBvSRem(final BvSRemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, true);
+        return bitvectorFormulaManager.remainder(leftOpTerm, rightOpTerm, true);
     }
 
     private Formula transformBvAnd(final BvAndExpr expr) {
@@ -944,7 +898,7 @@ final class JavaSMTExprTransformer {
         return floatingPointFormulaManager.makeNumber(
                 BvUtils.neutralBvLitExprToBigInteger(expr.getExponent()),
                 BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand()),
-                expr.getHidden(),
+                FloatingPointNumber.Sign.of(expr.getHidden()),
                 FloatingPointType.getFloatingPointType(
                         expr.getType().getExponent(), expr.getType().getSignificand() - 1));
     }
@@ -1175,7 +1129,7 @@ final class JavaSMTExprTransformer {
                 (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
         final FormulaType<TI> indexType =
                 (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
+        var arr = arrayFormulaManager.makeArray(indexType, elemType, elseElem);
         for (Tuple2<? extends LitExpr<?>, ? extends LitExpr<?>> element : expr.getElements()) {
             final TI index = (TI) toTerm(element.get1());
             final TE elem = (TE) toTerm(element.get2());
@@ -1195,7 +1149,7 @@ final class JavaSMTExprTransformer {
                 (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
         final FormulaType<TI> indexType =
                 (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
+        var arr = arrayFormulaManager.makeArray(indexType, elemType, elseElem);
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
             final TI index = (TI) toTerm(element.get1());
             final TE elem = (TE) toTerm(element.get2());

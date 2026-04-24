@@ -38,7 +38,7 @@ internal class XcfaOcCorrectnessValidator(
 
   init {
     if (!permissive) {
-      nonOcSolver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
+      nonOcSolver = SolverManager.resolveSolverFactory("Z3:new").createSolver()
     }
   }
 

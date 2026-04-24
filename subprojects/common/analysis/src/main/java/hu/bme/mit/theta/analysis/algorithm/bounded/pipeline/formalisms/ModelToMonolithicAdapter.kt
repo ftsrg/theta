@@ -26,7 +26,9 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 
 interface ModelToMonolithicAdapter<M, S : State, A : Action, Pr : Proof> {
 
-  fun modelToMonolithicExpr(model: M): MonolithicExpr
+  val model: M
+
+  val monolithicExpr: MonolithicExpr
 
   fun traceToModelTrace(trace: Trace<ExplState, ExprAction>): Trace<S, A>
 

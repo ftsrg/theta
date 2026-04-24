@@ -58,7 +58,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -70,7 +71,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.ArrayList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EvaluationTest {
 
@@ -432,8 +433,8 @@ public class EvaluationTest {
         assertEquals(Int(0), evaluate(Div(a, b), val));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testException() {
-        evaluate(Add(a, Int(1)));
+        assertThrows(RuntimeException.class, () -> evaluate(Add(a, Int(1))));
     }
 }

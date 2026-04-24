@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -31,27 +31,16 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class ExprOrdLeqTest {
 
     private static final Expr<IntType> X = Var("x", Int()).getRef();
-
-    @Parameter(value = 0)
     public ExprState state1;
-
-    @Parameter(value = 1)
     public ExprState state2;
-
-    @Parameter(value = 2)
     public boolean leq;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -63,10 +52,18 @@ public final class ExprOrdLeqTest {
                 });
     }
 
-    @Test
-    public void testIsTop() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void testIsTop(ExprState state1, ExprState state2, boolean leq) {
+        initExprOrdLeqTest(state1, state2, leq);
         final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
         final PartialOrd<ExprState> ord = ExprOrd.create(solver);
         assertEquals(ord.isLeq(state1, state2), leq);
+    }
+
+    public void initExprOrdLeqTest(ExprState state1, ExprState state2, boolean leq) {
+        this.state1 = state1;
+        this.state2 = state2;
+        this.leq = leq;
     }
 }

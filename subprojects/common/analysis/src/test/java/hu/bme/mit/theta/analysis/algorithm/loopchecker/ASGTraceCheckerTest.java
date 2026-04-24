@@ -43,9 +43,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.function.Predicate;
-import kotlin.Unit;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ASGTraceCheckerTest {
     @Test
@@ -70,7 +69,7 @@ public class ASGTraceCheckerTest {
         final Predicate<XstsState<PredState>> statePredicate =
                 new XstsStatePredicate<>(new ExprStatePredicate(xsts.getProp(), abstractionSolver));
         final AcceptancePredicate<XstsState<PredState>, XstsAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<>(statePredicate::test);
         final PredPrec precision = PredPrec.of();
         final Logger logger = new ConsoleLogger(Logger.Level.DETAIL);
         final ASGAbstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor =
@@ -90,7 +89,7 @@ public class ASGTraceCheckerTest {
                             ExprTraceStatus<ItpRefutation> status =
                                     strat.check(
                                             trace, solverFactory, xsts.getInitFormula(), logger);
-                            Assert.assertTrue(status.isInfeasible());
+                            Assertions.assertTrue(status.isInfeasible());
                         });
     }
 }

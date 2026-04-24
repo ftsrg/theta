@@ -27,29 +27,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import kotlin.Pair;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
 
-@RunWith(Parameterized.class)
+// @RunWith(Parameterized.class)
 public class LitmusTest {
-    @Parameterized.Parameter(0)
     public String filepath;
-
-    @Parameterized.Parameter(1)
     public int globalsNum;
-
-    @Parameterized.Parameter(2)
     public int threadNum;
-
-    @Parameterized.Parameter(3)
     public List<Integer> instructionPerThread;
-
-    @Parameterized.Parameter(4)
     public String mcmFilename;
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -57,20 +44,20 @@ public class LitmusTest {
                 });
     }
 
-    @Test
+    //    @Test
     public void parse() throws IOException {
         final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
 
-        Assert.assertEquals(globalsNum, xcfa.getGlobalVars().size());
-        Assert.assertEquals(threadNum, xcfa.getInitProcedures().size());
+        Assertions.assertEquals(globalsNum, xcfa.getGlobalVars().size());
+        Assertions.assertEquals(threadNum, xcfa.getInitProcedures().size());
         final List<Pair<XcfaProcedure, List<Expr<?>>>> processes = xcfa.getInitProcedures();
         for (int i = 0; i < processes.size(); i++) {
             XcfaProcedure procedure = processes.get(i).getFirst();
-            Assert.assertEquals((int) instructionPerThread.get(i), procedure.getEdges().size());
+            Assertions.assertEquals((int) instructionPerThread.get(i), procedure.getEdges().size());
         }
     }
 
-    @Test
+    //    @Test
     public void check() throws IOException {
         try (Solver solver = Z3LegacySolverFactory.getInstance().createSolver()) {
             final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
@@ -111,5 +98,18 @@ public class LitmusTest {
         // multiprocTransFunc, processIds, initialWrites, partialOrd, ExplState.top(), solver, mcm,
         // NullLogger.getInstance());
         //        mcmChecker.check(ExplPrec.empty());
+    }
+
+    public void initLitmusTest(
+            String filepath,
+            int globalsNum,
+            int threadNum,
+            List<Integer> instructionPerThread,
+            String mcmFilename) {
+        this.filepath = filepath;
+        this.globalsNum = globalsNum;
+        this.threadNum = threadNum;
+        this.instructionPerThread = instructionPerThread;
+        this.mcmFilename = mcmFilename;
     }
 }

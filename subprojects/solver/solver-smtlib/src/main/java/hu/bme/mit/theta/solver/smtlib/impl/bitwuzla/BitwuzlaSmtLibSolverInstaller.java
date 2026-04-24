@@ -25,6 +25,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 
+@Deprecated
 public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     public BitwuzlaSmtLibSolverInstaller(final Logger logger) {

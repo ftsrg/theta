@@ -1,0 +1,83 @@
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "488b5a06-b609-4508-aa3d-fdf8bc61c3b6"
+    creation_time: "2025-05-22T10:00:35Z"
+    producer:
+      name: "Theta"
+      version: "no version found"
+    task:
+      input_files:
+      - "Pendulum-2.c"
+      input_file_hashes:
+        "Pendulum-2.c": "6c357dd59fa50e4750def03bb2c3621245d338a5e36e5cbbd91eb5e4c83bc50e"
+      specification: "TERMINATION"
+      data_model: "LP64"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(a == 1)&&(p == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum-2.c"
+          line: 7
+          column: 5
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(a == 1)&&(p == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum-2.c"
+          line: 9
+          column: 13
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(a == 1)&&(p == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum-2.c"
+          line: 10
+          column: 17
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(a == 1)&&(p == 31)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum-2.c"
+          line: 8
+          column: 24
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(a == 1)&&(p == 31)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum-2.c"
+          line: 9
+          column: 13
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(a == 1)&&(p == 31)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum-2.c"
+          line: 12
+          column: 17
+        action: "cycle"

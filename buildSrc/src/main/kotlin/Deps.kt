@@ -14,6 +14,19 @@
  *  limitations under the License.
  */
 
+import java.util.Locale
+
+private fun getOs(): String {
+    val os: String = System.getProperty("os.name")
+
+    return when {
+        os.lowercase(Locale.getDefault()).startsWith("linux") -> "linux"
+        os.lowercase(Locale.getDefault()).startsWith("windows") -> "windows"
+        os.lowercase(Locale.getDefault()).contains("mac") || os.lowercase(Locale.getDefault()).contains("darwin") -> "macos"
+        else -> error("Operating system \"$os\" not supported.")
+    }
+}
+
 object Deps {
 
     val guava = "com.google.guava:guava:${Versions.guava}"
@@ -25,16 +38,29 @@ object Deps {
         val runtime = "org.antlr:antlr4-runtime:${Versions.antlr}"
     }
 
-    val z3 = "lib/com.microsoft.z3.jar"
+    val mpfr_java = when(getOs()) {
+        "windows" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.0-windows64.jar") // version mismatch, best-effort
+        "linux" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.4-linux64.jar")
+        "macos" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.4-osx64.jar")
+        else -> error("Operating system not supported")
+    }
+
+    val z3 = "org.sosy-lab:javasmt-solver-z3:4.14.0"
     val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
-    val cvc5 = "lib/cvc5.jar"
+    val javasmt = "org.sosy-lab:java-smt:5.0.1-523-g9001c0ea4" // hardcoded because deps also hardcoded
+    val javasmtDeps = mapOf(
+        "org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1" to setOf("libmathsat5j.so", "mathsat5j.dll", "mathsat.dll", "mpir.dll"),
+        "org.sosy-lab:javasmt-solver-z3:4.14.0" to setOf("libz3.dll", "libz3.dylib", "libz3.so", "libz3java.dll", "libz3java.dylib", "libz3java.so"),
+        "org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c" to setOf("libopensmtj.so"),
+        "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4" to setOf("libcvc4.so", "libcvc4jni.so", "libcvc4parser.so"),
+        "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc" to setOf("libcvc5jni.dll", "libcvc5jni.so"),
+        "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae" to setOf("libbitwuzlaj.dll", "libbitwuzlaj.so"),
+        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08" to setOf() // no deps
+    )
+    val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
-    val javasmt = "org.sosy-lab:java-smt:${Versions.javasmt}"
-    val javasmtLocal = "lib/javasmt.jar"
-    val sosylabCommon = "org.sosy-lab:common:${Versions.sosylab}"
-
-    val jcommander = "com.beust:jcommander:${Versions.jcommander}"
+    val jcommander = "org.jcommander:jcommander:${Versions.jcommander}"
 
     val pnmlCore = "fr.lip6.pnml:fr.lip6.pnml.framework.coremodel:${Versions.pnmlFramework}"
     val pnmlPtnet = "fr.lip6.pnml:fr.lip6.pnml.framework.ptnet:${Versions.pnmlFramework}"
@@ -52,15 +78,12 @@ object Deps {
 
     val axiomApi = "org.apache.ws.commons.axiom:axiom-api:${Versions.axiom}"
     val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
-    val jing = "com.thaiopensource:jing:${Versions.jing}"
+    val jing = "org.relaxng:jing:${Versions.jing}"
 
-    val delta = "lib/hu.bme.mit.delta"
-    val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
+    val delta = "lib/hu.bme.mit.delta-0.0.1-all.jar"
 
-    val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
+    val hoaf = "lib/jhoafparser-1.1.1.jar"
 
-    val junit4 = "junit:junit:${Versions.junit4}"
-    val junit4engine = "org.junit.vintage:junit-vintage-engine"
     val junit5 = "org.junit.jupiter:junit-jupiter-api:${Versions.junit}"
     val junit5param = "org.junit.jupiter:junit-jupiter-params:${Versions.junit}"
     val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
@@ -83,4 +106,7 @@ object Deps {
     val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
+
+    val hawtjni = "org.fusesource.hawtjni:hawtjni-runtime:${Versions.hawtjni}"
+    val fastutil = "it.unimi.dsi:fastutil:${Versions.fastutil}"
 }

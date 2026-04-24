@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import hu.bme.mit.theta.common.QuadFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -112,8 +112,8 @@ final class JavaSMTTermTransformer {
         this.symbolTable = symbolTable;
         this.context = context;
 
-        environment = Containers.createMap();
-        otherFuncs = Containers.createMap();
+        environment = CollectionUtil.createMap();
+        otherFuncs = CollectionUtil.createMap();
         addEnvFunc(
                 FunctionDeclarationKind.AND,
                 exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.AndExpr::create));
@@ -276,6 +276,10 @@ final class JavaSMTTermTransformer {
         addEnvFunc(
                 FunctionDeclarationKind.BV_NEG,
                 exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNegExpr::create));
+        addOtherFunc(
+                "bv2int",
+                exprUnaryOperator(
+                        t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, false)));
         addEnvFunc(
                 FunctionDeclarationKind.BV_MUL,
                 exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));

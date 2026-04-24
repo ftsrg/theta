@@ -87,7 +87,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                         param.first.type,
                       ),
                     )
-                  inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
+                  inStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
                 }
 
                 if (param.second != ParamDirection.IN) {
@@ -100,7 +100,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                         param.first.type,
                       ),
                     )
-                  outStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
+                  outStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
                 }
               }
 
