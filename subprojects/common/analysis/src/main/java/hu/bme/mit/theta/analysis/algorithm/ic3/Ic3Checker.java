@@ -239,9 +239,10 @@ public class Ic3Checker
                 if (optimizations.isUnSatOpt()) {
                     blockedExpression = removeRedundantExpressionsUsingUnsatCore(blockedExpression, unSatCore);
                 }
+                /*
                 if(optimizations.isMICOpt()) {
                     blockedExpression = generateMinimalInductiveClause(blockedExpression);
-                }
+                }*/
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
                     frames.get(i).refine(Not(And(blockedExpression)));
                 }
@@ -250,13 +251,13 @@ public class Ic3Checker
         }
         return null;
     }
-
+/*
     private Set<Expr<BoolType>> generateMinimalInductiveClause(Set<Expr<BoolType>> blockedExpression) {
         for (Expr<BoolType> expr : blockedExpression) {
 
         }
         return blockedExpression;
-    }
+    }*/
 
     public Trace<ExplState, ExprAction> checkFirst() {
         Trace<ExplState, ExprAction> intersection = checkIfFaultyIntersectsInit();
