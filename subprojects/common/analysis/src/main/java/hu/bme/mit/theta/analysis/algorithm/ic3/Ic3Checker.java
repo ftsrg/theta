@@ -239,10 +239,10 @@ public class Ic3Checker
                 if (optimizations.isUnSatOpt()) {
                     blockedExpression = removeRedundantExpressionsUsingUnsatCore(blockedExpression, unSatCore);
                 }
-                /*
-                if(optimizations.isMICOpt()) {
-                    blockedExpression = generateMinimalInductiveClause(blockedExpression);
-                }*/
+
+                if(optimizations.isGeneralizeOpt()) {
+                    blockedExpression = generalizeIter(blockedExpression,proofObligation.getTime());
+                }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
                     frames.get(i).refine(Not(And(blockedExpression)));
                 }
@@ -251,13 +251,47 @@ public class Ic3Checker
         }
         return null;
     }
-/*
-    private Set<Expr<BoolType>> generateMinimalInductiveClause(Set<Expr<BoolType>> blockedExpression) {
-        for (Expr<BoolType> expr : blockedExpression) {
 
+    private Set<Expr<BoolType>> generalizeIter(Set<Expr<BoolType>> blockedExpression, int currentFrameNumber) {
+        boolean done = false;
+        boolean isSat;
+        final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
+        Collection<Expr<BoolType>> unSatCore = null;
+        minimalExpressions.addAll(blockedExpression);
+
+        while (!done) {
+            done = true;
+            final var firstCopiedExpressions = new HashSet<Expr<BoolType>>();
+            firstCopiedExpressions.addAll(minimalExpressions);
+            for (Expr<BoolType> expr : firstCopiedExpressions) {
+                minimalExpressions.remove(expr);
+                if(checkIfExpressionIntersectsInit(minimalExpressions)) {
+                    minimalExpressions.add(expr);
+                }else{
+                    try (var wpp = new WithPushPop(solver)) {
+                        frames.get(currentFrameNumber - 1)
+                            .getExprs()
+                            .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                        for (Expr<BoolType> solverExpr : minimalExpressions) {
+                            solver.track(PathUtils.unfold(solverExpr, 0));
+                        }
+                        getConjuncts(monolithicExpr.getTransExpr())
+                            .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                        solver.track(PathUtils.unfold(Not(And(minimalExpressions)),monolithicExpr.getTransOffsetIndex()));
+                        isSat = solver.check().isSat();
+                        if(!isSat) {
+                            unSatCore = solver.getUnsatCore();
+                        }
+                    }
+                    if(!isSat) {
+                        removeRedundantExpressionsUsingUnsatCore(minimalExpressions, unSatCore);
+                        done = false;
+                    }
+                }
+            }
         }
         return blockedExpression;
-    }*/
+    }
 
     public Trace<ExplState, ExprAction> checkFirst() {
         Trace<ExplState, ExprAction> intersection = checkIfFaultyIntersectsInit();
@@ -289,6 +323,17 @@ public class Ic3Checker
         }
 
 
+    }
+    private boolean checkIfExpressionIntersectsInit(Set<Expr<BoolType>> expression){
+        boolean isSat;
+        try (var wpp = new WithPushPop(solver)) {
+            for (Expr<BoolType> expr : expression) {
+                solver.track(PathUtils.unfold(expr, 0));
+            }
+            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
+            isSat = solver.check().isSat();
+        }
+        return isSat;
     }
 
     private @Nullable Trace<ExplState, ExprAction> checkIfFaultyIntersectsInit() {

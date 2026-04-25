@@ -31,8 +31,8 @@ public class IC3Optimizations {
     return propagateOpt;
   }
 
-  public boolean isMICOpt() {
-    return MICOpt;
+  public boolean isGeneralizeOpt() {
+    return generalizeOpt;
   }
 
   public boolean isFilterOpt() {
@@ -50,7 +50,7 @@ public class IC3Optimizations {
   private final boolean propagateOpt;
   private final boolean filterOpt;
   private final boolean propertyOpt;
-  private final boolean MICOpt;
+  private final boolean generalizeOpt;
 
 
 
@@ -60,6 +60,6 @@ public class IC3Optimizations {
     this.propagateOpt = propagateOpt;
     this.filterOpt = filterOpt;
     this.propertyOpt = propertyOpt;
-    this.MICOpt = MICOpt;
+    this.generalizeOpt = MICOpt;
   }
 }
