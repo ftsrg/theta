@@ -16,8 +16,9 @@
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.Action;
