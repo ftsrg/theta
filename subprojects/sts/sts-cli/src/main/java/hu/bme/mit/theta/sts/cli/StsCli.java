@@ -35,6 +35,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.car.CarCegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.car.CarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.ic3.IC3Optimizations;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -182,6 +183,13 @@ public class StsCli {
                         new Ic3Checker(
                                 monolithicExpr,
                                 solverFactory,
+                                new IC3Optimizations(
+                                        stsCli.ic3UnSatOpt,
+                                        stsCli.ic3NotBOpt,
+                                        stsCli.ic3PropagateOpt,
+                                        stsCli.ic3FilterOpt,
+                                        stsCli.ic3GeneralizeOpt,
+                                        stsCli.ic3PropertyOpt),
                                 logger));
             }
         },
@@ -305,6 +313,42 @@ public class StsCli {
             names = {"--iteration-strategy"},
             description = "MDD iteration strategy")
     MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
+
+    @Parameter(
+            names = {"--ic3-unsat-opt"},
+            description = "IC3: minimize blocked cube using UNSAT core",
+            arity = 1)
+    Boolean ic3UnSatOpt = true;
+
+    @Parameter(
+            names = {"--ic3-notb-opt"},
+            description = "IC3: add NOT(B) to the transition query",
+            arity = 1)
+    Boolean ic3NotBOpt = true;
+
+    @Parameter(
+            names = {"--ic3-propagate-opt"},
+            description = "IC3: propagate clauses forward during push phase",
+            arity = 1)
+    Boolean ic3PropagateOpt = true;
+
+    @Parameter(
+            names = {"--ic3-filter-opt"},
+            description = "IC3: filter redundant variables from the SAT model",
+            arity = 1)
+    Boolean ic3FilterOpt = true;
+
+    @Parameter(
+            names = {"--ic3-generalize-opt"},
+            description = "IC3: generalize blocked cubes (MIC)",
+            arity = 1)
+    Boolean ic3GeneralizeOpt = true;
+
+    @Parameter(
+            names = {"--ic3-property-opt"},
+            description = "IC3: use property-aware frame initialization",
+            arity = 1)
+    Boolean ic3PropertyOpt = true;
 
     @Parameter(
             names = {"--smt-home"},
