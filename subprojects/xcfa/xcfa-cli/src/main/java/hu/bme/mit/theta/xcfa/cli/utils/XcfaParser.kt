@@ -15,11 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlList
-import com.charleskorn.kaml.YamlMap
-import com.charleskorn.kaml.YamlNode
-import com.charleskorn.kaml.YamlScalar
+import com.charleskorn.kaml.*
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
@@ -36,15 +32,13 @@ import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.params.exitProcess
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import org.antlr.v4.runtime.BailErrorStrategy
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -54,9 +48,6 @@ import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
-import org.antlr.v4.runtime.BailErrorStrategy
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
 
 fun getXcfa(
   config: XcfaConfig<*, *>,
@@ -225,12 +216,15 @@ private fun parseC(
         copied.appendText(newLine)
         copied.appendText(System.lineSeparator())
       }
-
-      "./clang ${copied.absolutePath} -Xclang -emit-cir-flat -fsyntax-only"
-        .runCommand(frontendConfig.cirDir)
       val mlir = temp.resolve("input.mlir").toFile()
+      val mlirFlat = temp.resolve("flat.mlir").toFile()
+
+      "./clang ${copied.absolutePath} -Xclang -emit-cir -fsyntax-only -o ${mlir.absolutePath}"
+        .runCommand(frontendConfig.cirDir)
+      "./cir-opt ${mlir.absolutePath} -cir-flatten-cfg -o ${mlirFlat.absolutePath}"
+        .runCommand(frontendConfig.cirDir)
       val transformed = temp.resolve("input-transformed.c").toFile()
-      "./xcfa-mapper ${mlir.absolutePath} ${transformed.absolutePath}"
+      "./xcfa-mapper ${mlirFlat.absolutePath} ${transformed.absolutePath}"
         .runCommand(frontendConfig.cirDir)
       transformed
     } else {
