@@ -19,11 +19,11 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
@@ -32,6 +32,7 @@ import java.util.*;
 public class Frame {
     private final Frame parent;
     private final Set<Expr<BoolType>> exprs;
+    private final List<Clause> clauses;
 
     private final UCSolver solver;
     private final MonolithicExpr monolithicExpr;
@@ -41,18 +42,37 @@ public class Frame {
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
         exprs = new HashSet<>();
+        clauses = new ArrayList<>();
     }
 
-    public void refine(Expr<BoolType> expression) {
+    public void addClausesToSolver(VarIndexing indexing) {
+        /*for (Expr<BoolType> expr : exprs) {
+            solver.track(PathUtils.unfold(expr, indexing));
+        }*/
+        for (Clause clause : clauses) {
+            solver.track(PathUtils.unfold(clause.toExpr(), indexing));
+        }
+    }
+    public void addNegatedClausesToSolver(VarIndexing indexing) {
+        final List<Expr<BoolType>> exprs = new ArrayList<>();
+        for (Clause clause : clauses) {
+            exprs.add(clause.negate().toExpr());
+        }
+        solver.track(PathUtils.unfold(Or(exprs),indexing));
+    }
+    public void refineExpr(Expr<BoolType> expression) {
         Collection<Expr<BoolType>> col = getConjuncts(expression);
         for (Expr<BoolType> e : col) {
             exprs.add(e);
         }
     }
-
-    public Set<Expr<BoolType>> getExprs() {
-        return exprs;
+    public void refine(Cube blockedCube) {
+        clauses.add(blockedCube.negate());
     }
+
+    /*public Set<Expr<BoolType>> getExprs() {
+        return exprs;
+    }*/
 
     public Valuation checkIfTargetIsReachableValuation(Expr<BoolType> target) {
         try (var wpp = new WithPushPop(solver)) {
@@ -87,8 +107,10 @@ public class Frame {
             return false;
         }
         try (var wpp = new WithPushPop(solver)) {
-            solver.track(PathUtils.unfold(Not(And(parent.getExprs())), 0));
-            solver.track(PathUtils.unfold(And(exprs), 0));
+
+            parent.addNegatedClausesToSolver(VarIndexingFactory.indexing(0));
+            addClausesToSolver(VarIndexingFactory.indexing(0));
+
             return solver.check().isUnsat();
         }
     }

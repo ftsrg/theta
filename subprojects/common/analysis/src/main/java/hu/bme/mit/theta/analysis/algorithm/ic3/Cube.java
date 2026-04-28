@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ public final class Cube {
     private final Set<Expr<BoolType>> literals;
 
     private Cube(final Collection<? extends Expr<BoolType>> literals) {
-        this.literals = Set.copyOf(checkNotNull(literals));
+        this.literals = new HashSet<>(checkNotNull(literals));
     }
 
     public static Cube of(final Collection<? extends Expr<BoolType>> literals) {
