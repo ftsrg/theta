@@ -65,8 +65,8 @@ public class MddProof implements InvariantProof {
     @Override
     public Expr<BoolType> getInvariant() {
         if (invariant == null) {
-          Expr<BoolType> expr = toExprStrategy.toExpr(stateSpace);
-          invariant = PathUtils.foldin(expr, 0);
+            Expr<BoolType> expr = toExprStrategy.toExpr(stateSpace);
+            invariant = PathUtils.foldin(expr, 0);
         }
         return invariant;
     }
