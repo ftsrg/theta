@@ -65,7 +65,7 @@ public class Ic3Checker
     private final Logger logger;
 
     public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
-        this(monolithicExpr, solverFactory, new IC3Optimizations(true,true,true,true, true,true, true, true), logger);
+        this(monolithicExpr, solverFactory, new IC3Optimizations(true,true,true,true, true,true,true), logger);
     }
 
     public Ic3Checker(
@@ -203,9 +203,10 @@ public class Ic3Checker
                     solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())), 0));
                 }
 
+                /*
                 if (proofObligation.getTime() > 2 && optimizations.isFormerFramesopt()) {
                     frames.get(proofObligation.getTime() - 2).addNegatedFrameToSolver(VarIndexingFactory.indexing(0));
-                }
+                }*/
 
                 getConjuncts(monolithicExpr.getTransExpr())
                     .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -368,27 +369,28 @@ public class Ic3Checker
         currentFrameNumber++;
         if (optimizations.isPropagateOpt()) {
             for (int j = 1; j < currentFrameNumber; j++) {
-                for (var clause : frames.get(j).getClauses()) {
+                List<Clause> copyClauses =  new ArrayList<>(frames.get(j).getClauses());
+                for (var clause : copyClauses) {
                     try (var wpp = new WithPushPop(solver)) {
 
                         frames.get(j).addFrameToSolver(VarIndexingFactory.indexing(0));
                         getConjuncts(monolithicExpr.getTransExpr())
                                 .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                        solver.track(
-                                PathUtils.unfold(clause.negate().toExpr(), monolithicExpr.getTransOffsetIndex()));
+                        Cube blockedCube = clause.negate();
+                        blockedCube.getLiterals()
+                                .forEach(expr -> solver.track(PathUtils.unfold(expr, monolithicExpr.getTransOffsetIndex())));
                         if (solver.check().isUnsat()) {
                             if(optimizations.isUnsatPropagate()) {
                                 var unsatCore = solver.getUnsatCore();
-                                var newCube = Cube.of(removeRedundantExpressionsUsingUnsatCore(clause.negate().getLiterals(), unsatCore));
-                                if (newCube.getLiterals().size()<clause.getLiterals().size()) {
-                                    clause = newCube.negate();
+                                blockedCube = Cube.of(removeRedundantExpressionsUsingUnsatCore(blockedCube.getLiterals(), unsatCore));
+
+                                if (blockedCube.getLiterals().size()<clause.getLiterals().size()) {
                                     for(int k = 1; k <= j; k++){
-                                        frames.get(k).refine(clause.negate());
+                                        frames.get(k).refine(blockedCube);
                                     }
                                 }
-
                             }
-                            frames.get(j + 1).refine(clause.negate());
+                            frames.get(j + 1).refine(blockedCube);
                         }
                     }
                 }

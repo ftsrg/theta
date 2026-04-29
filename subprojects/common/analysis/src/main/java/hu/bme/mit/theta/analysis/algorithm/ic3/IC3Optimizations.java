@@ -44,9 +44,6 @@ public class IC3Optimizations {
     return propertyOpt;
   }
 
-  public boolean isFormerFramesopt() {
-    return formerFramesopt;
-  }
 
   public boolean isUnsatPropagate() {
     return unsatPropagate;
@@ -59,19 +56,17 @@ public class IC3Optimizations {
   private final boolean filterOpt;
   private final boolean propertyOpt;
   private final boolean generalizeOpt;
-  private final boolean formerFramesopt;
   private final boolean unsatPropagate;
 
 
 
-  public IC3Optimizations(boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean MICOpt, boolean propertyOpt, boolean formerFramesopt, boolean unsatPropagate) {
+  public IC3Optimizations(boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean MICOpt, boolean propertyOpt, boolean unsatPropagate) {
     this.unSatOpt = unSatOpt;
     this.notBOpt = notBOpt;
     this.propagateOpt = propagateOpt;
     this.filterOpt = filterOpt;
     this.propertyOpt = propertyOpt;
     this.generalizeOpt = MICOpt;
-    this.formerFramesopt = formerFramesopt;
     this.unsatPropagate = unsatPropagate;
   }
 }

@@ -81,10 +81,10 @@ public class Frame {
         for (Clause clause : clauses) {
 
             if(clause.subsumes(newClause)){
-                return;
+                oldClause = clause;
             }
             if(newClause.subsumes(clause)){
-                oldClause = clause;
+                return;
             }
         }
 
