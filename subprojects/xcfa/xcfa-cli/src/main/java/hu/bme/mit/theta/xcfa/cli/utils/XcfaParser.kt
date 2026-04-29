@@ -216,8 +216,8 @@ private fun parseC(
         copied.appendText(newLine)
         copied.appendText(System.lineSeparator())
       }
-      val mlir = temp.resolve("input.mlir").toFile()
-      val mlirFlat = temp.resolve("flat.mlir").toFile()
+      val mlir = temp.resolve("input.cir").toFile()
+      val mlirFlat = temp.resolve("flat.cir").toFile()
 
       "./clang ${copied.absolutePath} -Xclang -emit-cir -fsyntax-only -o ${mlir.absolutePath}"
         .runCommand(frontendConfig.cirDir)
