@@ -65,7 +65,7 @@ public class Ic3Checker
     private final Logger logger;
 
     public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
-        this(monolithicExpr, solverFactory, new IC3Optimizations(true,true,false,true, true,true), logger);
+        this(monolithicExpr, solverFactory, new IC3Optimizations(true,true,true,true, true,true, true, true), logger);
     }
 
     public Ic3Checker(
@@ -78,8 +78,7 @@ public class Ic3Checker
         this.solverFactory = solverFactory;
         frames = new ArrayList<>();
         solver = solverFactory.createUCSolver();
-        frames.add(new Frame(null, solver, monolithicExpr));
-        frames.get(0).refineExpr(monolithicExpr.getInitExpr());
+        frames.add(new Frame(null, solver, monolithicExpr, optimizations));
         currentFrameNumber = 0;
     }
 
@@ -104,18 +103,6 @@ public class Ic3Checker
                 }
             }
         }
-    }
-
-    private void addFrameToSolver(int frameIndex, VarIndexing indexing) {
-        if(frameIndex ==0) {
-            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), indexing));
-        }else{
-            if(optimizations.isPropertyOpt()) {
-                solver.track(PathUtils.unfold(monolithicExpr.getPropExpr(), indexing));
-            }
-            frames.get(frameIndex).addClausesToSolver(indexing);
-        }
-
     }
 
     private Set<Expr<BoolType>> convertValuationToExpression(Valuation model) {
@@ -209,16 +196,16 @@ public class Ic3Checker
             final Collection<Expr<BoolType>> unSatCore;
             final Valuation model;
             try (var wpp = new WithPushPop(solver)) {
-                addFrameToSolver(proofObligation.getTime() - 1,VarIndexingFactory.indexing(0));
-                //frames.get(proofObligation.getTime() - 1).addToSolver(VarIndexingFactory.indexing(0)); //put frame - 1 expressions
+
+                frames.get(proofObligation.getTime() - 1).addFrameToSolver(VarIndexingFactory.indexing(0));
+
                 if (optimizations.isNotBOpt()) {
                     solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())), 0));
                 }
 
-                /*
-                if (proofObligation.getTime() > 3 && optimizations.isFormerFramesOpt()) {
-                    solver.track(PathUtils.unfold(Not(And(frames.get(proofObligation.getTime() - 2).getExprs())),0));
-                }*/
+                if (proofObligation.getTime() > 2 && optimizations.isFormerFramesopt()) {
+                    frames.get(proofObligation.getTime() - 2).addNegatedFrameToSolver(VarIndexingFactory.indexing(0));
+                }
 
                 getConjuncts(monolithicExpr.getTransExpr())
                     .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -258,7 +245,6 @@ public class Ic3Checker
                 }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
                     frames.get(i).refine(Cube.of(blockedExpression));
-                    frames.get(i).refineExpr(Not(And(blockedExpression)));
                 }
                 proofObligationsQueue.removeLast();
             }
@@ -283,8 +269,7 @@ public class Ic3Checker
                     minimalExpressions.add(expr);
                 }else{
                     try (var wpp = new WithPushPop(solver)) {
-                        addFrameToSolver(currentFrameNumber-1, VarIndexingFactory.indexing(0));
-                        //frames.get(currentFrameNumber - 1).addToSolver(VarIndexingFactory.indexing(0));
+                        frames.get(currentFrameNumber - 1).addFrameToSolver(VarIndexingFactory.indexing(0));
 
                         for (Expr<BoolType> solverExpr : minimalExpressions) {
                             solver.track(PathUtils.unfold(solverExpr, 0));
@@ -379,31 +364,38 @@ public class Ic3Checker
     }
 
     public boolean propagate() {
-        frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr));
+        frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr,optimizations));
         currentFrameNumber++;
-        if(optimizations.isPropertyOpt()){
-            frames.get(currentFrameNumber).refineExpr(monolithicExpr.getPropExpr());
-        }
         if (optimizations.isPropagateOpt()) {
-            /*
             for (int j = 1; j < currentFrameNumber; j++) {
-                for (var c : frames.get(j).getExprs()) {
+                for (var clause : frames.get(j).getClauses()) {
                     try (var wpp = new WithPushPop(solver)) {
-                        addFrameToSolver(j,VarIndexingFactory.indexing(0));
-                        //frames.get(j).addToSolver(VarIndexingFactory.indexing(0));
+
+                        frames.get(j).addFrameToSolver(VarIndexingFactory.indexing(0));
                         getConjuncts(monolithicExpr.getTransExpr())
                                 .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
                         solver.track(
-                                PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
+                                PathUtils.unfold(clause.negate().toExpr(), monolithicExpr.getTransOffsetIndex()));
                         if (solver.check().isUnsat()) {
-                            frames.get(j + 1).refineExpr(c);
+                            if(optimizations.isUnsatPropagate()) {
+                                var unsatCore = solver.getUnsatCore();
+                                var newCube = Cube.of(removeRedundantExpressionsUsingUnsatCore(clause.negate().getLiterals(), unsatCore));
+                                if (newCube.getLiterals().size()<clause.getLiterals().size()) {
+                                    clause = newCube.negate();
+                                    for(int k = 1; k <= j; k++){
+                                        frames.get(k).refine(clause.negate());
+                                    }
+                                }
+
+                            }
+                            frames.get(j + 1).refine(clause.negate());
                         }
                     }
                 }
                 if (frames.get(j + 1).equalsParent()) {
                     return true;
                 }
-            }*/
+            }
         } else if (currentFrameNumber > 1 && frames.get(currentFrameNumber - 1).equalsParent()) {
             return true;
         }

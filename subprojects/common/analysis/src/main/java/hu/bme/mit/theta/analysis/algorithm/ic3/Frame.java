@@ -31,52 +31,72 @@ import java.util.*;
 
 public class Frame {
     private final Frame parent;
-    private final Set<Expr<BoolType>> exprs;
     private final List<Clause> clauses;
 
     private final UCSolver solver;
+    private final IC3Optimizations optimizations;
     private final MonolithicExpr monolithicExpr;
 
-    Frame(final Frame parent, UCSolver solver, MonolithicExpr monolithicExpr) {
+    Frame(final Frame parent, UCSolver solver, MonolithicExpr monolithicExpr, IC3Optimizations optimizations) {
         this.parent = parent;
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
-        exprs = new HashSet<>();
+        this.optimizations = optimizations;
         clauses = new ArrayList<>();
     }
 
-    public void addClausesToSolver(VarIndexing indexing) {
-        /*for (Expr<BoolType> expr : exprs) {
-            solver.track(PathUtils.unfold(expr, indexing));
-        }*/
+    public List<Clause> getClauses() {
+        return clauses;
+    }
+
+    public void addFrameToSolver(VarIndexing indexing) {
+        if(parent == null){
+            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(),indexing));
+            return;
+        }
         for (Clause clause : clauses) {
             solver.track(PathUtils.unfold(clause.toExpr(), indexing));
         }
+        if(optimizations.isPropertyOpt()){
+            solver.track(PathUtils.unfold(monolithicExpr.getPropExpr(),indexing));
+        }
     }
-    public void addNegatedClausesToSolver(VarIndexing indexing) {
+    public void addNegatedFrameToSolver(VarIndexing indexing) {
+        if(parent == null){
+            solver.track(PathUtils.unfold(Not(monolithicExpr.getInitExpr()),indexing));
+            return;
+        }
         final List<Expr<BoolType>> exprs = new ArrayList<>();
         for (Clause clause : clauses) {
             exprs.add(clause.negate().toExpr());
         }
+        if(optimizations.isPropertyOpt()) {
+            exprs.add(Not(monolithicExpr.getPropExpr()));
+        }
         solver.track(PathUtils.unfold(Or(exprs),indexing));
     }
-    public void refineExpr(Expr<BoolType> expression) {
-        Collection<Expr<BoolType>> col = getConjuncts(expression);
-        for (Expr<BoolType> e : col) {
-            exprs.add(e);
-        }
-    }
     public void refine(Cube blockedCube) {
-        clauses.add(blockedCube.negate());
-    }
+        Clause newClause = blockedCube.negate();
+        Clause oldClause = null;
+        for (Clause clause : clauses) {
 
-    /*public Set<Expr<BoolType>> getExprs() {
-        return exprs;
-    }*/
+            if(clause.subsumes(newClause)){
+                return;
+            }
+            if(newClause.subsumes(clause)){
+                oldClause = clause;
+            }
+        }
+
+        if(oldClause != null){
+            clauses.remove(oldClause);
+        }
+        clauses.add(newClause);
+    }
 
     public Valuation checkIfTargetIsReachableValuation(Expr<BoolType> target) {
         try (var wpp = new WithPushPop(solver)) {
-            exprs.forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+            addFrameToSolver(VarIndexingFactory.indexing(0));
             getConjuncts(monolithicExpr.getTransExpr())
                 .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
             solver.track(PathUtils.unfold(target, monolithicExpr.getTransOffsetIndex()));
@@ -91,7 +111,7 @@ public class Frame {
     public Valuation checkIfContainsValuation(Expr<BoolType> target) {
         try (var wpp = new WithPushPop(solver)) {
             solver.track(PathUtils.unfold(target, 0));
-            exprs.forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+            addFrameToSolver(VarIndexingFactory.indexing(0));
             if (solver.check().isSat()) {
                 return solver.getModel();
             } else {
@@ -103,13 +123,13 @@ public class Frame {
 
 
     public boolean equalsParent() {
-        if (this.parent.parent == null) {
+        if (this.parent == null) {
             return false;
         }
         try (var wpp = new WithPushPop(solver)) {
 
-            parent.addNegatedClausesToSolver(VarIndexingFactory.indexing(0));
-            addClausesToSolver(VarIndexingFactory.indexing(0));
+            parent.addNegatedFrameToSolver(VarIndexingFactory.indexing(0));
+            addFrameToSolver(VarIndexingFactory.indexing(0));
 
             return solver.check().isUnsat();
         }

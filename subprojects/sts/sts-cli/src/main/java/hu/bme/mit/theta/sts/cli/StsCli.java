@@ -189,7 +189,9 @@ public class StsCli {
                                         stsCli.ic3PropagateOpt,
                                         stsCli.ic3FilterOpt,
                                         stsCli.ic3GeneralizeOpt,
-                                        stsCli.ic3PropertyOpt),
+                                        stsCli.ic3PropertyOpt,
+                                        stsCli.ic3FormerFramesOpt,
+                                        stsCli.ic3UnsatPropagateOpt),
                                 logger));
             }
         },
@@ -349,6 +351,18 @@ public class StsCli {
             description = "IC3: use property-aware frame initialization",
             arity = 1)
     Boolean ic3PropertyOpt = true;
+
+    @Parameter(
+            names = {"--ic3-former-frames-opt"},
+            description = "IC3: use former frames when blocking proof obligations",
+            arity = 1)
+    Boolean ic3FormerFramesOpt = true;
+
+    @Parameter(
+            names = {"--ic3-unsat-propagate-opt"},
+            description = "IC3: use UNSAT core when propagating clauses during push phase",
+            arity = 1)
+    Boolean ic3UnsatPropagateOpt = true;
 
     @Parameter(
             names = {"--smt-home"},

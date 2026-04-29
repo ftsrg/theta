@@ -47,7 +47,7 @@ public final class Clause {
     }
 
     /** Returns true if {@code other} subsumes this clause, i.e. other.literals ⊆ this.literals. */
-    public boolean isSubsumedBy(final Clause other) {
+    public boolean subsumes(final Clause other) {
         return this.literals.containsAll(other.literals);
     }
 
