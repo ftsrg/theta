@@ -50,7 +50,7 @@ runs:
         cat "$XML"
 
         folder=$(dirname $(find . -name "theta.jar" | head -n1))
-        timeout -k 60 3600 benchexec "$XML" -n 2 --tool-directory "$folder"
+        timeout -k 60 1800 benchexec "$XML" --no-container --tool-directory "$folder"
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
