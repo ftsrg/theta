@@ -150,7 +150,7 @@ Create a BenchExec XML configuration in `integration-tests/<category>/theta.xml`
 ```xml
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+<benchmark tool="theta" walltimelimit="60 s">
 
 <!-- config -->
 
