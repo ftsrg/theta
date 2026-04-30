@@ -67,10 +67,11 @@ fun getPortfolioChecker(
 
       "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "CHC-COMP" ->
+      "CHC-COMP-25" ->
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
         else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
+      "CHC-COMP",
       "CHC-COMP-26" -> chcCompPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
