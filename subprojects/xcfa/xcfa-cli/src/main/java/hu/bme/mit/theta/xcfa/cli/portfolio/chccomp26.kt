@@ -40,13 +40,13 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
  * Time budget: 30 minutes (1 800 000 ms) split across configurations in each category chain.
  *
  * Category detection precedence:
- *  1. Explicit `--chc-category` value (anything other than AUTO)
- *  2. Variable-type auto-detection (BvType → BV_LIN, RatType → LRA_LIN,
- *     ArrayType → LIA_LIN_ARRAYS, otherwise LIA_LIN)
+ * 1. Explicit `--chc-category` value (anything other than AUTO)
+ * 2. Variable-type auto-detection (BvType → BV_LIN, RatType → LRA_LIN, ArrayType → LIA_LIN_ARRAYS,
+ *    otherwise LIA_LIN)
  *
- * Note: AUTO cannot distinguish BV from BV_LIN, or LIA/LIA_ARRAYS from LIA_LIN/LIA_LIN_ARRAYS.
- * When the competition infrastructure passes the exact category name via `--chc-category`, the
- * portfolio can select the optimal chain for every category.
+ * Note: AUTO cannot distinguish BV from BV_LIN, or LIA/LIA_ARRAYS from LIA_LIN/LIA_LIN_ARRAYS. When
+ * the competition infrastructure passes the exact category name via `--chc-category`, the portfolio
+ * can select the optimal chain for every category.
  */
 fun chcCompPortfolio26(
   xcfa: XCFA,
@@ -243,10 +243,7 @@ fun chcCompPortfolio26(
     val (startingConfig, endConfig) =
       if (!xcfa.isInlined) {
         // Non-inlined CHC (procedure calls present): use generic CEGAR chain.
-        val chain =
-          cart(600_000, "Z3") then
-            bool(600_000, "Z3") then
-            cart(600_000, "cvc5:1.0.8")
+        val chain = cart(600_000, "Z3") then bool(600_000, "Z3") then cart(600_000, "cvc5:1.0.8")
         Pair(chain, cart(600_000, "cvc5:1.0.8"))
       } else if (needsModel) {
         // ── Model-validation portfolio ──────────────────────────────────────
@@ -254,7 +251,8 @@ fun chcCompPortfolio26(
         //   IC3 / MDD (100 % validation), IMC-MS (~98 %), CEGAR-CART in linear categories (~100 %).
         // BMC and KIND are placed last in categories where they yield 0 % validation.
         when (category) {
-          BV_LIN, BV -> {
+          BV_LIN,
+          BV -> {
             // IC3 dominates for BV-Lin models; IMC-MS and CART-MS bridge the remaining gap.
             val start =
               ic3(200_000, "Z3") then
@@ -266,7 +264,8 @@ fun chcCompPortfolio26(
             Pair(start, kind(400_000, "cvc5:1.0.8"))
           }
 
-          LIA, LIA_ARRAYS -> {
+          LIA,
+          LIA_ARRAYS -> {
             // All CEGAR configs produce 0 % validated witnesses here (quantified invariants).
             // Use the same order as the solving portfolio to maximise solved count.
             val start =
@@ -319,8 +318,7 @@ fun chcCompPortfolio26(
         when (category) {
           BV -> {
             // All CEGAR variants solve 3/68; no bounded technique applies.
-            val start =
-              expl(600_000, "Z3") then bool(600_000, "Z3") then cart(600_000, "Z3")
+            val start = expl(600_000, "Z3") then bool(600_000, "Z3") then cart(600_000, "Z3")
             Pair(start, cart(600_000, "Z3"))
           }
 
