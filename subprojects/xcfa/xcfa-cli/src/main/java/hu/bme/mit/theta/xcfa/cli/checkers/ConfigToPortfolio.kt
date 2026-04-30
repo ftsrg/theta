@@ -71,6 +71,8 @@ fun getPortfolioChecker(
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
         else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
+      "CHC-COMP-26" -> chcCompPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       "TESTING",
       "CHC",
       "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
