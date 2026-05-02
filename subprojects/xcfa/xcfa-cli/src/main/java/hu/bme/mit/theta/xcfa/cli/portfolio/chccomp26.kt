@@ -41,12 +41,13 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
  *
  * Category detection precedence:
  * 1. Explicit `--chc-category` value (anything other than AUTO)
- * 2. Variable-type auto-detection (BvType → BV_LIN, RatType → LRA_LIN, ArrayType → LIA_LIN_ARRAYS,
- *    otherwise LIA_LIN)
+ * 2. Variable-type + linearity auto-detection: non-inlined CHC (nonlinear clauses) maps to BV / LIA
+ *    / LIA_ARRAYS; inlined (linear) CHC maps to BV_LIN / LIA_LIN / LIA_LIN_ARRAYS / LRA_LIN based
+ *    on variable types.
  *
- * Note: AUTO cannot distinguish BV from BV_LIN, or LIA/LIA_ARRAYS from LIA_LIN/LIA_LIN_ARRAYS. When
- * the competition infrastructure passes the exact category name via `--chc-category`, the portfolio
- * can select the optimal chain for every category.
+ * Note: AUTO cannot distinguish LRA from LRA_LIN, or exact BV/LIA sub-variants. When the
+ * competition infrastructure passes the exact category name via `--chc-category`, the portfolio can
+ * select the optimal chain for every category.
  */
 fun chcCompPortfolio26(
   xcfa: XCFA,
@@ -68,16 +69,28 @@ fun chcCompPortfolio26(
   val categoryHint = chcFrontend?.category ?: AUTO
 
   // Resolve effective category: explicit hint wins over type-based detection.
+  // When auto-detecting, non-inlined CHC (nonlinear clauses) maps to the corresponding
+  // non-linear category variant; inlined (linear) CHC maps to the linear variant.
   val types = xcfa.collectVars().map { it.type }.toSet()
   val category =
     if (categoryHint != AUTO) categoryHint
-    else
-      when {
-        types.any { it is BvType } -> BV_LIN
-        types.any { it is RatType } -> LRA_LIN
-        types.any { it is ArrayType<*, *> } -> LIA_LIN_ARRAYS
-        else -> LIA_LIN
-      }
+    else {
+      val detectedLinear =
+        when {
+          types.any { it is BvType } -> BV_LIN
+          types.any { it is RatType } -> LRA_LIN
+          types.any { it is ArrayType<*, *> } -> LIA_LIN_ARRAYS
+          else -> LIA_LIN
+        }
+      if (!xcfa.isInlined)
+        when (detectedLinear) {
+          BV_LIN -> BV
+          LIA_LIN -> LIA
+          LIA_LIN_ARRAYS -> LIA_ARRAYS
+          else -> detectedLinear
+        }
+      else detectedLinear
+    }
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -241,73 +254,83 @@ fun chcCompPortfolio26(
     // Each chain is sized to fit within the 30-minute (1 800 000 ms) wall-clock budget.
 
     val (startingConfig, endConfig) =
-      if (!xcfa.isInlined) {
-        // Non-inlined CHC (procedure calls present): use generic CEGAR chain.
-        val chain = cart(600_000, "Z3") then bool(600_000, "Z3") then cart(600_000, "cvc5:1.0.8")
-        Pair(chain, cart(600_000, "cvc5:1.0.8"))
-      } else if (needsModel) {
+      if (needsModel) {
         // ── Model-validation portfolio ──────────────────────────────────────
         // Prioritise configurations that produce externally verifiable witnesses:
         //   IC3 / MDD (100 % validation), IMC-MS (~98 %), CEGAR-CART in linear categories (~100 %).
         // BMC and KIND are placed last in categories where they yield 0 % validation.
         when (category) {
-          BV_LIN,
           BV -> {
+            // BV (nonlinear): CEGAR-only — non-CEGAR techniques are ineffective on nonlinear CHCs.
+            // No Z3 for interpolating configs on BV: use MathSAT then cvc5.
+            val c1 = cart(600_000, "mathsat:5.6.10")
+            val c2 = bool(400_000, "mathsat:5.6.10")
+            val c3 = bool(400_000, "cvc5:1.0.8")
+            val c4 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4
+            Pair(c1, c4)
+          }
+
+          BV_LIN -> {
             // IC3 dominates for BV-Lin models; IMC-MS and CART-MS bridge the remaining gap.
-            val start =
-              ic3(200_000, "Z3") then
-                ic3(200_000, "mathsat:5.6.10") then
-                imc(300_000, "mathsat:5.6.10") then
-                cart(400_000, "mathsat:5.6.10") then
-                bool(300_000, "mathsat:5.6.10") then
-                kind(400_000, "cvc5:1.0.8")
-            Pair(start, kind(400_000, "cvc5:1.0.8"))
+            val c1 = ic3(200_000, "Z3")
+            val c2 = ic3(200_000, "mathsat:5.6.10")
+            val c3 = imc(300_000, "mathsat:5.6.10")
+            val c4 = cart(400_000, "mathsat:5.6.10")
+            val c5 = bool(300_000, "mathsat:5.6.10")
+            val c6 = cart(400_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6
+            Pair(c1, c6)
           }
 
           LIA,
           LIA_ARRAYS -> {
             // All CEGAR configs produce 0 % validated witnesses here (quantified invariants).
             // Use the same order as the solving portfolio to maximise solved count.
-            val start =
-              cart(900_000, "Z3") then
-                cart(400_000, "mathsat:5.6.10") then
-                bool(300_000, "Z3") then
-                expl(200_000, "Z3")
-            Pair(start, expl(200_000, "Z3"))
+            val c1 = cart(900_000, "Z3")
+            val c2 = cart(400_000, "mathsat:5.6.10")
+            val c3 = bool(300_000, "Z3")
+            val c4 = expl(200_000, "Z3")
+            val c5 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5
+            Pair(c1, c5)
           }
 
           LIA_LIN -> {
             // MDD and IMC-MS produce near-perfectly validated witnesses; CEGAR-CART follows.
-            val start =
-              mdd(150_000) then
-                imc(200_000, "mathsat:5.6.10") then
-                cart(600_000, "Z3") then
-                bool(400_000, "Z3") then
-                imc(200_000, "Z3") then
-                cart(250_000, "mathsat:5.6.10")
-            Pair(start, cart(250_000, "mathsat:5.6.10"))
+            val c1 = mdd(150_000)
+            val c2 = imc(200_000, "mathsat:5.6.10")
+            val c3 = cart(600_000, "Z3")
+            val c4 = bool(400_000, "Z3")
+            val c5 = imc(200_000, "Z3")
+            val c6 = cart(250_000, "mathsat:5.6.10")
+            val c7 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6 then c7
+            Pair(c1, c7)
           }
 
           LIA_LIN_ARRAYS -> {
             // IMC does not handle arrays; rely on MDD (if applicable) and CEGAR.
-            val start =
-              mdd(150_000) then
-                cart(800_000, "Z3") then
-                bool(500_000, "Z3") then
-                bmc(200_000, "Z3") then
-                expl(150_000, "Z3")
-            Pair(start, expl(150_000, "Z3"))
+            val c1 = mdd(150_000)
+            val c2 = cart(800_000, "Z3")
+            val c3 = bool(500_000, "Z3")
+            val c4 = bmc(200_000, "Z3")
+            val c5 = expl(150_000, "Z3")
+            val c6 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6
+            Pair(c1, c6)
           }
 
           LRA_LIN -> {
             // CEGAR-CART-MS: 100 % validated. BMC/KIND: 0 % validated — placed last.
-            val start =
-              cart(600_000, "mathsat:5.6.10") then
-                imc(300_000, "mathsat:5.6.10") then
-                cart(400_000, "Z3") then
-                kind(300_000, "Z3") then
-                bmc(200_000, "Z3")
-            Pair(start, bmc(200_000, "Z3"))
+            val c1 = cart(600_000, "mathsat:5.6.10")
+            val c2 = imc(300_000, "mathsat:5.6.10")
+            val c3 = cart(400_000, "Z3")
+            val c4 = kind(300_000, "Z3")
+            val c5 = bmc(200_000, "Z3")
+            val c6 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6
+            Pair(c1, c6)
           }
 
           AUTO -> error("Category should have been resolved before this point")
@@ -317,72 +340,84 @@ fun chcCompPortfolio26(
         // Order: fastest/most-effective first per category, then complementary configs.
         when (category) {
           BV -> {
-            // All CEGAR variants solve 3/68; no bounded technique applies.
-            val start = expl(600_000, "Z3") then bool(600_000, "Z3") then cart(600_000, "Z3")
-            Pair(start, cart(600_000, "Z3"))
+            // BV (nonlinear): CEGAR-only — non-CEGAR techniques are ineffective on nonlinear CHCs.
+            // No Z3 for interpolating configs on BV: use MathSAT then cvc5.
+            val c1 = expl(600_000, "mathsat:5.6.10")
+            val c2 = bool(600_000, "mathsat:5.6.10")
+            val c3 = cart(600_000, "mathsat:5.6.10")
+            val c4 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4
+            Pair(c1, c4)
           }
 
           BV_LIN -> {
             // CART-MS dominates (58); IMC-MS, BOOL-MS, KIND bridge the remaining gap to 77.
-            val start =
-              cart(300_000, "mathsat:5.6.10") then
-                bool(200_000, "mathsat:5.6.10") then
-                imc(100_000, "mathsat:5.6.10") then
-                kind(250_000, "Z3") then
-                kind(400_000, "cvc5:1.0.8") then
-                cart(550_000, "cvc5:1.0.8")
-            Pair(start, cart(550_000, "cvc5:1.0.8"))
+            val c1 = cart(300_000, "mathsat:5.6.10")
+            val c2 = bool(200_000, "mathsat:5.6.10")
+            val c3 = imc(100_000, "mathsat:5.6.10")
+            val c4 = kind(250_000, "Z3")
+            val c5 = kind(400_000, "cvc5:1.0.8")
+            val c6 = cart(550_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6
+            Pair(c1, c6)
           }
 
           LIA -> {
             // CART-Z3 and CART-MS are nearly equal at the top; BOOL and EXPL add coverage.
-            val start =
-              cart(900_000, "Z3") then
-                cart(400_000, "mathsat:5.6.10") then
-                bool(300_000, "Z3") then
-                expl(200_000, "Z3")
-            Pair(start, expl(200_000, "Z3"))
+            val c1 = cart(900_000, "Z3")
+            val c2 = cart(400_000, "mathsat:5.6.10")
+            val c3 = bool(300_000, "Z3")
+            val c4 = expl(200_000, "Z3")
+            val c5 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5
+            Pair(c1, c5)
           }
 
           LIA_ARRAYS -> {
             // CART-Z3 solves 99 % of the solvable instances; a short EXPL pass covers the rest.
-            val start = cart(1_600_000, "Z3") then expl(200_000, "Z3")
-            Pair(start, expl(200_000, "Z3"))
+            val c1 = cart(1_600_000, "Z3")
+            val c2 = expl(200_000, "Z3")
+            val c3 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3
+            Pair(c1, c3)
           }
 
           LIA_LIN -> {
             // IMC-MS and bounded techniques provide quick wins; CART and BOOL cover the bulk.
-            val start =
-              imc(60_000, "mathsat:5.6.10") then
-                bmc(30_000, "Z3") then
-                kind(30_000, "Z3") then
-                cart(550_000, "Z3") then
-                bool(400_000, "Z3") then
-                cart(380_000, "mathsat:5.6.10") then
-                bool(350_000, "cvc5:1.0.8")
-            Pair(start, bool(350_000, "cvc5:1.0.8"))
+            val c1 = imc(60_000, "mathsat:5.6.10")
+            val c2 = bmc(30_000, "Z3")
+            val c3 = kind(30_000, "Z3")
+            val c4 = cart(550_000, "Z3")
+            val c5 = bool(400_000, "Z3")
+            val c6 = cart(380_000, "mathsat:5.6.10")
+            val c7 = bool(350_000, "cvc5:1.0.8")
+            val c8 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6 then c7 then c8
+            Pair(c1, c8)
           }
 
           LIA_LIN_ARRAYS -> {
             // CART-Z3 covers 93 % of solvable instances; bounded techniques fill the gap.
-            val start =
-              cart(800_000, "Z3") then
-                imc(100_000, "mathsat:5.6.10") then
-                bmc(200_000, "Z3") then
-                bool(500_000, "Z3") then
-                expl(200_000, "Z3")
-            Pair(start, expl(200_000, "Z3"))
+            val c1 = cart(800_000, "Z3")
+            val c2 = imc(100_000, "mathsat:5.6.10")
+            val c3 = bmc(200_000, "Z3")
+            val c4 = bool(500_000, "Z3")
+            val c5 = expl(200_000, "Z3")
+            val c6 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6
+            Pair(c1, c6)
           }
 
           LRA_LIN -> {
             // BMC and KIND tied at top; CART-MS and IMC-MS provide complementary coverage.
-            val start =
-              bmc(150_000, "Z3") then
-                kind(300_000, "Z3") then
-                cart(600_000, "mathsat:5.6.10") then
-                imc(300_000, "mathsat:5.6.10") then
-                cart(450_000, "Z3")
-            Pair(start, cart(450_000, "Z3"))
+            val c1 = bmc(150_000, "Z3")
+            val c2 = kind(300_000, "Z3")
+            val c3 = cart(600_000, "mathsat:5.6.10")
+            val c4 = imc(300_000, "mathsat:5.6.10")
+            val c5 = cart(450_000, "Z3")
+            val c6 = cart(200_000, "cvc5:1.0.8")
+            c1 then c2 then c3 then c4 then c5 then c6
+            Pair(c1, c6)
           }
 
           AUTO -> error("Category should have been resolved before this point")
