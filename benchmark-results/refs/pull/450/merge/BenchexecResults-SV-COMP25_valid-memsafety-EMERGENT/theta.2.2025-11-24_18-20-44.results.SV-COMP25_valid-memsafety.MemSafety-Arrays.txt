@@ -1,0 +1,274 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memsafety.MemSafety-Arrays
+date:                    Mon, 2025-11-24 18:20:44 UTC
+tool:                    Theta 6.27.2
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio EMERGENT --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3241.608 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety.MemSafety-Arrays
+Run set 4 of 6 with options '--svcomp --portfolio EMERGENT --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                    status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+array-examples/data_structures_set_multi_proc_trivial_ground.yml                             TIMEOUT                         40.27       29.84        None
+array-examples/relax-1.yml                                                                   false(valid-deref)              10.38        4.07        None
+array-examples/relax-2-2.yml                                                                 TIMEOUT                         40.58       33.47        None
+array-examples/relax-2.yml                                                                   false(valid-deref)               9.70        3.79        None
+array-examples/sanfoundry_24-2.yml                                                           TIMEOUT                         40.80       27.24        None
+array-examples/standard_strcpy_ground-2.yml                                                  TIMEOUT                         40.65       27.64        None
+array-examples/standard_strcpy_original-1.yml                                                
+array-fpi/indp1.yml                                                                          
+array-memsafety/add_last_unsafe.yml                                                          
+array-memsafety/array01-alloca-2.yml                                                         
+array-memsafety/array02-alloca-2.yml                                                         
+array-memsafety/bubblesort-alloca-2.yml                                                      
+array-memsafety/bubblesort_unsafe.yml                                                        
+array-memsafety/count_down-alloca-1.yml                                                      
+array-memsafety/count_down_unsafe.yml                                                        
+array-memsafety/cstrcat-alloca-2.yml                                                         
+array-memsafety/cstrcat_unsafe.yml                                                           
+array-memsafety/cstrchr-alloca-2.yml                                                         
+array-memsafety/cstrchr_unsafe.yml                                                           
+array-memsafety/cstrcmp-alloca-2.yml                                                         
+array-memsafety/cstrcpy-alloca-1.yml                                                         
+array-memsafety/cstrcspn-alloca-1.yml                                                        
+array-memsafety/cstrlen-alloca-2.yml                                                         
+array-memsafety/cstrlen_unsafe.yml                                                           
+array-memsafety/cstrncat-alloca-2.yml                                                        
+array-memsafety/cstrncat_unsafe.yml                                                          
+array-memsafety/cstrncpy-alloca-2.yml                                                        
+array-memsafety/cstrncpy_unsafe.yml                                                          
+array-memsafety/cstrpbrk-alloca-2.yml                                                        
+array-memsafety/cstrpbrk_unsafe.yml                                                          
+array-memsafety/cstrspn-alloca-1.yml                                                         
+array-memsafety/diff-alloca-2.yml                                                            
+array-memsafety/diff_usafe.yml                                                               
+array-memsafety/insertionsort-alloca-1.yml                                                   
+array-memsafety/java_BubbleSort-alloca-1.yml                                                 
+array-memsafety/knapsack_alloca_unsafe.yml                                                   
+array-memsafety/lis-alloca-1.yml                                                             
+array-memsafety/lis_unsafe.yml                                                               
+array-memsafety/mult_array-alloca-1.yml                                                      
+array-memsafety/mult_array_unsafe.yml                                                        
+array-memsafety/openbsd_cbzero-alloca-2.yml                                                  
+array-memsafety/openbsd_cmemchr-alloca-2.yml                                                 
+array-memsafety/openbsd_cmemrchr-alloca-2.yml                                                
+array-memsafety/openbsd_cmemset-alloca-1.yml                                                 
+array-memsafety/openbsd_cstpcpy-alloca-1.yml                                                 
+array-memsafety/openbsd_cstpncpy-alloca-1.yml                                                
+array-memsafety/openbsd_cstrcat-alloca-2.yml                                                 
+array-memsafety/openbsd_cstrcmp-alloca-1.yml                                                 
+array-memsafety/openbsd_cstrcpy-alloca-2.yml                                                 
+array-memsafety/openbsd_cstrcspn-alloca-2.yml                                                
+array-memsafety/openbsd_cstrlcpy-alloca-1.yml                                                
+array-memsafety/openbsd_cstrlen-alloca-1.yml                                                 
+array-memsafety/openbsd_cstrncat-alloca-2.yml                                                
+array-memsafety/openbsd_cstrncmp-alloca-2.yml                                                
+array-memsafety/openbsd_cstrncpy-alloca-2.yml                                                
+array-memsafety/openbsd_cstrnlen-alloca-1.yml                                                
+array-memsafety/openbsd_cstrpbrk-alloca-2.yml                                                
+array-memsafety/openbsd_cstrspn-alloca-2.yml                                                 
+array-memsafety/openbsd_cstrstr-alloca-2.yml                                                 
+array-memsafety/rec_strlen-alloca-1.yml                                                      
+array-memsafety/reverse_array_alloca_unsafe.yml                                              
+array-memsafety/reverse_array_unsafe.yml                                                     
+array-memsafety/selectionsort-alloca-1.yml                                                   
+array-memsafety/selectionsort_unsafe.yml                                                     
+array-memsafety/stroeder1_unsafe.yml                                                         
+array-memsafety/strreplace-alloca-2.yml                                                      
+array-memsafety/subseq-alloca-2.yml                                                          
+array-memsafety/substring-alloca-2.yml                                                       
+array-memsafety-realloc/array-realloc-1.yml                                                  
+array-memsafety-realloc/array-realloc-2.yml                                                  
+array-memsafety-realloc/array-realloc-3.yml                                                  
+termination-dietlibc/basename-3.yml                                                          
+termination-dietlibc/dirname-2.yml                                                           
+termination-dietlibc/stpcpy.yml                                                              
+termination-dietlibc/strcasecmp.yml                                                          
+termination-dietlibc/strcat.yml                                                              
+termination-dietlibc/strcat_short.yml                                                        
+termination-dietlibc/strchr-1.yml                                                            
+termination-dietlibc/strchr_short.yml                                                        
+termination-dietlibc/strcpy_small.yml                                                        
+termination-dietlibc/strcspn.yml                                                             
+termination-dietlibc/strlcat.yml                                                             
+termination-dietlibc/strlcpy.yml                                                             
+termination-dietlibc/strlen.yml                                                              
+termination-dietlibc/strrchr_short.yml                                                       
+termination-dietlibc/strspn.yml                                                              
+termination-dietlibc/strtok_r.yml                                                            
+termination-dietlibc/wcsstr.yml                                                              
+termination-memory-alloca/Avery-2006FLOPS-Tabel1_true-alloca.yml                             
+termination-memory-alloca/HarrisLalNoriRajamani-2010SAS-Fig1-alloca.yml                      
+termination-memory-alloca/HarrisLalNoriRajamani-2010SAS-Fig3-alloca.yml                      
+termination-memory-alloca/KroeningSharyginaTsitovichWintersteiger-2010CAV-Fig1-alloca.yml    
+termination-memory-alloca/Urban-2013WST-Fig1-alloca.yml                                      
+termination-memory-alloca/Urban-2013WST-Fig2-modified1000-alloca.yml                         
+termination-memory-alloca/Velroyen-alloca.yml                                                
+termination-memory-alloca/a.01-alloca.yml                                                    
+termination-memory-alloca/a.04-alloca.yml                                                    
+termination-memory-alloca/a.05-alloca.yml                                                    
+termination-memory-alloca/a.06-alloca.yml                                                    
+termination-memory-alloca/a.07-alloca.yml                                                    
+termination-memory-alloca/a.08-alloca.yml                                                    
+termination-memory-alloca/a.09_assume-alloca.yml                                             
+termination-memory-alloca/a.10-alloca.yml                                                    
+termination-memory-alloca/aviad_true-alloca.yml                                              
+termination-memory-alloca/b.01-alloca.yml                                                    
+termination-memory-alloca/b.02-alloca.yml                                                    
+termination-memory-alloca/b.03-no-inv_assume-alloca.yml                                      
+termination-memory-alloca/b.03_assume-alloca.yml                                             
+termination-memory-alloca/b.04-alloca.yml                                                    
+termination-memory-alloca/b.05-alloca.yml                                                    
+termination-memory-alloca/b.06-alloca.yml                                                    
+termination-memory-alloca/b.07-alloca.yml                                                    
+termination-memory-alloca/b.09-no-inv_assume-alloca.yml                                      
+termination-memory-alloca/b.09_assume-alloca.yml                                             
+termination-memory-alloca/b.10-alloca.yml                                                    
+termination-memory-alloca/b.11-alloca.yml                                                    
+termination-memory-alloca/b.12-alloca.yml                                                    
+termination-memory-alloca/b.13-alloca.yml                                                    
+termination-memory-alloca/b.14-alloca.yml                                                    
+termination-memory-alloca/b.15-alloca.yml                                                    
+termination-memory-alloca/b.16-alloca.yml                                                    
+termination-memory-alloca/b.17-alloca.yml                                                    
+termination-memory-alloca/b.18-alloca.yml                                                    
+termination-memory-alloca/c.01-no-inv-alloca.yml                                             
+termination-memory-alloca/c.01_assume-alloca.yml                                             
+termination-memory-alloca/c.02-alloca.yml                                                    
+termination-memory-alloca/c.03-alloca-1.yml                                                  
+termination-memory-alloca/c.07-alloca.yml                                                    
+termination-memory-alloca/c.08-alloca.yml                                                    
+termination-memory-alloca/count_down-alloca-2.yml                                            
+termination-memory-alloca/cstrchr-alloca-1.yml                                               
+termination-memory-alloca/cstrcmp-alloca-1.yml                                               
+termination-memory-alloca/cstrcpy-alloca-2.yml                                               
+termination-memory-alloca/cstrcspn-alloca-2.yml                                              
+termination-memory-alloca/cstrlen-alloca-1.yml                                               
+termination-memory-alloca/cstrncpy-alloca-1.yml                                              
+termination-memory-alloca/cstrpbrk-alloca-1.yml                                              
+termination-memory-alloca/cstrspn-alloca-2.yml                                               
+termination-memory-alloca/easySum-alloca.yml                                                 
+termination-memory-alloca/ex3a-alloca.yml                                                    
+termination-memory-alloca/genady-alloca.yml                                                  
+termination-memory-alloca/java_AG313-alloca.yml                                              
+termination-memory-alloca/java_Break-alloca.yml                                              
+termination-memory-alloca/java_Continue1-alloca.yml                                          
+termination-memory-alloca/java_LogBuiltIn-alloca.yml                                         
+termination-memory-alloca/java_Nested-alloca.yml                                             
+termination-memory-alloca/java_Sequence-alloca.yml                                           
+termination-memory-alloca/openbsd_cbzero-alloca-1.yml                                        
+termination-memory-alloca/openbsd_cmemchr-alloca-1.yml                                       
+termination-memory-alloca/openbsd_cmemrchr-alloca-1.yml                                      
+termination-memory-alloca/openbsd_cmemset-alloca-2.yml                                       
+termination-memory-alloca/openbsd_cstpcpy-alloca-2.yml                                       
+termination-memory-alloca/openbsd_cstpncpy-alloca-2.yml                                      
+termination-memory-alloca/openbsd_cstrcpy-alloca-1.yml                                       
+termination-memory-alloca/openbsd_cstrcspn-alloca-1.yml                                      
+termination-memory-alloca/openbsd_cstrlcpy-alloca-2.yml                                      
+termination-memory-alloca/openbsd_cstrlen-alloca-2.yml                                       
+termination-memory-alloca/openbsd_cstrncmp-alloca-1.yml                                      
+termination-memory-alloca/openbsd_cstrncpy-alloca-1.yml                                      
+termination-memory-alloca/openbsd_cstrnlen-alloca-2.yml                                      
+termination-memory-alloca/openbsd_cstrpbrk-alloca-1.yml                                      
+termination-memory-alloca/openbsd_cstrspn-alloca-1.yml                                       
+termination-memory-alloca/rec_strlen-alloca-2.yml                                            
+termination-memory-alloca/strreplace-alloca-1.yml                                            
+termination-memory-alloca/subseq-alloca-1.yml                                                
+termination-memory-alloca/substring-alloca-1.yml                                             
+termination-memory-alloca/twisted-alloca.yml                                                 
+termination-15/array12_alloca.yml                                                            
+termination-15/array13_alloca.yml                                                            
+termination-15/array14_alloca.yml                                                            
+termination-15/array15_alloca.yml                                                            
+termination-15/array16_alloca_fixed.yml                                                      
+termination-15/array16_alloca_original.yml                                                   
+termination-15/array17_alloca.yml                                                            
+termination-15/count_up_alloca.yml                                                           
+termination-15/count_up_and_down_alloca.yml                                                  
+termination-15/cstrcat_reverse_alloca.yml                                                    
+termination-15/cstrchr_diffterm_alloca.yml                                                   
+termination-15/cstrchr_malloc.yml                                                            
+termination-15/cstrchr_reverse_alloca.yml                                                    
+termination-15/cstrcmp_diffterm_alloca.yml                                                   
+termination-15/cstrcmp_malloc.yml                                                            
+termination-15/cstrcmp_mixed_alloca.yml                                                      
+termination-15/cstrcmp_reverse_alloca.yml                                                    
+termination-15/cstrcpy_diffterm_alloca.yml                                                   
+termination-15/cstrcpy_malloc.yml                                                            
+termination-15/cstrcpy_mixed_alloca.yml                                                      
+termination-15/cstrcpy_reverse_alloca.yml                                                    
+termination-15/cstrcspn_diffterm_alloca.yml                                                  
+termination-15/cstrcspn_malloc.yml                                                           
+termination-15/cstrcspn_mixed_alloca.yml                                                     
+termination-15/cstrcspn_reverse_alloca.yml                                                   
+termination-15/cstrlen_diffterm_alloca.yml                                                   
+termination-15/cstrlen_malloc.yml                                                            
+termination-15/cstrlen_reverse_alloca.yml                                                    
+termination-15/cstrncat_reverse_alloca.yml                                                   
+termination-15/cstrncpy_diffterm_alloca.yml                                                  
+termination-15/cstrncpy_malloc.yml                                                           
+termination-15/cstrncpy_mixed_alloca.yml                                                     
+termination-15/cstrncpy_reverse_alloca.yml                                                   
+termination-15/cstrpbrk_diffterm_alloca.yml                                                  
+termination-15/cstrpbrk_malloc.yml                                                           
+termination-15/cstrpbrk_mixed_alloca.yml                                                     
+termination-15/cstrpbrk_reverse_alloca.yml                                                   
+termination-15/cstrspn_diffterm_alloca.yml                                                   
+termination-15/cstrspn_malloc.yml                                                            
+termination-15/cstrspn_reverse_alloca.yml                                                    
+termination-recursive-malloc/chunk1-2.yml                                                    
+termination-recursive-malloc/insertionSort_recursive.yml                                     
+termination-recursive-malloc/mutual_simple.yml                                               
+termination-recursive-malloc/rec_malloc_ex3.yml                                              
+termination-recursive-malloc/rec_strcopy_malloc.yml                                          
+termination-recursive-malloc/selectionSort_recursive.yml                                     
+verifythis/duplets.yml                                                                       
+verifythis/elimination_max.yml                                                               
+verifythis/lcp.yml                                                                           
+verifythis/prefixsum_iter.yml                                                                
+verifythis/linked-list-removal.yml                                                           
+verifythis/prefixsum_rec.yml                                                                 
+verifythis/elimination_max_rec.yml                                                           
+verifythis/elimination_max_rec_onepoint.yml                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 4                                                                                    done                            21.07      148.67           -
+
+Statistics:              6 Files
+  correct:               2
+    correct true:        0
+    correct false:       2
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               4
+  Score:                 2 (max: 7)

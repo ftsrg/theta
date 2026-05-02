@@ -1,0 +1,10 @@
+Theta/theta-start.sh sv-benchmarks/c/product-lines/elevator_spec2_product26.cil.c --svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/product-lines/elevator_spec2_product26.cil.c' using arguments '--svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/product-lines/elevator_spec2_product26.cil.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.

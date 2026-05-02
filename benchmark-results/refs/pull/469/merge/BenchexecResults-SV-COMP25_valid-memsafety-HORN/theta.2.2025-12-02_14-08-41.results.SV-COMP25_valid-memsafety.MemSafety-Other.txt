@@ -1,0 +1,68 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memsafety.MemSafety-Other
+date:                    Tue, 2025-12-02 14:08:41 UTC
+tool:                    Theta 6.27.14
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.54304 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety.MemSafety-Other
+Run set 4 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                       status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------------------------------
+loops/array-1.yml                                               ERROR (server error, after parsing finished)       12.96        5.91        None
+loops/bubble_sort-1.yml                                         ERROR (server error, after parsing finished)       15.44        6.59        None
+loops/heavy-2.yml                                               ERROR (server error, after parsing finished)       28.34       11.18        None
+loops/insertion_sort-1.yml                                      ERROR (server error, after parsing finished)       13.89        6.21        None
+loops/insertion_sort-2.yml                                      ERROR (server error, after parsing finished)       13.86        6.21        None
+loops/invert_string-2.yml                                       ERROR (server error, after parsing finished)       13.59        6.17        None
+loops/matrix-2.yml                                              ERROR (frontend failed, after parsing finished)        1.78        0.72        None
+loops/n.c40.yml                                                 ERROR (frontend failed, after parsing finished)        2.36        0.90        None
+loops/nec40.yml                                                 ERROR (frontend failed, after parsing finished)        2.45        0.92        None
+loops/string-1.yml                                              ERROR (server error, after parsing finished)       16.49        7.19        None
+loops/sum_array-1.yml                                           ERROR (server error, after parsing finished)       12.37        5.84        None
+loops/sum_array-2.yml                                           ERROR (server error, after parsing finished)       15.10        6.63        None
+loops/veris.c_NetBSD-libc_loop.yml                              ERROR (frontend failed, before parsing finished)        1.83        0.71        None
+loops/veris.c_OpenSER_cases1_stripFullBoth_arr.yml              ERROR (frontend failed, before parsing finished)        1.99        0.72        None
+loops/veris.c_sendmail_tTflag_arr_one_loop.yml                  ERROR (server error, after parsing finished)       14.35        6.47        None
+loop-acceleration/array3.yml                                    ERROR (server error, after parsing finished)       14.27        6.38        None
+loop-acceleration/array_1-2.yml                                 ERROR (server error, after parsing finished)       12.83        5.93        None
+loop-acceleration/array_3-1.yml                                 ERROR (server error, after parsing finished)       14.57        6.58        None
+loop-industry-pattern/aiob_4.c.v+cfa-reducer.yml                ERROR (frontend failed, before parsing finished)        2.16        0.79        None
+loop-industry-pattern/aiob_4.c.v+lh-reducer.yml                 ERROR (frontend failed, before parsing finished)        2.15        0.80        None
+loop-industry-pattern/aiob_4.c.v+lhb-reducer.yml                ERROR (frontend failed, before parsing finished)        2.38        0.86        None
+loop-industry-pattern/aiob_4.c.v+nlh-reducer.yml                ERROR (frontend failed, before parsing finished)        2.47        0.88        None
+loops-crafted-1/net_reset.yml                                   ERROR (frontend failed, before parsing finished)        1.99        0.75        None
+locks/test_locks_10.yml                                         TIMEOUT                         40.65       16.39        None
+locks/test_locks_11.yml                                         TIMEOUT                         42.11       13.12        None
+locks/test_locks_12.yml                                         TIMEOUT                         42.09       13.14        None

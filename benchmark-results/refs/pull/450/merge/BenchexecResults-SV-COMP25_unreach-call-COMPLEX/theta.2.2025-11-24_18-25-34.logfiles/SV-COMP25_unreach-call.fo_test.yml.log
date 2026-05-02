@@ -1,0 +1,74 @@
+Theta/theta-start.sh sv-benchmarks/c/ldv-regression/fo_test.i --svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/ldv-regression/fo_test.i' using arguments '--svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/ldv-regression/fo_test.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+ParsingResult Success
+Arithmetic: [NONLIN_INT, ARR]
+ParsingResult Success
+Using portfolio: ARR
+
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/fo_test.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/unreach-call.prp, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=ILP32)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:new, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3:new, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/fo_test.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: ParsingResult Success
+server: Arithmetic: [ARR, NONLIN_INT]
+server: ParsingResult Success
+server: Exception in thread "main" java.lang.IllegalArgumentException
+server: 	at com.google.common.base.Preconditions.checkArgument(Preconditions.java:131)
+server: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter.getMonolithicExpr(XcfaSingleThreadToMonolithicAdapter.kt:81)
+server: 	at hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker.<init>(FormalismPipelineChecker.kt:54)
+server: 	at hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker.<init>(FormalismPipelineChecker.kt:49)
+server: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker.<init>(XcfaPipelineChecker.kt:58)
+server: 	at hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker.<init>(XcfaPipelineChecker.kt:48)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToBoundedCheckerKt.getPipelineChecker(ConfigToBoundedChecker.kt:114)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToBoundedCheckerKt.getBoundedChecker(ConfigToBoundedChecker.kt:75)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:266)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:141)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:63)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex26Kt$complex26$checker$1.invoke(complex26.kt:46)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex26Kt$complex26$checker$1.invoke(complex26.kt:46)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:99)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:63)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:141, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1#invoke:278)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/fo_test.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/unreach-call.prp, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=ILP32)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=BW_BIN_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/fo_test.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: ParsingResult Success
+server: Arithmetic: [ARR, NONLIN_INT]
+server: ParsingResult Success
+server: (SafetyResult Unsafe Trace length: 4)
+server: (Property unreach-call)
+server: (SafetyResult Unsafe Trace length: 4)
+(Property unreach-call)
+(SafetyResult Unsafe Trace length: 0)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/fo_test.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/unreach-call.prp, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=ILP32)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=BW_BIN_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/fo_test.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false)) succeeded in 3783 ms
+success-result: PRED_CART-BW_BIN_ITP-Z3-true
+(Property unreach-call)
+(SafetyResult Unsafe Trace length: 0)
