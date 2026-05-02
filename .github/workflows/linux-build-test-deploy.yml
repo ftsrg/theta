@@ -72,7 +72,7 @@ jobs:
             input_type: software
           # chc
           - tool: Theta-chccomp
-            config: "--input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model --loglevel RESULT"
+            config: "--backend PORTFOLIO --portfolio CHC-COMP --print-model --loglevel RESULT"
             name: CHC-COMP_Portfolio
             input_type: chc
           # hardware
