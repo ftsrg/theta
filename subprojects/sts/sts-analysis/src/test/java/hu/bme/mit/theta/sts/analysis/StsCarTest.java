@@ -66,9 +66,7 @@ public class StsCarTest {
                     {"src/test/resources/counter.system", true},
                     {"src/test/resources/counter_bad.system", false},
                     {"src/test/resources/counter_parametric.system", true},
-
-                    //                {"src/test/resources/loop.system", true},
-
+                    {"src/test/resources/loop.system", true},
                     {"src/test/resources/loop_bad.system", false},
                     {"src/test/resources/multipleinitial.system", false},
                     {"src/test/resources/readerswriters.system", true},
