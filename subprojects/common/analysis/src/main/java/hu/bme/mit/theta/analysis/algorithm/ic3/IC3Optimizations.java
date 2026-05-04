@@ -16,57 +16,16 @@
 
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-public class IC3Optimizations {
+public class IC3Optimizations extends BaseOptimizations {
 
-
-  public boolean isUnSatOpt() {
-    return unSatOpt;
-  }
-
-  public boolean isNotBOpt() {
-    return notBOpt;
-  }
-
-  public boolean isPropagateOpt() {
-    return propagateOpt;
-  }
-
-  public boolean isGeneralizeOpt() {
-    return generalizeOpt;
-  }
-
-  public boolean isFilterOpt() {
-    return filterOpt;
-  }
-
-
-  public boolean isPropertyOpt() {
-    return propertyOpt;
-  }
-
-
-  public boolean isUnsatPropagate() {
-    return unsatPropagate;
-  }
-
-
-  private final boolean unSatOpt;
-  private final boolean notBOpt;
-  private final boolean propagateOpt;
-  private final boolean filterOpt;
-  private final boolean propertyOpt;
-  private final boolean generalizeOpt;
-  private final boolean unsatPropagate;
-
-
-
-  public IC3Optimizations(boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean generalizeOpt, boolean propertyOpt, boolean unsatPropagate) {
-    this.unSatOpt = unSatOpt;
-    this.notBOpt = notBOpt;
-    this.propagateOpt = propagateOpt;
-    this.filterOpt = filterOpt;
-    this.propertyOpt = propertyOpt;
-    this.generalizeOpt = generalizeOpt;
-    this.unsatPropagate = unsatPropagate;
+  public IC3Optimizations(
+      boolean unSatOpt,
+      boolean notBOpt,
+      boolean propagateOpt,
+      boolean filterOpt,
+      boolean generalizeOpt,
+      boolean propertyOpt,
+      boolean unsatPropagateOpt) {
+    super(unSatOpt, notBOpt, propagateOpt, filterOpt, propertyOpt, generalizeOpt, unsatPropagateOpt);
   }
 }

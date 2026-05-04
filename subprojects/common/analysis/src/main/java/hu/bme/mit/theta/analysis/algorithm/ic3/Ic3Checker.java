@@ -295,6 +295,18 @@ public class Ic3Checker
         return null;
     }
 
+    public boolean checkIfExpressionIntersectsInit(Set<Expr<BoolType>> expression){
+        boolean isSat;
+        try (var wpp = new WithPushPop(solver)) {
+            for (Expr<BoolType> expr : expression) {
+                solver.track(PathUtils.unfold(expr, 0));
+            }
+            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
+            isSat = solver.check().isSat();
+        }
+        return isSat;
+    }
+
     private @Nullable Trace<ExplState, ExprAction> checkIfFaultyReachableInOneStep() {
         final Valuation model = frames.getFirst().checkIfTargetIsReachableValuation(Not(monolithicExpr.getPropExpr()));
         if (model != null) {
@@ -317,17 +329,7 @@ public class Ic3Checker
 
 
     }
-    private boolean checkIfExpressionIntersectsInit(Set<Expr<BoolType>> expression){
-        boolean isSat;
-        try (var wpp = new WithPushPop(solver)) {
-            for (Expr<BoolType> expr : expression) {
-                solver.track(PathUtils.unfold(expr, 0));
-            }
-            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
-            isSat = solver.check().isSat();
-        }
-        return isSat;
-    }
+
 
     private @Nullable Trace<ExplState, ExprAction> checkIfFaultyIntersectsInit() {
         Valuation model = frames.getFirst().checkIfContainsValuation(Not(monolithicExpr.getPropExpr()));
@@ -373,7 +375,7 @@ public class Ic3Checker
                         blockedCube.getLiterals()
                                 .forEach(expr -> solver.track(PathUtils.unfold(expr, monolithicExpr.getTransOffsetIndex())));
                         if (solver.check().isUnsat()) {
-                            if(optimizations.isUnsatPropagate()) {
+                            if(optimizations.isUnsatPropagateOpt()) {
                                 var unsatCore = solver.getUnsatCore();
                                 blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unsatCore, false);
 

@@ -16,60 +16,24 @@
 
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-public class CarOptimizations {
+public class CarOptimizations extends BaseOptimizations {
 
+  private final boolean coverOpt;
 
-  public boolean isUnSatOpt() {
-    return unSatOpt;
-  }
-
-  public boolean isNotBOpt() {
-    return notBOpt;
-  }
-
-  public boolean isPropagateOpt() {
-    return propagateOpt;
-  }
-
-  public boolean isGeneralizeOpt() {
-    return generalizeOpt;
-  }
-
-  public boolean isFilterOpt() {
-    return filterOpt;
-  }
-
-  public boolean isPropertyOpt() {
-    return propertyOpt;
-  }
-
-  public boolean isUnsatPropagateOpt() {
-    return unsatPropagateOpt;
+  public CarOptimizations(
+      boolean unSatOpt,
+      boolean notBOpt,
+      boolean propagateOpt,
+      boolean propertyOpt,
+      boolean filterOpt,
+      boolean generalizeOpt,
+      boolean unsatPropagateOpt,
+      boolean coverOpt) {
+    super(unSatOpt, notBOpt, propagateOpt, filterOpt, propertyOpt, generalizeOpt, unsatPropagateOpt);
+    this.coverOpt = coverOpt;
   }
 
   public boolean isCoverOpt() {
     return coverOpt;
-  }
-
-  private final boolean unSatOpt;
-  private final boolean notBOpt;
-  private final boolean propagateOpt;
-  private final boolean propertyOpt;
-  private final boolean filterOpt;
-  private final boolean generalizeOpt;
-  private final boolean unsatPropagateOpt;
-  private final boolean coverOpt;
-
-
-
-  public CarOptimizations(boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean propertyOpt, boolean filterOpt, boolean generalizeOpt, boolean unsatPropagate, boolean coverOpt) {
-    this.unSatOpt = unSatOpt;
-    this.notBOpt = notBOpt;
-    this.propagateOpt = propagateOpt;
-    this.propertyOpt = propertyOpt;
-    this.filterOpt = filterOpt;
-    this.generalizeOpt = generalizeOpt;
-    this.unsatPropagateOpt = unsatPropagate;
-    this.coverOpt = coverOpt;
   }
 }
