@@ -67,4 +67,11 @@ public final class Cube {
     public String toString() {
         return literals.toString();
     }
+
+    public void removeLiteral(Expr<BoolType> redundantLiteral){
+        literals.remove(redundantLiteral);
+    }
+    public void addLiteral(Expr<BoolType> newLiteral){
+        literals.add(newLiteral);
+    }
 }

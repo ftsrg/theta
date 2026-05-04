@@ -118,7 +118,7 @@ public class Ic3Checker
             monolithicExpr.getVars());
     }
 
-    private MutableValuation removeRedundantVariables(Valuation model, ProofObligation proofObligation) {
+    private MutableValuation removeRedundantVariablesFromProofObligation(Valuation model, ProofObligation proofObligation) {
 
         final MutableValuation filteredModel = new MutableValuation();
         monolithicExpr.getVars().stream()
@@ -157,22 +157,14 @@ public class Ic3Checker
         return filteredModel;
     }
 
-    private Cube removeRedundantExpressionsUsingUnsatCore(Cube expressions, Collection<Expr<BoolType>> unSatCore){
+    private Cube removeRedundantExpressionsUsingUnsatCore(Cube expressions, Collection<Expr<BoolType>> unSatCore, boolean canIntersectInit){
         final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
         minimalExpressions.addAll(expressions.getLiterals());
         for (Expr<BoolType> expr : expressions.getLiterals()) {
             if (!unSatCore.contains(
                 PathUtils.unfold(expr, monolithicExpr.getTransOffsetIndex()))) {
                 minimalExpressions.remove(expr);
-                final boolean isSat;
-                try (var wpp = new WithPushPop(solver)) {
-                    for (Expr<BoolType> solverExpr : minimalExpressions) {
-                        solver.track(PathUtils.unfold(solverExpr, 0));
-                    }
-                    solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
-                    isSat = solver.check().isSat();
-                }
-                if (isSat) {
+                if(!canIntersectInit && checkIfExpressionIntersectsInit(minimalExpressions)) {
                     minimalExpressions.add(expr);
                 }
             }
@@ -203,11 +195,6 @@ public class Ic3Checker
                     solver.track(PathUtils.unfold(proofObligation.getCube().negate().toExpr(), 0));
                 }
 
-                /*
-                if (proofObligation.getTime() > 2 && optimizations.isFormerFramesopt()) {
-                    frames.get(proofObligation.getTime() - 2).addNegatedFrameToSolver(VarIndexingFactory.indexing(0));
-                }*/
-
                 getConjuncts(monolithicExpr.getTransExpr())
                     .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
                 proofObligation
@@ -218,6 +205,7 @@ public class Ic3Checker
                             solver.track(
                                 PathUtils.unfold(
                                     ex, monolithicExpr.getTransOffsetIndex())));
+
                 solverStatus = solver.check();
                 if (solverStatus.isSat()) {
                     model = solver.getModel();
@@ -230,7 +218,7 @@ public class Ic3Checker
             if (solverStatus.isSat()) {
                 final MutableValuation filteredModel;
                 if (optimizations.isFilterOpt()) {
-                    filteredModel = removeRedundantVariables(model, proofObligation);
+                    filteredModel = removeRedundantVariablesFromProofObligation(model, proofObligation);
                 }else {
                     filteredModel = MutableValuation.copyOf(model);
                 }
@@ -239,11 +227,11 @@ public class Ic3Checker
             }else{
                 Cube blockedExpression = proofObligation.getCube();
                 if (optimizations.isUnSatOpt()) {
-                    blockedExpression = removeRedundantExpressionsUsingUnsatCore(blockedExpression, unSatCore);
+                    blockedExpression = removeRedundantExpressionsUsingUnsatCore(blockedExpression, unSatCore, false);
                 }
 
                 if(optimizations.isGeneralizeOpt()) {
-                    blockedExpression = generalizeIter(blockedExpression,proofObligation.getTime());
+                    blockedExpression = generalizeIter(blockedExpression, proofObligation.getTime());
                 }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
                     frames.get(i).refine(blockedExpression);
@@ -255,37 +243,40 @@ public class Ic3Checker
     }
 
     private Cube generalizeIter(Cube blockedExpression, int currentFrameNumber) {
+        boolean canIntersectInit = false;
         boolean done = false;
         boolean isSat;
-        final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
+        Cube minimalCube = Cube.of(blockedExpression.getLiterals());
+        //final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
         Collection<Expr<BoolType>> unSatCore = null;
-        minimalExpressions.addAll(blockedExpression.getLiterals());
+        //minimalExpressions.addAll(blockedExpression.getLiterals());
 
         while (!done) {
             done = true;
             final var firstCopiedExpressions = new HashSet<Expr<BoolType>>();
-            firstCopiedExpressions.addAll(minimalExpressions);
+            firstCopiedExpressions.addAll(minimalCube.getLiterals());
             for (Expr<BoolType> expr : firstCopiedExpressions) {
-                minimalExpressions.remove(expr);
-                if(checkIfExpressionIntersectsInit(minimalExpressions)) {
-                    minimalExpressions.add(expr);
+                minimalCube.removeLiteral(expr);
+                if(!canIntersectInit && checkIfExpressionIntersectsInit(minimalCube.getLiterals())) {
+                    minimalCube.addLiteral(expr);
                 }else{
                     try (var wpp = new WithPushPop(solver)) {
                         frames.get(currentFrameNumber - 1).addFrameToSolver(VarIndexingFactory.indexing(0));
 
-                        for (Expr<BoolType> solverExpr : minimalExpressions) {
+                        for (Expr<BoolType> solverExpr : minimalCube.getLiterals()) {
                             solver.track(PathUtils.unfold(solverExpr, 0));
                         }
                         getConjuncts(monolithicExpr.getTransExpr())
                             .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                        solver.track(PathUtils.unfold(Not(And(minimalExpressions)),monolithicExpr.getTransOffsetIndex()));
+                        minimalCube.negate().getLiterals().
+                            forEach(ex -> solver.track(PathUtils.unfold(ex, monolithicExpr.getTransOffsetIndex())));
                         isSat = solver.check().isSat();
                         if(!isSat) {
                             unSatCore = solver.getUnsatCore();
                         }
                     }
                     if(!isSat) {
-                        removeRedundantExpressionsUsingUnsatCore(Cube.of(minimalExpressions), unSatCore);
+                        minimalCube =  removeRedundantExpressionsUsingUnsatCore(minimalCube, unSatCore, false);
                         done = false;
                     }
                 }
@@ -383,7 +374,7 @@ public class Ic3Checker
                         if (solver.check().isUnsat()) {
                             if(optimizations.isUnsatPropagate()) {
                                 var unsatCore = solver.getUnsatCore();
-                                blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unsatCore);
+                                blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unsatCore, false);
 
                                 if (blockedCube.getLiterals().size()<clause.getLiterals().size()) {
                                     for(int k = 1; k <= j; k++){
