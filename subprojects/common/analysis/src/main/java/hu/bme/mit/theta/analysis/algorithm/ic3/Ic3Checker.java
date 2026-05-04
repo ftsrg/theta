@@ -44,7 +44,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -137,12 +136,12 @@ public class Ic3Checker
             filteredModel.put(var, negatedValue);
             //todo use push/pop
             try (var wpp2 = new WithPushPop(solver)) {
-                var a = PathUtils.unfold(filteredModel.toExpr(), 0);
                 solver.track(PathUtils.unfold(filteredModel.toExpr(), 0));
                 getConjuncts(monolithicExpr.getTransExpr())
                     .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
                 proofObligation
-                    .getExpressions()
+                    .getCube()
+                    .getLiterals()
                     .forEach(
                         ex ->
                             solver.track(
@@ -158,10 +157,10 @@ public class Ic3Checker
         return filteredModel;
     }
 
-    private Set<Expr<BoolType>> removeRedundantExpressionsUsingUnsatCore(Set<Expr<BoolType>> expressions, Collection<Expr<BoolType>> unSatCore){
+    private Cube removeRedundantExpressionsUsingUnsatCore(Cube expressions, Collection<Expr<BoolType>> unSatCore){
         final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
-        minimalExpressions.addAll(expressions);
-        for (Expr<BoolType> expr : expressions) {
+        minimalExpressions.addAll(expressions.getLiterals());
+        for (Expr<BoolType> expr : expressions.getLiterals()) {
             if (!unSatCore.contains(
                 PathUtils.unfold(expr, monolithicExpr.getTransOffsetIndex()))) {
                 minimalExpressions.remove(expr);
@@ -178,7 +177,7 @@ public class Ic3Checker
                 }
             }
         }
-        return minimalExpressions;
+        return Cube.of(minimalExpressions);
     }
 
 
@@ -195,12 +194,13 @@ public class Ic3Checker
             final SolverStatus solverStatus;
             final Collection<Expr<BoolType>> unSatCore;
             final Valuation model;
+
             try (var wpp = new WithPushPop(solver)) {
 
                 frames.get(proofObligation.getTime() - 1).addFrameToSolver(VarIndexingFactory.indexing(0));
 
                 if (optimizations.isNotBOpt()) {
-                    solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())), 0));
+                    solver.track(PathUtils.unfold(proofObligation.getCube().negate().toExpr(), 0));
                 }
 
                 /*
@@ -211,7 +211,8 @@ public class Ic3Checker
                 getConjuncts(monolithicExpr.getTransExpr())
                     .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
                 proofObligation
-                    .getExpressions()
+                    .getCube()
+                    .getLiterals()
                     .forEach(
                         ex ->
                             solver.track(
@@ -234,9 +235,9 @@ public class Ic3Checker
                     filteredModel = MutableValuation.copyOf(model);
                 }
                 final Collection<Expr<BoolType>> reachableExprInFormerFrame = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
-                proofObligationsQueue.add(new ProofObligation(new HashSet<>(reachableExprInFormerFrame), proofObligation.getTime() - 1));
+                proofObligationsQueue.add(new ProofObligation(Cube.of(reachableExprInFormerFrame), proofObligation.getTime() - 1));
             }else{
-                Set<Expr<BoolType>> blockedExpression = proofObligation.getExpressions();
+                Cube blockedExpression = proofObligation.getCube();
                 if (optimizations.isUnSatOpt()) {
                     blockedExpression = removeRedundantExpressionsUsingUnsatCore(blockedExpression, unSatCore);
                 }
@@ -245,7 +246,7 @@ public class Ic3Checker
                     blockedExpression = generalizeIter(blockedExpression,proofObligation.getTime());
                 }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
-                    frames.get(i).refine(Cube.of(blockedExpression));
+                    frames.get(i).refine(blockedExpression);
                 }
                 proofObligationsQueue.removeLast();
             }
@@ -253,12 +254,12 @@ public class Ic3Checker
         return null;
     }
 
-    private Set<Expr<BoolType>> generalizeIter(Set<Expr<BoolType>> blockedExpression, int currentFrameNumber) {
+    private Cube generalizeIter(Cube blockedExpression, int currentFrameNumber) {
         boolean done = false;
         boolean isSat;
         final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
         Collection<Expr<BoolType>> unSatCore = null;
-        minimalExpressions.addAll(blockedExpression);
+        minimalExpressions.addAll(blockedExpression.getLiterals());
 
         while (!done) {
             done = true;
@@ -284,7 +285,7 @@ public class Ic3Checker
                         }
                     }
                     if(!isSat) {
-                        removeRedundantExpressionsUsingUnsatCore(minimalExpressions, unSatCore);
+                        removeRedundantExpressionsUsingUnsatCore(Cube.of(minimalExpressions), unSatCore);
                         done = false;
                     }
                 }
@@ -361,7 +362,7 @@ public class Ic3Checker
         if (interSection == null){
             return null;
         }
-        return new ProofObligation(interSection, currentFrameNumber);
+        return new ProofObligation(Cube.of(interSection), currentFrameNumber);
     }
 
     public boolean propagate() {
@@ -382,7 +383,7 @@ public class Ic3Checker
                         if (solver.check().isUnsat()) {
                             if(optimizations.isUnsatPropagate()) {
                                 var unsatCore = solver.getUnsatCore();
-                                blockedCube = Cube.of(removeRedundantExpressionsUsingUnsatCore(blockedCube.getLiterals(), unsatCore));
+                                blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unsatCore);
 
                                 if (blockedCube.getLiterals().size()<clause.getLiterals().size()) {
                                     for(int k = 1; k <= j; k++){
@@ -414,7 +415,7 @@ public class Ic3Checker
 
             if (!abstractStates.isEmpty())
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
-            abstractStates.add(PredState.of(currentProofObligation.getExpressions()));
+            abstractStates.add(PredState.of(currentProofObligation.getCube().getLiterals()));
         }
         if (optimizations.isPropertyOpt()) {
             abstractActions.add(MonolithicExprKt.action(monolithicExpr));

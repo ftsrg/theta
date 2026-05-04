@@ -31,12 +31,9 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.car.CarCegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.car.CarChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.algorithm.ic3.CarCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.ic3.CarOptimizations;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -56,8 +53,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public class StsCarCegarTest {
     public String filePath;
@@ -109,13 +104,7 @@ public class StsCarCegarTest {
                                     Z3LegacySolverFactory.getInstance(),
                                     ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                                         Z3LegacySolverFactory.getInstance()),
-                                    false,
-                                    true,
-                                    true,
-                                    true,
-                                    true,
-                                    true,
-                                    true,
+                                    new CarOptimizations(true, true,true, true, true, true, true, true),
                                     logger),
                         List.of(),
                         List.of(),

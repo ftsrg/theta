@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.car;
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof;
@@ -39,15 +39,12 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
@@ -65,21 +62,16 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
   private List<OverFrame> forwardOverFrames;
   private final SolverFactory solverFactory;
   private final UCSolver solver;
-  private final boolean formerFramesOpt;
-  private final boolean unSatOpt;
-  private final boolean notBOpt;
-  private final boolean propagateOpt;
-  private final boolean filterOpt;
+
+
+  private final CarOptimizations carOptimizations;
+
   private int currentFrameNumber;
-  private final boolean propertyOpt;
+
 
   private final boolean curFrameopt = false;
 
-  public boolean isCoverOpt() {
-    return coverOpt;
-  }
 
-  private final boolean coverOpt;
   private final Logger logger;
 
   private final Map<Node, Boolean> currentlyVisited;
@@ -107,36 +99,27 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     this(
         monolithicExpr,
         solverFactory,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
+        new CarOptimizations(
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true),
         logger);
   }
 
   public CarChecker(
       MonolithicExpr monolithicExpr,
       SolverFactory solverFactory,
-      boolean formerFramesOpt,
-      boolean unSatOpt,
-      boolean notBOpt,
-      boolean propagateOpt,
-      boolean filterOpt,
-      boolean propertyOpt,
-      boolean coverOpt,
+      CarOptimizations carOptimizations,
       Logger logger) {
+
     this.monolithicExpr = monolithicExpr;
-    this.formerFramesOpt = formerFramesOpt;
-    this.unSatOpt = unSatOpt;
-    this.notBOpt = notBOpt;
-    this.propagateOpt = propagateOpt;
-    this.filterOpt = filterOpt;
-    this.propertyOpt = propertyOpt;
     this.logger = logger;
-    this.coverOpt = coverOpt;
+    this.carOptimizations = carOptimizations;
     this.solverFactory = solverFactory;
     forwardOverFrames = new ArrayList<>();
     solver = solverFactory.createUCSolver();
@@ -144,14 +127,14 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     forwardOverFrames.get(0).refine(monolithicExpr.getInitExpr());
     currentFrameNumber = 0;
     valuations = new ArrayList<>();
-    root = new Node(Not(monolithicExpr.getPropExpr()),null, coverOpt, solver);
+    root = new Node(Not(monolithicExpr.getPropExpr()),null, carOptimizations.isCoverOpt(), solver);
     currentlyVisited = Containers.createMap();
 
   }
 
   private Node getNotCheckedNode(){
     if(currentlyVisited.size()==0){
-      root = new Node(Not(monolithicExpr.getPropExpr()),null, coverOpt, solver);
+      root = new Node(Not(monolithicExpr.getPropExpr()),null, carOptimizations.isCoverOpt(), solver);
       currentlyVisited.put(root,false);
     }
     for(Node node : currentlyVisited.keySet()){ //todo can be more faster if the nodes visited in a more specific order
@@ -171,10 +154,9 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     noNodeIsVisited();
     pruneLength = 0;
     root.setExprs(Not(monolithicExpr.getPropExpr()));
-    //forwardOverFrames = new ArrayList<>();
-    //forwardOverFrames.clear();
-    //forwardOverFrames.add(new OverFrame(null, solver, monolithicExpr));
+
     forwardOverFrames.get(0).refine(monolithicExpr.getInitExpr()); // todo only add neccessary formula
+
     // check if init violates prop
     var faultyNodeInit = checkFirst();
     if (faultyNodeInit != null) {
@@ -192,7 +174,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         Node counterExampleNode = checkCurrentFrame(node);
         if (counterExampleNode != null) {
           var faultyNode =
-              tryBlock(new ProofObligation(counterExampleNode, currentFrameNumber));
+              tryBlock(new ProofObligationCar(counterExampleNode, currentFrameNumber));
           if (faultyNode != null) {
             var trace = makeTrace(faultyNode);
             if(trace != null){
@@ -236,11 +218,11 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
   }
 
-  Node tryBlock(ProofObligation mainProofObligation) {
-    final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<ProofObligation>();
+  Node tryBlock(ProofObligationCar mainProofObligation) {
+    final LinkedList<ProofObligationCar> proofObligationsQueue = new LinkedList<ProofObligationCar>();
     proofObligationsQueue.add(mainProofObligation);
     while (!proofObligationsQueue.isEmpty()) {
-      final ProofObligation proofObligation = proofObligationsQueue.getLast();
+      final ProofObligationCar proofObligation = proofObligationsQueue.getLast();
 
       if (proofObligation.getTime() == 0) {
         return proofObligation.getNode();
@@ -253,9 +235,10 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         forwardOverFrames.get(proofObligation.getTime() - 1)
             .getExprs()
             .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-        if (notBOpt) {
+        if (carOptimizations.isNotBOpt()) {
           solver.track(PathUtils.unfold(Not(And(proofObligation.getNode().getExprs())), 0));
         }
+        /*
         if (proofObligation.getTime() > 2 && formerFramesOpt) { // lehet, hogy 1, vagy 2??
           solver.track(
               PathUtils.unfold(
@@ -263,7 +246,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                   monolithicExpr
                       .getTransOffsetIndex())); // 2 vel korábbi frame-ban
           // levő dolgok
-        }
+        }*/
 
         getConjuncts(monolithicExpr.getTransExpr())
             .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -284,7 +267,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
               .map(varDecl -> varDecl.getConstDecl(0))
               .filter(model.toMap()::containsKey)
               .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-          if (filterOpt) {
+          if (carOptimizations.isFilterOpt()) {
             var vars = Containers.createSet(filteredModel.toMap().keySet());
             for (var var : vars) {
               if (!(var.getType() instanceof BoolType)) {
@@ -319,7 +302,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
         final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
         newCore.addAll(proofObligation.getNode().getExprs());
-        if (unSatOpt) {
+        if (carOptimizations.isNotBOpt()) {
           for (Expr<BoolType> i : proofObligation.getNode().getExprs()) {
             if (!unSatCore.contains(
                 PathUtils.unfold(i, monolithicExpr.getTransOffsetIndex()))) {
@@ -343,16 +326,16 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         }
         proofObligationsQueue.removeLast();
       } else {
-        Node newNode = new Node(And(b),proofObligation.getNode(),coverOpt, solver);
+        Node newNode = new Node(And(b),proofObligation.getNode(),carOptimizations.isCoverOpt(), solver);
         currentlyVisited.put(newNode,false);
-        proofObligationsQueue.add(new ProofObligation(newNode, proofObligation.getTime() - 1));
+        proofObligationsQueue.add(new ProofObligationCar(newNode, proofObligation.getTime() - 1));
       }
     }
     return null;
   }
 
   public Node checkFirst() {
-    if (propertyOpt) {
+    if (carOptimizations.isPropertyOpt()) {
       try (var wpp = new WithPushPop(solver)) {
         solver.track(
             PathUtils.unfold(
@@ -375,7 +358,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
           var counterExample = getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
 
-          Node newNode = new Node(And(counterExample),root,coverOpt,solver);
+          Node newNode = new Node(And(counterExample),root,carOptimizations.isCoverOpt(),solver);
 
           currentlyVisited.put(newNode,false);
 
@@ -392,7 +375,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
   }
   public Node checkCurrentFrame(Node target) {
-    if (propertyOpt) {
+    if (carOptimizations.isPropertyOpt()) {
 
       try (var wpp = new WithPushPop(solver)) {
         forwardOverFrames.get(currentFrameNumber)
@@ -411,7 +394,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
           var counterExample = getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
 
-          Node newNode = new Node(And(counterExample),target,coverOpt,solver);
+          Node newNode = new Node(And(counterExample),target,carOptimizations.isCoverOpt(),solver);
 
           currentlyVisited.put(newNode,false);
 
@@ -428,7 +411,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
       if(counterExample == null){
         return null; //no intersection found
       }else{
-        Node newNode = new Node(And(counterExample),target,coverOpt,solver);
+        Node newNode = new Node(And(counterExample),target,carOptimizations.isCoverOpt(),solver);
 
         currentlyVisited.put(newNode,false);
         return newNode;
@@ -447,11 +430,11 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
       forwardOverFrames.add(new OverFrame(forwardOverFrames.get(currentFrameNumber), solver, monolithicExpr));
     }
     currentFrameNumber++;
-    if (propertyOpt) {
+    if (carOptimizations.isPropertyOpt()) {
       forwardOverFrames.get(currentFrameNumber).refine(monolithicExpr.getPropExpr());
     }
 
-    if (propagateOpt) {
+    if (carOptimizations.isPropagateOpt()) {
       for (int j = 1; j < currentFrameNumber; j++) {
         for (var c : forwardOverFrames.get(j).getExprs()) {
           try (var wpp = new WithPushPop(solver)) {

@@ -31,12 +31,10 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.car.CarChecker;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.ic3.CarChecker;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -105,13 +103,6 @@ public class StsCarTest {
                         monolithicExpr ->
                                 new CarChecker(monolithicExpr,
                                     Z3LegacySolverFactory.getInstance(),
-                                    false,
-                                    true,
-                                    true,
-                                    true,
-                                    true,
-                                    true,
-                                    true,
                                     logger),
                         List.of(),
                         List.of(),

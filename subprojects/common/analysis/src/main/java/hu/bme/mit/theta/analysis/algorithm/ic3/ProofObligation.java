@@ -20,11 +20,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.Set;
 
 public class ProofObligation {
-    private Set<Expr<BoolType>> expressions;
+    private Cube cube;
     private int time;
 
-    ProofObligation(Set<Expr<BoolType>> expressions, int time) {
-        this.expressions = expressions;
+    ProofObligation(Cube cube, int time) {
+        this.cube = cube;
         this.time = time;
     }
 
@@ -32,7 +32,7 @@ public class ProofObligation {
         return time;
     }
 
-    public Set<Expr<BoolType>> getExpressions() {
-        return expressions;
+    public Cube getCube() {
+        return cube;
     }
 }

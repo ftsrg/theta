@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.car;
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.common.container.Containers;
@@ -27,7 +27,6 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;

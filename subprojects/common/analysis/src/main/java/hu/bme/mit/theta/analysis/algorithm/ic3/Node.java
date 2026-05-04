@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.car;
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,9 +28,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.HashSet;
 import java.util.Set;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 public class Node {
 

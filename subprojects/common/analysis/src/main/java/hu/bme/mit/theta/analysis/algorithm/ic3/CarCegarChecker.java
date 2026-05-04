@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.car;
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.Trace;
@@ -33,46 +33,25 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.UCSolver;
 import kotlin.jvm.functions.Function1;
-
-import java.util.*;
 
 public class CarCegarChecker<S extends ExprState, A extends ExprAction>
     implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
   private MonolithicExpr monolithicExpr;
   private final Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> traceCheckerFactory;
   private final SolverFactory solverFactory;
-  private final boolean formerFramesOpt;
-  private final boolean unSatOpt;
-  private final boolean notBOpt;
-  private final boolean propagateOpt;
-  private final boolean filterOpt;
-  private final boolean coverOpt;
-  private final boolean propertyOpt;
+  private final CarOptimizations carOptimizations;
   private final Logger logger;
 
   public CarCegarChecker(
       MonolithicExpr monolithicExpr,
       SolverFactory solverFactory,
       Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> traceCheckerFactory,
-      boolean formerFramesOpt,
-      boolean unSatOpt,
-      boolean notBOpt,
-      boolean propagateOpt,
-      boolean filterOpt,
-      boolean propertyOpt,
-      boolean coverOpt,
+      CarOptimizations carOptimizations,
       Logger logger) {
     this.monolithicExpr = monolithicExpr;
     this.traceCheckerFactory = traceCheckerFactory;
-    this.formerFramesOpt = formerFramesOpt;
-    this.unSatOpt = unSatOpt;
-    this.notBOpt = notBOpt;
-    this.propagateOpt = propagateOpt;
-    this.filterOpt = filterOpt;
-    this.propertyOpt = propertyOpt;
-    this.coverOpt = coverOpt;
+    this.carOptimizations = carOptimizations;
     this.logger = logger;
     this.solverFactory = solverFactory;
   }
@@ -85,13 +64,7 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
         new CarChecker<>(
             abstractModel,
             solverFactory,
-            formerFramesOpt,
-            unSatOpt,
-            notBOpt,
-            propagateOpt,
-            filterOpt,
-            propertyOpt,
-            coverOpt,
+            carOptimizations,
             logger);
     while(true){
       logger.write(Logger.Level.SUBSTEP, "Current prec: %s\n", helper.currentPrec);

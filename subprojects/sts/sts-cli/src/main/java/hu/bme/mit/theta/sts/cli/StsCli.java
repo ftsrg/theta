@@ -32,11 +32,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
-import hu.bme.mit.theta.analysis.algorithm.car.CarCegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.car.CarChecker;
+import hu.bme.mit.theta.analysis.algorithm.ic3.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.ic3.IC3Optimizations;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -206,13 +203,6 @@ public class StsCli {
                 return (monolithicExpr ->
                     new CarChecker(monolithicExpr,
                         solverFactory,
-                        false,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
                         logger));
             }
         },
@@ -230,13 +220,7 @@ public class StsCli {
                         solverFactory,
                         ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                             Z3LegacySolverFactory.getInstance()),
-                        false,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
+                        new CarOptimizations(true, true,true, true, true, true, true, true),
                         logger));
             }
         },

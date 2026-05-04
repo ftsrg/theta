@@ -14,24 +14,14 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.car;
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import java.util.Set;
-
-public class ProofObligation {
-
-
+public class ProofObligationCar {
   private int time;
-
-
-
 
   private Node node;
 
-  ProofObligation(Node node, int time) {
+  ProofObligationCar(Node node, int time) {
     this.node = node;
     this.time = time;
   }
