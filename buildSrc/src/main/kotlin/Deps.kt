@@ -60,6 +60,8 @@ object Deps {
     )
     val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
+    val refinery = "tools.refinery:refinery-generator:${Versions.refinery}"
+
     val jcommander = "org.jcommander:jcommander:${Versions.jcommander}"
 
     val pnmlCore = "fr.lip6.pnml:fr.lip6.pnml.framework.coremodel:${Versions.pnmlFramework}"
