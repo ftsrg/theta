@@ -134,7 +134,7 @@ public class Ic3Checker
             var negatedValue =
                 BoolLitExpr.of(!((BoolLitExpr) origValue).getValue());
             filteredModel.put(var, negatedValue);
-            //todo use push/pop
+
             try (var wpp2 = new WithPushPop(solver)) {
                 solver.track(PathUtils.unfold(filteredModel.toExpr(), 0));
                 getConjuncts(monolithicExpr.getTransExpr())
@@ -231,7 +231,7 @@ public class Ic3Checker
                 }
 
                 if(optimizations.isGeneralizeOpt()) {
-                    blockedExpression = generalizeIter(blockedExpression, proofObligation.getTime());
+                    blockedExpression = generalizeIter(blockedExpression, proofObligation.getTime(), false);
                 }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
                     frames.get(i).refine(blockedExpression);
@@ -242,11 +242,10 @@ public class Ic3Checker
         return null;
     }
 
-    private Cube generalizeIter(Cube blockedExpression, int currentFrameNumber) {
-        boolean canIntersectInit = false;
+    private Cube generalizeIter(Cube blockedCube, int currentFrameNumber, boolean canIntersectInit) {
         boolean done = false;
         boolean isSat;
-        Cube minimalCube = Cube.of(blockedExpression.getLiterals());
+        Cube minimalCube = Cube.of(blockedCube.getLiterals());
         //final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
         Collection<Expr<BoolType>> unSatCore = null;
         //minimalExpressions.addAll(blockedExpression.getLiterals());
@@ -276,13 +275,15 @@ public class Ic3Checker
                         }
                     }
                     if(!isSat) {
-                        minimalCube =  removeRedundantExpressionsUsingUnsatCore(minimalCube, unSatCore, false);
+                        minimalCube =  removeRedundantExpressionsUsingUnsatCore(minimalCube, unSatCore, canIntersectInit);
                         done = false;
+                    } else {
+                        minimalCube.addLiteral(expr);
                     }
                 }
             }
         }
-        return blockedExpression;
+        return blockedCube;
     }
 
     public Trace<ExplState, ExprAction> checkFirst() {
