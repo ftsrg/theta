@@ -38,22 +38,22 @@ import kotlin.jvm.functions.Function1;
 public class CarCegarChecker<S extends ExprState, A extends ExprAction>
     implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
   private MonolithicExpr monolithicExpr;
-  private final Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> traceCheckerFactory;
   private final SolverFactory solverFactory;
-  private final CarOptimizations carOptimizations;
+  private final CarOptimizations optimizations;
   private final Logger logger;
+  private final Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> traceCheckerFactory;
 
   public CarCegarChecker(
       MonolithicExpr monolithicExpr,
       SolverFactory solverFactory,
       Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> traceCheckerFactory,
-      CarOptimizations carOptimizations,
+      CarOptimizations optimizations,
       Logger logger) {
     this.monolithicExpr = monolithicExpr;
-    this.traceCheckerFactory = traceCheckerFactory;
-    this.carOptimizations = carOptimizations;
-    this.logger = logger;
     this.solverFactory = solverFactory;
+    this.optimizations = optimizations;
+    this.logger = logger;
+    this.traceCheckerFactory = traceCheckerFactory;
   }
 
   @Override
@@ -64,7 +64,7 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
         new CarChecker<>(
             abstractModel,
             solverFactory,
-            carOptimizations,
+            optimizations,
             logger);
     while(true){
       logger.write(Logger.Level.SUBSTEP, "Current prec: %s\n", helper.currentPrec);

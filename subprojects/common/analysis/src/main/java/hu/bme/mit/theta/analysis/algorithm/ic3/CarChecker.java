@@ -53,26 +53,15 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 public class CarChecker<S extends ExprState, A extends ExprAction>
-    implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
+    extends HardwareChecker<CarOptimizations> {
   public void setMonolithicExpr(MonolithicExpr monolithicExpr) {
     this.monolithicExpr = monolithicExpr;
   }
 
-  private MonolithicExpr monolithicExpr;
   private List<OverFrame> forwardOverFrames;
-  private final SolverFactory solverFactory;
-  private final UCSolver solver;
-
-
-  private final CarOptimizations carOptimizations;
-
-  private int currentFrameNumber;
 
 
   private final boolean curFrameopt = false;
-
-
-  private final Logger logger;
 
   private final Map<Node, Boolean> currentlyVisited;
 
@@ -114,27 +103,22 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
   public CarChecker(
       MonolithicExpr monolithicExpr,
       SolverFactory solverFactory,
-      CarOptimizations carOptimizations,
+      CarOptimizations optimizations,
       Logger logger) {
 
-    this.monolithicExpr = monolithicExpr;
-    this.logger = logger;
-    this.carOptimizations = carOptimizations;
-    this.solverFactory = solverFactory;
+    super(monolithicExpr, solverFactory, optimizations, logger);
     forwardOverFrames = new ArrayList<>();
-    solver = solverFactory.createUCSolver();
     forwardOverFrames.add(new OverFrame(null, solver, monolithicExpr));
     forwardOverFrames.get(0).refine(monolithicExpr.getInitExpr());
-    currentFrameNumber = 0;
     valuations = new ArrayList<>();
-    root = new Node(Not(monolithicExpr.getPropExpr()),null, carOptimizations.isCoverOpt(), solver);
+    root = new Node(Not(monolithicExpr.getPropExpr()),null, optimizations.isCoverOpt(), solver);
     currentlyVisited = Containers.createMap();
 
   }
 
   private Node getNotCheckedNode(){
     if(currentlyVisited.size()==0){
-      root = new Node(Not(monolithicExpr.getPropExpr()),null, carOptimizations.isCoverOpt(), solver);
+      root = new Node(Not(monolithicExpr.getPropExpr()),null, optimizations.isCoverOpt(), solver);
       currentlyVisited.put(root,false);
     }
     for(Node node : currentlyVisited.keySet()){ //todo can be more faster if the nodes visited in a more specific order
@@ -155,10 +139,10 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     pruneLength = 0;
     root.setExprs(Not(monolithicExpr.getPropExpr()));
 
-    forwardOverFrames.get(0).refine(monolithicExpr.getInitExpr()); // todo only add neccessary formula
+    forwardOverFrames.get(0).refine(monolithicExpr.getInitExpr());
 
     // check if init violates prop
-    var faultyNodeInit = checkFirst();
+    var faultyNodeInit = checkFirstCar();
     if (faultyNodeInit != null) {
       var trace = makeTrace(faultyNodeInit);
       final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
@@ -235,7 +219,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         forwardOverFrames.get(proofObligation.getTime() - 1)
             .getExprs()
             .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-        if (carOptimizations.isNotBOpt()) {
+        if (optimizations.isNotBOpt()) {
           solver.track(PathUtils.unfold(Not(And(proofObligation.getNode().getExprs())), 0));
         }
         /*
@@ -267,7 +251,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
               .map(varDecl -> varDecl.getConstDecl(0))
               .filter(model.toMap()::containsKey)
               .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-          if (carOptimizations.isFilterOpt()) {
+          if (optimizations.isFilterOpt()) {
             var vars = Containers.createSet(filteredModel.toMap().keySet());
             for (var var : vars) {
               if (!(var.getType() instanceof BoolType)) {
@@ -302,7 +286,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
         final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
         newCore.addAll(proofObligation.getNode().getExprs());
-        if (carOptimizations.isNotBOpt()) {
+        if (optimizations.isNotBOpt()) {
           for (Expr<BoolType> i : proofObligation.getNode().getExprs()) {
             if (!unSatCore.contains(
                 PathUtils.unfold(i, monolithicExpr.getTransOffsetIndex()))) {
@@ -326,7 +310,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         }
         proofObligationsQueue.removeLast();
       } else {
-        Node newNode = new Node(And(b),proofObligation.getNode(),carOptimizations.isCoverOpt(), solver);
+        Node newNode = new Node(And(b),proofObligation.getNode(),optimizations.isCoverOpt(), solver);
         currentlyVisited.put(newNode,false);
         proofObligationsQueue.add(new ProofObligationCar(newNode, proofObligation.getTime() - 1));
       }
@@ -334,8 +318,8 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     return null;
   }
 
-  public Node checkFirst() {
-    if (carOptimizations.isPropertyOpt()) {
+  public Node checkFirstCar() {
+    if (optimizations.isPropertyOpt()) {
       try (var wpp = new WithPushPop(solver)) {
         solver.track(
             PathUtils.unfold(
@@ -358,7 +342,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
           var counterExample = getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
 
-          Node newNode = new Node(And(counterExample),root,carOptimizations.isCoverOpt(),solver);
+          Node newNode = new Node(And(counterExample),root,optimizations.isCoverOpt(),solver);
 
           currentlyVisited.put(newNode,false);
 
@@ -375,7 +359,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
   }
   public Node checkCurrentFrame(Node target) {
-    if (carOptimizations.isPropertyOpt()) {
+    if (optimizations.isPropertyOpt()) {
 
       try (var wpp = new WithPushPop(solver)) {
         forwardOverFrames.get(currentFrameNumber)
@@ -394,7 +378,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
           var counterExample = getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
 
-          Node newNode = new Node(And(counterExample),target,carOptimizations.isCoverOpt(),solver);
+          Node newNode = new Node(And(counterExample),target,optimizations.isCoverOpt(),solver);
 
           currentlyVisited.put(newNode,false);
 
@@ -411,7 +395,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
       if(counterExample == null){
         return null; //no intersection found
       }else{
-        Node newNode = new Node(And(counterExample),target,carOptimizations.isCoverOpt(),solver);
+        Node newNode = new Node(And(counterExample),target,optimizations.isCoverOpt(),solver);
 
         currentlyVisited.put(newNode,false);
         return newNode;
@@ -430,11 +414,11 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
       forwardOverFrames.add(new OverFrame(forwardOverFrames.get(currentFrameNumber), solver, monolithicExpr));
     }
     currentFrameNumber++;
-    if (carOptimizations.isPropertyOpt()) {
+    if (optimizations.isPropertyOpt()) {
       forwardOverFrames.get(currentFrameNumber).refine(monolithicExpr.getPropExpr());
     }
 
-    if (carOptimizations.isPropagateOpt()) {
+    if (optimizations.isPropagateOpt()) {
       for (int j = 1; j < currentFrameNumber; j++) {
         for (var c : forwardOverFrames.get(j).getExprs()) {
           try (var wpp = new WithPushPop(solver)) {

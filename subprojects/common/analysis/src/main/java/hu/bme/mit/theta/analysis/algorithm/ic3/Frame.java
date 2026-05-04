@@ -34,10 +34,10 @@ public class Frame {
     private final List<Clause> clauses;
 
     private final UCSolver solver;
-    private final IC3Optimizations optimizations;
+    private final BaseOptimizations optimizations;
     private final MonolithicExpr monolithicExpr;
 
-    Frame(final Frame parent, UCSolver solver, MonolithicExpr monolithicExpr, IC3Optimizations optimizations) {
+    Frame(final Frame parent, UCSolver solver, MonolithicExpr monolithicExpr, BaseOptimizations optimizations) {
         this.parent = parent;
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
