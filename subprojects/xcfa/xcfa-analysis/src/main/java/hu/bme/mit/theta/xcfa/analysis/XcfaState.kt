@@ -435,7 +435,6 @@ data class XcfaProcessState(
   companion object {
 
     fun XcfaProcedure.createLookup(
-      proc: XcfaProcedure,
       threadPrefix: String = "",
       procPrefix: String = "",
       includeThreadLocals: Boolean = false

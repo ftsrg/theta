@@ -42,7 +42,8 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.timed.ItpRefToProd2DataZonePrec
 import org.junit.jupiter.api.Assertions
@@ -53,6 +54,8 @@ import java.util.concurrent.TimeUnit
 class TimedXcfaPredAnalysisTest {
 
     companion object {
+
+      private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
         @JvmStatic
         fun data(): Collection<Array<Any>> {
@@ -70,8 +73,7 @@ class TimedXcfaPredAnalysisTest {
         val logger = ConsoleLogger(Logger.Level.INFO)
         val stopwatch = Stopwatch.createStarted()
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis =
@@ -81,10 +83,12 @@ class TimedXcfaPredAnalysisTest {
                 PredAbstractors.cartesianAbstractor(solver),
                 getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
                 false,
+                XcfaCoiMultiThread(xcfa)
             )
 
         val lts = getXcfaLts()
 
+        val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
         val abstractor =
             getXcfaAbstractor(
                 analysis,
@@ -94,7 +98,7 @@ class TimedXcfaPredAnalysisTest {
                 StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
                 logger,
                 lts,
-                ErrorDetection.ERROR_LOCATION,
+                errorDetector,
             )
                 as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
@@ -134,8 +138,7 @@ class TimedXcfaPredAnalysisTest {
         val logger = ConsoleLogger(Logger.Level.INFO)
         val stopwatch = Stopwatch.createStarted()
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis =
@@ -144,10 +147,12 @@ class TimedXcfaPredAnalysisTest {
                 PredAbstractors.cartesianAbstractor(solver),
                 PredOrd.create(solver),
                 false,
+                XcfaCoiMultiThread(xcfa)
             )
 
         val lts = getXcfaLts()
 
+        val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
         val abstractor =
             getXcfaAbstractor(
                 analysis,
@@ -157,7 +162,7 @@ class TimedXcfaPredAnalysisTest {
                 StopCriterions.firstCex<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>(),
                 logger,
                 lts,
-                ErrorDetection.ERROR_LOCATION,
+              errorDetector,
             )
                 as ArgAbstractor<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction, XcfaPrec<PtrPrec<Prod2Prec<PredPrec, ZonePrec>>>>
 

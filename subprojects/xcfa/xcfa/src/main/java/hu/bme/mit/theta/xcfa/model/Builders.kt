@@ -31,7 +31,7 @@ import java.util.*
 class XcfaBuilder
 @JvmOverloads
 constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet()) {
-  private val clocks: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
+  private val clocks: MutableSet<XcfaGlobalVar> = LinkedHashSet()
   private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet()
   private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList()
   val metaData: MutableMap<String, Any> = LinkedHashMap()

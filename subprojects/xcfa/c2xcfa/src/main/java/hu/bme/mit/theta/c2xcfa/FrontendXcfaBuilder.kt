@@ -44,6 +44,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -158,6 +159,7 @@ class FrontendXcfaBuilder(
         globalDeclaration.get2().ref,
         initStmtList,
         globalDeclaration.get1().initExpr,
+        globalDeclaration.get1().type.isThreadLocal,
         globalDeclaration.get1().type.isAtomic,
       )
     }
@@ -264,31 +266,36 @@ class FrontendXcfaBuilder(
     globalDeclaration: Expr<*>,
     initStmtList: MutableList<XcfaLabel>,
     initExpr: CStatement? = null,
+    isThreadLocal : Boolean = false,
     isAtomic: Boolean = false,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
     if (type is CVoid) {
       return
     }
-    if (type is CClock) {
-      builder.addClock(globalVar)
-      initStmtList.add(
-        ClockOpLabel(
-          Reset(cast(globalVar.wrappedVar, Rat()), 0)
-        )
-      )
-    }
     if (globalDeclaration is RefExpr<*>) {
       builder.addVar(
         XcfaGlobalVar(
           globalDeclaration.decl as VarDecl<*>,
           type.nullValue,
-          threadLocal = globalDeclaration.get1().type.isThreadLocal,
+          threadLocal = isThreadLocal,
           atomic = isAtomic
         )
       )
     }
-    if (type is CArray) {
+    if (type is CClock) {
+      check(globalDeclaration is RefExpr<*>)
+      val clock = cast(globalDeclaration.decl as VarDecl<*>, Rat())
+      builder.addClock(
+        XcfaGlobalVar(
+          clock,
+          type.nullValue,
+          threadLocal = isThreadLocal,
+          atomic = isAtomic
+        )
+      )
+      initStmtList.add(ClockOpLabel(Reset(clock, 0)))
+    } else if (type is CArray) {
       initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
       if (MemsafetyPass.enabled) {
         val bounds = type.arrayDimension.expression

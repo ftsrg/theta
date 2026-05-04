@@ -17,10 +17,10 @@
 package hu.bme.mit.theta.xcfa.analysis.timed
 
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.ClockDelayLabel
 import hu.bme.mit.theta.xcfa.model.ClockOpLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 object DataClockXcfaActionPartition {
 

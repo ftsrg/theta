@@ -197,7 +197,7 @@ class Btor2XcfaBuilder {
   }
 
   private fun nextLoc(initial: Boolean, final: Boolean, error: Boolean): XcfaLocation {
-    val loc = XcfaLocation("l${i}", initial, final, error, EmptyMetaData)
+    val loc = XcfaLocation("l${i}", initial, final, error, metadata = EmptyMetaData)
     i++
     return loc
   }

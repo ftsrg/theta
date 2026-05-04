@@ -28,10 +28,10 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.ClockOpLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 class InvariantPass(val timed : Boolean) : ProcedurePass {
 

@@ -141,7 +141,7 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     config.backendConfig.backend == Backend.PATH_ENUMERATION &&
       (config.backendConfig.specConfig as? PathEnumerationConfig)?.coi !=
         ConeOfInfluenceMode.NO_COI &&
-      config.inputConfig.property == ErrorDetection.DATA_RACE
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
   rule("NoAaporWhenDataRace") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&

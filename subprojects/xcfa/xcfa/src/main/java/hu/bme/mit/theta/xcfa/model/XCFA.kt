@@ -16,11 +16,11 @@
 package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.clock.constr.ClockConstr
-import hu.bme.mit.theta.core.clock.constr.ClockConstrs.True
+import hu.bme.mit.theta.core.clock.constr.ClockConstrs
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
@@ -138,7 +138,7 @@ data class XcfaProcedure(
   val initLoc: XcfaLocation, // initial location
   val finalLoc: Optional<XcfaLocation>, // final location (optional)
   val errorLoc: Optional<XcfaLocation>, // error location (optional)
-  val prop: Expr<BoolType> = True(),
+  val prop: Expr<BoolType> = BoolExprs.True(),
 ) {
 
   lateinit var parent: XCFA
@@ -151,7 +151,7 @@ constructor(
   val initial: Boolean = false, // is this the initial location?
   val final: Boolean = false, // is this the final location?
   val error: Boolean = false, // is this the error location?
-  var invariant: ClockConstr = True(),
+  var invariant: ClockConstr = ClockConstrs.True(),
   val metadata: MetaData,
 ) {
 

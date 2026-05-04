@@ -27,7 +27,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class TimedXcfaTest {
     private fun getXcfa() =

@@ -76,7 +76,7 @@ class CPasses(property: XcfaProperty, timed : Boolean, parseContext: ParseContex
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      LbePass(parseContext),
+      LbePass(parseContext), // default level, TODO
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),

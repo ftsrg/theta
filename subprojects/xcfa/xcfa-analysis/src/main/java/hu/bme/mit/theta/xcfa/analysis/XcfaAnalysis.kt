@@ -60,18 +60,15 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.timed.DataClockXcfaActionPartition
 import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneInitFunc
 import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneTransFunc
 import hu.bme.mit.theta.xcfa.analysis.timed.addVarsAndClocks
 import hu.bme.mit.theta.xcfa.analysis.timed.getActiveClocks
 import hu.bme.mit.theta.xcfa.analysis.timed.getInvariants
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.getGlobalVarsWithNeededMutexes
-import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -419,6 +416,7 @@ class ExplZoneXcfaAnalysis(
     maxEnum: Int,
     partialOrd: PartialOrd<ExplState>,
     isHavoc: Boolean,
+    coi: XcfaCoi? = null,
 ) : XcfaAnalysis<Prod2State<ExplState, ZoneState>, PtrPrec<Prod2Prec<ExplPrec, ZonePrec>>>(
     corePartialOrd = getPartialOrder(
         Prod2Ord.create(
@@ -439,7 +437,8 @@ class ExplZoneXcfaAnalysis(
         ),
         { s, a, p -> p.p.addVarsAndClocks(s, getLookups(s, a)) },
         isHavoc,
-    )
+    ),
+    coneOfInfluence = coi,
 )
 
 /// PRED
@@ -476,6 +475,7 @@ class PredZoneXcfaAnalysis(
     predAbstractor: PredAbstractor,
     partialOrd: PartialOrd<PredState>,
     isHavoc: Boolean,
+    coi: XcfaCoi? = null,
 ) : XcfaAnalysis<Prod2State<PredState, ZoneState>, PtrPrec<Prod2Prec<PredPrec, ZonePrec>>>(
     corePartialOrd = getPartialOrder(
         Prod2Ord.create(
@@ -496,111 +496,47 @@ class PredZoneXcfaAnalysis(
         ),
         { s, a, p -> p.p.addVarsAndClocks(s, getFoldedLookups(s, a)) },
         isHavoc,
-    )
+    ),
+    coneOfInfluence = coi,
 )
 
 /// EXPL_PRED_COMBINED
 
-private fun getExplPredCombinedXcfaInitFunc(
-  xcfa: XCFA,
+private fun getExplPredInitFunc(
   solver: Solver,
-): (XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>) -> List<
-    XcfaState<PtrState<Prod2State<ExplState, PredState>>>
-  > {
-  val processInitState =
-    xcfa.initProcedures
-      .mapIndexed { i, it ->
-        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
-        initLocStack.add(it.first.initLoc)
-        Pair(
-          i,
-          XcfaProcessState(
-            initLocStack,
-            prefix = "T$i",
-            varLookup = LinkedList(listOf(it.first.createLookup("T$i"))),
-          ),
-        )
-      }
-      .toMap()
-  return { p ->
-    Prod2InitFunc.create(
-        ExplInitFunc.create(solver, True()),
-        PredInitFunc.create(PredAbstractors.cartesianAbstractor(solver), True()),
-      )
-      .getPtrInitFunc()
-      .getInitStates(p.p)
-      .map { XcfaState(xcfa, processInitState, it) }
-  }
-}
+) = Prod2InitFunc.create(
+  ExplInitFunc.create(solver, True()),
+  PredInitFunc.create(PredAbstractors.cartesianAbstractor(solver), True()),
+)
 
-fun getExplPredStmtXcfaTransFunc(
+private fun getExplPredStmtTransFunc(
   solver: Solver,
-  isHavoc: Boolean,
-): (
-  XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
-  XcfaAction,
-  XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
-) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>> {
-  val combinedTransFunc =
-    (Prod2ExplPredStmtTransFunc.create<StmtAction>(solver)
-        as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
-      .getPtrTransFunc(isHavoc)
-  return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
-    combinedTransFunc
-      .getSuccStates(
-        newSt.sGlobal,
-        newAct,
-        p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
-      )
-      .map { newSt.withState(it) }
-  }
-}
+) = Prod2ExplPredStmtTransFunc.create<StmtAction>(solver)
+  as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>
 
-fun getExplPredSplitXcfaTransFunc(
-  prod2ExplPredAbstractor: Prod2ExplPredAbstractors.Prod2ExplPredAbstractor,
-  isHavoc: Boolean,
-): (
-  XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
-  XcfaAction,
-  XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
-) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>> {
-  val combinedTransFunc =
-    (Prod2ExplPredDedicatedTransFunc.create<StmtAction>(prod2ExplPredAbstractor)
-        as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
-      .getPtrTransFunc(isHavoc)
-  return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
-    combinedTransFunc
-      .getSuccStates(
-        newSt.sGlobal,
-        newAct,
-        p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
-      )
-      .map { newSt.withState(it) }
-  }
-}
+private fun getExplPredSplitTransFunc(
+  solver: Solver,
+) = Prod2ExplPredDedicatedTransFunc.create<StmtAction>(Prod2ExplPredAbstractors.booleanAbstractor(solver))
+  as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>
 
 class ExplPredCombinedXcfaAnalysis(
   xcfa: XCFA,
   solver: Solver,
-  prod2ExplPredTransFunc:
-    (
-      XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
-      XcfaAction,
-      XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
-    ) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+  explPredSplit: Boolean,
   partialOrd: PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
   isHavoc: Boolean,
   coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<Prod2State<ExplState, PredState>, PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>(
     corePartialOrd = partialOrd,
-    coreInitFunc = getExplPredCombinedXcfaInitFunc(xcfa, solver),
-    coreTransFunc = prod2ExplPredTransFunc,
+    coreInitFunc = getXcfaInitFunc(xcfa, getExplPredInitFunc(solver)),
+    coreTransFunc = getXcfaTransFunc(
+      if (explPredSplit) getExplPredSplitTransFunc(solver) else getExplPredStmtTransFunc(solver),
+      { s, a, p -> p.p.addVars(getFoldedLookups(s, a)) },
+      isHavoc
+    ),
     coneOfInfluence = coi,
   )
-
 
 /// UNIT
 
@@ -617,8 +553,11 @@ private fun getUnitInitFunc() = InitFunc<UnitState, UnitPrec> { _ -> listOf(Unit
 
 private fun getUnitTransFunc() = TransFunc<UnitState, ExprAction, UnitPrec> { s, _, _ -> listOf(s) }
 
-class UnitXcfaAnalysis(xcfa: XCFA, isHavoc: Boolean) :
-  XcfaAnalysis<UnitState, PtrPrec<UnitPrec>>(
+class UnitXcfaAnalysis(
+  xcfa: XCFA,
+  isHavoc: Boolean,
+  coi: XcfaCoi? = null,
+): XcfaAnalysis<UnitState, PtrPrec<UnitPrec>>(
     corePartialOrd = getUnitXcfaPartialOrd(xcfa),
     coreInitFunc = getXcfaInitFunc(xcfa, getUnitInitFunc()),
     coreTransFunc = getXcfaTransFunc(
@@ -626,6 +565,7 @@ class UnitXcfaAnalysis(xcfa: XCFA, isHavoc: Boolean) :
         {_, _, _ -> PtrPrec(UnitPrec.getInstance())},
         isHavoc,
     ),
+    coneOfInfluence = coi,
   )
 
 fun getBoundedXcfaChecker(
@@ -634,9 +574,10 @@ fun getBoundedXcfaChecker(
   bound: Int,
   solver: Solver,
   isHavoc: Boolean = false,
+  coi: XcfaCoi? = null,
 ): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
   val lts = getXcfaLts()
-  return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc)
+  return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc, coi)
 }
 
 fun getBoundedXcfaChecker(
@@ -646,9 +587,10 @@ fun getBoundedXcfaChecker(
   bound: Int,
   solver: Solver,
   isHavoc: Boolean = false,
+  coi: XcfaCoi? = null,
 ): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
-  val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
-  val target = getXcfaErrorPredicate(errorDetection)
+  val analysis = UnitXcfaAnalysis(xcfa, isHavoc, coi)
+  val target = getXcfaErrorDetector(errorDetection)
   val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
   return BoundedLtsChecker(lts, analysis, target, bound, prec, solver)
 }

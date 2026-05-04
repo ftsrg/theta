@@ -42,7 +42,6 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Ord
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -386,7 +385,7 @@ enum class Domain(
         ExplPredCombinedXcfaAnalysis(
           xcfa,
           solver,
-          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(solver), false),
+          explPredSplit = true,
           partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           false,
         ),
@@ -402,7 +401,7 @@ enum class Domain(
         ExplPredCombinedXcfaAnalysis(
           a,
           b,
-          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(b), j),
+          explPredSplit = true,
           i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           j,
           null,
@@ -447,7 +446,7 @@ enum class Domain(
         ExplPredCombinedXcfaAnalysis(
           xcfa,
           solver,
-          getExplPredStmtXcfaTransFunc(solver, false),
+          explPredSplit = false,
           partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           false,
         ),
@@ -463,7 +462,7 @@ enum class Domain(
         ExplPredCombinedXcfaAnalysis(
           a,
           b,
-          getExplPredStmtXcfaTransFunc(b, j),
+          explPredSplit = false,
           i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           j,
           k,
@@ -494,10 +493,29 @@ enum class Domain(
     stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   UNIT(
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
-      getXcfaAbstractor(UnitXcfaAnalysis(a, j), d, e, f, g, h)
+    asgAbstractor = {
+        xcfa,
+        solver,
+        maxEnum,
+        logger,
+        lts,
+        search,
+        partialOrd,
+        statePredicate,
+        transitionPredicate ->
+      ASGAbstractor(
+        UnitXcfaAnalysis(xcfa, false),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<UnitState>>, XcfaAction>,
+        search,
+        logger,
+      )
     },
-    itpPrecRefiner = {
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(UnitXcfaAnalysis(a, j, k), d, e, f, g, h)
+    },
+    itpPrecRefiner = { a, b ->
       XcfaPrecRefiner<PtrState<UnitState>, UnitPrec, ItpRefutation>(
         ItpRefToPtrPrec(
           object : RefutationToPrec<UnitPrec, ItpRefutation> {
