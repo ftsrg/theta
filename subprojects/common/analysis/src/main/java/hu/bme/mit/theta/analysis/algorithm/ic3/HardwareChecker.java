@@ -37,11 +37,7 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
@@ -113,38 +109,31 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
     return isSat;
   }
 
-  protected @Nullable Trace<ExplState, ExprAction> checkIfFaultyReachableInOneStep() {
+  protected @Nullable LinkedList<ProofObligation> checkIfFaultyReachableInOneStep() {
     final Valuation model = frames.getFirst().checkIfTargetIsReachableValuation(Not(monolithicExpr.getPropExpr()));
+
     if (model != null) {
-      return Trace.of(
-          List.of(
-              ExplState.of(
-                  PathUtils.extractValuation(
-                      model,
-                      VarIndexingFactory.indexing(0),
-                      monolithicExpr.getVars())),
-              ExplState.of(
-                  PathUtils.extractValuation(
-                      model,
-                      monolithicExpr.getTransOffsetIndex(),
-                      monolithicExpr.getVars()))),
-          List.of(MonolithicExprKt.action(monolithicExpr)));
-    } else {
-      return null;
+      var initReachableFrom = convertValuationToExpression(model);
+
+      final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<>();
+
+      proofObligationsQueue.add(new ProofObligation(Cube.of(initReachableFrom),0));
+
+      return proofObligationsQueue;
     }
+
+    return null;
+
   }
 
-  protected @Nullable Trace<ExplState, ExprAction> checkIfFaultyIntersectsInit() {
+  protected LinkedList<ProofObligation> checkIfFaultyIntersectsInit() {
     Valuation model = frames.getFirst().checkIfContainsValuation(Not(monolithicExpr.getPropExpr()));
     if (model != null) {
-      return Trace.of(
-          List.of(
-              ExplState.of(
-                  PathUtils.extractValuation(
-                      model,
-                      VarIndexingFactory.indexing(0),
-                      monolithicExpr.getVars()))),
-          List.of());
+      var counterExample = convertValuationToExpression(model);
+
+      final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<>();
+      proofObligationsQueue.add(new ProofObligation(Cube.of(counterExample),0));
+      return proofObligationsQueue;
     }
     return null;
   }
@@ -245,7 +234,7 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
     return blockedCube;
   }
 
-  protected MutableValuation removeRedundantVariablesFromProofObligation(Valuation model, ProofObligation proofObligation) {
+  protected MutableValuation removeRedundantVariablesFromProofObligation(Valuation model, Cube cube) {
 
     final MutableValuation filteredModel = new MutableValuation();
     monolithicExpr.getVars().stream()
@@ -266,9 +255,7 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
         solver.track(PathUtils.unfold(filteredModel.toExpr(), 0));
         getConjuncts(monolithicExpr.getTransExpr())
             .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-        proofObligation
-            .getCube()
-            .getLiterals()
+        cube.getLiterals()
             .forEach(
                 ex ->
                     solver.track(
@@ -284,13 +271,6 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
     return filteredModel;
   }
 
-  protected Trace<ExplState, ExprAction> checkFirst() {
-    Trace<ExplState, ExprAction> intersection = checkIfFaultyIntersectsInit();
-    if (intersection != null) return intersection;
-    if (optimizations.isPropertyOpt()) {
-      return checkIfFaultyReachableInOneStep();
-    }
-    return null;
-  }
+
 
 }

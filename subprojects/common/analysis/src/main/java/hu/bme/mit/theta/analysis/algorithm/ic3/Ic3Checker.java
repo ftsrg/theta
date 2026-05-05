@@ -67,9 +67,10 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
     @Override
     public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
         // check if init violates prop
-        var firstTrace = checkFirst();
-        if (firstTrace != null) {
-            return SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
+        var proofObligations = checkFirst();
+        if (proofObligations != null) {
+            var trace = makeTrace(proofObligations);
+            return SafetyResult.unsafe(trace, EmptyProof.getInstance());
         }
         while (true) {
             final ProofObligation counterExample = checkCurrentFrameForInterSections(Not(monolithicExpr.getPropExpr()));
@@ -85,6 +86,15 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
                 }
             }
         }
+    }
+
+    protected LinkedList<ProofObligation> checkFirst() {
+        var proofObligationsQueue = checkIfFaultyIntersectsInit();
+        if (proofObligationsQueue != null) return proofObligationsQueue;
+        if (optimizations.isPropertyOpt()) {
+            return checkIfFaultyReachableInOneStep();
+        }
+        return null;
     }
 
     LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
@@ -132,23 +142,23 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
             if (solverStatus.isSat()) {
                 final MutableValuation filteredModel;
                 if (optimizations.isFilterOpt()) {
-                    filteredModel = removeRedundantVariablesFromProofObligation(model, proofObligation);
+                    filteredModel = removeRedundantVariablesFromProofObligation(model, proofObligation.getCube());
                 }else {
                     filteredModel = MutableValuation.copyOf(model);
                 }
                 final Collection<Expr<BoolType>> reachableExprInFormerFrame = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
                 proofObligationsQueue.add(new ProofObligation(Cube.of(reachableExprInFormerFrame), proofObligation.getTime() - 1));
             }else{
-                Cube blockedExpression = proofObligation.getCube();
+                Cube blockedCube = proofObligation.getCube();
                 if (optimizations.isUnSatOpt()) {
-                    blockedExpression = removeRedundantExpressionsUsingUnsatCore(blockedExpression, unSatCore, false);
+                    blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, false);
                 }
 
                 if(optimizations.isGeneralizeOpt()) {
-                    blockedExpression = generalizeIter(blockedExpression, proofObligation.getTime(), false);
+                    blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), false);
                 }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
-                    frames.get(i).refine(blockedExpression);
+                    frames.get(i).refine(blockedCube);
                 }
                 proofObligationsQueue.removeLast();
             }
@@ -168,7 +178,7 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(currentProofObligation.getCube().getLiterals()));
         }
-        if (optimizations.isPropertyOpt()) {
+        if (optimizations.isPropertyOpt()) { //this can fail, if error and init intersect
             abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(Not(monolithicExpr.getPropExpr())));
         }

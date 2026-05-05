@@ -32,6 +32,7 @@ package hu.bme.mit.theta.sts.analysis;
  */
 
 import hu.bme.mit.theta.analysis.algorithm.ic3.CarChecker;
+import hu.bme.mit.theta.analysis.algorithm.ic3.CarCheckerOld;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
