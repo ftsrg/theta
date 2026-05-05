@@ -147,7 +147,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
       Node node = getNotCheckedNode();
       if(node == null){
         noNodeIsVisited();
-        if (propagateForward()) {
+        if (propagateForward(Frame::equalsAllParents)) {
           final SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> result =
               SafetyResult.safe(EmptyProof.getInstance());
           logger.writeln(Logger.Level.RESULT, result.toString());
@@ -266,20 +266,15 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         Cube blockedCube = Cube.of(proofObligation.getNode().getExprs());
 
         if (optimizations.isUnSatOpt()) {
-          blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, false);
+          blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, true);
         }
 
         if(optimizations.isGeneralizeOpt()) {
-          blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), false);
+          blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), true);
         }
 
-        for (int i = 1; i <= proofObligation.getTime(); ++i) {
-          frames.get(i).refine(blockedCube);
-        }
+        frames.get(proofObligation.getTime()).refine(blockedCube);
 
-        for (int i = 1; i <= proofObligation.getTime(); ++i) {
-          frames.get(i).refine(Cube.of(newCore));
-        }
         proofObligationsQueue.removeLast();
       }
     }

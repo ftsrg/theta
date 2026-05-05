@@ -120,7 +120,22 @@ public class Frame {
         }
     }
 
+    public boolean equalsAllParents() {
+        if (this.parent == null) {
+            return false;
+        }
+        try (var wpp = new WithPushPop(solver)) {
+            var currentParent = this.parent;
+            while(currentParent!=null){
+                currentParent.addNegatedFrameToSolver(VarIndexingFactory.indexing(0));
+                currentParent = currentParent.parent;
+            }
 
+            addFrameToSolver(VarIndexingFactory.indexing(0));
+
+            return solver.check().isUnsat();
+        }
+    }
 
     public boolean equalsParent() {
         if (this.parent == null) {

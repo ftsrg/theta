@@ -81,7 +81,7 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
                     return SafetyResult.unsafe(trace, EmptyProof.getInstance());
                 }
             } else {
-                if (propagateForward()) {
+                if (propagateForward(Frame::equalsParent)) {
                     return SafetyResult.safe(EmptyProof.getInstance());
                 }
             }

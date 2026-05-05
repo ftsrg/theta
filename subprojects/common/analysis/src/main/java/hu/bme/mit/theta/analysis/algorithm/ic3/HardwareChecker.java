@@ -38,6 +38,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
@@ -151,7 +152,7 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
     return new ProofObligation(Cube.of(interSection), currentFrameNumber);
   }
 
-  protected boolean propagateForward() {
+  protected boolean propagateForward(Predicate<Frame> equalityCheck) {
     frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr,optimizations));
     currentFrameNumber++;
     if (optimizations.isPropagateOpt()) {
@@ -181,11 +182,11 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
             }
           }
         }
-        if (frames.get(j + 1).equalsParent()) {
+        if (equalityCheck.test(frames.get(j + 1))) {
           return true;
         }
       }
-    } else if (currentFrameNumber > 1 && frames.get(currentFrameNumber - 1).equalsParent()) {
+    } else if (currentFrameNumber > 1 && equalityCheck.test(frames.get(currentFrameNumber - 1))) {
       return true;
     }
     return false;
