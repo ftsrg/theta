@@ -179,7 +179,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
   }
   private void delete(Node node){
-    //todo use childlist for this
+
     var deleteList = new ArrayList<Node>();
     for(Node currentNode : currentlyVisited.keySet()){
       if(currentNode.getParent() != null && currentNode.getParent().equals(node)){
@@ -191,6 +191,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
     currentlyVisited.remove(node);
   }
+
   public void prune(int pruneIndex, boolean more){
     while((errorLength > pruneIndex + 1) && !errorNode.equals(root)){
       errorLength--;
@@ -362,7 +363,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         return null;
       }else{
         prune(ref.getPruneIndex(),true);
-        errorNode.addExpr(ref.get(ref.getPruneIndex())); //todo maybe prune children?
+        errorNode.addExpr(ref.get(ref.getPruneIndex()));
         noNodeIsVisited();
         return null;
 

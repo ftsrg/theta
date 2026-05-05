@@ -61,7 +61,7 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
     AbstractHelper helper = new AbstractHelper(traceCheckerFactory);
     MonolithicExpr abstractModel = helper.createPrec(monolithicExpr);
     var checker =
-        new CarChecker<>(
+        new CarCheckerOld<>(
             abstractModel,
             solverFactory,
             optimizations,
