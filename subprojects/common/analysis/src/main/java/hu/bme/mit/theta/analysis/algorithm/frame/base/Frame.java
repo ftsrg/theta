@@ -37,7 +37,7 @@ public class Frame {
     private final BaseOptimizations optimizations;
     private final MonolithicExpr monolithicExpr;
 
-    Frame(
+    public Frame(
             final Frame parent,
             UCSolver solver,
             MonolithicExpr monolithicExpr,

@@ -19,7 +19,7 @@ public class ProofObligation {
     private Cube cube;
     private int time;
 
-    ProofObligation(Cube cube, int time) {
+    public ProofObligation(Cube cube, int time) {
         this.cube = cube;
         this.time = time;
     }

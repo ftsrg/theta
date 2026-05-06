@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.IC3Optimizations
 import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
@@ -53,15 +54,10 @@ fun getIc3Checker(
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     Ic3Checker(
-      /* monolithicExpr = */ monolithicExpr,
-      /* solverFactory = */ solverFactory,
-      /* formerFramesOpt = */ true,
-      /* unSatOpt = */ true,
-      /* notBOpt = */ true,
-      /* propagateOpt = */ true,
-      /* filterOpt = */ true,
-      /* propertyOpt = */ true,
-      /* logger = */ logger,
+      monolithicExpr,
+      solverFactory,
+      IC3Optimizations(true, true, true, true, true, true, true),
+      logger,
     )
   }
 
