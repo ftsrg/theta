@@ -49,6 +49,14 @@ public class Frame {
         return clauses;
     }
 
+    public Expr<BoolType> getExpression() {
+        final List<Expr<BoolType>> exprs = new ArrayList<>();
+        for (Clause clause : clauses) {
+            exprs.add(clause.toExpr());
+        }
+        return And(exprs);
+    }
+
     public void addFrameToSolver(VarIndexing indexing) {
         if(parent == null){
             solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(),indexing));

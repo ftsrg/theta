@@ -48,6 +48,7 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
@@ -127,7 +128,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
   }
 
   @Override
-  public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
+  public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
     if(!curFrameopt) {
       currentFrameNumber = 0;
     }
@@ -139,7 +140,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     var faultyNodeInit = checkFirstCar();
     if (faultyNodeInit != null) {
       var trace = makeTrace(faultyNodeInit);
-      final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
+      final var result = SafetyResult.unsafe(trace, PredState.of(True()));
       logger.writeln(Logger.Level.RESULT, result.toString());
       return result;
     }
@@ -147,11 +148,10 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
       Node node = getNotCheckedNode();
       if(node == null){
         noNodeIsVisited();
-        if (propagateForward(Frame::equalsAllParents)) {
-          final SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> result =
-              SafetyResult.safe(EmptyProof.getInstance());
-          logger.writeln(Logger.Level.RESULT, result.toString());
-          return result;
+        var propagateResult= propagateForward(Frame::equalsAllParents);
+        if (propagateResult > 0) {
+          return SafetyResult.safe(
+              PredState.of(frames.get(propagateResult).getExpression()));
         }
       } else {
         var counterExample = checkCurrentFrameForInterSections(And(node.getExprs()));
@@ -162,7 +162,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
           if (faultyNode != null) {
             var trace = makeTrace(faultyNode);
             if(trace != null){
-              final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
+              final var result = SafetyResult.unsafe(trace, PredState.of(True()));
               logger.writeln(Logger.Level.RESULT, result.toString());
               return result;
             }

@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -44,7 +45,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 public abstract class HardwareChecker<O extends BaseOptimizations>
-    implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
+    implements SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> {
 
   protected MonolithicExpr monolithicExpr;
   protected final SolverFactory solverFactory;
@@ -152,7 +153,7 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
     return new ProofObligation(Cube.of(interSection), currentFrameNumber);
   }
 
-  protected boolean propagateForward(Predicate<Frame> equalityCheck) {
+  protected int propagateForward(Predicate<Frame> equalityCheck) {
     frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr,optimizations));
     currentFrameNumber++;
     if (optimizations.isPropagateOpt()) {
@@ -183,13 +184,13 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
           }
         }
         if (equalityCheck.test(frames.get(j + 1))) {
-          return true;
+          return j+1;
         }
       }
     } else if (currentFrameNumber > 1 && equalityCheck.test(frames.get(currentFrameNumber - 1))) {
-      return true;
+      return currentFrameNumber - 1;
     }
-    return false;
+    return -1;
   }
 
   protected Cube generalizeIter(Cube blockedCube, int currentFrameNumber, boolean canIntersectInit) {

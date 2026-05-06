@@ -45,8 +45,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
@@ -126,7 +125,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
   }
 
   @Override
-  public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
+  public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
     if(!curFrameopt) {
       currentFrameNumber = 0;
     }
@@ -138,7 +137,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
     var faultyNodeInit = checkFirstCar();
     if (faultyNodeInit != null) {
       var trace = makeTrace(faultyNodeInit);
-      final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
+      final var result = SafetyResult.unsafe(trace, PredState.of(True()));
       logger.writeln(Logger.Level.RESULT, result.toString());
       return result;
     }
@@ -164,7 +163,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
           if (faultyNode != null) {
             var trace = makeTrace(faultyNode);
             if(trace != null){
-              final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
+              final var result = SafetyResult.unsafe(trace, PredState.of(True()));
               logger.writeln(Logger.Level.RESULT, result.toString());
               return result;
             }
@@ -173,11 +172,10 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
           currentlyVisited.put(node,true);
         }
       }
-      if (propagate()) {
-        final SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> result =
-            SafetyResult.safe(EmptyProof.getInstance());
-        logger.writeln(Logger.Level.RESULT, result.toString());
-        return result;
+      var propagateResult = propagate();
+      if (propagateResult > 0) {
+        return SafetyResult.safe(
+            PredState.of(frames.get(propagateResult).getExpression()));
       }
 
     }
@@ -406,7 +404,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
     }
   }
 
-  public boolean propagate() {
+  public int propagate() {
     noNodeIsVisited();
     if(frames.size()<=currentFrameNumber+1){ //todo if needed?
       frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr,optimizations));
@@ -453,18 +451,18 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
             noNodeIsVisited();
             if(counterExampleNode != null){
               logger.write(Logger.Level.SUBSTEP, "Current frame faulty: %s\n", currentFrameNumber);
-              return false;
+              return -1;
             }
           }
 
-          return true;
+          return j+1;
         }
       }
     } else if (currentFrameNumber > 1 && frames.get(currentFrameNumber - 1).equalsParent()) {
       logger.write(Logger.Level.VERBOSE, "\tFound safety: %s\n", currentFrameNumber);
-      return true;
+      return currentFrameNumber - 1;
     }
-    return false;
+    return -1;
   }
 
   public Trace<ExplState, ExprAction> makeTrace(Node faultyNode) {

@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
@@ -65,12 +66,12 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
     }
 
     @Override
-    public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
+    public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
         // check if init violates prop
         var proofObligations = checkFirst();
         if (proofObligations != null) {
             var trace = makeTrace(proofObligations);
-            return SafetyResult.unsafe(trace, EmptyProof.getInstance());
+            return SafetyResult.unsafe(trace, PredState.of(True()));
         }
         while (true) {
             final ProofObligation counterExample = checkCurrentFrameForInterSections(Not(monolithicExpr.getPropExpr()));
@@ -78,11 +79,13 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
                 var proofObligationsList = tryBlock(counterExample);
                 if (proofObligationsList != null) {
                     var trace = makeTrace(proofObligationsList);
-                    return SafetyResult.unsafe(trace, EmptyProof.getInstance());
+                    return SafetyResult.unsafe(trace, PredState.of(True()));
                 }
             } else {
-                if (propagateForward(Frame::equalsParent)) {
-                    return SafetyResult.safe(EmptyProof.getInstance());
+                var propagateResult= propagateForward(Frame::equalsAllParents);
+                if (propagateResult > 0) {
+                    return SafetyResult.safe(
+                        PredState.of(frames.get(propagateResult).getExpression()));
                 }
             }
         }

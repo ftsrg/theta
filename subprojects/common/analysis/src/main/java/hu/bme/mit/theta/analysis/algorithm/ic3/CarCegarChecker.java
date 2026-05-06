@@ -29,14 +29,15 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 
 import hu.bme.mit.theta.solver.SolverFactory;
 import kotlin.jvm.functions.Function1;
 
-public class CarCegarChecker<S extends ExprState, A extends ExprAction>
-    implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
+public class CarCegarChecker
+    implements SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> {
   private MonolithicExpr monolithicExpr;
   private final SolverFactory solverFactory;
   private final CarOptimizations optimizations;
@@ -57,7 +58,7 @@ public class CarCegarChecker<S extends ExprState, A extends ExprAction>
   }
 
   @Override
-  public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
+  public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
     AbstractHelper helper = new AbstractHelper(traceCheckerFactory);
     MonolithicExpr abstractModel = helper.createPrec(monolithicExpr);
     var checker =
