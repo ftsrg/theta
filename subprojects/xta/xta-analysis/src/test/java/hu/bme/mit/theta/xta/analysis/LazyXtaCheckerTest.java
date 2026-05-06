@@ -42,12 +42,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public final class LazyXtaCheckerTest {
 
-    private static final String MODEL_CSMA = "/csma-2.xta";
-    private static final String MODEL_FDDI = "/fddi-2.xta";
-    private static final String MODEL_FISCHER = "/fischer-2-32-64.xta";
-    private static final String MODEL_LYNCH = "/lynch-2-16.xta";
-    private static final String MODEL_ENGINE = "/engine-classic.xta";
-    private static final String MODEL_BROADCAST = "/broadcast.xta";
+    private static final String MODEL_CSMA = "/model/csma-2.xta";
+    private static final String MODEL_FDDI = "/model/fddi-2.xta";
+    private static final String MODEL_FISCHER = "/model/fischer-2-32-64.xta";
+    private static final String MODEL_LYNCH = "/model/lynch-2-16.xta";
+    private static final String MODEL_ENGINE = "/model/engine-classic.xta";
+    private static final String MODEL_BROADCAST = "/model/broadcast.xta";
 
     private static final Collection<String> MODELS =
             ImmutableList.of(
@@ -60,6 +60,7 @@ public final class LazyXtaCheckerTest {
 
     private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS =
             ImmutableSet.of(MODEL_FDDI, MODEL_ENGINE, MODEL_BROADCAST);
+
     public String filepath;
     public DataStrategy dataStrategy;
     public ClockStrategy clockStrategy;
@@ -96,6 +97,7 @@ public final class LazyXtaCheckerTest {
     public void test(String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
             throws IOException {
         initLazyXtaCheckerTest(filepath, dataStrategy, clockStrategy);
+
         // Act
         final SafetyResult<
                         ? extends ARG<? extends XtaState<?>, XtaAction>,

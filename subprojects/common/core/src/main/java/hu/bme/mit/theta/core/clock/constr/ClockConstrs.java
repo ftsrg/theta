@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
@@ -45,249 +46,306 @@ import java.util.List;
 
 public final class ClockConstrs {
 
-    private static final TrueConstr TRUE_CONSTR;
-    private static final FalseConstr FALSE_CONSTR;
+	private static final TrueConstr TRUE_CONSTR;
+	private static final FalseConstr FALSE_CONSTR;
 
-    static {
-        TRUE_CONSTR = new TrueConstr();
-        FALSE_CONSTR = new FalseConstr();
-    }
+	static {
+		TRUE_CONSTR = new TrueConstr();
+		FALSE_CONSTR = new FalseConstr();
+	}
 
-    private ClockConstrs() {}
+	private ClockConstrs() {
+	}
 
-    ////
+	////
 
-    public static ClockConstr formExpr(final Expr<BoolType> expr) {
-        return FromExprHelper.INSTANCE.transform(expr);
-    }
+	public static ClockConstr formExpr(final Expr<BoolType> expr) {
+		return FromExprHelper.INSTANCE.transform(expr);
+	}
 
-    ////
+	////
 
-    public static TrueConstr True() {
-        return TRUE_CONSTR;
-    }
+	public static TrueConstr True() {
+		return TRUE_CONSTR;
+	}
 
-    public static FalseConstr False() {
-        return FALSE_CONSTR;
-    }
+	public static FalseConstr False() {
+		return FALSE_CONSTR;
+	}
 
-    public static UnitLtConstr Lt(final VarDecl<RatType> clock, final int bound) {
-        checkNotNull(clock);
-        return new UnitLtConstr(clock, bound);
-    }
+	public static UnitLtConstr Lt(final VarDecl<RatType> clock, final int bound) {
+		checkNotNull(clock);
+		return new UnitLtConstr(clock, bound);
+	}
 
-    public static UnitLeqConstr Leq(final VarDecl<RatType> clock, final int bound) {
-        checkNotNull(clock);
-        return new UnitLeqConstr(clock, bound);
-    }
+	public static UnitLeqConstr Leq(final VarDecl<RatType> clock, final int bound) {
+		checkNotNull(clock);
+		return new UnitLeqConstr(clock, bound);
+	}
 
-    public static UnitGtConstr Gt(final VarDecl<RatType> clock, final int bound) {
-        checkNotNull(clock);
-        return new UnitGtConstr(clock, bound);
-    }
+	public static UnitGtConstr Gt(final VarDecl<RatType> clock, final int bound) {
+		checkNotNull(clock);
+		return new UnitGtConstr(clock, bound);
+	}
 
-    public static UnitGeqConstr Geq(final VarDecl<RatType> clock, final int bound) {
-        checkNotNull(clock);
-        return new UnitGeqConstr(clock, bound);
-    }
+	public static UnitGeqConstr Geq(final VarDecl<RatType> clock, final int bound) {
+		checkNotNull(clock);
+		return new UnitGeqConstr(clock, bound);
+	}
 
-    public static UnitEqConstr Eq(final VarDecl<RatType> clock, final int bound) {
-        checkNotNull(clock);
-        return new UnitEqConstr(clock, bound);
-    }
+	public static UnitEqConstr Eq(final VarDecl<RatType> clock, final int bound) {
+		checkNotNull(clock);
+		return new UnitEqConstr(clock, bound);
+	}
 
-    public static DiffLtConstr Lt(
-            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
-        checkNotNull(leftClock);
-        checkNotNull(rightClock);
-        return new DiffLtConstr(leftClock, rightClock, bound);
-    }
+	public static DiffLtConstr Lt(final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock,
+								  final int bound) {
+		checkNotNull(leftClock);
+		checkNotNull(rightClock);
+		return new DiffLtConstr(leftClock, rightClock, bound);
+	}
 
-    public static DiffLeqConstr Leq(
-            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
-        checkNotNull(leftClock);
-        checkNotNull(rightClock);
-        return new DiffLeqConstr(leftClock, rightClock, bound);
-    }
+	public static DiffLeqConstr Leq(final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock,
+									final int bound) {
+		checkNotNull(leftClock);
+		checkNotNull(rightClock);
+		return new DiffLeqConstr(leftClock, rightClock, bound);
+	}
 
-    public static DiffGtConstr Gt(
-            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
-        checkNotNull(leftClock);
-        checkNotNull(rightClock);
-        return new DiffGtConstr(leftClock, rightClock, bound);
-    }
+	public static DiffGtConstr Gt(final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock,
+								  final int bound) {
+		checkNotNull(leftClock);
+		checkNotNull(rightClock);
+		return new DiffGtConstr(leftClock, rightClock, bound);
+	}
 
-    public static DiffGeqConstr Geq(
-            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
-        checkNotNull(leftClock);
-        checkNotNull(rightClock);
-        return new DiffGeqConstr(leftClock, rightClock, bound);
-    }
+	public static DiffGeqConstr Geq(final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock,
+									final int bound) {
+		checkNotNull(leftClock);
+		checkNotNull(rightClock);
+		return new DiffGeqConstr(leftClock, rightClock, bound);
+	}
 
-    public static DiffEqConstr Eq(
-            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
-        checkNotNull(leftClock);
-        checkNotNull(rightClock);
-        return new DiffEqConstr(leftClock, rightClock, bound);
-    }
+	public static DiffEqConstr Eq(final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock,
+								  final int bound) {
+		checkNotNull(leftClock);
+		checkNotNull(rightClock);
+		return new DiffEqConstr(leftClock, rightClock, bound);
+	}
 
-    public static AndConstr And(final Collection<? extends ClockConstr> constrs) {
-        checkNotNull(constrs);
-        return new AndConstr(constrs);
-    }
+	public static AndConstr And(final Collection<? extends ClockConstr> constrs) {
+		checkNotNull(constrs);
+		return new AndConstr(constrs);
+	}
 
-    ////
+	////
 
-    public static AndConstr And(final ClockConstr... constrs) {
-        checkNotNull(constrs);
-        return And(ImmutableSet.copyOf(constrs));
-    }
+	public static AndConstr And(final ClockConstr... constrs) {
+		checkNotNull(constrs);
+		return And(ImmutableSet.copyOf(constrs));
+	}
 
-    ////
+	////
 
-    private static final class FromExprHelper {
+	private static final class FromExprHelper {
 
-        private static final FromExprHelper INSTANCE = new FromExprHelper();
+		private static final FromExprHelper INSTANCE = new FromExprHelper();
 
-        private final DispatchTable<ClockConstr> table;
+		private final DispatchTable<ClockConstr> table;
 
-        private FromExprHelper() {
-            table =
-                    DispatchTable.<ClockConstr>builder()
-                            .addCase(TrueExpr.class, this::transformTrue)
-                            .addCase(FalseExpr.class, this::transformFalse)
-                            .addCase(RatLtExpr.class, this::transformLt)
-                            .addCase(RatLeqExpr.class, this::transformLeq)
-                            .addCase(RatGtExpr.class, this::transformGt)
-                            .addCase(RatGeqExpr.class, this::transformGeq)
-                            .addCase(RatEqExpr.class, this::transformEq)
-                            .addCase(AndExpr.class, this::transformAnd)
-                            .addDefault(
-                                    o -> {
-                                        throw new IllegalArgumentException();
-                                    })
-                            .build();
-        }
+		private FromExprHelper() {
+			table = DispatchTable.<ClockConstr>builder()
 
-        public ClockConstr transform(final Expr<BoolType> expr) {
-            return table.dispatch(expr);
-        }
+					.addCase(TrueExpr.class, this::transformTrue)
 
-        private TrueConstr transformTrue(final TrueExpr expr) {
-            return True();
-        }
+					.addCase(FalseExpr.class, this::transformFalse)
 
-        private FalseConstr transformFalse(final FalseExpr expr) {
-            return False();
-        }
+					.addCase(RatLtExpr.class, this::transformLt)
 
-        private ClockConstr transformLt(final RatLtExpr expr) {
-            final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-            final int rhs = extractConstrRhs(expr);
-            if (lhs.size() == 1) {
-                return Lt(lhs.get(0), rhs);
-            } else {
-                return Lt(lhs.get(0), lhs.get(1), rhs);
-            }
-        }
+					.addCase(RatLeqExpr.class, this::transformLeq)
 
-        private ClockConstr transformLeq(final RatLeqExpr expr) {
-            final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-            final int rhs = extractConstrRhs(expr);
-            if (lhs.size() == 1) {
-                return Leq(lhs.get(0), rhs);
-            } else {
-                return Leq(lhs.get(0), lhs.get(1), rhs);
-            }
-        }
+					.addCase(RatGtExpr.class, this::transformGt)
 
-        private ClockConstr transformGt(final RatGtExpr expr) {
-            final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-            final int rhs = extractConstrRhs(expr);
-            if (lhs.size() == 1) {
-                return Gt(lhs.get(0), rhs);
-            } else {
-                return Gt(lhs.get(0), lhs.get(1), rhs);
-            }
-        }
+					.addCase(RatGeqExpr.class, this::transformGeq)
 
-        private ClockConstr transformGeq(final RatGeqExpr expr) {
-            final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-            final int rhs = extractConstrRhs(expr);
-            if (lhs.size() == 1) {
-                return Geq(lhs.get(0), rhs);
-            } else {
-                return Geq(lhs.get(0), lhs.get(1), rhs);
-            }
-        }
+					.addCase(RatEqExpr.class, this::transformEq)
 
-        private ClockConstr transformEq(final RatEqExpr expr) {
-            final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-            final int rhs = extractConstrRhs(expr);
-            if (lhs.size() == 1) {
-                return Eq(lhs.get(0), rhs);
-            } else {
-                return Eq(lhs.get(0), lhs.get(1), rhs);
-            }
-        }
+					.addCase(AndExpr.class, this::transformAnd)
 
-        private AndConstr transformAnd(final AndExpr expr) {
-            final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
-            for (final Expr<BoolType> op : expr.getOps()) {
-                builder.add(transform(op));
-            }
-            return And(builder.build());
-        }
+					.addDefault(o -> {
+						throw new IllegalArgumentException();
+					})
 
-        private static List<VarDecl<RatType>> extractConstrLhs(
-                final BinaryExpr<RatType, BoolType> expr) {
-            final Expr<?> leftOp = expr.getLeftOp();
+					.build();
+		}
 
-            if (leftOp instanceof RefExpr) {
-                final RefExpr<?> leftRef = (RefExpr<?>) leftOp;
-                final Decl<?> leftDecl = leftRef.getDecl();
-                if (leftDecl instanceof VarDecl) {
-                    final VarDecl<?> leftVar = (VarDecl<?>) leftDecl;
-                    final VarDecl<RatType> leftRatVar = TypeUtils.cast(leftVar, Rat());
-                    return ImmutableList.of(leftRatVar);
-                }
-            }
+		public ClockConstr transform(final Expr<BoolType> expr) {
+			return table.dispatch(expr);
+		}
 
-            if (leftOp instanceof RatSubExpr) {
-                final RatSubExpr subExpr = (RatSubExpr) leftOp;
-                // TODO
-                final Expr<?> subLeftOp = subExpr.getLeftOp();
-                final Expr<?> subRightOp = subExpr.getRightOp();
-                if (subLeftOp instanceof RefExpr && subRightOp instanceof RefExpr) {
-                    final RefExpr<?> subLeftRef = (RefExpr<?>) subLeftOp;
-                    final RefExpr<?> subRightRef = (RefExpr<?>) subRightOp;
-                    final Decl<?> subLeftDecl = subLeftRef.getDecl();
-                    final Decl<?> subRightDecl = subRightRef.getDecl();
-                    if (subLeftDecl instanceof VarDecl && subRightDecl instanceof VarDecl) {
-                        final VarDecl<?> subLeftVar = (VarDecl<?>) subLeftDecl;
-                        final VarDecl<?> subRightVar = (VarDecl<?>) subRightDecl;
-                        final VarDecl<RatType> subLeftRatVar = TypeUtils.cast(subLeftVar, Rat());
-                        final VarDecl<RatType> subRightRatVar = TypeUtils.cast(subRightVar, Rat());
-                        return ImmutableList.of(subLeftRatVar, subRightRatVar);
-                    }
-                }
-            }
+		private TrueConstr transformTrue(final TrueExpr expr) {
+			return True();
+		}
 
-            throw new IllegalArgumentException();
-        }
+		private FalseConstr transformFalse(final FalseExpr expr) {
+			return False();
+		}
 
-        private static int extractConstrRhs(final BinaryExpr<?, BoolType> expr) {
-            final Expr<?> rightOp = ExprUtils.simplify(expr.getRightOp());
+		private ClockConstr transformLt(final RatLtExpr expr) {
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Lt(lhs.get(0), rhs);
+				} else {
+					return Lt(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformGt(RatExprs.Gt(rightOp, leftOp));
+			} else {
+				throw new IllegalArgumentException();
+			}
+		}
 
-            if (rightOp instanceof RatLitExpr) {
-                final RatLitExpr ratLit = (RatLitExpr) rightOp;
-                if (ratLit.getDenom().intValue() == 1) {
-                    final int num = ratLit.getNum().intValue();
-                    return num;
-                }
-            }
+		private ClockConstr transformLeq(final RatLeqExpr expr) {
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Leq(lhs.get(0), rhs);
+				} else {
+					return Leq(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformGeq(RatExprs.Geq(rightOp, leftOp));
+			} else {
+				throw new IllegalArgumentException();
+			}
+		}
 
-            throw new IllegalArgumentException();
-        }
-    }
+		private ClockConstr transformGt(final RatGtExpr expr) {
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Gt(lhs.get(0), rhs);
+				} else {
+					return Gt(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformLt(RatExprs.Lt(rightOp, leftOp));
+			} else {
+				throw new IllegalArgumentException();
+			}
+		}
+
+		private ClockConstr transformGeq(final RatGeqExpr expr) {
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Geq(lhs.get(0), rhs);
+				} else {
+					return Geq(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformLeq(RatExprs.Leq(rightOp, leftOp));
+			} else {
+				throw new IllegalArgumentException();
+			}
+		}
+
+		private ClockConstr transformEq(final RatEqExpr expr) {
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Eq(lhs.get(0), rhs);
+				} else {
+					return Eq(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformEq(expr.with(rightOp, leftOp));
+			} else {
+				throw new IllegalArgumentException();
+			}
+		}
+
+		private AndConstr transformAnd(final AndExpr expr) {
+			final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
+			for (final Expr<BoolType> op : expr.getOps()) {
+				builder.add(transform(op));
+			}
+			return And(builder.build());
+		}
+
+		private static List<VarDecl<RatType>> extractConstrLhs(final BinaryExpr<RatType, BoolType> expr) {
+			final Expr<?> leftOp = expr.getLeftOp();
+
+			if (leftOp instanceof RefExpr) {
+				final RefExpr<?> leftRef = (RefExpr<?>) leftOp;
+				final Decl<?> leftDecl = leftRef.getDecl();
+				if (leftDecl instanceof VarDecl) {
+					final VarDecl<?> leftVar = (VarDecl<?>) leftDecl;
+					final VarDecl<RatType> leftRatVar = TypeUtils.cast(leftVar, Rat());
+					return ImmutableList.of(leftRatVar);
+				}
+			}
+
+			if (leftOp instanceof RatSubExpr) {
+				final RatSubExpr subExpr = (RatSubExpr) leftOp;
+				// TODO
+				final Expr<?> subLeftOp = subExpr.getLeftOp();
+				final Expr<?> subRightOp = subExpr.getRightOp();
+				if (subLeftOp instanceof RefExpr && subRightOp instanceof RefExpr) {
+					final RefExpr<?> subLeftRef = (RefExpr<?>) subLeftOp;
+					final RefExpr<?> subRightRef = (RefExpr<?>) subRightOp;
+					final Decl<?> subLeftDecl = subLeftRef.getDecl();
+					final Decl<?> subRightDecl = subRightRef.getDecl();
+					if (subLeftDecl instanceof VarDecl && subRightDecl instanceof VarDecl) {
+						final VarDecl<?> subLeftVar = (VarDecl<?>) subLeftDecl;
+						final VarDecl<?> subRightVar = (VarDecl<?>) subRightDecl;
+						final VarDecl<RatType> subLeftRatVar = TypeUtils.cast(subLeftVar, Rat());
+						final VarDecl<RatType> subRightRatVar = TypeUtils.cast(subRightVar, Rat());
+						return ImmutableList.of(subLeftRatVar, subRightRatVar);
+					}
+				}
+			}
+
+			throw new IllegalArgumentException();
+		}
+
+		private static int extractConstrRhs(final BinaryExpr<?, BoolType> expr) {
+			final Expr<?> rightOp = ExprUtils.simplify(expr.getRightOp());
+
+			if (rightOp instanceof RatLitExpr) {
+				final RatLitExpr ratLit = (RatLitExpr) rightOp;
+				if (ratLit.getDenom().intValue() == 1) {
+					final int num = ratLit.getNum().intValue();
+					return num;
+				}
+			}
+
+			throw new IllegalArgumentException();
+		}
+
+		private static boolean containsClock(final Expr<?> expr) {
+			return (expr instanceof RefExpr<?> refExpr && refExpr.getType() instanceof RatType) ||
+					(expr instanceof RatSubExpr ratSubExpr
+							&& ratSubExpr.getLeftOp() instanceof RefExpr
+							&& ratSubExpr.getRightOp() instanceof RefExpr);
+		}
+
+	}
+
 }

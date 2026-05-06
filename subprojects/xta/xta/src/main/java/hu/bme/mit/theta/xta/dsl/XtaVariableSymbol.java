@@ -35,318 +35,338 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
-import hu.bme.mit.theta.xta.utils.RangeType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
+
 import java.util.List;
 
 final class XtaVariableSymbol implements Symbol {
 
-    private final String name;
-    private final boolean constant;
-    private final boolean broadcast;
+	private String name;
+	private final boolean constant;
+	private final boolean broadcast;
+	private boolean global;
 
-    private final XtaType type;
-    private final XtaInitialiser initialiser;
+	private final XtaType type;
+	private final XtaInitialiser initialiser;
 
-    public XtaVariableSymbol(
-            final Scope scope,
-            final TypeContext typeContext,
-            final VariableIdContext variableIdcontext) {
-        checkNotNull(typeContext);
-        checkNotNull(variableIdcontext);
-        name = variableIdcontext.fArrayId.fId.getText();
-        constant = (typeContext.fTypePrefix.fConst != null);
-        broadcast = (typeContext.fTypePrefix.fBroadcast != null);
-        type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
-        initialiser =
-                variableIdcontext.fInitialiser != null
-                        ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
-                        : null;
+	public XtaVariableSymbol(final Scope scope, final TypeContext typeContext,
+							 final VariableIdContext variableIdcontext) {
+		checkNotNull(typeContext);
+		checkNotNull(variableIdcontext);
+		name = variableIdcontext.fArrayId.fId.getText();
+		constant = (typeContext.fTypePrefix.fConst != null);
+		broadcast = (typeContext.fTypePrefix.fBroadcast != null);
+		type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
+		initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
+				: null;
+	}
+
+    private XtaVariableSymbol(final String name, final XtaVariableSymbol toCopy) {
+        this.name = name;
+        constant = toCopy.constant;
+        broadcast = toCopy.broadcast;
+        type = toCopy.type;
+        initialiser = toCopy.initialiser;
     }
 
-    @Override
-    public String getName() {
-        return name;
+    public XtaVariableSymbol copy(String prefix) {
+        return new XtaVariableSymbol(prefix + name, this);
     }
 
-    public boolean isConstant() {
-        return constant;
-    }
+	private XtaVariableSymbol(String _name){
+		name = _name;
+		constant = false;
+		broadcast = false;
+		type = null;
+		initialiser = null;
+	}
 
-    public boolean isBroadcast() {
-        return broadcast;
-    }
+	public static XtaVariableSymbol forcedCreate(String name){
+		return new XtaVariableSymbol(name);
+	}
 
-    public InstantiateResult instantiate(final String prefix, final Env env) {
-        final Type varType = type.instantiate(env);
+	public void setGlobal(){
+		global = true;
+	}
 
-        if (varType == ChanType.getInstance() && initialiser != null) {
-            throw new UnsupportedOperationException(
-                    "Initialisers are not supported for type \"chan\"");
-        }
+	public boolean isGlobal(){
+		return global;
+	}
 
-        if (constant) {
-            if (!isSupportedDataType(varType)) {
-                throw new UnsupportedOperationException("Unsupported type for const " + name + ".");
-            } else if (initialiser == null) {
-                throw new UnsupportedOperationException(
-                        "The value of const " + name + " is undefined.");
-            } else {
-                final LitExpr<?> expr = (LitExpr<?>) initialiser.instantiate(varType, env);
-                return InstantiateResult.constant(expr);
-            }
-        } else if (isSupportedDataType(varType)) {
-            if (broadcast) {
-                throw new UnsupportedOperationException(
-                        "Unsupported keyword \"broadcast\" for variable" + name + ".");
-            } else {
-                final VarDecl<?> varDecl = Decls.Var(prefix + name, varType);
-                final LitExpr<?> initValue;
-                if (initialiser != null) {
-                    final Expr<?> expr = initialiser.instantiate(varType, env);
-                    if (expr instanceof LitExpr) {
-                        initValue = (LitExpr<?>) expr;
-                    } else {
-                        throw new AssertionError();
-                    }
-                } else {
-                    initValue = defaultValueFor(varType);
-                }
-                return InstantiateResult.dataVariable(varDecl, initValue);
-            }
-        } else if (varType instanceof ClockType) {
-            if (broadcast) {
-                throw new UnsupportedOperationException(
-                        "Unsupported keyword \"broadcast\" for variable" + name + ".");
-            } else if (initialiser != null) {
-                throw new UnsupportedOperationException(
-                        "Clock " + name + " should not be initialized.");
-            } else {
-                final VarDecl<RatType> varDecl = Decls.Var(prefix + name, Rat());
-                return InstantiateResult.clockVariable(varDecl);
-            }
-        } else if (isChanArrayType(varType)) {
-            final List<Type> args = extractArgs(varType);
-            final Label label = Label.of(prefix + name, args, broadcast);
-            return InstantiateResult.channel(label);
-        } else {
-            throw new UnsupportedOperationException(
-                    "Type of variable " + name + " is unsupported.");
-        }
-    }
+	@Override
+	public String getName() {
+		return name;
+	}
 
-    private static boolean isSupportedDataType(Type type) {
-        return type instanceof BoolType || type instanceof IntType;
-    }
+	public boolean isConstant() {
+		return constant;
+	}
 
-    private static <T extends Type> LitExpr<T> defaultValueFor(final T type) {
-        checkArgument(isSupportedDataType(type));
-        if (type instanceof BoolType) {
-            return (LitExpr<T>) cast(False(), type);
-        } else if (type instanceof IntType) {
-            return (LitExpr<T>) cast(Int(0), type);
-        } else {
-            throw new AssertionError();
-        }
-    }
+	public boolean isBroadcast() {
+		return broadcast;
+	}
 
-    private static boolean isChanArrayType(final Type type) {
-        if (type instanceof ChanType) {
-            return true;
-        } else if (type instanceof ArrayType) {
-            final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
-            final Type indexType = arrayType.getIndexType();
-            final Type elemType = arrayType.getElemType();
+	public InstantiateResult instantiate(final String prefix, final Env env) {
+		final Type varType = type.instantiate(env);
 
-            if (!(indexType instanceof BoolType || indexType instanceof RangeType)) {
-                return false;
-            } else if (elemType instanceof ChanType) {
-                return true;
-            } else if (elemType instanceof ArrayType) {
-                return isChanArrayType(elemType);
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
+		if (varType == ChanType.getInstance() && initialiser != null) {
+			throw new UnsupportedOperationException("Initialisers are not supported for type \"chan\"");
+		}
 
-    private static List<Type> extractArgs(final Type type) {
-        if (type instanceof ChanType) {
-            return ImmutableList.of();
-        } else if (type instanceof ArrayType) {
-            final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
-            final Type indexType = arrayType.getIndexType();
-            final Type elemType = arrayType.getElemType();
+		if (constant) {
+			if (!isSupportedDataType(varType)) {
+				throw new UnsupportedOperationException("Unsupported type for const " + name + ".");
+			} else if (initialiser == null) {
+				throw new UnsupportedOperationException("The value of const " + name + " is undefined.");
+			} else {
+				final LitExpr<?> expr = (LitExpr<?>) initialiser.instantiate(varType, env);
+				return InstantiateResult.constant(expr);
+			}
+		} else if (isSupportedDataType(varType)) {
+			if (broadcast) {
+				throw new UnsupportedOperationException("Unsupported keyword \"broadcast\" for variable" + name + ".");
+			} else {
+				final VarDecl<?> varDecl = Decls.Var(prefix + name, varType);
+				final LitExpr<?> initValue;
+				if (initialiser != null) {
+					final Expr<?> expr = initialiser.instantiate(varType, env);
+					if (expr instanceof LitExpr) {
+						initValue = (LitExpr<?>) expr;
+					} else {
+						throw new AssertionError();
+					}
+				} else {
+					initValue = defaultValueFor(varType);
+				}
+				return InstantiateResult.dataVariable(varDecl, initValue);
+			}
+		} else if (varType instanceof ClockType) {
+			if (broadcast) {
+				throw new UnsupportedOperationException("Unsupported keyword \"broadcast\" for variable" + name + ".");
+			} else if (initialiser != null) {
+				throw new UnsupportedOperationException("Clock " + name + " should not be initialized.");
+			} else {
+				final VarDecl<RatType> varDecl = Decls.Var(prefix + name, Rat());
+				return InstantiateResult.clockVariable(varDecl);
+			}
+		} else if (isChanArrayType(varType)) {
+			final List<Type> args = extractArgs(varType);
+			final Label label = Label.of(prefix + name, args, broadcast);
+			return InstantiateResult.channel(label);
+		} else {
+			throw new UnsupportedOperationException("Type of variable " + name + " is unsupported.");
+		}
+	}
 
-            final Type newIndexType = (indexType instanceof RangeType) ? Int() : indexType;
+	private static boolean isSupportedDataType(final Type type) {
+		if (type instanceof final ArrayType<?, ?> arrayType) {
+			return (arrayType.getIndexType() instanceof IntType) && isSupportedDataType(arrayType.getElemType());
+		}
+		return type instanceof BoolType || type instanceof IntType;
+	}
 
-            final List<Type> result =
-                    ImmutableList.<Type>builder()
-                            .add(newIndexType)
-                            .addAll(extractArgs(elemType))
-                            .build();
-            return result;
-        } else {
-            throw new AssertionError();
-        }
-    }
+	private static <T extends Type> LitExpr<T> defaultValueFor(final T type) {
+		checkArgument(isSupportedDataType(type));
+		return TypeUtils.getDefaultValue(type);
+	}
 
-    public abstract static class InstantiateResult {
+	private static boolean isChanArrayType(final Type type) {
+		if (type instanceof ChanType) {
+			return true;
+		} else if (type instanceof ArrayType) {
+			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+			final Type indexType = arrayType.getIndexType();
+			final Type elemType = arrayType.getElemType();
 
-        private InstantiateResult() {}
+			if (!(indexType instanceof BoolType || indexType instanceof RangeType)) {
+				return false;
+			} else if (elemType instanceof ChanType) {
+				return true;
+			} else if (elemType instanceof ArrayType) {
+				return isChanArrayType(elemType);
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
 
-        public static InstantiateResult constant(final LitExpr<?> expr) {
-            return new Constant(expr);
-        }
+	private static List<Type> extractArgs(final Type type) {
+		if (type instanceof ChanType) {
+			return ImmutableList.of();
+		} else if (type instanceof ArrayType) {
+			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+			final Type indexType = arrayType.getIndexType();
+			final Type elemType = arrayType.getElemType();
 
-        public static InstantiateResult clockVariable(final VarDecl<RatType> varDecl) {
-            return new ClockVariable(varDecl);
-        }
+			final Type newIndexType = (indexType instanceof RangeType) ? Int() : indexType;
 
-        public static InstantiateResult dataVariable(
-                final VarDecl<?> varDecl, final LitExpr<?> initValue) {
-            return new DataVariable(varDecl, initValue);
-        }
+			final List<Type> result = ImmutableList.<Type>builder().add(newIndexType).addAll(extractArgs(elemType))
+					.build();
+			return result;
+		} else {
+			throw new AssertionError();
+		}
+	}
 
-        public static InstantiateResult channel(final Label label) {
-            return new Channel(label);
-        }
+	public static abstract class InstantiateResult {
 
-        public boolean isDataVariable() {
-            return false;
-        }
+		private InstantiateResult() {
+		}
 
-        public boolean isClockVariable() {
-            return false;
-        }
+		public static InstantiateResult constant(final LitExpr<?> expr) {
+			return new Constant(expr);
+		}
 
-        public boolean isConstant() {
-            return false;
-        }
+		public static InstantiateResult clockVariable(final VarDecl<RatType> varDecl) {
+			return new ClockVariable(varDecl);
+		}
 
-        public boolean isChannel() {
-            return false;
-        }
+		public static InstantiateResult dataVariable(final VarDecl<?> varDecl, final LitExpr<?> initValue) {
+			return new DataVariable(varDecl, initValue);
+		}
 
-        public DataVariable asDataVariable() {
-            throw new ClassCastException();
-        }
+		public static InstantiateResult channel(final Label label) {
+			return new Channel(label);
+		}
 
-        public ClockVariable asClockVariable() {
-            throw new ClassCastException();
-        }
+		public boolean isDataVariable() {
+			return false;
+		}
 
-        public Constant asConstant() {
-            throw new ClassCastException();
-        }
+		public boolean isClockVariable() {
+			return false;
+		}
 
-        public Channel asChannel() {
-            throw new ClassCastException();
-        }
-    }
+		public boolean isConstant() {
+			return false;
+		}
 
-    public static final class DataVariable extends InstantiateResult {
+		public boolean isChannel() {
+			return false;
+		}
 
-        private final VarDecl<?> varDecl;
-        private final LitExpr<?> initValue;
+		public DataVariable asDataVariable() {
+			throw new ClassCastException();
+		}
 
-        private DataVariable(final VarDecl<?> varDecl, LitExpr<?> litExpr) {
-            this.varDecl = checkNotNull(varDecl);
-            this.initValue = checkNotNull(litExpr);
-        }
+		public ClockVariable asClockVariable() {
+			throw new ClassCastException();
+		}
 
-        @Override
-        public boolean isDataVariable() {
-            return true;
-        }
+		public Constant asConstant() {
+			throw new ClassCastException();
+		}
 
-        @Override
-        public DataVariable asDataVariable() {
-            return this;
-        }
+		public Channel asChannel() {
+			throw new ClassCastException();
+		}
+	}
 
-        public VarDecl<?> getVarDecl() {
-            return varDecl;
-        }
 
-        public LitExpr<?> getInitValue() {
-            return initValue;
-        }
-    }
+	public static final class DataVariable extends InstantiateResult {
+		private final VarDecl<?> varDecl;
+		private final LitExpr<?> initValue;
 
-    public static final class ClockVariable extends InstantiateResult {
+		private DataVariable(final VarDecl<?> varDecl, LitExpr<?> litExpr) {
+			this.varDecl = checkNotNull(varDecl);
+			this.initValue = checkNotNull(litExpr);
+		}
 
-        private final VarDecl<RatType> varDecl;
+		@Override
+		public boolean isDataVariable() {
+			return true;
+		}
 
-        private ClockVariable(final VarDecl<RatType> varDecl) {
-            this.varDecl = checkNotNull(varDecl);
-        }
+		@Override
+		public DataVariable asDataVariable() {
+			return this;
+		}
 
-        @Override
-        public boolean isClockVariable() {
-            return true;
-        }
+		public VarDecl<?> getVarDecl() {
+			return varDecl;
+		}
 
-        @Override
-        public ClockVariable asClockVariable() {
-            return this;
-        }
+		public LitExpr<?> getInitValue() {
+			return initValue;
+		}
+	}
 
-        public VarDecl<RatType> getVarDecl() {
-            return varDecl;
-        }
-    }
+	public static final class ClockVariable extends InstantiateResult{
+		private final VarDecl<RatType> varDecl;
 
-    public static final class Constant extends InstantiateResult {
+		private ClockVariable(final VarDecl<RatType> varDecl) {
+			this.varDecl = checkNotNull(varDecl);
+		}
 
-        private final LitExpr<?> expr;
+		@Override
+		public boolean isClockVariable() {
+			return true;
+		}
 
-        private Constant(final LitExpr<?> expr) {
-            this.expr = checkNotNull(expr);
-            checkArgument(isSupportedDataType(expr.getType()));
-        }
+		@Override
+		public ClockVariable asClockVariable() {
+			return this;
+		}
 
-        @Override
-        public boolean isConstant() {
-            return true;
-        }
+		public VarDecl<RatType> getVarDecl() {
+			return varDecl;
+		}
+	}
 
-        @Override
-        public Constant asConstant() {
-            return this;
-        }
+	public static final class Constant extends InstantiateResult {
+		private final LitExpr<?> expr;
 
-        public LitExpr<?> getExpr() {
-            return expr;
-        }
-    }
+		private Constant(final LitExpr<?> expr) {
+			this.expr = checkNotNull(expr);
+			checkArgument(isSupportedDataType(expr.getType()));
+		}
 
-    public static final class Channel extends InstantiateResult {
+		@Override
+		public boolean isConstant() {
+			return true;
+		}
 
-        private final Label label;
+		@Override
+		public Constant asConstant() {
+			return this;
+		}
 
-        private Channel(final Label label) {
-            this.label = checkNotNull(label);
-        }
+		public LitExpr<?> getExpr() {
+			return expr;
+		}
+	}
 
-        @Override
-        public boolean isChannel() {
-            return true;
-        }
+	public static final class Channel extends InstantiateResult {
+		private final Label label;
 
-        @Override
-        public Channel asChannel() {
-            return this;
-        }
+		private Channel(final Label label) {
+			this.label = checkNotNull(label);
+		}
 
-        public Label getLabel() {
-            return label;
-        }
-    }
+		@Override
+		public boolean isChannel() {
+			return true;
+		}
+
+		@Override
+		public Channel asChannel() {
+			return this;
+		}
+
+		public Label getLabel() {
+			return label;
+		}
+	}
+
+	public void setName(String name){
+		this.name = name;
+	}
 }

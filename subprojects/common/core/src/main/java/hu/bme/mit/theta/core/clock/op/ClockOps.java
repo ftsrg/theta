@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ClockOps {
@@ -128,8 +129,8 @@ public final class ClockOps {
         public <DeclType extends Type> ClockOp visit(
                 final AssignStmt<DeclType> stmt, final Void param) {
 
-            final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
-            final Expr<?> expr = stmt.getExpr();
+			      final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			      final Expr<?> expr = ExprUtils.simplify(stmt.getExpr());
 
             if (expr instanceof IntLitExpr) {
                 final IntLitExpr intLit = (IntLitExpr) expr;

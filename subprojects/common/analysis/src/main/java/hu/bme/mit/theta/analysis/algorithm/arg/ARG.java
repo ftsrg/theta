@@ -35,7 +35,7 @@ public final class ARG<S extends State, A extends Action> implements Proof {
     private final Collection<ArgNode<S, A>> initNodes;
     public boolean initialized; // Set by ArgBuilder
     private int nextId = 0;
-    private final PartialOrd<S> partialOrd;
+    public final PartialOrd<S> partialOrd;
 
     private ARG(final PartialOrd<S> partialOrd) {
         initNodes = CollectionUtil.createSet();

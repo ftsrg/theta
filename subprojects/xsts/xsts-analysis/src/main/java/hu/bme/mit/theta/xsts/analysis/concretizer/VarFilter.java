@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xsts.XSTS;
 import java.util.Optional;
-
 public final class VarFilter {
 
     private final XSTS xsts;

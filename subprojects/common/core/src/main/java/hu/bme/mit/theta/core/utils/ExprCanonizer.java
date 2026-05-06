@@ -50,6 +50,7 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -98,6 +99,10 @@ public final class ExprCanonizer {
                     .addCase(RatLeqExpr.class, ExprCanonizer::canonizeRatLeq)
                     .addCase(RatLtExpr.class, ExprCanonizer::canonizeRatLt)
                     .addCase(RatToIntExpr.class, ExprCanonizer::canonizeRatToInt)
+
+                    // Range
+
+                    .addCase(InRangeExpr.class, ExprCanonizer::canonizeInRange)
 
                     // Integer
 
@@ -322,6 +327,16 @@ public final class ExprCanonizer {
 
     private static Expr<IntType> canonizeRatToInt(final RatToIntExpr expr) {
         final Expr<RatType> op = canonize(expr.getOp());
+
+        return expr.with(op);
+    }
+
+    /*
+     * Ranges
+     */
+
+    private static Expr<BoolType> canonizeInRange(final InRangeExpr expr) {
+        final Expr<IntType> op = canonize(expr.getOp());
 
         return expr.with(op);
     }

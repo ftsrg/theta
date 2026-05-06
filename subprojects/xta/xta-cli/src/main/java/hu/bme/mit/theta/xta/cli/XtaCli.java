@@ -25,154 +25,223 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
+import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
+import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfigFactory;
+import hu.bme.mit.theta.xta.analysis.lazy.*;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import hu.bme.mit.theta.xta.utils.CTLOperatorNotSupportedException;
+import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
 import java.io.*;
 
 public final class XtaCli {
 
-    private static final String JAR_NAME = "theta-xta.jar";
-    private final String[] args;
-    private final TableWriter writer;
+	public enum Algorithm {
+		LAZY, EXPERIMENTAL_COMBINED
+	}
 
-    @Parameter(
-            names = {"--model", "-m", "--input"},
-            description = "Path of the input model",
-            required = true)
-    String model;
+	private static final String JAR_NAME = "theta-xta.jar";
+	private final String[] args;
+	private final TableWriter writer;
 
-    @Parameter(
-            names = {"--discrete", "-d"},
-            description = "Refinement strategy for discrete variables",
-            required = false)
-    DataStrategy dataStrategy = DataStrategy.NONE;
+	/// Main parameters
 
-    @Parameter(
-            names = {"--clock", "-c"},
-            description = "Refinement strategy for clock variables",
-            required = true)
-    ClockStrategy clockStrategy;
+	@Parameter(names = {"--model", "-m"}, description = "Path of the input model", required = true)
+	String model;
 
-    @Parameter(
-            names = {"--search", "-s"},
-            description = "Search strategy",
-            required = true)
-    SearchStrategy searchStrategy;
+	@Parameter(names = {"--algorithm"}, description = "The algorithm to use")
+	Algorithm algorithm = Algorithm.LAZY;
 
-    @Parameter(
-            names = {"--benchmark", "-b"},
-            description = "Benchmark mode (only print metrics)")
-    Boolean benchmarkMode = false;
+	/// Lazy algorithm parameters
 
-    @Parameter(
-            names = {"--visualize", "-v"},
-            description = "Write proof or counterexample to file in dot format")
-    String dotfile = null;
+	@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
+	DataStrategy2.ConcrDom concrDataDom = DataStrategy2.ConcrDom.EXPL;
 
-    @Parameter(
-            names = {"--header", "-h"},
-            description = "Print only a header (for benchmarks)",
-            help = true)
-    boolean headerOnly = false;
+	@Parameter(names = {"--discreteabstr", "-da"}, description = "Abstract domain for discrete variables", required = false)
+	DataStrategy2.AbstrDom abstrDataDom = DataStrategy2.AbstrDom.EXPL;
 
-    @Parameter(
-            names = {"--property"},
-            description = "Property placeholder (ignored)")
-    String property;
+	@Parameter(names = {"--discreteitp", "-di"}, description = "Interpolation strategy for discrete variables", required = false)
+	DataStrategy2.ItpStrategy dataItpStrategy = DataStrategy2.ItpStrategy.BIN_BW;
 
-    @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
-    boolean stacktrace = false;
+	@Parameter(names = {"--meet", "-me"}, description = "Meet strategy for expressions", required = false)
+	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
 
-    @Parameter(names = "--version", description = "Display version", help = true)
-    boolean versionInfo = false;
+	/// Combined algorithm parameters
 
-    public XtaCli(final String[] args) {
-        this.args = args;
-        this.writer = new BasicTableWriter(System.out, ",", "\"", "\"");
-    }
+	@Parameter(names = {"--combined-dataDomain"}, description = "Abstract domain for data")
+	CombinedLazyCegarXtaCheckerConfigFactory.DataDomain dataDomain = CombinedLazyCegarXtaCheckerConfigFactory.DataDomain.EXPL;
 
-    public static void main(final String[] args) {
-        final XtaCli mainApp = new XtaCli(args);
-        mainApp.run();
-    }
+	@Parameter(names = "--combined-predsplit", description = "Predicate splitting (for predicate abstraction)")
+	CombinedLazyCegarXtaCheckerConfigFactory.PredSplit predSplit = CombinedLazyCegarXtaCheckerConfigFactory.PredSplit.WHOLE;
 
-    private void run() {
-        try {
-            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-        } catch (final ParameterException ex) {
-            System.out.println("Invalid parameters, details:");
-            System.out.println(ex.getMessage());
-            ex.usage();
-            return;
-        }
+	@Parameter(names = "--combined-maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+	Integer maxEnum = 10;
 
-        if (headerOnly) {
-            LazyXtaStatistics.writeHeader(writer);
-            return;
-        }
+	@Parameter(names = {"--combined-dataRefinement"}, description = "Data refinement strategy")
+	CombinedLazyCegarXtaCheckerConfigFactory.DataRefinement dataRefinement = CombinedLazyCegarXtaCheckerConfigFactory.DataRefinement.SEQ_ITP;
 
-        if (versionInfo) {
-            CliUtils.printVersion(System.out);
-            return;
-        }
+	@Parameter(names = {"--combined-pruneStrategy"}, description = "Strategy for pruning the ARG after refinement")
+	PruneStrategy pruneStrategy = PruneStrategy.FULL;
 
-        try {
-            final XtaSystem system = loadModel();
-            final SafetyChecker<?, ?, UnitPrec> checker =
-                    LazyXtaCheckerFactory.create(
-                            system, dataStrategy, clockStrategy, searchStrategy);
-            final SafetyResult<
-                            ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
-                    result = check(checker);
-            printResult(result);
-            if (dotfile != null) {
-                writeVisualStatus(result, dotfile);
-            }
-        } catch (final Throwable ex) {
-            printError(ex);
-            System.exit(1);
-        }
-    }
+	@Parameter(names = "--combined-noArgCexCheck")
+	boolean noArgCexCheck = false;
 
-    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
-            check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
-        try {
-            return (SafetyResult<
-                            ? extends ARG<?, ?>,
-                            ? extends Trace<? extends State, ? extends Action>>)
-                    checker.check(UnitPrec.getInstance());
-        } catch (final Exception ex) {
-            String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
-            throw new Exception(
-                    "Error while running algorithm: "
-                            + ex.getClass().getSimpleName()
-                            + " "
-                            + message,
-                    ex);
-        }
-    }
+	/// Common algorithm parameters
 
-    private XtaSystem loadModel() throws Exception {
-        try {
-            try (InputStream inputStream = new FileInputStream(model)) {
-                return XtaDslManager.createSystem(inputStream);
-            }
-        } catch (Exception ex) {
-            throw new Exception("Could not parse XTA: " + ex.getMessage(), ex);
-        }
-    }
+	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = false)
+	ClockStrategy clockStrategy = ClockStrategy.BWITP;
+
+	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = false)
+	SearchStrategy searchStrategy = SearchStrategy.BFS;
+
+	/// Common parameters
+
+	@Parameter(names = {"--benchmark", "-b"}, description = "Benchmark mode (only print metrics)")
+	Boolean benchmarkMode = false;
+
+	@Parameter(names = {"--visualize", "-v"}, description = "Write proof or counterexample to file in dot format")
+	String dotfile = null;
+
+	@Parameter(names = {"--header", "-h"}, description = "Print only a header (for benchmarks)", help = true)
+	boolean headerOnly = false;
+
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
+
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
+	Logger.Level logLevel = Logger.Level.VERBOSE;
+
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
+	public XtaCli(final String[] args) {
+		this.args = args;
+		this.writer = new BasicTableWriter(System.out, ",", "\"", "\"");
+	}
+
+	public static void main(final String[] args) {
+		final XtaCli mainApp = new XtaCli(args);
+		mainApp.run();
+	}
+
+	private void run() {
+		try {
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+		} catch (final ParameterException ex) {
+			System.out.println("Invalid parameters, details:");
+			System.out.println(ex.getMessage());
+			ex.usage();
+			return;
+		}
+
+		if (headerOnly) {
+			LazyXtaStatistics.writeHeader(writer);
+			return;
+		}
+
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
+			return;
+		}
+
+		try {
+			final XtaSystem system = loadModel();
+			switch (algorithm) {
+				case LAZY -> runLazy(system);
+				case EXPERIMENTAL_COMBINED -> runCombined(system);
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+			System.exit(1);
+		}
+	}
+
+	private void runLazy(final XtaSystem system) {
+		final LazyXtaAbstractorConfig<?, ?, ?> abstractor = LazyXtaAbstractorConfigFactory.create(
+			system, new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
+			clockStrategy, searchStrategy, exprMeetStrategy
+		);
+		final var result = abstractor.check();
+		resultPrinter(result.isSafe(), result.isUnsafe(), system);
+	}
+
+	private void runCombined(final XtaSystem system) {
+		final var config = CombinedLazyCegarXtaCheckerConfigFactory
+			.create(system, NullLogger.getInstance(), Z3LegacySolverFactory.getInstance())
+			.dataDomain(dataDomain)
+			.maxEnum(maxEnum)
+			.predSplit(predSplit)
+			.dataRefinement(dataRefinement)
+			.clockStrategy(clockStrategy)
+			.searchStragegy(searchStrategy)
+			.pruneStrategy(pruneStrategy)
+			.build();
+		try {
+			final var result = config.check();
+			resultPrinter(result.isSafe(), result.isUnsafe(), system);
+		} catch (NotSolvableException ex) {
+			ex.printStackTrace();
+			System.exit(9);
+		}
+	}
+
+	private void resultPrinter(final boolean isSafe, final boolean isUnsafe, final XtaSystem system) {
+		if (isSafe) {
+			switch (system.getPropertyKind()) {
+				case AG -> System.out.println("(SafetyResult Safe)");
+				case EF -> System.out.println("(SafetyResult Unsafe)");
+				default -> throw new UnsupportedOperationException();
+			}
+		} else if (isUnsafe) {
+			switch (system.getPropertyKind()) {
+				case AG -> System.out.println("(SafetyResult Unsafe)");
+				case EF -> System.out.println("(SafetyResult Safe)");
+				default -> throw new UnsupportedOperationException();
+			}
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
+		try {
+			return checker.check(UnitPrec.getInstance());
+		} catch (final Exception ex) {
+			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+		}
+	}
+
+	private XtaSystem loadModel() throws Exception {
+		try {
+			try (InputStream inputStream = new FileInputStream(model)) {
+				return XtaDslManager.createSystem(inputStream);
+			}
+		} catch (CTLOperatorNotSupportedException ex) {
+			ex.printStackTrace();
+			System.exit(11);
+		} catch (MixedDataTimeNotSupportedException ex) {
+			ex.printStackTrace();
+			System.exit(12);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.exit(10);
+		}
+		throw new AssertionError();
+	}
 
     private void printResult(
             final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> result) {

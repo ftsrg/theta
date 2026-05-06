@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.ForallExpr;
@@ -100,6 +101,9 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -126,6 +130,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
@@ -211,7 +219,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(EnumNeqExpr.class, this::transformEnumNeq)
                 .addCase(EnumEqExpr.class, this::transformEnumEq)
 
-                // Bitvectors
+				        // Ranges
+
+				        .addCase(InRangeExpr.class, this::transformInRange)
+
+				        // Bitvectors
 
                 .addCase(BvLitExpr.class, this::transformBvLit)
                 .addCase(BvConcatExpr.class, this::transformBvConcat)
@@ -643,8 +655,23 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     /*
-     * Bitvectors
-     */
+    * Ranges
+    */
+
+    protected String transformInRange(final InRangeExpr expr) {
+        final Expr<IntType> op = expr.getOp();
+
+        final RangeType range = expr.getRange();
+        final Expr<IntType> lower = Int(range.getLower());
+        final Expr<IntType> upper = Int(range.getUpper());
+
+        final Expr<BoolType> asBoolExpr = And(Leq(lower, op), Leq(op, upper));
+        return toTerm(asBoolExpr);
+    }
+
+    /*
+    * Bitvectors
+    */
 
     protected String transformBvLit(final BvLitExpr expr) {
         final StringBuilder sb = new StringBuilder(expr.getType().getSize() + 1);

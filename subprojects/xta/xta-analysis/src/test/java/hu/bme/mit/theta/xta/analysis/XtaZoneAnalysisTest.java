@@ -47,11 +47,11 @@ public final class XtaZoneAnalysisTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {"/csma-2.xta"},
-                    {"/fddi-2.xta"},
-                    {"/fischer-2-32-64.xta"},
-                    {"/lynch-2-16.xta"},
-                    {"/broadcast.xta"},
+                    {"/model/csma-2.xta"},
+                    {"/model/fddi-2.xta"},
+                    {"/model/fischer-2-32-64.xta"},
+                    {"/model/lynch-2-16.xta"},
+                    {"/model/broadcast.xta"},
                 });
     }
 
@@ -65,16 +65,14 @@ public final class XtaZoneAnalysisTest {
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
         final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
-        final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis =
-                XtaExplAnalysis.create(system);
-        final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.getInstance();
-        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>>
-                prodAnalysis = Prod2Analysis.create(explAnalysis, zoneAnalysis);
-        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis =
-                PrecMappingAnalysis.create(
-                        prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
-        final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis =
-                XtaAnalysis.create(system, mappedAnalysis);
+        final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(system);
+        final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.create(system.getInitLocs());
+        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
+                .create(explAnalysis, zoneAnalysis);
+        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
+                .create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
+        final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
+                .create(system, mappedAnalysis);
 
         final ZonePrec prec = ZonePrec.of(system.getClockVars());
 

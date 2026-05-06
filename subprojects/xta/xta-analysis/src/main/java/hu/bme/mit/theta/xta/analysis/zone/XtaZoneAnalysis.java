@@ -22,30 +22,35 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.ZoneOrd;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
+
+import java.util.Collection;
 
 public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, ZonePrec> {
 
-    private static final XtaZoneAnalysis INSTANCE = new XtaZoneAnalysis();
+	private final InitFunc<ZoneState, ZonePrec> initFunc;
 
-    private XtaZoneAnalysis() {}
+	private XtaZoneAnalysis(final Collection<XtaProcess.Loc> initLocs) {
+		initFunc = XtaZoneInitFunc.create(initLocs);
+	}
 
-    public static XtaZoneAnalysis getInstance() {
-        return INSTANCE;
-    }
+	public static XtaZoneAnalysis create(final Collection<XtaProcess.Loc> initLocs) {
+		return new XtaZoneAnalysis(initLocs);
+	}
 
-    @Override
-    public PartialOrd<ZoneState> getPartialOrd() {
-        return ZoneOrd.getInstance();
-    }
+	@Override
+	public PartialOrd<ZoneState> getPartialOrd() {
+		return ZoneOrd.getInstance();
+	}
 
-    @Override
-    public InitFunc<ZoneState, ZonePrec> getInitFunc() {
-        return XtaZoneInitFunc.getInstance();
-    }
+	@Override
+	public InitFunc<ZoneState, ZonePrec> getInitFunc() {
+		return initFunc;
+	}
 
-    @Override
-    public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
-        return XtaZoneTransFunc.getInstance();
-    }
+	@Override
+	public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
+		return XtaZoneTransFunc.getInstance();
+	}
 }

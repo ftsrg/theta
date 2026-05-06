@@ -23,16 +23,20 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.List;
 import org.kframework.mpfr.BigFloat;
 
 /** Utility functions related to types. */
@@ -185,27 +189,32 @@ public final class TypeUtils {
         checkArgument(op1.getType().equals(op2.getType()), "All types must equal");
     }
 
-    public static <T extends Type> LitExpr<T> getDefaultValue(final T type) {
-        if (type instanceof BoolType) {
-            return (LitExpr<T>) cast(BoolExprs.False(), type);
-        } else if (type instanceof IntType) {
-            return (LitExpr<T>) cast(IntExprs.Int(0), type);
-        } else if (type instanceof RatType) {
-            return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
-        } else if (type instanceof BvType) {
-            return (LitExpr<T>)
-                    cast(
-                            BvUtils.bigIntegerToNeutralBvLitExpr(
-                                    BigInteger.ZERO, ((BvType) type).getSize()),
-                            type);
-        } else if (type instanceof FpType) {
-            return (LitExpr<T>)
-                    cast(
-                            FpUtils.bigFloatToFpLitExpr(
-                                    BigFloat.zero(((FpType) type).getSignificand()), (FpType) type),
-                            type);
-        } else {
-            throw new AssertionError();
-        }
-    }
+	public static <T extends Type> LitExpr<T> getDefaultValue(final T type) {
+		if(type instanceof BoolType) {
+			return (LitExpr<T>) cast(BoolExprs.False(), type);
+		} else if(type instanceof IntType) {
+			if(type instanceof final RangeType range) {
+				final boolean zeroInRange = range.getLower() <= 0 && 0 <= range.getUpper();
+				final int rangeDefault = zeroInRange ? 0 : range.getLower();
+				return (LitExpr<T>) cast(IntExprs.Int(rangeDefault), type);
+			}
+			return (LitExpr<T>) cast(IntExprs.Int(0), type);
+		} else if(type instanceof RatType) {
+			return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
+		} else if(type instanceof BvType) {
+			return (LitExpr<T>) cast(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize()), type);
+		} else if(type instanceof FpType) {
+			return (LitExpr<T>) cast(FpUtils.bigFloatToFpLitExpr(BigFloat.zero(((FpType) type).getSignificand()), (FpType) type), type);
+		} else if (type instanceof final ArrayType<?, ?> arrayType) {
+			return (LitExpr<T>) cast(defaultArrayValue(arrayType), type);
+		} else {
+			throw new AssertionError();
+		}
+	}
+
+	private static <IT extends Type, ET extends Type> ArrayLitExpr<IT, ET> defaultArrayValue(final ArrayType<IT, ET> arrayType) {
+		final ET elemType = arrayType.getElemType();
+		final LitExpr<ET> defaultElem = getDefaultValue(elemType);
+		return ArrayLitExpr.of(List.of(), defaultElem, arrayType);
+	}
 }

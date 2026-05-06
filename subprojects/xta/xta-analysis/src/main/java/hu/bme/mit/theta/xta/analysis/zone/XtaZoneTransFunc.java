@@ -22,13 +22,13 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import java.util.Collection;
 
-final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
+public final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
 
     private static final XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
 
     private XtaZoneTransFunc() {}
 
-    static XtaZoneTransFunc getInstance() {
+    public static XtaZoneTransFunc getInstance() {
         return INSTANCE;
     }
 

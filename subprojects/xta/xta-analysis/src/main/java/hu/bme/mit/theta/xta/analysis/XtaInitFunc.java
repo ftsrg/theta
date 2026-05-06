@@ -26,25 +26,25 @@ import java.util.Collection;
 import java.util.List;
 
 final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<XtaState<S>, P> {
+	private final XtaSystem system;
+	private final InitFunc<S, ? super P> initFunc;
 
-    private final XtaSystem system;
-    private final InitFunc<S, ? super P> initFunc;
+	private XtaInitFunc(final XtaSystem system, final InitFunc<S, ? super P> initFunc) {
+		this.system = checkNotNull(system);
+		this.initFunc = checkNotNull(initFunc);
+	}
 
-    private XtaInitFunc(final XtaSystem system, final InitFunc<S, ? super P> initFunc) {
-        this.system = checkNotNull(system);
-        this.initFunc = checkNotNull(initFunc);
-    }
+	public static <S extends State, P extends Prec> XtaInitFunc<S, P> create(final XtaSystem system,
+																			 final InitFunc<S, ? super P> initFunc) {
+		return new XtaInitFunc<>(system, initFunc);
+	}
 
-    public static <S extends State, P extends Prec> XtaInitFunc<S, P> create(
-            final XtaSystem system, final InitFunc<S, ? super P> initFunc) {
-        return new XtaInitFunc<>(system, initFunc);
-    }
+	@Override
+	public Collection<XtaState<S>> getInitStates(final P prec) {
+		checkNotNull(prec);
+		final List<Loc> initLocs = system.getInitLocs();
+		final Collection<? extends S> initStates = initFunc.getInitStates(prec);
+		return XtaState.collectionOf(initLocs, initStates, system.getInitVal());
+	}
 
-    @Override
-    public Collection<XtaState<S>> getInitStates(final P prec) {
-        checkNotNull(prec);
-        final List<Loc> initLocs = system.getInitLocs();
-        final Collection<? extends S> initStates = initFunc.getInitStates(prec);
-        return XtaState.collectionOf(initLocs, initStates);
-    }
 }

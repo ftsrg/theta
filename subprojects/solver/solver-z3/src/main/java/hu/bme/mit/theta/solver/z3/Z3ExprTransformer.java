@@ -51,6 +51,8 @@ import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.*;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -133,6 +135,10 @@ final class Z3ExprTransformer {
                         .addCase(IntLeqExpr.class, this::transformIntLeq)
                         .addCase(IntLtExpr.class, this::transformIntLt)
                         .addCase(IntToRatExpr.class, this::transformIntToRat)
+
+                        // Ranges
+
+                        .addCase(InRangeExpr.class, this::transformInRange)
 
                         // Bitvectors
 
@@ -558,18 +564,31 @@ final class Z3ExprTransformer {
         return context.mkLt(leftOpTerm, rightOpTerm);
     }
 
-    /*
-     * Bitvectors
-     */
-
     private com.microsoft.z3.Expr transformIntToRat(final IntToRatExpr expr) {
         final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
         return context.mkInt2Real(opTerm);
     }
 
+    /*
+    * Ranges
+    */
+
+    private com.microsoft.z3.Expr transformInRange(final InRangeExpr expr) {
+        final RangeType range = expr.getRange();
+        final com.microsoft.z3.ArithExpr op = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
+
+        return context.mkAnd(
+            context.mkLe(context.mkInt(range.getLower()), op),
+            context.mkLe(op, context.mkInt(range.getUpper()))
+        );
+    }
+
+    /*
+    * Bitvectors
+    */
+
     private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
-        return context.mkBV(
-                BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
+        return context.mkBV(BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
     }
 
     private com.microsoft.z3.Expr transformBvEq(final BvEqExpr expr) {
