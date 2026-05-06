@@ -432,7 +432,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     val edgesToExplore = mutableListOf<XcfaEdge>()
     edgesToExplore.add(startEdge)
     while (edgesToExplore.isNotEmpty()) {
-      val exploring = edgesToExplore.removeFirst()
+      val exploring = edgesToExplore.removeAt(0)
       vars.addAll(getDirectlyUsedVars(exploring))
       if (goFurther.test(exploring)) {
         val successiveEdges = getSuccessiveEdges(exploring)
@@ -461,7 +461,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     val edgesToExplore = mutableListOf<XcfaEdge>()
     edgesToExplore.add(startEdge)
     while (edgesToExplore.isNotEmpty()) {
-      val exploring = edgesToExplore.removeFirst()
+      val exploring = edgesToExplore.removeAt(0)
       memLocs.addAll(getDirectlyUsedMemLocs(exploring))
       if (goFurther.test(exploring)) {
         val successiveEdges = getSuccessiveEdges(exploring)

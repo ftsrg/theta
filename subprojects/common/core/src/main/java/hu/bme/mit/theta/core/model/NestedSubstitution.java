@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -46,7 +46,7 @@ public final class NestedSubstitution implements Substitution {
 
     @Override
     public Collection<? extends Decl<?>> getDecls() {
-        final Set<Decl<?>> decls = Containers.createSet();
+        final Set<Decl<?>> decls = CollectionUtil.createSet();
         decls.addAll(subst.getDecls());
         decls.addAll(enclosingSubst.getDecls());
         return decls;

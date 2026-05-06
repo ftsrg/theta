@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":theta-petrinet-model"))
     implementation(project(":theta-petrinet-analysis"))
     implementation(project(":theta-petrinet-xsts"))
+    implementation(project(":theta-dve-frontend"))
     implementation(project(":theta-xsts"))
     implementation(project(":theta-xsts-analysis"))
     implementation(project(":theta-analysis"))
