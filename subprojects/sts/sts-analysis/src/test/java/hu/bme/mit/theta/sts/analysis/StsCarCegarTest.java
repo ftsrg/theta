@@ -31,8 +31,8 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.ic3.CarCegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.ic3.CarOptimizations;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarOptimizations;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;

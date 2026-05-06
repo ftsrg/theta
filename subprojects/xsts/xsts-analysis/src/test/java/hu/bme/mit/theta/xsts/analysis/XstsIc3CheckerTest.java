@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xsts.analysis;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;

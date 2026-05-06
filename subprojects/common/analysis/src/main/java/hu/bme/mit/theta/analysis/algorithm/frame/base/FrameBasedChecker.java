@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.base;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
 
-public abstract class HardwareChecker<O extends BaseOptimizations>
+public abstract class FrameBasedChecker<O extends BaseOptimizations>
         implements SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> {
 
     protected MonolithicExpr monolithicExpr;
@@ -52,7 +52,7 @@ public abstract class HardwareChecker<O extends BaseOptimizations>
     protected final List<Frame> frames;
     protected int currentFrameNumber;
 
-    protected HardwareChecker(
+    protected FrameBasedChecker(
             MonolithicExpr monolithicExpr,
             SolverFactory solverFactory,
             O optimizations,

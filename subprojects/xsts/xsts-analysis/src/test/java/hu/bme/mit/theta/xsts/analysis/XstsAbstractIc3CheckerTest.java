@@ -23,7 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;

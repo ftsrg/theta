@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.base;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;

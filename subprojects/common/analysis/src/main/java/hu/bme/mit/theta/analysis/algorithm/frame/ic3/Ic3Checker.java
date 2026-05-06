@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.ic3;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -25,6 +25,10 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.FrameBasedChecker;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.ProofObligation;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.Cube;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.Frame;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -46,7 +50,7 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 
-public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
+public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
 
     public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
         this(

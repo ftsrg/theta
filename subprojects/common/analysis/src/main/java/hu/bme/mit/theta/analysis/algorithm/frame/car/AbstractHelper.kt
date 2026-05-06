@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.ic3
+package hu.bme.mit.theta.analysis.algorithm.frame.car
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
@@ -37,8 +37,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.IffExpr
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
@@ -92,9 +91,13 @@ constructor(
       }
     val transOffsetIndex = indexingBuilder.build()
     return MonolithicExpr(
-      initExpr = And(And(lambdaList), model.initExpr),
-      transExpr = And(And(lambdaList), And(lambdaPrimeList), model.transExpr),
-      propExpr = Not(And(And(lambdaList), Not(model.propExpr))),
+      initExpr = SmartBoolExprs.And(SmartBoolExprs.And(lambdaList), model.initExpr),
+      transExpr = SmartBoolExprs.And(
+        SmartBoolExprs.And(lambdaList), SmartBoolExprs.And(lambdaPrimeList), model.transExpr
+      ),
+      propExpr = SmartBoolExprs.Not(
+        SmartBoolExprs.And(SmartBoolExprs.And(lambdaList), SmartBoolExprs.Not(model.propExpr))
+      ),
       transOffsetIndex = transOffsetIndex,
       vars = activationLiterals + model.ctrlVars,
       ctrlVars = model.ctrlVars,

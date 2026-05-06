@@ -13,14 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.common.container.Containers;
+
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -43,7 +44,7 @@ public class OverFrame {
         this.parent = parent;
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
-        exprs = Containers.createSet();
+        exprs = CollectionUtil.createSet();
     }
 
     public void refine(Expr<BoolType> expression) {

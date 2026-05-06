@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.base;
 
 public abstract class BaseOptimizations {
 

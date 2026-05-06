@@ -14,11 +14,12 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
-import hu.bme.mit.theta.common.container.Containers;
+
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -81,7 +82,7 @@ public class Node {
     }
 
     public Node(Expr<BoolType> expr, Node parent, boolean coverOpt, UCSolver solver) {
-        exprs = Containers.createSet();
+        exprs = CollectionUtil.createSet();
         this.solver = solver;
         this.coverOpt = coverOpt;
         if (parent != null) {

@@ -14,18 +14,23 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
-public class IC3Optimizations extends BaseOptimizations {
+import hu.bme.mit.theta.analysis.algorithm.frame.base.BaseOptimizations;
 
-    public IC3Optimizations(
+public class CarOptimizations extends BaseOptimizations {
+
+    private final boolean coverOpt;
+
+    public CarOptimizations(
             boolean unSatOpt,
             boolean notBOpt,
             boolean propagateOpt,
+            boolean propertyOpt,
             boolean filterOpt,
             boolean generalizeOpt,
-            boolean propertyOpt,
-            boolean unsatPropagateOpt) {
+            boolean unsatPropagateOpt,
+            boolean coverOpt) {
         super(
                 unSatOpt,
                 notBOpt,
@@ -34,5 +39,10 @@ public class IC3Optimizations extends BaseOptimizations {
                 propertyOpt,
                 generalizeOpt,
                 unsatPropagateOpt);
+        this.coverOpt = coverOpt;
+    }
+
+    public boolean isCoverOpt() {
+        return coverOpt;
     }
 }

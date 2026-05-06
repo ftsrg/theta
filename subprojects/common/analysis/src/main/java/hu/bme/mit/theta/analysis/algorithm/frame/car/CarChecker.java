@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
@@ -27,6 +27,9 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.Cube;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.Frame;
+import hu.bme.mit.theta.analysis.algorithm.frame.base.FrameBasedChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -36,7 +39,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.container.Containers;
+
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -50,7 +54,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 
 public class CarChecker<S extends ExprState, A extends ExprAction>
-        extends HardwareChecker<CarOptimizations> {
+        extends FrameBasedChecker<CarOptimizations> {
     public void setMonolithicExpr(MonolithicExpr monolithicExpr) {
         this.monolithicExpr = monolithicExpr;
     }
@@ -99,7 +103,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                         null,
                         optimizations.isCoverOpt(),
                         solver);
-        currentlyVisited = Containers.createMap();
+        currentlyVisited = CollectionUtil.createMap();
     }
 
     private Node getNotCheckedNode() {

@@ -13,11 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.base;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -26,16 +26,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class Clause {
+public final class Cube {
 
     private final Set<Expr<BoolType>> literals;
 
-    private Clause(final Collection<Expr<BoolType>> literals) {
+    private Cube(final Collection<? extends Expr<BoolType>> literals) {
         this.literals = new HashSet<>(checkNotNull(literals));
     }
 
-    public static Clause of(final Collection<Expr<BoolType>> literals) {
-        return new Clause(literals);
+    public static Cube of(final Collection<? extends Expr<BoolType>> literals) {
+        return new Cube(literals);
     }
 
     public Set<Expr<BoolType>> getLiterals() {
@@ -43,23 +43,18 @@ public final class Clause {
     }
 
     public Expr<BoolType> toExpr() {
-        return Or(literals);
+        return And(literals);
     }
 
-    /** Returns true if {@code other} subsumes this clause, i.e. other.literals ⊆ this.literals. */
-    public boolean subsumes(final Clause other) {
-        return this.literals.containsAll(other.literals);
-    }
-
-    /** Returns the cube ¬l₁ ∧ ¬l₂ ∧ … that is the negation of this clause. */
-    public Cube negate() {
-        return Cube.of(literals.stream().map(l -> Not(l)).collect(Collectors.toSet()));
+    /** Returns the clause ¬l₁ ∨ ¬l₂ ∨ … that is the negation of this cube. */
+    public Clause negate() {
+        return Clause.of(literals.stream().map(l -> Not(l)).collect(Collectors.toSet()));
     }
 
     @Override
     public boolean equals(final Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof Clause that)) return false;
+        if (!(obj instanceof Cube that)) return false;
         return literals.equals(that.literals);
     }
 
@@ -71,5 +66,13 @@ public final class Clause {
     @Override
     public String toString() {
         return literals.toString();
+    }
+
+    public void removeLiteral(Expr<BoolType> redundantLiteral) {
+        literals.remove(redundantLiteral);
+    }
+
+    public void addLiteral(Expr<BoolType> newLiteral) {
+        literals.add(newLiteral);
     }
 }

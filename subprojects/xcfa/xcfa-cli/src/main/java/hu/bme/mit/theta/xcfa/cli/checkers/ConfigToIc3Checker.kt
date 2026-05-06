@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.pred.PredState

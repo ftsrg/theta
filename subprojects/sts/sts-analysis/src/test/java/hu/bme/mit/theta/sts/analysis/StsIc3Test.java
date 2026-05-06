@@ -31,7 +31,7 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;

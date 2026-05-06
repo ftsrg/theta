@@ -19,7 +19,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.google.common.base.Stopwatch
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker
 import hu.bme.mit.theta.solver.SolverManager
 import java.util.concurrent.TimeUnit
 
