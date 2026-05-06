@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
-import hu.bme.mit.theta.analysis.algorithm.ic3.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.ic3.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -194,34 +194,33 @@ public class StsCli {
         CAR {
             @Override
             Function<
-                MonolithicExpr,
-                SafetyChecker<
-                    ? extends InvariantProof,
-                    Trace<ExplState, ExprAction>,
-                    UnitPrec>>
-            getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
-                return (monolithicExpr ->
-                    new CarChecker(monolithicExpr,
-                        solverFactory,
-                        logger));
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr -> new CarChecker(monolithicExpr, solverFactory, logger));
             }
         },
         CARCEGAR {
             @Override
             Function<
-                MonolithicExpr,
-                SafetyChecker<
-                    ? extends InvariantProof,
-                    Trace<ExplState, ExprAction>,
-                    UnitPrec>>
-            getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
-                    new CarCegarChecker(monolithicExpr,
-                        solverFactory,
-                        ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
-                            Z3LegacySolverFactory.getInstance()),
-                        new CarOptimizations(true, true,true, true, true, true, true, true),
-                        logger));
+                        new CarCegarChecker(
+                                monolithicExpr,
+                                solverFactory,
+                                ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                        Z3LegacySolverFactory.getInstance()),
+                                new CarOptimizations(
+                                        true, true, true, true, true, true, true, true),
+                                logger));
             }
         },
         ;

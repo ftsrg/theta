@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,19 +44,23 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.*;
 
 public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
 
     public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
-        this(monolithicExpr, solverFactory, new IC3Optimizations(true,true,true,true, true,true,true), logger);
+        this(
+                monolithicExpr,
+                solverFactory,
+                new IC3Optimizations(true, true, true, true, true, true, true),
+                logger);
     }
 
     public Ic3Checker(
-        MonolithicExpr monolithicExpr,
-        SolverFactory solverFactory, IC3Optimizations optimizations,
-        Logger logger) {
+            MonolithicExpr monolithicExpr,
+            SolverFactory solverFactory,
+            IC3Optimizations optimizations,
+            Logger logger) {
         super(monolithicExpr, solverFactory, optimizations, logger);
         frames.add(new Frame(null, solver, monolithicExpr, optimizations));
     }
@@ -70,7 +74,8 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
             return SafetyResult.unsafe(trace, PredState.of(True()));
         }
         while (true) {
-            final ProofObligation counterExample = checkCurrentFrameForInterSections(Not(monolithicExpr.getPropExpr()));
+            final ProofObligation counterExample =
+                    checkCurrentFrameForInterSections(Not(monolithicExpr.getPropExpr()));
             if (counterExample != null) {
                 var proofObligationsList = tryBlock(counterExample);
                 if (proofObligationsList != null) {
@@ -78,10 +83,10 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
                     return SafetyResult.unsafe(trace, PredState.of(True()));
                 }
             } else {
-                var propagateResult= propagateForward(Frame::equalsAllParents);
+                var propagateResult = propagateForward(Frame::equalsAllParents);
                 if (propagateResult > 0) {
                     return SafetyResult.safe(
-                        PredState.of(frames.get(propagateResult).getExpression()));
+                            PredState.of(frames.get(propagateResult).getExpression()));
                 }
             }
         }
@@ -112,22 +117,23 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
 
             try (var wpp = new WithPushPop(solver)) {
 
-                frames.get(proofObligation.getTime() - 1).addFrameToSolver(VarIndexingFactory.indexing(0));
+                frames.get(proofObligation.getTime() - 1)
+                        .addFrameToSolver(VarIndexingFactory.indexing(0));
 
                 if (optimizations.isNotBOpt()) {
                     solver.track(PathUtils.unfold(proofObligation.getCube().negate().toExpr(), 0));
                 }
 
                 getConjuncts(monolithicExpr.getTransExpr())
-                    .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                        .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
                 proofObligation
-                    .getCube()
-                    .getLiterals()
-                    .forEach(
-                        ex ->
-                            solver.track(
-                                PathUtils.unfold(
-                                    ex, monolithicExpr.getTransOffsetIndex())));
+                        .getCube()
+                        .getLiterals()
+                        .forEach(
+                                ex ->
+                                        solver.track(
+                                                PathUtils.unfold(
+                                                        ex, monolithicExpr.getTransOffsetIndex())));
 
                 solverStatus = solver.check();
                 if (solverStatus.isSat()) {
@@ -141,19 +147,28 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
             if (solverStatus.isSat()) {
                 final MutableValuation filteredModel;
                 if (optimizations.isFilterOpt()) {
-                    filteredModel = removeRedundantVariablesFromProofObligation(model, proofObligation.getCube());
-                }else {
+                    filteredModel =
+                            removeRedundantVariablesFromProofObligation(
+                                    model, proofObligation.getCube());
+                } else {
                     filteredModel = MutableValuation.copyOf(model);
                 }
-                final Collection<Expr<BoolType>> reachableExprInFormerFrame = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
-                proofObligationsQueue.add(new ProofObligation(Cube.of(reachableExprInFormerFrame), proofObligation.getTime() - 1));
-            }else{
+                final Collection<Expr<BoolType>> reachableExprInFormerFrame =
+                        getConjuncts(
+                                PathUtils.foldin(
+                                        PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
+                proofObligationsQueue.add(
+                        new ProofObligation(
+                                Cube.of(reachableExprInFormerFrame),
+                                proofObligation.getTime() - 1));
+            } else {
                 Cube blockedCube = proofObligation.getCube();
                 if (optimizations.isUnSatOpt()) {
-                    blockedCube = removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, false);
+                    blockedCube =
+                            removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, false);
                 }
 
-                if(optimizations.isGeneralizeOpt()) {
+                if (optimizations.isGeneralizeOpt()) {
                     blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), false);
                 }
                 for (int i = 1; i <= proofObligation.getTime(); ++i) {
@@ -165,8 +180,7 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
         return null;
     }
 
-    public Trace<ExplState, ExprAction> makeTrace(
-            LinkedList<ProofObligation> proofObligations) {
+    public Trace<ExplState, ExprAction> makeTrace(LinkedList<ProofObligation> proofObligations) {
         var abstractStates = new ArrayList<ExprState>();
         var abstractActions = new ArrayList<ExprAction>();
         while (!proofObligations.isEmpty()) {
@@ -177,7 +191,7 @@ public class Ic3Checker extends HardwareChecker<IC3Optimizations> {
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(currentProofObligation.getCube().getLiterals()));
         }
-        if (optimizations.isPropertyOpt()) { //this can fail, if error and init intersect
+        if (optimizations.isPropertyOpt()) { // this can fail, if error and init intersect
             abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(Not(monolithicExpr.getPropExpr())));
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ package hu.bme.mit.theta.sts.analysis;
  */
 
 import hu.bme.mit.theta.analysis.algorithm.ic3.CarChecker;
-import hu.bme.mit.theta.analysis.algorithm.ic3.CarCheckerOld;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -43,15 +42,14 @@ import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class StsCarTest {
     public String filePath;
@@ -100,9 +98,10 @@ public class StsCarTest {
                 new StsPipelineChecker<>(
                         sts,
                         monolithicExpr ->
-                                new CarChecker(monolithicExpr,
-                                    Z3LegacySolverFactory.getInstance(),
-                                    logger),
+                                new CarChecker(
+                                        monolithicExpr,
+                                        Z3LegacySolverFactory.getInstance(),
+                                        logger),
                         List.of(),
                         List.of(),
                         logger);

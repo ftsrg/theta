@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,10 +68,11 @@ public final class Cube {
         return literals.toString();
     }
 
-    public void removeLiteral(Expr<BoolType> redundantLiteral){
+    public void removeLiteral(Expr<BoolType> redundantLiteral) {
         literals.remove(redundantLiteral);
     }
-    public void addLiteral(Expr<BoolType> newLiteral){
+
+    public void addLiteral(Expr<BoolType> newLiteral) {
         literals.add(newLiteral);
     }
 }

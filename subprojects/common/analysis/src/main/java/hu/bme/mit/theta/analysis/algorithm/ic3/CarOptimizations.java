@@ -18,22 +18,29 @@ package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 public class CarOptimizations extends BaseOptimizations {
 
-  private final boolean coverOpt;
+    private final boolean coverOpt;
 
-  public CarOptimizations(
-      boolean unSatOpt,
-      boolean notBOpt,
-      boolean propagateOpt,
-      boolean propertyOpt,
-      boolean filterOpt,
-      boolean generalizeOpt,
-      boolean unsatPropagateOpt,
-      boolean coverOpt) {
-    super(unSatOpt, notBOpt, propagateOpt, filterOpt, propertyOpt, generalizeOpt, unsatPropagateOpt);
-    this.coverOpt = coverOpt;
-  }
+    public CarOptimizations(
+            boolean unSatOpt,
+            boolean notBOpt,
+            boolean propagateOpt,
+            boolean propertyOpt,
+            boolean filterOpt,
+            boolean generalizeOpt,
+            boolean unsatPropagateOpt,
+            boolean coverOpt) {
+        super(
+                unSatOpt,
+                notBOpt,
+                propagateOpt,
+                filterOpt,
+                propertyOpt,
+                generalizeOpt,
+                unsatPropagateOpt);
+        this.coverOpt = coverOpt;
+    }
 
-  public boolean isCoverOpt() {
-    return coverOpt;
-  }
+    public boolean isCoverOpt() {
+        return coverOpt;
+    }
 }

@@ -17,21 +17,20 @@
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 public class ProofObligationCar {
-  private int time;
+    private int time;
 
-  private Node node;
+    private Node node;
 
-  ProofObligationCar(Node node, int time) {
-    this.node = node;
-    this.time = time;
-  }
+    ProofObligationCar(Node node, int time) {
+        this.node = node;
+        this.time = time;
+    }
 
-  public Node getNode() {
-    return node;
-  }
-  public int getTime() {
-    return time;
-  }
+    public Node getNode() {
+        return node;
+    }
 
-
+    public int getTime() {
+        return time;
+    }
 }

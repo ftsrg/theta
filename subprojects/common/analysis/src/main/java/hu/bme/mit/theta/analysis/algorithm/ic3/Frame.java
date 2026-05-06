@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +37,11 @@ public class Frame {
     private final BaseOptimizations optimizations;
     private final MonolithicExpr monolithicExpr;
 
-    Frame(final Frame parent, UCSolver solver, MonolithicExpr monolithicExpr, BaseOptimizations optimizations) {
+    Frame(
+            final Frame parent,
+            UCSolver solver,
+            MonolithicExpr monolithicExpr,
+            BaseOptimizations optimizations) {
         this.parent = parent;
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
@@ -58,45 +62,47 @@ public class Frame {
     }
 
     public void addFrameToSolver(VarIndexing indexing) {
-        if(parent == null){
-            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(),indexing));
+        if (parent == null) {
+            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), indexing));
             return;
         }
         for (Clause clause : clauses) {
             solver.track(PathUtils.unfold(clause.toExpr(), indexing));
         }
-        if(optimizations.isPropertyOpt()){
-            solver.track(PathUtils.unfold(monolithicExpr.getPropExpr(),indexing));
+        if (optimizations.isPropertyOpt()) {
+            solver.track(PathUtils.unfold(monolithicExpr.getPropExpr(), indexing));
         }
     }
+
     public void addNegatedFrameToSolver(VarIndexing indexing) {
-        if(parent == null){
-            solver.track(PathUtils.unfold(Not(monolithicExpr.getInitExpr()),indexing));
+        if (parent == null) {
+            solver.track(PathUtils.unfold(Not(monolithicExpr.getInitExpr()), indexing));
             return;
         }
         final List<Expr<BoolType>> exprs = new ArrayList<>();
         for (Clause clause : clauses) {
             exprs.add(clause.negate().toExpr());
         }
-        if(optimizations.isPropertyOpt()) {
+        if (optimizations.isPropertyOpt()) {
             exprs.add(Not(monolithicExpr.getPropExpr()));
         }
-        solver.track(PathUtils.unfold(Or(exprs),indexing));
+        solver.track(PathUtils.unfold(Or(exprs), indexing));
     }
+
     public void refine(Cube blockedCube) {
         Clause newClause = blockedCube.negate();
         Clause oldClause = null;
         for (Clause clause : clauses) {
 
-            if(clause.subsumes(newClause)){
+            if (clause.subsumes(newClause)) {
                 oldClause = clause;
             }
-            if(newClause.subsumes(clause)){
+            if (newClause.subsumes(clause)) {
                 return;
             }
         }
 
-        if(oldClause != null){
+        if (oldClause != null) {
             clauses.remove(oldClause);
         }
         clauses.add(newClause);
@@ -106,7 +112,7 @@ public class Frame {
         try (var wpp = new WithPushPop(solver)) {
             addFrameToSolver(VarIndexingFactory.indexing(0));
             getConjuncts(monolithicExpr.getTransExpr())
-                .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                    .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
             solver.track(PathUtils.unfold(target, monolithicExpr.getTransOffsetIndex()));
             if (solver.check().isSat()) {
                 return solver.getModel();
@@ -134,7 +140,7 @@ public class Frame {
         }
         try (var wpp = new WithPushPop(solver)) {
             var currentParent = this.parent;
-            while(currentParent!=null){
+            while (currentParent != null) {
                 currentParent.addNegatedFrameToSolver(VarIndexingFactory.indexing(0));
                 currentParent = currentParent.parent;
             }

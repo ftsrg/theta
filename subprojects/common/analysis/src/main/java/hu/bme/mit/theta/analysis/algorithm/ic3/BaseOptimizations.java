@@ -18,56 +18,56 @@ package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 public abstract class BaseOptimizations {
 
-  private final boolean unSatOpt;
-  private final boolean notBOpt;
-  private final boolean propagateOpt;
-  private final boolean filterOpt;
-  private final boolean propertyOpt;
-  private final boolean generalizeOpt;
-  private final boolean unsatPropagateOpt;
+    private final boolean unSatOpt;
+    private final boolean notBOpt;
+    private final boolean propagateOpt;
+    private final boolean filterOpt;
+    private final boolean propertyOpt;
+    private final boolean generalizeOpt;
+    private final boolean unsatPropagateOpt;
 
-  protected BaseOptimizations(
-      boolean unSatOpt,
-      boolean notBOpt,
-      boolean propagateOpt,
-      boolean filterOpt,
-      boolean propertyOpt,
-      boolean generalizeOpt,
-      boolean unsatPropagateOpt) {
-    this.unSatOpt = unSatOpt;
-    this.notBOpt = notBOpt;
-    this.propagateOpt = propagateOpt;
-    this.filterOpt = filterOpt;
-    this.propertyOpt = propertyOpt;
-    this.generalizeOpt = generalizeOpt;
-    this.unsatPropagateOpt = unsatPropagateOpt;
-  }
+    protected BaseOptimizations(
+            boolean unSatOpt,
+            boolean notBOpt,
+            boolean propagateOpt,
+            boolean filterOpt,
+            boolean propertyOpt,
+            boolean generalizeOpt,
+            boolean unsatPropagateOpt) {
+        this.unSatOpt = unSatOpt;
+        this.notBOpt = notBOpt;
+        this.propagateOpt = propagateOpt;
+        this.filterOpt = filterOpt;
+        this.propertyOpt = propertyOpt;
+        this.generalizeOpt = generalizeOpt;
+        this.unsatPropagateOpt = unsatPropagateOpt;
+    }
 
-  public boolean isUnSatOpt() {
-    return unSatOpt;
-  }
+    public boolean isUnSatOpt() {
+        return unSatOpt;
+    }
 
-  public boolean isNotBOpt() {
-    return notBOpt;
-  }
+    public boolean isNotBOpt() {
+        return notBOpt;
+    }
 
-  public boolean isPropagateOpt() {
-    return propagateOpt;
-  }
+    public boolean isPropagateOpt() {
+        return propagateOpt;
+    }
 
-  public boolean isFilterOpt() {
-    return filterOpt;
-  }
+    public boolean isFilterOpt() {
+        return filterOpt;
+    }
 
-  public boolean isPropertyOpt() {
-    return propertyOpt;
-  }
+    public boolean isPropertyOpt() {
+        return propertyOpt;
+    }
 
-  public boolean isGeneralizeOpt() {
-    return generalizeOpt;
-  }
+    public boolean isGeneralizeOpt() {
+        return generalizeOpt;
+    }
 
-  public boolean isUnsatPropagateOpt() {
-    return unsatPropagateOpt;
-  }
+    public boolean isUnsatPropagateOpt() {
+        return unsatPropagateOpt;
+    }
 }

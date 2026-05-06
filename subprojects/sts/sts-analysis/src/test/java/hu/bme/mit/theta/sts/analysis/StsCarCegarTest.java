@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,15 +44,14 @@ import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class StsCarCegarTest {
     public String filePath;
@@ -100,12 +99,14 @@ public class StsCarCegarTest {
                 new StsPipelineChecker<>(
                         sts,
                         monolithicExpr ->
-                                new CarCegarChecker(monolithicExpr,
-                                    Z3LegacySolverFactory.getInstance(),
-                                    ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
-                                        Z3LegacySolverFactory.getInstance()),
-                                    new CarOptimizations(true, true,true, true, true, true, true, true),
-                                    logger),
+                                new CarCegarChecker(
+                                        monolithicExpr,
+                                        Z3LegacySolverFactory.getInstance(),
+                                        ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                                Z3LegacySolverFactory.getInstance()),
+                                        new CarOptimizations(
+                                                true, true, true, true, true, true, true, true),
+                                        logger),
                         List.of(),
                         List.of(),
                         logger);

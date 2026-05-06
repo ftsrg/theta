@@ -18,14 +18,21 @@ package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 public class IC3Optimizations extends BaseOptimizations {
 
-  public IC3Optimizations(
-      boolean unSatOpt,
-      boolean notBOpt,
-      boolean propagateOpt,
-      boolean filterOpt,
-      boolean generalizeOpt,
-      boolean propertyOpt,
-      boolean unsatPropagateOpt) {
-    super(unSatOpt, notBOpt, propagateOpt, filterOpt, propertyOpt, generalizeOpt, unsatPropagateOpt);
-  }
+    public IC3Optimizations(
+            boolean unSatOpt,
+            boolean notBOpt,
+            boolean propagateOpt,
+            boolean filterOpt,
+            boolean generalizeOpt,
+            boolean propertyOpt,
+            boolean unsatPropagateOpt) {
+        super(
+                unSatOpt,
+                notBOpt,
+                propagateOpt,
+                filterOpt,
+                propertyOpt,
+                generalizeOpt,
+                unsatPropagateOpt);
+    }
 }

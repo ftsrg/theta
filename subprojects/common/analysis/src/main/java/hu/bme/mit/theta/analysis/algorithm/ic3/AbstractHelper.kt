@@ -42,19 +42,21 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
-class AbstractHelper @JvmOverloads constructor(
-    val traceCheckerFactory: (MonolithicExpr) -> ExprTraceChecker<ItpRefutation>,
-    val initPrec: (MonolithicExpr) -> PredPrec = { monolithicExpr ->
-      PredPrec.of(listOf(monolithicExpr.propExpr, monolithicExpr.initExpr))
-    },
-    val refine: (PredPrec, Expr<BoolType>) -> PredPrec = { prec, expr ->
-      prec.join(PredPrec.of(expr))
-    }
-  )
-{
+class AbstractHelper
+@JvmOverloads
+constructor(
+  val traceCheckerFactory: (MonolithicExpr) -> ExprTraceChecker<ItpRefutation>,
+  val initPrec: (MonolithicExpr) -> PredPrec = { monolithicExpr ->
+    PredPrec.of(listOf(monolithicExpr.propExpr, monolithicExpr.initExpr))
+  },
+  val refine: (PredPrec, Expr<BoolType>) -> PredPrec = { prec, expr ->
+    prec.join(PredPrec.of(expr))
+  },
+) {
   private lateinit var literalToPred: Map<Decl<*>, Expr<BoolType>>
   private lateinit var concreteModel: MonolithicExpr
   lateinit var currentPrec: PredPrec
+
   fun createPrec(monolithicExpr: MonolithicExpr): MonolithicExpr {
     concreteModel = monolithicExpr
     currentPrec = initPrec(concreteModel)
@@ -113,6 +115,7 @@ class AbstractHelper @JvmOverloads constructor(
         },
     )
   }
+
   fun getConcretisationResult(cex: Trace<ExplState, ExprAction>): ExprTraceStatus<ItpRefutation?>? {
     val trace =
       cex.let {
@@ -123,6 +126,7 @@ class AbstractHelper @JvmOverloads constructor(
       }
     return traceCheckerFactory(concreteModel).check(trace)
   }
+
   fun activationLiteralsToPredicates(valuation: Valuation) =
     PredState.of(
       valuation.toMap().minus(concreteModel.ctrlVars.toSet()).map {
@@ -132,5 +136,4 @@ class AbstractHelper @JvmOverloads constructor(
         }
       }
     )
-
 }
