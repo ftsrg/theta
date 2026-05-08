@@ -29,7 +29,8 @@ public class Signed extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         cSimpleType.setSigned(true);
+        return cSimpleType;
     }
 }

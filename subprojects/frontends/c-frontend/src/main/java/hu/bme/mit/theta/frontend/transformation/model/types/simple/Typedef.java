@@ -29,7 +29,8 @@ public class Typedef extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         cSimpleType.setTypedef(true);
+        return cSimpleType;
     }
 }
