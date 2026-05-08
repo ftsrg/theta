@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.PathUtils;
 
 public class MddProof implements InvariantProof {
 
@@ -64,7 +65,8 @@ public class MddProof implements InvariantProof {
     @Override
     public Expr<BoolType> getInvariant() {
         if (invariant == null) {
-            invariant = toExprStrategy.toExpr(stateSpace);
+            Expr<BoolType> expr = toExprStrategy.toExpr(stateSpace);
+            invariant = PathUtils.foldin(expr, 0);
         }
         return invariant;
     }
