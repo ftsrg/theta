@@ -43,7 +43,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDo
 public class NamedType extends CSimpleType {
     protected final ParseContext parseContext;
 
-    private final String namedType;
+    private String namedType;
     private final Logger uniqueWarningLogger;
 
     NamedType(ParseContext parseContext, final String namedType, Logger uniqueWarningLogger) {
@@ -145,8 +145,12 @@ public class NamedType extends CSimpleType {
         return namedType;
     }
 
+    private void setNamedType(String newNamedType) {
+        namedType = newNamedType;
+    }
+
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         for (int i = 0; i < getPointerLevel(); i++) {
             cSimpleType.incrementPointer();
         }
@@ -172,6 +176,15 @@ public class NamedType extends CSimpleType {
                 break;
             case "":
                 break;
+            case "struct":
+                // we cannot patch structness onto another csimpletype, so we reverse the patching
+                return cSimpleType.patch(this.copyOf());
+            case "void":
+                if (cSimpleType instanceof NamedType named && named.namedType.isEmpty()) {
+                    named.setNamedType(namedType);
+                    break;
+                }
+            // deliberately not breaking, let it throw an error (must be above default branch)
             default:
                 if (!cSimpleType.isTypedef()) {
                     throw new UnsupportedFrontendElementException(
@@ -180,6 +193,7 @@ public class NamedType extends CSimpleType {
                 }
                 break;
         }
+        return cSimpleType;
     }
 
     @Override

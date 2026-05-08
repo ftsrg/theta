@@ -24,8 +24,9 @@ public class DeclaredName extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         cSimpleType.setAssociatedName(declaredName);
+        return cSimpleType;
     }
 
     @Override
