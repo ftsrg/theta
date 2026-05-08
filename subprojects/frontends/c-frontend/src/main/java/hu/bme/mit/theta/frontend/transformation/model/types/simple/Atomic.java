@@ -29,7 +29,8 @@ public class Atomic extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         cSimpleType.setAtomic(true);
+        return cSimpleType;
     }
 }

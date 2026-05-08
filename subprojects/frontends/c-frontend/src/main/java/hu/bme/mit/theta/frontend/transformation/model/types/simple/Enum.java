@@ -39,7 +39,7 @@ public class Enum extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         throw new RuntimeException("Should not be here! Cannot patch with an enum.");
     }
 

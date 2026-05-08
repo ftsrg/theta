@@ -29,7 +29,8 @@ public class Volatile extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         cSimpleType.setVolatile(true);
+        return cSimpleType;
     }
 }

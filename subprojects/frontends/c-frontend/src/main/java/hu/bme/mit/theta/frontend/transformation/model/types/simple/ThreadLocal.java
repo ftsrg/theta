@@ -29,7 +29,8 @@ public class ThreadLocal extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         cSimpleType.setThreadLocal(true);
+        return cSimpleType;
     }
 }
