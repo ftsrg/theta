@@ -25,17 +25,17 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
 
-public final class ExplTransFunc<A extends Action> implements TransFunc<ExplState, A, UnitPrec> {
+public final class LazyExplTransFunc<A extends Action> implements TransFunc<ExplState, A, UnitPrec> {
 
-	private final ExplActionPost<A> explActionPost;
+	private final ExplPost<A> explPost;
 
-	private ExplTransFunc(final ExplActionPost<A> explActionPost) {
-		checkNotNull(explActionPost);
-		this.explActionPost = explActionPost;
+	private LazyExplTransFunc(final ExplPost<A> explPost) {
+		checkNotNull(explPost);
+		this.explPost = explPost;
 	}
 
-	public static <A extends Action> ExplTransFunc<A> create(final ExplActionPost<A> explActionPost) {
-		return new ExplTransFunc<>(explActionPost);
+	public static <A extends Action> LazyExplTransFunc<A> create(final ExplPost<A> explPost) {
+		return new LazyExplTransFunc<>(explPost);
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public final class ExplTransFunc<A extends Action> implements TransFunc<ExplStat
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
-		return singleton(explActionPost.post(state, action));
+		return singleton(explPost.post(state, action));
 	}
 
 }

@@ -18,10 +18,10 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public interface ExprActionPost<A extends Action> {
+public interface ExprPost<A extends Action> {
     BasicExprState post(final BasicExprState state, final A action);
 
-    class QuantifiedExprActionPost<A extends ExprAction> implements ExprActionPost<A> {
+    class QuantifiedExprPost<A extends ExprAction> implements ExprPost<A> {
         @Override
         public BasicExprState post(BasicExprState state, A action) {
             final QuantifiedPostImage post = new QuantifiedPostImage(state, action);

@@ -8,19 +8,19 @@ import hu.bme.mit.theta.core.model.Valuation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ExplAnalysis<A extends Action> implements Analysis<ExplState, A, UnitPrec> {
-    private final ExplInitFunc initFunc;
-    private final ExplTransFunc<A> transFunc;
+public class LazyExplAnalysis<A extends Action> implements Analysis<ExplState, A, UnitPrec> {
+    private final LazyExplInitFunc initFunc;
+    private final LazyExplTransFunc<A> transFunc;
 
-    private ExplAnalysis(final Valuation initialValuation, final ExplActionPost<A> explActionPost) {
+    private LazyExplAnalysis(final Valuation initialValuation, final ExplPost<A> explPost) {
         checkNotNull(initialValuation);
-        checkNotNull(explActionPost);
-        initFunc = ExplInitFunc.create(initialValuation);
-        transFunc = ExplTransFunc.create(explActionPost);
+        checkNotNull(explPost);
+        initFunc = LazyExplInitFunc.create(initialValuation);
+        transFunc = LazyExplTransFunc.create(explPost);
     }
 
-    public static <A extends Action> ExplAnalysis<A> create(final Valuation initialValuation, final ExplActionPost<A> explActionPost) {
-        return new ExplAnalysis(initialValuation, explActionPost);
+    public static <A extends Action> LazyExplAnalysis<A> create(final Valuation initialValuation, final ExplPost<A> explPost) {
+        return new LazyExplAnalysis<>(initialValuation, explPost);
     }
 
     @Override

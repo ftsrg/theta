@@ -4,10 +4,10 @@ import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
-import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplAnalysis;
-import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplTransFunc;
-import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprInvTransFunc;
-import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprTransFunc;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.LazyExplAnalysis;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.LazyExplTransFunc;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expr.LazyExprInvTransFunc;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expr.LazyExprTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.*;
@@ -28,7 +28,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
-import hu.bme.mit.theta.xta.analysis.expr.XtaExprActionPost;
+import hu.bme.mit.theta.xta.analysis.expr.XtaExprPost;
 import hu.bme.mit.theta.xta.analysis.expr.XtaExprAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
@@ -161,7 +161,7 @@ public final class LazyXtaAbstractorConfigFactory {
         private Analysis createConcrDataAnalysis() {
             switch (dataStrategy.getConcrDom()) {
                 case EXPL:
-                    return ExplAnalysis.create(system.getInitVal(), XtaExplUtils::post);
+                    return LazyExplAnalysis.create(system.getInitVal(), XtaExplUtils::post);
                 case EXPR:
                     final Solver solver = solverFactory.createSolver();
                     return XtaExprAnalysis.create(system, solver);
@@ -291,15 +291,15 @@ public final class LazyXtaAbstractorConfigFactory {
         }
 
         private InvTransFunc createDataInvTransFunc() {
-            return ExprInvTransFunc.create(XtaExplUtils::pre);
+            return LazyExprInvTransFunc.create(XtaExplUtils::pre);
         }
 
         private TransFunc createDataAbstrTransFunc(final DataStrategy2.AbstrDom abstrDom) {
             switch (abstrDom) {
                 case EXPL:
-                    return ExplTransFunc.create(XtaExplUtils::post);
+                    return LazyExplTransFunc.create(XtaExplUtils::post);
                 case EXPR:
-                    return ExprTransFunc.create(XtaExprActionPost.create());
+                    return LazyExprTransFunc.create(XtaExprPost.create());
                 default:
                     throw new AssertionError();
             }

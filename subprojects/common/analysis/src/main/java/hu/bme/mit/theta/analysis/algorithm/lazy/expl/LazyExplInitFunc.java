@@ -10,16 +10,16 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
 
-final class ExplInitFunc implements InitFunc<ExplState, UnitPrec> {
+final class LazyExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 
     private final Valuation initialValuation;
 
-    private ExplInitFunc(final Valuation initialValuation) {
+    private LazyExplInitFunc(final Valuation initialValuation) {
         this.initialValuation = checkNotNull(initialValuation);
     }
 
-    public static ExplInitFunc create(final Valuation initialValuation) {
-        return new ExplInitFunc(initialValuation);
+    public static LazyExplInitFunc create(final Valuation initialValuation) {
+        return new LazyExplInitFunc(initialValuation);
     }
 
     @Override
