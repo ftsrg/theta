@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
-import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 
 final class ClockStrategies {
 

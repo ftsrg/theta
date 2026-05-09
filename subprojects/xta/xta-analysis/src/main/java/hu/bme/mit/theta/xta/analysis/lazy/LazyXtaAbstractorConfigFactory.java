@@ -9,6 +9,7 @@ import hu.bme.mit.theta.analysis.algorithm.lazy.expl.LazyExplTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.LazyExprInvTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.LazyExprTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
+import hu.bme.mit.theta.analysis.algorithm.lazy.lu.LuZoneStrategy;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.*;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -30,10 +31,11 @@ import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expr.XtaExprPost;
 import hu.bme.mit.theta.xta.analysis.expr.XtaExprAnalysis;
+import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
-import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 
 import java.util.function.Function;
 
@@ -313,7 +315,7 @@ public final class LazyXtaAbstractorConfigFactory {
                 case LU:
                     final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
                             lens = LazyXtaLensUtils.createAbstrClockLens();
-                    return new LuZoneStrategy2<>(lens);
+                    return new LuZoneStrategy<>(lens, XtaLuZoneUtils::pre);
                 default:
                     throw new AssertionError();
             }

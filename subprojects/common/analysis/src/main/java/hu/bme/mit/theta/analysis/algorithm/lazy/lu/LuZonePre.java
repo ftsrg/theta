@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,22 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xta.analysis.zone.lu;
 
-import hu.bme.mit.theta.analysis.PartialOrd;
+package hu.bme.mit.theta.analysis.algorithm.lazy.lu;
 
-public final class LuZoneOrd implements PartialOrd<LuZoneState> {
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.zone.BoundFunc;
 
-    private static final LuZoneOrd INSTANCE = new LuZoneOrd();
-
-    private LuZoneOrd() {}
-
-    public static LuZoneOrd getInstance() {
-        return INSTANCE;
-    }
-
-    @Override
-    public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
-        return state1.isLeq(state2);
-    }
+public interface LuZonePre<A extends Action> {
+    BoundFunc pre(final BoundFunc boundFunction, final A action);
 }

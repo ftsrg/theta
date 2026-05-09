@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
+import hu.bme.mit.theta.analysis.algorithm.lazy.lu.LuZoneStrategy;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl;
@@ -31,11 +32,11 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils;
-import hu.bme.mit.theta.xta.analysis.lazy.LuZoneStrategy2;
+import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
-import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 
 import java.util.Set;
 import java.util.function.Function;
@@ -302,7 +303,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
             case LU -> {
                 final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
                     lens = LazyXtaLensUtils.createAbstrClockLens();
-                yield new LuZoneStrategy2<>(lens);
+                yield new LuZoneStrategy<>(lens, XtaLuZoneUtils::pre);
             }
         };
     }

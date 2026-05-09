@@ -32,8 +32,8 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
-import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneAnalysis;
-import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import java.util.Collection;
 import java.util.function.Function;
 
