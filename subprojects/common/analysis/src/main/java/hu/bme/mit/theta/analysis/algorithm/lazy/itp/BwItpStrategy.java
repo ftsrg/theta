@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.utils.Lens;
 
@@ -21,17 +22,21 @@ public final class BwItpStrategy<SConcr extends State, SAbstr extends ExprState,
                          final Interpolator<SAbstr, SItp> interpolator,
                          final Concretizer<SConcr, SAbstr> concretizer,
                          final InvTransFunc<SItp, A, P> invTransFunc,
-                         final P prec){
+                         final P prec) {
         super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
     }
 
     @Override
-    public final SAbstr block(final ArgNode<S, A> node, final SItp B, final Collection<ArgNode<S, A>> uncoveredNodes){
+    public SAbstr block(final ArgNode<S, A> node, final SItp B,
+                              final Collection<ArgNode<S, A>> uncoveredNodes,
+                              final LazyStatistics.Builder stats) {
 
         final SAbstr abstrState = lens.get(node.getState()).getAbstrState();
         if(interpolator.refutes(abstrState, B)){
             return abstrState;
         }
+
+        stats.refine();
 
         final SConcr concrState = lens.get(node.getState()).getConcrState();
         final SAbstr interpolant = interpolator.interpolate(concretizer.concretize(concrState), B);
@@ -48,7 +53,7 @@ public final class BwItpStrategy<SConcr extends State, SAbstr extends ExprState,
             for(final SItp badState : badStates){
                 final Collection<? extends SItp> preBadStates = invTransFunc.getPreStates(badState, action, prec);
                 for(final SItp preBadState : preBadStates){
-                    block(parent, preBadState, uncoveredNodes);
+                    block(parent, preBadState, uncoveredNodes, stats);
                 }
             }
         }

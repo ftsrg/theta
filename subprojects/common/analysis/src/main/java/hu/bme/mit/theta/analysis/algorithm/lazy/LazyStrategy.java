@@ -20,7 +20,7 @@ public interface LazyStrategy<SConcr extends State, SAbstr extends State, S exte
 
     boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer);
 
-    void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer, final Collection<ArgNode<S, A>> uncoveredNodes);
+    void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer, final Collection<ArgNode<S, A>> uncoveredNodes, final LazyStatistics.Builder stats);
 
-    void disable(final ArgNode<S, A> node, final A action, final S succState, final Collection<ArgNode<S, A>> uncoveredNodes);
+    void disable(final ArgNode<S, A> node, final A action, final S succState, final Collection<ArgNode<S, A>> uncoveredNodes, final LazyStatistics.Builder stats);
 }

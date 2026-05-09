@@ -9,6 +9,7 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.utils.Lens;
 
@@ -29,19 +30,22 @@ public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState,
                          final InvTransFunc<SItp, A, P> invTransFunc,
                          final P prec,
                          final TransFunc<SAbstr, A, PAbstr> transFunc,
-                         final PAbstr abstrPrec){
+                         final PAbstr abstrPrec) {
         super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
         this.transFunc = checkNotNull(transFunc);
         this.abstrPrec = checkNotNull(abstrPrec);
     }
 
     @Override
-    public final SAbstr block(final ArgNode<S, A> node, final SItp B, final Collection<ArgNode<S, A>> uncoveredNodes){
+    public SAbstr block(final ArgNode<S, A> node, final SItp B,
+                              final Collection<ArgNode<S, A>> uncoveredNodes,
+                              final LazyStatistics.Builder stats) {
 
         final SAbstr abstrState = lens.get(node.getState()).getAbstrState();
         if(interpolator.refutes(abstrState, B)){
             return abstrState;
         }
+        stats.refine();
 
         SAbstr interpolant;
 
@@ -54,7 +58,7 @@ public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState,
             final Collection<? extends SItp> pre = invTransFunc.getPreStates(B, action, prec);
             for (final SItp B_pre : pre) {
 
-                final SAbstr A_pre = block(parent, B_pre, uncoveredNodes);
+                final SAbstr A_pre = block(parent, B_pre, uncoveredNodes, stats);
 
                 final Collection<? extends SAbstr> post = transFunc.getSuccStates(A_pre, action, abstrPrec);
                 assert post.size() == 1;

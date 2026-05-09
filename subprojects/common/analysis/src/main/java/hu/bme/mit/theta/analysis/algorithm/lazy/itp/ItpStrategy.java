@@ -36,7 +36,6 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
         this.concretizer = checkNotNull(concretizer);
         projection = s -> unit();
         initAbstractor = s -> abstrLattice.top();
-
     }
 
     @Override

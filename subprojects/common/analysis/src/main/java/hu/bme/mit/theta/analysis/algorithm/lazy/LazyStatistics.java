@@ -29,15 +29,15 @@ public final class LazyStatistics extends Statistics {
 	private final long algorithmTimeInMs;
 	private final long expandTimeInMs;
 	private final long closeTimeInMs;
-	private final long expandExplRefinementTimeInMs;
-	private final long expandZoneRefinementTimeInMs;
-	private final long closeExplRefinementTimeInMs;
-	private final long closeZoneRefinementTimeInMs;
+	private final long expandState1RefinementTimeInMs;
+	private final long expandState2RefinementTimeInMs;
+	private final long closeState1RefinementTimeInMs;
+	private final long closeState2RefinementTimeInMs;
 	private final long coverageChecks;
 	private final long coverageAttempts;
 	private final long coverageSuccesses;
-	private final long explRefinementSteps;
-	private final long zoneRefinementSteps;
+	private final long state1RefinementSteps;
+	private final long state2RefinementSteps;
 	private final long argDepth;
 	private final long argNodes;
 	private final long argNodesExpanded;
@@ -46,15 +46,15 @@ public final class LazyStatistics extends Statistics {
 		algorithmTimeInMs = builder.algorithmTimer.elapsed(MILLISECONDS);
 		expandTimeInMs = builder.expandTimer.elapsed(MILLISECONDS);
 		closeTimeInMs = builder.closeTimer.elapsed(MILLISECONDS);
-		expandExplRefinementTimeInMs = builder.expandExplRefinementTimer.elapsed(MILLISECONDS);
-		expandZoneRefinementTimeInMs = builder.expandZoneRefinementTimer.elapsed(MILLISECONDS);
-		closeExplRefinementTimeInMs = builder.closeExplRefinementTimer.elapsed(MILLISECONDS);
-		closeZoneRefinementTimeInMs = builder.closeZoneRefinementTimer.elapsed(MILLISECONDS);
+		expandState1RefinementTimeInMs = builder.expandState1RefinementTimer.elapsed(MILLISECONDS);
+		expandState2RefinementTimeInMs = builder.expandState2RefinementTimer.elapsed(MILLISECONDS);
+		closeState1RefinementTimeInMs = builder.closeState1RefinementTimer.elapsed(MILLISECONDS);
+		closeState2RefinementTimeInMs = builder.closeState2RefinementTimer.elapsed(MILLISECONDS);
 		coverageChecks = builder.coverageChecks;
 		coverageAttempts = builder.coverageAttempts;
 		coverageSuccesses = builder.coverageSuccesses;
-		explRefinementSteps = builder.explRefinementSteps;
-		zoneRefinementSteps = builder.zoneRefinementSteps;
+		state1RefinementSteps = builder.state1RefinementSteps;
+		state2RefinementSteps = builder.state2RefinementSteps;
 		argDepth = builder.arg.getDepth();
 		argNodes = builder.arg.size();
 		argNodesExpanded = builder.arg.getNodes().filter(n -> !n.isSubsumed()).count();
@@ -62,15 +62,15 @@ public final class LazyStatistics extends Statistics {
 		addStat("AlgorithmTimeInMs", this::getAlgorithmTimeInMs);
 		addStat("ExpandTimeInMs", this::getExpandTimeInMs);
 		addStat("CloseTimeInMs", this::getCloseTimeInMs);
-		addStat("ExpandExplRefinementTimeInMs", this::getExpandExplRefinementTimeInMs);
-		addStat("ExpandZoneRefinementTimeInMs", this::getExpandZoneRefinementTimeInMs);
-		addStat("CloseExplRefinementTimeInMs", this::getCloseExplRefinementTimeInMs);
-		addStat("CloseZoneRefinementTimeInMs", this::getCloseZoneRefinementTimeInMs);
+		addStat("ExpandState1RefinementTimeInMs", this::getExpandState1RefinementTimeInMs);
+		addStat("ExpandState2RefinementTimeInMs", this::getExpandState2RefinementTimeInMs);
+		addStat("CloseState1RefinementTimeInMs", this::getCloseState1RefinementTimeInMs);
+		addStat("CloseState2RefinementTimeInMs", this::getCloseState2RefinementTimeInMs);
 		addStat("CoverageChecks", this::getCoverageChecks);
 		addStat("CoverageAttempts", this::getCoverageAttempts);
 		addStat("CoverageSuccesses", this::getCoverageSuccesses);
-		addStat("ExplRefinementSteps", this::getExplRefinementSteps);
-		addStat("ZoneRefinementSteps", this::getZoneRefinementSteps);
+		addStat("State1RefinementSteps", this::getState1RefinementSteps);
+		addStat("State2RefinementSteps", this::getState2RefinementSteps);
 		addStat("ArgDepth", this::getArgDepth);
 		addStat("ArgNodes", this::getArgNodes);
 		addStat("ArgNodesExpanded", this::getArgNodesExpanded);
@@ -92,20 +92,20 @@ public final class LazyStatistics extends Statistics {
 		return closeTimeInMs;
 	}
 
-	public long getExpandExplRefinementTimeInMs() {
-		return expandExplRefinementTimeInMs;
+	public long getExpandState1RefinementTimeInMs() {
+		return expandState1RefinementTimeInMs;
 	}
 
-	public long getExpandZoneRefinementTimeInMs() {
-		return expandZoneRefinementTimeInMs;
+	public long getExpandState2RefinementTimeInMs() {
+		return expandState2RefinementTimeInMs;
 	}
 
-	public long getCloseExplRefinementTimeInMs() {
-		return closeExplRefinementTimeInMs;
+	public long getCloseState1RefinementTimeInMs() {
+		return closeState1RefinementTimeInMs;
 	}
 
-	public long getCloseZoneRefinementTimeInMs() {
-		return closeZoneRefinementTimeInMs;
+	public long getCloseState2RefinementTimeInMs() {
+		return closeState2RefinementTimeInMs;
 	}
 
 	public long getCoverageChecks() {
@@ -120,12 +120,12 @@ public final class LazyStatistics extends Statistics {
 		return coverageSuccesses;
 	}
 
-	public long getExplRefinementSteps() {
-		return explRefinementSteps;
+	public long getState1RefinementSteps() {
+		return state1RefinementSteps;
 	}
 
-	public long getZoneRefinementSteps() {
-		return zoneRefinementSteps;
+	public long getState2RefinementSteps() {
+		return state2RefinementSteps;
 	}
 
 	public long getArgDepth() {
@@ -144,15 +144,15 @@ public final class LazyStatistics extends Statistics {
 		writer.cell("AlgorithmTimeInMs");
 		writer.cell("ExpandTimeInMs");
 		writer.cell("CloseTimeInMs");
-		writer.cell("ExpandExplRefinementTimeInMs");
-		writer.cell("ExpandZoneRefinementTimeInMs");
-		writer.cell("CloseExplRefinementTimeInMs");
-		writer.cell("CloseZoneRefinementTimeInMs");
+		writer.cell("ExpandState1RefinementTimeInMs");
+		writer.cell("ExpandState2RefinementTimeInMs");
+		writer.cell("CloseState1RefinementTimeInMs");
+		writer.cell("CloseState2RefinementTimeInMs");
 		writer.cell("CoverageChecks");
 		writer.cell("CoverageAttempts");
 		writer.cell("CoverageSuccesses");
-		writer.cell("ExplRefinementSteps");
-		writer.cell("ZoneRefinementSteps");
+		writer.cell("State1RefinementSteps");
+		writer.cell("State2RefinementSteps");
 		writer.cell("ArgDepth");
 		writer.cell("ArgNodes");
 		writer.cell("ArgNodesExpanded");
@@ -163,174 +163,231 @@ public final class LazyStatistics extends Statistics {
 		writer.cell(algorithmTimeInMs);
 		writer.cell(expandTimeInMs);
 		writer.cell(closeTimeInMs);
-		writer.cell(expandExplRefinementTimeInMs);
-		writer.cell(expandZoneRefinementTimeInMs);
-		writer.cell(closeExplRefinementTimeInMs);
-		writer.cell(closeZoneRefinementTimeInMs);
+		writer.cell(expandState1RefinementTimeInMs);
+		writer.cell(expandState2RefinementTimeInMs);
+		writer.cell(closeState1RefinementTimeInMs);
+		writer.cell(closeState2RefinementTimeInMs);
 		writer.cell(coverageChecks);
 		writer.cell(coverageAttempts);
 		writer.cell(coverageSuccesses);
-		writer.cell(explRefinementSteps);
-		writer.cell(zoneRefinementSteps);
+		writer.cell(state1RefinementSteps);
+		writer.cell(state2RefinementSteps);
 		writer.cell(argDepth);
 		writer.cell(argNodes);
 		writer.cell(argNodesExpanded);
 		writer.newRow();
 	}
 
-	public static final class Builder {
+	public static class Builder {
 
-		private enum State {
-			CREATED, RUNNING, EXPANDING, CLOSING, EXPAND_EXPL_REFINING, EXPAND_ZONE_REFINING, CLOSE_EXPL_REFINING, CLOSE_ZONE_REFINING, STOPPED, BUILT
+    private enum AlgorithmState {
+			CREATED, RUNNING, EXPANDING, CLOSING, EXPAND_STATE_1_REFINING, EXPAND_STATE_2_REFINING, CLOSE_STATE_1_REFINING, CLOSE_STATE_2_REFINING, STOPPED, BUILT
 		}
 
-		private State state;
+    private enum BuilderState {
+      STATE_1, STATE_2
+    }
 
-		private final ARG<?, ?> arg;
-		private final Stopwatch algorithmTimer;
-		private final Stopwatch expandTimer;
-		private final Stopwatch closeTimer;
-		private final Stopwatch expandExplRefinementTimer;
-		private final Stopwatch expandZoneRefinementTimer;
-		private final Stopwatch closeExplRefinementTimer;
-		private final Stopwatch closeZoneRefinementTimer;
-		private long coverageChecks;
-		private long coverageAttempts;
-		private long coverageSuccesses;
-		private long explRefinementSteps;
-		private long zoneRefinementSteps;
+    private AlgorithmState algorithmState;
+    private BuilderState builderState;
+
+    private final ARG<?, ?> arg;
+    private final Stopwatch algorithmTimer;
+    private final Stopwatch expandTimer;
+    private final Stopwatch closeTimer;
+    private final Stopwatch expandState1RefinementTimer;
+    private final Stopwatch expandState2RefinementTimer;
+    private final Stopwatch closeState1RefinementTimer;
+    private final Stopwatch closeState2RefinementTimer;
+    private long coverageChecks;
+    private long coverageAttempts;
+    private long coverageSuccesses;
+    private long state1RefinementSteps;
+    private long state2RefinementSteps;
 
 		private Builder(final ARG<?, ?> arg) {
 			this.arg = checkNotNull(arg);
-			state = State.CREATED;
+			algorithmState = AlgorithmState.CREATED;
+      builderState = BuilderState.STATE_1;
 			algorithmTimer = Stopwatch.createUnstarted();
 			expandTimer = Stopwatch.createUnstarted();
 			closeTimer = Stopwatch.createUnstarted();
-			expandExplRefinementTimer = Stopwatch.createUnstarted();
-			expandZoneRefinementTimer = Stopwatch.createUnstarted();
-			closeExplRefinementTimer = Stopwatch.createUnstarted();
-			closeZoneRefinementTimer = Stopwatch.createUnstarted();
+			expandState1RefinementTimer = Stopwatch.createUnstarted();
+			expandState2RefinementTimer = Stopwatch.createUnstarted();
+			closeState1RefinementTimer = Stopwatch.createUnstarted();
+			closeState2RefinementTimer = Stopwatch.createUnstarted();
 			coverageChecks = 0;
 			coverageAttempts = 0;
 			coverageSuccesses = 0;
-			explRefinementSteps = 0;
-			zoneRefinementSteps = 0;
+			state1RefinementSteps = 0;
+			state2RefinementSteps = 0;
 		}
 
 		public void startAlgorithm() {
-			checkState(state == State.CREATED);
+			checkState(algorithmState == AlgorithmState.CREATED);
 			algorithmTimer.start();
-			state = State.RUNNING;
+			algorithmState = AlgorithmState.RUNNING;
 		}
 
 		public void stopAlgorithm() {
-			checkState(state == State.RUNNING);
+			checkState(algorithmState == AlgorithmState.RUNNING);
 			algorithmTimer.stop();
-			state = State.STOPPED;
+			algorithmState = AlgorithmState.STOPPED;
 		}
 
 		public void startExpanding() {
-			checkState(state == State.RUNNING);
+			checkState(algorithmState == AlgorithmState.RUNNING);
 			expandTimer.start();
-			state = State.EXPANDING;
+			algorithmState = AlgorithmState.EXPANDING;
 		}
 
 		public void stopExpanding() {
-			checkState(state == State.EXPANDING);
+			checkState(algorithmState == AlgorithmState.EXPANDING);
 			expandTimer.stop();
-			state = State.RUNNING;
+			algorithmState = AlgorithmState.RUNNING;
 		}
 
-		public void startExpandExplRefinement() {
-			checkState(state == State.EXPANDING);
-			expandExplRefinementTimer.start();
-			state = State.EXPAND_EXPL_REFINING;
+    public void startExpandRefinement() {
+      if (builderState == BuilderState.STATE_1) {
+        startExpandState1Refinement();
+      } else {
+        startExpandState2Refinement();
+      }
+    }
+
+    public void stopExpandRefinement() {
+      if (builderState == BuilderState.STATE_1) {
+        stopExpandState1Refinement();
+      } else {
+        stopExpandState2Refinement();
+      }
+    }
+
+		private void startExpandState1Refinement() {
+			checkState(algorithmState == AlgorithmState.EXPANDING);
+			expandState1RefinementTimer.start();
+			algorithmState = AlgorithmState.EXPAND_STATE_1_REFINING;
 		}
 
-		public void stopExpandExplRefinement() {
-			checkState(state == State.EXPAND_EXPL_REFINING);
-			expandExplRefinementTimer.stop();
-			state = State.EXPANDING;
+		private void stopExpandState1Refinement() {
+			checkState(algorithmState == AlgorithmState.EXPAND_STATE_1_REFINING);
+			expandState1RefinementTimer.stop();
+			algorithmState = AlgorithmState.EXPANDING;
 		}
 
-		public void startExpandZoneRefinement() {
-			checkState(state == State.EXPANDING);
-			expandZoneRefinementTimer.start();
-			state = State.EXPAND_ZONE_REFINING;
+		private void startExpandState2Refinement() {
+			checkState(algorithmState == AlgorithmState.EXPANDING);
+			expandState2RefinementTimer.start();
+			algorithmState = AlgorithmState.EXPAND_STATE_2_REFINING;
 		}
 
-		public void stopExpandZoneRefinement() {
-			checkState(state == State.EXPAND_ZONE_REFINING);
-			expandZoneRefinementTimer.stop();
-			state = State.EXPANDING;
+		private void stopExpandState2Refinement() {
+			checkState(algorithmState == AlgorithmState.EXPAND_STATE_2_REFINING);
+			expandState2RefinementTimer.stop();
+			algorithmState = AlgorithmState.EXPANDING;
 		}
 
 		public void startClosing() {
-			checkState(state == State.RUNNING);
+			checkState(algorithmState == AlgorithmState.RUNNING);
 			closeTimer.start();
-			state = State.CLOSING;
+			algorithmState = AlgorithmState.CLOSING;
 		}
 
 		public void stopClosing() {
-			checkState(state == State.CLOSING);
+			checkState(algorithmState == AlgorithmState.CLOSING);
 			closeTimer.stop();
-			state = State.RUNNING;
+			algorithmState = AlgorithmState.RUNNING;
 		}
 
-		public void startCloseExplRefinement() {
-			checkState(state == State.CLOSING);
-			closeExplRefinementTimer.start();
-			state = State.CLOSE_EXPL_REFINING;
+    public void startCloseRefinement() {
+      if (builderState == BuilderState.STATE_1) {
+        startCloseState1Refinement();
+      } else {
+        startCloseState2Refinement();
+      }
+    }
+
+    public void stopCloseRefinement() {
+      if (builderState == BuilderState.STATE_1) {
+        stopCloseState1Refinement();
+      } else {
+        stopCloseState2Refinement();
+      }
+    }
+
+		private void startCloseState1Refinement() {
+			checkState(algorithmState == AlgorithmState.CLOSING);
+			closeState1RefinementTimer.start();
+			algorithmState = AlgorithmState.CLOSE_STATE_1_REFINING;
 		}
 
-		public void stopCloseExplRefinement() {
-			checkState(state == State.CLOSE_EXPL_REFINING);
-			closeExplRefinementTimer.stop();
-			state = State.CLOSING;
+		private void stopCloseState1Refinement() {
+			checkState(algorithmState == AlgorithmState.CLOSE_STATE_1_REFINING);
+			closeState1RefinementTimer.stop();
+			algorithmState = AlgorithmState.CLOSING;
 		}
 
-		public void startCloseZoneRefinement() {
-			checkState(state == State.CLOSING);
-			closeZoneRefinementTimer.start();
-			state = State.CLOSE_ZONE_REFINING;
+		private void startCloseState2Refinement() {
+			checkState(algorithmState == AlgorithmState.CLOSING);
+			closeState2RefinementTimer.start();
+			algorithmState = AlgorithmState.CLOSE_STATE_2_REFINING;
 		}
 
-		public void stopCloseZoneRefinement() {
-			checkState(state == State.CLOSE_ZONE_REFINING);
-			closeZoneRefinementTimer.stop();
-			state = State.CLOSING;
+		private void stopCloseState2Refinement() {
+			checkState(algorithmState == AlgorithmState.CLOSE_STATE_2_REFINING);
+			closeState2RefinementTimer.stop();
+			algorithmState = AlgorithmState.CLOSING;
 		}
 
 		public void checkCoverage() {
-			checkState(state == State.CLOSING);
+			checkState(algorithmState == AlgorithmState.CLOSING);
 			coverageChecks++;
 		}
 
 		public void attemptCoverage() {
-			checkState(state == State.CLOSING);
+			checkState(algorithmState == AlgorithmState.CLOSING);
 			coverageAttempts++;
 		}
 
 		public void successfulCoverage() {
-			checkState(state == State.CLOSING);
+			checkState(algorithmState == AlgorithmState.CLOSING);
 			coverageSuccesses++;
 		}
 
-		public void refineExpl() {
-			checkState(state == State.EXPAND_EXPL_REFINING || state == State.CLOSE_EXPL_REFINING);
-			explRefinementSteps++;
+    public void refine() {
+      if (builderState == BuilderState.STATE_1) {
+        refineState1();
+      } else {
+        refineState2();
+      }
+    }
+
+		private void refineState1() {
+			checkState(algorithmState == AlgorithmState.EXPAND_STATE_1_REFINING || algorithmState == AlgorithmState.CLOSE_STATE_1_REFINING);
+			state1RefinementSteps++;
 		}
 
-		public void refineZone() {
-			checkState(state == State.EXPAND_ZONE_REFINING || state == State.CLOSE_ZONE_REFINING);
-			zoneRefinementSteps++;
+		private void refineState2() {
+			checkState(algorithmState == AlgorithmState.EXPAND_STATE_2_REFINING || algorithmState == AlgorithmState.CLOSE_STATE_2_REFINING);
+			state2RefinementSteps++;
 		}
+
+    public void setState1() {
+      builderState = BuilderState.STATE_1;
+    }
+
+    public void setState2() {
+      builderState = BuilderState.STATE_2;
+    }
+
+    public void clearState() {
+      builderState = BuilderState.STATE_1;
+    }
 
 		public LazyStatistics build() {
-			checkState(state == State.STOPPED);
-			state = State.BUILT;
+			checkState(algorithmState == AlgorithmState.STOPPED);
+			algorithmState = AlgorithmState.BUILT;
 			return new LazyStatistics(this);
 		}
-
 	}
 }

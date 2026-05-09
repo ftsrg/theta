@@ -24,7 +24,6 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
     private final LTS<FSConcr, A> lts;
     private final SearchStrategy searchStrategy;
     private final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy;
-    //private final Function<LazyState<FSConcr, FSAbstr>, ?> projection;
     private final Analysis<LazyState<FSConcr, FSAbstr>, A, P> analysis;
     private final Predicate<FSConcr> isTarget;
     private final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens;
@@ -127,7 +126,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                     coveree.setCoveringNode(coverer);
                     final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
                             uncoveredNodes = new ArrayList<>();
-                    lazyStrategy.cover(coveree, coverer, uncoveredNodes);
+                    lazyStrategy.cover(coveree, coverer, uncoveredNodes, stats);
                     waiting.addAll(uncoveredNodes.stream().filter(n -> !n.equals(coveree)));
 
                     if (coveree.isCovered()) {
@@ -157,7 +156,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                         if (lazyStrategy.inconsistentState(concrStateLens.get(succState))) {
                             final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
                                     uncoveredNodes = new ArrayList<>();
-                            lazyStrategy.disable(node, action, succState, uncoveredNodes);
+                            lazyStrategy.disable(node, action, succState, uncoveredNodes, stats);
                             waiting.addAll(uncoveredNodes);
                         } else {
                             final boolean target = isTarget.test(succState.getConcrState());

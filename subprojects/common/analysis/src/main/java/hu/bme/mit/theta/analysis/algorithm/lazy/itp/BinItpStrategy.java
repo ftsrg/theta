@@ -7,6 +7,7 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.utils.Lens;
 
@@ -34,20 +35,30 @@ public abstract class BinItpStrategy<SConcr extends State, SAbstr extends ExprSt
     }
 
     @Override
-    public final void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer, final Collection<ArgNode<S, A>> uncoveredNodes) {
+    public final void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer,
+                            final Collection<ArgNode<S, A>> uncoveredNodes,
+                            final LazyStatistics.Builder stats) {
+        stats.startCloseRefinement();
         final SItp covererState = interpolator.toItpDom(lens.get(coverer.getState()).getAbstrState());
         final Collection<SItp> complementState = interpolator.complement(covererState);
-        complementState.forEach(B -> block(coveree, B, uncoveredNodes));
+        complementState.forEach(B -> block(coveree, B, uncoveredNodes, stats));
+        stats.stopCloseRefinement();
     }
 
     @Override
-    public final void disable(final ArgNode<S, A> node, final A action, final S succState, final Collection<ArgNode<S, A>> uncoveredNodes) {
+    public final void disable(final ArgNode<S, A> node, final A action, final S succState,
+                              final Collection<ArgNode<S, A>> uncoveredNodes,
+                              final LazyStatistics.Builder stats) {
         assert inconsistentState(lens.get(succState).getConcrState());
+        stats.startExpandRefinement();
         final SItp top = interpolator.toItpDom(abstrLattice.top());
         final Collection<? extends SItp> badStates = invTransFunc.getPreStates(top, action, prec);
-        badStates.forEach(B -> block(node, B, uncoveredNodes));
+        badStates.forEach(B -> block(node, B, uncoveredNodes, stats));
+        stats.stopExpandRefinement();
     }
 
-    protected abstract SAbstr block(final ArgNode<S, A> node, final SItp B, final Collection<ArgNode<S, A>> uncoveredNodes);
+    protected abstract SAbstr block(final ArgNode<S, A> node, final SItp B,
+                                    final Collection<ArgNode<S, A>> uncoveredNodes,
+                                    final LazyStatistics.Builder stats);
 
 }

@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.BasicExprState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -53,22 +54,32 @@ public final class ExprSeqItpStrategy<S extends State, A extends Action> extends
     }
 
     @Override
-    public void cover(ArgNode<S, A> coveree, ArgNode<S, A> coverer, Collection<ArgNode<S, A>> uncoveredNodes) {
+    public void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer,
+                      final Collection<ArgNode<S, A>> uncoveredNodes,
+                      final LazyStatistics.Builder stats) {
+        stats.startCloseRefinement();
         final BasicExprState covererAbstrState = lens.get(coverer.getState()).getAbstrState();
         final Expr<BoolType> covererExpr = covererAbstrState.toExpr();
         final Expr<BoolType> complementExpr = Not(covererExpr);
-        block(coveree, complementExpr, uncoveredNodes);
+        block(coveree, complementExpr, uncoveredNodes, stats);
+        stats.stopCloseRefinement();
     }
 
     @Override
-    public void disable(ArgNode<S, A> node, A action, S succState, Collection<ArgNode<S, A>> uncoveredNodes) {
+    public void disable(final ArgNode<S, A> node, final A action, final S succState,
+                        final Collection<ArgNode<S, A>> uncoveredNodes,
+                        final LazyStatistics.Builder stats) {
         assert inconsistentState(lens.get(succState).getConcrState());
+        stats.startExpandRefinement();
         final ExprAction exprAction = actionTransform.apply(action);
         final Expr<BoolType> badExpr = exprAction.toExpr();
-        block(node, badExpr, uncoveredNodes);
+        block(node, badExpr, uncoveredNodes, stats);
+        stats.stopExpandRefinement();
     }
 
-    private void block(final ArgNode<S, A> node, final Expr<BoolType> badExpr, final Collection<ArgNode<S, A>> uncoveredNodes) {
+    private void block(final ArgNode<S, A> node, final Expr<BoolType> badExpr,
+                       final Collection<ArgNode<S, A>> uncoveredNodes,
+                       final LazyStatistics.Builder stats) {
         try (WithPushPop wpp = new WithPushPop(solver)) {
             final BasicExprState abstrState = lens.get(node.getState()).getAbstrState();
             solver.add(PathUtils.unfold(abstrState.toExpr(), 0));
@@ -78,6 +89,8 @@ public final class ExprSeqItpStrategy<S extends State, A extends Action> extends
                 return;
             }
         }
+        stats.refine();
+
         final Trace<ExprState, ExprAction> trace = traceToBlock(node, badExpr);
         final ExprTraceStatus<ItpRefutation> result = traceChecker.check(trace);
         assert result.isInfeasible();
@@ -103,7 +116,8 @@ public final class ExprSeqItpStrategy<S extends State, A extends Action> extends
         }
     }
 
-    private Trace<ExprState, ExprAction> traceToBlock(ArgNode<S, A> node, Expr<BoolType> badExpr) {
+    private Trace<ExprState, ExprAction> traceToBlock(final ArgNode<S, A> node,
+                                                      final Expr<BoolType> badExpr) {
         final List<ExprState> states = new ArrayList<>();
         final List<StmtAction> actions = new ArrayList<>();
 

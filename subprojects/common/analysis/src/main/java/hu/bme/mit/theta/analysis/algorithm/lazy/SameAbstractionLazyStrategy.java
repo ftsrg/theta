@@ -14,7 +14,8 @@ import java.util.function.Function;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Unit.unit;
 
-public final class SameAbstractionLazyStrategy<SAbstr extends State, S extends State, A extends Action> implements LazyStrategy<SAbstr, SAbstr, S, A> {
+public final class SameAbstractionLazyStrategy<SAbstr extends State, S extends State, A extends Action>
+      implements LazyStrategy<SAbstr, SAbstr, S, A> {
 
     private final Lens<S, SAbstr> lens;
     private final PartialOrd<SAbstr> partialOrd;
@@ -22,7 +23,8 @@ public final class SameAbstractionLazyStrategy<SAbstr extends State, S extends S
     private final Function<S, ?> projection;
     private final InitAbstractor<SAbstr, SAbstr> initAbstractor;
 
-    public SameAbstractionLazyStrategy(final Lens<S, SAbstr> lens, final PartialOrd<SAbstr> partialOrd) {
+    public SameAbstractionLazyStrategy(final Lens<S, SAbstr> lens,
+                                       final PartialOrd<SAbstr> partialOrd) {
         this.lens = checkNotNull(lens);
         this.partialOrd = checkNotNull(partialOrd);
         projection  = s -> unit();
@@ -46,22 +48,26 @@ public final class SameAbstractionLazyStrategy<SAbstr extends State, S extends S
     }
 
     @Override
-    public boolean inconsistentState(SAbstr state) {
+    public boolean inconsistentState(final SAbstr state) {
         return concretizer.inconsistentConcrState(state);
     }
 
     @Override
-    public boolean mightCover(ArgNode<S, A> coveree, ArgNode<S, A> coverer) {
+    public boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer) {
         return lens.get(coveree.getState()).equals(lens.get(coverer.getState())) ||
                 concretizer.proves(lens.get(coveree.getState()), lens.get(coverer.getState()));
     }
 
     @Override
-    public void cover(ArgNode<S, A> coveree, ArgNode<S, A> coverer, Collection<ArgNode<S, A>> uncoveredNodes) {
+    public void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer,
+                      final Collection<ArgNode<S, A>> uncoveredNodes,
+                      final LazyStatistics.Builder stats) {
     }
 
     @Override
-    public void disable(ArgNode<S, A> node, A action, S succState, Collection<ArgNode<S, A>> uncoveredNodes) {
+    public void disable(final ArgNode<S, A> node, final A action, final S succState,
+                        final Collection<ArgNode<S, A>> uncoveredNodes,
+                        final LazyStatistics.Builder stats) {
         assert lens.get(succState).isBottom();
     }
 }
