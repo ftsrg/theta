@@ -17,6 +17,6 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 public enum ClockStrategy {
     LU,
-    FWITP,
-    BWITP;
+    FW_ITP,
+    BW_ITP;
 }

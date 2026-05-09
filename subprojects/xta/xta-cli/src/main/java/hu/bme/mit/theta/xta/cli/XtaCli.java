@@ -69,13 +69,13 @@ public final class XtaCli {
 	/// Lazy algorithm parameters
 
 	@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
-	DataStrategy2.ConcrDom concrDataDom = DataStrategy2.ConcrDom.EXPL;
+	DataStrategy.ConcrDom concrDataDom = DataStrategy.ConcrDom.EXPL;
 
 	@Parameter(names = {"--discreteabstr", "-da"}, description = "Abstract domain for discrete variables", required = false)
-	DataStrategy2.AbstrDom abstrDataDom = DataStrategy2.AbstrDom.EXPL;
+	DataStrategy.AbstrDom abstrDataDom = DataStrategy.AbstrDom.EXPL;
 
 	@Parameter(names = {"--discreteitp", "-di"}, description = "Interpolation strategy for discrete variables", required = false)
-	DataStrategy2.ItpStrategy dataItpStrategy = DataStrategy2.ItpStrategy.BIN_BW;
+	DataStrategy.ItpStrategy dataItpStrategy = DataStrategy.ItpStrategy.BIN_BW;
 
 	@Parameter(names = {"--meet", "-me"}, description = "Meet strategy for expressions", required = false)
 	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
@@ -100,7 +100,7 @@ public final class XtaCli {
   /// Common algorithm parameters
 
 	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = false)
-	ClockStrategy clockStrategy = ClockStrategy.BWITP;
+	ClockStrategy clockStrategy = ClockStrategy.BW_ITP;
 
 	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = false)
 	SearchStrategy searchStrategy = SearchStrategy.BFS;
@@ -194,7 +194,7 @@ public final class XtaCli {
         LazyXtaAbstractorConfigFactory.create(
             system,
             new ConsoleLogger(logLevel),
-            new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
+            new DataStrategy(concrDataDom, abstrDataDom, dataItpStrategy),
             clockStrategy,
             searchStrategy,
             exprMeetStrategy

@@ -81,7 +81,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     private int maxEnum = 0;
     private PredSplit predSplit = PredSplit.WHOLE;
     private DataRefinement dataRefinement = DataRefinement.SEQ_ITP;
-    private ClockStrategy clockStrategy = ClockStrategy.BWITP;
+    private ClockStrategy clockStrategy = ClockStrategy.BW_ITP;
     private SearchStrategy searchStrategy = SearchStrategy.BFS;
     private PruneStrategy pruneStrategy = PruneStrategy.FULL;
 
@@ -272,7 +272,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     private Analysis createConcrClockAnalysis() {
         return switch (clockStrategy) {
-            case LU, FWITP, BWITP -> XtaZoneAnalysis.create(system.getInitLocs());
+            case LU, FW_ITP, BW_ITP -> XtaZoneAnalysis.create(system.getInitLocs());
         };
     }
 
@@ -302,7 +302,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     private LazyStrategy createClockStrategy() {
         return switch (clockStrategy) {
-            case BWITP, FWITP -> createItpZoneStrategy();
+            case BW_ITP, FW_ITP -> createItpZoneStrategy();
             case LU -> {
                 final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
                     lens = LazyXtaLensUtils.createAbstrClockLens();
@@ -323,9 +323,9 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
         switch (clockStrategy){
-            case BWITP:
+            case BW_ITP:
                 return new BwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
-            case FWITP:
+            case FW_ITP:
                 final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc = XtaZoneTransFunc.getInstance();
                 return new FwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec, zoneTransFunc, prec);
             default:

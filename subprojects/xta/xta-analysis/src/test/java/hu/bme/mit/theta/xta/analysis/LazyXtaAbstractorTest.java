@@ -43,7 +43,7 @@ public final class LazyXtaAbstractorTest {
         ImmutableSet.of(MODEL_FDDI, MODEL_ENGINE, MODEL_BROADCAST);
 
     public String filepath;
-    public DataStrategy2 dataStrategy;
+    public DataStrategy dataStrategy;
     public ClockStrategy clockStrategy;
 
     private LazyXtaAbstractorConfig<?, ?, ?> abstractor;
@@ -52,7 +52,7 @@ public final class LazyXtaAbstractorTest {
         final Collection<Object[]> result = new ArrayList<>();
         for (final String model : MODELS) {
 
-            for (final DataStrategy2 dataStrategy : DataStrategy2.getValidStrategies()) {
+            for (final DataStrategy dataStrategy : DataStrategy.getValidStrategies()) {
                 for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
                     if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
                         result.add(new Object[]{model, dataStrategy, clockStrategy});
@@ -78,7 +78,7 @@ public final class LazyXtaAbstractorTest {
 
     @MethodSource("data")
     @ParameterizedTest(name = "model: {0}, discrete: {1}, clock: {2}")
-    public void test(String filepath, DataStrategy2 dataStrategy, ClockStrategy clockStrategy)
+    public void test(String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
             throws IOException {
         initLazyXtaAbstractorTest(filepath, dataStrategy, clockStrategy);
         test(abstractor);
@@ -96,7 +96,7 @@ public final class LazyXtaAbstractorTest {
     }
 
     public void initLazyXtaAbstractorTest(
-            String filepath, DataStrategy2 dataStrategy, ClockStrategy clockStrategy)
+        String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
             throws IOException {
         this.filepath = filepath;
         this.dataStrategy = dataStrategy;

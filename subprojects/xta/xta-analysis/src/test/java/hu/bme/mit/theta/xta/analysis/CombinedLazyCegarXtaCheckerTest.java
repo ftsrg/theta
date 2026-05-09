@@ -26,7 +26,6 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfig;
 import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfigFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 import java.io.SequenceInputStream;
@@ -44,62 +43,20 @@ public final class CombinedLazyCegarXtaCheckerTest {
 
 	public String modelPath;
 	public String propPath;
-	public DataStrategy dataStrategy;
 	public ClockStrategy clockStrategy;
 	public Boolean safety;
 
 	private CombinedLazyCegarXtaCheckerConfig config;
 
-	/*
-	private static final String MODEL_CSMA = "/model/csma-2.xta";
-    private static final String MODEL_FDDI = "/model/fddi-2.xta";
-    private static final String MODEL_FISCHER = "/model/fischer-2-32-64.xta";
-    private static final String MODEL_LYNCH = "/model/lynch-2-16.xta";
-    private static final String MODEL_ENGINE = "/model/engine-classic.xta";
-    private static final String MODEL_BROADCAST = "/model/broadcast.xta";
-
-	private static final Collection<String> MODELS =
-            ImmutableList.of(
-                    MODEL_CSMA,
-                    MODEL_FDDI,
-                    MODEL_FISCHER,
-                    MODEL_LYNCH,
-                    MODEL_ENGINE,
-                    MODEL_BROADCAST);
-
-    private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS =
-            ImmutableSet.of(MODEL_FDDI, MODEL_ENGINE, MODEL_BROADCAST);
-
-	@Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
 	public static Collection<Object[]> data() {
-		final Collection<Object[]> result = new ArrayList<>();
-		for (final String model : MODELS) {
-			for (final DataStrategy dataStrategy : DataStrategy.values()) {
-				for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
-					if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
-						result.add(new Object[]{model, dataStrategy, clockStrategy});
-					}
-				}
-			}
-		}
-		return result;
-	}*/
-
-	//@Parameters(name = "model: {0}, safety: {4}")
-	public static Collection<Object[]> data() {
-		/*final Collection<Object[]> result = new ArrayList<>();
-		for (final String model : MODELS) {
-			result.add(new Object[]{model, null, null, true});
-		}
-		return result;*/
 		return List.<Object[]>of(
-			new Object[]{"/model/AndOr.xta", "/property/AndOr.prop", null, null, true},
+			new Object[]{"/model/AndOr.xta", "/property/AndOr.prop", null, true},
 			// Extremely long
-			// new Object[]{"/model/bangOlufsen.xta", "/property/bangOlufsen.prop", null, null, true},
-			new Object[]{"/model/fischer-2-32-64.xta", "/property/fischer-2-32-64.prop", null, null, true},
-			new Object[]{"/model/mytest.xta", "/property/mytest.prop", null, null, true},
-			new Object[]{"/model/lazy-pruning-example.xta", "/property/p-errorloc.prop", null, null, true},
-			new Object[]{"/model/lazy-pruning-example-2.xta", "/property/p-errorloc.prop", null, null, true}
+			// new Object[]{"/model/bangOlufsen.xta", "/property/bangOlufsen.prop", null, true},
+			new Object[]{"/model/fischer-2-32-64.xta", "/property/fischer-2-32-64.prop", null, true},
+			new Object[]{"/model/mytest.xta", "/property/mytest.prop", null, true},
+			new Object[]{"/model/lazy-pruning-example.xta", "/property/p-errorloc.prop", null, true},
+			new Object[]{"/model/lazy-pruning-example-2.xta", "/property/p-errorloc.prop", null, true}
 		);
 	}
 
@@ -115,15 +72,14 @@ public final class CombinedLazyCegarXtaCheckerTest {
 	}
 
     @MethodSource("data")
-    @ParameterizedTest(name = "model: {0}, prop: {1}, discrete: {2}, clock: {3}, safety: {4}")
+    @ParameterizedTest(name = "model: {0}, prop: {1}, clocks: {2}, safety: {3}")
 	public void test(
             String modelPath,
             String propPath,
-            DataStrategy dataStrategy,
             ClockStrategy clockStrategy,
             Boolean safety)
             throws IOException {
-        initCombinedLazyCegarXtaCheckerTest(modelPath, propPath, dataStrategy, clockStrategy, safety);
+        initCombinedLazyCegarXtaCheckerTest(modelPath, propPath, clockStrategy, safety);
 
 		// Act
         final SafetyResult<
@@ -142,13 +98,11 @@ public final class CombinedLazyCegarXtaCheckerTest {
     public void initCombinedLazyCegarXtaCheckerTest(
             String modelPath,
             String propPath,
-            DataStrategy dataStrategy,
             ClockStrategy clockStrategy,
             Boolean safety)
             throws IOException {
         this.modelPath = modelPath;
         this.propPath = propPath;
-        this.dataStrategy = dataStrategy;
         this.clockStrategy = clockStrategy;
         this.safety = safety;
         this.initialize();
