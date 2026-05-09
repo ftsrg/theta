@@ -19,6 +19,8 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfig;
@@ -107,7 +109,9 @@ public final class CombinedLazyCegarXtaCheckerTest {
 			getClass().getResourceAsStream(propPath)
 		);
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
-		config = CombinedLazyCegarXtaCheckerConfigFactory.create(system).build();
+		config = CombinedLazyCegarXtaCheckerConfigFactory
+        .create(system, new ConsoleLogger(Logger.Level.MAINSTEP), Z3LegacySolverFactory.getInstance())
+        .build();
 	}
 
     @MethodSource("data")

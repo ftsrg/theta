@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xta.analysis.combinedlazycegar;
 
 import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
@@ -137,7 +138,8 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         return this;
     }
 
-    public CombinedLazyCegarXtaCheckerConfig build() {
+    public CombinedLazyCegarXtaCheckerConfig<?, ?, ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+    build() {
         final var lazyStrategy = createLazyStrategy();
 
         final var lazyAnalysis = createLazyAnalysis(
@@ -154,7 +156,8 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
                 lazyStrategy,
                 lazyAnalysis,
                 XtaState::isError,
-                createConcrProd2Lens()
+                createConcrProd2Lens(),
+                logger
             ),
             SingleExprTraceRefiner.create(
                 new CombinedLazyCegarExprTraceChecker(
@@ -299,7 +302,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     private LazyStrategy createClockStrategy() {
         return switch (clockStrategy) {
-            case BWITP, FWITP -> createLazyZoneStrategy();
+            case BWITP, FWITP -> createItpZoneStrategy();
             case LU -> {
                 final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
                     lens = LazyXtaLensUtils.createAbstrClockLens();
@@ -309,7 +312,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     }
 
     private LazyStrategy<ZoneState, ZoneState, LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, XtaAction>
-    createLazyZoneStrategy() {
+    createItpZoneStrategy() {
         final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, LazyState<ZoneState, ZoneState>>
             lens = LazyXtaLensUtils.createLazyClockLens();
         final Lattice<ZoneState> lattice = ZoneLattice.getInstance();

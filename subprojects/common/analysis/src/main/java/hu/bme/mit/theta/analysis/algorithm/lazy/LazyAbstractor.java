@@ -10,6 +10,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.utils.Lens;
 
 import java.util.ArrayList;
@@ -27,19 +28,22 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
     private final Analysis<LazyState<FSConcr, FSAbstr>, A, P> analysis;
     private final Predicate<FSConcr> isTarget;
     private final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens;
+    private final Logger logger;
 
     public LazyAbstractor(final LTS<FSConcr, A> lts,
                           final SearchStrategy searchStrategy,
                           final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy,
                           final LazyAnalysis<FSConcr, FSAbstr, A, P> analysis,
                           final Predicate<FSConcr> isTarget,
-                          final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens) {
+                          final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens,
+                          final Logger logger) {
         this.lts = checkNotNull(lts);
         this.searchStrategy = checkNotNull(searchStrategy);
         this.lazyStrategy = checkNotNull(lazyStrategy);
         this.analysis = checkNotNull(analysis);
         this.isTarget = isTarget;
         this.concrStateLens = concrStateLens;
+        this.logger = logger;
     }
 
     @Override
@@ -48,7 +52,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
     }
 
     @Override
-    public AbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
+    public LazyAbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
         Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting = searchStrategy.createWaitlist();
         if (arg.getNodes().findAny().isEmpty()) {
             final Collection<? extends LazyState<FSConcr, FSAbstr>>
@@ -82,11 +86,11 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
             this.waiting = waiting;
         }
 
-        public AbstractorResult run() {
+        public LazyAbstractorResult run() {
             stats.startAlgorithm();
 
             if (arg.getInitNodes().anyMatch(ArgNode::isTarget)) {
-                return stop(AbstractorResult.unsafe());
+                return stopAlgorithm(false);
             }
 
             while (!waiting.isEmpty()) {
@@ -95,19 +99,13 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
 
                 close(v, stats);
                 if (!v.isCovered()) {
-                    AbstractorResult result = expand(v, arg, stats);
-                    if (result.isUnsafe()) {
-                        return stop(AbstractorResult.unsafe());
+                    boolean isSafe = expand(v, arg, stats);
+                    if (!isSafe) {
+                        return stopAlgorithm(false);
                     }
                 }
             }
-            return stop(AbstractorResult.safe());
-        }
-
-        private AbstractorResult stop(AbstractorResult result) {
-            stats.stopAlgorithm();
-            final LazyStatistics statistics = stats.build();
-            return result;
+            return stopAlgorithm(true);
         }
 
         private void close(final ArgNode<LazyState<FSConcr, FSAbstr>, A> coveree,
@@ -140,7 +138,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
             stats.stopClosing();
         }
 
-        private AbstractorResult expand(final ArgNode<LazyState<FSConcr, FSAbstr>, A> node,
+        private boolean expand(final ArgNode<LazyState<FSConcr, FSAbstr>, A> node,
                             final ARG<LazyState<FSConcr, FSAbstr>, A> arg,
                             final LazyStatistics.Builder stats) {
             stats.startExpanding();
@@ -164,7 +162,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                                     succNode = arg.createSuccNode(node, action, succState, target);
                             if (target) {
                                 stats.stopExpanding();
-                                return AbstractorResult.unsafe();
+                                return false;
                             }
                             waiting.add(succNode);
                         }
@@ -174,7 +172,18 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
             node.expanded = true;
             passed.add(node);
             stats.stopExpanding();
-            return AbstractorResult.safe();
+            return true;
+        }
+
+        private LazyAbstractorResult stopAlgorithm(boolean isSafe) {
+          stats.stopAlgorithm();
+          final LazyStatistics statistics = stats.build();
+          final LazyAbstractorResult result = isSafe
+              ? LazyAbstractorResult.safe(arg, statistics)
+              : LazyAbstractorResult.unsafe(arg.getCexs().findAny().get().toTrace(), arg, statistics);
+          logger.write(Logger.Level.BENCHMARK, statistics.toString());
+          logger.write(Logger.Level.RESULT, "%s%n", result.toString());
+          return result;
         }
     }
 }

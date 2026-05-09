@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
 import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.lazy.*;
@@ -64,8 +66,14 @@ public final class LazyXtaAbstractorTest {
     public void initialize() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
-        abstractor = LazyXtaAbstractorConfigFactory
-            .create(system, dataStrategy, clockStrategy, BFS, ExprMeetStrategy.SYNTACTIC);
+        abstractor = LazyXtaAbstractorConfigFactory.create(
+            system,
+            new ConsoleLogger(Logger.Level.DETAIL),
+            dataStrategy,
+            clockStrategy,
+            BFS,
+            ExprMeetStrategy.SYNTACTIC
+        );
     }
 
     @MethodSource("data")

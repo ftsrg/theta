@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expl.LazyExplAnalysis;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expl.LazyExplTransFunc;
@@ -21,6 +20,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.common.Tuple3;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.utils.Lens;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
@@ -47,31 +47,37 @@ public final class LazyXtaAbstractorConfigFactory {
 
     public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
     LazyXtaAbstractorConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
-    create(final XtaSystem system, final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
-
-        final Factory<DConcr, CConcr, DAbstr, CAbstr, DPrec, CPrec>
-                factory = new Factory<>(system, dataStrategy, clockStrategy, searchStrategy, meetStrategy);
+    create(final XtaSystem system, final Logger logger,
+           final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy,
+           final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
+        final Factory<DConcr, CConcr, DAbstr, CAbstr, DPrec, CPrec> factory =
+            new Factory<>(system, logger, dataStrategy, clockStrategy, searchStrategy, meetStrategy);
         return factory.create();
     }
 
     public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
     LazyXtaAbstractorConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
-    create(final XtaSystem system, final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
-        return create(system, dataStrategy, clockStrategy, searchStrategy, ExprMeetStrategy.BASIC);
+    create(final XtaSystem system, final Logger logger,
+           final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy,
+           final SearchStrategy searchStrategy) {
+        return create(system, logger, dataStrategy, clockStrategy, searchStrategy, ExprMeetStrategy.BASIC);
     }
 
     private static class Factory<DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec> {
 
         private final XtaSystem system;
+        private final Logger logger;
         private final DataStrategy2 dataStrategy;
         private final ClockStrategy clockStrategy;
         private final SearchStrategy searchStrategy;
         private final ExprMeetStrategy meetStrategy;
         private final SolverFactory solverFactory;
 
-        public Factory(final XtaSystem system, final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy,
-                       final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy){
+        public Factory(final XtaSystem system, final Logger logger,
+                       final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy,
+                       final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
             this.system = system;
+            this.logger = logger;
             this.dataStrategy = dataStrategy;
             this.clockStrategy = clockStrategy;
             this.searchStrategy = searchStrategy;
@@ -90,14 +96,15 @@ public final class LazyXtaAbstractorConfigFactory {
                     lazyAnalysis = createLazyAnalysis(abstrPartialOrd, initAbstractor);
 
             final Prod2Prec<DPrec, CPrec> prec = createConcrPrec();
-            final ArgAbstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, Prod2Prec<DPrec, CPrec>>
+            final LazyAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
                     abstractor = new LazyAbstractor(
                     XtaLts.create(system),
                     searchStrategy,
                     lazyStrategy,
                     lazyAnalysis,
                     s -> ((XtaState) s).isError(),
-                    createConcrProd2Lens()
+                    createConcrProd2Lens(),
+                    logger
             );
             return new LazyXtaAbstractorConfig<>(abstractor, prec);
         }

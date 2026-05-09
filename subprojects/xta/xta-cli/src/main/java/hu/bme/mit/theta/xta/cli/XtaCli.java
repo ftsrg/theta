@@ -21,25 +21,26 @@ import com.beust.jcommander.ParameterException;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyAbstractorResult;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
-import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
+import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfig;
 import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfigFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.*;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
@@ -50,7 +51,7 @@ import java.io.*;
 public final class XtaCli {
 
 	public enum Algorithm {
-		LAZY, EXPERIMENTAL_COMBINED
+		LAZY, COMBINED
 	}
 
 	private static final String JAR_NAME = "theta-xta.jar";
@@ -96,10 +97,7 @@ public final class XtaCli {
 	@Parameter(names = {"--combined-pruneStrategy"}, description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.FULL;
 
-	@Parameter(names = "--combined-noArgCexCheck")
-	boolean noArgCexCheck = false;
-
-	/// Common algorithm parameters
+  /// Common algorithm parameters
 
 	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = false)
 	ClockStrategy clockStrategy = ClockStrategy.BWITP;
@@ -147,21 +145,25 @@ public final class XtaCli {
 			return;
 		}
 
-		if (headerOnly) {
-			LazyXtaStatistics.writeHeader(writer);
-			return;
-		}
-
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
 			return;
 		}
 
+    if (headerOnly) {
+      LazyStatistics.writeHeader(writer);
+      return;
+    }
+
+    if (benchmarkMode) {
+      logLevel = Logger.Level.DISABLE;
+    }
+
 		try {
 			final XtaSystem system = loadModel();
 			switch (algorithm) {
 				case LAZY -> runLazy(system);
-				case EXPERIMENTAL_COMBINED -> runCombined(system);
+				case COMBINED -> runCombined(system);
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -169,44 +171,84 @@ public final class XtaCli {
 		}
 	}
 
+  private XtaSystem loadModel() {
+    try {
+      try (InputStream inputStream = new FileInputStream(model)) {
+        return XtaDslManager.createSystem(inputStream);
+      }
+    } catch (CTLOperatorNotSupportedException ex) {
+      ex.printStackTrace();
+      System.exit(11);
+    } catch (MixedDataTimeNotSupportedException ex) {
+      ex.printStackTrace();
+      System.exit(12);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      System.exit(10);
+    }
+    throw new AssertionError();
+  }
+
 	private void runLazy(final XtaSystem system) {
-		final LazyXtaAbstractorConfig<?, ?, ?> abstractor = LazyXtaAbstractorConfigFactory.create(
-			system, new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
-			clockStrategy, searchStrategy, exprMeetStrategy
-		);
-		final var result = abstractor.check();
-		resultPrinter(result.isSafe(), result.isUnsafe(), system);
+		final LazyXtaAbstractorConfig<?, ?, ?> abstractor =
+        LazyXtaAbstractorConfigFactory.create(
+            system,
+            new ConsoleLogger(logLevel),
+            new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
+            clockStrategy,
+            searchStrategy,
+            exprMeetStrategy
+        );
+		final LazyAbstractorResult result = abstractor.check();
+		printResult(system.getPropertyKind(), result.isSafe(), result.isUnsafe(), result.getStats());
+    if (dotfile != null) {
+      final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+          safetyResult = result.isSafe()
+              ? SafetyResult.safe(result.getProof())
+              : SafetyResult.unsafe(result.getCex(), result.getProof());
+      writeVisualStatus(safetyResult, dotfile);
+    }
 	}
 
 	private void runCombined(final XtaSystem system) {
-		final var config = CombinedLazyCegarXtaCheckerConfigFactory
-			.create(system, NullLogger.getInstance(), Z3LegacySolverFactory.getInstance())
-			.dataDomain(dataDomain)
-			.maxEnum(maxEnum)
-			.predSplit(predSplit)
-			.dataRefinement(dataRefinement)
-			.clockStrategy(clockStrategy)
-			.searchStragegy(searchStrategy)
-			.pruneStrategy(pruneStrategy)
-			.build();
+		 final CombinedLazyCegarXtaCheckerConfig<?, ?, ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> config =
+        CombinedLazyCegarXtaCheckerConfigFactory
+            .create(system, new ConsoleLogger(logLevel), Z3LegacySolverFactory.getInstance())
+            .dataDomain(dataDomain)
+            .maxEnum(maxEnum)
+            .predSplit(predSplit)
+            .dataRefinement(dataRefinement)
+            .clockStrategy(clockStrategy)
+            .searchStragegy(searchStrategy)
+            .pruneStrategy(pruneStrategy)
+            .build();
 		try {
-			final var result = config.check();
-			resultPrinter(result.isSafe(), result.isUnsafe(), system);
+			final SafetyResult<? extends ARG<?, ?>,
+          ? extends Trace<? extends State, ? extends Action>> result = config.check();
+			printResult(system.getPropertyKind(), result.isSafe(), result.isUnsafe(), null);
+      if (dotfile != null) {
+        writeVisualStatus(result, dotfile);
+      }
 		} catch (NotSolvableException ex) {
 			ex.printStackTrace();
 			System.exit(9);
 		}
 	}
 
-	private void resultPrinter(final boolean isSafe, final boolean isUnsafe, final XtaSystem system) {
-		if (isSafe) {
-			switch (system.getPropertyKind()) {
+	private void printResult(final XtaSystem.PropertyKind propertyKind,
+                           final boolean isSafe, final boolean isUnsafe,
+                           final LazyStatistics lazyStats) {
+    if (benchmarkMode && lazyStats != null) {
+      lazyStats.writeData(writer);
+    }
+    if (isSafe) {
+			switch (propertyKind) {
 				case AG -> System.out.println("(SafetyResult Safe)");
 				case EF -> System.out.println("(SafetyResult Unsafe)");
 				default -> throw new UnsupportedOperationException();
 			}
 		} else if (isUnsafe) {
-			switch (system.getPropertyKind()) {
+			switch (propertyKind) {
 				case AG -> System.out.println("(SafetyResult Unsafe)");
 				case EF -> System.out.println("(SafetyResult Safe)");
 				default -> throw new UnsupportedOperationException();
@@ -216,70 +258,34 @@ public final class XtaCli {
 		}
 	}
 
-	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
-		try {
-			return checker.check(UnitPrec.getInstance());
-		} catch (final Exception ex) {
-			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
-			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
-		}
-	}
+  private void printError(final Throwable ex) {
+      final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+      if (benchmarkMode) {
+          writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+      } else {
+          System.out.println(ex.getClass().getSimpleName() + " occurred, message: " + message);
+          if (stacktrace) {
+              final StringWriter errors = new StringWriter();
+              ex.printStackTrace(new PrintWriter(errors));
+              System.out.println("Trace:");
+              System.out.println(errors);
+          } else {
+              System.out.println("Use --stacktrace for stack trace");
+          }
+      }
+  }
 
-	private XtaSystem loadModel() throws Exception {
-		try {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				return XtaDslManager.createSystem(inputStream);
-			}
-		} catch (CTLOperatorNotSupportedException ex) {
-			ex.printStackTrace();
-			System.exit(11);
-		} catch (MixedDataTimeNotSupportedException ex) {
-			ex.printStackTrace();
-			System.exit(12);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			System.exit(10);
-		}
-		throw new AssertionError();
-	}
-
-    private void printResult(
-            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> result) {
-        final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
-        if (benchmarkMode) {
-            stats.writeData(writer);
-        } else {
-            System.out.println(stats.toString());
-        }
+  private void writeVisualStatus(
+      final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status,
+      final String filename
+  ) {
+    try {
+      final Graph graph = status.isSafe()
+          ? ArgVisualizer.getDefault().visualize(status.asSafe().getProof())
+          : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
+      GraphvizWriter.getInstance().writeFile(graph, filename);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
     }
-
-    private void printError(final Throwable ex) {
-        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-        if (benchmarkMode) {
-            writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
-        } else {
-            System.out.println(ex.getClass().getSimpleName() + " occurred, message: " + message);
-            if (stacktrace) {
-                final StringWriter errors = new StringWriter();
-                ex.printStackTrace(new PrintWriter(errors));
-                System.out.println("Trace:");
-                System.out.println(errors);
-            } else {
-                System.out.println("Use --stacktrace for stack trace");
-            }
-        }
-    }
-
-    private void writeVisualStatus(
-            final SafetyResult<
-                            ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
-                    status,
-            final String filename)
-            throws FileNotFoundException {
-        final Graph graph =
-                status.isSafe()
-                        ? ArgVisualizer.getDefault().visualize(status.asSafe().getProof())
-                        : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
-        GraphvizWriter.getInstance().writeFile(graph, filename);
-    }
+  }
 }

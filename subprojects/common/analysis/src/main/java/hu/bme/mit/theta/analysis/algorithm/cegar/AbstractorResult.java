@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 import hu.bme.mit.theta.common.Utils;
 
 /** Represents the result of the Abstractor component, that can be either safe or unsafe. */
-public final class AbstractorResult {
+public class AbstractorResult {
 
     private final boolean safe;
 
