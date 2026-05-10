@@ -19,18 +19,18 @@ public abstract class BinItpStrategy<SConcr extends State, SAbstr extends ExprSt
         extends ItpStrategy<SConcr, SAbstr, S, A> {
 
     protected final Interpolator<SAbstr, SItp> interpolator;
-    protected final InvTransFunc<SItp, A, P> invTransFunc;
+    protected final InvTransFunc<SItp, A, P> preImage;
     protected final P prec;
 
     protected BinItpStrategy(final Lens<S, LazyState<SConcr, SAbstr>> lens,
                              final Lattice<SAbstr> abstrLattice,
                              final Concretizer<SConcr, SAbstr> concretizer,
                              final Interpolator<SAbstr, SItp> interpolator,
-                             final InvTransFunc<SItp, A, P> invTransFunc,
+                             final InvTransFunc<SItp, A, P> preImage,
                              final P prec) {
         super(lens, abstrLattice, concretizer);
         this.interpolator = checkNotNull(interpolator);
-        this.invTransFunc = checkNotNull(invTransFunc);
+        this.preImage = checkNotNull(preImage);
         this.prec = prec;
     }
 
@@ -39,9 +39,12 @@ public abstract class BinItpStrategy<SConcr extends State, SAbstr extends ExprSt
                             final Collection<ArgNode<S, A>> uncoveredNodes,
                             final LazyStatistics.Builder stats) {
         stats.startCloseRefinement();
-        final SItp covererState = interpolator.toItpDom(lens.get(coverer.getState()).getAbstrState());
-        final Collection<SItp> complementState = interpolator.complement(covererState);
-        complementState.forEach(B -> block(coveree, B, uncoveredNodes, stats));
+        final SItp covererAbstrState =
+            interpolator.toItpDom(lens.get(coverer.getState()).getAbstrState());
+        final Collection<SItp> nonCoveredAbstrStates =
+            interpolator.complement(covererAbstrState);
+        nonCoveredAbstrStates
+            .forEach(badAbstrState -> block(coveree, badAbstrState, uncoveredNodes, stats));
         stats.stopCloseRefinement();
     }
 
@@ -51,13 +54,14 @@ public abstract class BinItpStrategy<SConcr extends State, SAbstr extends ExprSt
                               final LazyStatistics.Builder stats) {
         assert inconsistentState(lens.get(succState).getConcrState());
         stats.startExpandRefinement();
-        final SItp top = interpolator.toItpDom(abstrLattice.top());
-        final Collection<? extends SItp> badStates = invTransFunc.getPreStates(top, action, prec);
-        badStates.forEach(B -> block(node, B, uncoveredNodes, stats));
+        final Collection<? extends SItp> abstrStatesWhereActionIsEnabled =
+            preImage.getPreStates(interpolator.toItpDom(abstrLattice.top()), action, prec);
+        abstrStatesWhereActionIsEnabled
+            .forEach(badAbstrState -> block(node, badAbstrState, uncoveredNodes, stats));
         stats.stopExpandRefinement();
     }
 
-    protected abstract SAbstr block(final ArgNode<S, A> node, final SItp B,
+    protected abstract SAbstr block(final ArgNode<S, A> node, final SItp badState,
                                     final Collection<ArgNode<S, A>> uncoveredNodes,
                                     final LazyStatistics.Builder stats);
 

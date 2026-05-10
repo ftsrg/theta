@@ -5,6 +5,8 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.xta.analysis.XtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaDataAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
 public final class LazyXtaLensUtils {
@@ -157,5 +159,18 @@ public final class LazyXtaLensUtils {
                 return lazyState.withConcrState(newXtaState);
             }
         };
+    }
+
+    public static Lens<XtaAction, XtaDataAction> createXtaDataActionLens() {
+      return new Lens<>() {
+        @Override
+        public XtaDataAction get(XtaAction xtaAction) {
+          return XtaDataAction.of(xtaAction);
+        }
+        @Override
+        public XtaAction set(XtaAction xtaAction, XtaDataAction xtaDataAction) {
+          throw new UnsupportedOperationException();
+        }
+      };
     }
 }

@@ -20,56 +20,61 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState, SItp extends State, S extends State, A extends Action, P extends Prec, PAbstr extends Prec>
     extends BinItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
 
-    private final TransFunc<SAbstr, A, PAbstr> transFunc;
+    private final TransFunc<SAbstr, A, PAbstr> postImage;
     private final PAbstr abstrPrec;
 
     public FwItpStrategy(final Lens<S, LazyState<SConcr, SAbstr>> lens,
                          final Lattice<SAbstr> abstrLattice,
                          final Interpolator<SAbstr, SItp> interpolator,
                          final Concretizer<SConcr, SAbstr> concretizer,
-                         final InvTransFunc<SItp, A, P> invTransFunc,
+                         final InvTransFunc<SItp, A, P> preImage,
                          final P prec,
-                         final TransFunc<SAbstr, A, PAbstr> transFunc,
+                         final TransFunc<SAbstr, A, PAbstr> postImage,
                          final PAbstr abstrPrec) {
-        super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
-        this.transFunc = checkNotNull(transFunc);
+        super(lens, abstrLattice, concretizer, interpolator, preImage, prec);
+        this.postImage = checkNotNull(postImage);
         this.abstrPrec = checkNotNull(abstrPrec);
     }
 
     @Override
-    public SAbstr block(final ArgNode<S, A> node, final SItp B,
-                              final Collection<ArgNode<S, A>> uncoveredNodes,
-                              final LazyStatistics.Builder stats) {
+    public SAbstr block(final ArgNode<S, A> node, final SItp badState,
+                        final Collection<ArgNode<S, A>> uncoveredNodes,
+                        final LazyStatistics.Builder stats) {
 
         final SAbstr abstrState = lens.get(node.getState()).getAbstrState();
-        if(interpolator.refutes(abstrState, B)){
+        if(interpolator.refutes(abstrState, badState)) {
             return abstrState;
         }
         stats.refine();
 
-        SAbstr interpolant;
+        SAbstr interpolant = null;
 
-        if(node.getInEdge().isPresent()){
+        if (node.getInEdge().isPresent()) {
             final ArgEdge<S, A> inEdge = node.getInEdge().get();
             final A action = inEdge.getAction();
             final ArgNode<S, A> parent = inEdge.getSource();
-            interpolant = abstrLattice.top();
 
-            final Collection<? extends SItp> pre = invTransFunc.getPreStates(B, action, prec);
-            for (final SItp B_pre : pre) {
+            for (final SItp preBadState : preImage.getPreStates(badState, action, prec)) {
 
-                final SAbstr A_pre = block(parent, B_pre, uncoveredNodes, stats);
+                final SAbstr preItp = block(parent, preBadState, uncoveredNodes, stats);
 
-                final Collection<? extends SAbstr> post = transFunc.getSuccStates(A_pre, action, abstrPrec);
-                assert post.size() == 1;
-                final SAbstr A = post.iterator().next();
+                final Collection<? extends SAbstr> preItpSuccessors =
+                    postImage.getSuccStates(preItp, action, abstrPrec);
+                assert preItpSuccessors.size() == 1;
+                final SAbstr preItpSuccessor = preItpSuccessors.stream().findFirst().get();
 
-                final SAbstr i = interpolator.interpolate(A, B);
-                interpolant = abstrLattice.meet(i, interpolant);
+                final SAbstr i = interpolator.interpolate(preItpSuccessor, badState);
+
+                if (interpolant == null) {
+                  interpolant = i;
+                } else {
+                  interpolant = abstrLattice.meet(interpolant, i);
+                }
             }
         } else {
-            final SAbstr A = concretizer.concretize(lens.get(node.getState()).getConcrState());
-            interpolant = interpolator.interpolate(A, B);
+            final SAbstr rootConcrState =
+                concretizer.concretize(lens.get(node.getState()).getConcrState());
+            interpolant = interpolator.interpolate(rootConcrState, badState);
         }
 
         strengthen(node, interpolant);

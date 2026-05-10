@@ -41,6 +41,7 @@ import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
+import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createXtaDataActionLens;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public final class LazyXtaCheckerConfigFactory {
@@ -195,7 +196,7 @@ public final class LazyXtaCheckerConfigFactory {
         private LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
         createLazyStrategy(final XtaSystem system, final DataStrategy dataStrategy, final ClockStrategy clockStrategy) {
             final LazyStrategy<DConcr, DAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-                    dataLazyStrategy = createDataStrategy2(system, dataStrategy);
+                    dataLazyStrategy = createDataStrategy(system, dataStrategy);
             final LazyStrategy<CConcr, CAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
                     clockLazyStrategy = createClockStrategy(system, clockStrategy);
             final Function<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, ?> projection = s -> Tuple3.of(
@@ -207,7 +208,7 @@ public final class LazyXtaCheckerConfigFactory {
             return new Prod2LazyStrategy<>(lens, dataLazyStrategy, clockLazyStrategy, projection);
         }
 
-        private LazyStrategy createDataStrategy2(final XtaSystem system, final DataStrategy dataStrategy) {
+        private LazyStrategy createDataStrategy(final XtaSystem system, final DataStrategy dataStrategy) {
             final DataStrategy.ConcrDom concrDom = dataStrategy.getConcrDom();
             final DataStrategy.AbstrDom abstrDom = dataStrategy.getAbstrDom();
             final DataStrategy.ItpStrategy itpStrategy = dataStrategy.getItpStrategy();
@@ -219,11 +220,11 @@ public final class LazyXtaCheckerConfigFactory {
             }
             final Lattice abstrLattice = createDataLattice(abstrDom);
             if (itpStrategy == DataStrategy.ItpStrategy.SEQ) {
-                final Function<XtaAction, XtaDataAction> actionTransform = XtaDataAction::of;
+                final Lens<XtaAction, XtaDataAction> actionLens = createXtaDataActionLens();
                 final Solver solver = solverFactory.createSolver();
                 final ItpSolver itpSolver = solverFactory.createItpSolver();
                 final ExprTraceChecker<ItpRefutation> traceChecker = ExprTraceSeqItpChecker.create(True(), True(), itpSolver);
-                return new ExprSeqItpStrategy(lens, actionTransform, abstrLattice, concretizer, solver, traceChecker);
+                return new ExprSeqItpStrategy(lens, actionLens, abstrLattice, concretizer, solver, traceChecker);
             }
             final Interpolator interpolator = createDataInterpolator(abstrDom);
             final InvTransFunc invTransFunc = createDataInvTransFunc();

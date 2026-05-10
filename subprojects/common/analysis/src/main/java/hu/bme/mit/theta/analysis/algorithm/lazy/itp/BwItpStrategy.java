@@ -21,44 +21,40 @@ public final class BwItpStrategy<SConcr extends State, SAbstr extends ExprState,
                          final Lattice<SAbstr> abstrLattice,
                          final Interpolator<SAbstr, SItp> interpolator,
                          final Concretizer<SConcr, SAbstr> concretizer,
-                         final InvTransFunc<SItp, A, P> invTransFunc,
+                         final InvTransFunc<SItp, A, P> preImage,
                          final P prec) {
-        super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
+        super(lens, abstrLattice, concretizer, interpolator, preImage, prec);
     }
 
     @Override
-    public SAbstr block(final ArgNode<S, A> node, final SItp B,
-                              final Collection<ArgNode<S, A>> uncoveredNodes,
-                              final LazyStatistics.Builder stats) {
+    public SAbstr block(final ArgNode<S, A> node, final SItp badState,
+                        final Collection<ArgNode<S, A>> uncoveredNodes,
+                        final LazyStatistics.Builder stats) {
 
         final SAbstr abstrState = lens.get(node.getState()).getAbstrState();
-        if(interpolator.refutes(abstrState, B)){
+        if(interpolator.refutes(abstrState, badState)) {
             return abstrState;
         }
-
         stats.refine();
 
-        final SConcr concrState = lens.get(node.getState()).getConcrState();
-        final SAbstr interpolant = interpolator.interpolate(concretizer.concretize(concrState), B);
+        final SAbstr concrState =
+            concretizer.concretize(lens.get(node.getState()).getConcrState());
+        final SAbstr interpolant = interpolator.interpolate(concrState, badState);
 
         strengthen(node, interpolant);
         maintainCoverage(node, interpolant, uncoveredNodes);
 
-        if(node.getInEdge().isPresent()) {
+        if (node.getInEdge().isPresent()) {
             final ArgEdge<S, A> inEdge = node.getInEdge().get();
             final A action = inEdge.getAction();
             final ArgNode<S, A> parent = inEdge.getSource();
 
-            final Collection<SItp> badStates = interpolator.complement(interpolator.toItpDom(interpolant));
-            for(final SItp badState : badStates){
-                final Collection<? extends SItp> preBadStates = invTransFunc.getPreStates(badState, action, prec);
-                for(final SItp preBadState : preBadStates){
-                    block(parent, preBadState, uncoveredNodes, stats);
+            for (final SItp itpNeg : interpolator.complement(interpolator.toItpDom(interpolant))) {
+                for (final SItp preItpNeg : preImage.getPreStates(itpNeg, action, prec)) {
+                    block(parent, preItpNeg, uncoveredNodes, stats);
                 }
             }
         }
-
-        return interpolant;
+        return null;
     }
-
 }

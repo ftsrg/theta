@@ -17,7 +17,6 @@ import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Unit.unit;
-import static java.util.stream.Collectors.toList;
 
 public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState, S extends State, A extends Action>
         implements LazyStrategy<SConcr, SAbstr, S, A> {
@@ -39,12 +38,12 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
     }
 
     @Override
-    public final Function<S, Unit> getProjection(){
+    public final Function<S, Unit> getProjection() {
         return projection;
     }
 
     @Override
-    public final InitAbstractor<SConcr, SAbstr> getInitAbstractor(){
+    public final InitAbstractor<SConcr, SAbstr> getInitAbstractor() {
         return initAbstractor;
     }
 
@@ -59,13 +58,13 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
     }
 
     @Override
-    public final boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer){
+    public final boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer) {
         final SConcr covereeState = lens.get(coveree.getState()).getConcrState();
         final SAbstr covererState = lens.get(coverer.getState()).getAbstrState();
         return concretizer.proves(covereeState, covererState);
     }
 
-    protected final void strengthen(final ArgNode<S, A> node, final SAbstr interpolant){
+    protected final void strengthen(final ArgNode<S, A> node, final SAbstr interpolant) {
         final S state = node.getState();
         final LazyState<SConcr, SAbstr> lazyState = lens.get(state);
         final SAbstr abstrState = lazyState.getAbstrState();
@@ -75,14 +74,16 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
         node.setState(newState);
     }
 
-    protected final void maintainCoverage(final ArgNode<S, A> node, final SAbstr interpolant, final Collection<ArgNode<S, A>> uncoveredNodes){
-        final Collection<ArgNode<S, A>> uncovered =
-                node.getCoveredNodes().filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
+    protected final void maintainCoverage(final ArgNode<S, A> node, final SAbstr interpolant,
+                                          final Collection<ArgNode<S, A>> uncoveredNodes) {
+        final Collection<ArgNode<S, A>> uncovered = node.getCoveredNodes()
+            .filter(covered -> shouldUncover(covered, interpolant))
+            .toList();
         uncoveredNodes.addAll(uncovered);
         uncovered.forEach(ArgNode::unsetCoveringNode);
     }
 
-    private boolean shouldUncover(final ArgNode<S, A> coveredNode, final SAbstr interpolant){
+    private boolean shouldUncover(final ArgNode<S, A> coveredNode, final SAbstr interpolant) {
         final SAbstr coveredState = lens.get(coveredNode.getState()).getAbstrState();
         return !abstrLattice.isLeq(coveredState, interpolant);
     }
