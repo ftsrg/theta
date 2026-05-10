@@ -46,7 +46,7 @@ public final class LazyXtaAbstractorTest {
     public DataStrategy dataStrategy;
     public ClockStrategy clockStrategy;
 
-    private LazyXtaAbstractorConfig<?, ?, ?> abstractor;
+    private LazyXtaCheckerConfig<?, ?, ?> abstractor;
 
     public static Collection<Object[]> data() {
         final Collection<Object[]> result = new ArrayList<>();
@@ -66,7 +66,7 @@ public final class LazyXtaAbstractorTest {
     public void initialize() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
-        abstractor = LazyXtaAbstractorConfigFactory.create(
+        abstractor = LazyXtaCheckerConfigFactory.create(
             system,
             new ConsoleLogger(Logger.Level.DETAIL),
             dataStrategy,
@@ -84,14 +84,14 @@ public final class LazyXtaAbstractorTest {
         test(abstractor);
     }
 
-    private void test(LazyXtaAbstractorConfig<?, ?, ?> abstractor) throws IOException {
+    private void test(LazyXtaCheckerConfig<?, ?, ?> config) throws IOException {
         // Act
-        abstractor.check();
+        final var result = config.check();
 
         // Assert
         final ArgChecker argChecker =
             ArgChecker.create(Z3LegacySolverFactory.getInstance().createSolver());
-        final boolean argCheckResult = argChecker.isWellLabeled(abstractor.getArg());
+        final boolean argCheckResult = argChecker.isWellLabeled(result.getProof());
         assertTrue(argCheckResult);
     }
 

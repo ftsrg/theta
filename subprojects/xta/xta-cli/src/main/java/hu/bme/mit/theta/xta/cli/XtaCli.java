@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.lazy.LazyAbstractorResult;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -161,10 +160,14 @@ public final class XtaCli {
 
 		try {
 			final XtaSystem system = loadModel();
-			switch (algorithm) {
-				case LAZY -> runLazy(system);
-				case COMBINED -> runCombined(system);
-			}
+      final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+          result = switch (algorithm) {
+              case LAZY -> runLazy(system);
+              case COMBINED -> runCombined(system);
+          };
+      if (dotfile != null) {
+        writeVisualStatus(result, dotfile);
+      }
 		} catch (final Throwable ex) {
 			printError(ex);
 			System.exit(1);
@@ -189,9 +192,10 @@ public final class XtaCli {
     throw new AssertionError();
   }
 
-	private void runLazy(final XtaSystem system) {
-		final LazyXtaAbstractorConfig<?, ?, ?> abstractor =
-        LazyXtaAbstractorConfigFactory.create(
+	private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+  runLazy(final XtaSystem system) {
+		final LazyXtaCheckerConfig<?, ?, ?> config =
+        LazyXtaCheckerConfigFactory.create(
             system,
             new ConsoleLogger(logLevel),
             new DataStrategy(concrDataDom, abstrDataDom, dataItpStrategy),
@@ -199,18 +203,15 @@ public final class XtaCli {
             searchStrategy,
             exprMeetStrategy
         );
-		final LazyAbstractorResult result = abstractor.check();
-		printResult(system.getPropertyKind(), result.isSafe(), result.isUnsafe(), result.getStats());
-    if (dotfile != null) {
-      final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
-          safetyResult = result.isSafe()
-              ? SafetyResult.safe(result.getProof())
-              : SafetyResult.unsafe(result.getCex(), result.getProof());
-      writeVisualStatus(safetyResult, dotfile);
-    }
+    final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+        result = config.check();
+    final LazyStatistics stats = (LazyStatistics) (result.getStats().get());
+    printResult(system.getPropertyKind(), result.isSafe(), result.isUnsafe(), stats);
+    return result;
 	}
 
-	private void runCombined(final XtaSystem system) {
+	private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+  runCombined(final XtaSystem system) {
 		 final CombinedLazyCegarXtaCheckerConfig<?, ?, ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> config =
         CombinedLazyCegarXtaCheckerConfigFactory
             .create(system, new ConsoleLogger(logLevel), Z3LegacySolverFactory.getInstance())
@@ -223,17 +224,16 @@ public final class XtaCli {
             .pruneStrategy(pruneStrategy)
             .build();
 		try {
-			final SafetyResult<? extends ARG<?, ?>,
-          ? extends Trace<? extends State, ? extends Action>> result = config.check();
+			final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+          result = config.check();
 			printResult(system.getPropertyKind(), result.isSafe(), result.isUnsafe(), null);
-      if (dotfile != null) {
-        writeVisualStatus(result, dotfile);
-      }
+      return result;
 		} catch (NotSolvableException ex) {
 			ex.printStackTrace();
 			System.exit(9);
+      return null;
 		}
-	}
+  }
 
 	private void printResult(final XtaSystem.PropertyKind propertyKind,
                            final boolean isSafe, final boolean isUnsafe,

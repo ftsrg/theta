@@ -16,52 +16,15 @@
 
 package hu.bme.mit.theta.analysis.algorithm.lazy;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 
 public class LazyAbstractorResult extends AbstractorResult {
 
   private final LazyStatistics stats;
-  private ARG<? extends State, ? extends Action> proof;
-  private Trace<? extends State, ? extends Action> cex;
 
-  private LazyAbstractorResult(final boolean safe,
-                               final ARG<? extends State, ? extends Action> proof,
-                               final Trace<? extends State, ? extends Action> cex,
-                               final LazyStatistics stats) {
+  public LazyAbstractorResult(final boolean safe, final LazyStatistics stats) {
     super(safe);
-    this.proof = proof;
-    this.cex = cex;
     this.stats = stats;
-  }
-
-  public static <S extends State, A extends Action> LazyAbstractorResult safe(
-      final ARG<S, A> proof, final LazyStatistics stats
-  ) {
-    return new LazyAbstractorResult(true, proof, null, stats);
-  }
-
-  public static LazyAbstractorResult unsafe(
-      final Trace<? extends State, ? extends Action> cex,
-      final ARG<? extends State, ? extends Action> proof,
-      final LazyStatistics stats
-  ) {
-    return new LazyAbstractorResult(false, proof, cex, stats);
-  }
-
-  public ARG<? extends State, ? extends Action> getProof() {
-    return proof;
-  }
-
-  public Trace<? extends State, ? extends Action> getCex() {
-    if (isUnsafe()) {
-      return cex;
-    } else {
-      throw new IllegalStateException();
-    }
   }
 
   public LazyStatistics getStats() {

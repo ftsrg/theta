@@ -5,7 +5,6 @@ import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
@@ -178,9 +177,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
         private LazyAbstractorResult stopAlgorithm(boolean isSafe) {
           stats.stopAlgorithm();
           final LazyStatistics statistics = stats.build();
-          final LazyAbstractorResult result = isSafe
-              ? LazyAbstractorResult.safe(arg, statistics)
-              : LazyAbstractorResult.unsafe(arg.getCexs().findAny().get().toTrace(), arg, statistics);
+          final LazyAbstractorResult result = new LazyAbstractorResult(isSafe, statistics);
           logger.write(Logger.Level.BENCHMARK, statistics.toString());
           logger.write(Logger.Level.RESULT, "%s%n", result.toString());
           return result;
