@@ -3,7 +3,7 @@ package hu.bme.mit.theta.xta.analysis;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
-import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.ExprLattice;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
@@ -72,7 +72,7 @@ public final class LazyXtaAbstractorTest {
             dataStrategy,
             clockStrategy,
             BFS,
-            ExprMeetStrategy.SYNTACTIC
+            ExprLattice.MeetImpl.SYNTACTIC_CHECK
         );
     }
 

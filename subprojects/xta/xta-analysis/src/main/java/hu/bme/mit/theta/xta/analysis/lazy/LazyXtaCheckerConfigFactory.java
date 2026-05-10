@@ -49,9 +49,9 @@ public final class LazyXtaCheckerConfigFactory {
     LazyXtaCheckerConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
     create(final XtaSystem system, final Logger logger,
            final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
-           final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
+           final SearchStrategy searchStrategy, final ExprLattice.MeetImpl meetImpl) {
         final Factory<DConcr, CConcr, DAbstr, CAbstr, DPrec, CPrec> factory =
-            new Factory<>(system, logger, dataStrategy, clockStrategy, searchStrategy, meetStrategy);
+            new Factory<>(system, logger, dataStrategy, clockStrategy, searchStrategy, meetImpl);
         return factory.create();
     }
 
@@ -60,7 +60,7 @@ public final class LazyXtaCheckerConfigFactory {
     create(final XtaSystem system, final Logger logger,
            final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
            final SearchStrategy searchStrategy) {
-        return create(system, logger, dataStrategy, clockStrategy, searchStrategy, ExprMeetStrategy.BASIC);
+        return create(system, logger, dataStrategy, clockStrategy, searchStrategy, ExprLattice.MeetImpl.BASIC);
     }
 
     private static class Factory<DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec> {
@@ -70,18 +70,18 @@ public final class LazyXtaCheckerConfigFactory {
         private final DataStrategy dataStrategy;
         private final ClockStrategy clockStrategy;
         private final SearchStrategy searchStrategy;
-        private final ExprMeetStrategy meetStrategy;
+        private final ExprLattice.MeetImpl exprMeetImpl;
         private final SolverFactory solverFactory;
 
         public Factory(final XtaSystem system, final Logger logger,
                        final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
-                       final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
+                       final SearchStrategy searchStrategy, final ExprLattice.MeetImpl exprMeetImpl) {
             this.system = system;
             this.logger = logger;
             this.dataStrategy = dataStrategy;
             this.clockStrategy = clockStrategy;
             this.searchStrategy = searchStrategy;
-            this.meetStrategy = meetStrategy;
+            this.exprMeetImpl = exprMeetImpl;
             solverFactory = Z3LegacySolverFactory.getInstance();
         }
 
@@ -275,14 +275,7 @@ public final class LazyXtaCheckerConfigFactory {
                     return ExplLattice.getInstance();
                 case EXPR:
                     final Solver solver = solverFactory.createSolver();
-                    switch (meetStrategy) {
-                        case BASIC:
-                            return ExprLattice.create(solver, BasicExprMeetStrategy.getInstance());
-                        case SYNTACTIC:
-                            return ExprLattice.create(solver, SyntacticExprMeetStrategy.getInstance());
-                        case SEMANTIC:
-                            return ExprLattice.create(solver, SemanticExprMeetStrategy.create(solver));
-                    }
+                    return ExprLattice.create(solver, exprMeetImpl);
                 default:
                     throw new AssertionError();
             }

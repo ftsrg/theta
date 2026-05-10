@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
-import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.ExprLattice;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -77,7 +77,7 @@ public final class XtaCli {
 	DataStrategy.ItpStrategy dataItpStrategy = DataStrategy.ItpStrategy.BIN_BW;
 
 	@Parameter(names = {"--meet", "-me"}, description = "Meet strategy for expressions", required = false)
-	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
+	ExprLattice.MeetImpl exprMeetImpl = ExprLattice.MeetImpl.BASIC;
 
 	/// Combined algorithm parameters
 
@@ -201,7 +201,7 @@ public final class XtaCli {
             new DataStrategy(concrDataDom, abstrDataDom, dataItpStrategy),
             clockStrategy,
             searchStrategy,
-            exprMeetStrategy
+            exprMeetImpl
         );
     final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
         result = config.check();
