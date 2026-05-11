@@ -104,7 +104,6 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
             try {
                 externalDeclarationContext.accept(this);
             } catch (Throwable e) {
-                e.printStackTrace();
                 // we don't do anything, we'll throw an error later if something's missing
             }
         }
