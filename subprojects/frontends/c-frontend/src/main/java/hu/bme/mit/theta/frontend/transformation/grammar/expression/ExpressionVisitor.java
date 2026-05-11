@@ -673,9 +673,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "&":
                 checkState(
                         originalOperand instanceof RefExpr<?>
-                                && ((RefExpr<?>) originalOperand).getDecl() instanceof VarDecl,
-                        "Referencing non-variable expressions is not allowed!");
-                return reference((RefExpr<?>) originalOperand);
+                                || originalOperand instanceof Dereference<?, ?, ?>,
+                        "Referencing non-lvalue expressions is not allowed!");
+                return reference(originalOperand);
             case "*":
                 type = CComplexType.getType(originalOperand, parseContext);
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
@@ -698,7 +698,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return of;
     }
 
-    private Expr<?> reference(RefExpr<?> accept) {
+    private Expr<?> reference(Expr<?> accept) {
         final var newType =
                 new CPointer(null, CComplexType.getType(accept, parseContext), parseContext);
         Reference<Type, ?> of = Reference(accept, newType.getSmtType());

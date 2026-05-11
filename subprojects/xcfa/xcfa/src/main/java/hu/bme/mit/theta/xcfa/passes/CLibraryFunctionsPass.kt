@@ -19,15 +19,20 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
+import java.math.BigInteger
 
 /**
  * Transforms the library procedure calls with names in supportedFunctions into model elements.
@@ -248,11 +253,36 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
 
+  private fun Expr<*>.isLiteralZero(): Boolean =
+    when (this) {
+      is IntLitExpr -> value == BigInteger.ZERO
+      is BvLitExpr -> value.all { !it }
+      else -> false
+    }
+
   private fun InvokeLabel.getParam(index: Int): VarDecl<*> {
     var param = params[index]
     while (param is Reference<*, *>) param = param.expr
-    check(param is RefExpr && param.decl is VarDecl<*>)
-    return param.decl as VarDecl<*>
+    return when (param) {
+      is RefExpr<*> -> {
+        check(param.decl is VarDecl<*>)
+        param.decl as VarDecl<*>
+      }
+
+      is Dereference<*, *, *> -> {
+        check(param.array is RefExpr<*>) {
+          "Unsupported library parameter: expected reference base variable, got ${param.array}"
+        }
+        check(param.offset.isLiteralZero()) {
+          "Unsupported library parameter: non-zero dereference offsets are not supported (${param.offset})"
+        }
+        val base = param.array as RefExpr<*>
+        check(base.decl is VarDecl<*>)
+        base.decl as VarDecl<*>
+      }
+
+      else -> error("Unsupported library parameter expression: $param")
+    }
   }
 
   private fun InvokeLabel.getMutexHandle(

@@ -65,7 +65,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .flatMap { p ->
             p.getEdges().flatMap { it -> it.label.getFlatLabels().flatMap { it.references } }
           }
-          .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+          .map {
+            getReferencedBaseDecl(it)
+              ?: error("Unsupported reference target in ReferenceElimination: ${it.expr}")
+          }
           .toSet()
           .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
           .associateWith {
@@ -104,7 +107,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder
         .getEdges()
         .flatMap { e -> e.label.getFlatLabels().flatMap { it.references } }
-        .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+        .map {
+          getReferencedBaseDecl(it)
+            ?: error("Unsupported reference target in ReferenceElimination: ${it.expr}")
+        }
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
         .associateWith { v ->
@@ -219,6 +225,29 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     newInitEdges.forEach(builder::addEdge)
   }
 
+  private fun getReferencedBaseDecl(reference: Reference<*, *>): VarDecl<*>? =
+    when (val target = reference.expr) {
+      is RefExpr<*> -> target.decl as? VarDecl<*>
+      is Dereference<*, *, *> -> (target.array as? RefExpr<*>)?.decl as? VarDecl<*>
+      else -> null
+    }
+
+  private fun getPointerExprForBase(
+    base: Expr<*>,
+    varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>,
+    parseContext: ParseContext?,
+  ): Expr<*> =
+    if (base is RefExpr<*> && base.decl in varLut.keys) {
+      varLut[base.decl]!!.first.ref
+    } else {
+      base.changeReferredVars(varLut, parseContext)
+    }
+
+  private fun isZeroOffset(offset: Expr<*>): Boolean {
+    val offsetType = CComplexType.getType(offset, parseContext)
+    return offset == offsetType.nullValue
+  }
+
   @JvmOverloads
   fun XcfaLabel.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
@@ -327,12 +356,46 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   ): Expr<T> =
     if (this is RefExpr<T>) {
       (decl as VarDecl<T>).changeReferredVars(varLut)
-    } else if (
-      this is Reference<*, *> &&
-        this.expr is RefExpr<*> &&
-        (this.expr as RefExpr<*>).decl in varLut.keys
-    ) {
-      varLut[(this.expr as RefExpr<*>).decl]?.first?.ref as Expr<T>
+    } else if (this is Reference<*, *>) {
+      when (val target = this.expr) {
+        is RefExpr<*> ->
+          (varLut[target.decl]?.first?.ref as? Expr<T>)
+            ?: run {
+              val ret = this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
+              if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
+                parseContext.metadata.create(ret, "cType", CComplexType.getType(this, parseContext))
+              }
+              ret
+            }
+
+        is Dereference<*, *, *> -> {
+          val rewrittenBase = getPointerExprForBase(target.array, varLut, parseContext)
+          val ret: Expr<T> =
+            if (isZeroOffset(target.offset)) {
+              cast(rewrittenBase, this.type)
+            } else {
+              val rewrittenOffset = target.offset.changeReferredVars(varLut, parseContext)
+              val ptrExpr =
+                Add(
+                  cast(rewrittenBase, rewrittenBase.type),
+                  cast(rewrittenOffset, rewrittenBase.type),
+                )
+              cast(ptrExpr, this.type)
+            }
+          if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
+            parseContext.metadata.create(ret, "cType", CComplexType.getType(this, parseContext))
+          }
+          ret
+        }
+
+        else -> {
+          val ret = this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
+          if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
+            parseContext.metadata.create(ret, "cType", CComplexType.getType(this, parseContext))
+          }
+          ret
+        }
+      }
     } else {
       val ret = this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
       if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
