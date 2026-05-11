@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import java.util.Objects;
 
 public abstract class CInteger extends CComplexType {
 
@@ -56,4 +57,15 @@ public abstract class CInteger extends CComplexType {
     public abstract CInteger getSignedVersion();
 
     public abstract CInteger getUnsignedVersion();
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass());
+    }
 }

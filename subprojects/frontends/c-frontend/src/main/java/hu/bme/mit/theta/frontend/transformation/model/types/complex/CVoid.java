@@ -17,6 +17,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex;
 
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import java.util.Objects;
 
 public class CVoid extends CComplexType {
 
@@ -36,5 +37,16 @@ public class CVoid extends CComplexType {
     @Override
     public String getTypeName() {
         return "void";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass());
     }
 }
