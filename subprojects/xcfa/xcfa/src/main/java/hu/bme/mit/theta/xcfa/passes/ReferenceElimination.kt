@@ -65,10 +65,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .flatMap { p ->
             p.getEdges().flatMap { it -> it.label.getFlatLabels().flatMap { it.references } }
           }
-          .map {
-            getReferencedBaseDecl(it)
-              ?: error("Unsupported reference target in ReferenceElimination: ${it.expr}")
-          }
+          // Only direct/base-backed references require synthetic pointer variables.
+          // Computed references (e.g., &(**p + k)-like forms represented with nested dereferences)
+          // are handled by expression rewriting in changeReferredVars().
+          .mapNotNull(::getReferencedBaseDecl)
           .toSet()
           .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
           .associateWith {
@@ -107,10 +107,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder
         .getEdges()
         .flatMap { e -> e.label.getFlatLabels().flatMap { it.references } }
-        .map {
-          getReferencedBaseDecl(it)
-            ?: error("Unsupported reference target in ReferenceElimination: ${it.expr}")
-        }
+        // Keep only references that can be mapped to a concrete base variable.
+        // Nested/computed dereference references remain expression-level addresses.
+        .mapNotNull(::getReferencedBaseDecl)
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
         .associateWith { v ->
