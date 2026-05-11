@@ -586,6 +586,40 @@ class PassTests {
             ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_true x) y) 42)") }
           },
         ),
+        PassTestData(
+          global = {},
+          passes = listOf(ReferenceElimination(parseContext)),
+          input = {
+            "B" type Int()
+            "O" type Int()
+            "x" type Int()
+            "y" type Int()
+            "z" type Int()
+            (init to "L1") { "x".assign("(ref (deref B O Int) Int)") }
+            ("L1" to "L2") { "y".assign("x") }
+            ("L2" to final) { "z".assign("(deref y 2 Int)") }
+          },
+          output = {
+            "B" type Int()
+            "O" type Int()
+            "x" type Int()
+            "y" type Int()
+            "z" type Int()
+            "x_base" type Int()
+            "x_offset" type Int()
+            "y_base" type Int()
+            "y_offset" type Int()
+            (init to "L1") {
+              "x_base".assign("B")
+              "x_offset".assign("O")
+            }
+            ("L1" to "L2") {
+              "y_base".assign("x_base")
+              "y_offset".assign("x_offset")
+            }
+            ("L2" to final) { "z".assign("(deref y_base (+ y_offset 2) Int)") }
+          },
+        ),
       )
   }
 

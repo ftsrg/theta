@@ -177,8 +177,14 @@ public class NamedType extends CSimpleType {
             case "":
                 break;
             case "struct":
-                // we cannot patch structness onto another csimpletype, so we reverse the patching
-                return cSimpleType.patch(this.copyOf());
+                if (cSimpleType instanceof Struct otherStruct) {
+                    // we might be a tyepedef, do nothing
+                    break;
+                } else {
+                    // we cannot patch structness onto another csimpletype, so we reverse the
+                    // patching
+                    return cSimpleType.patch(this.copyOf());
+                }
             case "void":
                 if (cSimpleType instanceof NamedType named && named.namedType.isEmpty()) {
                     named.setNamedType(namedType);
