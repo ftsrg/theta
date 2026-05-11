@@ -1,31 +1,43 @@
 package hu.bme.mit.theta.frontend.svlib;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
+import org.antlr.v4.runtime.*;
 
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
+import static java.util.Objects.requireNonNull;
 
 public class SvLibFrontend{
 
-    public static SvLibParser.ScriptContext parse(String source) {
-        // 1. source String -> ANTLR CharStream
-        CharStream input = CharStreams.fromString(source);
+    private final ProcedurePassManager procedurePassManager;
 
-        // 2. CharStream -> Lexer
-        SvLibLexer lexer = new SvLibLexer(input);
+    public SvLibFrontend() {
+        this(new ProcedurePassManager());
+    }
 
-        // 3. Lexer -> Token stream
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
+    public SvLibFrontend(ProcedurePassManager procedurePassManager) {
+        this.procedurePassManager = requireNonNull(procedurePassManager);
+    }
 
-        // 4. Token stream -> Parser
-        SvLibParser parser = new SvLibParser(tokens);
-        parser.setErrorHandler(new BailErrorStrategy());
+    public XCFA buildXcfa(File input) {
+        try {
+            return buildXcfa(Files.readString(input.toPath()));
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read SV-LIB input from " + input, e);
+        }
+    }
 
-        // 5. Parser -> Parse tree
-        return parser.script();
+    public XCFA buildXcfa(String source) {
+        SvLibParser parser = createParser(source);
+        SvLibParser.ScriptContext script = parser.script();
+        return new SvLibXcfaBuilder(procedurePassManager).buildXcfa(script);
     }
 
     private SvLibParser createParser(String source) {
@@ -34,4 +46,5 @@ public class SvLibFrontend{
         parser.setErrorHandler(new BailErrorStrategy());
         return parser;
     }
+
 }
