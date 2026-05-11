@@ -241,6 +241,9 @@ public final class XtaCli {
     if (benchmarkMode && lazyStats != null) {
       lazyStats.writeData(writer);
     }
+    if (propertyKind == XtaSystem.PropertyKind.NONE) {
+      return;
+    }
     if (isSafe) {
 			switch (propertyKind) {
 				case AG -> System.out.println("(SafetyResult Safe)");
@@ -254,7 +257,7 @@ public final class XtaCli {
 				default -> throw new UnsupportedOperationException();
 			}
 		} else {
-			throw new UnsupportedOperationException();
+			throw new AssertionError();
 		}
 	}
 
