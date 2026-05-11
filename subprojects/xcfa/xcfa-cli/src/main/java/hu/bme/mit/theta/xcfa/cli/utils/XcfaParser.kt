@@ -36,9 +36,6 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import org.antlr.v4.runtime.BailErrorStrategy
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -48,6 +45,9 @@ import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
+import org.antlr.v4.runtime.BailErrorStrategy
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 
 fun getXcfa(
   config: XcfaConfig<*, *>,
@@ -220,12 +220,12 @@ private fun parseC(
       val mlirFlat = temp.resolve("flat.cir").toFile()
 
       "./clang ${copied.absolutePath} -Xclang -emit-cir -fsyntax-only -o ${mlir.absolutePath}"
-        .runCommand(frontendConfig.cirDir)
+        .runCommand(frontendConfig.cirDir, logger)
       "./cir-opt ${mlir.absolutePath} -cir-flatten-cfg -o ${mlirFlat.absolutePath}"
-        .runCommand(frontendConfig.cirDir)
+        .runCommand(frontendConfig.cirDir, logger)
       val transformed = temp.resolve("input-transformed.c").toFile()
       "./xcfa-mapper ${mlirFlat.absolutePath} ${transformed.absolutePath}"
-        .runCommand(frontendConfig.cirDir)
+        .runCommand(frontendConfig.cirDir, logger)
       transformed
     } else {
       input
@@ -315,11 +315,11 @@ private fun parseBTOR2(
   return xcfa
 }
 
-private fun String.runCommand(wd: File) {
-  ProcessBuilder(*split(" ").toTypedArray())
-    .directory(wd)
-    .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-    .redirectError(ProcessBuilder.Redirect.INHERIT)
-    .start()
-    .waitFor(15, TimeUnit.MINUTES)
+private fun String.runCommand(wd: File, logger: Logger, level: Logger.Level = Logger.Level.INFO) {
+  val process =
+    ProcessBuilder(*split(" ").toTypedArray()).directory(wd).redirectErrorStream(true).start()
+  process.inputStream.bufferedReader().useLines { lines ->
+    lines.forEach { logger.write(level, "%s%n", it) }
+  }
+  process.waitFor(15, TimeUnit.MINUTES)
 }
