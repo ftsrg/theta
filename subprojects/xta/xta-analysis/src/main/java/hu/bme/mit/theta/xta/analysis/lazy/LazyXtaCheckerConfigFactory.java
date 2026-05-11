@@ -1,4 +1,24 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xta.analysis.lazy;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
+import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createXtaDataActionLens;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
@@ -19,6 +39,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.*;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.utils.Lens;
@@ -29,42 +50,74 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
-import hu.bme.mit.theta.xta.analysis.expr.XtaExprPost;
 import hu.bme.mit.theta.xta.analysis.expr.XtaExprAnalysis;
+import hu.bme.mit.theta.xta.analysis.expr.XtaExprPost;
 import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
-
 import java.util.function.Function;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
-import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createXtaDataActionLens;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public final class LazyXtaCheckerConfigFactory {
 
-    public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
-    LazyXtaCheckerConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
-    create(final XtaSystem system, final Logger logger,
-           final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
-           final SearchStrategy searchStrategy, final ExprLattice.MeetImpl meetImpl) {
+    public static <
+                    DConcr extends State,
+                    CConcr extends State,
+                    DAbstr extends State,
+                    CAbstr extends State,
+                    DPrec extends Prec,
+                    CPrec extends Prec>
+            LazyXtaCheckerConfig<
+                            Prod2State<DConcr, CConcr>,
+                            Prod2State<DAbstr, CAbstr>,
+                            Prod2Prec<DPrec, CPrec>>
+                    create(
+                            final XtaSystem system,
+                            final Logger logger,
+                            final DataStrategy dataStrategy,
+                            final ClockStrategy clockStrategy,
+                            final SearchStrategy searchStrategy,
+                            final ExprLattice.MeetImpl meetImpl) {
         final Factory<DConcr, CConcr, DAbstr, CAbstr, DPrec, CPrec> factory =
-            new Factory<>(system, logger, dataStrategy, clockStrategy, searchStrategy, meetImpl);
+                new Factory<>(
+                        system, logger, dataStrategy, clockStrategy, searchStrategy, meetImpl);
         return factory.create();
     }
 
-    public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
-    LazyXtaCheckerConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
-    create(final XtaSystem system, final Logger logger,
-           final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
-           final SearchStrategy searchStrategy) {
-        return create(system, logger, dataStrategy, clockStrategy, searchStrategy, ExprLattice.MeetImpl.BASIC);
+    public static <
+                    DConcr extends State,
+                    CConcr extends State,
+                    DAbstr extends State,
+                    CAbstr extends State,
+                    DPrec extends Prec,
+                    CPrec extends Prec>
+            LazyXtaCheckerConfig<
+                            Prod2State<DConcr, CConcr>,
+                            Prod2State<DAbstr, CAbstr>,
+                            Prod2Prec<DPrec, CPrec>>
+                    create(
+                            final XtaSystem system,
+                            final Logger logger,
+                            final DataStrategy dataStrategy,
+                            final ClockStrategy clockStrategy,
+                            final SearchStrategy searchStrategy) {
+        return create(
+                system,
+                logger,
+                dataStrategy,
+                clockStrategy,
+                searchStrategy,
+                ExprLattice.MeetImpl.BASIC);
     }
 
-    private static class Factory<DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec> {
+    private static class Factory<
+            DConcr extends State,
+            CConcr extends State,
+            DAbstr extends State,
+            CAbstr extends State,
+            DPrec extends Prec,
+            CPrec extends Prec> {
 
         private final XtaSystem system;
         private final Logger logger;
@@ -74,9 +127,13 @@ public final class LazyXtaCheckerConfigFactory {
         private final ExprLattice.MeetImpl exprMeetImpl;
         private final SolverFactory solverFactory;
 
-        public Factory(final XtaSystem system, final Logger logger,
-                       final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
-                       final SearchStrategy searchStrategy, final ExprLattice.MeetImpl exprMeetImpl) {
+        public Factory(
+                final XtaSystem system,
+                final Logger logger,
+                final DataStrategy dataStrategy,
+                final ClockStrategy clockStrategy,
+                final SearchStrategy searchStrategy,
+                final ExprLattice.MeetImpl exprMeetImpl) {
             this.system = system;
             this.logger = logger;
             this.dataStrategy = dataStrategy;
@@ -86,29 +143,56 @@ public final class LazyXtaCheckerConfigFactory {
             solverFactory = Z3LegacySolverFactory.getInstance();
         }
 
-        public final LazyXtaCheckerConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>> create() {
-            final LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>,
-                    LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+        public final LazyXtaCheckerConfig<
+                        Prod2State<DConcr, CConcr>,
+                        Prod2State<DAbstr, CAbstr>,
+                        Prod2Prec<DPrec, CPrec>>
+                create() {
+            final LazyStrategy<
+                            Prod2State<DConcr, CConcr>,
+                            Prod2State<DAbstr, CAbstr>,
+                            LazyState<
+                                    XtaState<Prod2State<DConcr, CConcr>>,
+                                    XtaState<Prod2State<DAbstr, CAbstr>>>,
+                            XtaAction>
                     lazyStrategy = createLazyStrategy(system, dataStrategy, clockStrategy);
 
-            final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd = lazyStrategy.getPartialOrd();
-            final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor = lazyStrategy.getInitAbstractor();
-            final LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
+            final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd =
+                    lazyStrategy.getPartialOrd();
+            final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>>
+                    initAbstractor = lazyStrategy.getInitAbstractor();
+            final LazyAnalysis<
+                            XtaState<Prod2State<DConcr, CConcr>>,
+                            XtaState<Prod2State<DAbstr, CAbstr>>,
+                            XtaAction,
+                            Prod2Prec<DPrec, CPrec>>
                     lazyAnalysis = createLazyAnalysis(abstrPartialOrd, initAbstractor);
 
             final Prod2Prec<DPrec, CPrec> prec = createConcrPrec();
-            final LazyAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-                    lazyAbstractor = new LazyAbstractor(
-                    XtaLts.create(system),
-                    searchStrategy,
-                    lazyStrategy,
-                    lazyAnalysis,
-                    s -> ((XtaState) s).isError(),
-                    createConcrProd2Lens(),
-                    logger
-            );
-            final LazyChecker<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-                  lazyChecker = LazyChecker.create(lazyAbstractor);
+            final LazyAbstractor<
+                            Prod2State<DConcr, CConcr>,
+                            Prod2State<DAbstr, CAbstr>,
+                            XtaState<Prod2State<DConcr, CConcr>>,
+                            XtaState<Prod2State<DAbstr, CAbstr>>,
+                            XtaAction,
+                            Prod2Prec<DPrec, CPrec>>
+                    lazyAbstractor =
+                            new LazyAbstractor(
+                                    XtaLts.create(system),
+                                    searchStrategy,
+                                    lazyStrategy,
+                                    lazyAnalysis,
+                                    s -> ((XtaState) s).isError(),
+                                    createConcrProd2Lens(),
+                                    logger);
+            final LazyChecker<
+                            Prod2State<DConcr, CConcr>,
+                            Prod2State<DAbstr, CAbstr>,
+                            XtaState<Prod2State<DConcr, CConcr>>,
+                            XtaState<Prod2State<DAbstr, CAbstr>>,
+                            XtaAction,
+                            Prod2Prec<DPrec, CPrec>>
+                    lazyChecker = LazyChecker.create(lazyAbstractor);
             return new LazyXtaCheckerConfig<>(lazyChecker, prec);
         }
 
@@ -140,33 +224,53 @@ public final class LazyXtaCheckerConfigFactory {
             }
         }
 
-        private LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-        createLazyAnalysis(final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd,
-                           final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor) {
+        private LazyAnalysis<
+                        XtaState<Prod2State<DConcr, CConcr>>,
+                        XtaState<Prod2State<DAbstr, CAbstr>>,
+                        XtaAction,
+                        Prod2Prec<DPrec, CPrec>>
+                createLazyAnalysis(
+                        final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd,
+                        final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>>
+                                initAbstractor) {
 
-            final XtaOrd<Prod2State<DAbstr, CAbstr>> xtaAbstrPartialOrd = XtaOrd.create(abstrPartialOrd);
+            final XtaOrd<Prod2State<DAbstr, CAbstr>> xtaAbstrPartialOrd =
+                    XtaOrd.create(abstrPartialOrd);
 
-            final Prod2Analysis<DConcr, CConcr, XtaAction, DPrec, CPrec> prod2ConcrAnalysis = createConcrAnalysis();
-            final XtaAnalysis<Prod2State<DConcr, CConcr>, Prod2Prec<DPrec, CPrec>> xtaConcrAnalysis
-                    = XtaAnalysis.create(system, prod2ConcrAnalysis);
-            final InitFunc<XtaState<Prod2State<DConcr, CConcr>>, Prod2Prec<DPrec, CPrec>> xtaConcrInitFunc
-                    = xtaConcrAnalysis.getInitFunc();
-            final TransFunc<XtaState<Prod2State<DConcr, CConcr>>, XtaAction, Prod2Prec<DPrec, CPrec>> xtaConcrTransFunc
-                    = xtaConcrAnalysis.getTransFunc();
+            final Prod2Analysis<DConcr, CConcr, XtaAction, DPrec, CPrec> prod2ConcrAnalysis =
+                    createConcrAnalysis();
+            final XtaAnalysis<Prod2State<DConcr, CConcr>, Prod2Prec<DPrec, CPrec>>
+                    xtaConcrAnalysis = XtaAnalysis.create(system, prod2ConcrAnalysis);
+            final InitFunc<XtaState<Prod2State<DConcr, CConcr>>, Prod2Prec<DPrec, CPrec>>
+                    xtaConcrInitFunc = xtaConcrAnalysis.getInitFunc();
+            final TransFunc<
+                            XtaState<Prod2State<DConcr, CConcr>>,
+                            XtaAction,
+                            Prod2Prec<DPrec, CPrec>>
+                    xtaConcrTransFunc = xtaConcrAnalysis.getTransFunc();
 
-            final XtaInitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> xtaInitAbstractor
-                    = XtaInitAbstractor.create(initAbstractor);
+            final XtaInitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>>
+                    xtaInitAbstractor = XtaInitAbstractor.create(initAbstractor);
 
-            final LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-                    lazyAnalysis = LazyAnalysis.create(xtaAbstrPartialOrd, xtaConcrInitFunc, xtaConcrTransFunc, xtaInitAbstractor);
+            final LazyAnalysis<
+                            XtaState<Prod2State<DConcr, CConcr>>,
+                            XtaState<Prod2State<DAbstr, CAbstr>>,
+                            XtaAction,
+                            Prod2Prec<DPrec, CPrec>>
+                    lazyAnalysis =
+                            LazyAnalysis.create(
+                                    xtaAbstrPartialOrd,
+                                    xtaConcrInitFunc,
+                                    xtaConcrTransFunc,
+                                    xtaInitAbstractor);
             return lazyAnalysis;
         }
 
         private Prod2Analysis<DConcr, CConcr, XtaAction, DPrec, CPrec> createConcrAnalysis() {
             final Analysis<DConcr, XtaAction, DPrec> dataAnalysis = createConcrDataAnalysis();
             final Analysis<CConcr, XtaAction, CPrec> clockAnalysis = createConcrClockAnalysis();
-            final Prod2Analysis<DConcr, CConcr, XtaAction, DPrec, CPrec>
-                    prod2Analysis = Prod2Analysis.create(dataAnalysis, clockAnalysis);
+            final Prod2Analysis<DConcr, CConcr, XtaAction, DPrec, CPrec> prod2Analysis =
+                    Prod2Analysis.create(dataAnalysis, clockAnalysis);
             return prod2Analysis;
         }
 
@@ -193,22 +297,55 @@ public final class LazyXtaCheckerConfigFactory {
             }
         }
 
-        private LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-        createLazyStrategy(final XtaSystem system, final DataStrategy dataStrategy, final ClockStrategy clockStrategy) {
-            final LazyStrategy<DConcr, DAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+        private LazyStrategy<
+                        Prod2State<DConcr, CConcr>,
+                        Prod2State<DAbstr, CAbstr>,
+                        LazyState<
+                                XtaState<Prod2State<DConcr, CConcr>>,
+                                XtaState<Prod2State<DAbstr, CAbstr>>>,
+                        XtaAction>
+                createLazyStrategy(
+                        final XtaSystem system,
+                        final DataStrategy dataStrategy,
+                        final ClockStrategy clockStrategy) {
+            final LazyStrategy<
+                            DConcr,
+                            DAbstr,
+                            LazyState<
+                                    XtaState<Prod2State<DConcr, CConcr>>,
+                                    XtaState<Prod2State<DAbstr, CAbstr>>>,
+                            XtaAction>
                     dataLazyStrategy = createDataStrategy(system, dataStrategy);
-            final LazyStrategy<CConcr, CAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+            final LazyStrategy<
+                            CConcr,
+                            CAbstr,
+                            LazyState<
+                                    XtaState<Prod2State<DConcr, CConcr>>,
+                                    XtaState<Prod2State<DAbstr, CAbstr>>>,
+                            XtaAction>
                     clockLazyStrategy = createClockStrategy(system, clockStrategy);
-            final Function<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, ?> projection = s -> Tuple3.of(
-                    s.getConcrState().getLocs(),
-                    dataLazyStrategy.getProjection().apply(s),
-                    clockLazyStrategy.getProjection().apply(s));
-            final Lens<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, Prod2State<DConcr, CConcr>>
+            final Function<
+                            LazyState<
+                                    XtaState<Prod2State<DConcr, CConcr>>,
+                                    XtaState<Prod2State<DAbstr, CAbstr>>>,
+                            ?>
+                    projection =
+                            s ->
+                                    Tuple3.of(
+                                            s.getConcrState().getLocs(),
+                                            dataLazyStrategy.getProjection().apply(s),
+                                            clockLazyStrategy.getProjection().apply(s));
+            final Lens<
+                            LazyState<
+                                    XtaState<Prod2State<DConcr, CConcr>>,
+                                    XtaState<Prod2State<DAbstr, CAbstr>>>,
+                            Prod2State<DConcr, CConcr>>
                     lens = createConcrProd2Lens();
             return new Prod2LazyStrategy<>(lens, dataLazyStrategy, clockLazyStrategy, projection);
         }
 
-        private LazyStrategy createDataStrategy(final XtaSystem system, final DataStrategy dataStrategy) {
+        private LazyStrategy createDataStrategy(
+                final XtaSystem system, final DataStrategy dataStrategy) {
             final DataStrategy.ConcrDom concrDom = dataStrategy.getConcrDom();
             final DataStrategy.AbstrDom abstrDom = dataStrategy.getAbstrDom();
             final DataStrategy.ItpStrategy itpStrategy = dataStrategy.getItpStrategy();
@@ -223,18 +360,29 @@ public final class LazyXtaCheckerConfigFactory {
                 final Lens<XtaAction, XtaDataAction> actionLens = createXtaDataActionLens();
                 final Solver solver = solverFactory.createSolver();
                 final ItpSolver itpSolver = solverFactory.createItpSolver();
-                final ExprTraceChecker<ItpRefutation> traceChecker = ExprTraceSeqItpChecker.create(True(), True(), itpSolver);
-                return new ExprSeqItpStrategy(lens, actionLens, abstrLattice, concretizer, solver, traceChecker);
+                final ExprTraceChecker<ItpRefutation> traceChecker =
+                        ExprTraceSeqItpChecker.create(True(), True(), itpSolver);
+                return new ExprSeqItpStrategy(
+                        lens, actionLens, abstrLattice, concretizer, solver, traceChecker);
             }
             final Interpolator interpolator = createDataInterpolator(abstrDom);
             final InvTransFunc invTransFunc = createDataInvTransFunc();
             final UnitPrec prec = UnitPrec.getInstance();
             if (itpStrategy == DataStrategy.ItpStrategy.BIN_BW) {
-                return new BwItpStrategy(lens, abstrLattice, interpolator, concretizer, invTransFunc, prec);
+                return new BwItpStrategy(
+                        lens, abstrLattice, interpolator, concretizer, invTransFunc, prec);
             }
             final TransFunc abstrTransFunc = createDataAbstrTransFunc(abstrDom);
             if (itpStrategy == DataStrategy.ItpStrategy.BIN_FW) {
-                return new FwItpStrategy(lens, abstrLattice, interpolator, concretizer, invTransFunc, prec, abstrTransFunc, prec);
+                return new FwItpStrategy(
+                        lens,
+                        abstrLattice,
+                        interpolator,
+                        concretizer,
+                        invTransFunc,
+                        prec,
+                        abstrTransFunc,
+                        prec);
             }
             throw new AssertionError();
         }
@@ -246,7 +394,8 @@ public final class LazyXtaCheckerConfigFactory {
             return LazyXtaLensUtils.createLazyDataLens();
         }
 
-        private Concretizer createDataConcretizer(final DataStrategy.ConcrDom concrDom, final DataStrategy.AbstrDom abstrDom) {
+        private Concretizer createDataConcretizer(
+                final DataStrategy.ConcrDom concrDom, final DataStrategy.AbstrDom abstrDom) {
             final Solver solver;
             switch (concrDom) {
                 case EXPL:
@@ -310,13 +459,18 @@ public final class LazyXtaCheckerConfigFactory {
             }
         }
 
-        private LazyStrategy createClockStrategy(final XtaSystem system, final ClockStrategy clockStrategy) {
+        private LazyStrategy createClockStrategy(
+                final XtaSystem system, final ClockStrategy clockStrategy) {
             switch (clockStrategy) {
                 case BW_ITP:
                 case FW_ITP:
                     return createLazyZoneStrategy(system, clockStrategy);
                 case LU:
-                    final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
+                    final Lens<
+                                    LazyState<
+                                            XtaState<Prod2State<?, ZoneState>>,
+                                            XtaState<Prod2State<?, LuZoneState>>>,
+                                    LuZoneState>
                             lens = LazyXtaLensUtils.createAbstrClockLens();
                     return new LuZoneStrategy<>(lens, XtaLuZoneUtils::pre);
                 default:
@@ -324,24 +478,46 @@ public final class LazyXtaCheckerConfigFactory {
             }
         }
 
-        private LazyStrategy<ZoneState, ZoneState, LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, XtaAction>
-        createLazyZoneStrategy(final XtaSystem system, final ClockStrategy clockStrategy) {
+        private LazyStrategy<
+                        ZoneState,
+                        ZoneState,
+                        LazyState<
+                                XtaState<Prod2State<?, ZoneState>>,
+                                XtaState<Prod2State<?, ZoneState>>>,
+                        XtaAction>
+                createLazyZoneStrategy(final XtaSystem system, final ClockStrategy clockStrategy) {
 
-            final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, LazyState<ZoneState, ZoneState>>
+            final Lens<
+                            LazyState<
+                                    XtaState<Prod2State<?, ZoneState>>,
+                                    XtaState<Prod2State<?, ZoneState>>>,
+                            LazyState<ZoneState, ZoneState>>
                     lens = LazyXtaLensUtils.createLazyClockLens();
             final Lattice<ZoneState> lattice = ZoneLattice.getInstance();
             final Interpolator<ZoneState, ZoneState> interpolator = ZoneInterpolator.getInstance();
             final PartialOrd<ZoneState> partialOrd = ZoneOrd.getInstance();
-            final Concretizer<ZoneState, ZoneState> concretizer = BasicConcretizer.create(partialOrd);
-            final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc = XtaZoneInvTransFunc.getInstance();
+            final Concretizer<ZoneState, ZoneState> concretizer =
+                    BasicConcretizer.create(partialOrd);
+            final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc =
+                    XtaZoneInvTransFunc.getInstance();
             final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
-            switch (clockStrategy){
+            switch (clockStrategy) {
                 case BW_ITP:
-                    return new BwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
+                    return new BwItpStrategy<>(
+                            lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
                 case FW_ITP:
-                    final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc = XtaZoneTransFunc.getInstance();
-                    return new FwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec, zoneTransFunc, prec);
+                    final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc =
+                            XtaZoneTransFunc.getInstance();
+                    return new FwItpStrategy<>(
+                            lens,
+                            lattice,
+                            interpolator,
+                            concretizer,
+                            zoneInvTransFunc,
+                            prec,
+                            zoneTransFunc,
+                            prec);
                 default:
                     throw new AssertionError();
             }

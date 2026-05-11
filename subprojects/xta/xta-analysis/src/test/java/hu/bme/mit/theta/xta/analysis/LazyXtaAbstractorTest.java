@@ -1,4 +1,24 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xta.analysis;
+
+import static hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy.BFS;
+import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -17,10 +37,6 @@ import java.util.Collection;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy.BFS;
-import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 public final class LazyXtaAbstractorTest {
 
     private static final String MODEL_CSMA = "/model/csma-2.xta";
@@ -31,16 +47,16 @@ public final class LazyXtaAbstractorTest {
     private static final String MODEL_BROADCAST = "/model/broadcast.xta";
 
     private static final Collection<String> MODELS =
-        ImmutableList.of(
-            MODEL_CSMA,
-            MODEL_FDDI,
-            MODEL_FISCHER,
-            MODEL_LYNCH,
-            MODEL_ENGINE,
-            MODEL_BROADCAST);
+            ImmutableList.of(
+                    MODEL_CSMA,
+                    MODEL_FDDI,
+                    MODEL_FISCHER,
+                    MODEL_LYNCH,
+                    MODEL_ENGINE,
+                    MODEL_BROADCAST);
 
     private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS =
-        ImmutableSet.of(MODEL_FDDI, MODEL_ENGINE, MODEL_BROADCAST);
+            ImmutableSet.of(MODEL_FDDI, MODEL_ENGINE, MODEL_BROADCAST);
 
     public String filepath;
     public DataStrategy dataStrategy;
@@ -54,8 +70,9 @@ public final class LazyXtaAbstractorTest {
 
             for (final DataStrategy dataStrategy : DataStrategy.getValidStrategies()) {
                 for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
-                    if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
-                        result.add(new Object[]{model, dataStrategy, clockStrategy});
+                    if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model)
+                            || (clockStrategy != LU)) {
+                        result.add(new Object[] {model, dataStrategy, clockStrategy});
                     }
                 }
             }
@@ -66,14 +83,14 @@ public final class LazyXtaAbstractorTest {
     public void initialize() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
-        abstractor = LazyXtaCheckerConfigFactory.create(
-            system,
-            new ConsoleLogger(Logger.Level.DETAIL),
-            dataStrategy,
-            clockStrategy,
-            BFS,
-            ExprLattice.MeetImpl.SYNTACTIC_CHECK
-        );
+        abstractor =
+                LazyXtaCheckerConfigFactory.create(
+                        system,
+                        new ConsoleLogger(Logger.Level.DETAIL),
+                        dataStrategy,
+                        clockStrategy,
+                        BFS,
+                        ExprLattice.MeetImpl.SYNTACTIC_CHECK);
     }
 
     @MethodSource("data")
@@ -90,13 +107,13 @@ public final class LazyXtaAbstractorTest {
 
         // Assert
         final ArgChecker argChecker =
-            ArgChecker.create(Z3LegacySolverFactory.getInstance().createSolver());
+                ArgChecker.create(Z3LegacySolverFactory.getInstance().createSolver());
         final boolean argCheckResult = argChecker.isWellLabeled(result.getProof());
         assertTrue(argCheckResult);
     }
 
     public void initLazyXtaAbstractorTest(
-        String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
+            String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
             throws IOException {
         this.filepath = filepath;
         this.dataStrategy = dataStrategy;

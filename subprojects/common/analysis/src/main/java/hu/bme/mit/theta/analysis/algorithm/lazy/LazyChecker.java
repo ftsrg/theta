@@ -25,34 +25,50 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 
-public class LazyChecker<SConcr extends State, SAbstr extends State, FSConcr extends State, FSAbstr extends ExprState, A extends Action, P extends Prec>
-    implements SafetyChecker<ARG<LazyState<FSConcr, FSAbstr>, A>, Trace<LazyState<FSConcr, FSAbstr>, A>, P> {
+public class LazyChecker<
+                SConcr extends State,
+                SAbstr extends State,
+                FSConcr extends State,
+                FSAbstr extends ExprState,
+                A extends Action,
+                P extends Prec>
+        implements SafetyChecker<
+                ARG<LazyState<FSConcr, FSAbstr>, A>, Trace<LazyState<FSConcr, FSAbstr>, A>, P> {
 
-  private final LazyAbstractor<SConcr, SAbstr, FSConcr, FSAbstr, A, P> lazyAbstractor;
-  private final ARG<LazyState<FSConcr, FSAbstr>, A> arg;
+    private final LazyAbstractor<SConcr, SAbstr, FSConcr, FSAbstr, A, P> lazyAbstractor;
+    private final ARG<LazyState<FSConcr, FSAbstr>, A> arg;
 
-  private LazyChecker(final LazyAbstractor<SConcr, SAbstr, FSConcr, FSAbstr, A, P> lazyAbstractor) {
-    this.lazyAbstractor = lazyAbstractor;
-    this.arg = lazyAbstractor.createProof();
-  }
-
-  public static <SConcr extends State, SAbstr extends State, FSConcr extends State, FSAbstr extends ExprState, A extends Action, P extends Prec> LazyChecker<SConcr, SAbstr, FSConcr, FSAbstr, A, P>
-  create(final LazyAbstractor<SConcr, SAbstr, FSConcr, FSAbstr, A, P> lazyAbstractor) {
-    return new LazyChecker<>(lazyAbstractor);
-  }
-
-  @Override
-  public SafetyResult<ARG<LazyState<FSConcr, FSAbstr>, A>, Trace<LazyState<FSConcr, FSAbstr>, A>>
-  check(P input) {
-    final LazyAbstractorResult result = lazyAbstractor.check(arg, input);
-    final LazyStatistics stats = result.getStats();
-    if (result.isSafe()) {
-      return SafetyResult.safe(arg, stats);
-    } else if (result.isUnsafe()) {
-      final Trace<LazyState<FSConcr, FSAbstr>, A> cex = arg.getCexs().findFirst().get().toTrace();
-      return SafetyResult.unsafe(cex, arg, stats);
-    } else {
-      throw new AssertionError();
+    private LazyChecker(
+            final LazyAbstractor<SConcr, SAbstr, FSConcr, FSAbstr, A, P> lazyAbstractor) {
+        this.lazyAbstractor = lazyAbstractor;
+        this.arg = lazyAbstractor.createProof();
     }
-  }
+
+    public static <
+                    SConcr extends State,
+                    SAbstr extends State,
+                    FSConcr extends State,
+                    FSAbstr extends ExprState,
+                    A extends Action,
+                    P extends Prec>
+            LazyChecker<SConcr, SAbstr, FSConcr, FSAbstr, A, P> create(
+                    final LazyAbstractor<SConcr, SAbstr, FSConcr, FSAbstr, A, P> lazyAbstractor) {
+        return new LazyChecker<>(lazyAbstractor);
+    }
+
+    @Override
+    public SafetyResult<ARG<LazyState<FSConcr, FSAbstr>, A>, Trace<LazyState<FSConcr, FSAbstr>, A>>
+            check(P input) {
+        final LazyAbstractorResult result = lazyAbstractor.check(arg, input);
+        final LazyStatistics stats = result.getStats();
+        if (result.isSafe()) {
+            return SafetyResult.safe(arg, stats);
+        } else if (result.isUnsafe()) {
+            final Trace<LazyState<FSConcr, FSAbstr>, A> cex =
+                    arg.getCexs().findFirst().get().toTrace();
+            return SafetyResult.unsafe(cex, arg, stats);
+        } else {
+            throw new AssertionError();
+        }
+    }
 }

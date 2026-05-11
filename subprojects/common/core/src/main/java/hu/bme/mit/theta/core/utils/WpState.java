@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -174,11 +174,11 @@ public final class WpState {
 
         @Override
         public WpState visit(final SequenceStmt stmt, WpState state) {
-          WpState res = state;
-          for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
-            res = subStmt.accept(this, state);
-          }
-          return res;
+            WpState res = state;
+            for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
+                res = subStmt.accept(this, state);
+            }
+            return res;
         }
 
         @Override
@@ -246,11 +246,11 @@ public final class WpState {
 
         @Override
         public WpState visit(final SequenceStmt stmt, WpState state) {
-          WpState res = state;
-          for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
-            res = subStmt.accept(this, state);
-          }
-          return res;
+            WpState res = state;
+            for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
+                res = subStmt.accept(this, state);
+            }
+            return res;
         }
 
         @Override

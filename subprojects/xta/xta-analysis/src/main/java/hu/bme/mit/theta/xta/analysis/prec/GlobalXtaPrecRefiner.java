@@ -1,4 +1,23 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xta.analysis.prec;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -9,10 +28,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class GlobalXtaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+public class GlobalXtaPrecRefiner<
+                S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
         implements PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> {
 
     private final RefutationToPrec<P, R> refToPrec;
@@ -21,13 +38,14 @@ public class GlobalXtaPrecRefiner<S extends ExprState, A extends Action, P exten
         this.refToPrec = checkNotNull(refToPrec);
     }
 
-    public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GlobalXtaPrecRefiner<S, A, P, R> create(
-            final RefutationToPrec<P, R> refToPrec) {
+    public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+            GlobalXtaPrecRefiner<S, A, P, R> create(final RefutationToPrec<P, R> refToPrec) {
         return new GlobalXtaPrecRefiner<>(refToPrec);
     }
 
     @Override
-    public XtaPrec<P> refine(final XtaPrec<P> prec, final Trace<XtaState<S>, A> trace, final R refutation) {
+    public XtaPrec<P> refine(
+            final XtaPrec<P> prec, final Trace<XtaState<S>, A> trace, final R refutation) {
         checkNotNull(trace);
         checkNotNull(prec);
         checkNotNull(refutation);
@@ -47,6 +65,4 @@ public class GlobalXtaPrecRefiner<S extends ExprState, A extends Action, P exten
     public String toString() {
         return getClass().getSimpleName();
     }
-
 }
-

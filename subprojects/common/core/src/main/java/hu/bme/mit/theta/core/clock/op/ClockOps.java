@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -129,8 +129,8 @@ public final class ClockOps {
         public <DeclType extends Type> ClockOp visit(
                 final AssignStmt<DeclType> stmt, final Void param) {
 
-			      final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
-			      final Expr<?> expr = ExprUtils.simplify(stmt.getExpr());
+            final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
+            final Expr<?> expr = ExprUtils.simplify(stmt.getExpr());
 
             if (expr instanceof IntLitExpr) {
                 final IntLitExpr intLit = (IntLitExpr) expr;

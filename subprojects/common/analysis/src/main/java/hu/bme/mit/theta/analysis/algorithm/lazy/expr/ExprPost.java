@@ -1,4 +1,24 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.analysis.algorithm.lazy.expr;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.expr.BasicExprState;
@@ -11,12 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-
 import java.util.*;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public interface ExprPost<A extends Action> {
     BasicExprState post(final BasicExprState state, final A action);
@@ -27,7 +42,8 @@ public interface ExprPost<A extends Action> {
             final QuantifiedPostImage post = new QuantifiedPostImage(state, action);
             final Expr<BoolType> postExpr = post.getResultExpr();
             final Collection<ParamDecl<?>> quantifiedParams = post.getQuantifiedParams();
-            final Expr<BoolType> succExpr = (quantifiedParams.isEmpty()) ? postExpr : Exists(quantifiedParams, postExpr);
+            final Expr<BoolType> succExpr =
+                    (quantifiedParams.isEmpty()) ? postExpr : Exists(quantifiedParams, postExpr);
             return BasicExprState.of(succExpr);
         }
 
@@ -78,7 +94,8 @@ public interface ExprPost<A extends Action> {
                 for (final ConstDecl<?> decl : ExprUtils.getConstants(stateExpr)) {
                     if (decl instanceof IndexedConstDecl && !varMapping.containsKey(decl)) {
                         final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) decl;
-                        final IndexedConstDecl<?> newVarDecl = nextIndexedDecl(indexedConstDecl.getVarDecl());
+                        final IndexedConstDecl<?> newVarDecl =
+                                nextIndexedDecl(indexedConstDecl.getVarDecl());
                         varMapping.put(indexedConstDecl, newVarDecl);
                         addQuantifiedParam(newVarDecl);
                     }
@@ -128,6 +145,4 @@ public interface ExprPost<A extends Action> {
             }
         }
     }
-
-
 }

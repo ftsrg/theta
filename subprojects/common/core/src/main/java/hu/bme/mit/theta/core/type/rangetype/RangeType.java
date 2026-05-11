@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,67 +26,67 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public final class RangeType extends IntType {
-	private static final int HASH_SEED = 5441;
-	private volatile int hashCode = 0;
+    private static final int HASH_SEED = 5441;
+    private volatile int hashCode = 0;
 
-	private final int lower;
-	private final int upper;
+    private final int lower;
+    private final int upper;
 
-	private RangeType(final int lower, final int upper) {
-		super();
-		checkArgument(lower <= upper);
-		this.lower = lower;
-		this.upper = upper;
-	}
+    private RangeType(final int lower, final int upper) {
+        super();
+        checkArgument(lower <= upper);
+        this.lower = lower;
+        this.upper = upper;
+    }
 
-	public static RangeType Range(final int lower, final int upper) {
-		return new RangeType(lower, upper);
-	}
+    public static RangeType Range(final int lower, final int upper) {
+        return new RangeType(lower, upper);
+    }
 
-	public IntLitExpr Int(final int value) {
-		checkArgument(value >= lower && value <= upper);
-		return IntExprs.Int(value);
-	}
+    public IntLitExpr Int(final int value) {
+        checkArgument(value >= lower && value <= upper);
+        return IntExprs.Int(value);
+    }
 
-	public Stream<IntLitExpr> values() {
-		return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
-	}
+    public Stream<IntLitExpr> values() {
+        return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
+    }
 
-	public int getLower() {
-		return lower;
-	}
+    public int getLower() {
+        return lower;
+    }
 
-	public int getUpper() {
-		return upper;
-	}
+    public int getUpper() {
+        return upper;
+    }
 
-	public IntType getCorrectedType() {
-		return IntType.getInstance();
-	}
+    public IntType getCorrectedType() {
+        return IntType.getInstance();
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + lower;
-			result = 31 * result + upper;
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + lower;
+            result = 31 * result + upper;
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RangeType) {
-			final RangeType that = (RangeType) obj;
-			return this.lower == that.lower && this.upper == that.upper;
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RangeType) {
+            final RangeType that = (RangeType) obj;
+            return this.lower == that.lower && this.upper == that.upper;
+        } else {
+            return false;
+        }
+    }
 
     @Override
     public String toString() {

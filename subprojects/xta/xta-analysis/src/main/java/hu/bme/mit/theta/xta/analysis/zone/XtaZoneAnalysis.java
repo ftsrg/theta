@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,33 +24,32 @@ import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
-
 import java.util.Collection;
 
 public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, ZonePrec> {
 
-	private final InitFunc<ZoneState, ZonePrec> initFunc;
+    private final InitFunc<ZoneState, ZonePrec> initFunc;
 
-	private XtaZoneAnalysis(final Collection<XtaProcess.Loc> initLocs) {
-		initFunc = XtaZoneInitFunc.create(initLocs);
-	}
+    private XtaZoneAnalysis(final Collection<XtaProcess.Loc> initLocs) {
+        initFunc = XtaZoneInitFunc.create(initLocs);
+    }
 
-	public static XtaZoneAnalysis create(final Collection<XtaProcess.Loc> initLocs) {
-		return new XtaZoneAnalysis(initLocs);
-	}
+    public static XtaZoneAnalysis create(final Collection<XtaProcess.Loc> initLocs) {
+        return new XtaZoneAnalysis(initLocs);
+    }
 
-	@Override
-	public PartialOrd<ZoneState> getPartialOrd() {
-		return ZoneOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<ZoneState> getPartialOrd() {
+        return ZoneOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<ZoneState, ZonePrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<ZoneState, ZonePrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
-		return XtaZoneTransFunc.getInstance();
-	}
+    @Override
+    public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
+        return XtaZoneTransFunc.getInstance();
+    }
 }

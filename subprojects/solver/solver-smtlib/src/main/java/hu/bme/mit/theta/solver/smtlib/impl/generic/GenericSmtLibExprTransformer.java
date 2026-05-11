@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
@@ -131,10 +134,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     private static final int CACHE_SIZE = 1000;
@@ -219,11 +218,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(EnumNeqExpr.class, this::transformEnumNeq)
                 .addCase(EnumEqExpr.class, this::transformEnumEq)
 
-				        // Ranges
+                // Ranges
 
-				        .addCase(InRangeExpr.class, this::transformInRange)
+                .addCase(InRangeExpr.class, this::transformInRange)
 
-				        // Bitvectors
+                // Bitvectors
 
                 .addCase(BvLitExpr.class, this::transformBvLit)
                 .addCase(BvConcatExpr.class, this::transformBvConcat)
@@ -655,8 +654,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     /*
-    * Ranges
-    */
+     * Ranges
+     */
 
     protected String transformInRange(final InRangeExpr expr) {
         final Expr<IntType> op = expr.getOp();
@@ -670,8 +669,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     /*
-    * Bitvectors
-    */
+     * Bitvectors
+     */
 
     protected String transformBvLit(final BvLitExpr expr) {
         final StringBuilder sb = new StringBuilder(expr.getType().getSize() + 1);

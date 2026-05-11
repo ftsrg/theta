@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,135 +34,140 @@ import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.CTLOperatorNotSupportedException;
-import org.antlr.v4.runtime.Token;
 import java.util.*;
+import org.antlr.v4.runtime.Token;
 
 final class XtaSpecification implements Scope {
-	private final SymbolTable symbolTable;
+    private final SymbolTable symbolTable;
 
-	private final List<XtaVariableSymbol> variables;
-	private final List<XtaTypeSymbol> types;
-	private final List<String> processIds;
-	private final XtaContext context;
+    private final List<XtaVariableSymbol> variables;
+    private final List<XtaTypeSymbol> types;
+    private final List<String> processIds;
+    private final XtaContext context;
 
-	private final XtaSystem system;
+    private final XtaSystem system;
 
-	private XtaSpecification(final XtaContext context) {
-		checkNotNull(context);
-		this.context = context;
-		symbolTable = new SymbolTable();
+    private XtaSpecification(final XtaContext context) {
+        checkNotNull(context);
+        this.context = context;
+        symbolTable = new SymbolTable();
 
-		variables = new ArrayList<>();
-		types = new ArrayList<>();
-		processIds = context.fSystem.fIds.stream().map(Token::getText).collect(toList());
+        variables = new ArrayList<>();
+        types = new ArrayList<>();
+        processIds = context.fSystem.fIds.stream().map(Token::getText).collect(toList());
 
-		declareAllTypes(context.fTypeDecls);
-		declareAllVariables(context.fVariableDecls, "");
-		declareAllFunctions(context.fFunctionDecls);
-		declareAllProcesses(context.fProcessDecls);
-		declareAllInstantiations(context.fInstantiations);
-		system = instantiate();
-	}
+        declareAllTypes(context.fTypeDecls);
+        declareAllVariables(context.fVariableDecls, "");
+        declareAllFunctions(context.fFunctionDecls);
+        declareAllProcesses(context.fProcessDecls);
+        declareAllInstantiations(context.fInstantiations);
+        system = instantiate();
+    }
 
-	public static XtaSpecification fromContext(final XtaContext context) {
-		return new XtaSpecification(context);
-	}
+    public static XtaSpecification fromContext(final XtaContext context) {
+        return new XtaSpecification(context);
+    }
 
-	public List<XtaVariableSymbol> getVariables() {
-		return Collections.unmodifiableList(variables);
-	}
+    public List<XtaVariableSymbol> getVariables() {
+        return Collections.unmodifiableList(variables);
+    }
 
-	////
+    ////
 
-	private XtaSystem instantiate() {
-		final Env env = new Env();
+    private XtaSystem instantiate() {
+        final Env env = new Env();
 
-		final XtaSystem system = XtaSystem.create();
+        final XtaSystem system = XtaSystem.create();
 
-		defineAllTypes(env);
-		createAllGlobalVariables(system, env);
+        defineAllTypes(env);
+        createAllGlobalVariables(system, env);
 
-		for (final String processId : processIds) {
-			final Symbol symbol = symbolTable.get(processId).get();
+        for (final String processId : processIds) {
+            final Symbol symbol = symbolTable.get(processId).get();
 
-			if (symbol instanceof XtaProcessSymbol) {
-				final XtaProcessSymbol processSymbol = (XtaProcessSymbol) symbol;
-				final Set<List<Expr<?>>> argumentLists = processSymbol.getArgumentLists(env);
+            if (symbol instanceof XtaProcessSymbol) {
+                final XtaProcessSymbol processSymbol = (XtaProcessSymbol) symbol;
+                final Set<List<Expr<?>>> argumentLists = processSymbol.getArgumentLists(env);
 
-				for (final List<Expr<?>> argumentList : argumentLists) {
-					final String name = createName(processSymbol, argumentList);
-					//local variables need to be added to the symbolictable
-					processSymbol.instantiate(system, name, argumentList, env, symbolTable);
+                for (final List<Expr<?>> argumentList : argumentLists) {
+                    final String name = createName(processSymbol, argumentList);
+                    // local variables need to be added to the symbolictable
+                    processSymbol.instantiate(system, name, argumentList, env, symbolTable);
+                }
+            } else if (symbol instanceof XtaInstantiationSymbol) {
+                final XtaInstantiationSymbol instantiationSymbol = (XtaInstantiationSymbol) symbol;
+                final String procName = instantiationSymbol.getProcName();
+                final Optional<Symbol> optSymbol = resolve(procName);
+                if (optSymbol.isEmpty()) {
+                    throw new RuntimeException("Symbol \"" + procName + "\" is undefined.");
+                } else {
+                    Symbol someSymbol = optSymbol.get();
+                    if (someSymbol instanceof XtaProcessSymbol) {
+                        final XtaProcessSymbol processSymbol = (XtaProcessSymbol) someSymbol;
+                        final String name = instantiationSymbol.getName();
+                        final List<Expr<?>> argumentList = instantiationSymbol.getArgumentList(env);
+                        processSymbol.instantiate(system, name, argumentList, env, symbolTable);
+                    } else {
+                        throw new RuntimeException(
+                                "Symbol \"" + procName + "\" is not a template.");
+                    }
+                }
+            } else {
+                throw new AssertionError();
+            }
+        }
+        if (context.fProperty != null) {
+            Expr<BoolType> prop =
+                    cast(new XtaExpression(this, context.fProperty.prop).instantiate(env), Bool());
 
-				}
-			} else if (symbol instanceof XtaInstantiationSymbol) {
-				final XtaInstantiationSymbol instantiationSymbol = (XtaInstantiationSymbol) symbol;
-				final String procName = instantiationSymbol.getProcName();
-				final Optional<Symbol> optSymbol = resolve(procName);
-				if (optSymbol.isEmpty()) {
-					throw new RuntimeException("Symbol \"" + procName + "\" is undefined.");
-				} else {
-					Symbol someSymbol = optSymbol.get();
-					if (someSymbol instanceof XtaProcessSymbol) {
-						final XtaProcessSymbol processSymbol = (XtaProcessSymbol) someSymbol;
-						final String name = instantiationSymbol.getName();
-						final List<Expr<?>> argumentList = instantiationSymbol.getArgumentList(env);
-						processSymbol.instantiate(system, name, argumentList, env, symbolTable);
-					} else {
-						throw new RuntimeException("Symbol \"" + procName + "\" is not a template.");
-					}
-				}
-			} else {
-				throw new AssertionError();
-			}
-		}
-		if(context.fProperty != null){
-			Expr<BoolType> prop = cast(new XtaExpression(this,context.fProperty.prop).instantiate(env), Bool());
+            if (context.fProperty.q.children.get(0).toString().equals("A[]")) {
+                prop = BoolExprs.Not(prop);
+                system.setProp(prop, XtaSystem.PropertyKind.AG);
+            } else if (context.fProperty.q.children.get(0).toString().equals("E<>")) {
+                system.setProp(prop, XtaSystem.PropertyKind.EF);
+            } else {
+                throw new CTLOperatorNotSupportedException(
+                        context.fProperty.q.children.get(0).toString());
+            }
+            // if(context.fProperty.neg != null) prop = BoolExprs.Not(prop);
+        }
+        return system;
+    }
 
-			if(context.fProperty.q.children.get(0).toString().equals("A[]")) {
-				prop = BoolExprs.Not(prop);
-				system.setProp(prop, XtaSystem.PropertyKind.AG);
-			} else if (context.fProperty.q.children.get(0).toString().equals("E<>")) {
-				system.setProp(prop, XtaSystem.PropertyKind.EF);
-			} else {
-				throw new CTLOperatorNotSupportedException(context.fProperty.q.children.get(0).toString());
-			}
-			//if(context.fProperty.neg != null) prop = BoolExprs.Not(prop);
-		}
-		return system;
-	}
+    private Expr<BoolType> negProp() {
+        // TODO negation
+        return null;
+    }
 
-	private Expr<BoolType> negProp() {
-		//TODO negation
-		return null;
-	}
+    private static String createName(
+            final XtaProcessSymbol processSymbol, final List<Expr<?>> argumentList) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(processSymbol.getName());
+        argumentList.forEach(a -> sb.append("_" + a.toString()));
+        return sb.toString();
+    }
 
-	private static String createName(final XtaProcessSymbol processSymbol, final List<Expr<?>> argumentList) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(processSymbol.getName());
-		argumentList.forEach(a -> sb.append("_" + a.toString()));
-		return sb.toString();
-	}
+    ////
 
-	////
+    private void defineAllTypes(final Env env) {
+        for (final XtaTypeSymbol type : types) {
+            env.compute(type, v -> v.instantiate(env));
+        }
+    }
 
-	private void defineAllTypes(final Env env) {
-		for (final XtaTypeSymbol type : types) {
-			env.compute(type, v -> v.instantiate(env));
-		}
-	}
-
-	private void createAllGlobalVariables(final XtaSystem system, final Env env) {
-		for (final XtaVariableSymbol variable : variables) {
+    private void createAllGlobalVariables(final XtaSystem system, final Env env) {
+        for (final XtaVariableSymbol variable : variables) {
             if (variable.isConstant()) {
                 // do nothing; will be defined lazily on first occurrence
             } else {
-                final XtaVariableSymbol.InstantiateResult instantiateResult = variable.instantiate("", env);
+                final XtaVariableSymbol.InstantiateResult instantiateResult =
+                        variable.instantiate("", env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
                 } else if (instantiateResult.isClockVariable()) {
-                    final VarDecl<RatType> varDecl = instantiateResult.asClockVariable().getVarDecl();
+                    final VarDecl<RatType> varDecl =
+                            instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
                     system.addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
@@ -174,93 +179,93 @@ final class XtaSpecification implements Scope {
                     throw new AssertionError();
                 }
             }
-		}
-	}
+        }
+    }
 
-	////
+    ////
 
-	private void declareAllTypes(final List<TypeDeclContext> contexts) {
-		contexts.forEach(this::declare);
-	}
+    private void declareAllTypes(final List<TypeDeclContext> contexts) {
+        contexts.forEach(this::declare);
+    }
 
-	private void declare(final TypeDeclContext context) {
-		final TypeContext typeContext = context.fType;
-		for (final ArrayIdContext arrayIdContext : context.fArrayIds) {
-			final XtaTypeSymbol typeSymbol = new XtaTypeSymbol(this, typeContext, arrayIdContext);
-			types.add(typeSymbol);
-			symbolTable.add(typeSymbol);
-		}
-	}
+    private void declare(final TypeDeclContext context) {
+        final TypeContext typeContext = context.fType;
+        for (final ArrayIdContext arrayIdContext : context.fArrayIds) {
+            final XtaTypeSymbol typeSymbol = new XtaTypeSymbol(this, typeContext, arrayIdContext);
+            types.add(typeSymbol);
+            symbolTable.add(typeSymbol);
+        }
+    }
 
-	////
+    ////
 
-	private void declareAllVariables(final List<VariableDeclContext> contexts, String ProcessID) {
-		for(VariableDeclContext vardecl: contexts){
-			declare(vardecl, ProcessID);
-		}
-	}
+    private void declareAllVariables(final List<VariableDeclContext> contexts, String ProcessID) {
+        for (VariableDeclContext vardecl : contexts) {
+            declare(vardecl, ProcessID);
+        }
+    }
 
-	private void declare(final VariableDeclContext context, String ProcessID) {
-		final TypeContext typeContext = context.fType;
-		for (final VariableIdContext variableIdContext : context.fVariableIds) {
-			final XtaVariableSymbol variableSymbol = new XtaVariableSymbol(this, typeContext, variableIdContext);
-			if(!ProcessID.isEmpty()){
-				variableSymbol.setName(ProcessID + "_" + variableSymbol.getName());
-			}
-			else variableSymbol.setGlobal();
-			variables.add(variableSymbol);
-			symbolTable.add(variableSymbol);
-		}
-	}
+    private void declare(final VariableDeclContext context, String ProcessID) {
+        final TypeContext typeContext = context.fType;
+        for (final VariableIdContext variableIdContext : context.fVariableIds) {
+            final XtaVariableSymbol variableSymbol =
+                    new XtaVariableSymbol(this, typeContext, variableIdContext);
+            if (!ProcessID.isEmpty()) {
+                variableSymbol.setName(ProcessID + "_" + variableSymbol.getName());
+            } else variableSymbol.setGlobal();
+            variables.add(variableSymbol);
+            symbolTable.add(variableSymbol);
+        }
+    }
 
-	////
+    ////
 
-	private void declareAllFunctions(final List<FunctionDeclContext> contexts) {
-		contexts.forEach(this::declare);
-	}
+    private void declareAllFunctions(final List<FunctionDeclContext> contexts) {
+        contexts.forEach(this::declare);
+    }
 
-	private void declare(final FunctionDeclContext context) {
-		final XtaFunctionSymbol functionSymbol = new XtaFunctionSymbol(context);
-		symbolTable.add(functionSymbol);
-	}
+    private void declare(final FunctionDeclContext context) {
+        final XtaFunctionSymbol functionSymbol = new XtaFunctionSymbol(context);
+        symbolTable.add(functionSymbol);
+    }
 
-	////
+    ////
 
-	private void declareAllProcesses(final List<ProcessDeclContext> contexts) {
-		contexts.forEach(this::declare);
-	}
+    private void declareAllProcesses(final List<ProcessDeclContext> contexts) {
+        contexts.forEach(this::declare);
+    }
 
-	private void declare(final ProcessDeclContext context) {
-		final XtaProcessSymbol processSymbol = new XtaProcessSymbol(this, context);
+    private void declare(final ProcessDeclContext context) {
+        final XtaProcessSymbol processSymbol = new XtaProcessSymbol(this, context);
         symbolTable.add(processSymbol);
-	}
+    }
 
-	////
+    ////
 
-	private void declareAllInstantiations(final List<InstantiationContext> contexts) {
-		contexts.forEach(this::declare);
-	}
+    private void declareAllInstantiations(final List<InstantiationContext> contexts) {
+        contexts.forEach(this::declare);
+    }
 
-	private void declare(final InstantiationContext context) {
-		final XtaInstantiationSymbol processSymbol = new XtaInstantiationSymbol(this, context);
-		symbolTable.add(processSymbol);
-	}
+    private void declare(final InstantiationContext context) {
+        final XtaInstantiationSymbol processSymbol = new XtaInstantiationSymbol(this, context);
+        symbolTable.add(processSymbol);
+    }
 
-	////
+    ////
 
-	public XtaSystem getSystem() {
-		return system;
-	}
+    public XtaSystem getSystem() {
+        return system;
+    }
 
-	////
+    ////
 
-	@Override
-	public Optional<Scope> enclosingScope() {
-		return Optional.empty();
-	}
+    @Override
+    public Optional<Scope> enclosingScope() {
+        return Optional.empty();
+    }
 
-	@Override
-	public Optional<Symbol> resolve(final String name) {
-		return symbolTable.get(name);
-	}
+    @Override
+    public Optional<Symbol> resolve(final String name) {
+        return symbolTable.get(name);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -570,25 +570,25 @@ final class Z3ExprTransformer {
     }
 
     /*
-    * Ranges
-    */
+     * Ranges
+     */
 
     private com.microsoft.z3.Expr transformInRange(final InRangeExpr expr) {
         final RangeType range = expr.getRange();
         final com.microsoft.z3.ArithExpr op = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
 
         return context.mkAnd(
-            context.mkLe(context.mkInt(range.getLower()), op),
-            context.mkLe(op, context.mkInt(range.getUpper()))
-        );
+                context.mkLe(context.mkInt(range.getLower()), op),
+                context.mkLe(op, context.mkInt(range.getUpper())));
     }
 
     /*
-    * Bitvectors
-    */
+     * Bitvectors
+     */
 
     private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
-        return context.mkBV(BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
+        return context.mkBV(
+                BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
     }
 
     private com.microsoft.z3.Expr transformBvEq(final BvEqExpr expr) {

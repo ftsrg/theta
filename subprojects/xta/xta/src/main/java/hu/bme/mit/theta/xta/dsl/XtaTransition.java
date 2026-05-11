@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,112 +46,123 @@ import java.util.List;
 import java.util.Optional;
 
 final class XtaTransition implements Scope {
-	private final XtaProcessSymbol scope;
-	private final SymbolTable symbolTable;
+    private final XtaProcessSymbol scope;
+    private final SymbolTable symbolTable;
 
-	private final String sourceState;
-	private final String targetState;
-	private final List<XtaIteratorSymbol> selections;
-	private final List<XtaExpression> guards;
-	private final Optional<XtaSync> sync;
-	private final List<XtaUpdate> updates;
+    private final String sourceState;
+    private final String targetState;
+    private final List<XtaIteratorSymbol> selections;
+    private final List<XtaExpression> guards;
+    private final Optional<XtaSync> sync;
+    private final List<XtaUpdate> updates;
 
-	public XtaTransition(final XtaProcessSymbol scope, final TransitionContext context) {
-		checkNotNull(context);
-		this.scope = checkNotNull(scope);
-		symbolTable = new SymbolTable();
+    public XtaTransition(final XtaProcessSymbol scope, final TransitionContext context) {
+        checkNotNull(context);
+        this.scope = checkNotNull(scope);
+        symbolTable = new SymbolTable();
 
-		sourceState = context.fSourceId.getText();
-		targetState = context.fTargetId.getText();
+        sourceState = context.fSourceId.getText();
+        targetState = context.fTargetId.getText();
 
-		selections = new ArrayList<>();
-		guards = new ArrayList<>();
-		sync = extractSync(context);
-		updates = extractUpdates(context);
+        selections = new ArrayList<>();
+        guards = new ArrayList<>();
+        sync = extractSync(context);
+        updates = extractUpdates(context);
 
-		declareAllSelections(context.fTransitionBody.fSelect);
-		extractGuards(context.fTransitionBody.fGuard);
-	}
+        declareAllSelections(context.fTransitionBody.fSelect);
+        extractGuards(context.fTransitionBody.fGuard);
+    }
 
-	private Optional<XtaSync> extractSync(final TransitionContext context) {
-		return Optional.ofNullable(context.fTransitionBody.fSync).map(s -> new XtaSync(this, s));
-	}
+    private Optional<XtaSync> extractSync(final TransitionContext context) {
+        return Optional.ofNullable(context.fTransitionBody.fSync).map(s -> new XtaSync(this, s));
+    }
 
-	private void extractGuards(final GuardContext context) {
-		if (context != null) {
-			if (context.fExpressions != null) {
-				context.fExpressions.forEach(e -> guards.add(new XtaExpression(this, e)));
+    private void extractGuards(final GuardContext context) {
+        if (context != null) {
+            if (context.fExpressions != null) {
+                context.fExpressions.forEach(e -> guards.add(new XtaExpression(this, e)));
+            }
+        }
+    }
 
-			}
-		}
-	}
+    private List<XtaUpdate> extractUpdates(final TransitionContext context) {
+        if (context.fTransitionBody.fAssign != null) {
+            if (context.fTransitionBody.fAssign.fExpressions != null) {
+                return context.fTransitionBody.fAssign.fExpressions.stream()
+                        .map(e -> new XtaUpdate(this, e))
+                        .collect(toList());
+            }
+        }
+        return emptyList();
+    }
 
-	private List<XtaUpdate> extractUpdates(final TransitionContext context) {
-		if (context.fTransitionBody.fAssign != null) {
-			if (context.fTransitionBody.fAssign.fExpressions != null) {
-				return context.fTransitionBody.fAssign.fExpressions.stream().map(e -> new XtaUpdate(this, e))
-						.collect(toList());
-			}
-		}
-		return emptyList();
-	}
+    private void declareAllSelections(final SelectContext context) {
+        if (context != null) {
+            if (context.fIteratorDecls != null) {
+                context.fIteratorDecls.forEach(this::declare);
+            }
+        }
+    }
 
-	private void declareAllSelections(final SelectContext context) {
-		if (context != null) {
-			if (context.fIteratorDecls != null) {
-				context.fIteratorDecls.forEach(this::declare);
-			}
-		}
-	}
+    private void declare(final IteratorDeclContext context) {
+        final XtaIteratorSymbol iteratorSymbol = new XtaIteratorSymbol(this, context);
+        selections.add(iteratorSymbol);
+        symbolTable.add(iteratorSymbol);
+    }
 
-	private void declare(final IteratorDeclContext context) {
-		final XtaIteratorSymbol iteratorSymbol = new XtaIteratorSymbol(this, context);
-		selections.add(iteratorSymbol);
-		symbolTable.add(iteratorSymbol);
-	}
+    ////
 
-	////
+    public void instantiate(final XtaProcess process, final Env env) {
+        final XtaStateSymbol sourceSymbol = (XtaStateSymbol) resolve(sourceState).get();
+        final XtaStateSymbol targetSymbol = (XtaStateSymbol) resolve(targetState).get();
 
-	public void instantiate(final XtaProcess process, final Env env) {
-		final XtaStateSymbol sourceSymbol = (XtaStateSymbol) resolve(sourceState).get();
-		final XtaStateSymbol targetSymbol = (XtaStateSymbol) resolve(targetState).get();
+        final Loc source = (Loc) env.eval(sourceSymbol);
+        final Loc target = (Loc) env.eval(targetSymbol);
 
-		final Loc source = (Loc) env.eval(sourceSymbol);
-		final Loc target = (Loc) env.eval(targetSymbol);
+        final Collection<Selection> selections =
+                this.selections.stream()
+                        .map(
+                                iteratorSymbol -> {
+                                    final VarDecl<RangeType> varDecl =
+                                            iteratorSymbol.instantiate(env);
+                                    return Selection.create(varDecl);
+                                })
+                        .collect(toList());
 
-		final Collection<Selection> selections = this.selections.stream().map(iteratorSymbol -> {
-			final VarDecl<RangeType> varDecl = iteratorSymbol.instantiate(env);
-			return Selection.create(varDecl);
-		}).collect(toList());
+        final Collection<Expr<BoolType>> guards =
+                this.guards.stream()
+                        .flatMap(
+                                guard -> {
+                                    final Expr<?> expr = guard.instantiate(env);
+                                    final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
+                                    final Collection<Expr<BoolType>> conjuncts =
+                                            ExprUtils.getConjuncts(guardExpr);
+                                    return conjuncts.stream();
+                                })
+                        .collect(toSet());
 
-		final Collection<Expr<BoolType>> guards = this.guards.stream().flatMap(guard -> {
-			final Expr<?> expr = guard.instantiate(env);
-			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
-			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
-			return conjuncts.stream();
-		}).collect(toSet());
+        final List<Stmt> assignments =
+                updates.stream().map(u -> u.instantiate(env)).collect(toList());
+        final Optional<Sync> label = sync.map(s -> s.instantiate(env));
 
-		final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env)).collect(toList());
-		final Optional<Sync> label = sync.map(s -> s.instantiate(env));
+        process.createEdge(source, target, selections, guards, label, assignments);
+    }
 
-		process.createEdge(source, target, selections, guards, label, assignments);
-	}
+    ////
 
-	////
+    @Override
+    public Optional<? extends Scope> enclosingScope() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("TODO: auto-generated method stub");
+    }
 
-	@Override
-	public Optional<? extends Scope> enclosingScope() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public Optional<Symbol> resolve(final String name) {
-		final Optional<Symbol> symbol = symbolTable.get(name);
-		if (symbol.isPresent()) {
-			return symbol;
-		} else {
-			return scope.resolve(name);
-		}
-	}
+    @Override
+    public Optional<Symbol> resolve(final String name) {
+        final Optional<Symbol> symbol = symbolTable.get(name);
+        if (symbol.isPresent()) {
+            return symbol;
+        } else {
+            return scope.resolve(name);
+        }
+    }
 }

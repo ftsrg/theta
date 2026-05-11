@@ -1,4 +1,25 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xta.analysis.combinedlazycegar;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaUtils.forceCast;
+import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
+import static java.util.stream.Collectors.toSet;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
@@ -19,6 +40,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.*;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -37,21 +59,20 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
-
 import java.util.Set;
 import java.util.function.Function;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaUtils.forceCast;
-import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
-import static java.util.stream.Collectors.toSet;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     public enum DataDomain {
-        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT
+        EXPL,
+        PRED_BOOL,
+        PRED_CART,
+        PRED_SPLIT,
+        EXPL_PRED_BOOL,
+        EXPL_PRED_CART,
+        EXPL_PRED_SPLIT
     }
 
     @SuppressWarnings("unused")
@@ -70,8 +91,20 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     }
 
     public enum DataRefinement {
-        FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE, UCB,
-        NWT_WP, NWT_SP, NWT_WP_LV, NWT_SP_LV, NWT_IT_WP, NWT_IT_SP, NWT_IT_WP_LV, NWT_IT_SP_LV
+        FW_BIN_ITP,
+        BW_BIN_ITP,
+        SEQ_ITP,
+        MULTI_SEQ,
+        UNSAT_CORE,
+        UCB,
+        NWT_WP,
+        NWT_SP,
+        NWT_WP_LV,
+        NWT_SP_LV,
+        NWT_IT_WP,
+        NWT_IT_SP,
+        NWT_IT_WP_LV,
+        NWT_IT_SP_LV
     }
 
     private final XtaSystem system;
@@ -85,7 +118,8 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     private SearchStrategy searchStrategy = SearchStrategy.BFS;
     private PruneStrategy pruneStrategy = PruneStrategy.FULL;
 
-    private CombinedLazyCegarXtaCheckerConfigFactory(final XtaSystem system, final Logger logger, final SolverFactory solverFactory) {
+    private CombinedLazyCegarXtaCheckerConfigFactory(
+            final XtaSystem system, final Logger logger, final SolverFactory solverFactory) {
         this.system = system;
         this.logger = logger;
         this.solverFactory = solverFactory;
@@ -95,7 +129,8 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         this(system, NullLogger.getInstance(), Z3LegacySolverFactory.getInstance());
     }
 
-    public static CombinedLazyCegarXtaCheckerConfigFactory create(final XtaSystem system, final Logger logger, final SolverFactory solverFactory) {
+    public static CombinedLazyCegarXtaCheckerConfigFactory create(
+            final XtaSystem system, final Logger logger, final SolverFactory solverFactory) {
         return new CombinedLazyCegarXtaCheckerConfigFactory(system, logger, solverFactory);
     }
 
@@ -118,145 +153,238 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         return this;
     }
 
-    public CombinedLazyCegarXtaCheckerConfigFactory dataRefinement(final DataRefinement dataRefinement) {
+    public CombinedLazyCegarXtaCheckerConfigFactory dataRefinement(
+            final DataRefinement dataRefinement) {
         this.dataRefinement = dataRefinement;
         return this;
     }
 
-    public CombinedLazyCegarXtaCheckerConfigFactory clockStrategy(final ClockStrategy clockStrategy) {
+    public CombinedLazyCegarXtaCheckerConfigFactory clockStrategy(
+            final ClockStrategy clockStrategy) {
         this.clockStrategy = clockStrategy;
         return this;
     }
 
-    public CombinedLazyCegarXtaCheckerConfigFactory searchStragegy(final SearchStrategy searchStrategy) {
+    public CombinedLazyCegarXtaCheckerConfigFactory searchStragegy(
+            final SearchStrategy searchStrategy) {
         this.searchStrategy = searchStrategy;
         return this;
     }
 
-    public CombinedLazyCegarXtaCheckerConfigFactory pruneStrategy(final PruneStrategy pruneStrategy) {
+    public CombinedLazyCegarXtaCheckerConfigFactory pruneStrategy(
+            final PruneStrategy pruneStrategy) {
         this.pruneStrategy = pruneStrategy;
         return this;
     }
 
-    public CombinedLazyCegarXtaCheckerConfig<?, ?, ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
-    build() {
+    public CombinedLazyCegarXtaCheckerConfig<
+                    ?, ?, ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+            build() {
         final var lazyStrategy = createLazyStrategy();
 
-        final var lazyAnalysis = createLazyAnalysis(
-            lazyStrategy.getPartialOrd(),
-            lazyStrategy.getInitAbstractor()
-        );
+        final var lazyAnalysis =
+                createLazyAnalysis(lazyStrategy.getPartialOrd(), lazyStrategy.getInitAbstractor());
 
         final var prec = createConcrPrec();
 
-        final var cegarChecker = CegarChecker.create(
-            new LazyAbstractor<>(
-                forceCast(XtaLts.create(system)),
-                searchStrategy,
-                lazyStrategy,
-                lazyAnalysis,
-                XtaState::isError,
-                createConcrProd2Lens(),
-                logger
-            ),
-            SingleExprTraceRefiner.create(
-                new CombinedLazyCegarExprTraceChecker(
-                    switch (dataRefinement) {
-                        case FW_BIN_ITP -> ExprTraceFwBinItpChecker.create(True(), True(), solverFactory.createItpSolver());
-                        case BW_BIN_ITP -> ExprTraceBwBinItpChecker.create(True(), True(), solverFactory.createItpSolver());
-                        case SEQ_ITP, MULTI_SEQ -> ExprTraceSeqItpChecker.create(True(), True(), solverFactory.createItpSolver());
-                        case UNSAT_CORE -> ExprTraceUnsatCoreChecker.create(True(), True(), solverFactory.createUCSolver());
-                        case UCB -> ExprTraceUCBChecker.create(True(), True(), solverFactory.createUCSolver());
-                        case NWT_WP -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withoutIT().withWP().withoutLV();
-                        case NWT_SP -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withoutIT().withSP().withoutLV();
-                        case NWT_WP_LV -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withoutIT().withWP().withLV();
-                        case NWT_SP_LV -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withoutIT().withSP().withLV();
-                        case NWT_IT_WP -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withIT().withWP().withoutLV();
-                        case NWT_IT_SP -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withIT().withSP().withoutLV();
-                        case NWT_IT_WP_LV -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withIT().withWP().withLV();
-                        case NWT_IT_SP_LV -> ExprTraceNewtonChecker.create(True(), True(), solverFactory.createUCSolver()).withIT().withSP().withLV();
-                    },
-                    createConcrProd2Lens(),
-                    system
-                ),
-                new CombinedLazyCegarXtaPrecRefiner(switch (dataDomain) {
-                    case EXPL -> new ItpRefToExplPrec();
-                    case PRED_BOOL, PRED_CART, PRED_SPLIT -> new ItpRefToPredPrec(predSplit.splitter);
-                    case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT -> {
-                        final Set<Expr<BoolType>> atoms = system.getProcesses().stream()
-                                .flatMap(process -> process.getEdges().stream())
-                                .flatMap(edge -> edge.getGuards().stream())
-                                .flatMap(guard -> ExprUtils.getAtoms(guard.toExpr()).stream())
-                                .collect(toSet());
-                        final AutoExpl autoExpl = new NewAtomsAutoExpl(Set.of(), atoms, 0);
-                        yield AutomaticItpRefToProd2ExplPredPrec.create(autoExpl, predSplit.splitter);
-                    }
-                }),
-                pruneStrategy,
-                logger
-            ),
-            logger,
-            ArgVisualizer.getDefault()
-        );
+        final var cegarChecker =
+                CegarChecker.create(
+                        new LazyAbstractor<>(
+                                forceCast(XtaLts.create(system)),
+                                searchStrategy,
+                                lazyStrategy,
+                                lazyAnalysis,
+                                XtaState::isError,
+                                createConcrProd2Lens(),
+                                logger),
+                        SingleExprTraceRefiner.create(
+                                new CombinedLazyCegarExprTraceChecker(
+                                        switch (dataRefinement) {
+                                            case FW_BIN_ITP ->
+                                                    ExprTraceFwBinItpChecker.create(
+                                                            True(),
+                                                            True(),
+                                                            solverFactory.createItpSolver());
+                                            case BW_BIN_ITP ->
+                                                    ExprTraceBwBinItpChecker.create(
+                                                            True(),
+                                                            True(),
+                                                            solverFactory.createItpSolver());
+                                            case SEQ_ITP, MULTI_SEQ ->
+                                                    ExprTraceSeqItpChecker.create(
+                                                            True(),
+                                                            True(),
+                                                            solverFactory.createItpSolver());
+                                            case UNSAT_CORE ->
+                                                    ExprTraceUnsatCoreChecker.create(
+                                                            True(),
+                                                            True(),
+                                                            solverFactory.createUCSolver());
+                                            case UCB ->
+                                                    ExprTraceUCBChecker.create(
+                                                            True(),
+                                                            True(),
+                                                            solverFactory.createUCSolver());
+                                            case NWT_WP ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withoutIT()
+                                                            .withWP()
+                                                            .withoutLV();
+                                            case NWT_SP ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withoutIT()
+                                                            .withSP()
+                                                            .withoutLV();
+                                            case NWT_WP_LV ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withoutIT()
+                                                            .withWP()
+                                                            .withLV();
+                                            case NWT_SP_LV ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withoutIT()
+                                                            .withSP()
+                                                            .withLV();
+                                            case NWT_IT_WP ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withIT()
+                                                            .withWP()
+                                                            .withoutLV();
+                                            case NWT_IT_SP ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withIT()
+                                                            .withSP()
+                                                            .withoutLV();
+                                            case NWT_IT_WP_LV ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withIT()
+                                                            .withWP()
+                                                            .withLV();
+                                            case NWT_IT_SP_LV ->
+                                                    ExprTraceNewtonChecker.create(
+                                                                    True(),
+                                                                    True(),
+                                                                    solverFactory.createUCSolver())
+                                                            .withIT()
+                                                            .withSP()
+                                                            .withLV();
+                                        },
+                                        createConcrProd2Lens(),
+                                        system),
+                                new CombinedLazyCegarXtaPrecRefiner(
+                                        switch (dataDomain) {
+                                            case EXPL -> new ItpRefToExplPrec();
+                                            case PRED_BOOL, PRED_CART, PRED_SPLIT ->
+                                                    new ItpRefToPredPrec(predSplit.splitter);
+                                            case EXPL_PRED_BOOL,
+                                                    EXPL_PRED_CART,
+                                                    EXPL_PRED_SPLIT -> {
+                                                final Set<Expr<BoolType>> atoms =
+                                                        system.getProcesses().stream()
+                                                                .flatMap(
+                                                                        process ->
+                                                                                process
+                                                                                        .getEdges()
+                                                                                        .stream())
+                                                                .flatMap(
+                                                                        edge ->
+                                                                                edge
+                                                                                        .getGuards()
+                                                                                        .stream())
+                                                                .flatMap(
+                                                                        guard ->
+                                                                                ExprUtils.getAtoms(
+                                                                                        guard
+                                                                                                .toExpr())
+                                                                                        .stream())
+                                                                .collect(toSet());
+                                                final AutoExpl autoExpl =
+                                                        new NewAtomsAutoExpl(Set.of(), atoms, 0);
+                                                yield AutomaticItpRefToProd2ExplPredPrec.create(
+                                                        autoExpl, predSplit.splitter);
+                                            }
+                                        }),
+                                pruneStrategy,
+                                logger),
+                        logger,
+                        ArgVisualizer.getDefault());
 
         return new CombinedLazyCegarXtaCheckerConfig<>(cegarChecker, prec);
     }
 
-    private LazyAnalysis createLazyAnalysis(final PartialOrd<Prod2State<ExplState, ZoneState>> abstrPartialOrd,
-                       final InitAbstractor<Prod2State<ExplState, ZoneState>, Prod2State<ExplState, ZoneState>> initAbstractor) {
+    private LazyAnalysis createLazyAnalysis(
+            final PartialOrd<Prod2State<ExplState, ZoneState>> abstrPartialOrd,
+            final InitAbstractor<Prod2State<ExplState, ZoneState>, Prod2State<ExplState, ZoneState>>
+                    initAbstractor) {
         final Prod2Analysis prod2ConcrAnalysis = createConcrAnalysis();
         final XtaAnalysis xtaConcrAnalysis = XtaAnalysis.create(system, prod2ConcrAnalysis);
 
         return LazyAnalysis.create(
-            XtaOrd.create(abstrPartialOrd),
-            xtaConcrAnalysis.getInitFunc(),
-            xtaConcrAnalysis.getTransFunc(),
-            XtaInitAbstractor.create(initAbstractor)
-        );
+                XtaOrd.create(abstrPartialOrd),
+                xtaConcrAnalysis.getInitFunc(),
+                xtaConcrAnalysis.getTransFunc(),
+                XtaInitAbstractor.create(initAbstractor));
     }
 
     private Prod2Analysis createConcrAnalysis() {
-        return Prod2Analysis.create(
-            createConcrDataAnalysis(),
-            createConcrClockAnalysis()
-        );
+        return Prod2Analysis.create(createConcrDataAnalysis(), createConcrClockAnalysis());
     }
 
     private Analysis createConcrDataAnalysis() {
         return CombinedLazyCegarXtaAnalysis.create(
-            forceCast(switch (dataDomain) {
-                case EXPL -> createExplAnalysis();
-                case PRED_BOOL, PRED_CART, PRED_SPLIT -> createPredAnalysis(solverFactory.createSolver());
-                case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT -> createExplPredAnalysis(solverFactory.createSolver());
-            })
-        );
+                forceCast(
+                        switch (dataDomain) {
+                            case EXPL -> createExplAnalysis();
+                            case PRED_BOOL, PRED_CART, PRED_SPLIT ->
+                                    createPredAnalysis(solverFactory.createSolver());
+                            case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT ->
+                                    createExplPredAnalysis(solverFactory.createSolver());
+                        }));
     }
 
     private Analysis createExplAnalysis() {
         return ExplStmtAnalysis.create(
-                solverFactory.createSolver(),
-                system.getInitVal().toExpr(),
-                maxEnum
-        );
+                solverFactory.createSolver(), system.getInitVal().toExpr(), maxEnum);
     }
 
     private Analysis createPredAnalysis(final Solver solver) {
         return switch (dataDomain) {
-            case PRED_BOOL, EXPL_PRED_BOOL -> PredAnalysis.create(
-                    solver,
-                    PredAbstractors.booleanAbstractor(solver),
-                    system.getInitVal().toExpr()
-            );
-            case PRED_CART, EXPL_PRED_CART -> PredAnalysis.create(
-                    solver,
-                    PredAbstractors.cartesianAbstractor(solver),
-                    system.getInitVal().toExpr()
-            );
-            case PRED_SPLIT, EXPL_PRED_SPLIT -> PredAnalysis.create(
-                    solver,
-                    PredAbstractors.booleanSplitAbstractor(solver),
-                    system.getInitVal().toExpr()
-            );
+            case PRED_BOOL, EXPL_PRED_BOOL ->
+                    PredAnalysis.create(
+                            solver,
+                            PredAbstractors.booleanAbstractor(solver),
+                            system.getInitVal().toExpr());
+            case PRED_CART, EXPL_PRED_CART ->
+                    PredAnalysis.create(
+                            solver,
+                            PredAbstractors.cartesianAbstractor(solver),
+                            system.getInitVal().toExpr());
+            case PRED_SPLIT, EXPL_PRED_SPLIT ->
+                    PredAnalysis.create(
+                            solver,
+                            PredAbstractors.booleanSplitAbstractor(solver),
+                            system.getInitVal().toExpr());
             default -> throw new AssertionError();
         };
     }
@@ -266,8 +394,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
                 createExplAnalysis(),
                 createPredAnalysis(solver),
                 Prod2ExplPredStrengtheningOperator.create(solver),
-                Prod2ExplPredAbstractors.booleanAbstractor(solver)
-        );
+                Prod2ExplPredAbstractors.booleanAbstractor(solver));
     }
 
     private Analysis createConcrClockAnalysis() {
@@ -280,11 +407,12 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         final LazyStrategy dataLazyStrategy = forceCast(createDataStrategy2());
         final LazyStrategy clockLazyStrategy = forceCast(createClockStrategy());
 
-        final Function<LazyState<XtaState<?>, XtaState<?>>, ?> projection = s -> Tuple3.of(
-            s.getConcrState().getLocs(),
-            dataLazyStrategy.getProjection().apply(s),
-            clockLazyStrategy.getProjection().apply(s)
-        );
+        final Function<LazyState<XtaState<?>, XtaState<?>>, ?> projection =
+                s ->
+                        Tuple3.of(
+                                s.getConcrState().getLocs(),
+                                dataLazyStrategy.getProjection().apply(s),
+                                clockLazyStrategy.getProjection().apply(s));
 
         final Lens lens = createConcrProd2Lens();
         return new Prod2LazyStrategy<>(lens, dataLazyStrategy, clockLazyStrategy, projection);
@@ -292,11 +420,16 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     private LazyStrategy createDataStrategy2() {
         final Lens lens = LazyXtaLensUtils.createConcrDataLens();
-        final PartialOrd partialOrd = switch (dataDomain) {
-            case EXPL -> ExplOrd.getInstance();
-            case PRED_BOOL, PRED_CART, PRED_SPLIT -> PredOrd.create(solverFactory.createSolver());
-            case EXPL_PRED_CART, EXPL_PRED_BOOL, EXPL_PRED_SPLIT -> Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solverFactory.createSolver()));
-        };
+        final PartialOrd partialOrd =
+                switch (dataDomain) {
+                    case EXPL -> ExplOrd.getInstance();
+                    case PRED_BOOL, PRED_CART, PRED_SPLIT ->
+                            PredOrd.create(solverFactory.createSolver());
+                    case EXPL_PRED_CART, EXPL_PRED_BOOL, EXPL_PRED_SPLIT ->
+                            Prod2Ord.create(
+                                    ExplOrd.getInstance(),
+                                    PredOrd.create(solverFactory.createSolver()));
+                };
         return new SameAbstractionLazyStrategy(lens, partialOrd);
     }
 
@@ -304,30 +437,54 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         return switch (clockStrategy) {
             case BW_ITP, FW_ITP -> createItpZoneStrategy();
             case LU -> {
-                final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
-                    lens = LazyXtaLensUtils.createAbstrClockLens();
+                final Lens<
+                                LazyState<
+                                        XtaState<Prod2State<?, ZoneState>>,
+                                        XtaState<Prod2State<?, LuZoneState>>>,
+                                LuZoneState>
+                        lens = LazyXtaLensUtils.createAbstrClockLens();
                 yield new LuZoneStrategy<>(lens, XtaLuZoneUtils::pre);
             }
         };
     }
 
-    private LazyStrategy<ZoneState, ZoneState, LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, XtaAction>
-    createItpZoneStrategy() {
-        final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, LazyState<ZoneState, ZoneState>>
-            lens = LazyXtaLensUtils.createLazyClockLens();
+    private LazyStrategy<
+                    ZoneState,
+                    ZoneState,
+                    LazyState<
+                            XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>,
+                    XtaAction>
+            createItpZoneStrategy() {
+        final Lens<
+                        LazyState<
+                                XtaState<Prod2State<?, ZoneState>>,
+                                XtaState<Prod2State<?, ZoneState>>>,
+                        LazyState<ZoneState, ZoneState>>
+                lens = LazyXtaLensUtils.createLazyClockLens();
         final Lattice<ZoneState> lattice = ZoneLattice.getInstance();
         final Interpolator<ZoneState, ZoneState> interpolator = ZoneInterpolator.getInstance();
         final PartialOrd<ZoneState> partialOrd = ZoneOrd.getInstance();
         final Concretizer<ZoneState, ZoneState> concretizer = BasicConcretizer.create(partialOrd);
-        final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc = XtaZoneInvTransFunc.getInstance();
+        final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc =
+                XtaZoneInvTransFunc.getInstance();
         final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
-        switch (clockStrategy){
+        switch (clockStrategy) {
             case BW_ITP:
-                return new BwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
+                return new BwItpStrategy<>(
+                        lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
             case FW_ITP:
-                final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc = XtaZoneTransFunc.getInstance();
-                return new FwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec, zoneTransFunc, prec);
+                final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc =
+                        XtaZoneTransFunc.getInstance();
+                return new FwItpStrategy<>(
+                        lens,
+                        lattice,
+                        interpolator,
+                        concretizer,
+                        zoneInvTransFunc,
+                        prec,
+                        zoneTransFunc,
+                        prec);
             default:
                 throw new AssertionError();
         }
@@ -341,12 +498,12 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         return switch (dataDomain) {
             case EXPL -> ExplPrec.empty();
             case PRED_BOOL, PRED_CART, PRED_SPLIT -> PredPrec.of();
-            case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT -> Prod2Prec.of(ExplPrec.empty(), PredPrec.of());
+            case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT ->
+                    Prod2Prec.of(ExplPrec.empty(), PredPrec.of());
         };
     }
 
     private ZonePrec createConcrZonePrec() {
         return ZonePrec.of(system.getClockVars());
     }
-
 }

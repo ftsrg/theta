@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,23 +26,23 @@ import java.util.Collections;
 
 final class XtaZoneInitFunc implements InitFunc<ZoneState, ZonePrec> {
 
-	private final Collection<XtaProcess.Loc> initLocs;
+    private final Collection<XtaProcess.Loc> initLocs;
 
-	private XtaZoneInitFunc(final Collection<XtaProcess.Loc> initLocs) {
-		this.initLocs = initLocs;
-	}
+    private XtaZoneInitFunc(final Collection<XtaProcess.Loc> initLocs) {
+        this.initLocs = initLocs;
+    }
 
-	static XtaZoneInitFunc create(final Collection<XtaProcess.Loc> initLocs) {
-		return new XtaZoneInitFunc(initLocs);
-	}
+    static XtaZoneInitFunc create(final Collection<XtaProcess.Loc> initLocs) {
+        return new XtaZoneInitFunc(initLocs);
+    }
 
-	@Override
-	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
-		checkNotNull(prec);
-		ZoneState initZone = ZoneState.zero(prec.getVars());
-		if (initLocs.stream().allMatch(l -> l.getKind() == XtaProcess.LocKind.NORMAL)) {
-			initZone = initZone.transform().up().build();
-		}
-		return Collections.singleton(initZone);
-	}
+    @Override
+    public Collection<ZoneState> getInitStates(final ZonePrec prec) {
+        checkNotNull(prec);
+        ZoneState initZone = ZoneState.zero(prec.getVars());
+        if (initLocs.stream().allMatch(l -> l.getKind() == XtaProcess.LocKind.NORMAL)) {
+            initZone = initZone.transform().up().build();
+        }
+        return Collections.singleton(initZone);
+    }
 }

@@ -1,4 +1,24 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.analysis.algorithm.lazy;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -6,16 +26,13 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+public abstract class LazyState<SConcr extends State, SAbstr extends ExprState>
+        implements ExprState {
 
-public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> implements ExprState {
+    private LazyState() {}
 
-    private LazyState(){
-    }
-
-    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(
+            final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
         if (state.isBottom()) {
             return new Bottom<>(state);
         } else {
@@ -23,7 +40,8 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
         }
     }
 
-    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr concrState, final SAbstr abstrState) {
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(
+            final SConcr concrState, final SAbstr abstrState) {
         if (concrState.isBottom()) {
             return new Bottom<>(concrState);
         } else {
@@ -31,7 +49,8 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
         }
     }
 
-    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> bottom(final SConcr state) {
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> bottom(
+            final SConcr state) {
         return new Bottom<>(state);
     }
 
@@ -43,7 +62,8 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
 
     public abstract LazyState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState);
 
-    private static final class NonBottom<SConcr extends State, SAbstr extends ExprState> extends LazyState<SConcr, SAbstr> {
+    private static final class NonBottom<SConcr extends State, SAbstr extends ExprState>
+            extends LazyState<SConcr, SAbstr> {
 
         private final SConcr concrState;
         private final SAbstr abstrState;
@@ -104,7 +124,8 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
                 return true;
             } else if (obj instanceof NonBottom) {
                 final NonBottom<?, ?> that = (NonBottom<?, ?>) obj;
-                return this.concrState.equals(that.concrState) && this.abstrState.equals(that.abstrState);
+                return this.concrState.equals(that.concrState)
+                        && this.abstrState.equals(that.abstrState);
             } else {
                 return false;
             }
@@ -112,14 +133,16 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(LazyState.class.getSimpleName()).aligned()
+            return Utils.lispStringBuilder(LazyState.class.getSimpleName())
+                    .aligned()
                     .add(concrState.toString())
                     .add(abstrState.toString())
                     .toString();
         }
     }
 
-    private static final class Bottom<SConcr extends State, SAbstr extends ExprState> extends LazyState<SConcr, SAbstr> {
+    private static final class Bottom<SConcr extends State, SAbstr extends ExprState>
+            extends LazyState<SConcr, SAbstr> {
 
         private final SConcr state;
 
@@ -186,11 +209,10 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(LazyState.class.getSimpleName()).aligned()
+            return Utils.lispStringBuilder(LazyState.class.getSimpleName())
+                    .aligned()
                     .add(state.toString())
                     .toString();
         }
     }
 }
-
-

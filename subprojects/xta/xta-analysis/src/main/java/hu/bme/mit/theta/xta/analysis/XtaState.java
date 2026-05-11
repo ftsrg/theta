@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 import java.util.ArrayList;
@@ -33,121 +32,121 @@ import java.util.Collection;
 import java.util.List;
 
 public final class XtaState<S extends State> implements ExprState {
-	private static final int HASH_SEED = 8291;
-	private volatile int hashCode = 0;
+    private static final int HASH_SEED = 8291;
+    private volatile int hashCode = 0;
 
-	private final List<Loc> locs;
-	private final S state;
-	private final boolean committed;
-	private final boolean urgent;
-	private final boolean error;
-	private final Valuation additionalValueConstraints;
+    private final List<Loc> locs;
+    private final S state;
+    private final boolean committed;
+    private final boolean urgent;
+    private final boolean error;
+    private final Valuation additionalValueConstraints;
 
-	private XtaState(final List<Loc> locs, final S state, Valuation additionalValueConstraints) {
-		this.locs = ImmutableList.copyOf(checkNotNull(locs));
-		this.state = checkNotNull(state);
-		this.additionalValueConstraints = additionalValueConstraints;
-		final LocKind locKind = extractKind(locs);
-		error = locKind == LocKind.ERROR;
-		committed = locKind == LocKind.COMMITTED;
-		urgent = locKind != LocKind.NORMAL;
-	}
+    private XtaState(final List<Loc> locs, final S state, Valuation additionalValueConstraints) {
+        this.locs = ImmutableList.copyOf(checkNotNull(locs));
+        this.state = checkNotNull(state);
+        this.additionalValueConstraints = additionalValueConstraints;
+        final LocKind locKind = extractKind(locs);
+        error = locKind == LocKind.ERROR;
+        committed = locKind == LocKind.COMMITTED;
+        urgent = locKind != LocKind.NORMAL;
+    }
 
-	private static final LocKind extractKind(final List<Loc> locs) {
-		boolean committed = false;
-		boolean urgent = false;
-		boolean error = false;
-		for (final Loc loc : locs) {
-			switch (loc.getKind()) {
-				case COMMITTED:
-					committed = true;
-					break;
-				case URGENT:
-					urgent = true;
-					break;
-				case NORMAL:
-					break;
-				case ERROR:
-					error = true;
-					break;
-				default:
-					throw new AssertionError();
-			}
-		}
+    private static final LocKind extractKind(final List<Loc> locs) {
+        boolean committed = false;
+        boolean urgent = false;
+        boolean error = false;
+        for (final Loc loc : locs) {
+            switch (loc.getKind()) {
+                case COMMITTED:
+                    committed = true;
+                    break;
+                case URGENT:
+                    urgent = true;
+                    break;
+                case NORMAL:
+                    break;
+                case ERROR:
+                    error = true;
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+        }
 
-		if(error) {
-			return LocKind.ERROR;
-		} else if (committed) {
-			return LocKind.COMMITTED;
-		} else if (urgent) {
-			return LocKind.URGENT;
-		} else {
-			return LocKind.NORMAL;
-		}
-	}
+        if (error) {
+            return LocKind.ERROR;
+        } else if (committed) {
+            return LocKind.COMMITTED;
+        } else if (urgent) {
+            return LocKind.URGENT;
+        } else {
+            return LocKind.NORMAL;
+        }
+    }
 
-	public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state) {
-		return new XtaState<>(locs, state, ImmutableValuation.empty());
-	}
+    public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state) {
+        return new XtaState<>(locs, state, ImmutableValuation.empty());
+    }
 
-	public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state, Valuation valuation) {
-		return new XtaState<>(locs, state, valuation);
-	}
+    public static <S extends State> XtaState<S> of(
+            final List<Loc> locs, final S state, Valuation valuation) {
+        return new XtaState<>(locs, state, valuation);
+    }
 
-	public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
-																		 final Collection<? extends S> states) {
-		return collectionOf(locs, states, ImmutableValuation.empty());
-	}
+    public static <S extends State> Collection<XtaState<S>> collectionOf(
+            final List<Loc> locs, final Collection<? extends S> states) {
+        return collectionOf(locs, states, ImmutableValuation.empty());
+    }
 
-	public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
-																		 final Collection<? extends S> states,
-																		 final Valuation valuation) {
-		final Collection<XtaState<S>> result = new ArrayList<>();
-		for (final S state : states) {
-			final XtaState<S> initXtaState = XtaState.of(locs, state, valuation);
-			result.add(initXtaState);
-		}
-		return result;
-	}
+    public static <S extends State> Collection<XtaState<S>> collectionOf(
+            final List<Loc> locs, final Collection<? extends S> states, final Valuation valuation) {
+        final Collection<XtaState<S>> result = new ArrayList<>();
+        for (final S state : states) {
+            final XtaState<S> initXtaState = XtaState.of(locs, state, valuation);
+            result.add(initXtaState);
+        }
+        return result;
+    }
 
-	public List<Loc> getLocs() {
-		return locs;
-	}
+    public List<Loc> getLocs() {
+        return locs;
+    }
 
-	public S getState() {
-		return state;
-	}
+    public S getState() {
+        return state;
+    }
 
-	public boolean isError(){
-		return error;
-	}
+    public boolean isError() {
+        return error;
+    }
 
-	public boolean isCommitted() {
-		return committed;
-	}
+    public boolean isCommitted() {
+        return committed;
+    }
 
-	public boolean isUrgent() {
-		return urgent;
-	}
+    public boolean isUrgent() {
+        return urgent;
+    }
 
-	public <S2 extends State> XtaState<S2> withState(final S2 state) {
-		return XtaState.of(this.locs, state);
-	}
+    public <S2 extends State> XtaState<S2> withState(final S2 state) {
+        return XtaState.of(this.locs, state);
+    }
 
-	@Override
-	public boolean isBottom() {
-		return state.isBottom();
-	}
+    @Override
+    public boolean isBottom() {
+        return state.isBottom();
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		if (state instanceof ExprState) {
-			final ExprState exprState = (ExprState) state;
+    @Override
+    public Expr<BoolType> toExpr() {
+        if (state instanceof ExprState) {
+            final ExprState exprState = (ExprState) state;
             return exprState.toExpr();
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
 
     @Override
     public int hashCode() {

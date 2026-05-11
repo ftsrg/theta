@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
-
 import java.util.*;
 
 public final class XtaProcess {
@@ -92,18 +91,23 @@ public final class XtaProcess {
         this.initLoc = loc;
     }
 
-    public Loc createLoc(final String name, final LocKind kind, final Collection<Expr<BoolType>> invars) {
+    public Loc createLoc(
+            final String name, final LocKind kind, final Collection<Expr<BoolType>> invars) {
         final Loc loc = new Loc(name, kind, invars);
         locs.add(loc);
         return loc;
     }
 
-    public Edge createEdge(final Loc source, final Loc target, final Collection<Selection> selections,
-                           final Collection<Expr<BoolType>> guards, final Optional<Sync> sync,
-                           final List<Stmt> updates) {
+    public Edge createEdge(
+            final Loc source,
+            final Loc target,
+            final Collection<Selection> selections,
+            final Collection<Expr<BoolType>> guards,
+            final Optional<Sync> sync,
+            final List<Stmt> updates) {
         checkArgument(locs.contains(source));
         checkArgument(locs.contains(target));
-        if(!name.equals("ErrorProc") && !target.getKind().equals(LocKind.ERROR)) {
+        if (!name.equals("ErrorProc") && !target.getKind().equals(LocKind.ERROR)) {
             int count = 0;
             for (VarDecl<?> var : system.getDataVars()) {
                 if (!target.equals(source) || count == 2) {
@@ -128,8 +132,10 @@ public final class XtaProcess {
 
     ////
 
-    private Collection<Guard> createGuards(final Collection<Expr<BoolType>> exprs, Collection<VarDecl<?>> dataVars,
-                                           Collection<VarDecl<RatType>> clockVars) {
+    private Collection<Guard> createGuards(
+            final Collection<Expr<BoolType>> exprs,
+            Collection<VarDecl<?>> dataVars,
+            Collection<VarDecl<RatType>> clockVars) {
         checkNotNull(exprs);
 
         final ImmutableList.Builder<Guard> builder = ImmutableList.builder();
@@ -161,8 +167,10 @@ public final class XtaProcess {
         return builder.build();
     }
 
-    private List<Update> createUpdates(final List<Stmt> stmts, Collection<VarDecl<?>> dataVars,
-                                       Collection<VarDecl<RatType>> clockVars) {
+    private List<Update> createUpdates(
+            final List<Stmt> stmts,
+            Collection<VarDecl<?>> dataVars,
+            Collection<VarDecl<RatType>> clockVars) {
         checkNotNull(stmts);
 
         final ImmutableList.Builder<Update> builder = ImmutableList.builder();
@@ -196,7 +204,10 @@ public final class XtaProcess {
     ////
 
     public enum LocKind {
-        NORMAL, URGENT, COMMITTED, ERROR
+        NORMAL,
+        URGENT,
+        COMMITTED,
+        ERROR
     }
 
     public final class Loc {
@@ -211,14 +222,15 @@ public final class XtaProcess {
         private final Collection<Edge> unmodInEdges;
         private final Collection<Edge> unmodOutEdges;
 
-        private Loc(final String name, final LocKind kind, final Collection<Expr<BoolType>> invars) {
+        private Loc(
+                final String name, final LocKind kind, final Collection<Expr<BoolType>> invars) {
             inEdges = new ArrayList<>();
             outEdges = new ArrayList<>();
             this.name = checkNotNull(name);
             this.kind = checkNotNull(kind);
             this.invars = createGuards(invars, system.getDataVars(), system.getClockVars());
 
-            varName = "__" +  name;
+            varName = "__" + name;
             unmodInEdges = Collections.unmodifiableCollection(inEdges);
             unmodOutEdges = Collections.unmodifiableCollection(outEdges);
         }
@@ -264,8 +276,13 @@ public final class XtaProcess {
         private final Optional<Sync> sync;
         private final List<Update> updates;
 
-        private Edge(final Loc source, final Loc target, final Collection<Selection> selections,
-                     final Collection<Expr<BoolType>> guards, final Optional<Sync> sync, final List<Stmt> updates) {
+        private Edge(
+                final Loc source,
+                final Loc target,
+                final Collection<Selection> selections,
+                final Collection<Expr<BoolType>> guards,
+                final Optional<Sync> sync,
+                final List<Stmt> updates) {
             this.source = checkNotNull(source);
             this.target = checkNotNull(target);
             this.selections = checkNotNull(selections);

@@ -20,14 +20,14 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 
 public class LazyAbstractorResult extends AbstractorResult {
 
-  private final LazyStatistics stats;
+    private final LazyStatistics stats;
 
-  public LazyAbstractorResult(final boolean safe, final LazyStatistics stats) {
-    super(safe);
-    this.stats = stats;
-  }
+    public LazyAbstractorResult(final boolean safe, final LazyStatistics stats) {
+        super(safe);
+        this.stats = stats;
+    }
 
-  public LazyStatistics getStats() {
-    return stats;
-  }
+    public LazyStatistics getStats() {
+        return stats;
+    }
 }

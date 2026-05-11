@@ -32,113 +32,127 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import java.util.*;
 
 public final class XtaSystem {
-	private final List<XtaProcess> processes;
-	private final Collection<VarDecl<?>> dataVars;
-	private final Collection<VarDecl<RatType>> clockVars;
-	private final MutableValuation initVal;
+    private final List<XtaProcess> processes;
+    private final Collection<VarDecl<?>> dataVars;
+    private final Collection<VarDecl<RatType>> clockVars;
+    private final MutableValuation initVal;
 
-	private final List<XtaProcess> unmodProcesses;
-	private final Collection<VarDecl<?>> unmodDataVars;
-	private final Collection<VarDecl<RatType>> unmodClockVars;
+    private final List<XtaProcess> unmodProcesses;
+    private final Collection<VarDecl<?>> unmodDataVars;
+    private final Collection<VarDecl<RatType>> unmodClockVars;
 
+    private Expr<BoolType> prop;
+    private PropertyKind propertyKind = PropertyKind.NONE;
 
-	private Expr<BoolType> prop;
-	private PropertyKind propertyKind = PropertyKind.NONE;
+    private XtaSystem() {
+        processes = new ArrayList<>();
+        dataVars = CollectionUtil.createSet();
+        clockVars = CollectionUtil.createSet();
+        initVal = new MutableValuation();
 
-	private XtaSystem() {
-    processes = new ArrayList<>();
-    dataVars = CollectionUtil.createSet();
-    clockVars = CollectionUtil.createSet();
-    initVal = new MutableValuation();
+        unmodProcesses = Collections.unmodifiableList(processes);
+        unmodDataVars = Collections.unmodifiableCollection(dataVars);
+        unmodClockVars = Collections.unmodifiableCollection(clockVars);
+    }
 
-		unmodProcesses = Collections.unmodifiableList(processes);
-		unmodDataVars = Collections.unmodifiableCollection(dataVars);
-		unmodClockVars = Collections.unmodifiableCollection(clockVars);
-	}
+    public static XtaSystem create() {
+        return new XtaSystem();
+    }
 
-	public static XtaSystem create() {
-		return new XtaSystem();
-	}
+    public List<XtaProcess> getProcesses() {
+        return unmodProcesses;
+    }
 
-	public List<XtaProcess> getProcesses() {
-		return unmodProcesses;
-	}
+    public Collection<VarDecl<?>> getDataVars() {
+        return unmodDataVars;
+    }
 
-	public Collection<VarDecl<?>> getDataVars() {
-		return unmodDataVars;
-	}
+    public Collection<VarDecl<RatType>> getClockVars() {
+        return unmodClockVars;
+    }
 
-	public Collection<VarDecl<RatType>> getClockVars() {
-		return unmodClockVars;
-	}
+    // TODO Return value is not immutable
+    public Valuation getInitVal() {
+        return initVal;
+    }
 
-	// TODO Return value is not immutable
-	public Valuation getInitVal() {
-		return initVal;
-	}
+    public List<Loc> getInitLocs() {
+        return processes.stream().map(XtaProcess::getInitLoc).collect(toImmutableList());
+    }
 
-	public List<Loc> getInitLocs() {
-		return processes.stream().map(XtaProcess::getInitLoc).collect(toImmutableList());
-	}
+    ////
 
-	////
+    public void addDataVar(final VarDecl<?> varDecl, final LitExpr<?> initValue) {
+        checkNotNull(varDecl);
+        checkNotNull(initValue);
+        checkArgument(!clockVars.contains(varDecl));
+        dataVars.add(varDecl);
+        initVal.put(varDecl, initValue);
+    }
 
-	public void addDataVar(final VarDecl<?> varDecl, final LitExpr<?> initValue) {
-		checkNotNull(varDecl);
-		checkNotNull(initValue);
-		checkArgument(!clockVars.contains(varDecl));
-		dataVars.add(varDecl);
-		initVal.put(varDecl, initValue);
-	}
+    public void addClockVar(final VarDecl<RatType> varDecl) {
+        checkNotNull(varDecl);
+        checkArgument(!dataVars.contains(varDecl));
+        clockVars.add(varDecl);
+    }
 
-	public void addClockVar(final VarDecl<RatType> varDecl) {
-		checkNotNull(varDecl);
-		checkArgument(!dataVars.contains(varDecl));
-		clockVars.add(varDecl);
-	}
+    public XtaProcess createProcess(final String name) {
+        final XtaProcess process = XtaProcess.create(this, name);
+        processes.add(process);
+        return process;
+    }
 
-	public XtaProcess createProcess(final String name) {
-		final XtaProcess process = XtaProcess.create(this, name);
-		processes.add(process);
-		return process;
-	}
+    public Expr<BoolType> getProp() {
+        return prop;
+    }
 
-	public Expr<BoolType> getProp(){
-		return prop;
-	}
+    public PropertyKind getPropertyKind() {
+        return propertyKind;
+    }
 
-	public PropertyKind getPropertyKind() {
-		return propertyKind;
-	}
+    public void setProp(final Expr<BoolType> _prop, final PropertyKind _propertyKind) {
 
-	public void setProp(final Expr<BoolType> _prop, final PropertyKind _propertyKind){
+        prop = _prop;
+        propertyKind = _propertyKind;
+        // ErrorProcess
+        XtaProcess process = createProcess("ErrorProc");
+        final Collection<Expr<BoolType>> invars = Collections.emptySet();
+        Loc initloc = process.createLoc("InitLoc", XtaProcess.LocKind.NORMAL, invars);
+        process.setInitLoc(initloc);
+        Loc errorLoc = process.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
+        final Collection<Expr<BoolType>> guards = ExprUtils.getConjuncts(ExprUtils.simplify(prop));
+        process.createEdge(
+                initloc,
+                errorLoc,
+                Collections.emptyList(),
+                guards,
+                Optional.empty(),
+                Collections.emptyList());
 
-		prop = _prop;
-		propertyKind = _propertyKind;
-		//ErrorProcess
-		XtaProcess process = createProcess("ErrorProc");
-		final Collection<Expr<BoolType>> invars = Collections.emptySet();
-		Loc initloc = process.createLoc("InitLoc", XtaProcess.LocKind.NORMAL, invars);
-		process.setInitLoc(initloc);
-		Loc errorLoc = process.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
-		final Collection<Expr<BoolType>> guards = ExprUtils.getConjuncts(ExprUtils.simplify(prop));
-		process.createEdge(initloc, errorLoc, Collections.emptyList(), guards, Optional.empty(), Collections.emptyList());
+        // Edges to ErrorLocations from COMMITTED locations
 
-		//Edges to ErrorLocations from COMMITTED locations
+        for (XtaProcess proc : processes) {
+            if (!proc.getName().equals("ErrorProc")) {
+                Loc own_errorLoc = proc.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
+                for (Loc loc : proc.getLocs()) {
+                    if (loc.getKind().equals(XtaProcess.LocKind.COMMITTED))
+                        proc.createEdge(
+                                loc,
+                                own_errorLoc,
+                                Collections.emptyList(),
+                                guards,
+                                Optional.empty(),
+                                Collections.emptyList());
+                }
+            }
+        }
+    }
 
-		for (XtaProcess proc: processes) {
-			if (!proc.getName().equals("ErrorProc")) {
-				Loc own_errorLoc = proc.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
-				for (Loc loc:proc.getLocs() ) {
-					if(loc.getKind().equals(XtaProcess.LocKind.COMMITTED))
-						proc.createEdge(loc, own_errorLoc, Collections.emptyList(), guards, Optional.empty(),Collections.emptyList());
-				}
-			}
-
-		}
-	}
-
-	public enum PropertyKind {
-		AG, AF, EG, EF, NONE
-	}
+    public enum PropertyKind {
+        AG,
+        AF,
+        EG,
+        EF,
+        NONE
+    }
 }

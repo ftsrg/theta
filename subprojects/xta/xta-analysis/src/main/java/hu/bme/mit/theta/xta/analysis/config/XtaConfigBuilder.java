@@ -1,11 +1,29 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xta.analysis.config;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.Proof;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -20,27 +38,41 @@ import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
 import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
-import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.xta.analysis.prec.*;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
 public class XtaConfigBuilder {
     public enum Domain {
-        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
+        EXPL,
+        PRED_BOOL,
+        PRED_CART,
+        PRED_SPLIT
     }
 
     public enum Refinement {
-        FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE, UCB,
-        NWT_WP, NWT_SP, NWT_WP_LV, NWT_SP_LV, NWT_IT_WP, NWT_IT_SP, NWT_IT_WP_LV, NWT_IT_SP_LV
+        FW_BIN_ITP,
+        BW_BIN_ITP,
+        SEQ_ITP,
+        MULTI_SEQ,
+        UNSAT_CORE,
+        UCB,
+        NWT_WP,
+        NWT_SP,
+        NWT_WP_LV,
+        NWT_SP_LV,
+        NWT_IT_WP,
+        NWT_IT_SP,
+        NWT_IT_WP_LV,
+        NWT_IT_SP_LV
     }
+
     public enum Search {
         BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
 
@@ -51,10 +83,7 @@ public class XtaConfigBuilder {
         private Search(final ArgNodeComparators.ArgNodeComparator comparator) {
             this.comparator = comparator;
         }
-
     }
-
-
 
     public enum PredSplit {
         WHOLE(ExprSplitters.whole()),
@@ -69,24 +98,27 @@ public class XtaConfigBuilder {
             this.splitter = splitter;
         }
     }
-    //TODO more InitPrec needed
-    public enum InitPrec{
+
+    // TODO more InitPrec needed
+    public enum InitPrec {
         EMPTY(new XtaEmptyInitPrec());
         public final XtaInitPrec builder;
-        private InitPrec(final XtaInitPrec _builder){
+
+        private InitPrec(final XtaInitPrec _builder) {
             builder = _builder;
         }
     }
-    public enum PrecGranularity{
+
+    public enum PrecGranularity {
         GLOBAL {
 
             public <P extends Prec> XtaPrec<P> createPrec(final P innerPrec) {
                 return GlobalXtaPrec.create(innerPrec);
             }
 
-
-            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
-                    final RefutationToPrec<P, R> refToPrec) {
+            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+                    PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
+                            final RefutationToPrec<P, R> refToPrec) {
                 return GlobalXtaPrecRefiner.create(refToPrec);
             }
         },
@@ -96,19 +128,20 @@ public class XtaConfigBuilder {
                 return GlobalXtaPrec.create(innerPrec);
             }
 
-
-            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
-            final RefutationToPrec<P, R> refToPrec) {
+            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+                    PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
+                            final RefutationToPrec<P, R> refToPrec) {
                 return GlobalXtaPrecRefiner.create(refToPrec);
             }
         };
+
         public abstract <P extends Prec> XtaPrec<P> createPrec(final P innerPrec);
-        public abstract  <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
-                final RefutationToPrec<P, R> refToPrec);
 
-
+        public abstract <
+                        S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+                PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
+                        final RefutationToPrec<P, R> refToPrec);
     }
-
 
     private Logger logger = NullLogger.getInstance();
     private final SolverFactory abstractionSolverFactory;
@@ -122,52 +155,68 @@ public class XtaConfigBuilder {
     private InitPrec initPrec = InitPrec.EMPTY;
     private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
-
-    public XtaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
+    public XtaConfigBuilder(
+            final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
         this.domain = domain;
         this.refinement = refinement;
         this.abstractionSolverFactory = solverFactory;
         this.refinementSolverFactory = solverFactory;
     }
-    public XtaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) {
+
+    public XtaConfigBuilder(
+            final Domain domain,
+            final Refinement refinement,
+            final SolverFactory abstractionSolverFactory,
+            final SolverFactory refinementSolverFactory) {
         this.domain = domain;
         this.refinement = refinement;
         this.abstractionSolverFactory = abstractionSolverFactory;
         this.refinementSolverFactory = refinementSolverFactory;
     }
+
     public XtaConfigBuilder logger(final Logger logger) {
         this.logger = logger;
         return this;
     }
+
     public XtaConfigBuilder search(final Search search) {
         this.search = search;
         return this;
     }
+
     public XtaConfigBuilder predSplit(final PredSplit predSplit) {
         this.predSplit = predSplit;
         return this;
     }
+
     public XtaConfigBuilder precGranularity(final PrecGranularity precGranularity) {
         this.precGranularity = precGranularity;
 
         return this;
     }
+
     public XtaConfigBuilder maxEnum(final int maxEnum) {
         this.maxEnum = maxEnum;
         return this;
     }
+
     public XtaConfigBuilder initPrec(final InitPrec initPrec) {
         this.initPrec = initPrec;
         return this;
     }
+
     public XtaConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
         this.pruneStrategy = pruneStrategy;
         return this;
     }
-    public XtaConfig<? extends Proof, ? extends Cex, ? extends Prec> build(final XtaSystem xta, final XtaProcess.Loc errLoc) {
+
+    public XtaConfig<? extends Proof, ? extends Cex, ? extends Prec> build(
+            final XtaSystem xta, final XtaProcess.Loc errLoc) {
         final XtaLts lts = XtaLts.create(xta);
-        //final Expr<BoolType> negProp = xta.
-        if(domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT){
+        // final Expr<BoolType> negProp = xta.
+        if (domain == Domain.PRED_BOOL
+                || domain == Domain.PRED_CART
+                || domain == Domain.PRED_SPLIT) {
             final Solver analysisSolver = abstractionSolverFactory.createSolver();
             PredAbstractors.PredAbstractor predAbstractor;
             switch (domain) {
@@ -183,92 +232,208 @@ public class XtaConfigBuilder {
                 default:
                     throw new UnsupportedOperationException(domain + " domain is not supported.");
             }
-            final Analysis<Prod2State<PredState, ZoneState>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> prod2Analysis = Prod2Analysis.create(
-                    PredAnalysis.create(analysisSolver, predAbstractor, xta.getInitVal().toExpr()),
-                    XtaZoneAnalysis.create(xta.getInitLocs())
-            );
-            //miért nem kell xtaprec-be becsomagolni
-            final Analysis<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> analysis = XtaAnalysis.create(xta,prod2Analysis);
+            final Analysis<
+                            Prod2State<PredState, ZoneState>,
+                            XtaAction,
+                            Prod2Prec<PredPrec, ZonePrec>>
+                    prod2Analysis =
+                            Prod2Analysis.create(
+                                    PredAnalysis.create(
+                                            analysisSolver,
+                                            predAbstractor,
+                                            xta.getInitVal().toExpr()),
+                                    XtaZoneAnalysis.create(xta.getInitLocs()));
+            // miért nem kell xtaprec-be becsomagolni
+            final Analysis<
+                            XtaState<Prod2State<PredState, ZoneState>>,
+                            XtaAction,
+                            Prod2Prec<PredPrec, ZonePrec>>
+                    analysis = XtaAnalysis.create(xta, prod2Analysis);
 
-            //TODO analysis
-            final ArgBuilder<XtaState<Prod2State<PredState, ZoneState>>,XtaAction,Prod2Prec<PredPrec, ZonePrec> > argbuilder = ArgBuilder.create(lts, analysis, s -> s.getLocs().stream().anyMatch(l -> l.getKind().equals(XtaProcess.LocKind.ERROR)), true);
-            final ArgAbstractor<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> abstractor = BasicArgAbstractor.builder(argbuilder)
-                    .waitlist(PriorityWaitlist.create(search.comparator))
-                    .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration() : StopCriterions.firstCex())
-                    .logger(logger).build()
-                    ;
+            // TODO analysis
+            final ArgBuilder<
+                            XtaState<Prod2State<PredState, ZoneState>>,
+                            XtaAction,
+                            Prod2Prec<PredPrec, ZonePrec>>
+                    argbuilder =
+                            ArgBuilder.create(
+                                    lts,
+                                    analysis,
+                                    s ->
+                                            s.getLocs().stream()
+                                                    .anyMatch(
+                                                            l ->
+                                                                    l.getKind()
+                                                                            .equals(
+                                                                                    XtaProcess
+                                                                                            .LocKind
+                                                                                            .ERROR)),
+                                    true);
+            final ArgAbstractor<
+                            XtaState<Prod2State<PredState, ZoneState>>,
+                            XtaAction,
+                            Prod2Prec<PredPrec, ZonePrec>>
+                    abstractor =
+                            BasicArgAbstractor.builder(argbuilder)
+                                    .waitlist(PriorityWaitlist.create(search.comparator))
+                                    .stopCriterion(
+                                            refinement == Refinement.MULTI_SEQ
+                                                    ? StopCriterions.fullExploration()
+                                                    : StopCriterions.firstCex())
+                                    .logger(logger)
+                                    .build();
 
             ExprTraceChecker<ItpRefutation> exprTraceChecker;
             switch (refinement) {
                 case FW_BIN_ITP:
-                    exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), refinementSolverFactory.createItpSolver());
+                    exprTraceChecker =
+                            ExprTraceFwBinItpChecker.create(
+                                    True(), True(), refinementSolverFactory.createItpSolver());
                     break;
                 case BW_BIN_ITP:
-                    exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), refinementSolverFactory.createItpSolver());
+                    exprTraceChecker =
+                            ExprTraceBwBinItpChecker.create(
+                                    True(), True(), refinementSolverFactory.createItpSolver());
                     break;
                 case SEQ_ITP:
-                    exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), refinementSolverFactory.createItpSolver());
+                    exprTraceChecker =
+                            ExprTraceSeqItpChecker.create(
+                                    True(), True(), refinementSolverFactory.createItpSolver());
                     break;
                 case MULTI_SEQ:
-                    exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), refinementSolverFactory.createItpSolver());
+                    exprTraceChecker =
+                            ExprTraceSeqItpChecker.create(
+                                    True(), True(), refinementSolverFactory.createItpSolver());
                     break;
                 case UCB:
-                    exprTraceChecker = ExprTraceUCBChecker.create(True(), True(), refinementSolverFactory.createUCSolver());
+                    exprTraceChecker =
+                            ExprTraceUCBChecker.create(
+                                    True(), True(), refinementSolverFactory.createUCSolver());
                     break;
                 case NWT_SP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withoutIT().withSP().withoutLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withoutIT()
+                                    .withSP()
+                                    .withoutLV();
                     break;
                 case NWT_WP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withoutIT().withWP().withoutLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withoutIT()
+                                    .withWP()
+                                    .withoutLV();
                     break;
                 case NWT_SP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withoutIT().withSP().withLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withoutIT()
+                                    .withSP()
+                                    .withLV();
                     break;
                 case NWT_WP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withoutIT()
+                                    .withWP()
+                                    .withLV();
                     break;
                 case NWT_IT_SP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withIT().withSP().withoutLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withIT()
+                                    .withSP()
+                                    .withoutLV();
                     break;
                 case NWT_IT_WP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withIT().withWP().withoutLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withIT()
+                                    .withWP()
+                                    .withoutLV();
                     break;
                 case NWT_IT_SP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withIT().withSP().withLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withIT()
+                                    .withSP()
+                                    .withLV();
                     break;
                 case NWT_IT_WP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withIT().withWP().withLV();
+                    exprTraceChecker =
+                            ExprTraceNewtonChecker.create(
+                                            True(),
+                                            True(),
+                                            refinementSolverFactory.createUCSolver())
+                                    .withIT()
+                                    .withWP()
+                                    .withLV();
                     break;
                 default:
                     throw new UnsupportedOperationException(
                             domain + " domain does not support " + refinement + " refinement.");
             }
-            final RefutationToPrec<Prod2Prec<PredPrec, ZonePrec>, ItpRefutation> reftoprec = ItpRefToProd2PredZonePrec.create(predSplit.splitter, ZonePrec.of(xta.getClockVars()));
-            ArgRefiner<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> refiner;
+            final RefutationToPrec<Prod2Prec<PredPrec, ZonePrec>, ItpRefutation> reftoprec =
+                    ItpRefToProd2PredZonePrec.create(
+                            predSplit.splitter, ZonePrec.of(xta.getClockVars()));
+            ArgRefiner<
+                            XtaState<Prod2State<PredState, ZoneState>>,
+                            XtaAction,
+                            Prod2Prec<PredPrec, ZonePrec>>
+                    refiner;
 
-            PrecRefiner<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, Prod2Prec<PredPrec, ZonePrec>, ItpRefutation> precRefiner
-                    = JoiningPrecRefiner.create(reftoprec);
+            PrecRefiner<
+                            XtaState<Prod2State<PredState, ZoneState>>,
+                            XtaAction,
+                            Prod2Prec<PredPrec, ZonePrec>,
+                            ItpRefutation>
+                    precRefiner = JoiningPrecRefiner.create(reftoprec);
             if (refinement == Refinement.MULTI_SEQ) {
 
-                refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+                refiner =
+                        MultiExprTraceRefiner.create(
+                                exprTraceChecker, precRefiner, pruneStrategy, logger);
             } else {
-                refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-                        precRefiner, pruneStrategy, logger);
+                refiner =
+                        SingleExprTraceRefiner.create(
+                                exprTraceChecker, precRefiner, pruneStrategy, logger);
             }
 
             final SafetyChecker<
                             ARG<XtaState<Prod2State<PredState, ZoneState>>, XtaAction>,
                             Trace<XtaState<Prod2State<PredState, ZoneState>>, XtaAction>,
-                            Prod2Prec<PredPrec, ZonePrec>> checker =
-                    CegarChecker.create(abstractor, refiner, logger, ArgVisualizer.getDefault());
+                            Prod2Prec<PredPrec, ZonePrec>>
+                    checker =
+                            CegarChecker.create(
+                                    abstractor, refiner, logger, ArgVisualizer.getDefault());
 
             Prod2Prec<PredPrec, ZonePrec> prec = initPrec.builder.createProd2PredZone(xta);
             return XtaConfig.create(checker, prec);
         }
-        //TODO :
+        // TODO :
         // Only works with Prod2Prec<PredPrec, ZonePrec>
 
         return null;
     }
-
 }

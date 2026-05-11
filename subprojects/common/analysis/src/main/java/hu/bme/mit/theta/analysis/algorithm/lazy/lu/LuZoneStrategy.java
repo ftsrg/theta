@@ -16,6 +16,9 @@
 
 package hu.bme.mit.theta.analysis.algorithm.lazy.lu;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Unit.unit;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
@@ -29,12 +32,8 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneOrd;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.core.utils.Lens;
-
 import java.util.Collection;
 import java.util.function.Function;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.Unit.unit;
 
 public final class LuZoneStrategy<S extends State, A extends Action>
         implements LazyStrategy<ZoneState, LuZoneState, S, A> {
@@ -81,9 +80,11 @@ public final class LuZoneStrategy<S extends State, A extends Action>
     }
 
     @Override
-    public void cover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer,
-                      final Collection<ArgNode<S, A>> uncoveredNodes,
-                      final LazyStatistics.Builder stats) {
+    public void cover(
+            final ArgNode<S, A> coveree,
+            final ArgNode<S, A> coverer,
+            final Collection<ArgNode<S, A>> uncoveredNodes,
+            final LazyStatistics.Builder stats) {
         stats.startCloseRefinement();
         final LuZoneState covererState = lens.get(coverer.getState());
         final BoundFunc boundFunc = covererState.getBoundFunc();
@@ -92,9 +93,12 @@ public final class LuZoneStrategy<S extends State, A extends Action>
     }
 
     @Override
-    public void disable(final ArgNode<S, A> node, final A action, final S succState,
-                        final Collection<ArgNode<S, A>> uncoveredNodes,
-                        final LazyStatistics.Builder stats) {
+    public void disable(
+            final ArgNode<S, A> node,
+            final A action,
+            final S succState,
+            final Collection<ArgNode<S, A>> uncoveredNodes,
+            final LazyStatistics.Builder stats) {
         assert succState.isBottom();
         stats.startExpandRefinement();
         final BoundFunc preImage = pre.pre(BoundFunc.top(), action);
@@ -102,9 +106,11 @@ public final class LuZoneStrategy<S extends State, A extends Action>
         stats.stopExpandRefinement();
     }
 
-    private void propagateBounds(final ArgNode<S, A> node, final BoundFunc boundFunc,
-                                 final Collection<ArgNode<S, A>> uncoveredNodes,
-                                 final LazyStatistics.Builder stats) {
+    private void propagateBounds(
+            final ArgNode<S, A> node,
+            final BoundFunc boundFunc,
+            final Collection<ArgNode<S, A>> uncoveredNodes,
+            final LazyStatistics.Builder stats) {
         final LuZoneState oldState = lens.get(node.getState());
         final BoundFunc oldBoundFunc = oldState.getBoundFunc();
         if (!boundFunc.isLeq(oldBoundFunc)) {
@@ -133,19 +139,26 @@ public final class LuZoneStrategy<S extends State, A extends Action>
         node.setState(newState);
     }
 
-    private void maintainCoverage(final ArgNode<S, A> node, final BoundFunc interpolant, final Collection<ArgNode<S, A>> uncoveredNodes) {
+    private void maintainCoverage(
+            final ArgNode<S, A> node,
+            final BoundFunc interpolant,
+            final Collection<ArgNode<S, A>> uncoveredNodes) {
 
         final LuZoneState covererState = lens.get(node.getState());
-        final Collection<ArgNode<S, A>> uncovered = node.getCoveredNodes()
-                .filter(covered -> shouldUncover(covered, covererState, interpolant)).toList();
+        final Collection<ArgNode<S, A>> uncovered =
+                node.getCoveredNodes()
+                        .filter(covered -> shouldUncover(covered, covererState, interpolant))
+                        .toList();
         uncoveredNodes.addAll(uncovered);
         uncovered.forEach(ArgNode::unsetCoveringNode);
     }
 
-    private boolean shouldUncover(final ArgNode<S, A> covered, final LuZoneState covererState, final BoundFunc interpolant) {
+    private boolean shouldUncover(
+            final ArgNode<S, A> covered,
+            final LuZoneState covererState,
+            final BoundFunc interpolant) {
         final LuZoneState coveredState = lens.get(covered.getState());
         return !interpolant.isLeq(coveredState.getBoundFunc())
                 || !coveredState.getZone().isLeq(covererState.getZone(), interpolant);
     }
-
 }

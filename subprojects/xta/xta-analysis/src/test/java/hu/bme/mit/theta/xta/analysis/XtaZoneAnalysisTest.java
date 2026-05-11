@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,14 +65,17 @@ public final class XtaZoneAnalysisTest {
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
         final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
-        final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(system);
-        final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.create(system.getInitLocs());
-        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
-                .create(explAnalysis, zoneAnalysis);
-        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
-                .create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
-        final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
-                .create(system, mappedAnalysis);
+        final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis =
+                XtaExplAnalysis.create(system);
+        final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis =
+                XtaZoneAnalysis.create(system.getInitLocs());
+        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>>
+                prodAnalysis = Prod2Analysis.create(explAnalysis, zoneAnalysis);
+        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis =
+                PrecMappingAnalysis.create(
+                        prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
+        final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis =
+                XtaAnalysis.create(system, mappedAnalysis);
 
         final ZonePrec prec = ZonePrec.of(system.getClockVars());
 

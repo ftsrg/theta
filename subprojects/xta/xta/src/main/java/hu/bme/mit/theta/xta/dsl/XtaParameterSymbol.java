@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,56 +25,58 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ParameterIdContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
-import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 final class XtaParameterSymbol implements Symbol {
 
-	private final String name;
-	private final boolean reference;
-	private final boolean constant;
+    private final String name;
+    private final boolean reference;
+    private final boolean constant;
 
-	private final XtaType type;
+    private final XtaType type;
 
-	public XtaParameterSymbol(final Scope scope, final TypeContext typeContext,
-							  final ParameterIdContext parameterIdContext) {
-		checkNotNull(typeContext);
-		checkNotNull(parameterIdContext);
-		name = parameterIdContext.fArrayId.fId.getText();
-		reference = (parameterIdContext.fRef != null);
-		constant = (typeContext.fTypePrefix.fConst != null);
-		type = new XtaType(scope, typeContext, parameterIdContext.fArrayId.fArrayIndexes);
+    public XtaParameterSymbol(
+            final Scope scope,
+            final TypeContext typeContext,
+            final ParameterIdContext parameterIdContext) {
+        checkNotNull(typeContext);
+        checkNotNull(parameterIdContext);
+        name = parameterIdContext.fArrayId.fId.getText();
+        reference = (parameterIdContext.fRef != null);
+        constant = (typeContext.fTypePrefix.fConst != null);
+        type = new XtaType(scope, typeContext, parameterIdContext.fArrayId.fArrayIndexes);
 
-		checkArgument(constant && !reference);
-	}
+        checkArgument(constant && !reference);
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	public boolean isReference() {
-		return reference;
-	}
+    public boolean isReference() {
+        return reference;
+    }
 
-	public boolean isConstant() {
-		return constant;
-	}
+    public boolean isConstant() {
+        return constant;
+    }
 
-	public Type instantiateType(final Env env) {
-		checkNotNull(env);
-		final Type paramType = type.instantiate(env);
-		return paramType;
-	}
+    public Type instantiateType(final Env env) {
+        checkNotNull(env);
+        final Type paramType = type.instantiate(env);
+        return paramType;
+    }
 
-	public Set<Expr<?>> instantiateValues(final Env env) {
-		checkState(!reference);
-		final Type paramType = instantiateType(env);
-		final RangeType rangeType = (RangeType) paramType;
-		final Set<Expr<?>> values = rangeType.values().collect(toCollection(LinkedHashSet::new));
-		return values;
-	}
+    public Set<Expr<?>> instantiateValues(final Env env) {
+        checkState(!reference);
+        final Type paramType = instantiateType(env);
+        final RangeType rangeType = (RangeType) paramType;
+        final Set<Expr<?>> values = rangeType.values().collect(toCollection(LinkedHashSet::new));
+        return values;
+    }
 }

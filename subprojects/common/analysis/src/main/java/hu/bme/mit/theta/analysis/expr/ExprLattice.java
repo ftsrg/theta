@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ import hu.bme.mit.theta.solver.Solver;
 public final class ExprLattice implements Lattice<BasicExprState> {
 
     public enum MeetImpl {
-      BASIC,
-      SYNTACTIC_CHECK,
-      SEMANTIC_CHECK
+        BASIC,
+        SYNTACTIC_CHECK,
+        SEMANTIC_CHECK
     }
 
     private final PartialOrd<ExprState> partialOrd;
@@ -65,7 +65,7 @@ public final class ExprLattice implements Lattice<BasicExprState> {
 
     @Override
     public boolean isLeq(BasicExprState state1, BasicExprState state2) {
-      return partialOrd.isLeq(state1, state2);
+        return partialOrd.isLeq(state1, state2);
     }
 
     @Override
@@ -76,23 +76,23 @@ public final class ExprLattice implements Lattice<BasicExprState> {
 
     @Override
     public BasicExprState meet(BasicExprState state1, BasicExprState state2) {
-      if (meetImpl == MeetImpl.SEMANTIC_CHECK) {
-        if (partialOrd.isLeq(state1, state2)) {
-          return state1;
+        if (meetImpl == MeetImpl.SEMANTIC_CHECK) {
+            if (partialOrd.isLeq(state1, state2)) {
+                return state1;
+            }
+            if (partialOrd.isLeq(state2, state1)) {
+                return state2;
+            }
+        } else if (meetImpl == MeetImpl.SYNTACTIC_CHECK) {
+            final Expr<BoolType> expr1 = state1.toExpr();
+            final Expr<BoolType> expr2 = state2.toExpr();
+            if (ExprUtils.getConjuncts(expr1).contains(expr2)) {
+                return BasicExprState.of(expr1);
+            }
+            if (ExprUtils.getConjuncts(expr2).contains(expr1)) {
+                return BasicExprState.of(expr2);
+            }
         }
-        if (partialOrd.isLeq(state2, state1)) {
-          return state2;
-        }
-      } else if (meetImpl == MeetImpl.SYNTACTIC_CHECK) {
-        final Expr<BoolType> expr1 = state1.toExpr();
-        final Expr<BoolType> expr2 = state2.toExpr();
-        if (ExprUtils.getConjuncts(expr1).contains(expr2)) {
-          return BasicExprState.of(expr1);
-        }
-        if (ExprUtils.getConjuncts(expr2).contains(expr1)) {
-          return BasicExprState.of(expr2);
-        }
-      }
-      return BasicExprState.of(And(state1.toExpr(), state2.toExpr()));
+        return BasicExprState.of(And(state1.toExpr(), state2.toExpr()));
     }
 }
