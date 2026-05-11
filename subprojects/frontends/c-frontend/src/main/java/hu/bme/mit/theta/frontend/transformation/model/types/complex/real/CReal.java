@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.real;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import java.util.Objects;
 
 public abstract class CReal extends CComplexType {
 
@@ -44,5 +45,16 @@ public abstract class CReal extends CComplexType {
         } else {
             return type.getSmallestCommonType(this);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass());
     }
 }

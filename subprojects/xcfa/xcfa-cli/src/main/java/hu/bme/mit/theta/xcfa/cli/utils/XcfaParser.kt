@@ -203,7 +203,7 @@ private fun parseC(
   input =
     if (frontendConfig.useCir) {
       val temp = createTempDirectory()
-      val copied = temp.resolve("input.c").toFile()
+      val copied = temp.resolve("input.${input.extension}").toFile()
       var curlyBraceCount = 0
       input.readLines().forEach { line ->
         line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
