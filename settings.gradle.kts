@@ -15,18 +15,6 @@
  */
 rootProject.name = "theta"
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-        maven { url = uri("https://ghp.refinery.tools/maven") }
-    }
-}
-
-plugins {
-    id("tools.refinery.settings") version "0.2.0"
-}
-
 include(
     "common/analysis",
     "common/common",

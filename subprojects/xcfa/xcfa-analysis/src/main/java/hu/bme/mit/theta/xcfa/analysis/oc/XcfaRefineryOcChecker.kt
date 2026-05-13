@@ -27,12 +27,22 @@ import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.solver.SolverStatus
 import tools.refinery.generator.standalone.StandaloneRefinery
@@ -45,7 +55,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   override val status: SolverStatus?
     get() = currentStatus
   // run refinery on the problem, return SAT/UNSAT, null if not yet run
-
+  private var helperCount = 0
   override val model: Valuation?
     get() = TODO("Not yet implemented") // retrieve the model from refinery, if SAT, null otherwise
 
@@ -58,12 +68,21 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     // add rf-related constraints to the refinery problem here
 
     // do not add po and ws relation constraints here!
+
+    val helperScripts = mutableSetOf<String>()
     val (eventsCode, rfPredicatesCode) = generateEvents(eg)
+
     baseRefineryCode = buildString {
       append(generateMetamodel())
       append(eventsCode)
       append(generateRelations(eg))
       append(rfPredicatesCode)
+      append(generateErrors(eg)) // A hibáknak is lehetnek helperei
+
+      if (helperScripts.isNotEmpty()) {
+        append("\n% --- Helper Functions ---\n")
+        helperScripts.forEach { appendLine(it) }
+      }
     }
 
     println("--- REFINERY CODE ---")
@@ -113,25 +132,58 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     val sb = StringBuilder("\n% Events\n")
     val rfPredicatesSb = StringBuilder("\n% Possible Read-From Predicates\n")
     eg.events.values.flatMap { it.values }.flatten().forEach { event ->
-
+      val helperScripts = mutableSetOf<String>()
       val valueExpr = event.assignment
       //elágazás konkrét érték, tartomány, kifejezés
-      val numericValue = when {
-        valueExpr == null -> "unknown"
-        valueExpr is IntLitExpr -> valueExpr.value.toString()
-        valueExpr is BoolLitExpr -> if (valueExpr.value) "1" else "0"
-        else -> (event.const as? IndexedConstDecl<*>)?.index?.toString() ?: "0"
+      when(valueExpr) {
+        null -> sb.appendLine("value(${event.refineryId}): unknown.")
+        //is IntLitExpr -> sb.appendLine("value(${event.refineryId}): ${valueExpr.value}.")
+        //is BoolLitExpr -> if (valueExpr.value) sb.appendLine("value(${event.refineryId}): 1.")
+        //                            else sb.appendLine("value(${event.refineryId}): 0.")
+        is EqExpr<*> -> {
+          val constantValue = when {
+            valueExpr.rightOp is IntLitExpr -> (valueExpr.rightOp as IntLitExpr).value.toString()
+            valueExpr.leftOp is IntLitExpr -> (valueExpr.leftOp as IntLitExpr).value.toString()
+            valueExpr.rightOp is BoolLitExpr -> if ((valueExpr.rightOp as BoolLitExpr).value) "1" else "0"
+            valueExpr.leftOp is BoolLitExpr -> if ((valueExpr.leftOp as BoolLitExpr).value) "1" else "0"
+            else -> null
+          }
+
+          if (constantValue != null) {
+            sb.appendLine("value(${event.refineryId}): $constantValue.")
+          } else {
+            sb.appendLine("error pred ${event.refineryId}ValueError() <-> !(${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
+              "propagation rule ${event.refineryId}ValueRule() <->\n" +
+              "\ttrue\n" +
+              "==>\n" +
+              "\tassert ${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}.")
+            helperScripts.forEach {
+              sb.appendLine(it)
+            }
+          }
+        }
+        is TrueExpr -> {}
+        //is IntEqExpr && (leftOp.decl == event.const) -> sb.appendLine("value(${event.refineryId}): ${valueExpr.rightOp}.")
+        else -> {
+          sb.appendLine("error pred ${event.refineryId}ValueError() <-> !(${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
+            "propagation rule ${event.refineryId}ValueRule() <->\n" +
+            "\ttrue\n" +
+            "==>\n" +
+            "\tassert ${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}.")
+          helperScripts.forEach {
+            sb.appendLine(it)
+          }
+        }
       }
 
-      val guardString = event.guard.joinToString(" && ") { it.toRefineryExpr(eg.events) }
+      val guardString = event.guard.joinToString(" && ") { it.toRefineryExpr(eg.events, helperScripts, event.refineryId) }
 
       val type = if (event.type == EventType.READ) "true" else "false"
-
 
       sb.appendLine("Event(${event.refineryId}).")
       sb.appendLine("atom ${event.refineryId}.")
       sb.appendLine("isRead(${event.refineryId}): $type.")
-      sb.appendLine("value(${event.refineryId}): $numericValue.")
+      //sb.appendLine("value(${event.refineryId}): $valueExprToString.")
 
       if (event.guard.isEmpty()) {
         sb.appendLine("guard(${event.refineryId}): true.")
@@ -168,6 +220,26 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
             sb.append("?rf(${rel.from.refineryId}, ${rel.to.refineryId}).\n")
         }
     }
+
+    return sb.toString()
+  }
+
+  private fun generateErrors(eg: XcfaToEventGraph.EventGraph): String {
+    if (eg.violations.isEmpty()) return ""
+
+    val sb = StringBuilder("\n% Reach errors\n")
+    val errorNames = mutableListOf<String>()
+
+    eg.violations.forEachIndexed { index, violation ->
+      val errorId = "err${index}_pid${violation.pid}"
+      errorNames.add(errorId)
+      val helperScripts = mutableSetOf<String>()
+      val guardExpr = violation.guard.toRefineryExpr(eg.events, helperScripts, currentEventId = errorId)
+      sb.appendLine("pred $errorId() <-> $guardExpr.")
+    }
+    sb.appendLine("\npred errorReached() <-> ${errorNames.joinToString(" ; ") { "$it()" }}.")
+
+    sb.appendLine("error pred violationNotFound() <-> !errorReached().")
 
     return sb.toString()
   }
@@ -224,17 +296,45 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
 
   private fun String.toRefineryString() = replace(":", "_")
 
-  private fun Expr<*>.toRefineryExpr(events: Map<VarDecl<*>, Map<Int, List<E>>>): String = when (this) {
+  private fun Expr<*>.toRefineryExpr(
+    events: Map<VarDecl<*>, Map<Int, List<E>>>,
+    helperScripts: MutableSet<String>,
+    currentEventId: String
+  ): String = when (this) {
     is IntLitExpr -> value.toString()
     is BoolLitExpr -> value.toString()
     is RefExpr<*> -> {
       val constDecl = decl as IndexedConstDecl<*>
       "value(${events[constDecl.varDecl]!!.values.firstNotNullOf { it.find { it.const == constDecl }}.refineryId})"
     }
-    is OrExpr -> ops.joinToString("||") { "(${it.toRefineryExpr(events)})" }
-    is AndExpr -> ops.joinToString("&&") { "(${it.toRefineryExpr(events)})" }
-    is NotExpr -> "!(${op.toRefineryExpr(events)})"
-    is EqExpr<*> -> "(${leftOp.toRefineryExpr(events)}) == (${rightOp.toRefineryExpr(events)})"
+    is OrExpr -> ops.joinToString("||") { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
+    is AndExpr -> ops.joinToString("&&") { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
+    is NotExpr -> "!(${op.toRefineryExpr(events, helperScripts, currentEventId)})"
+    is EqExpr<*> -> "${leftOp.toRefineryExpr(events, helperScripts,currentEventId)} == ${rightOp.toRefineryExpr(events, helperScripts, currentEventId)}"
+    is NeqExpr<*> -> ops.joinToString("!=") { it.toRefineryExpr(events, helperScripts, currentEventId)}
+    is AddExpr<*> -> ops.joinToString("+")  { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
+    is LtExpr<*> -> ops.joinToString("<") { it.toRefineryExpr(events, helperScripts, currentEventId)}
+    is LeqExpr<*> -> ops.joinToString("<=") { it.toRefineryExpr(events, helperScripts, currentEventId)}
+    is GtExpr<*> -> ops.joinToString(">") { it.toRefineryExpr(events, helperScripts, currentEventId)}
+    is GeqExpr<*> -> ops.joinToString(">=") { it.toRefineryExpr(events, helperScripts, currentEventId)}
+    is SubExpr<*> -> ops.joinToString("-")  { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
+    is IteExpr<*> -> {
+      val currentHelperId = ++helperCount
+      val helperName = "${currentEventId}_helper_$currentHelperId"
+
+      val condStr = cond.toRefineryExpr(events, helperScripts, currentEventId)
+      val thenStr = then.toRefineryExpr(events, helperScripts, currentEventId)
+      val elseStr = `else`.toRefineryExpr(events, helperScripts, currentEventId)
+
+      val helperDef = """
+            int $helperName() = 
+                $condStr -> $thenStr;
+                !($condStr) -> $elseStr.
+        """.trimIndent()
+
+      helperScripts.add(helperDef)
+      "$helperName()"
+    }
     else -> throw UnsupportedOperationException("Unsupported expression $this in refinery expression conversion.")
   }
 
