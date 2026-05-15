@@ -115,6 +115,10 @@ class CLibraryFunctionsPass : ProcedurePass {
                 "pthread_create" -> {
                   val handle = invokeLabel.getParam(1)
                   val funcptr = invokeLabel.getParam(3)
+                  check(builder.parent.getProcedures().any { it.name == funcptr.name }) {
+                    "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
+                      "Only direct function symbols are supported as thread entry points."
+                  }
                   val param = invokeLabel.params[4]
                   // int(0) to solve StartLabel not handling return params
                   listOf(
