@@ -105,6 +105,9 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                 externalDeclarationContext.accept(this);
             } catch (Throwable e) {
                 // we don't do anything, we'll throw an error later if something's missing
+                // Important: When looking for the source of frontend issues CHECK AND DEBUG THROWN
+                // STUFF HERE
+                throw e;
             }
         }
         return null;
