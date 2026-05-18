@@ -3,20 +3,20 @@ package hu.bme.mit.theta.frontend.svlib;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
-import hu.bme.mit.theta.xcfa.model.ParamDirection;
-import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
+import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   private final ProcedurePassManager procedurePassManager;
   private final LinkedHashMap<String, VarDecl<?>> declarations = new LinkedHashMap<>();
 
-  private final LinkedHashMap<String, LinkedHashMap<String, VarDecl<?>>> procedureInputs =
+  /*private final LinkedHashMap<String, LinkedHashMap<String, VarDecl<?>>> procedureInputs =
       new LinkedHashMap<>();
 
   private final LinkedHashMap<String, LinkedHashMap<String, VarDecl<?>>> procedureOutputs =
@@ -36,20 +36,33 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
       new LinkedHashMap<>();
 
   private final LinkedHashMap<String, SvLibParser.StatementContext> procedureBodies =
-      new LinkedHashMap<>();
+      new LinkedHashMap<>();*/
 
   private String entryProcedureName;
+
+  private XcfaProcedureBuilder entryProcedure;
 
   private List<SvLibParser.TermContext> entryArguments = List.of();
 
   private final LinkedHashMap<String, XcfaProcedureBuilder> procedures = new LinkedHashMap<>();
+
+  private int locCounter;
 
   SvLibXcfaBuilder(ProcedurePassManager procedurePassManager) {
     this.procedurePassManager = procedurePassManager;
   }
 
   XCFA buildXcfa(SvLibParser.ScriptContext script){
-    return null;
+    XcfaBuilder xcfaBuilder = new XcfaBuilder("SvLibXCFA");
+    for (VarDecl<?> declaration : declarations.values()) {
+      xcfaBuilder.addVar(new XcfaGlobalVar(declaration));
+    }
+    visit(script);
+    if (entryProcedure == null) {
+      throw new IllegalStateException("SV-LIB input does not define a procedure");
+    }
+    xcfaBuilder.addEntryPoint(entryProcedure, Collections.emptyList());
+    return xcfaBuilder.build();
   }
 
   //Extract the parameter names and types from the ctx,
@@ -76,6 +89,13 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     }
   }
 
+  private SvLibMetadata metadata() {
+    return new SvLibMetadata();
+  }
+  private XcfaLocation nextLoc(String kind, String sourceName) {
+    return new XcfaLocation("l" + locCounter++, metadata());
+  }
+
   @Override
   public Void visitDeclareVar(SvLibParser.DeclareVarContext ctx) {
     String name = ctx.symbol().getText();
@@ -91,7 +111,15 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     addParams(procedure, ctx.procDeclarationArguments(1), ParamDirection.OUT);
     addLocals(procedure, ctx.procDeclarationArguments(2));
     procedures.put(name, procedure);
-    procedureBodies.put(name, ctx.statement());
+    //procedureBodies.put(name, ctx.statement());
+
+    procedure.createInitLoc();
+    procedure.createFinalLoc();
+    procedure.createErrorLoc();
+
+    SvLibExprVisitor exprVisitor = new SvLibExprVisitor(procedure, declarations);
+    SvLibStatementVisitor statementVisitor =
+        new SvLibStatementVisitor(procedure, name, declarations, exprVisitor, this::nextLoc);
     return null;
   }
 
@@ -114,10 +142,6 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   }
 
 
-
-  private static <T> T unsupported(String what) {
-    throw new UnsupportedOperationException("Unsupported SV-LIB " + what);
-  }
 
 }
 
