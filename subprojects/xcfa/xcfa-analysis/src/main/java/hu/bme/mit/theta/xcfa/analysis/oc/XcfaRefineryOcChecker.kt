@@ -110,15 +110,28 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
             
             pred rf(Write w, Read r).
             default !rf(*, *).
+            
+            pred ws(Write w1, Write w2).
+            default !ws(*, *).
 
             propagation rule rfIsHb(Write w, Read r) <->
                 rf(w, r) ==> hb(w, r).
                 
             propagation rule poIsHb(Event a, Event b) <->
                 po(a, b) ==> hb(a, b).
+                
+            propagation rule wsIsHb(Write w1, Write w2) <->
+                ws(w1, w2) ==> hb(w1, w2).
 
             propagation rule hbTransitive(Event a, Event c) <->
                 hb(a, b), hb(b, c) ==> hb(a, c).
+                
+            pred wsInactive(Write w1, Write w2) <->
+                !guard(w1) ; !guard(w2).
+        
+            error pred wsViolation(Write w1, Write w2) <->
+                ws(w1, w2),
+                wsInactive(w1, w2).
 
             error pred cycle(Event e) <-> hb(e, e).
 
@@ -225,6 +238,12 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
         relations.forEach { rel ->
             sb.append("?rf(${rel.from.refineryId}, ${rel.to.refineryId}).\n")
         }
+    }
+
+    eg.wss.forEach { (varDecl, relations) ->
+      relations.forEach { rel ->
+        sb.append("?ws(${rel.from.refineryId}, ${rel.to.refineryId}).\n")
+      }
     }
 
     return sb.toString()
