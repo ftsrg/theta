@@ -122,8 +122,14 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
 
             error pred cycle(Event e) <-> hb(e, e).
 
-            error pred rfValuesNotEqual(Write w, Read r) <->
-                rf(w, r), (value(w) != value(r)).
+            pred rfDisabledOrNotEqual(Write w, Read r) <->
+                value(w) != value(r) ;
+                !guard(w) ; 
+                !guard(r).
+        
+            error pred rfViolation(Write w, Read r) <->
+                (rf(w, r)), 
+                rfDisabledOrNotEqual(w, r).
 
             error pred readFromSeveralWriters(Read r, Write w1, Write w2) <->
                 rf(w1, r), rf(w2, r), w1 != w2.
