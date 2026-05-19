@@ -54,7 +54,6 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   private var baseRefineryCode: String = ""
   override val status: SolverStatus?
     get() = currentStatus
-  // run refinery on the problem, return SAT/UNSAT, null if not yet run
   private var helperCount = 0
   override val model: Valuation?
     get() = TODO("Not yet implemented") // retrieve the model from refinery, if SAT, null otherwise
@@ -93,38 +92,42 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   private fun generateMetamodel(): String {
     return """
             class Event {
-                int index
-                boolean isRead
                 int value
-                boolean guard
             }
+            
+            pred guard(Event e).
+            
+            class Read extends Event.
+            class Write extends Event.
 
+            !exists(Read::new).
+            !exists(Read::new).
+            
             pred hb(Event a, Event b).
-            default !hb(*, *). 
             
             pred po(Event a, Event b).
             default !po(*, *). 
             
-            pred rf(Event w, Event r).
+            pred rf(Write w, Read r).
             default !rf(*, *).
 
-            propagation rule rfIsHb(Event w, Event r) <->
+            propagation rule rfIsHb(Write w, Read r) <->
                 rf(w, r) ==> hb(w, r).
+                
+            propagation rule poIsHb(Event a, Event b) <->
+                po(a, b) ==> hb(a, b).
 
             propagation rule hbTransitive(Event a, Event c) <->
                 hb(a, b), hb(b, c) ==> hb(a, c).
 
             error pred cycle(Event e) <-> hb(e, e).
 
-            error pred rfBadTypes(Event w, Event r) <->
-                rf(w, r), (isRead(w) || !isRead(r)).
-
-            error pred rfValuesNotEqual(Event w, Event r) <->
+            error pred rfValuesNotEqual(Write w, Read r) <->
                 rf(w, r), (value(w) != value(r)).
 
-            error pred readFromSeveralWriters(Event r, Event w1, Event w2) <->
+            error pred readFromSeveralWriters(Read r, Write w1, Write w2) <->
                 rf(w1, r), rf(w2, r), w1 != w2.
-
+                
         """.trimIndent()
   }
 
@@ -134,12 +137,9 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     eg.events.values.flatMap { it.values }.flatten().forEach { event ->
       val helperScripts = mutableSetOf<String>()
       val valueExpr = event.assignment
-      //elágazás konkrét érték, tartomány, kifejezés
+
       when(valueExpr) {
         null -> sb.appendLine("value(${event.refineryId}): unknown.")
-        //is IntLitExpr -> sb.appendLine("value(${event.refineryId}): ${valueExpr.value}.")
-        //is BoolLitExpr -> if (valueExpr.value) sb.appendLine("value(${event.refineryId}): 1.")
-        //                            else sb.appendLine("value(${event.refineryId}): 0.")
         is EqExpr<*> -> {
           val constantValue = when {
             valueExpr.rightOp is IntLitExpr -> (valueExpr.rightOp as IntLitExpr).value.toString()
@@ -163,7 +163,6 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
           }
         }
         is TrueExpr -> {}
-        //is IntEqExpr && (leftOp.decl == event.const) -> sb.appendLine("value(${event.refineryId}): ${valueExpr.rightOp}.")
         else -> {
           sb.appendLine("error pred ${event.refineryId}ValueError() <-> !(${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
             "propagation rule ${event.refineryId}ValueRule() <->\n" +
@@ -180,17 +179,18 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
 
       val type = if (event.type == EventType.READ) "true" else "false"
 
-      sb.appendLine("Event(${event.refineryId}).")
+      if (event.type == EventType.READ) sb.appendLine("Read(${event.refineryId}).") else sb.appendLine("Write(${event.refineryId}).")
+
       sb.appendLine("atom ${event.refineryId}.")
-      sb.appendLine("isRead(${event.refineryId}): $type.")
       //sb.appendLine("value(${event.refineryId}): $valueExprToString.")
 
       if (event.guard.isEmpty()) {
-        sb.appendLine("guard(${event.refineryId}): true.")
+        sb.appendLine("guard(${event.refineryId}).")
       }
       else {
-        sb.appendLine("pred guard${event.refineryId}() <-> guard(${event.refineryId}) == ($guardString).")
-        sb.appendLine("guard${event.refineryId}().")
+        sb.appendLine("error pred guard${event.refineryId}() <->\n" +
+                      "\t!(guard(${event.refineryId})) , ($guardString);\n" +
+                      "\t(guard(${event.refineryId})) , !($guardString).")
       }
 
       if (event.type == EventType.READ) {
@@ -268,13 +268,11 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       var generator = StandaloneRefinery.getGeneratorFactory().createGenerator(problem)
 
       generator.generate()
-      //kiértékelés: ha talált modellt, akkor SAT
       currentStatus = SolverStatus.SAT
       println("sat")
       return SolverStatus.SAT
 
     } catch (e: Exception) {
-      // ha ellentmondás, vagy hiba van, akkor UNSAT
       currentStatus = SolverStatus.UNSAT
       println("unsat")
       return SolverStatus.UNSAT
