@@ -27,7 +27,6 @@ dependencies {
     implementation(project(":theta-xcfa"))
     implementation(project(":theta-c-frontend"))
     implementation(Deps.refinery)
-    implementation(refinery.generator)
     testImplementation(project(":theta-c2xcfa"))
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver"))
