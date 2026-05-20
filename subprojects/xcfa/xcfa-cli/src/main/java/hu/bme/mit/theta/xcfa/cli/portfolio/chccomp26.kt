@@ -103,11 +103,12 @@ fun chcCompPortfolio26(
         baseCegarConfig.adaptConfig(
           inProcess = inProcess,
           domain = PRED_CART,
-          refinement = BW_BIN_ITP,
+          refinement = Refinement.SEQ_ITP,
           exprSplitter = ExprSplitterOptions.WHOLE,
           timeoutMs = timeout,
           abstractionSolver = solver,
           refinementSolver = solver,
+          search = Search.ERR,
         ),
         checker,
       )
@@ -119,11 +120,12 @@ fun chcCompPortfolio26(
         baseCegarConfig.adaptConfig(
           inProcess = inProcess,
           domain = PRED_BOOL,
-          refinement = BW_BIN_ITP,
+          refinement = Refinement.SEQ_ITP,
           exprSplitter = ExprSplitterOptions.WHOLE,
           timeoutMs = timeout,
           abstractionSolver = solver,
           refinementSolver = solver,
+          search = Search.ERR,
         ),
         checker,
       )
@@ -139,6 +141,7 @@ fun chcCompPortfolio26(
           timeoutMs = timeout,
           abstractionSolver = solver,
           refinementSolver = solver,
+          search = Search.ERR,
         ),
         checker,
       )
@@ -222,29 +225,6 @@ fun chcCompPortfolio26(
       )
     }
 
-    val complex26 =
-      ConfigNode(
-        "Complex26-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
-
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
       edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
       return node
@@ -285,7 +265,7 @@ fun chcCompPortfolio26(
 
           LIA,
           LIA_ARRAYS -> {
-            // All CEGAR configs produce 0 % validated witnesses here (quantified invariants).
+            // All CEGAR configs produce 0 % validated witnesses here.
             // Use the same order as the solving portfolio to maximise solved count.
             val c1 = cart(900_000, "Z3")
             val c2 = cart(400_000, "mathsat:5.6.10")
@@ -423,8 +403,6 @@ fun chcCompPortfolio26(
           AUTO -> error("Category should have been resolved before this point")
         }
       }
-
-    endConfig then complex26
 
     return STM(startingConfig, edges)
   }
