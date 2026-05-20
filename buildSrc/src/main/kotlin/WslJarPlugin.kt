@@ -60,18 +60,6 @@ class WslJarPlugin : Plugin<Project> {
       val projectVersion = project.version
 
       doLast {
-        fun String.relativePath(base: String): String {
-          val thisSplit = this.split("/").filter { it.isNotEmpty() }
-          val baseSplit = base.split("/").filter { it.isNotEmpty() }
-          val commonLength = thisSplit.zip(baseSplit).takeWhile { it.first == it.second }.count()
-          val upLevels = baseSplit.size - commonLength
-          val downLevels = thisSplit.drop(commonLength)
-          return buildString {
-            repeat(upLevels) { append("../") }
-            append(downLevels.joinToString("/"))
-          }
-        }
-
         JarFile(artifact).use { jar ->
           val manifest = jar.manifest
           val attrs = manifest.mainAttributes
@@ -80,8 +68,8 @@ class WslJarPlugin : Plugin<Project> {
             runtimeClasspath.files.joinToString(" ") { f ->
               f.absolutePath.let {
                 val drive = it[0].lowercase()
-                "/mnt/$drive${it.substring(2).replace("\\", "/")}"
-              }.relativePath(artifactPath)
+                "file:/mnt/$drive${it.substring(2).replace("\\", "/")}"
+              }
             }
           attrs.putValue("Class-Path", classPath)
 

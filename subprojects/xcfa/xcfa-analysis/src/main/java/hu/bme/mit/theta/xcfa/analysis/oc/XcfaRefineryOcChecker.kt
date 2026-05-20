@@ -16,33 +16,16 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
-import hu.bme.mit.theta.analysis.algorithm.oc.Event
-import hu.bme.mit.theta.analysis.algorithm.oc.EventType
-import hu.bme.mit.theta.analysis.algorithm.oc.GlobalRelation
-import hu.bme.mit.theta.analysis.algorithm.oc.Reason
-import hu.bme.mit.theta.analysis.algorithm.oc.Relation
+import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr
-import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.GtExpr
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.LtExpr
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr
+import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.AndExpr
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
-import hu.bme.mit.theta.core.type.booltype.NotExpr
-import hu.bme.mit.theta.core.type.booltype.OrExpr
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr
+import hu.bme.mit.theta.core.type.booltype.*
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.solver.SolverStatus
 import tools.refinery.generator.standalone.StandaloneRefinery
@@ -211,17 +194,26 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
                       "\t!(guard(${event.refineryId})) , ($guardString);\n" +
                       "\t(guard(${event.refineryId})) , !($guardString).")
       }
+    }
 
-      if (event.type == EventType.READ) {
-        rfPredicatesSb.appendLine("pred rfSome${event.refineryId}() <->")
-        val possibleRfs = event.possibleRFs(eg.rfs)
-        if (possibleRfs == "") {
-          rfPredicatesSb.appendLine("\t!guard(${event.refineryId}).")
-        } else {
-          rfPredicatesSb.appendLine("\t!guard(${event.refineryId}) ; $possibleRfs.")
+    eg.rfs.forEach { (v, list) ->
+      list
+        .groupBy { it.to }
+        .forEach { (event, rfs) ->
+          rfs.forEach { rf ->
+            // TODO rf-val
+          }
+
+          rfPredicatesSb.appendLine("error pred rfSome${event.refineryId}() <->")
+          val possibleRfs = rfs.joinToString(" , ") { rel ->
+            "!rf(${rel.from.refineryId}, ${rel.to.refineryId})"
+          }
+          if (possibleRfs == "") {
+            rfPredicatesSb.appendLine("\tguard(${event.refineryId}).")
+          } else {
+            rfPredicatesSb.appendLine("\tguard(${event.refineryId}) , $possibleRfs.")
+          }
         }
-        rfPredicatesSb.appendLine("rfSome${event.refineryId}().")
-      }
     }
 
     return Pair(sb.toString(), rfPredicatesSb.toString())
@@ -359,15 +351,5 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       "$helperName()"
     }
     else -> throw UnsupportedOperationException("Unsupported expression $this in refinery expression conversion.")
-  }
-
-  private fun Event.possibleRFs(rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>): String {
-    val relevantRelations = rfs[this.const.varDecl] ?: return ""
-
-    return relevantRelations
-      .filter { it.to == this }
-      .joinToString(" ; ") { rel ->
-        "rf(${rel.from.refineryId}, ${rel.to.refineryId})"
-      }
   }
 }
