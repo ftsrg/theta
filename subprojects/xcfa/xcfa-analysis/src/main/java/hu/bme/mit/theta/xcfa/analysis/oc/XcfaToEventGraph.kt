@@ -348,7 +348,12 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           consts.forEach { (v, c) -> assumeConsts.getOrPut(v) { mutableListOf() }.add(c) }
         }
       }
-      this.cond.toEvents(consts, true)
+      if (asAssign) {
+        check(this.cond.vars.size == 1)
+        last = event(this.cond.vars.first(), WRITE)
+      } else {
+        this.cond.toEvents(consts, true)
+      }
       if ((edge.source.outgoingEdges.size == 1 || !firstLabel) && asAssign) {
         last.first().assignment = condWithConsts
       }
