@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuseFormat
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -592,6 +593,7 @@ data class OutputConfig(
   val cOutputConfig: COutputConfig = COutputConfig(),
   val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
   val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
+  val precOutputConfig: PrecOutputConfig = PrecOutputConfig(),
   val witnessConfig: WitnessConfig = WitnessConfig(),
   val argConfig: ArgConfig = ArgConfig(),
 ) : Config {
@@ -601,12 +603,13 @@ data class OutputConfig(
       cOutputConfig.getObjects() union
       xcfaOutputConfig.getObjects() union
       chcOutputConfig.getObjects() union
+      precOutputConfig.getObjects() union
       witnessConfig.getObjects() union
       argConfig.getObjects()
   }
 
   override fun update(): Boolean =
-    listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, witnessConfig, argConfig)
+    listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, precOutputConfig, witnessConfig, argConfig)
       .map { it.update() }
       .any { it }
 }
@@ -617,6 +620,10 @@ data class XcfaOutputConfig(
 
 data class ChcOutputConfig(
   @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
+) : Config
+
+data class PrecOutputConfig(
+  @Parameter(names = ["--enable-prec-serialization"]) var format: PrecReuseFormat? = null
 ) : Config
 
 data class COutputConfig(

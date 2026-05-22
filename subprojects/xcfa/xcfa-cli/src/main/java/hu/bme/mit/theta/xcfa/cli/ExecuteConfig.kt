@@ -31,8 +31,6 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.utils.PrecReuse
-import hu.bme.mit.theta.analysis.utils.PrecReuseMode
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
@@ -48,6 +46,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
@@ -57,7 +56,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -114,22 +112,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
   }
   (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
-    if (cegarConfig.initPrec == InitPrec.REUSE) {
-      cegarConfig.precFile?.let { precFilename ->
-        val precFile = File(precFilename)
-        if (precFile.exists()) {
-          PrecReuse.setInput(precFile)
-          PrecReuse.setLogger(uniqueLogger)
-          PrecReuse.precReuseMode = when (precFile.extension) {
-            "yml" -> PrecReuseMode.WITNESS
-            "txt" -> PrecReuseMode.PROPRIETARY
-            else -> PrecReuseMode.PROPRIETARY.also {
-              logger.write(Logger.Level.INFO, "Precision reuse selected, but provided precision file format not recognised. Proceeding with empty initial precision.\n")
-            }
-          }
-        }
-        else logger.write(Logger.Level.INFO, "Precision reuse selected, but provided precision file does not exist. Proceeding with empty initial precision.\n")
-      } ?: logger.write(Logger.Level.INFO, "Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision. Proceeding with empty initial precision.\n")
+    if (cegarConfig.initPrec == InitPrec.REUSE || config.outputConfig.precOutputConfig.format != null) {
+      PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
     }
   }
 
@@ -225,6 +209,10 @@ private fun frontend(
     } else {
       emptySet()
     }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (cegarConfig.initPrec == InitPrec.REUSE)
+      PrecReuse.load(cegarConfig.precFile, xcfa.collectVars(), parseContext, logger)
+  }
 
   if (
     parseContext.multiThreading &&

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,23 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis
+
+package hu.bme.mit.theta.analysis.utils
 
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.core.decl.VarDecl
 
-data class XcfaPrec<P : Prec>(val p: P, val noPop: MutableList<XcfaState<*>> = mutableListOf()) :
-  Prec {
+object PrecCache {
+    private var cached: Prec? = null
 
-  override fun getUsedVars(): Collection<VarDecl<*>> {
-    return p.usedVars
-  }
-
-  fun refine(runningPrec: P): XcfaPrec<P> {
-    return if (this.p == runningPrec) {
-      this
-    } else {
-      XcfaPrec(runningPrec)
+    fun <P : Prec> store(prec: P) {
+        cached = prec
     }
-  }
+
+    fun get(): Prec? {
+        return cached
+    }
 }

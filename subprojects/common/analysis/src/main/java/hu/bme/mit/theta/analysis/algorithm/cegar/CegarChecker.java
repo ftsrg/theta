@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
-import hu.bme.mit.theta.analysis.utils.PrecReuse;
+import hu.bme.mit.theta.analysis.utils.PrecCache;
 import hu.bme.mit.theta.analysis.utils.ProofVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -159,7 +159,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         logger.write(Level.MAINSTEP, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
 
-        PrecReuse.INSTANCE.store(prec);
+        PrecCache.INSTANCE.store(prec);
 
         return cegarResult;
     }
