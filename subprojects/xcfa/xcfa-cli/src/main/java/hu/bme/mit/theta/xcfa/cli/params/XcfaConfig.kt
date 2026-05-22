@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -161,6 +162,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.LITMUS -> null
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
+        InputType.BTOR2 -> BTOR2FrontendConfig() as T
       }
   }
 }
@@ -178,6 +180,18 @@ data class CFrontendConfig(
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
 ) : SpecFrontendConfig
 
+/** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
+enum class ChcCategory {
+  AUTO,
+  BV,
+  BV_LIN,
+  LIA,
+  LIA_ARRAYS,
+  LIA_LIN,
+  LIA_LIN_ARRAYS,
+  LRA_LIN,
+}
+
 data class CHCFrontendConfig(
   @Parameter(
     names = ["--chc-transformation"],
@@ -186,6 +200,19 @@ data class CHCFrontendConfig(
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
   @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
   var model: Boolean = false,
+  @Parameter(
+    names = ["--chc-category"],
+    description =
+      "CHC-COMP category hint for portfolio selection " +
+        "(AUTO, BV, BV_LIN, LIA, LIA_ARRAYS, LIA_LIN, LIA_LIN_ARRAYS, LRA_LIN). " +
+        "AUTO infers the category from variable types.",
+  )
+  var category: ChcCategory = ChcCategory.AUTO,
+) : SpecFrontendConfig
+
+data class BTOR2FrontendConfig(
+  @Parameter(names = ["--no-optimization"], description = "Runs frontend without XCFA passes")
+  var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config
@@ -550,6 +577,25 @@ data class MddConfig(
     description = "Iteration strategy for the MDD checker",
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(
+    names = ["--look-ahead-strategy"],
+    description = "MDD to expression conversion strategy",
+  )
+  var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+  @Parameter(
+    names = ["--proof-strategy"],
+    description = "MDD to expression conversion strategy for the proof invariant",
+  )
+  var proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
+  var traceTimeout: Long = 10,
+  @Parameter(
+    names = ["--solver-measurements"],
+    description = "Perform a structural rerun to estimate solver time overhead",
+  )
+  var solverMeasurements: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

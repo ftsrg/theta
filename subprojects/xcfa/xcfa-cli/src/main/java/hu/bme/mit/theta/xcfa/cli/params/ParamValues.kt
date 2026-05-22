@@ -77,6 +77,7 @@ enum class InputType {
   CHC,
   LITMUS,
   CFA,
+  BTOR2,
 }
 
 enum class Backend {

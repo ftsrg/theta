@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import java.util.Collection;
 import java.util.Collections;
@@ -85,7 +85,7 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
     public LocalCfaPrec<P> refine(final Map<Loc, P> refinedPrecs) {
         checkNotNull(refinedPrecs);
 
-        final Map<Loc, P> refinedMapping = Containers.createMap(this.mapping);
+        final Map<Loc, P> refinedMapping = CollectionUtil.createMap(this.mapping);
 
         for (final Entry<Loc, P> entry : refinedPrecs.entrySet()) {
             final Loc loc = entry.getKey();

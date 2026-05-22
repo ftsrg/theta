@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -37,7 +37,7 @@ import java.util.Set;
 public class StmtAtomCollector {
 
     public static Set<Expr<BoolType>> collectAtoms(final Stmt stmt) {
-        final Set<Expr<BoolType>> atoms = Containers.createSet();
+        final Set<Expr<BoolType>> atoms = CollectionUtil.createSet();
         stmt.accept(new AllAssumesAndAssignsCollector(), atoms);
         return atoms;
     }
