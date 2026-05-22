@@ -47,10 +47,6 @@ import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.analysis.unit.UnitAnalysis
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
-import hu.bme.mit.theta.analysis.utils.ExplPrecSerializer
-import hu.bme.mit.theta.analysis.utils.PrecReuse
-import hu.bme.mit.theta.analysis.utils.PrecReuseMode
-import hu.bme.mit.theta.analysis.utils.PredPrecSerializer
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -69,9 +65,8 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPredPrecSerializer
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessExplPrecSerializer
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaSegmentOrderComparator
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -776,21 +771,12 @@ enum class InitPrec(
   ),
   REUSE(
     explPrec = { xcfa ->
-      val explPrecSerializer = when (PrecReuse.precReuseMode) {
-        PrecReuseMode.PROPRIETARY -> ExplPrecSerializer()
-        PrecReuseMode.WITNESS -> WitnessExplPrecSerializer()
-      }
-      PrecReuse.enable(XcfaPrecSerializer(PtrPrecSerializer(explPrecSerializer)))
-      PrecReuse.load(xcfa.collectVars())
+      XcfaPrec(PtrPrec(PrecReuse.get<ExplPrec>()))
     },
     predPrec = { xcfa ->
-      val predPrecSerializer = when (PrecReuse.precReuseMode) {
-        PrecReuseMode.PROPRIETARY -> PredPrecSerializer()
-        PrecReuseMode.WITNESS -> WitnessPredPrecSerializer()
-      }
-      PrecReuse.enable(XcfaPrecSerializer(PtrPrecSerializer(predPrecSerializer)))
-      PrecReuse.load(xcfa.collectVars())
+      XcfaPrec(PtrPrec(PrecReuse.get<PredPrec>()))
     },
+    prod2Prec = { error("REUSE is not supported for the product domain.") }
   ),
 }
 
