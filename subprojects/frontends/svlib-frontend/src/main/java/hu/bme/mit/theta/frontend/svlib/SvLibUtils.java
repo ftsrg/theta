@@ -4,18 +4,31 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
+import static hu.bme.mit.theta.xcfa.passes.UtilsKt.changeVars;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
-import java.util.List;
+
+import java.util.*;
+
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -38,32 +51,111 @@ final class SvLibUtils {
     charStream = cs;
   }
 
+  static void resetSymbolTable() {
+    symbolTable = new GenericSmtLibSymbolTable(initialSymbolTable);
+    termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+  }
 
-  static String getOriginalText(ParserRuleContext ctx) {
-    return charStream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+  static void registerVar(VarDecl<?> var, boolean initial) {
+    transformConst(Decls.Const(var.getName(), var.getType()), initial);
+  }
+
+  static Expr<BoolType> boolExpr(
+      SvLibParser.TermContext term,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    return (Expr<BoolType>) expr(term, Bool(), procedure, declarations);
+  }
+
+  static Expr<IntType> intExpr(
+      SvLibParser.TermContext term,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    return (Expr<IntType>) expr(term, Int(), procedure, declarations);
+  }
+
+  static Expr<BoolType> relationalBoolExpr(
+      SvLibParser.RelationalTermContext term,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    return (Expr<BoolType>) relationalExpr(term, Bool(), procedure, declarations);
+  }
+
+  static Expr<?> relationalExpr(
+      SvLibParser.RelationalTermContext term,
+      Type expectedType,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    if (term instanceof SvLibParser.OldRelationalTermContext) {
+      return unsupported("relational term 'old'");
+    }
+    return parseAndReplace(getOriginalText(term), expectedType, procedure, declarations);
+  }
+
+  static Expr<?> expr(
+      SvLibParser.TermContext term,
+      Type expectedType,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    if (term instanceof SvLibParser.MatchTermContext) {
+      return unsupported("term 'match'");
+    }
+    if (term instanceof SvLibParser.AnnotatedTermContext) {
+      return unsupported("term annotation");
+    }
+    return parseAndReplace(getOriginalText(term), expectedType, procedure, declarations);
   }
 
 
+  private static Expr<?> parseAndReplace(
+      String text,
+      Type expectedType,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    Expr<?> expr =
+        termTransformer.toExpr(text, expectedType, new SmtLibModel(Collections.emptyMap()));
+    var exprVars = new ArrayList<ConstDecl<?>>();
+    ExprUtils.collectConstants(expr, exprVars);
+    Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();
+    for (Decl<?> var : exprVars) {
+      varsToLocal.put(var, resolveVar(var.getName(), procedure, declarations));
+    }
+    return changeVars(expr, varsToLocal);
+  }
 
-  private static Type guessType(SvLibParser.TermContext term) {
-    if (term instanceof SvLibParser.SpecConstantTermContext) {
-      return Int();
-    }
-    if (term instanceof SvLibParser.QualIdentifierTermContext identifierTerm) {
-      String identifier = identifierTerm.qual_identifer().getText();
-      if ("true".equals(identifier) || "false".equals(identifier)) {
-        return Bool();
+  static VarDecl<?> resolveVar(
+      String symbol,
+      XcfaProcedureBuilder procedure,
+      Map<String, VarDecl<?>> declarations) {
+    String name = symbol;
+    VarDecl<?> variable = null;
+    for (VarDecl<?> candidate : procedure.getVars()) {
+      if (candidate.getName().equals(name)) {
+        variable = candidate;
+        break;
       }
-      return Int();
     }
-    if (term instanceof SvLibParser.ApplicationTermContext application) {
-      String operator = application.qual_identifer().getText();
-      return switch (operator) {
-        case "=", "distinct", "<", "<=", ">", ">=", "not", "and", "or", "=>" -> Bool();
-        default -> Int();
-      };
+    if (variable == null) {
+      for (kotlin.Pair<VarDecl<?>, hu.bme.mit.theta.xcfa.model.ParamDirection> param :
+          procedure.getParams()) {
+        if (param.getFirst().getName().equals(name)) {
+          variable = param.getFirst();
+          break;
+        }
+      }
     }
-    return Int();
+    if (variable == null) {
+      variable = declarations.get(name);
+    }
+    if (variable == null) {
+      throw new IllegalStateException("Unknown SV-LIB variable '" + name + "'");
+    }
+    return variable;
+  }
+
+
+  static String getOriginalText(ParserRuleContext ctx) {
+    return charStream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
   }
 
   private static void transformConst(ConstDecl<?> decl, boolean initial) {

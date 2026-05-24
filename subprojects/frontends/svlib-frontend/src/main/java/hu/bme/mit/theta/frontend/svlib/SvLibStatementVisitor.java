@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.frontend.svlib;
 
 
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.boolExpr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
 
@@ -45,7 +46,6 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
 
     private final XcfaProcedureBuilder builder;
     private final Map<String, VarDecl<?>> declarations;
-    private final SvLibExprVisitor exprVisitor;
     private final String procedureName;
     private final BiFunction<String, String, XcfaLocation> nextLoc;
     private Set<XcfaLocation> currentEntries = Set.of();
@@ -54,13 +54,26 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
             XcfaProcedureBuilder builder,
             String procedureName,
             Map<String, VarDecl<?>> declarations,
-            SvLibExprVisitor exprVisitor,
             BiFunction<String, String, XcfaLocation> nextLoc) {
         this.builder = builder;
         this.procedureName = procedureName;
         this.declarations = declarations;
-        this.exprVisitor = exprVisitor;
         this.nextLoc = nextLoc;
     }
+
+    Set<XcfaLocation> visit(SvLibParser.StatementContext statement, Set<XcfaLocation> entries) {
+        currentEntries = entries;
+        Set<XcfaLocation> result = super.visit(statement);
+        return result == null ? Set.of() : result;
+    }
+
+    @Override
+    public Set<XcfaLocation> visitAssumeStatement(SvLibParser.AssumeStatementContext ctx) {
+        Set<XcfaLocation> result = new LinkedHashSet<>();
+        Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
+        return result;
+    }
+
+
 
 }

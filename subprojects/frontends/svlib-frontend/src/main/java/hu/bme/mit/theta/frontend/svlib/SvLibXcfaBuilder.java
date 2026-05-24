@@ -24,27 +24,15 @@ import java.util.List;
 public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
 
   private final ProcedurePassManager procedurePassManager;
+
   private final LinkedHashMap<String, VarDecl<?>> declarations = new LinkedHashMap<>();
-
-  /*private final LinkedHashMap<String, LinkedHashMap<String, VarDecl<?>>> procedureInputs =
-      new LinkedHashMap<>();
-
-  private final LinkedHashMap<String, LinkedHashMap<String, VarDecl<?>>> procedureOutputs =
-      new LinkedHashMap<>();
-
-  private final LinkedHashMap<String, LinkedHashMap<String, VarDecl<?>>> procedureLocals =
-      new LinkedHashMap<>();
-
-  private final LinkedHashMap<String, SvLibParser.StatementContext> procedureBodies =
-      new LinkedHashMap<>();*/
-
   private String entryProcedureName;
 
   private XcfaProcedureBuilder entryProcedure;
 
   private List<SvLibParser.TermContext> entryArguments = List.of();
 
-  private final LinkedHashMap<String, XcfaProcedureBuilder> procedures = new LinkedHashMap<>();
+  private int procedureCount;
 
   private int locCounter;
 
@@ -53,6 +41,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   }
 
   XCFA buildXcfa(SvLibParser.ScriptContext script){
+    collectGlobalsAndEntry(script);
     XcfaBuilder xcfaBuilder = new XcfaBuilder("SvLibXCFA");
     for (VarDecl<?> declaration : declarations.values()) {
       xcfaBuilder.addVar(new XcfaGlobalVar(declaration));
@@ -65,6 +54,26 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     return xcfaBuilder.build();
   }
 
+  private void collectGlobalsAndEntry(SvLibParser.ScriptContext script) {
+    for (SvLibParser.CommandSvLibContext command : script.commandSvLib()) {
+      if (command instanceof SvLibParser.DeclareVarContext declareVarContext) {
+        String name = declareVarContext.symbol().getText();
+        VarDecl<?> declaration = Var(name, sortOf(declareVarContext.sort()));
+        declarations.put(name, declaration);
+        SvLibUtils.registerVar(declaration, true);
+      } else if (command instanceof SvLibParser.DefineProcContext) {
+        procedureCount++;
+      } else if (command instanceof SvLibParser.VerifyCallContext verifyCallContext) {
+        entryProcedureName = verifyCallContext.symbol().getText();
+        entryArguments = List.copyOf(verifyCallContext.term());
+      }
+    }
+    if (procedureCount > 1) {
+      throw new UnsupportedOperationException(
+          "Current SV-LIB prototype supports exactly one procedure");
+    }
+  }
+
   //Extract the parameter names and types from the ctx,
   // and then add them to the current procedure as either input or output parameters.
   private void addParams(
@@ -75,8 +84,11 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     List<SvLibParser.SortContext> sorts = ctx.sort();
     for (int i = 0; i < symbols.size(); i++) {
       String name = symbols.get(i).getText();
-      procedure.addParam(Var(name, sortOf(sorts.get(i))), direction);
+      VarDecl<?> param = Var(name, sortOf(sorts.get(i)));
+      procedure.addParam(param, direction);
+      SvLibUtils.registerVar(param, false);
     }
+
   }
 
   private void addLocals(
@@ -85,14 +97,16 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     List<SvLibParser.SortContext> sorts = ctx.sort();
     for (int i = 0; i < symbols.size(); i++) {
       String name = symbols.get(i).getText();
-      procedure.addVar(Var(name, sortOf(sorts.get(i))));
+      VarDecl<?> local = Var(name, sortOf(sorts.get(i)));
+      procedure.addVar(local);
+      SvLibUtils.registerVar(local, false);
     }
   }
 
   private SvLibMetadata metadata() {
     return new SvLibMetadata();
   }
-  private XcfaLocation nextLoc(String kind, String sourceName) {
+  private XcfaLocation nextLoc() {
     return new XcfaLocation("l" + locCounter++, metadata());
   }
 
@@ -106,20 +120,26 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   @Override
   public Void visitDefineProc(SvLibParser.DefineProcContext ctx) {
     String name = ctx.symbol().getText();
+    if (entryProcedureName != null && !entryProcedureName.equals(name)) {
+      return null;
+    }
+    if (entryProcedure != null) {
+      return null;
+    }
     XcfaProcedureBuilder procedure = new XcfaProcedureBuilder(name, procedurePassManager);
+    SvLibUtils.resetSymbolTable();
     addParams(procedure, ctx.procDeclarationArguments(0), ParamDirection.IN);
     addParams(procedure, ctx.procDeclarationArguments(1), ParamDirection.OUT);
     addLocals(procedure, ctx.procDeclarationArguments(2));
-    procedures.put(name, procedure);
-    //procedureBodies.put(name, ctx.statement());
+
 
     procedure.createInitLoc();
     procedure.createFinalLoc();
     procedure.createErrorLoc();
 
-    SvLibExprVisitor exprVisitor = new SvLibExprVisitor(procedure, declarations);
-    SvLibStatementVisitor statementVisitor =
-        new SvLibStatementVisitor(procedure, name, declarations, exprVisitor, this::nextLoc);
+
+    //SvLibStatementVisitor statementVisitor =
+        //new SvLibStatementVisitor(procedure, name, declarations, this::nextLoc);
     return null;
   }
 
