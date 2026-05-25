@@ -57,15 +57,15 @@ import hu.bme.mit.theta.xcfa.cli.params.Domain.*
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessExplPrecSerializer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPredPrecSerializer
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
 import kotlin.reflect.KProperty
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 
 enum class PrecReuseFormat(
   val explPrecSerializer: ExplPrecSerializer,
   val predPrecSerializer: PredPrecSerializer,
-  val extension: String
+  val extension: String,
 ) {
   GENERIC(
     explPrecSerializer = GenericExplPrecSerializer(),
@@ -76,47 +76,77 @@ enum class PrecReuseFormat(
     explPrecSerializer = WitnessExplPrecSerializer(),
     predPrecSerializer = WitnessPredPrecSerializer(),
     extension = "yml",
-  )
+  ),
 }
 
 object PrecReuse {
   private const val ERROR_MESSAGE = "Misconfigured WitnessPrecSerializer"
 
   private var prec: Prec? = null
-  private var serializer: ((PrecReuseFormat) -> PrecSerializer<*>) by ThrowIfNullDelegate("$ERROR_MESSAGE - domain was not set")
+  private var serializer: ((PrecReuseFormat) -> PrecSerializer<*>) by
+    ThrowIfNullDelegate("$ERROR_MESSAGE - domain was not set")
 
   fun setDomain(domain: Domain) {
-    serializer = when (domain) {
-      EXPL -> { format -> format.explPrecSerializer }
-      PRED_BOOL,
-      PRED_CART,
-      PRED_SPLIT -> { format -> format.predPrecSerializer }
-      EXPL_PRED_SPLIT,
-      EXPL_PRED_STMT -> error("REUSE is not supported for the product domain.")
-    }
+    serializer =
+      when (domain) {
+        EXPL -> { format -> format.explPrecSerializer }
+        PRED_BOOL,
+        PRED_CART,
+        PRED_SPLIT -> { format -> format.predPrecSerializer }
+        EXPL_PRED_SPLIT,
+        EXPL_PRED_STMT -> error("REUSE is not supported for the product domain.")
+      }
   }
 
-  fun load(precFilePath: String?, currentVars: Iterable<VarDecl<*>> = emptyList(), parseContext: ParseContext, logger: Logger) {
+  fun load(
+    precFilePath: String?,
+    currentVars: Iterable<VarDecl<*>> = emptyList(),
+    parseContext: ParseContext,
+    logger: Logger,
+  ) {
     precFilePath
-      ?: return emptyPrec(parseContext, logger, "WARNING: Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision. Proceeding with empty initial precision.")
+      ?: return emptyPrec(
+        parseContext,
+        logger,
+        "WARNING: Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision. Proceeding with empty initial precision.",
+      )
 
-    val precFile = File(precFilePath).takeIf(File::exists)
-      ?: return emptyPrec(parseContext, logger, "WARNING: Precision reuse selected, but provided precision file does not exist. Proceeding with empty initial precision.")
+    val precFile =
+      File(precFilePath).takeIf(File::exists)
+        ?: return emptyPrec(
+          parseContext,
+          logger,
+          "WARNING: Precision reuse selected, but provided precision file does not exist. Proceeding with empty initial precision.",
+        )
 
-    val format = PrecReuseFormat.entries.firstOrNull { it.extension == precFile.extension }
-      ?: return emptyPrec(parseContext, logger, "WARNING: Precision reuse selected, but provided precision file format not recognised. Proceeding with empty initial precision.")
+    val format =
+      PrecReuseFormat.entries.firstOrNull { it.extension == precFile.extension }
+        ?: return emptyPrec(
+          parseContext,
+          logger,
+          "WARNING: Precision reuse selected, but provided precision file format not recognised. Proceeding with empty initial precision.",
+        )
 
     prec = serializer(format).parse(precFile.readText(), currentVars, parseContext, logger)
   }
 
-  fun <P : Prec> get(): P = prec as? P ?: throw RuntimeException("$ERROR_MESSAGE - incompatible domains")
+  fun <P : Prec> get(): P =
+    prec as? P ?: throw RuntimeException("$ERROR_MESSAGE - incompatible domains")
 
-  fun write(format: PrecReuseFormat, outputFolder: File, config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger) {
+  fun write(
+    format: PrecReuseFormat,
+    outputFolder: File,
+    config: XcfaConfig<*, *>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ) {
     val outputFileName = "prec.${format.extension}"
     val outputFile = File(outputFolder, outputFileName)
-    outputFile.writeText(PrecCache.get()?.unwrap()?.let {
-      serializer(format).serialize(it, config, parseContext, logger)
-    } ?: "")
+    outputFile.writeText(
+      PrecCache.get()?.unwrap()?.let {
+        serializer(format).serialize(it, config, parseContext, logger)
+      } ?: ""
+    )
   }
 
   private fun emptyPrec(parseContext: ParseContext, logger: Logger, message: String) {
@@ -126,8 +156,19 @@ object PrecReuse {
 }
 
 interface PrecSerializer<out P : Prec> {
-  fun serialize(prec: Prec, config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger): String
-  fun parse(input: String, currentVars: Iterable<VarDecl<*>>, parseContext: ParseContext, logger: Logger): P
+  fun serialize(
+    prec: Prec,
+    config: XcfaConfig<*, *>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ): String
+
+  fun parse(
+    input: String,
+    currentVars: Iterable<VarDecl<*>>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ): P
 }
 
 interface ExplPrecSerializer : PrecSerializer<ExplPrec>
@@ -135,8 +176,19 @@ interface ExplPrecSerializer : PrecSerializer<ExplPrec>
 interface PredPrecSerializer : PrecSerializer<PredPrec>
 
 class GenericExplPrecSerializer : ExplPrecSerializer {
-  override fun serialize(prec: Prec, config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger) = "*:\n" + prec.usedVars.joinToString(separator = "\n") { it.name }
-  override fun parse(input: String, currentVars: Iterable<VarDecl<*>>, parseContext: ParseContext, logger: Logger): ExplPrec {
+  override fun serialize(
+    prec: Prec,
+    config: XcfaConfig<*, *>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ) = "*:\n" + prec.usedVars.joinToString(separator = "\n") { it.name }
+
+  override fun parse(
+    input: String,
+    currentVars: Iterable<VarDecl<*>>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ): ExplPrec {
     val varNames = removeScopes(input).trim().split(Regex("\\s+"))
     val vars = currentVars.filter { varNames.contains(it.name) }
     return ExplPrec.of(vars)
@@ -144,34 +196,47 @@ class GenericExplPrecSerializer : ExplPrecSerializer {
 }
 
 class GenericPredPrecSerializer : PredPrecSerializer {
-  override fun serialize(prec: Prec, config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger): String {
+  override fun serialize(
+    prec: Prec,
+    config: XcfaConfig<*, *>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ): String {
     val symbolTable = PrecSmtLibSymbolTable()
     val transformationManager = GenericSmtLibTransformationManager(symbolTable)
     val declTransformer = PrecSmtLibDeclTransformer(transformationManager, symbolTable)
 
-    val quotedVarLookup = prec.usedVars
-      .associateWith { Decls.Const(it.toSymbol(), it.type) }
+    val quotedVarLookup = prec.usedVars.associateWith { Decls.Const(it.toSymbol(), it.type) }
 
-    val varDecls = quotedVarLookup.values.joinToString(separator = "\n") { declTransformer.toDeclaration(it) }
+    val varDecls =
+      quotedVarLookup.values.joinToString(separator = "\n") { declTransformer.toDeclaration(it) }
 
-    val predicates = (prec as PredPrec).preds
-      .map { pred -> ExprUtils.changeDecls(pred, quotedVarLookup) }
-      .mapNotNull {
-        try {
-          transformationManager.toTerm(it)
-        } catch (e: Exception) {
-          logger.writeln(INFO, "WARNING: Couldn't serialize precision predicate, skipping it (${e.message})")
-          null
+    val predicates =
+      (prec as PredPrec)
+        .preds
+        .map { pred -> ExprUtils.changeDecls(pred, quotedVarLookup) }
+        .mapNotNull {
+          try {
+            transformationManager.toTerm(it)
+          } catch (e: Exception) {
+            logger.writeln(
+              INFO,
+              "WARNING: Couldn't serialize precision predicate, skipping it (${e.message})",
+            )
+            null
+          }
         }
-      }
-      .joinToString(separator = "\n") {
-        "(assert $it)"
-      }
+        .joinToString(separator = "\n") { "(assert $it)" }
 
     return "$varDecls\n\n*:\n$predicates"
   }
 
-  override fun parse(input: String, currentVars: Iterable<VarDecl<*>>, parseContext: ParseContext, logger: Logger): PredPrec {
+  override fun parse(
+    input: String,
+    currentVars: Iterable<VarDecl<*>>,
+    parseContext: ParseContext,
+    logger: Logger,
+  ): PredPrec {
     val symbolTable = PrecSmtLibSymbolTable()
     val termTransformer = GenericSmtLibTermTransformer(symbolTable)
 
@@ -186,20 +251,25 @@ class GenericPredPrecSerializer : PredPrecSerializer {
       symbolTable.put(Decls.Const(name, type), name, def.get3())
     }
 
-    val varLookup = funDecls.keys
-      .associateBy(symbolTable::getConst) { name -> currentVars.find { it.toSymbol() == name } }
-      .filterValues { it != null }
+    val varLookup =
+      funDecls.keys
+        .associateBy(symbolTable::getConst) { name -> currentVars.find { it.toSymbol() == name } }
+        .filterValues { it != null }
 
-    val preds = savedPrec.terms.mapNotNull { t ->
-      try {
-        var expr = termTransformer.toExpr(t, BoolExprs.Bool(), SmtLibModel(emptyMap()))
-        expr = ExprUtils.changeDecls(expr, varLookup)
-        ExprUtils.simplify(expr)
-      } catch (e: Exception) {
-        logger.writeln(INFO, "WARNING: Couldn't parse initial precision $t, skipping it (${e.message})")
-        null
+    val preds =
+      savedPrec.terms.mapNotNull { t ->
+        try {
+          var expr = termTransformer.toExpr(t, BoolExprs.Bool(), SmtLibModel(emptyMap()))
+          expr = ExprUtils.changeDecls(expr, varLookup)
+          ExprUtils.simplify(expr)
+        } catch (e: Exception) {
+          logger.writeln(
+            INFO,
+            "WARNING: Couldn't parse initial precision $t, skipping it (${e.message})",
+          )
+          null
+        }
       }
-    }
     return PredPrec.of(preds)
   }
 }
@@ -223,8 +293,10 @@ class PrecSmtLibSymbolTable : GenericSmtLibSymbolTable() {
   override fun definesSymbol(symbol: String) = constToSymbol.inverse().containsKey(symbol)
 }
 
-class PrecSmtLibDeclTransformer(transformer: SmtLibTransformationManager, symbolTable: SmtLibSymbolTable)
-  : GenericSmtLibDeclTransformer(transformer, symbolTable) {
+class PrecSmtLibDeclTransformer(
+  transformer: SmtLibTransformationManager,
+  symbolTable: SmtLibSymbolTable,
+) : GenericSmtLibDeclTransformer(transformer, symbolTable) {
 
   override fun symbolNameFor(decl: Decl<*>): String {
     return decl.name
@@ -274,9 +346,11 @@ private fun parseResponse(input: String): PrecisionResponse {
   }
 }
 
-fun removeScopes(input: String) = input.lines()
-  .filter { line -> line.trim().let { it.isNotEmpty() && ':' != it.last() } }
-  .joinToString("\n")
+fun removeScopes(input: String) =
+  input
+    .lines()
+    .filter { line -> line.trim().let { it.isNotEmpty() && ':' != it.last() } }
+    .joinToString("\n")
 
 class ThrowIfNullDelegate<T, P>(private val errorMessage: String) {
   var value: P? = null

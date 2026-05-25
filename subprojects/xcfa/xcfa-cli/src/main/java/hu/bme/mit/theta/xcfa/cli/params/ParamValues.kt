@@ -770,13 +770,9 @@ enum class InitPrec(
     },
   ),
   REUSE(
-    explPrec = { xcfa ->
-      XcfaPrec(PtrPrec(PrecReuse.get<ExplPrec>()))
-    },
-    predPrec = { xcfa ->
-      XcfaPrec(PtrPrec(PrecReuse.get<PredPrec>()))
-    },
-    prod2Prec = { error("REUSE is not supported for the product domain.") }
+    explPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<ExplPrec>())) },
+    predPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<PredPrec>())) },
+    prod2Prec = { error("REUSE is not supported for the product domain.") },
   ),
 }
 

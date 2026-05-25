@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,8 @@ public abstract class SpecificResponse {
                     }
 
                     @Override
-                    public SpecificResponse visitPrecision_response(SMTLIBv2Parser.Precision_responseContext ctx) {
+                    public SpecificResponse visitPrecision_response(
+                            SMTLIBv2Parser.Precision_responseContext ctx) {
                         return PrecisionResponse.fromContext(ctx);
                     }
                 });
