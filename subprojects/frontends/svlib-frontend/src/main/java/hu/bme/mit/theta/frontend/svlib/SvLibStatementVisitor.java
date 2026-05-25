@@ -40,23 +40,20 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
 
     private final XcfaProcedureBuilder builder;
     private final Map<String, VarDecl<?>> declarations;
-    private final String procedureName;
-    private final BiFunction<String, String, XcfaLocation> nextLoc;
+    private final Function<String, XcfaLocation> nextLoc;
     private Set<XcfaLocation> currentEntries = Set.of();
 
     SvLibStatementVisitor(
             XcfaProcedureBuilder builder,
-            String procedureName,
             Map<String, VarDecl<?>> declarations,
-            BiFunction<String, String, XcfaLocation> nextLoc) {
+            Function<String, XcfaLocation> nextLoc) {
         this.builder = builder;
-        this.procedureName = procedureName;
         this.declarations = declarations;
         this.nextLoc = nextLoc;
     }
@@ -73,6 +70,9 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
         Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
         return result;
     }
+
+
+
 
 
 

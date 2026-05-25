@@ -3,7 +3,9 @@ package hu.bme.mit.theta.frontend.svlib;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
+import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
@@ -16,9 +18,8 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
+
 
 
 public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
@@ -103,11 +104,11 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     }
   }
 
-  private SvLibMetadata metadata() {
-    return new SvLibMetadata();
+  private SvLibMetadata metadata(String sourceName) {
+    return new SvLibMetadata(sourceName);
   }
-  private XcfaLocation nextLoc() {
-    return new XcfaLocation("l" + locCounter++, metadata());
+  private XcfaLocation nextLoc(String sourceName) {
+    return new XcfaLocation("l" + locCounter++, metadata(sourceName));
   }
 
   @Override
@@ -137,9 +138,39 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     procedure.createFinalLoc();
     procedure.createErrorLoc();
 
+    List<XcfaLabel> entryLabels = new ArrayList<>();
+    if (Objects.equals(entryProcedureName, name)) {
+      List<VarDecl<?>> inputVars = new ArrayList<>();
+      for (kotlin.Pair<VarDecl<?>, ParamDirection> param : procedure.getParams()) {
+        if (param.getSecond() == ParamDirection.IN) {
+          inputVars.add(param.getFirst());
+        }
+      }
+      for (int i = 0; i < Math.min(entryArguments.size(), inputVars.size()); i++) {
+        entryLabels.add(
+            AssignStmtLabel(
+                inputVars.get(i),
+                expr(entryArguments.get(i), inputVars.get(i).getType(), procedure, declarations),
+                metadata(inputVars.get(i).getName())));
+      }
+    }
 
-    //SvLibStatementVisitor statementVisitor =
-        //new SvLibStatementVisitor(procedure, name, declarations, this::nextLoc);
+    XcfaLocation start = addLabels(procedure, procedure.getInitLoc(), entryLabels);
+    Set<XcfaLocation> exits =
+        new SvLibStatementVisitor(procedure, declarations, this::nextLoc)
+            .visit(
+                ctx.statement(), Set.of(start));
+
+    for (XcfaLocation exit : exits) {
+      procedure.addEdge(
+          new XcfaEdge(
+              exit,
+              procedure.getFinalLoc().get(),
+              NopLabel.INSTANCE,
+              EmptyMetaData.INSTANCE));
+    }
+    this.entryProcedure = procedure;
+
     return null;
   }
 
@@ -148,6 +179,17 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     entryProcedureName = ctx.symbol().getText();
     entryArguments = List.copyOf(ctx.term());
     return null;
+  }
+
+  private XcfaLocation addLabels(
+      XcfaProcedureBuilder builder, XcfaLocation from, List<XcfaLabel> labels) {
+    if (labels.isEmpty()) {
+      return from;
+    }
+    XcfaLocation to = nextLoc("sequence");
+    XcfaLabel label = labels.size() == 1 ? labels.get(0) : new SequenceLabel(labels);
+    builder.addEdge(new XcfaEdge(from, to, label, EmptyMetaData.INSTANCE));
+    return to;
   }
 
   private static Type sortOf(SvLibParser.SortContext sort) {

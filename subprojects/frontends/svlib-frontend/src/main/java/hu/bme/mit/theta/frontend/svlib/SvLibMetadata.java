@@ -20,6 +20,13 @@ import hu.bme.mit.theta.xcfa.model.MetaData;
 import org.jetbrains.annotations.NotNull;
 
 public class SvLibMetadata extends MetaData {
+
+  private final String sourceName;
+
+  public SvLibMetadata(String sourceName) {
+    this.sourceName = sourceName;
+  }
+
   @Override
   @NotNull
   public MetaData combine(@NotNull MetaData other) {
