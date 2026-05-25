@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -167,7 +167,11 @@ enum class Language {
  *   a mapping that describes one invariant.
  */
 @Serializable
-data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null, val precision: Precision? = null) {
+data class ContentItem(
+  val segment: Segment? = null,
+  val invariant: Invariant? = null,
+  val precision: Precision? = null,
+) {
 
   constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
 }

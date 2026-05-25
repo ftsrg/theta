@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,27 +19,35 @@ package hu.bme.mit.theta.solver.smtlib.solver.parser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 public class PrecisionResponse extends SpecificResponse {
     private final Collection<String> terms;
-    private final Map<String, Tuple3<List<SMTLIBv2Parser.SortContext>, SMTLIBv2Parser.SortContext, String>>
+    private final Map<
+                    String,
+                    Tuple3<List<SMTLIBv2Parser.SortContext>, SMTLIBv2Parser.SortContext, String>>
             funDeclarations; // name -> [inSorts, outSort, declaration]
 
     private PrecisionResponse(
             Collection<String> terms,
-            Map<String, Tuple3<List<SMTLIBv2Parser.SortContext>, SMTLIBv2Parser.SortContext, String>> funDeclarations) {
+            Map<
+                            String,
+                            Tuple3<
+                                    List<SMTLIBv2Parser.SortContext>,
+                                    SMTLIBv2Parser.SortContext,
+                                    String>>
+                    funDeclarations) {
         this.terms = terms;
         this.funDeclarations = funDeclarations;
     }
 
-    public static PrecisionResponse fromContext(final SMTLIBv2Parser.Precision_responseContext ctx) {
+    public static PrecisionResponse fromContext(
+            final SMTLIBv2Parser.Precision_responseContext ctx) {
         return new PrecisionResponse(
                 ctx.term().stream()
                         .map(PrecisionResponse::extractString)
@@ -63,7 +71,8 @@ public class PrecisionResponse extends SpecificResponse {
         return terms;
     }
 
-    public Map<String, Tuple3<List<SMTLIBv2Parser.SortContext>, SMTLIBv2Parser.SortContext, String>> getFunDeclarations() {
+    public Map<String, Tuple3<List<SMTLIBv2Parser.SortContext>, SMTLIBv2Parser.SortContext, String>>
+            getFunDeclarations() {
         return funDeclarations;
     }
 }

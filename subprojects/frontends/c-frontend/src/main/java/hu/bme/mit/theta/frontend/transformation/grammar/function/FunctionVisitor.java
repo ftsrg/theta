@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -124,8 +124,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         parseContext.getMetadata().create(varDecl.getName(), "cName", name);
         if (!currentStatementContext.isEmpty()) {
             Token location = currentStatementContext.peek().get1().start;
-            parseContext.getMetadata().create(varDecl.getName(), "locationLine", location.getLine());
-            parseContext.getMetadata().create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationLine", location.getLine());
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
         }
         declaration.addVarDecl(varDecl);
     }

@@ -33,7 +33,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -114,7 +113,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
   }
   (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
-    if (cegarConfig.initPrec == InitPrec.REUSE || config.outputConfig.precOutputConfig.format != null) {
+    if (
+      cegarConfig.initPrec == InitPrec.REUSE || config.outputConfig.precOutputConfig.format != null
+    ) {
       PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
     }
   }
@@ -370,7 +371,8 @@ private fun postAnalysisLogging(
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
-) = when (config.backendConfig.backend) {
+) =
+  when (config.backendConfig.backend) {
     Backend.TRACEGEN ->
       postTraceGenerationLogging(
         result

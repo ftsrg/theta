@@ -19,13 +19,13 @@ package hu.bme.mit.theta.analysis.utils
 import hu.bme.mit.theta.analysis.Prec
 
 object PrecCache {
-    private var cached: Prec? = null
+  private var cached: Prec? = null
 
-    fun <P : Prec> store(prec: P) {
-        cached = prec
-    }
+  fun <P : Prec> store(prec: P) {
+    cached = prec
+  }
 
-    fun get(): Prec? {
-        return cached
-    }
+  fun get(): Prec? {
+    return cached
+  }
 }

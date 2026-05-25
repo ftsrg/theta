@@ -655,7 +655,14 @@ data class OutputConfig(
   }
 
   override fun update(): Boolean =
-    listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, precOutputConfig, witnessConfig, argConfig)
+    listOf(
+        cOutputConfig,
+        xcfaOutputConfig,
+        chcOutputConfig,
+        precOutputConfig,
+        witnessConfig,
+        argConfig,
+      )
       .map { it.update() }
       .any { it }
 }
