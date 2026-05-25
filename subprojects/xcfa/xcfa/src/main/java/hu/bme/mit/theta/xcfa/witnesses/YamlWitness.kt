@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.witnesses
 import com.charleskorn.kaml.MultiLineStringStyle
 import com.charleskorn.kaml.SingleLineStringStyle
 import com.charleskorn.kaml.Yaml
-import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -55,7 +54,6 @@ val WitnessYamlConfig =
 data class YamlWitness(
   @SerialName("entry_type") val entryType: EntryType,
   val metadata: Metadata,
-  @Required val declarations: List<String> = emptyList(), // TODO remove field
   val content: List<ContentItem>,
 )
 
