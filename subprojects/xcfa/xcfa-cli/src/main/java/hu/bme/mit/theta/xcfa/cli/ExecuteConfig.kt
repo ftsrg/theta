@@ -123,7 +123,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
   }
   (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
-    if (cegarConfig.initPrec == InitPrec.REUSE || config.outputConfig.precOutputConfig.format != null) {
+    if (
+      cegarConfig.initPrec == InitPrec.REUSE || config.outputConfig.precOutputConfig.format != null
+    ) {
       PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
     }
   }

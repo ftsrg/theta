@@ -124,8 +124,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         parseContext.getMetadata().create(varDecl.getName(), "cName", name);
         if (!currentStatementContext.isEmpty()) {
             Token location = currentStatementContext.peek().get1().start;
-            parseContext.getMetadata().create(varDecl.getName(), "locationLine", location.getLine());
-            parseContext.getMetadata().create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationLine", location.getLine());
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
         }
         declaration.addVarDecl(varDecl);
     }

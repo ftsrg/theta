@@ -167,7 +167,11 @@ enum class Language {
  *   a mapping that describes one invariant.
  */
 @Serializable
-data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null, val precision: Precision? = null) {
+data class ContentItem(
+  val segment: Segment? = null,
+  val invariant: Invariant? = null,
+  val precision: Precision? = null,
+) {
 
   constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
 }

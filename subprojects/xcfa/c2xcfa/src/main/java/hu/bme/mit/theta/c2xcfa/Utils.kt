@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -139,7 +139,8 @@ fun getBoolExpressionFromC(
   warningLogger: Logger,
   vars: Iterable<VarDecl<*>>,
 ): Expr<BoolType> {
-  val expr = getExpressionFromC(value, parseContext, collectStatistics, checkOverflow, warningLogger, vars)
+  val expr =
+    getExpressionFromC(value, parseContext, collectStatistics, checkOverflow, warningLogger, vars)
   val signedType = CComplexType.getSignedInt(parseContext)
 
   return if (
