@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
@@ -68,8 +69,49 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
     public Set<XcfaLocation> visitAssumeStatement(SvLibParser.AssumeStatementContext ctx) {
         Set<XcfaLocation> result = new LinkedHashSet<>();
         Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
+        for (XcfaLocation entry : currentEntries) {
+            result.add(addLabel(entry, new StmtLabel(AssumeStmt.of(condition))));
+        }
         return result;
     }
+
+    @Override
+    public Set<XcfaLocation> visitIfStatement(SvLibParser.IfStatementContext ctx) {
+        Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
+        Set<XcfaLocation> thenEntries = new LinkedHashSet<>();
+        Set<XcfaLocation> elseEntries = new LinkedHashSet<>();
+        for (XcfaLocation entry : currentEntries) {
+            thenEntries.add(addLabel(entry, new StmtLabel(AssumeStmt.of(condition))));
+            elseEntries.add(
+                addLabel(entry, new StmtLabel(AssumeStmt.of(BoolExprs.Not(condition)))));
+        }
+        Set<XcfaLocation> thenExits = visit(ctx.statement(0), thenEntries);
+        Set<XcfaLocation> elseExits =
+            ctx.statement().size() > 1 ? visit(ctx.statement(1), elseEntries) : elseEntries;
+        Set<XcfaLocation> result = new LinkedHashSet<>(thenExits);
+        result.addAll(elseExits);
+        return result;
+    }
+
+    private XcfaLocation addLabel(XcfaLocation from, XcfaLabel label) {
+        return addLabels(from, List.of(label));
+    }
+
+    private XcfaLocation addLabels(XcfaLocation from, List<XcfaLabel> labels) {
+        return addLabels(from, labels, "sequence");
+    }
+
+    private XcfaLocation addLabels(
+        XcfaLocation from, List<XcfaLabel> labels, String sourceName) {
+        if (labels.isEmpty()) {
+            return from;
+        }
+        XcfaLocation to = nextLoc.apply(sourceName);
+        XcfaLabel label = labels.size() == 1 ? labels.get(0) : new SequenceLabel(labels);
+        builder.addEdge(new XcfaEdge(from, to, label, EmptyMetaData.INSTANCE));
+        return to;
+    }
+
 
 
 
