@@ -41,7 +41,9 @@ public class SvLibFrontend{
     }
 
     private SvLibParser createParser(String source) {
-        SvLibLexer lexer = new SvLibLexer(CharStreams.fromString(source));
+        CharStream charStream = CharStreams.fromString(source);
+        SvLibUtils.init(charStream);
+        SvLibLexer lexer = new SvLibLexer(charStream);
         SvLibParser parser = new SvLibParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         return parser;

@@ -2,22 +2,22 @@ package hu.bme.mit.theta.frontend.svlib;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.relationalBoolExpr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
 import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-
 import java.util.*;
 
 
@@ -32,6 +32,8 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   private XcfaProcedureBuilder entryProcedure;
 
   private List<SvLibParser.TermContext> entryArguments = List.of();
+
+  private final List<SvLibParser.RelationalTermContext> postconditions = new ArrayList<>();
 
   private int procedureCount;
 
@@ -62,16 +64,36 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
         VarDecl<?> declaration = Var(name, sortOf(declareVarContext.sort()));
         declarations.put(name, declaration);
         SvLibUtils.registerVar(declaration, true);
+      } else if (command instanceof SvLibParser.SMTLIBv2CommandContext smtlibCommandContext
+          && smtlibCommandContext.command()
+              instanceof SvLibParser.DeclareConstCommandContext declareConstCommandContext) {
+        String name = declareConstCommandContext.cmd_declareConst().symbol().getText();
+        VarDecl<?> declaration =
+            Var(name, sortOf(declareConstCommandContext.cmd_declareConst().sort()));
+        declarations.put(name, declaration);
+        SvLibUtils.registerVar(declaration, true);
       } else if (command instanceof SvLibParser.DefineProcContext) {
         procedureCount++;
       } else if (command instanceof SvLibParser.VerifyCallContext verifyCallContext) {
         entryProcedureName = verifyCallContext.symbol().getText();
         entryArguments = List.copyOf(verifyCallContext.term());
+      } else if (command instanceof SvLibParser.AnnotateTagContext annotateTagContext) {
+        collectPostconditions(annotateTagContext.annotateTagCommand());
       }
     }
     if (procedureCount > 1) {
       throw new UnsupportedOperationException(
           "Current SV-LIB prototype supports exactly one procedure");
+    }
+  }
+
+  private void collectPostconditions(SvLibParser.AnnotateTagCommandContext ctx) {
+    for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
+      if (attribute instanceof SvLibParser.TagPropertyContext tagPropertyContext
+          && tagPropertyContext.property()
+              instanceof SvLibParser.EnsuresPropertyContext ensuresPropertyContext) {
+        postconditions.add(ensuresPropertyContext.relationalTerm());
+      }
     }
   }
 
@@ -161,17 +183,36 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
             .visit(
                 ctx.statement(), Set.of(start));
 
+    addExitEdges(procedure, exits);
+    this.entryProcedure = procedure;
+
+    return null;
+  }
+
+  private void addExitEdges(XcfaProcedureBuilder procedure, Set<XcfaLocation> exits) {
     for (XcfaLocation exit : exits) {
+      XcfaLocation finalSource = exit;
+      for (SvLibParser.RelationalTermContext postcondition : postconditions) {
+        Expr<BoolType> condition = relationalBoolExpr(postcondition, procedure, declarations);
+        procedure.addEdge(
+            new XcfaEdge(
+                exit,
+                procedure.getErrorLoc().get(),
+                new StmtLabel(AssumeStmt.of(Not(condition))),
+                EmptyMetaData.INSTANCE));
+        finalSource =
+            addLabels(
+                procedure,
+                finalSource,
+                List.of(new StmtLabel(AssumeStmt.of(condition))));
+      }
       procedure.addEdge(
           new XcfaEdge(
-              exit,
+              finalSource,
               procedure.getFinalLoc().get(),
               NopLabel.INSTANCE,
               EmptyMetaData.INSTANCE));
     }
-    this.entryProcedure = procedure;
-
-    return null;
   }
 
   @Override
@@ -206,4 +247,3 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
 
 
 }
-

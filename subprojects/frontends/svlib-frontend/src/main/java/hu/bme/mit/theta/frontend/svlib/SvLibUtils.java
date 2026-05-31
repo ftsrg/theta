@@ -97,12 +97,6 @@ final class SvLibUtils {
       Type expectedType,
       XcfaProcedureBuilder procedure,
       Map<String, VarDecl<?>> declarations) {
-    if (term instanceof SvLibParser.MatchTermContext) {
-      return unsupported("term 'match'");
-    }
-    if (term instanceof SvLibParser.AnnotatedTermContext) {
-      return unsupported("term annotation");
-    }
     return parseAndReplace(getOriginalText(term), expectedType, procedure, declarations);
   }
 

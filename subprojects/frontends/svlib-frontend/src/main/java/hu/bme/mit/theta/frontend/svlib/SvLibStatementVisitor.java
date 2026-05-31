@@ -17,6 +17,8 @@ package hu.bme.mit.theta.frontend.svlib;
 
 
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.boolExpr;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.resolveVar;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
 
@@ -73,6 +75,39 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
             result.add(addLabel(entry, new StmtLabel(AssumeStmt.of(condition))));
         }
         return result;
+    }
+
+    @Override
+    public Set<XcfaLocation> visitAssignStatement(SvLibParser.AssignStatementContext ctx) {
+        List<XcfaLabel> labels = new ArrayList<>();
+        for (int i = 0; i < ctx.symbol().size(); i++) {
+            VarDecl<?> variable = resolveVar(ctx.symbol(i).getText(), builder, declarations);
+            labels.add(
+                AssignStmtLabel(
+                    variable,
+                    expr(ctx.term(i), variable.getType(), builder, declarations),
+                    EmptyMetaData.INSTANCE));
+        }
+
+        Set<XcfaLocation> result = new LinkedHashSet<>();
+        for (XcfaLocation entry : currentEntries) {
+            result.add(addLabels(entry, labels, "assign"));
+        }
+        return result;
+    }
+
+    @Override
+    public Set<XcfaLocation> visitSequenceStatement(SvLibParser.SequenceStatementContext ctx) {
+        Set<XcfaLocation> entries = currentEntries;
+        for (SvLibParser.StatementContext statement : ctx.statement()) {
+            entries = visit(statement, entries);
+        }
+        return entries;
+    }
+
+    @Override
+    public Set<XcfaLocation> visitAnnotatedStatement(SvLibParser.AnnotatedStatementContext ctx) {
+        return visit(ctx.statement(), currentEntries);
     }
 
     @Override

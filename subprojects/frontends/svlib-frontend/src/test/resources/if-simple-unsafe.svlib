@@ -1,0 +1,23 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc ifExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (!
+    (sequence
+      (if (<= 0 x0)
+        (assign (x 1))
+        (assign (x 2))))
+    :tag proc-if-example))
+
+(annotate-tag proc-if-example
+  :requires true
+  :ensures (= x 0))
+
+(declare-const input Int)
+
+(verify-call ifExample (input))
+(get-witness)
