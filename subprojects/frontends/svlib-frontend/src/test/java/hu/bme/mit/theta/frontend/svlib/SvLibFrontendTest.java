@@ -91,6 +91,19 @@ class SvLibFrontendTest {
     assertFalse(dot.isBlank());
   }
 
+  @Test
+  void translatedIfXcfaCanBeExportedToDot2() throws IOException {
+    var xcfa = parseResource("if-assign.svlib");
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("svlib-if-assign.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertFalse(dot.isBlank());
+  }
+
   private static hu.bme.mit.theta.xcfa.model.XCFA parseResource(String name) {
     try {
       var resource = SvLibFrontendTest.class.getClassLoader().getResource(name);

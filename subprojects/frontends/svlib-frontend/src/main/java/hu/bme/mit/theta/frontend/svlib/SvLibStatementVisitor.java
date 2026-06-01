@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.frontend.svlib;
 
 
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.boolExpr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.resolveVar;
@@ -45,12 +46,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
+final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
 
     private final XcfaProcedureBuilder builder;
     private final Map<String, VarDecl<?>> declarations;
     private final Function<String, XcfaLocation> nextLoc;
-    private Set<XcfaLocation> currentEntries = Set.of();
+    private XcfaLocation currentEntry;
 
     SvLibStatementVisitor(
             XcfaProcedureBuilder builder,
@@ -61,24 +62,20 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
         this.nextLoc = nextLoc;
     }
 
-    Set<XcfaLocation> visit(SvLibParser.StatementContext statement, Set<XcfaLocation> entries) {
-        currentEntries = entries;
-        Set<XcfaLocation> result = super.visit(statement);
-        return result == null ? Set.of() : result;
+    XcfaLocation visit(SvLibParser.StatementContext statement, XcfaLocation entry) {
+        currentEntry = entry;
+        XcfaLocation result = super.visit(statement);
+        return result == null ? entry : result;
     }
 
     @Override
-    public Set<XcfaLocation> visitAssumeStatement(SvLibParser.AssumeStatementContext ctx) {
-        Set<XcfaLocation> result = new LinkedHashSet<>();
+    public XcfaLocation visitAssumeStatement(SvLibParser.AssumeStatementContext ctx) {
         Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
-        for (XcfaLocation entry : currentEntries) {
-            result.add(addLabel(entry, new StmtLabel(AssumeStmt.of(condition))));
-        }
-        return result;
+        return addLabel(currentEntry, new StmtLabel(AssumeStmt.of(condition)));
     }
 
     @Override
-    public Set<XcfaLocation> visitAssignStatement(SvLibParser.AssignStatementContext ctx) {
+    public XcfaLocation visitAssignStatement(SvLibParser.AssignStatementContext ctx) {
         List<XcfaLabel> labels = new ArrayList<>();
         for (int i = 0; i < ctx.symbol().size(); i++) {
             VarDecl<?> variable = resolveVar(ctx.symbol(i).getText(), builder, declarations);
@@ -88,44 +85,46 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<Set<XcfaLocation>> {
                     expr(ctx.term(i), variable.getType(), builder, declarations),
                     EmptyMetaData.INSTANCE));
         }
-
-        Set<XcfaLocation> result = new LinkedHashSet<>();
-        for (XcfaLocation entry : currentEntries) {
-            result.add(addLabels(entry, labels, "assign"));
-        }
-        return result;
+        return addLabels(currentEntry, labels, "assign");
     }
 
     @Override
-    public Set<XcfaLocation> visitSequenceStatement(SvLibParser.SequenceStatementContext ctx) {
-        Set<XcfaLocation> entries = currentEntries;
+    public XcfaLocation visitSequenceStatement(SvLibParser.SequenceStatementContext ctx) {
+        XcfaLocation last = currentEntry;
         for (SvLibParser.StatementContext statement : ctx.statement()) {
-            entries = visit(statement, entries);
+            last = visit(statement, last);
         }
-        return entries;
+        return last;
     }
 
     @Override
-    public Set<XcfaLocation> visitAnnotatedStatement(SvLibParser.AnnotatedStatementContext ctx) {
-        return visit(ctx.statement(), currentEntries);
+    public XcfaLocation visitAnnotatedStatement(SvLibParser.AnnotatedStatementContext ctx) {
+        return visit(ctx.statement(), currentEntry);
     }
 
     @Override
-    public Set<XcfaLocation> visitIfStatement(SvLibParser.IfStatementContext ctx) {
+    public XcfaLocation visitIfStatement(SvLibParser.IfStatementContext ctx) {
         Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
-        Set<XcfaLocation> thenEntries = new LinkedHashSet<>();
-        Set<XcfaLocation> elseEntries = new LinkedHashSet<>();
-        for (XcfaLocation entry : currentEntries) {
-            thenEntries.add(addLabel(entry, new StmtLabel(AssumeStmt.of(condition))));
-            elseEntries.add(
-                addLabel(entry, new StmtLabel(AssumeStmt.of(BoolExprs.Not(condition)))));
-        }
-        Set<XcfaLocation> thenExits = visit(ctx.statement(0), thenEntries);
-        Set<XcfaLocation> elseExits =
-            ctx.statement().size() > 1 ? visit(ctx.statement(1), elseEntries) : elseEntries;
-        Set<XcfaLocation> result = new LinkedHashSet<>(thenExits);
-        result.addAll(elseExits);
-        return result;
+
+        XcfaLocation thenEntry =
+            addLabel(currentEntry, new StmtLabel(AssumeStmt.of(condition)));
+
+        XcfaLocation elseEntry =
+            addLabel(currentEntry, new StmtLabel(AssumeStmt.of(Not(condition))));
+
+        XcfaLocation thenEnd = visit(ctx.statement(0), thenEntry);
+
+        XcfaLocation elseEnd =
+            ctx.statement().size() > 1
+                ? visit(ctx.statement(1), elseEntry)
+                : elseEntry;
+
+        XcfaLocation endLoc = nextLoc.apply("if-end");
+
+        builder.addEdge(new XcfaEdge(thenEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+        builder.addEdge(new XcfaEdge(elseEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+
+        return endLoc;
     }
 
     private XcfaLocation addLabel(XcfaLocation from, XcfaLabel label) {

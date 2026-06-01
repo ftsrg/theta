@@ -178,41 +178,43 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     }
 
     XcfaLocation start = addLabels(procedure, procedure.getInitLoc(), entryLabels);
-    Set<XcfaLocation> exits =
+    XcfaLocation exit =
         new SvLibStatementVisitor(procedure, declarations, this::nextLoc)
             .visit(
-                ctx.statement(), Set.of(start));
+                ctx.statement(), start);
 
-    addExitEdges(procedure, exits);
+    addExitEdges(procedure, exit);
     this.entryProcedure = procedure;
 
     return null;
   }
 
-  private void addExitEdges(XcfaProcedureBuilder procedure, Set<XcfaLocation> exits) {
-    for (XcfaLocation exit : exits) {
-      XcfaLocation finalSource = exit;
-      for (SvLibParser.RelationalTermContext postcondition : postconditions) {
-        Expr<BoolType> condition = relationalBoolExpr(postcondition, procedure, declarations);
-        procedure.addEdge(
-            new XcfaEdge(
-                exit,
-                procedure.getErrorLoc().get(),
-                new StmtLabel(AssumeStmt.of(Not(condition))),
-                EmptyMetaData.INSTANCE));
-        finalSource =
-            addLabels(
-                procedure,
-                finalSource,
-                List.of(new StmtLabel(AssumeStmt.of(condition))));
-      }
+  private void addExitEdges(XcfaProcedureBuilder procedure, XcfaLocation exit) {
+    XcfaLocation finalSource = exit;
+
+    for (SvLibParser.RelationalTermContext postcondition : postconditions) {
+      Expr<BoolType> condition = relationalBoolExpr(postcondition, procedure, declarations);
+
       procedure.addEdge(
           new XcfaEdge(
               finalSource,
-              procedure.getFinalLoc().get(),
-              NopLabel.INSTANCE,
+              procedure.getErrorLoc().get(),
+              new StmtLabel(AssumeStmt.of(Not(condition))),
               EmptyMetaData.INSTANCE));
+
+      finalSource =
+          addLabels(
+              procedure,
+              finalSource,
+              List.of(new StmtLabel(AssumeStmt.of(condition))));
     }
+
+    procedure.addEdge(
+        new XcfaEdge(
+            finalSource,
+            procedure.getFinalLoc().get(),
+            NopLabel.INSTANCE,
+            EmptyMetaData.INSTANCE));
   }
 
   @Override
