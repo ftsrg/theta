@@ -174,6 +174,8 @@ public class NamedType extends CSimpleType {
                 break;
             case "int":
                 break;
+            case "char":
+                break;
             case "":
                 break;
             case "struct":
