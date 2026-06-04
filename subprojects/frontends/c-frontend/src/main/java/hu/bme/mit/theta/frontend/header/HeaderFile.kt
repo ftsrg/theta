@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.frontend.stdlib
+package hu.bme.mit.theta.frontend.header
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
+import hu.bme.mit.theta.frontend.stdlib.*
+import hu.bme.mit.theta.grammar.textWithWS
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -40,6 +42,7 @@ enum class HeaderFile(val filename: String, val content: String) {
   STDLIB_H("stdlib.h", stdlib_h),
   STRING_H("string.h", string_h),
   TIME_H("time.h", time_h),
+  ATOMICFUNC_H("atomicfunc.h", atomicfunc_h)
 }
 
 private fun fromPath(s: String): String =
@@ -47,8 +50,13 @@ private fun fromPath(s: String): String =
 
 private val includePattern = Regex("<(.*)>")
 
-fun <T> parseHeaderFile(includeDirective: String, visitor: CBaseVisitor<T>): T? {
+fun <T> parseIncludeDirective(ctx: CParser.IncludeDirectiveContext, visitor: CBaseVisitor<T>): T? {
+  val includeDirective = ctx.textWithWS()
   val headerFile = includePattern.find(includeDirective)?.groupValues?.get(1) ?: return null
+  return parseHeaderFile(headerFile, visitor)
+}
+
+fun <T> parseHeaderFile(headerFile: String, visitor: CBaseVisitor<T>): T? {
   val input = CharStreams.fromString(fromPath(headerFile))
   val lexer = CLexer(input)
   val tokens = CommonTokenStream(lexer)

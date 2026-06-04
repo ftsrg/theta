@@ -15,8 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar;
 
-import static hu.bme.mit.theta.frontend.stdlib.HeaderFileKt.parseHeaderFile;
-import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
+import static hu.bme.mit.theta.frontend.header.HeaderFileKt.parseIncludeDirective;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -25,6 +24,6 @@ public abstract class IncludeHandlingCBaseVisitor<T> extends CBaseVisitor<T> {
 
     @Override
     public final T visitIncludeDirective(CParser.IncludeDirectiveContext ctx) {
-        return parseHeaderFile(textWithWS(ctx), this);
+        return parseIncludeDirective(ctx, this);
     }
 }

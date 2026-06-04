@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.frontend.header.HeaderFileKt.parseHeaderFile;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -146,6 +147,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         variables.push(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
+
+        parseHeaderFile("atomicfunc.h", this);
 
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
         ctx.accept(typedefVisitor);
