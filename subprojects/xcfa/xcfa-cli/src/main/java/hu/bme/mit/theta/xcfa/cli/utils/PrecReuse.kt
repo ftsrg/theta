@@ -54,9 +54,11 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.params.Domain
 import hu.bme.mit.theta.xcfa.cli.params.Domain.*
+import hu.bme.mit.theta.xcfa.cli.params.InitPrec
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessExplPrecSerializer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPredPrecSerializer
+import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import kotlin.reflect.KProperty
 import org.antlr.v4.runtime.CharStreams
@@ -82,6 +84,7 @@ enum class PrecReuseFormat(
 object PrecReuse {
   private const val ERROR_MESSAGE = "Misconfigured WitnessPrecSerializer"
 
+  private var emptyPrec: Prec by ThrowIfNullDelegate("$ERROR_MESSAGE - domain was not set")
   private var prec: Prec? = null
   private var serializer: ((PrecReuseFormat) -> PrecSerializer<*>) by
     ThrowIfNullDelegate("$ERROR_MESSAGE - domain was not set")
@@ -96,6 +99,7 @@ object PrecReuse {
         EXPL_PRED_SPLIT,
         EXPL_PRED_STMT -> error("REUSE is not supported for the product domain.")
       }
+    emptyPrec = domain.initPrec(XCFA("", emptySet()), InitPrec.EMPTY).unwrap()
   }
 
   fun load(
@@ -105,26 +109,23 @@ object PrecReuse {
     logger: Logger,
   ) {
     precFilePath
-      ?: return emptyPrec(
-        parseContext,
+      ?: return warnInitEmptyPrec(
         logger,
-        "WARNING: Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision. Proceeding with empty initial precision.",
+        "WARNING: Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision.",
       )
 
     val precFile =
       File(precFilePath).takeIf(File::exists)
-        ?: return emptyPrec(
-          parseContext,
+        ?: return warnInitEmptyPrec(
           logger,
-          "WARNING: Precision reuse selected, but provided precision file does not exist. Proceeding with empty initial precision.",
+          "WARNING: Precision reuse selected, but provided precision file does not exist.",
         )
 
     val format =
       PrecReuseFormat.entries.firstOrNull { it.extension == precFile.extension }
-        ?: return emptyPrec(
-          parseContext,
+        ?: return warnInitEmptyPrec(
           logger,
-          "WARNING: Precision reuse selected, but provided precision file format not recognised. Proceeding with empty initial precision.",
+          "WARNING: Precision reuse selected, but provided precision file format not recognised.",
         )
 
     prec = serializer(format).parse(precFile.readText(), currentVars, parseContext, logger)
@@ -143,15 +144,15 @@ object PrecReuse {
     val outputFileName = "prec.${format.extension}"
     val outputFile = File(outputFolder, outputFileName)
     outputFile.writeText(
-      PrecCache.get()?.unwrap()?.let {
+      (PrecCache.get()?.unwrap() ?: emptyPrec).let {
         serializer(format).serialize(it, config, parseContext, logger)
-      } ?: ""
+      }
     )
   }
 
-  private fun emptyPrec(parseContext: ParseContext, logger: Logger, message: String) {
-    prec = serializer(PrecReuseFormat.GENERIC).parse("", emptyList(), parseContext, logger)
-    logger.writeln(INFO, message)
+  private fun warnInitEmptyPrec(logger: Logger, message: String) {
+    prec = emptyPrec
+    logger.writeln(INFO, "$message Proceeding with empty initial precision.")
   }
 }
 
