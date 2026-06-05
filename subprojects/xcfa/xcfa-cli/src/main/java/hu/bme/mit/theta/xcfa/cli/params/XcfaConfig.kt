@@ -676,9 +676,8 @@ data class ChcOutputConfig(
 ) : Config
 
 data class PrecOutputConfig(
-  @Parameter(
-    names = ["--enable-prec-serialization"], variableArity = true
-  ) var format: List<PrecReuseFormat> = emptyList()
+  @Parameter(names = ["--enable-prec-serialization"], variableArity = true)
+  var format: List<PrecReuseFormat> = emptyList()
 ) : Config
 
 data class COutputConfig(
