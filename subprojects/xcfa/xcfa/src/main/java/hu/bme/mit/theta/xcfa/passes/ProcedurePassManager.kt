@@ -41,6 +41,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       UnusedLocRemovalPass(),
       // handling intrinsics
       ErrorLocationPass(property),
+      AssertionToErrorLocationPass(property),
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
@@ -116,6 +117,7 @@ class NontermValidationPasses(
       UnusedLocRemovalPass(),
       // handling intrinsics
       ErrorLocationPass(property),
+      AssertionToErrorLocationPass(property),
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),

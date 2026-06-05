@@ -66,5 +66,7 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
     OVERFLOW -> LtlProperty("no-overflow", OVERFLOW.ltl(Unit))
     NO_ERROR -> LtlProperty("no-error", NO_ERROR.ltl(Unit))
     TERMINATION -> LtlProperty("termination", TERMINATION.ltl(Unit))
+    NO_ASSERTION_VIOLATION ->
+      LtlProperty("no-assertion-violation", NO_ASSERTION_VIOLATION.ltl(Unit))
   }
 }

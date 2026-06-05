@@ -35,7 +35,10 @@ fun interface XcfaErrorDetector : Predicate<S> {
 fun getXcfaErrorDetector(errorDetection: ErrorDetection): XcfaErrorDetector =
   when (errorDetection) { // TODO: when refactoring prop in xcfa, it has to be added here as well?
     NO_ERROR -> XcfaErrorDetector { false }
-    ERROR_LOCATION -> XcfaErrorDetector { s -> s.processes.any { it.value.locs.peek().error } }
+    ERROR_LOCATION,
+    NO_ASSERTION_VIOLATION -> XcfaErrorDetector { s ->
+      s.processes.any { it.value.locs.peek().error }
+    }
     DATA_RACE -> getDataRaceDetector()
     else ->
       error(
