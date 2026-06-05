@@ -169,7 +169,7 @@ internal fun postVerificationLogging(
         else -> {}
       }
 
-      config.outputConfig.precOutputConfig.format?.let {
+      config.outputConfig.precOutputConfig.format.forEach {
         PrecReuse.write(it, resultFolder, config, parseContext, logger)
       }
     } catch (e: Throwable) {
