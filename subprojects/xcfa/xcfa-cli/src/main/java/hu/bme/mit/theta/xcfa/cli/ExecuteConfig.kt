@@ -114,7 +114,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   }
   (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
     if (
-      cegarConfig.initPrec == InitPrec.REUSE || config.outputConfig.precOutputConfig.format.isNotEmpty()
+      cegarConfig.initPrec == InitPrec.REUSE ||
+        config.outputConfig.precOutputConfig.format.isNotEmpty()
     ) {
       PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
     }
