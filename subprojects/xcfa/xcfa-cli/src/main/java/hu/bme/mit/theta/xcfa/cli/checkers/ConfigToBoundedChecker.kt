@@ -31,18 +31,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.solver.Interpolant
-import hu.bme.mit.theta.solver.ItpMarker
-import hu.bme.mit.theta.solver.ItpMarkerTree
-import hu.bme.mit.theta.solver.ItpPattern
-import hu.bme.mit.theta.solver.ItpSolver
-import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.solver.SolverStatus
-import hu.bme.mit.theta.solver.UCSolver
 import hu.bme.mit.theta.solver.impl.NullSolver
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -140,10 +129,12 @@ private fun tryGetSolver(name: String, validate: Boolean): SolverFactory {
   } catch (e: Throwable) {
     object : SolverFactory {
       private val stub = NullSolver.withException(e)
+
       override fun createSolver() = stub
+
       override fun createUCSolver() = stub
+
       override fun createItpSolver() = stub
     }
   }
 }
-

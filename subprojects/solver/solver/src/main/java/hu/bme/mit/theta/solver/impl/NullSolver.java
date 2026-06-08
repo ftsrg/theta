@@ -19,9 +19,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.*;
-
 import java.util.Collection;
-import java.util.List;
 
 public final class NullSolver implements Solver, ItpSolver, UCSolver {
 
@@ -32,8 +30,7 @@ public final class NullSolver implements Solver, ItpSolver, UCSolver {
     }
 
     private static class LazyHolder {
-        static final NullSolver INSTANCE =
-            new NullSolver(new UnsupportedOperationException());
+        static final NullSolver INSTANCE = new NullSolver(new UnsupportedOperationException());
     }
 
     public static NullSolver getInstance() {
@@ -42,9 +39,7 @@ public final class NullSolver implements Solver, ItpSolver, UCSolver {
 
     public static NullSolver withException(final Throwable t) {
         final RuntimeException ex =
-            (t instanceof RuntimeException)
-                ? (RuntimeException) t
-                : new RuntimeException(t);
+                (t instanceof RuntimeException) ? (RuntimeException) t : new RuntimeException(t);
         return new NullSolver(ex);
     }
 
