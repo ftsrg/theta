@@ -62,6 +62,7 @@ class TestFrontendXcfaBuilder {
         arrayOf("/22nondet.c"),
         arrayOf("/23exotic.c"),
         arrayOf("/24initializer.c"),
+        arrayOf("/25atomic.c"),
       )
     }
   }
