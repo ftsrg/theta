@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ object MddSinglePathExtractor {
       } else {
         val cursor = node.cursor()
         cursor.moveNext()
-        templateBuilder.set(cursor.key(), transform(cursor.value()).node)
+        templateBuilder.set(cursor.key(), transform(cursor.value() as MddHandle).node)
       }
 
       return node.variableHandle.checkInNode(

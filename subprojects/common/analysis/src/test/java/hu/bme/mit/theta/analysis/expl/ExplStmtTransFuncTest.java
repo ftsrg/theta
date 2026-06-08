@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -132,7 +132,7 @@ public class ExplStmtTransFuncTest {
         final List<Stmt> stmts = new ArrayList<>();
         stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
 
-        final Map<Integer, Integer> solverCallsToExpectedStates = Containers.createMap();
+        final Map<Integer, Integer> solverCallsToExpectedStates = CollectionUtil.createMap();
         solverCallsToExpectedStates.put(1, 1);
         solverCallsToExpectedStates.put(2, 1);
         solverCallsToExpectedStates.put(3, 3);
