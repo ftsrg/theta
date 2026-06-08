@@ -52,6 +52,7 @@ object Logger {
     private var initialized: Boolean = false
     private val writeLock: ReentrantLock = ReentrantLock()
     private var output: Writer = System.err.writer()
+    private var fileOutput: Boolean = false
     private val loggedOnceMessages: MutableSet<String> = mutableSetOf<String>()
     private val timestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
@@ -80,12 +81,15 @@ object Logger {
                 try {
                     val logFile: File = File(file)
                     output = PrintWriter(FileWriter(logFile, true), true)
+                    fileOutput = true
                     logBeforeInit("INFO", "Logging to file: $file")
                 } catch (e: Exception) {
                     logBeforeInit("ERROR", "Failed to open log file: ${e.message}")
                     throw e
                 }
             } else {
+                output = System.err.writer()
+                fileOutput = false
                 logBeforeInit("INFO", "Logging to stderr")
             }
 
@@ -274,7 +278,9 @@ object Logger {
             try {
                 if (initialized) {
                     logBeforeInit("INFO", "Logger closed")
-                    output.close()
+                    if (fileOutput) {
+                        output.close()
+                    }
                 }
             } catch (e: Exception) {
                 logBeforeInit("ERROR", "Failed to close logger: ${e.message}")
@@ -282,6 +288,8 @@ object Logger {
                 initialized = false
                 enabled.fill(false)
                 loggedOnceMessages.clear()
+                output = System.err.writer()
+                fileOutput = false
             }
         }
     }

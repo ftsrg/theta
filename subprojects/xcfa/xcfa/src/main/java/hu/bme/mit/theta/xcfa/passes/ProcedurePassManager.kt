@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
@@ -171,7 +170,7 @@ class ChcPasses(parseContext: ParseContext) :
 
 class LitmusPasses : ProcedurePassManager()
 
-class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class Btor2Passes(parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       LbePass(parseContext),
@@ -180,7 +179,7 @@ class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
       SimplifyExprsPass(parseContext),
-      UnusedVarPass(uniqueWarningLogger),
+      UnusedVarPass(),
     )
   )
 

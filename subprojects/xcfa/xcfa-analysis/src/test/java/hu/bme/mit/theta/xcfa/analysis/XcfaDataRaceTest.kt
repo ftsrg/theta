@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -59,6 +60,7 @@ class XcfaDataRaceTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       Logger.init(Logger.ALL)
     }
 

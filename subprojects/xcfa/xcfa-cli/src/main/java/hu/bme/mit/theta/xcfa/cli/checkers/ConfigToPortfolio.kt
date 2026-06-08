@@ -65,18 +65,12 @@ fun getPortfolioChecker(
 
       "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config)
 
-<<<<<<< refactor/singleton-logger
-      "CHC-COMP" ->
+      "CHC-COMP-25" ->
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config)
         else chcCompPortfolioModel25(xcfa, mcm, parseContext, config)
-=======
-      "CHC-COMP-25" ->
-        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
->>>>>>> master
 
       "CHC-COMP",
-      "CHC-COMP-26" -> chcCompPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "CHC-COMP-26" -> chcCompPortfolio26(xcfa, mcm, parseContext, config)
 
       "TESTING",
       "CHC",

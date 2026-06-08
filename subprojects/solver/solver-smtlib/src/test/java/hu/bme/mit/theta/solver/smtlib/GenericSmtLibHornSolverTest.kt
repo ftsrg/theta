@@ -66,6 +66,7 @@ class GenericSmtLibHornSolverTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       if (!Logger.isEnabled(Logger.Level.ERROR)) {
         Logger.init("ERROR")
       }

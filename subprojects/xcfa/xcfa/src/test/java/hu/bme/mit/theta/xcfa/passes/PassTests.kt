@@ -33,6 +33,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
@@ -68,6 +69,7 @@ class PassTests {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       Logger.init(Logger.ALL)
     }
 

@@ -48,6 +48,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,9 @@ public class StsPredTest {
     final ItpSolver refinementSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
     STS sts = null;
 
-    public StsPredTest() {
+    @BeforeAll
+    public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

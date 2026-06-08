@@ -60,6 +60,7 @@ class TestChcUtils {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       Logger.init(Logger.ALL)
       if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val home = SmtLibSolverManager.HOME

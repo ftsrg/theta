@@ -33,6 +33,7 @@ import java.io.SequenceInputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,6 +50,7 @@ public class XstsTest {
 
     @BeforeAll
     public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

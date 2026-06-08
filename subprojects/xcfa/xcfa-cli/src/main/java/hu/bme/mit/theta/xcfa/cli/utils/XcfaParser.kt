@@ -104,8 +104,6 @@ fun getXcfa(
           config.inputConfig.input!!,
           btor2Frontend.btor2Passes,
           parseContext,
-          logger,
-          uniqueWarningLogger,
         )
       }
     }
@@ -252,10 +250,8 @@ private fun parseBTOR2(
   input: File,
   btor2Passes: Boolean,
   parseContext: ParseContext,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): XCFA {
-  val visitor = Btor2Visitor(logger)
+  val visitor = Btor2Visitor()
 
   val inputBTOR2 = input.readLines().joinToString("\n")
   val cinput = CharStreams.fromString(inputBTOR2)
@@ -267,7 +263,7 @@ private fun parseBTOR2(
 
   context.accept(visitor)
 
-  val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
-  logger.write(Logger.Level.VERBOSE, xcfa.toDot())
+  val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext)
+  Logger.verbose(xcfa.toDot())
   return xcfa
 }

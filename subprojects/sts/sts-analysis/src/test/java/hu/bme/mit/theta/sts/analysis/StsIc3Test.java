@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,6 +58,7 @@ public class StsIc3Test {
 
     @BeforeAll
     public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

@@ -34,12 +34,14 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
 public class XstsMddCheckerTest {
 
     @BeforeAll
     public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

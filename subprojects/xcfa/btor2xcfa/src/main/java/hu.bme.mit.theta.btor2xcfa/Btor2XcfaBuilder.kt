@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.btor2xcfa
 
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -36,7 +35,6 @@ class Btor2XcfaBuilder {
     circuit: Btor2Circuit,
     btor2Passes: Boolean,
     parseContext: ParseContext,
-    uniqueLogger: Logger,
   ): XCFA {
     check(circuit.properties.isNotEmpty(), { "Circuit has no error property" })
 
@@ -53,7 +51,7 @@ class Btor2XcfaBuilder {
     val procBuilder =
       XcfaProcedureBuilder(
         "main",
-        if (btor2Passes) Btor2Passes(parseContext, uniqueLogger) else Btor2EmptyPass(),
+        if (btor2Passes) Btor2Passes(parseContext) else Btor2EmptyPass(),
       )
 
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())

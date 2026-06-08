@@ -50,6 +50,7 @@ public class ASGTraceCheckerTest {
 
     @BeforeAll
     public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

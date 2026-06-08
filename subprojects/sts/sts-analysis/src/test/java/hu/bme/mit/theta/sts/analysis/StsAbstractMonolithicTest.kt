@@ -37,6 +37,7 @@ import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker
 import hu.bme.mit.theta.sts.dsl.StsDslManager
 import java.io.FileInputStream
 import java.io.IOException
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -49,6 +50,7 @@ class StsAbstractMonolithicTest() {
     @JvmStatic
     @BeforeAll
     fun initLogger() {
+      Logger.close()
       Logger.init(Logger.ALL)
     }
 

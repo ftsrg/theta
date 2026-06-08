@@ -55,6 +55,7 @@ class XcfaCliPortfolioTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       Logger.init(Logger.ALL)
     }
 

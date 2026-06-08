@@ -43,6 +43,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlin.random.Random
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -59,6 +60,7 @@ class XcfaExplAnalysisTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       Logger.init(Logger.ALL)
     }
 

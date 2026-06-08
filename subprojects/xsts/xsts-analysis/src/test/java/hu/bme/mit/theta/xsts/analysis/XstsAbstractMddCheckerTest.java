@@ -39,6 +39,7 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,6 +51,7 @@ public class XstsAbstractMddCheckerTest {
 
     @BeforeAll
     public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

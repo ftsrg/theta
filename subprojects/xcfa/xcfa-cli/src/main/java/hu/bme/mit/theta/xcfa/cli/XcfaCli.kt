@@ -114,6 +114,7 @@ class XcfaCli(private val args: Array<String>) {
       return
     }
 
+    Logger.close()
     Logger.init(config.debugConfig.logLevel)
 
     runConfig(config, false)

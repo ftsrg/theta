@@ -34,6 +34,7 @@ import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -41,6 +42,7 @@ public class PnmlSymbolicGSATTest {
 
     @BeforeAll
     public static void initLogger() {
+        Logger.close();
         Logger.init(Logger.ALL);
     }
 

@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -73,6 +74,7 @@ public class ASGCegarVerifierTest {
 
     @BeforeAll
     public static void init() {
+        Logger.close();
         Logger.init(Logger.ALL);
         abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();

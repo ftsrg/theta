@@ -58,6 +58,7 @@ public class SmtLibSolverFPTest {
 
     @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
+        Logger.close();
         if (!Logger.isEnabled(Logger.Level.ERROR)) {
             Logger.init("ERROR");
         }

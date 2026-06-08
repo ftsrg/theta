@@ -26,6 +26,7 @@ import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -36,8 +37,10 @@ class XcfaDslTest {
     @BeforeAll
     @JvmStatic
     fun init() {
+      Logger.close()
       Logger.init(Logger.ALL)
     }
+
   }
 
   private fun getSyncXcfa() =

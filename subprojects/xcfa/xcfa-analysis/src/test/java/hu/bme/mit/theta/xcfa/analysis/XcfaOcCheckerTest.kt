@@ -26,6 +26,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -50,6 +51,7 @@ class XcfaOcCheckerTest {
     @BeforeAll
     @JvmStatic
     fun registerSolver() {
+      Logger.close()
       Logger.init(Logger.ALL)
       SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     }
