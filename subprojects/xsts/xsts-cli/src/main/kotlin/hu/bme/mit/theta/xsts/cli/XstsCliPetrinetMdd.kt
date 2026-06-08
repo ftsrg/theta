@@ -164,7 +164,7 @@ class XstsCliPetrinetMdd :
     if (system.placeCount > 10000 || system.transitionCount > 10000) {
       Logger.info(
         "[WARNING] Skipping image generation because the model size exceeds 10k places or " +
-          "transitions.",
+          "transitions."
       )
       return
     }

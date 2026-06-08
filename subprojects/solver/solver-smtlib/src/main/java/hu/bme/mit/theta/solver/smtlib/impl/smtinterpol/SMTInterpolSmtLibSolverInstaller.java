@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ import java.util.List;
 
 public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public SMTInterpolSmtLibSolverInstaller() {
-    }
+    public SMTInterpolSmtLibSolverInstaller() {}
 
     @Override
     protected String getSolverName() {
@@ -52,9 +51,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
                                                 .toAbsolutePath()
                                                 .toString())
                                 .getChannel()) {
-            Logger.mainStep(
-                    "Starting download (%s)...\n",
-                    getDownloadUrl(version).toString());
+            Logger.mainStep("Starting download (%s)...\n", getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);

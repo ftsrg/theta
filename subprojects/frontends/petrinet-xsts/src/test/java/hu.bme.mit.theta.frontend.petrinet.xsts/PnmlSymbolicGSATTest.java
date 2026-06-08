@@ -34,7 +34,6 @@ import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -67,8 +66,7 @@ public class PnmlSymbolicGSATTest {
                     pipeline =
                             new XstsPipelineChecker<>(
                                     xsts,
-                                    monolithicExpr ->
-                                            new MddChecker(monolithicExpr, solverPool));
+                                    monolithicExpr -> new MddChecker(monolithicExpr, solverPool));
             status = pipeline.check();
             Logger.mainStep(status.toString());
             Logger.mainStep(

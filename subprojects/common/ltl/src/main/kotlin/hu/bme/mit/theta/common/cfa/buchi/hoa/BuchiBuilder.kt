@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@ import jhoafparser.consumer.HOAConsumer
 import jhoafparser.consumer.HOAConsumerException
 
 class BuchiBuilder
-internal constructor(
-  private val swappedExpressions: Map<String, Expr<BoolType>>,
-) : HOAConsumer {
+internal constructor(private val swappedExpressions: Map<String, Expr<BoolType>>) : HOAConsumer {
 
   private val builder: CFA.Builder = CFA.builder()
   private var initLocNumber: Int? = null
@@ -109,11 +107,7 @@ internal constructor(
 
   override fun provideAcceptanceName(s: String, list: List<Any>) {
     Logger.verbose("Acceptance name received: %s%n", s)
-    list.forEach(
-      Consumer { o: Any? ->
-        Logger.verbose("\tobject under acceptance: %s%n", o)
-      }
-    )
+    list.forEach(Consumer { o: Any? -> Logger.verbose("\tobject under acceptance: %s%n", o) })
   }
 
   @Throws(HOAConsumerException::class)

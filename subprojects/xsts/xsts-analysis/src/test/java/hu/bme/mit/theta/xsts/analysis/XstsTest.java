@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import java.io.SequenceInputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -569,8 +568,7 @@ public class XstsTest {
         if (SOLVER_STRING.contains("Z3") || SOLVER_STRING.contains("JavaSMT")) {
             return;
         }
-        try (final var solverManager =
-                SmtLibSolverManager.create(SMTLIB_HOME)) {
+        try (final var solverManager = SmtLibSolverManager.create(SMTLIB_HOME)) {
             String solverVersion = SmtLibSolverManager.getSolverVersion(SOLVER_STRING);
             String solverName = SmtLibSolverManager.getSolverName(SOLVER_STRING);
             if (solverManager.managesSolver(SOLVER_STRING)

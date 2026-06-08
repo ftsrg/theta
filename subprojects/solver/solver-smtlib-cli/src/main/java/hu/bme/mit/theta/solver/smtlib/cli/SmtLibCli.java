@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ public class SmtLibCli {
         @Parameter(names = "--home", description = "The path of the solver registry")
         String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
-        @Parameter(names = "--loglevel", description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+        @Parameter(
+                names = "--loglevel",
+                description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
         String logLevel = "MAINSTEP";
 
         @Parameter(
@@ -54,8 +56,7 @@ public class SmtLibCli {
 
         String getCommand();
 
-        void handle(SmtLibSolverManager smtLibSolverManager)
-                throws SmtLibSolverInstallerException;
+        void handle(SmtLibSolverManager smtLibSolverManager) throws SmtLibSolverInstallerException;
     }
 
     @Parameters(commandDescription = "Installs the solver")
@@ -309,9 +310,7 @@ public class SmtLibCli {
         public void handle(SmtLibSolverManager smtLibSolverManager)
                 throws SmtLibSolverInstallerException {
             if (solver != null) {
-                Logger.mainStep(
-                        "The currently installed versions of solver %s are:",
-                        solver);
+                Logger.mainStep("The currently installed versions of solver %s are:", solver);
                 smtLibSolverManager
                         .getInstalledVersions(solver)
                         .forEach(
@@ -328,9 +327,7 @@ public class SmtLibCli {
                                             .forEach(
                                                     version -> {
                                                         Logger.result(
-                                                                "\t%s:%s",
-                                                                solver.get1(),
-                                                                version);
+                                                                "\t%s:%s", solver.get1(), version);
                                                     });
                                 });
             }
@@ -357,9 +354,7 @@ public class SmtLibCli {
         public void handle(SmtLibSolverManager smtLibSolverManager)
                 throws SmtLibSolverInstallerException {
             if (solver != null) {
-                Logger.mainStep(
-                        "The currently supported versions of solver %s are:",
-                        solver);
+                Logger.mainStep("The currently supported versions of solver %s are:", solver);
                 smtLibSolverManager
                         .getSupportedVersions(solver)
                         .forEach(
@@ -376,9 +371,7 @@ public class SmtLibCli {
                                             .forEach(
                                                     version -> {
                                                         Logger.result(
-                                                                "\t%s:%s",
-                                                                solver.get1(),
-                                                                version);
+                                                                "\t%s:%s", solver.get1(), version);
                                                     });
                                 });
             }
@@ -470,10 +463,7 @@ public class SmtLibCli {
 
     private void printError(final Throwable ex, final boolean printStackTrace) {
         final String message = ex.getMessage() == null ? "" : ex.getMessage();
-        Logger.result(
-                "%s occurred, message: %s",
-                ex.getClass().getSimpleName(),
-                message);
+        Logger.result("%s occurred, message: %s", ex.getClass().getSimpleName(), message);
         if (printStackTrace) {
             final StringWriter errors = new StringWriter();
             ex.printStackTrace(new PrintWriter(errors));

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -85,8 +84,7 @@ class XcfaDataRaceTest {
     println("Testing $program for trivial no data race...")
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
     val dataRacePossible = isDataRacePossible(xcfa)
     Assertions.assertEquals(expectedDataRacePossible, dataRacePossible)
   }
@@ -101,8 +99,7 @@ class XcfaDataRaceTest {
     println("Testing $program for data race...")
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -161,8 +158,7 @@ class XcfaDataRaceTest {
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
     DataRaceToReachabilityPass.enabled = false
 
     val ocChecker =

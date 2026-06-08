@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -62,23 +62,16 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
       expandingNode.state,
     )
     if (expandingNode.state.isBottom()) {
-      Logger.verbose("Node is a dead end since its bottom%n")
+      Logger.verbose("Node is a dead end since it is bottom%n")
       return BacktrackResult(null, null)
     }
     val totalTargets =
       if (expandingNode.accepting || incomingEdge.accepting) targetsSoFar + 1 else targetsSoFar
     if (pathSoFar.containsKey(expandingNode) && pathSoFar[expandingNode]!! < totalTargets) {
-      Logger.subStep(
-        "Found trace with a length of %d, building lasso...%n",
-        pathSoFar.size,
-      )
+      Logger.subStep("Found trace with a length of %d, building lasso...%n", pathSoFar.size)
       Logger.detail("Honda should be: %s", expandingNode.state)
       pathSoFar.forEach { (node, targetsThatFar) ->
-        Logger.verbose(
-          "Node state %s | targets that far: %d%n",
-          node.state,
-          targetsThatFar,
-        )
+        Logger.verbose("Node state %s | targets that far: %d%n", node.state, targetsThatFar)
       }
       val lasso: ASGTrace<S, A> = ASGTrace(edgesSoFar + incomingEdge, expandingNode)
       Logger.detail("Built the following lasso:%n%s", lasso.print())

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,8 +30,7 @@ import hu.bme.mit.theta.common.logging.Logger
  * progress even if in some iterations a new cex is not found, but seems to be rare. However, if you
  * think analysis should NOT be stopped by this monitor, disable it and check results.
  */
-class CexMonitor<S : State?, A : Action?>
-constructor(private val arg: ARG<S, A>) : Monitor {
+class CexMonitor<S : State?, A : Action?> constructor(private val arg: ARG<S, A>) : Monitor {
 
   private val cexHashStorage = CexHashStorage<S, A>()
   var lastCex: ArgTrace<S, A>? = null

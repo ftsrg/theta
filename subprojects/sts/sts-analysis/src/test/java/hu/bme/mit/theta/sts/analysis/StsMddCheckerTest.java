@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -88,8 +87,7 @@ public class StsMddCheckerTest {
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final var checker =
                     new StsPipelineChecker<>(
-                            sts,
-                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool));
+                            sts, monolithicExpr -> new MddChecker(monolithicExpr, solverPool));
             status = checker.check(null);
         }
 

@@ -36,8 +36,7 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     private final List<SemVer.VersionDecoder> versions;
 
-    private final YicesSmtLibSolverInstaller yicesInstaller =
-            new YicesSmtLibSolverInstaller();
+    private final YicesSmtLibSolverInstaller yicesInstaller = new YicesSmtLibSolverInstaller();
     private static final String YICES_VERSION = "1.0.40";
 
     public EldaricaSmtLibSolverInstaller() {

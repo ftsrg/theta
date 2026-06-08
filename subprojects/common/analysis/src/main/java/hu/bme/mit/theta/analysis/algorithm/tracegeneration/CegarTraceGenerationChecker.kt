@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,9 +42,7 @@ class CegarTraceGenerationChecker<S : State, A : Action, P : Prec>(
   }
 
   override fun check(prec: P): TraceGenerationResult<AbstractTraceSet<S, A>, S, A> {
-    Logger.subStep(
-      "Printing prec for trace generation...\n" + System.lineSeparator(),
-    )
+    Logger.subStep("Printing prec for trace generation...\n" + System.lineSeparator())
     Logger.subStep(prec.toString())
 
     val arg = abstractor.createProof()

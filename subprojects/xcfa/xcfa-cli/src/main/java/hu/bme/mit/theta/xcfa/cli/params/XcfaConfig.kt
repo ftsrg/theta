@@ -693,7 +693,10 @@ data class DebugConfig(
   var debug: Boolean = false,
   @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
   var stacktrace: Boolean = false,
-  @Parameter(names = ["--loglevel"], description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+  @Parameter(
+    names = ["--loglevel"],
+    description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)",
+  )
   var logLevel: String = "ERROR|WARN|RESULT",
   @Parameter(
     names = ["--arg-debug"],

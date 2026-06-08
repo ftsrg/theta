@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,8 +33,7 @@ public final class ArgCegarChecker {
 
     public static <S extends State, A extends Action, P extends Prec>
             CegarChecker<P, ARG<S, A>, Trace<S, A>> create(
-                    final ArgAbstractor<S, A, P> abstractor,
-                    final ArgRefiner<S, A, P> refiner) {
-        return CegarChecker.create(abstractor, refiner, ArgVisualizer.<S,A>getDefault());
+                    final ArgAbstractor<S, A, P> abstractor, final ArgRefiner<S, A, P> refiner) {
+        return CegarChecker.create(abstractor, refiner, ArgVisualizer.<S, A>getDefault());
     }
 }

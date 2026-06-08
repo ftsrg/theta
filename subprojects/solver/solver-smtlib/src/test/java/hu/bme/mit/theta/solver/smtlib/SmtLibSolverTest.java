@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -95,7 +95,9 @@ public final class SmtLibSolverTest {
                 Logger.error("Could not get solver factory because solver was not installed");
             }
         }
-        assertTrue(solverInstalled, "Solver " + SOLVER + " " + VERSION + " must be installed to run these tests");
+        assertTrue(
+                solverInstalled,
+                "Solver " + SOLVER + " " + VERSION + " must be installed to run these tests");
     }
 
     @AfterAll

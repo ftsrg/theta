@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -144,8 +143,7 @@ class XcfaMonolithicTest {
     println("Testing $program for XCFA to monolithic expression transformation.")
     val stream = javaClass.getResourceAsStream(program)
     val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
     val multithread =
       xcfa.procedures.any { p ->
         p.edges.any { e -> e.getFlatLabels().filterIsInstance<StartLabel>().isNotEmpty() }

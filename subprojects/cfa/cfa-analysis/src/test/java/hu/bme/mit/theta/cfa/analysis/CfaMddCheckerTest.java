@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -82,9 +81,7 @@ public class CfaMddCheckerTest {
             try (var solverPool = new SolverPool(solverFactory)) {
                 final var checker =
                         new CfaPipelineChecker<>(
-                                cfa,
-                                monolithicExpr ->
-                                        new MddChecker(monolithicExpr, solverPool));
+                                cfa, monolithicExpr -> new MddChecker(monolithicExpr, solverPool));
                 status = checker.check(null);
             }
 

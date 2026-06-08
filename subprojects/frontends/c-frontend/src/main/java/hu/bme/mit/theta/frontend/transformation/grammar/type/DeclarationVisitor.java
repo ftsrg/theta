@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,9 +40,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
 
-    public DeclarationVisitor(
-            ParseContext parseContext,
-            FunctionVisitor functionVisitor) {
+    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor) {
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
         this.typedefVisitor = new TypedefVisitor(this);

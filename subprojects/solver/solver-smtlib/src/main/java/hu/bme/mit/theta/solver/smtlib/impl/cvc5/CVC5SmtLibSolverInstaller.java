@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,9 +77,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
         try (final var inputStream = getDownloadUrl(version).openStream()) {
-            Logger.mainStep(
-                    "Starting download (%s)...\n",
-                    getDownloadUrl(version).toString());
+            Logger.mainStep("Starting download (%s)...\n", getDownloadUrl(version).toString());
             if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
                 try (final var inputChannel = Channels.newChannel(inputStream);
                         final var outputChannel =
@@ -113,8 +111,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                         installDir.resolve("COPYING").toAbsolutePath().toString())
                                 .getChannel()) {
             Logger.mainStep(
-                    "Starting license download (%s)...\n",
-                    getLicenseDownloadUrl().toString());
+                    "Starting license download (%s)...\n", getLicenseDownloadUrl().toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);

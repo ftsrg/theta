@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
 
-        Logger.solverDebug("Starting SmtLibSolverBinary with command: %s", String.join(" ", processCmd));
+        Logger.solverDebug(
+                "Starting SmtLibSolverBinary with command: %s", String.join(" ", processCmd));
 
         final var solverProcessBuilder = new NuProcessBuilder(processCmd);
 

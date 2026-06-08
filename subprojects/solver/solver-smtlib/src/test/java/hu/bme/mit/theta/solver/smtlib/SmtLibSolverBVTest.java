@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -69,7 +69,9 @@ public class SmtLibSolverBVTest {
                 solverInstalled = true;
             }
         }
-        assertTrue(solverInstalled, "Solver " + SOLVER + " " + VERSION + " must be installed to run these tests");
+        assertTrue(
+                solverInstalled,
+                "Solver " + SOLVER + " " + VERSION + " must be installed to run these tests");
     }
 
     @AfterAll

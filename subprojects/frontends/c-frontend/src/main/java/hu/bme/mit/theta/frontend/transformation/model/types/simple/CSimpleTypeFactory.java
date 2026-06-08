@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,8 +46,7 @@ public class CSimpleTypeFactory {
         return Typedef.instance;
     }
 
-    public static NamedType NamedType(
-            final String namedType, ParseContext parseContext) {
+    public static NamedType NamedType(final String namedType, ParseContext parseContext) {
         return new NamedType(parseContext, namedType);
     }
 
@@ -59,8 +58,7 @@ public class CSimpleTypeFactory {
         return new Enum(id, fields);
     }
 
-    public static Struct Struct(
-            final String name, ParseContext parseContext) {
+    public static Struct Struct(final String name, ParseContext parseContext) {
         return new Struct(name, parseContext);
     }
 

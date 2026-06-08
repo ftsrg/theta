@@ -531,8 +531,7 @@ public class XstsHornTest {
                 OsHelper.getOs()
                         == OsHelper.OperatingSystem
                                 .LINUX); // chc solvers are only properly on linux
-        try (final var solverManager =
-                SmtLibSolverManager.create(SMTLIB_HOME)) {
+        try (final var solverManager = SmtLibSolverManager.create(SMTLIB_HOME)) {
             String solverVersion = SmtLibSolverManager.getSolverVersion(solverString);
             String solverName = SmtLibSolverManager.getSolverName(solverString);
             if (solverManager.managesSolver(solverString)

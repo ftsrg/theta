@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlin.random.Random
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -79,8 +78,7 @@ class XcfaExplAnalysisTest {
   fun testNoporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -134,8 +132,7 @@ class XcfaExplAnalysisTest {
   fun testSporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing SPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -190,8 +187,7 @@ class XcfaExplAnalysisTest {
     XcfaDporLts.random = Random(seed)
     println("Testing DPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -243,8 +239,7 @@ class XcfaExplAnalysisTest {
   fun testAasporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing AASPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -303,8 +298,7 @@ class XcfaExplAnalysisTest {
     XcfaDporLts.random = Random(seed)
     println("Testing AADPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property).first
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, property).first
 
     val analysis =
       ExplXcfaAnalysis(

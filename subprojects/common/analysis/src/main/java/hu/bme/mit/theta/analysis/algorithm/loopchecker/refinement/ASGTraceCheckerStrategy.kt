@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,8 +51,7 @@ enum class ASGTraceCheckerStrategy {
       init: Expr<BoolType>,
     ): ExprTraceStatus<ItpRefutation> {
       try {
-        return BoundedUnrollingASGTraceCheckerStrategy(trace, solverFactory, init, 100)
-          .check()
+        return BoundedUnrollingASGTraceCheckerStrategy(trace, solverFactory, init, 100).check()
       } catch (t: TraceCheckingFailedException) {
         Logger.info("${t.message}\n")
         Logger.info("Falling back to default strategy $default\n")
@@ -142,11 +141,7 @@ abstract class AbstractASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
       val itpFolded: Expr<BoolType> = PathUtils.foldin(interpolantExpr, indexing)
       return ExprTraceStatus.infeasible(ItpRefutation.binary(itpFolded, satPrefix, stateCount))
     } catch (e: IllegalArgumentException) {
-      Logger.info(
-        "Interpolant expression: %s; indexing: %s%n",
-        interpolantExpr,
-        indexing,
-      )
+      Logger.info("Interpolant expression: %s; indexing: %s%n", interpolantExpr, indexing)
       throw e
     }
   }

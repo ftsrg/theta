@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -180,12 +180,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       pruneStrategy: PruneStrategy,
       nodePruner: NodePruner<S, A>,
     ): XcfaSingleExprTraceRefiner<S, A, P, R> {
-      return XcfaSingleExprTraceRefiner(
-        exprTraceChecker,
-        precRefiner,
-        pruneStrategy,
-        nodePruner,
-      )
+      return XcfaSingleExprTraceRefiner(exprTraceChecker, precRefiner, pruneStrategy, nodePruner)
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.common.logging.Logger
 
 class HackyAsgTrace<A : ExprAction>(val trace: Trace<ExplState, A>, val originalStates: List<*>) :
   ASGTrace<ExplState, A>(emptyList(), ASGNode(ExplState.top(), true), emptyList()) {

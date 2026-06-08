@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -112,10 +111,7 @@ public class ASGAbstractorCheckingTest {
         final ExplPrec precision = new XstsAllVarsInitPrec().createExpl(xsts);
         var abstractor =
                 new ASGAbstractor<>(
-                        analysis,
-                        lts,
-                        target,
-                        LoopCheckerSearchStrategy.Companion.getDefault());
+                        analysis, lts, target, LoopCheckerSearchStrategy.Companion.getDefault());
         ASG<XstsState<ExplState>, XstsAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
         Assertions.assertEquals(isLassoPresent, result.isUnsafe());
@@ -138,10 +134,7 @@ public class ASGAbstractorCheckingTest {
                 new AcceptancePredicate<>(statePredicate::test);
         ASGAbstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor =
                 new ASGAbstractor<>(
-                        analysis,
-                        lts,
-                        target,
-                        LoopCheckerSearchStrategy.Companion.getDefault());
+                        analysis, lts, target, LoopCheckerSearchStrategy.Companion.getDefault());
         ASG<CfaState<ExplState>, CfaAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
         Assertions.assertEquals(isLassoPresent, result.isUnsafe());

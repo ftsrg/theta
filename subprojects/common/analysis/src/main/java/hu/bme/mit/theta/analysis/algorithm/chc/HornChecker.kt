@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,14 +51,14 @@ class HornChecker(
             relations.joinToString("\n\t") {
                 it.constDecl.toString()
             }
-        }\n",
+        }\n"
     )
     Logger.detail(
       "Rules:\n\t${
             solver.assertions.joinToString("\n\t") {
                 it.toString().replace(Regex("[\r\n\t ]+"), " ")
             }
-        }\n",
+        }\n"
     )
     Logger.mainStep("Added constraints to solver\n")
     solver.check()

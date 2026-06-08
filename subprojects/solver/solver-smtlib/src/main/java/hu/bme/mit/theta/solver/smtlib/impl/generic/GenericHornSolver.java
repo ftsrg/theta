@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,7 +78,9 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
         solverBinary.issueCommand("(check-sat)");
         final var response = solverBinary.readResponse().lines().toList();
         if (response.isEmpty()) {
-            throw new SmtLibSolverBinaryException("Solver returned an empty response to '(check-sat)' (likely it failed to start).");
+            throw new SmtLibSolverBinaryException(
+                    "Solver returned an empty response to '(check-sat)' (likely it failed to"
+                            + " start).");
         }
         final var resultLine = response.get(0);
         status =

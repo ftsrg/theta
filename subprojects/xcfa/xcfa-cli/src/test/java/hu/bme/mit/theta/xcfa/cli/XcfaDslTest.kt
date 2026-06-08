@@ -26,7 +26,6 @@ import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -40,7 +39,6 @@ class XcfaDslTest {
       Logger.close()
       Logger.init(Logger.ALL)
     }
-
   }
 
   private fun getSyncXcfa() =
@@ -99,25 +97,13 @@ class XcfaDslTest {
       )
     run {
       val xcfa = getSyncXcfa()
-      val checker =
-        getSafetyChecker(
-          xcfa,
-          emptySet(),
-          config,
-          ParseContext(),
-        )
+      val checker = getSafetyChecker(xcfa, emptySet(), config, ParseContext())
       val safetyResult = checker.check()
       Assertions.assertTrue(safetyResult.isSafe)
     }
     run {
       val xcfa = getAsyncXcfa()
-      val checker =
-        getSafetyChecker(
-          xcfa,
-          emptySet(),
-          config,
-          ParseContext(),
-        )
+      val checker = getSafetyChecker(xcfa, emptySet(), config, ParseContext())
       val safetyResult = checker.check()
       Assertions.assertTrue(safetyResult.isUnsafe)
     }

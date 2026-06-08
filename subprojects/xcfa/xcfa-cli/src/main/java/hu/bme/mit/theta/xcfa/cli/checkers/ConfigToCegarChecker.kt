@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -128,12 +127,7 @@ fun getCegarChecker(
           cegarConfig.refinerConfig.pruneStrategy,
           atomicNodePruner,
         )
-      else
-        MultiExprTraceRefiner.create(
-          ref,
-          precRefiner,
-          cegarConfig.refinerConfig.pruneStrategy,
-        )
+      else MultiExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy)
     else if (cegarConfig.por == POR.AASPOR)
       XcfaSingleExprTraceRefiner.create(
         ref,
@@ -142,11 +136,7 @@ fun getCegarChecker(
         atomicNodePruner,
       )
     else
-      XcfaSingleExprTraceRefiner.create(
-        ref,
-        precRefiner,
-        cegarConfig.refinerConfig.pruneStrategy,
-      )
+      XcfaSingleExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy)
 
   val cegarChecker =
     if (cegarConfig.por == POR.AASPOR)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -101,9 +101,7 @@ constructor(
       iteration++
       Logger.mainStep("Starting iteration $iteration\n")
       if (!kindEnabled(iteration) && imcEnabled(iteration) && bmcEnabled()) {
-        Logger.info(
-          "BMC and IMC together are inefficient; IMC includes BMC as a substep.",
-        )
+        Logger.info("BMC and IMC together are inefficient; IMC includes BMC as a substep.")
       }
       check((!kindEnabled(iteration)) || bmcEnabled()) {
         "K-Induction needs BMC as an external substep."
@@ -148,9 +146,7 @@ constructor(
 
         if (bmcSolver.check().isSat) {
           val trace = getTrace(bmcSolver.model)
-          Logger.mainStep(
-            "CeX found in the initial state (length ${trace.length()})\n",
-          )
+          Logger.mainStep("CeX found in the initial state (length ${trace.length()})\n")
           return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
         }
       }
@@ -261,9 +257,7 @@ constructor(
 
         if (itpSolver.check().isSat) {
           val trace = getTrace(itpSolver.model)
-          Logger.mainStep(
-            "CeX found in the initial state (length ${trace.length()})\n",
-          )
+          Logger.mainStep("CeX found in the initial state (length ${trace.length()})\n")
           return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
         }
       }

@@ -51,27 +51,16 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-fun getXcfa(
-  config: XcfaConfig<*, *>,
-  parseContext: ParseContext,
-) =
+fun getXcfa(config: XcfaConfig<*, *>, parseContext: ParseContext) =
   try {
     when (config.frontendConfig.inputType) {
       InputType.CHC -> {
         val chcConfig = config.frontendConfig.specConfig as CHCFrontendConfig
-        parseChc(
-          config.inputConfig.input!!,
-          chcConfig.chcTransformation,
-          parseContext,
-        )
+        parseChc(config.inputConfig.input!!, chcConfig.chcTransformation, parseContext)
       }
 
       InputType.C -> {
-        parseC(
-          config.inputConfig.input!!,
-          config.inputConfig.property,
-          parseContext,
-        )
+        parseC(config.inputConfig.input!!, config.inputConfig.property, parseContext)
       }
 
       InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
@@ -100,11 +89,7 @@ fun getXcfa(
 
       InputType.BTOR2 -> {
         val btor2Frontend = config.frontendConfig.specConfig as BTOR2FrontendConfig
-        parseBTOR2(
-          config.inputConfig.input!!,
-          btor2Frontend.btor2Passes,
-          parseContext,
-        )
+        parseBTOR2(config.inputConfig.input!!, btor2Frontend.btor2Passes, parseContext)
       }
     }
   } catch (e: Exception) {
@@ -152,11 +137,7 @@ private fun CFA.toXcfa(): XCFA {
   return xcfaBuilder.build()
 }
 
-private fun parseC(
-  input: File,
-  property: XcfaProperty,
-  parseContext: ParseContext,
-): XCFA {
+private fun parseC(input: File, property: XcfaProperty, parseContext: ParseContext): XCFA {
   val input =
     if (input.name.endsWith(".yml")) {
       try {
@@ -198,8 +179,7 @@ private fun parseC(
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         Logger.info("Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
-        val xcfa =
-          getXcfaFromC(stream, parseContext, false, property).first
+        val xcfa = getXcfaFromC(stream, parseContext, false, property).first
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
@@ -227,9 +207,7 @@ private fun parseChc(
           ChcPasses(parseContext),
         )
       } catch (e: UnsupportedOperationException) {
-        Logger.info(
-          "Non-linear CHC found, retrying using backward transformation...\n",
-        )
+        Logger.info("Non-linear CHC found, retrying using backward transformation...\n")
         chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
         chcFrontend.buildXcfa(
           CharStreams.fromStream(FileInputStream(input)),
@@ -238,19 +216,12 @@ private fun parseChc(
       }
     } else {
       chcFrontend = ChcFrontend(chcTransformation)
-      chcFrontend.buildXcfa(
-        CharStreams.fromStream(FileInputStream(input)),
-        ChcPasses(parseContext),
-      )
+      chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input)), ChcPasses(parseContext))
     }
   return xcfaBuilder.build()
 }
 
-private fun parseBTOR2(
-  input: File,
-  btor2Passes: Boolean,
-  parseContext: ParseContext,
-): XCFA {
+private fun parseBTOR2(input: File, btor2Passes: Boolean, parseContext: ParseContext): XCFA {
   val visitor = Btor2Visitor()
 
   val inputBTOR2 = input.readLines().joinToString("\n")

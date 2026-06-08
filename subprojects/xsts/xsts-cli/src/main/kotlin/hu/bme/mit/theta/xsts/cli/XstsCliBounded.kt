@@ -21,7 +21,6 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.*
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import java.util.concurrent.TimeUnit
@@ -36,34 +35,18 @@ class XstsCliBounded :
   enum class Variant {
     BMC {
 
-      override fun buildChecker(
-        monolithicExpr: MonolithicExpr,
-        solverFactory: SolverFactory,
-      ) = buildBMC(monolithicExpr, solverFactory.createSolver())
+      override fun buildChecker(monolithicExpr: MonolithicExpr, solverFactory: SolverFactory) =
+        buildBMC(monolithicExpr, solverFactory.createSolver())
     },
     KINDUCTION {
 
-      override fun buildChecker(
-        monolithicExpr: MonolithicExpr,
-        solverFactory: SolverFactory,
-      ) =
-        buildKIND(
-          monolithicExpr,
-          solverFactory.createSolver(),
-          solverFactory.createSolver(),
-        )
+      override fun buildChecker(monolithicExpr: MonolithicExpr, solverFactory: SolverFactory) =
+        buildKIND(monolithicExpr, solverFactory.createSolver(), solverFactory.createSolver())
     },
     IMC {
 
-      override fun buildChecker(
-        monolithicExpr: MonolithicExpr,
-        solverFactory: SolverFactory,
-      ) =
-        buildIMC(
-          monolithicExpr,
-          solverFactory.createSolver(),
-          solverFactory.createItpSolver(),
-        )
+      override fun buildChecker(monolithicExpr: MonolithicExpr, solverFactory: SolverFactory) =
+        buildIMC(monolithicExpr, solverFactory.createSolver(), solverFactory.createItpSolver())
     };
 
     abstract fun buildChecker(
@@ -83,8 +66,7 @@ class XstsCliBounded :
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
-    val checker =
-      createChecker(xsts, solverFactory) { variant.buildChecker(it, solverFactory) }
+    val checker = createChecker(xsts, solverFactory) { variant.buildChecker(it, solverFactory) }
     val result = checker.check()
     sw.stop()
     printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -115,7 +115,9 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         // we didn't get explicit signedness
         if (type.isSigned() == null) {
             if (type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
-                Logger.warnOnce("signedness of the type char is implementation specific. Right now it is interpreted as a signed char%n");
+                Logger.warnOnce(
+                        "signedness of the type char is implementation specific. Right now it is"
+                                + " interpreted as a signed char%n");
             }
             type.setSigned(true);
         }
@@ -270,8 +272,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         if (ctx.structOrUnion().Struct() != null) {
             return Struct.getByName(text);
         } else {
-            return NamedType(
-                    ctx.structOrUnion().getText() + " " + text, parseContext);
+            return NamedType(ctx.structOrUnion().getText() + " " + text, parseContext);
         }
     }
 

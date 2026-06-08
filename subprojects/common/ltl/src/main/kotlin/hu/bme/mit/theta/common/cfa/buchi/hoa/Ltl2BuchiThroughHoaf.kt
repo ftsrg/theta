@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import jhoafparser.parser.HOAFParser
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-class Ltl2BuchiThroughHoaf(private val converter: Ltl2Hoaf) :
-  Ltl2BuchiTransformer {
+class Ltl2BuchiThroughHoaf(private val converter: Ltl2Hoaf) : Ltl2BuchiTransformer {
 
   override fun transform(ltl: String, namedVariables: Map<String, VarDecl<*>>): CFA {
     val variables = namedVariables.values

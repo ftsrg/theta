@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -163,14 +163,7 @@ public class CfaCli {
                     getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         new Ic3Checker(
-                                monolithicExpr,
-                                solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true));
+                                monolithicExpr, solverFactory, true, true, true, true, true, true));
             }
         };
 
@@ -425,8 +418,7 @@ public class CfaCli {
                                         monolithicExpr ->
                                                 algorithm
                                                         .getCheckerFactory(
-                                                                this,
-                                                                abstractionSolverFactory)
+                                                                this, abstractionSolverFactory)
                                                         .apply(monolithicExpr),
                                         passes);
                 status = formalismChecker.check(null);
@@ -542,10 +534,7 @@ public class CfaCli {
             writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
             writer.newRow();
         } else {
-            Logger.result(
-                    "%s occurred, message: %s%n",
-                    ex.getClass().getSimpleName(),
-                    message);
+            Logger.result("%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));

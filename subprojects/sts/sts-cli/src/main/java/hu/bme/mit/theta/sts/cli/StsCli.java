@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -172,14 +172,7 @@ public class StsCli {
                     getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         new Ic3Checker(
-                                monolithicExpr,
-                                solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true));
+                                monolithicExpr, solverFactory, true, true, true, true, true, true));
             }
         };
 
@@ -353,8 +346,7 @@ public class StsCli {
                                         sts,
                                         monolithicExpr ->
                                                 algorithm
-                                                        .getCheckerFactory(
-                                                                this, solverFactory)
+                                                        .getCheckerFactory(this, solverFactory)
                                                         .apply(monolithicExpr),
                                         passes);
                 status = formalismChecker.check(null);
@@ -374,8 +366,7 @@ public class StsCli {
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
         SolverManager.registerSolverManager(
                 hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
-        SolverManager.registerSolverManager(
-                SmtLibSolverManager.create(Path.of(solverHome)));
+        SolverManager.registerSolverManager(SmtLibSolverManager.create(Path.of(solverHome)));
         SolverManager.registerSolverManager(JavaSMTSolverManager.create());
     }
 
@@ -491,10 +482,7 @@ public class StsCli {
             writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
             writer.newRow();
         } else {
-            Logger.result(
-                    "%s occurred, message: %s%n",
-                    ex.getClass().getSimpleName(),
-                    message);
+            Logger.result("%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));

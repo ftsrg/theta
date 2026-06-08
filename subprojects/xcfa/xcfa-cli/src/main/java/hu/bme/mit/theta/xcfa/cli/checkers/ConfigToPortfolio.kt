@@ -95,8 +95,7 @@ fun getPortfolioChecker(
       }
     }
 
-  val result =
-    portfolioStm.execute() as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
+  val result = portfolioStm.execute() as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
   Logger.result("Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
   Logger.benchmark("success-result: ${result.first.first}\n")

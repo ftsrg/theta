@@ -98,13 +98,7 @@ internal fun postVerificationLogging(
 
       when {
         config.outputConfig.witnessConfig.enabled == WitnessLevel.SVCOMP -> {
-          writeSvcompWitness(
-            config,
-            parseContext,
-            safetyResult,
-            resultFolder,
-            ltlSpecification,
-          )
+          writeSvcompWitness(config, parseContext, safetyResult, resultFolder, ltlSpecification)
         }
 
         forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
@@ -225,10 +219,7 @@ private fun writeArgAsProof(resultFolder: File, safetyResult: SafetyResult<*, *>
   }
 }
 
-private fun writeArgAsLocInvs(
-  resultFolder: File,
-  locationInvariants: LocationInvariants,
-) {
+private fun writeArgAsLocInvs(resultFolder: File, locationInvariants: LocationInvariants) {
   try {
     val invFile = File(resultFolder, "invariants.txt")
     invFile.writeText("")
@@ -243,11 +234,7 @@ private fun writeArgAsLocInvs(
   }
 }
 
-private fun writeChcAnswer(
-  config: XcfaConfig<*, *>,
-  xcfa: XCFA,
-  safetyResult: SafetyResult<*, *>,
-) {
+private fun writeChcAnswer(config: XcfaConfig<*, *>, xcfa: XCFA, safetyResult: SafetyResult<*, *>) {
   try {
     val resultFolder = config.outputConfig.resultFolder
     resultFolder.mkdirs()

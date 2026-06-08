@@ -58,10 +58,7 @@ import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-fun runConfig(
-  config: XcfaConfig<*, *>,
-  throwDontExit: Boolean,
-): Result<*> {
+fun runConfig(config: XcfaConfig<*, *>, throwDontExit: Boolean): Result<*> {
   propagateInputOptions(config)
 
   registerAllSolverManagers(config.backendConfig.solverHome)
@@ -157,9 +154,7 @@ private fun validateInputOptions(config: XcfaConfig<*, *>) {
   }
 }
 
-private fun parseInputFiles(
-  config: XcfaConfig<*, *>,
-): Triple<XCFA?, MCM?, ParseContext?> {
+private fun parseInputFiles(config: XcfaConfig<*, *>): Triple<XCFA?, MCM?, ParseContext?> {
   if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
     Logger.info("Not parsing input because a worker process will handle it later.")
     return Triple(null, null, null)
@@ -170,9 +165,7 @@ private fun parseInputFiles(
   return Triple(xcfa, mcm, parseContext)
 }
 
-private fun frontend(
-  config: XcfaConfig<*, *>,
-): Triple<XCFA, MCM, ParseContext> {
+private fun frontend(config: XcfaConfig<*, *>): Triple<XCFA, MCM, ParseContext> {
   if (config.inputConfig.xcfaWCtx != null) {
     return config.inputConfig.xcfaWCtx!!
   }
@@ -362,14 +355,7 @@ private fun postAnalysisLogging(
         parseContext,
         config,
       )
-    else ->
-      postVerificationLogging(
-        xcfa,
-        result as SafetyResult<*, *>,
-        mcm,
-        parseContext,
-        config,
-      )
+    else -> postVerificationLogging(xcfa, result as SafetyResult<*, *>, mcm, parseContext, config)
   }
 }
 

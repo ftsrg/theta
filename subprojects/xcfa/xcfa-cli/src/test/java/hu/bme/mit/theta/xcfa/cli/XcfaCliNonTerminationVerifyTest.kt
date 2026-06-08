@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import java.nio.file.Path
@@ -41,8 +40,7 @@ class XcfaCliNonTerminationVerifyTest {
 
     private fun installSolver(name: String) {
       try {
-        SmtLibSolverManager.create(SMTLIB_HOME).use {
-          solverManager ->
+        SmtLibSolverManager.create(SMTLIB_HOME).use { solverManager ->
           val solverVersion = SmtLibSolverManager.getSolverVersion(name)
           val solverName = SmtLibSolverManager.getSolverName(name)
           if (

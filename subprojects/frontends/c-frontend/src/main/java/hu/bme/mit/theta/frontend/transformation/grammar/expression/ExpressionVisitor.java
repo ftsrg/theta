@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -717,7 +717,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitGccPrettyFunc(CParser.GccPrettyFuncContext ctx) {
-        Logger.warnOnce("gcc intrinsic encountered in place of an expression, using a literal 0 instead%n");
+        Logger.warnOnce(
+                "gcc intrinsic encountered in place of an expression, using a literal 0 instead%n");
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         LitExpr<?> zero = signedInt.getNullValue();
         parseContext.getMetadata().create(zero, "cType", signedInt);

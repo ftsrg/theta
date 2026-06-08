@@ -92,7 +92,7 @@ class XstsCliTracegen :
     xsts: XSTS,
   ) {
     Logger.result(
-      "Successfully generated a summary of ${abstractResult.sourceTraces.size} traces in ${totalTimeMs}ms\n",
+      "Successfully generated a summary of ${abstractResult.sourceTraces.size} traces in ${totalTimeMs}ms\n"
     )
 
     // TODO print coverage (full or not)?
@@ -194,9 +194,7 @@ class XstsCliTracegen :
       )
     val sw = Stopwatch.createStarted()
     val checker: XstsTracegenConfig<out State, out Action, out Prec> =
-      XstsTracegenBuilder(Z3SolverFactory.getInstance(), true)
-        .setGetFullTraces(false)
-        .build(xsts)
+      XstsTracegenBuilder(Z3SolverFactory.getInstance(), true).setGetFullTraces(false).build(xsts)
     val result = checker.check()
     val summary = result.summary as AbstractTraceSet
 

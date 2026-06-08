@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -52,8 +51,7 @@ fun getSafetyChecker(
       Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config)
       Backend.OC -> getOcChecker(xcfa, mcm, config)
       Backend.LAZY -> TODO()
-      Backend.PORTFOLIO ->
-        getPortfolioChecker(xcfa, mcm, config, parseContext)
+      Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext)
       Backend.MDD -> getMddChecker(xcfa, parseContext, config)
       Backend.NONE ->
         SafetyChecker<

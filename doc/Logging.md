@@ -120,3 +120,12 @@ fun myLevel(format: String, vararg args: Any?) {}
 ```
 
 5. Users can now enable it via the pattern: `Logger.init("ERROR|MY_LEVEL")`.
+
+## Examples
+
+For runnable examples covering regex patterns, file output, thread safety,
+deduplication, and edge cases, see the Logger tests:
+
+```
+subprojects/common/common/src/test/kotlin/hu/bme/mit/theta/common/logging/LoggerTest.kt
+```

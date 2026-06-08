@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -93,8 +93,7 @@ class XcfaOcChecker(
         Logger.info(
           "Auto conflict time (ms): " +
             measureTime {
-                val conflicts =
-                  conflictFinder.findConflicts(eg.events, preservedPos, eg.rfs)
+                val conflicts = conflictFinder.findConflicts(eg.events, preservedPos, eg.rfs)
                 ocChecker.solver.add(conflicts.map { Not(it.expr) })
                 Logger.info("Auto conflicts: ${conflicts.size}")
               }

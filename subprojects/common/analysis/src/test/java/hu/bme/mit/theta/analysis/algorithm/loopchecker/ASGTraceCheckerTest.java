@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -80,10 +80,7 @@ public class ASGTraceCheckerTest {
         final PredPrec precision = PredPrec.of();
         final ASGAbstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor =
                 new ASGAbstractor<>(
-                        analysis,
-                        lts,
-                        target,
-                        LoopCheckerSearchStrategy.Companion.getDefault());
+                        analysis, lts, target, LoopCheckerSearchStrategy.Companion.getDefault());
         ASG<XstsState<PredState>, XstsAction> ASG = new ASG<>(target);
         abstractor.check(ASG, precision);
         ASGTrace<XstsState<PredState>, XstsAction> trace = ASG.getTraces().iterator().next();
@@ -92,8 +89,7 @@ public class ASGTraceCheckerTest {
                 .forEach(
                         strat -> {
                             ExprTraceStatus<ItpRefutation> status =
-                                    strat.check(
-                                            trace, solverFactory, xsts.getInitFormula());
+                                    strat.check(trace, solverFactory, xsts.getInitFormula());
                             Assertions.assertTrue(status.isInfeasible());
                         });
     }
