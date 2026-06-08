@@ -160,6 +160,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.LITMUS -> null
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
+        InputType.BTOR2 -> BTOR2FrontendConfig() as T
       }
   }
 }
@@ -177,6 +178,18 @@ data class CFrontendConfig(
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
 ) : SpecFrontendConfig
 
+/** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
+enum class ChcCategory {
+  AUTO,
+  BV,
+  BV_LIN,
+  LIA,
+  LIA_ARRAYS,
+  LIA_LIN,
+  LIA_LIN_ARRAYS,
+  LRA_LIN,
+}
+
 data class CHCFrontendConfig(
   @Parameter(
     names = ["--chc-transformation"],
@@ -185,6 +198,19 @@ data class CHCFrontendConfig(
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
   @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
   var model: Boolean = false,
+  @Parameter(
+    names = ["--chc-category"],
+    description =
+      "CHC-COMP category hint for portfolio selection " +
+        "(AUTO, BV, BV_LIN, LIA, LIA_ARRAYS, LIA_LIN, LIA_LIN_ARRAYS, LRA_LIN). " +
+        "AUTO infers the category from variable types.",
+  )
+  var category: ChcCategory = ChcCategory.AUTO,
+) : SpecFrontendConfig
+
+data class BTOR2FrontendConfig(
+  @Parameter(names = ["--no-optimization"], description = "Runs frontend without XCFA passes")
+  var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config

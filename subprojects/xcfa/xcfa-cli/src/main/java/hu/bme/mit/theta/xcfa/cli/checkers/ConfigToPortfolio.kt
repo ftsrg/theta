@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,9 +65,18 @@ fun getPortfolioChecker(
 
       "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config)
 
+<<<<<<< refactor/singleton-logger
       "CHC-COMP" ->
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config)
         else chcCompPortfolioModel25(xcfa, mcm, parseContext, config)
+=======
+      "CHC-COMP-25" ->
+        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+>>>>>>> master
+
+      "CHC-COMP",
+      "CHC-COMP-26" -> chcCompPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
       "CHC",

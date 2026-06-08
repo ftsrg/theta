@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -165,6 +165,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
+  search: Search = this.backendConfig.specConfig!!.abstractorConfig.search,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
@@ -183,6 +184,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
                   abstractionSolver = abstractionSolver,
                   validateAbstractionSolver = validateAbstractionSolver,
                   domain = domain,
+                  search = search,
                 ),
             refinerConfig =
               backendConfig.specConfig!!
