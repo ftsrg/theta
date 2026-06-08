@@ -1,0 +1,24 @@
+// Synchronous channel with data: one sender, one receiver
+
+channel data_ch {byte} [0];
+
+process Sender {
+    byte val = 7;
+    state s0, s1;
+    init s0;
+    trans
+        s0 -> s1 { sync data_ch!val; },
+        s1 -> s0 {};
+}
+
+process Receiver {
+    byte x = 0;
+    state r0, r1;
+    init r0;
+    trans
+        r0 -> r1 { sync data_ch?x; },
+        r1 -> r0 {};
+}
+
+system async;
+

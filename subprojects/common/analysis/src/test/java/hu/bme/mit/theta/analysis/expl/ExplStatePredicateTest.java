@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -32,28 +32,17 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ExplStatePredicateTest {
 
     private static final VarDecl<IntType> x = Var("x", Int());
     private final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
-
-    @Parameter(value = 0)
     public Expr<BoolType> expr;
-
-    @Parameter(value = 1)
     public ExplState state;
-
-    @Parameter(value = 2)
     public boolean expected;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -76,8 +65,16 @@ public class ExplStatePredicateTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Expr<BoolType> expr, ExplState state, boolean expected) {
+        initExplStatePredicateTest(expr, state, expected);
         assertEquals(expected, new ExplStatePredicate(expr, solver).test(state));
+    }
+
+    public void initExplStatePredicateTest(Expr<BoolType> expr, ExplState state, boolean expected) {
+        this.expr = expr;
+        this.state = state;
+        this.expected = expected;
     }
 }

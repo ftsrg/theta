@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -39,6 +40,7 @@ public final class XstsDslManager {
         final XstsDslLexer lexer = new XstsDslLexer(CharStreams.fromStream(inputStream));
         final CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         final XstsDslParser parser = new XstsDslParser(tokenStream);
+        parser.setErrorHandler(new BailErrorStrategy());
         final XstsDslParser.XstsContext model = parser.xsts();
         final XstsSpecification xstsSpecification = new XstsSpecification(model);
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -41,8 +41,8 @@ public final class XtaSystem {
 
     private XtaSystem() {
         processes = new ArrayList<>();
-        dataVars = Containers.createSet();
-        clockVars = Containers.createSet();
+        dataVars = CollectionUtil.createSet();
+        clockVars = CollectionUtil.createSet();
         initVal = new MutableValuation();
 
         unmodProcesses = Collections.unmodifiableList(processes);

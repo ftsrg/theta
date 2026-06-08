@@ -165,6 +165,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
+  search: Search = this.backendConfig.specConfig!!.abstractorConfig.search,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
@@ -183,6 +184,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
                   abstractionSolver = abstractionSolver,
                   validateAbstractionSolver = validateAbstractionSolver,
                   domain = domain,
+                  search = search,
                 ),
             refinerConfig =
               backendConfig.specConfig!!

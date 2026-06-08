@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -275,12 +275,12 @@ class GenericSmtLibHornSolverTest {
       val A = ArrayList<Expr<BoolType>>(2)
       val B = ArrayList<Expr<BoolType>>(2)
 
-      A.add(IntExprs.Eq(b, IntExprs.Mul(ImmutableList.of<Expr<IntType?>?>(Int(2), a))))
+      A.add(IntExprs.Eq(b, IntExprs.Mul(ImmutableList.of<Expr<IntType>>(Int(2), a))))
       B.add(
         IntExprs.Eq(
           b,
           IntExprs.Add(
-            ImmutableList.of(IntExprs.Mul(ImmutableList.of<Expr<IntType?>?>(Int(2), c)), Int(1))
+            ImmutableList.of(IntExprs.Mul(ImmutableList.of<Expr<IntType>>(Int(2), c)), Int(1))
           ),
         )
       )

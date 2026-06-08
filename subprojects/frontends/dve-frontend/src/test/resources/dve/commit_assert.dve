@@ -1,0 +1,15 @@
+// Committed states and assertions
+
+process P {
+    byte x = 0;
+    state s0, s1, s2;
+    init s0;
+    commit s1;
+    assert s0: x >= 0, s2: x < 10;
+    trans
+        s0 -> s1 { effect x = x + 1; },
+        s1 -> s2 { guard x > 0; },
+        s2 -> s0 {};
+}
+
+system async;

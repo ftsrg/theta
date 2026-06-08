@@ -16,6 +16,7 @@
 plugins {
     id("java-common")
     id("cli-tool")
+    id("archive-packaging")
 }
 
 dependencies {
@@ -30,4 +31,10 @@ dependencies {
 
 application {
     mainClass.set("hu.bme.mit.theta.xta.cli.XtaCli")
+}
+archivePackaging {
+    variant {
+        toolName = "Theta-xta"
+        readmeTemplate = file("src/main/resources/archive-packaging/README.md")
+    }
 }

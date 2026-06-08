@@ -1,0 +1,3 @@
+prop{
+    !(main_region == Error && signal_alert_Out == true)
+}

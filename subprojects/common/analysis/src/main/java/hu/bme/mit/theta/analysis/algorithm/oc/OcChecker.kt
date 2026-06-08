@@ -141,7 +141,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
     val unassignedCopy = unassignedWss.toMutableList()
     val pairs = mutableListOf<Pair<Relation<E>, Relation<E>>>()
     while (unassignedCopy.isNotEmpty()) {
-      val ws = unassignedCopy.removeFirst()
+      val ws = unassignedCopy.removeAt(0)
       val pair = unassignedCopy.find { it.from == ws.to || it.to == ws.from }
       if (pair != null) {
         pairs.add(ws to pair)
