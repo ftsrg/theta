@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.rattype.RatType
@@ -34,10 +33,8 @@ fun chcCompPortfolioModel25(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   val baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)

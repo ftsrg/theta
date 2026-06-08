@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,10 +29,7 @@ import jhoafparser.consumer.HOAConsumer
 import jhoafparser.consumer.HOAConsumerException
 
 class BuchiBuilder
-internal constructor(
-  private val logger: Logger,
-  private val swappedExpressions: Map<String, Expr<BoolType>>,
-) : HOAConsumer {
+internal constructor(private val swappedExpressions: Map<String, Expr<BoolType>>) : HOAConsumer {
 
   private val builder: CFA.Builder = CFA.builder()
   private var initLocNumber: Int? = null
@@ -77,11 +74,11 @@ internal constructor(
   }
 
   override fun notifyHeaderStart(s: String) {
-    logger.write(Logger.Level.VERBOSE, "HOA consumer header: %s%n", s)
+    Logger.verbose("HOA consumer header: %s%n", s)
   }
 
   override fun setNumberOfStates(i: Int) {
-    logger.write(Logger.Level.VERBOSE, "HOA automaton has %d states%n", i)
+    Logger.verbose("HOA automaton has %d states%n", i)
   }
 
   @Throws(HOAConsumerException::class)
@@ -105,32 +102,28 @@ internal constructor(
     i: Int,
     booleanExpression: BooleanExpression<AtomAcceptance>,
   ) {
-    logger.write(Logger.Level.VERBOSE, "Acceptance condition: %s%n", booleanExpression)
+    Logger.verbose("Acceptance condition: %s%n", booleanExpression)
   }
 
   override fun provideAcceptanceName(s: String, list: List<Any>) {
-    logger.write(Logger.Level.VERBOSE, "Acceptance name received: %s%n", s)
-    list.forEach(
-      Consumer { o: Any? ->
-        logger.write(Logger.Level.VERBOSE, "\tobject under acceptance: %s%n", o)
-      }
-    )
+    Logger.verbose("Acceptance name received: %s%n", s)
+    list.forEach(Consumer { o: Any? -> Logger.verbose("\tobject under acceptance: %s%n", o) })
   }
 
   @Throws(HOAConsumerException::class)
   override fun setName(s: String) {
-    logger.write(Logger.Level.VERBOSE, "Automaton named {}%n", s)
+    Logger.verbose("Automaton named {}%n", s)
   }
 
   override fun setTool(s: String, s1: String) {
-    logger.write(Logger.Level.VERBOSE, "Tool named %s %s%n", s, s1)
+    Logger.verbose("Tool named %s %s%n", s, s1)
   }
 
   override fun addProperties(list: List<String>) {
     if (list.isEmpty()) return
-    logger.write(Logger.Level.VERBOSE, "Properties:%n")
-    list.forEach(Consumer { prop: String? -> logger.write(Logger.Level.VERBOSE, "%s", prop) })
-    logger.write(Logger.Level.VERBOSE, "%n")
+    Logger.verbose("Properties:%n")
+    list.forEach(Consumer { prop: String? -> Logger.verbose("%s", prop) })
+    Logger.verbose("%n")
   }
 
   override fun addMiscHeader(s: String, list: List<Any>) {

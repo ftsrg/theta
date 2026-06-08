@@ -25,9 +25,7 @@ import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.common.table.BasicTableWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager
@@ -59,11 +57,15 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
   protected val solver: String by
     option(help = "The solver to use for the check").defaultLazy { defaultSolver }
   private val smtHome: File by option().file().default(SmtLibSolverManager.HOME.toFile())
-  protected val logger: Logger by lazy {
-    if (outputOptions.benchmarkMode) NullLogger.getInstance()
-    else ConsoleLogger(outputOptions.logLevel)
-  }
+  private val logPattern: String by
+    option("--loglevel", help = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+      .default("ERROR|WARN|RESULT|BENCHMARK|MAINSTEP|SUBSTEP")
+
   protected val writer = BasicTableWriter(System.out, ",", "\"", "\"")
+
+  init {
+    Logger.init(logPattern)
+  }
 
   protected abstract fun doRun()
 
@@ -85,11 +87,11 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
       writer.newRow()
       return
     }
-    logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", exceptionName, message)
+    Logger.result("%s occurred, message: %s%n", exceptionName, message)
     if (outputOptions.stacktrace) {
-      logger.write(Logger.Level.RESULT, "Trace:%n%s%n", exception.stackTraceToString())
+      Logger.result("Trace:%n%s%n", exception.stackTraceToString())
     } else {
-      logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n")
+      Logger.result("Use --stacktrace for stack trace%n")
     }
   }
 
@@ -107,7 +109,7 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
 
   protected fun printBenchmarkResult(status: SafetyResult<*, *>, xsts: XSTS, totalTimeMs: Long) {
     if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
+      Logger.result(status.toString())
       return
     }
     printCommonResult(status, xsts, totalTimeMs)
@@ -118,7 +120,7 @@ abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
   private fun registerSolverManagers() {
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create())
-    SolverManager.registerSolverManager(SmtLibSolverManager.create(smtHome.toPath(), logger))
+    SolverManager.registerSolverManager(SmtLibSolverManager.create(smtHome.toPath()))
     SolverManager.registerSolverManager(JavaSMTSolverManager.create())
   }
 

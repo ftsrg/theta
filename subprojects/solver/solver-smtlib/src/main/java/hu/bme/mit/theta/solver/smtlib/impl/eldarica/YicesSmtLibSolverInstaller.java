@@ -39,8 +39,7 @@ public class YicesSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     private final List<SemVer.VersionDecoder> versions;
 
-    public YicesSmtLibSolverInstaller(final Logger logger) {
-        super(logger);
+    public YicesSmtLibSolverInstaller() {
 
         versions = new ArrayList<>();
         versions.add(
@@ -63,7 +62,7 @@ public class YicesSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                 "https://web.archive.org/web/20240607070523if_/https://yices.csl.sri.com/old/binaries/yices-%s-x86_64-unknown-linux-gnu-static-gmp.tar.gz",
                                 version));
 
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+        Logger.mainStep("Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
             installDir
@@ -75,7 +74,7 @@ public class YicesSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

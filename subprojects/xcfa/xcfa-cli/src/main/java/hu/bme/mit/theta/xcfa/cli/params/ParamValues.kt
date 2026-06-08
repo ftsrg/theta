@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -128,7 +127,6 @@ enum class Domain(
       xcfa: XCFA,
       solver: Solver,
       maxEnum: Int,
-      logger: Logger,
       lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
       search: LoopCheckerSearchStrategy,
       partialOrder: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
@@ -142,7 +140,6 @@ enum class Domain(
       maxEnum: Int,
       waitlist: Waitlist<out ArgNode<out XcfaState<out PtrState<out ExprState>>, XcfaAction>>,
       stopCriterion: StopCriterion<out XcfaState<out PtrState<out ExprState>>, XcfaAction>,
-      logger: Logger,
       lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
       errorDetectionType: XcfaErrorDetector,
       partialOrd: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
@@ -167,7 +164,6 @@ enum class Domain(
       xcfa,
       solver,
       maxEnum,
-      logger,
       lts,
       search,
       partialOrd,
@@ -185,17 +181,15 @@ enum class Domain(
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
           as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
         search,
-        logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
-        ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j, k),
+        ExplXcfaAnalysis(a, b, c, h as PartialOrd<XcfaState<PtrState<ExplState>>>, i, j),
         d,
         e,
         f,
         g,
-        h,
       )
     },
     itpPrecRefiner = { _, _ ->
@@ -213,7 +207,6 @@ enum class Domain(
       xcfa,
       solver,
       maxEnum,
-      logger,
       lts,
       search,
       partialOrd,
@@ -231,24 +224,22 @@ enum class Domain(
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
           as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
         search,
-        logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
           a,
           b,
           PredAbstractors.booleanAbstractor(b),
-          i as PartialOrd<XcfaState<PtrState<PredState>>>,
+          h as PartialOrd<XcfaState<PtrState<PredState>>>,
+          i,
           j,
-          k,
         ),
         d,
         e,
         f,
         g,
-        h,
       )
     },
     itpPrecRefiner = { a, _ ->
@@ -266,7 +257,6 @@ enum class Domain(
       xcfa,
       solver,
       maxenum,
-      logger,
       lts,
       search,
       partialOrd,
@@ -284,24 +274,22 @@ enum class Domain(
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
           as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
         search,
-        logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
           a,
           b,
           PredAbstractors.cartesianAbstractor(b),
-          i as PartialOrd<XcfaState<PtrState<PredState>>>,
+          h as PartialOrd<XcfaState<PtrState<PredState>>>,
+          i,
           j,
-          k,
         ),
         d,
         e,
         f,
         g,
-        h,
       )
     },
     itpPrecRefiner = { a, _ ->
@@ -319,7 +307,6 @@ enum class Domain(
       xcfa,
       solver,
       maxenum,
-      logger,
       lts,
       search,
       partialOrd,
@@ -337,24 +324,22 @@ enum class Domain(
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
           as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
         search,
-        logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
           a,
           b,
           PredAbstractors.booleanSplitAbstractor(b),
-          i as PartialOrd<XcfaState<PtrState<PredState>>>,
+          h as PartialOrd<XcfaState<PtrState<PredState>>>,
+          i,
           j,
-          k,
         ),
         d,
         e,
         f,
         g,
-        h,
       )
     },
     itpPrecRefiner = { a, _ ->
@@ -372,7 +357,6 @@ enum class Domain(
       xcfa,
       solver,
       maxEnum,
-      logger,
       lts,
       search,
       partialOrd,
@@ -390,24 +374,22 @@ enum class Domain(
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
           as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
         search,
-        logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
           a,
           b,
-          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(b), j),
-          i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
-          j,
+          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(b), i),
+          h as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          i,
           null,
         ),
         d,
         e,
         f,
         g,
-        h,
       )
     },
     itpPrecRefiner = { a, b ->
@@ -433,7 +415,6 @@ enum class Domain(
       xcfa,
       solver,
       maxEnum,
-      logger,
       lts,
       search,
       partialOrd,
@@ -451,24 +432,22 @@ enum class Domain(
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
           as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
         search,
-        logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
           a,
           b,
-          getExplPredStmtXcfaTransFunc(b, j),
-          i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          getExplPredStmtXcfaTransFunc(b, i),
+          h as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          i,
           j,
-          k,
         ),
         d,
         e,
         f,
         g,
-        h,
       )
     },
     itpPrecRefiner = { a, b ->

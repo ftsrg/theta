@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ internal class XcfaOcCorrectnessValidator(
   private val ocChecker: OcChecker<E>,
   private val inputConflictClauseFile: String,
   private val permissive: Boolean = true,
-  private val logger: Logger,
 ) : OcChecker<E>() {
 
   private var clauseValidationTime = 0L
@@ -64,7 +63,7 @@ internal class XcfaOcCorrectnessValidator(
     val parser = XcfaOcReasonParser(flatRfs union flatWss, flatEvents.toSet())
     var parseFailure = 0
     val propagatedClauses: List<Reason>
-    logger.info(
+    Logger.info(
       "Parse time (ms): " +
         measureTime {
             propagatedClauses =
@@ -89,10 +88,10 @@ internal class XcfaOcCorrectnessValidator(
             }
         }
         .inWholeMilliseconds
-    logger.info("Conflict clause parse failures: $parseFailure")
-    logger.info("Parsed conflict clauses: ${propagatedClauses.size}")
-    logger.info("Validated conflict clauses: ${validConflicts.size}")
-    logger.info("Clause validation time (ms): $clauseValidationTime")
+    Logger.info("Conflict clause parse failures: $parseFailure")
+    Logger.info("Parsed conflict clauses: ${propagatedClauses.size}")
+    Logger.info("Validated conflict clauses: ${validConflicts.size}")
+    Logger.info("Clause validation time (ms): $clauseValidationTime")
 
     wss.forEach { (_, vWss) ->
       val wsList = vWss.toList()
@@ -110,7 +109,7 @@ internal class XcfaOcCorrectnessValidator(
       nonOcSolver.add(validConflicts.map { Not(it.expr) })
     }
     val result: SolverStatus?
-    logger.info(
+    Logger.info(
       "Solver time (ms): " +
         measureTime {
             result =

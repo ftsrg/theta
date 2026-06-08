@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
@@ -71,14 +70,14 @@ public class ASGCegarVerifierTest {
     private static Solver abstractionSolver;
     private static ItpSolver itpSolver;
     private static SolverFactory solverFactory;
-    private static Logger logger;
 
     @BeforeAll
     public static void init() {
+        Logger.close();
+        Logger.init(Logger.ALL);
         abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
         solverFactory = Z3LegacySolverFactory.getInstance();
-        logger = new ConsoleLogger(Logger.Level.INFO);
     }
 
     public String fileName;
@@ -133,7 +132,7 @@ public class ASGCegarVerifierTest {
                 new XstsStatePredicate<>(new ExprStatePredicate(xsts.getProp(), abstractionSolver));
         final AcceptancePredicate<XstsState<PredState>, XstsAction> target =
                 new AcceptancePredicate<>(statePredicate::test);
-        logger.write(Logger.Level.MAINSTEP, "Verifying %s%n", xsts.getProp());
+        Logger.mainStep("Verifying %s%n", xsts.getProp());
         LoopCheckerSearchStrategy.getEntries()
                 .forEach(
                         lStrat ->
@@ -142,8 +141,7 @@ public class ASGCegarVerifierTest {
                                                 strat -> {
                                                     var abstractor =
                                                             new ASGAbstractor<>(
-                                                                    analysis, lts, target, lStrat,
-                                                                    logger);
+                                                                    analysis, lts, target, lStrat);
                                                     final Refiner<
                                                                     PredPrec,
                                                                     ASG<
@@ -161,7 +159,6 @@ public class ASGCegarVerifierTest {
                                                                                             new ItpRefToPredPrec(
                                                                                                     ExprSplitters
                                                                                                             .atoms())),
-                                                                            logger,
                                                                             xsts.getInitFormula());
                                                     final CegarChecker<
                                                                     PredPrec,
@@ -175,7 +172,6 @@ public class ASGCegarVerifierTest {
                                                                     CegarChecker.create(
                                                                             abstractor,
                                                                             refiner,
-                                                                            logger,
                                                                             new AsgVisualizer<>(
                                                                                     Objects
                                                                                             ::toString,
@@ -217,8 +213,7 @@ public class ASGCegarVerifierTest {
                                                 strat -> {
                                                     var abstractor =
                                                             new ASGAbstractor<>(
-                                                                    analysis, lts, target, lStrat,
-                                                                    logger);
+                                                                    analysis, lts, target, lStrat);
                                                     final Refiner<
                                                                     CfaPrec<PredPrec>,
                                                                     ASG<
@@ -234,7 +229,6 @@ public class ASGCegarVerifierTest {
                                                                             JoiningPrecRefiner
                                                                                     .create(
                                                                                             cfaRefToPrec),
-                                                                            logger,
                                                                             True());
                                                     final CegarChecker<
                                                                     CfaPrec<PredPrec>,
@@ -248,7 +242,6 @@ public class ASGCegarVerifierTest {
                                                                     CegarChecker.create(
                                                                             abstractor,
                                                                             refiner,
-                                                                            logger,
                                                                             new AsgVisualizer<>(
                                                                                     Objects
                                                                                             ::toString,

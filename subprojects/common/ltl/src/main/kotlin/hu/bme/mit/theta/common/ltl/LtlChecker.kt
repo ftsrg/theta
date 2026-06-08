@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaSbeLts
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
 import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
 import hu.bme.mit.theta.common.cfa.buchi.Ltl2BuchiTransformer
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -74,7 +73,6 @@ class LtlChecker<
   dataAnalysis: Analysis<DataS, in CfaAction, DataP>,
   ltl: String,
   solverFactory: SolverFactory,
-  logger: Logger,
   searchStrategy: LoopCheckerSearchStrategy,
   refinerStrategy: ASGTraceCheckerStrategy,
   ltl2BuchiTransformer: Ltl2BuchiTransformer,
@@ -122,13 +120,7 @@ class LtlChecker<
     val multiRefToPrec = RefToMultiPrec(refToPrec, buchiRefToPrec, dataRefToPrec)
     val multiAnalysis = product.side.analysis
     val abstractor =
-      ASGAbstractor(
-        multiAnalysis,
-        product.lts,
-        buchiPredicate(buchiAutomaton),
-        searchStrategy,
-        logger,
-      )
+      ASGAbstractor(multiAnalysis, product.lts, buchiPredicate(buchiAutomaton), searchStrategy)
     val refiner:
       SingleASGTraceRefiner<
         ExprMultiState<ControlS, CfaState<UnitState>, DataS>,
@@ -139,7 +131,6 @@ class LtlChecker<
         refinerStrategy,
         solverFactory,
         JoiningPrecRefiner.create(multiRefToPrec),
-        logger,
         initExpr,
       )
     val visualizer =
@@ -150,7 +141,7 @@ class LtlChecker<
         { it.toString() },
         { "" },
       )
-    checker = CegarChecker.create(abstractor, refiner, logger, visualizer)
+    checker = CegarChecker.create(abstractor, refiner, visualizer)
   }
 
   private fun buchiPredicate(

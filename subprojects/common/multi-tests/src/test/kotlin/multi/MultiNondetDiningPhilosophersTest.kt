@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
 import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
 import hu.bme.mit.theta.cfa.copyWithReplacingVars
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
@@ -46,7 +44,6 @@ import org.junit.jupiter.api.Test
 
 class MultiNondetDiningPhilosophersTest {
 
-  val logger: Logger = ConsoleLogger(Logger.Level.SUBSTEP)
   val solver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
 
   @Test
@@ -140,7 +137,6 @@ class MultiNondetDiningPhilosophersTest {
         MultiPrec(cfaInitPrec, cfaInitPrec, dataInitPrec),
         dataInitPrec,
         Z3LegacySolverFactory.getInstance(),
-        logger,
       )
     val result = multiConfigBuilder.build().check()
 

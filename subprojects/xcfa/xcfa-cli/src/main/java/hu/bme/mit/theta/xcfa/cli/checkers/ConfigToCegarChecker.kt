@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -53,7 +52,6 @@ fun getCegarChecker(
   mcm: MCM,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
     error("Termination cannot be checked with CEGAR, use LIVENESS_CEGAR as a backend.")
@@ -97,7 +95,6 @@ fun getCegarChecker(
       cegarConfig.abstractorConfig.maxEnum,
       waitlist,
       cegarConfig.refinerConfig.refinement.stopCriterion,
-      logger,
       lts,
       errorDetector,
       if (cegarConfig.por.isDynamic) {
@@ -128,45 +125,31 @@ fun getCegarChecker(
           ref,
           precRefiner,
           cegarConfig.refinerConfig.pruneStrategy,
-          logger,
           atomicNodePruner,
         )
-      else
-        MultiExprTraceRefiner.create(
-          ref,
-          precRefiner,
-          cegarConfig.refinerConfig.pruneStrategy,
-          logger,
-        )
+      else MultiExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy)
     else if (cegarConfig.por == POR.AASPOR)
       XcfaSingleExprTraceRefiner.create(
         ref,
         precRefiner,
         cegarConfig.refinerConfig.pruneStrategy,
-        logger,
         atomicNodePruner,
       )
     else
-      XcfaSingleExprTraceRefiner.create(
-        ref,
-        precRefiner,
-        cegarConfig.refinerConfig.pruneStrategy,
-        logger,
-      )
+      XcfaSingleExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy)
 
   val cegarChecker =
     if (cegarConfig.por == POR.AASPOR)
       ArgCegarChecker.create(
         abstractor,
         AasporRefiner.create(refiner, cegarConfig.refinerConfig.pruneStrategy, ignoredVarRegistry),
-        logger,
       )
-    else ArgCegarChecker.create(abstractor, refiner, logger)
+    else ArgCegarChecker.create(abstractor, refiner)
 
   // initialize monitors
   MonitorCheckpoint.reset()
   if (cegarConfig.cexMonitor == CexMonitorOptions.CHECK) {
-    val cm = CexMonitor(logger, cegarChecker.proof)
+    val cm = CexMonitor(cegarChecker.proof)
     MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
   }
 

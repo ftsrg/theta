@@ -96,7 +96,6 @@ class XstsCliCegar :
         .search(search)
         .predSplit(predsplit)
         .optimizeStmts(optimizestmts)
-        .logger(logger)
         .build(xsts)
     val sw = Stopwatch.createStarted()
     val result = config.check()

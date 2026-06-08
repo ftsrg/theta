@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -32,11 +31,9 @@ fun portfolio(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   var baseConfig =
     XcfaConfig(
@@ -131,4 +128,4 @@ fun portfolio(
   return STM(ConfigNode("BaseConfig", baseConfig, checker), setOf())
 }
 
-portfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+portfolio(xcfa, mcm, parseContext, portfolioConfig)

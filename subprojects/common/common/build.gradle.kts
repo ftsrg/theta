@@ -18,6 +18,33 @@ plugins {
     id("kotlin-common")
 }
 
+val noLogging = project.hasProperty("noLogging")
+
+val loggerOutputDir = layout.buildDirectory.dir("generated/sources/logger/java/hu/bme/mit/theta/common/logging")
+
+val generateLogger by tasks.registering(Copy::class) {
+    val suffix = if (noLogging) "disabled" else "enabled"
+    from(layout.projectDirectory.dir("src/main/templates/Logger.$suffix.kt"))
+    into(loggerOutputDir)
+    rename { "Logger.kt" }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir(generateLogger.map { it.destinationDir })
+        }
+    }
+}
+
+tasks.named("compileKotlin") {
+    dependsOn(generateLogger)
+}
+
+tasks.named("compileJava") {
+    dependsOn(generateLogger)
+}
+
 dependencies {
     implementation(Deps.nuprocess)
     implementation(files(rootDir.resolve(Deps.delta)))

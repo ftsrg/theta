@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,11 +47,9 @@ fun multithreadPortfolio(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   var baseConfig: XcfaConfig<CFrontendConfig, CegarConfig> =
     baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
@@ -80,7 +78,7 @@ fun multithreadPortfolio(
             LbePass(parseContext, LBE_LOCAL),
             NormalizePass(),
             DeterministicPass(),
-            UnusedVarPass(logger, portfolioConfig.inputConfig.property),
+            UnusedVarPass(portfolioConfig.inputConfig.property),
             EmptyEdgeRemovalPass(),
             UnusedLocRemovalPass(),
           )
@@ -356,7 +354,7 @@ fun multithreadPortfolio(
     return STM(startNode, edges)
   }
 
-  logger.benchmark("Using portfolio: MULTITHREAD\n")
+  Logger.benchmark("Using portfolio: MULTITHREAD\n")
 
   if (portfolioConfig.debugConfig.debug) {
     return getStm(false)

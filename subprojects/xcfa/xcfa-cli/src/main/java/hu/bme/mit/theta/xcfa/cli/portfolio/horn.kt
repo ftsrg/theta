@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,11 +32,9 @@ fun hornPortfolio(
   mcm: MCM,
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, true) }
 
   var baseConfig =
     XcfaConfig(
@@ -139,7 +137,7 @@ fun hornPortfolio(
     return STM(configEldarica, edges)
   }
 
-  logger.benchmark("Using CHC portfolio\n")
+  Logger.benchmark("Using CHC portfolio\n")
 
   if (parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) {
     throw UnsupportedOperationException("CHC portfolio does not support floating points")

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import com.beust.jcommander.ParameterException
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import hu.bme.mit.theta.common.CliUtils
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
-import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
@@ -117,15 +114,10 @@ class XcfaCli(private val args: Array<String>) {
       return
     }
 
-    val logger =
-      if (config.debugConfig.logLevel == Logger.Level.DISABLE) {
-        NullLogger.getInstance()
-      } else {
-        ConsoleLogger(config.debugConfig.logLevel)
-      }
-    val uniqueLogger = UniqueWarningLogger(logger)
+    Logger.close()
+    Logger.init(config.debugConfig.logLevel)
 
-    runConfig(config, logger, uniqueLogger, false)
+    runConfig(config, false)
   }
 
   companion object {

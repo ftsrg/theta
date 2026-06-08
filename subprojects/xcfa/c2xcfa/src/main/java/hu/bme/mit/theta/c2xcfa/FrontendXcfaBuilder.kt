@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package hu.bme.mit.theta.c2xcfa
 
 import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -64,11 +63,8 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import java.math.BigInteger
 import java.util.stream.Collectors
 
-class FrontendXcfaBuilder(
-  val parseContext: ParseContext,
-  val property: XcfaProperty,
-  val uniqueWarningLogger: Logger,
-) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
+class FrontendXcfaBuilder(val parseContext: ParseContext, val property: XcfaProperty) :
+  CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   private var ptrCnt = 1 // counts up, uses 3k+1
@@ -174,8 +170,7 @@ class FrontendXcfaBuilder(
     val isAtomic = function.atomicVariables::contains
     val funcDecl = function.funcDecl
     val compound = function.compound
-    val builder =
-      XcfaProcedureBuilder(funcDecl.name, CPasses(property, parseContext, uniqueWarningLogger))
+    val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(property, parseContext))
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
     if (param.size > 0 && builder.name.equals("main")) {
@@ -190,7 +185,7 @@ class FrontendXcfaBuilder(
     } else {
       // TODO we assume later that there is always a ret var, but this should change
       val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-      val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext, uniqueWarningLogger)
+      val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext)
       signedIntType.setSigned(true)
       parseContext.metadata.create(toAdd.ref, "cType", signedIntType)
       builder.addParam(toAdd, ParamDirection.OUT)

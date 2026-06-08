@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import static java.lang.Math.min;
 import com.zaxxer.nuprocess.NuAbstractProcessHandler;
 import com.zaxxer.nuprocess.NuProcess;
 import com.zaxxer.nuprocess.NuProcessBuilder;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import java.nio.ByteBuffer;
@@ -43,6 +44,9 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
+
+        Logger.solverDebug(
+                "Starting SmtLibSolverBinary with command: %s", String.join(" ", processCmd));
 
         final var solverProcessBuilder = new NuProcessBuilder(processCmd);
 
@@ -72,6 +76,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         try {
             return processHandler.read().trim();
         } catch (InterruptedException e) {
+            Logger.error("Interrupted while reading response: %s", e.getMessage());
             throw new SmtLibSolverBinaryException(e);
         }
     }

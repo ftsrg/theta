@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -63,6 +64,13 @@ class PassTests {
     private val fpParseContext =
       ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
     private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      Logger.close()
+      Logger.init(Logger.ALL)
+    }
 
     @JvmStatic
     val data: List<Arguments> =
@@ -524,12 +532,7 @@ class PassTests {
         ),
         PassTestData(
           global = {},
-          passes =
-            listOf(
-              NormalizePass(),
-              DeterministicPass(),
-              UnusedVarPass(NullLogger.getInstance(), property),
-            ),
+          passes = listOf(NormalizePass(), DeterministicPass(), UnusedVarPass(property)),
           input = { "tmp" type Int() },
           output = {},
         ),
@@ -668,7 +671,7 @@ class PassTests {
 
   @Test
   fun testCPipeline() {
-    val passes = CPasses(property, parseContext, NullLogger.getInstance())
+    val passes = CPasses(property, parseContext)
     val xcfaSource =
       xcfa("example") {
         procedure("main", passes) { (init to final) { "proc1"() } }.start()
@@ -691,7 +694,7 @@ class PassTests {
   fun testSplit() {
     lateinit var edge: XcfaEdge
     xcfa("example") {
-      procedure("main", CPasses(property, parseContext, NullLogger.getInstance())) {
+      procedure("main", CPasses(property, parseContext)) {
         edge = (init to final) {
           assume("1 == 1")
           "proc1"()

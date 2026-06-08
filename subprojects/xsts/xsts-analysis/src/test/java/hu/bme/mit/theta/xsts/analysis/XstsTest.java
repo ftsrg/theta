@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package hu.bme.mit.theta.xsts.analysis;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
@@ -48,6 +46,12 @@ public class XstsTest {
     public String propPath;
     public boolean safe;
     public XstsConfigBuilder.Domain domain;
+
+    @BeforeAll
+    public static void initLogger() {
+        Logger.close();
+        Logger.init(Logger.ALL);
+    }
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -564,8 +568,7 @@ public class XstsTest {
         if (SOLVER_STRING.contains("Z3") || SOLVER_STRING.contains("JavaSMT")) {
             return;
         }
-        try (final var solverManager =
-                SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
+        try (final var solverManager = SmtLibSolverManager.create(SMTLIB_HOME)) {
             String solverVersion = SmtLibSolverManager.getSolverVersion(SOLVER_STRING);
             String solverName = SmtLibSolverManager.getSolverName(SOLVER_STRING);
             if (solverManager.managesSolver(SOLVER_STRING)
@@ -587,11 +590,10 @@ public class XstsTest {
             String filePath, String propPath, boolean safe, XstsConfigBuilder.Domain domain)
             throws Exception {
         initXstsTest(filePath, propPath, safe, domain);
-        final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(
                 hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
-        SolverManager.registerSolverManager(SmtLibSolverManager.create(SMTLIB_HOME, logger));
+        SolverManager.registerSolverManager(SmtLibSolverManager.create(SMTLIB_HOME));
         SolverManager.registerSolverManager(JavaSMTSolverManager.create());
 
         final SolverFactory solverFactory;
@@ -621,7 +623,6 @@ public class XstsTest {
                             .predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS)
                             .maxEnum(250)
                             .autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS)
-                            .logger(logger)
                             .build(xsts);
             final SafetyResult<?, ?> status = configuration.check();
 

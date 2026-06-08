@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,14 +26,12 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.common.logging.Logger
 
 class ASGAbstractor<S : ExprState, A : ExprAction, P : Prec>(
   private val analysis: Analysis<S, in A, in P>,
   private val lts: LTS<in S, A>,
-  private val acceptancePredicate: AcceptancePredicate<S, A>,
+  private var acceptancePredicate: AcceptancePredicate<S, A>,
   private val searchStrategy: LoopCheckerSearchStrategy,
-  private val logger: Logger,
 ) : Abstractor<P, ASG<S, A>> {
 
   override fun createProof() = ASG(acceptancePredicate)
@@ -55,7 +53,7 @@ class ASGAbstractor<S : ExprState, A : ExprAction, P : Prec>(
           }
         }
       }
-    val searchResult = searchStrategy.search(ASG, acceptancePredicate, expander, logger)
+    val searchResult = searchStrategy.search(ASG, acceptancePredicate, expander)
     ASG.traces = searchResult.toList()
     return AbstractorResult(searchResult.isEmpty())
   }

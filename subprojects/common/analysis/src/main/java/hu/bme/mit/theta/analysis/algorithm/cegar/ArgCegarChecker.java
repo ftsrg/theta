@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 
 /**
  * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation, that uses an Abstractor
@@ -36,14 +34,6 @@ public final class ArgCegarChecker {
     public static <S extends State, A extends Action, P extends Prec>
             CegarChecker<P, ARG<S, A>, Trace<S, A>> create(
                     final ArgAbstractor<S, A, P> abstractor, final ArgRefiner<S, A, P> refiner) {
-        return create(abstractor, refiner, NullLogger.getInstance());
-    }
-
-    public static <S extends State, A extends Action, P extends Prec>
-            CegarChecker<P, ARG<S, A>, Trace<S, A>> create(
-                    final ArgAbstractor<S, A, P> abstractor,
-                    final ArgRefiner<S, A, P> refiner,
-                    final Logger logger) {
-        return CegarChecker.create(abstractor, refiner, logger, ArgVisualizer.getDefault());
+        return CegarChecker.create(abstractor, refiner, ArgVisualizer.<S, A>getDefault());
     }
 }

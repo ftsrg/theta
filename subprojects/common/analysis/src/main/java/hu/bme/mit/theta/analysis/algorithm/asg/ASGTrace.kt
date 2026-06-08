@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level
 
 class HackyAsgTrace<A : ExprAction>(val trace: Trace<ExplState, A>, val originalStates: List<*>) :
   ASGTrace<ExplState, A>(emptyList(), ASGNode(ExplState.top(), true), emptyList()) {
@@ -79,18 +77,15 @@ open class ASGTrace<S : ExprState, A : ExprAction>(
   open fun toTrace(): Trace<S, A> =
     Trace.of(edges.map { it.source!!.state } + honda.state, edges.map { it.action!! })
 
-  fun print(logger: Logger, level: Level) {
+  fun print() {
+    val sb = StringBuilder()
     tail.forEach {
-      logger.write(
-        level,
-        "%s%n---through action:---%n%s%n--------->%n",
-        it.source?.state,
-        it.action,
-      )
+      sb.append("${it.source?.state}\n---through action:---\n${it.action}\n--------->\n")
     }
-    logger.write(level, "---HONDA:---%n{ %s }---------%n", honda.state)
+    sb.append("---HONDA:---\n{ ${honda.state} }---------\n")
     loop.forEach {
-      logger.write(level, "---through action:---%n%s%n--------->%n%s%n", it.action, it.target.state)
+      sb.append("---through action:---\n${it.action}\n--------->\n${it.target.state}\n")
     }
+    sb.toString()
   }
 }

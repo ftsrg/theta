@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
@@ -30,7 +29,6 @@ fun getOcChecker(
   xcfa: XCFA,
   mcm: MCM,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<EmptyProof, Cex, XcfaPrec<*>> {
   val ocConfig = config.backendConfig.specConfig as OcConfig
   val ocChecker =
@@ -39,7 +37,6 @@ fun getOcChecker(
       property = config.inputConfig.property.verifiedProperty,
       decisionProcedure = ocConfig.decisionProcedure,
       smtSolver = ocConfig.smtSolver,
-      logger = logger,
       conflictInput = ocConfig.inputConflictClauseFile,
       outputConflictClauses = ocConfig.outputConflictClauses,
       nonPermissiveValidation = ocConfig.nonPermissiveValidation,

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.io.FileNotFoundException
 import kotlinx.serialization.builtins.ListSerializer
 
-fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
+fun determineProperty(config: XcfaConfig<*, *>): XcfaProperty =
   (config.inputConfig.propertyFile
       ?.run {
         val propertyFile = config.inputConfig.propertyFile!!
@@ -45,9 +45,8 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
           propertyFile.name.endsWith("termination.prp") -> TERMINATION
 
           else -> {
-            logger.write(
-              Logger.Level.INFO,
-              "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
+            Logger.info(
+              "Unknown property $propertyFile, using full state space exploration (no refinement)\n"
             )
             NO_ERROR
           }
@@ -56,7 +55,7 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
       ?.let { XcfaProperty(it) } ?: config.inputConfig.property)
     .let { iP ->
       config.inputConfig.witness?.let {
-        logger.info("Applying witness $it")
+        Logger.info("Applying witness $it")
         if (!it.exists()) {
           exitProcess(
             config.debugConfig.debug,
@@ -69,7 +68,7 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
               ListSerializer(YamlWitness.serializer()),
               it.readText(),
             )[0]
-        logger.mainStep(
+        Logger.mainStep(
           "Applying ${witness.entryType} witness $witness with size ${witness.content.size}"
         )
         XcfaProperty(

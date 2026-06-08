@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import java.util.*
+import kotlin.collections.plus
 
 /**
  * A checker for bounded model checking.
@@ -71,7 +72,6 @@ constructor(
   private val imcEnabled: (Int) -> Boolean = { itpSolver != null },
   private val indSolver: Solver? = null,
   private val kindEnabled: (Int) -> Boolean = { indSolver != null },
-  private val logger: Logger,
   private val needProof: Boolean = false,
 ) : SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> {
 
@@ -99,12 +99,9 @@ constructor(
 
     while (!shouldGiveUp(iteration)) {
       iteration++
-      logger.write(Logger.Level.MAINSTEP, "Starting iteration $iteration\n")
+      Logger.mainStep("Starting iteration $iteration\n")
       if (!kindEnabled(iteration) && imcEnabled(iteration) && bmcEnabled()) {
-        logger.writeln(
-          Logger.Level.INFO,
-          "BMC and IMC together are inefficient; IMC includes BMC as a substep.",
-        )
+        Logger.info("BMC and IMC together are inefficient; IMC includes BMC as a substep.")
       }
       check((!kindEnabled(iteration)) || bmcEnabled()) {
         "K-Induction needs BMC as an external substep."
@@ -141,7 +138,7 @@ constructor(
 
   private fun bmc(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
     val bmcSolver = this.bmcSolver!!
-    logger.write(Logger.Level.MAINSTEP, "\tStarting BMC\n")
+    Logger.mainStep("\tStarting BMC\n")
 
     if (iteration == 1) {
       WithPushPop(bmcSolver).use {
@@ -149,10 +146,7 @@ constructor(
 
         if (bmcSolver.check().isSat) {
           val trace = getTrace(bmcSolver.model)
-          logger.write(
-            Logger.Level.MAINSTEP,
-            "CeX found in the initial state (length ${trace.length()})\n",
-          )
+          Logger.mainStep("CeX found in the initial state (length ${trace.length()})\n")
           return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
         }
       }
@@ -176,7 +170,7 @@ constructor(
       bmcSolver.add(loopfree)
 
       if (bmcSolver.check().isUnsat) {
-        logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step\n")
+        Logger.mainStep("Safety proven in BMC step\n")
         val proof =
           if (needProof) {
             // we enumerate all states explored by previous iteration of BMC
@@ -199,7 +193,7 @@ constructor(
 
       if (bmcSolver.check().isSat) {
         val trace = getTrace(bmcSolver.model)
-        logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
+        Logger.mainStep("CeX found in BMC step (length ${trace.length()})\n")
         SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
       } else null
     }
@@ -208,7 +202,7 @@ constructor(
   private fun kind(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
     val indSolver = this.indSolver!!
 
-    logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
+    Logger.mainStep("\tStarting k-induction\n")
 
     exprs.subList(kindLastIterLookup, exprs.size).forEach { indSolver.add(it) }
     val allSafe = LinkedList<Expr<BoolType>>()
@@ -219,9 +213,10 @@ constructor(
 
     return WithPushPop(indSolver).use {
       indSolver.add(Not(unfoldedPropExpr(indices.last())))
+      // debug("${bmcSolver?.assertions}")
 
       if (indSolver.check().isUnsat) {
-        logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
+        Logger.mainStep("Safety proven in k-induction step\n")
         val proof =
           if (needProof) {
             val bmc = And(exprs + unfoldedInitExpr)
@@ -247,7 +242,7 @@ constructor(
 
   private fun itp(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
     val itpSolver = this.itpSolver!!
-    logger.write(Logger.Level.MAINSTEP, "\tStarting IMC\n")
+    Logger.mainStep("\tStarting IMC\n")
 
     itpSolver.push()
 
@@ -262,10 +257,7 @@ constructor(
 
         if (itpSolver.check().isSat) {
           val trace = getTrace(itpSolver.model)
-          logger.write(
-            Logger.Level.MAINSTEP,
-            "CeX found in the initial state (length ${trace.length()})\n",
-          )
+          Logger.mainStep("CeX found in the initial state (length ${trace.length()})\n")
           return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
         }
       }
@@ -296,7 +288,7 @@ constructor(
       if (itpSolver.check().isUnsat) {
         itpSolver.pop()
         itpSolver.pop()
-        logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC/BMC step\n")
+        Logger.mainStep("Safety proven in IMC/BMC step\n")
         val proof =
           if (needProof) {
             // we enumerate all states explored by previous iteration of BMC
@@ -321,7 +313,7 @@ constructor(
 
     if (status.isSat) {
       val trace = getTrace(itpSolver.model)
-      logger.write(Logger.Level.MAINSTEP, "CeX found in IMC/BMC step (length ${trace.length()})\n")
+      Logger.mainStep("CeX found in IMC/BMC step (length ${trace.length()})\n")
       itpSolver.pop()
       itpSolver.pop()
       return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
@@ -339,7 +331,7 @@ constructor(
       itpSolver.add(a, Not(img))
       val itpStatus = itpSolver.check()
       if (itpStatus.isUnsat) {
-        logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC step\n")
+        Logger.mainStep("Safety proven in IMC step\n")
         itpSolver.pop()
         itpSolver.pop()
         return SafetyResult.safe(

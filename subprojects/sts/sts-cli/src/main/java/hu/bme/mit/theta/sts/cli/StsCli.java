@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,10 +43,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -96,7 +93,7 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 throw new UnsupportedOperationException(
                         "CEGAR can't provide a checker factory as it is not to be used in ME"
                                 + " pipeline");
@@ -110,10 +107,10 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildBMC(
-                                monolithicExpr, solverFactory.createSolver(), logger));
+                                monolithicExpr, solverFactory.createSolver()));
             }
         },
         KINDUCTION {
@@ -124,13 +121,12 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildKIND(
                                 monolithicExpr,
                                 solverFactory.createSolver(),
-                                solverFactory.createSolver(),
-                                logger));
+                                solverFactory.createSolver()));
             }
         },
         IMC {
@@ -141,13 +137,12 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildIMC(
                                 monolithicExpr,
                                 solverFactory.createSolver(),
-                                solverFactory.createItpSolver(),
-                                logger));
+                                solverFactory.createItpSolver()));
             }
         },
         MDD {
@@ -158,12 +153,11 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         new MddChecker(
                                 monolithicExpr,
                                 new SolverPool(solverFactory),
-                                logger,
                                 stsCli.iterationStrategy));
             }
         },
@@ -175,18 +169,10 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory) {
                 return (monolithicExpr ->
                         new Ic3Checker(
-                                monolithicExpr,
-                                solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                logger));
+                                monolithicExpr, solverFactory, true, true, true, true, true, true));
             }
         };
 
@@ -194,7 +180,7 @@ public class StsCli {
                         MonolithicExpr,
                         SafetyChecker<
                                 ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
-                getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger);
+                getCheckerFactory(StsCli stsCli, SolverFactory solverFactory);
     }
 
     @Parameter(
@@ -275,8 +261,8 @@ public class StsCli {
 
     @Parameter(
             names = {"--loglevel"},
-            description = "Detailedness of logging")
-    Logger.Level logLevel = Level.SUBSTEP;
+            description = "Regex pattern for log levels (e.g. ERROR|WARN|INFO)")
+    String logLevel = "ERROR|WARN|RESULT|BENCHMARK|MAINSTEP|SUBSTEP";
 
     @Parameter(
             names = {"--benchmark"},
@@ -298,8 +284,6 @@ public class StsCli {
     @Parameter(names = "--version", description = "Display version", help = true)
     boolean versionInfo = false;
 
-    private Logger logger;
-
     public StsCli(final String[] args) {
         this.args = args;
         writer = new BasicTableWriter(System.out, ",", "\"", "\"");
@@ -313,7 +297,7 @@ public class StsCli {
     private void run() {
         try {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+            Logger.init(logLevel);
         } catch (final ParameterException ex) {
             System.out.println("Invalid parameters, details:");
             System.out.println(ex.getMessage());
@@ -362,8 +346,7 @@ public class StsCli {
                                         sts,
                                         monolithicExpr ->
                                                 algorithm
-                                                        .getCheckerFactory(
-                                                                this, solverFactory, logger)
+                                                        .getCheckerFactory(this, solverFactory)
                                                         .apply(monolithicExpr),
                                         passes);
                 status = formalismChecker.check(null);
@@ -383,8 +366,7 @@ public class StsCli {
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
         SolverManager.registerSolverManager(
                 hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
-        SolverManager.registerSolverManager(
-                SmtLibSolverManager.create(Path.of(solverHome), logger));
+        SolverManager.registerSolverManager(SmtLibSolverManager.create(Path.of(solverHome)));
         SolverManager.registerSolverManager(JavaSMTSolverManager.create());
     }
 
@@ -449,7 +431,6 @@ public class StsCli {
                     .search(search)
                     .predSplit(predSplit)
                     .pruneStrategy(pruneStrategy)
-                    .logger(logger)
                     .build(sts);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -491,7 +472,7 @@ public class StsCli {
             writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
             writer.newRow();
         } else {
-            logger.write(Level.RESULT, status.toString());
+            Logger.result(status.toString());
         }
     }
 
@@ -501,17 +482,13 @@ public class StsCli {
             writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
             writer.newRow();
         } else {
-            logger.write(
-                    Level.RESULT,
-                    "%s occurred, message: %s%n",
-                    ex.getClass().getSimpleName(),
-                    message);
+            Logger.result("%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));
-                logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+                Logger.result("Trace:%n%s%n", errors.toString());
             } else {
-                logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+                Logger.result("Use --stacktrace for stack trace%n");
             }
         }
     }

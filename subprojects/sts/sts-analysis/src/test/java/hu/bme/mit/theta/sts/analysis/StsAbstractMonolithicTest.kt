@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.Utils
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
@@ -39,6 +38,7 @@ import hu.bme.mit.theta.sts.dsl.StsDslManager
 import java.io.FileInputStream
 import java.io.IOException
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -46,6 +46,13 @@ import org.junit.jupiter.params.provider.MethodSource
 class StsAbstractMonolithicTest() {
 
   companion object {
+    @JvmStatic
+    @BeforeAll
+    fun initLogger() {
+      Logger.close()
+      Logger.init(Logger.ALL)
+    }
+
     @JvmStatic
     fun data(): Collection<Arguments> {
       return listOf(
@@ -73,7 +80,6 @@ class StsAbstractMonolithicTest() {
   private fun runTest(
     filePath: String,
     expectedResult: Boolean,
-    logger: Logger,
     checkerBuilderFunction:
       (MonolithicExpr) -> SafetyChecker<out InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>,
   ) {
@@ -95,18 +101,16 @@ class StsAbstractMonolithicTest() {
         )
       )
 
-    val checker = StsPipelineChecker(sts, checkerBuilderFunction, passes, logger = logger)
+    val checker = StsPipelineChecker(sts, checkerBuilderFunction, passes)
 
     Assertions.assertEquals(expectedResult, checker.check().isSafe())
   }
 
   //    @Test
   //    public void testIc3() throws IOException {
-  //        final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
   //        final var solverFactory = Z3LegacySolverFactory.getInstance();
   //
   //        runTest(
-  //            logger,
   //            solverFactory,
   //            abstractMe -> new Ic3Checker<>(
   //                    abstractMe,
@@ -120,33 +124,29 @@ class StsAbstractMonolithicTest() {
   //                    true,
   //                    true,
   //                    true,
-  //                    true,
-  //                    logger)
+  //                    true)
   //        );
   //    }
   //
   //    @Test
   //    public void testBMC() throws IOException {
-  //        final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
   //        final var solverFactory = Z3LegacySolverFactory.getInstance();
   //
   //        runTest(
-  //                logger,
   //                solverFactory,
   //                abstractMe -> BoundedCheckerBuilderKt.buildBMC(
   //                        abstractMe,
   //                        solverFactory.createSolver(),
   //                        val -> abstractMe.getValToState().invoke(val),
   //                        (val1, val2) ->
-  //                                abstractMe.getBiValToAction().invoke(val1, val2),
-  //                        logger)
+  //                                abstractMe.getBiValToAction().invoke(val1, val2))
   //        );
   //    }
+
   @ParameterizedTest
   @MethodSource("data")
   @Throws(IOException::class)
   fun testMdd(filePath: String, expectedResult: Boolean) {
-    val logger: Logger = ConsoleLogger(Logger.Level.VERBOSE)
     val solverFactory = Z3LegacySolverFactory.getInstance()
 
     try {
@@ -154,8 +154,7 @@ class StsAbstractMonolithicTest() {
         runTest(
           filePath,
           expectedResult,
-          logger,
-          { monolithicExpr: MonolithicExpr? -> MddChecker(monolithicExpr!!, solverPool, logger) },
+          { monolithicExpr: MonolithicExpr? -> MddChecker(monolithicExpr!!, solverPool) },
         )
       }
     } catch (e: Exception) {

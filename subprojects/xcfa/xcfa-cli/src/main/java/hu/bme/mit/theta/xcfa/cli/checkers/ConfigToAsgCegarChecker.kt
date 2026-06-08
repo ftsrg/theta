@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import hu.bme.mit.theta.analysis.expr.ExprStatePredicate
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -51,7 +50,6 @@ fun getAsgCegarChecker(
   parseContext: ParseContext,
   mcm: MCM,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<
   ASG<XcfaState<PtrState<*>>, XcfaAction>,
   ASGTrace<XcfaState<PtrState<*>>, XcfaAction>,
@@ -130,7 +128,6 @@ fun getAsgCegarChecker(
       xcfa,
       abstractionSolverInstance,
       asgCegarConfig.abstractorConfig.maxEnum,
-      logger,
       lts.second,
       asgCegarConfig.abstractorConfig.search,
       getPartialOrder(
@@ -157,15 +154,10 @@ fun getAsgCegarChecker(
       asgCegarConfig.refinerConfig.refinement,
       refinementSolverFactory,
       precRefiner,
-      logger,
     )
 
   val checker =
-    AsgCegarChecker.create(
-      abstractor as ASGAbstractor<ExprState, ExprAction, Prec>,
-      refiner,
-      logger,
-    )
+    AsgCegarChecker.create(abstractor as ASGAbstractor<ExprState, ExprAction, Prec>, refiner)
 
   return object :
     SafetyChecker<

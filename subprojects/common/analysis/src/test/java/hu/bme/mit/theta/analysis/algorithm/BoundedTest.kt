@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package hu.bme.mit.theta.analysis.algorithm
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
@@ -70,7 +68,6 @@ class BoundedTest {
         bmcSolver = solver,
         itpSolver = itpSolver,
         indSolver = indSolver,
-        logger = ConsoleLogger(Logger.Level.VERBOSE),
       )
     val safetyResult: SafetyResult<*, *> = checker.check()
     Assertions.assertTrue(safetyResult.isUnsafe())
@@ -87,7 +84,6 @@ class BoundedTest {
         bmcSolver = solver,
         itpSolver = itpSolver,
         indSolver = indSolver,
-        logger = ConsoleLogger(Logger.Level.VERBOSE),
       )
     val safetyResult: SafetyResult<*, *> = checker.check()
     Assertions.assertTrue(safetyResult.isSafe())

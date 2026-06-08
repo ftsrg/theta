@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 
 typealias NodeExpander<S, A> = (ASGNode<S, A>) -> Collection<ASGEdge<S, A>>
 
@@ -41,8 +39,7 @@ enum class LoopCheckerSearchStrategy(private val strategy: ILoopCheckerSearchStr
     ASG: ASG<S, A>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-    logger: Logger = NullLogger.getInstance(),
-  ): Collection<ASGTrace<S, A>> = strategy.search(ASG.initNodes, target, expand, logger)
+  ): Collection<ASGTrace<S, A>> = strategy.search(ASG.initNodes, target, expand)
 }
 
 interface ILoopCheckerSearchStrategy {
@@ -51,6 +48,5 @@ interface ILoopCheckerSearchStrategy {
     initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-    logger: Logger,
   ): Collection<ASGTrace<S, A>>
 }

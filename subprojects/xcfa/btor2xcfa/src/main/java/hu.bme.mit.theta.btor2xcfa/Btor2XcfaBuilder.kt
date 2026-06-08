@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.btor2xcfa
 
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -32,12 +31,7 @@ class Btor2XcfaBuilder {
 
   private var i: Int = 1
 
-  fun btor2xcfa(
-    circuit: Btor2Circuit,
-    btor2Passes: Boolean,
-    parseContext: ParseContext,
-    uniqueLogger: Logger,
-  ): XCFA {
+  fun btor2xcfa(circuit: Btor2Circuit, btor2Passes: Boolean, parseContext: ParseContext): XCFA {
     check(circuit.properties.isNotEmpty(), { "Circuit has no error property" })
 
     // would be nice to check that no operand node (i.e. right side node) is later than it's
@@ -51,10 +45,7 @@ class Btor2XcfaBuilder {
     parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
 
     val procBuilder =
-      XcfaProcedureBuilder(
-        "main",
-        if (btor2Passes) Btor2Passes(parseContext, uniqueLogger) else Btor2EmptyPass(),
-      )
+      XcfaProcedureBuilder("main", if (btor2Passes) Btor2Passes(parseContext) else Btor2EmptyPass())
 
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()

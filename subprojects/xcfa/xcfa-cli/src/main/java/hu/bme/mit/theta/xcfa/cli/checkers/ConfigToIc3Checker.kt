@@ -28,7 +28,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -45,7 +44,6 @@ fun getIc3Checker(
   xcfa: XCFA,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
 
   val ic3Config = config.backendConfig.specConfig as Ic3Config
@@ -61,7 +59,6 @@ fun getIc3Checker(
       /* propagateOpt = */ true,
       /* filterOpt = */ true,
       /* propertyOpt = */ true,
-      /* logger = */ logger,
     )
   }
 
@@ -82,7 +79,6 @@ fun getIc3Checker(
     parseContext,
     baseChecker,
     passes,
-    logger,
     config.outputConfig.acceptUnreliableSafe,
   )
 }

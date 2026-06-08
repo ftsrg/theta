@@ -28,7 +28,6 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
@@ -46,7 +45,6 @@ fun getMddChecker(
   xcfa: XCFA,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
   val mddConfig = config.backendConfig.specConfig as MddConfig
 
@@ -58,7 +56,6 @@ fun getMddChecker(
     MddChecker(
       monolithicExpr,
       solverPool,
-      logger,
       iterationStrategy = mddConfig.iterationStrategy,
       lookAheadStrategy = mddConfig.lookAheadStrategy,
       proofStrategy = mddConfig.proofStrategy,
@@ -84,7 +81,6 @@ fun getMddChecker(
     parseContext,
     baseChecker,
     passes,
-    logger,
     config.outputConfig.acceptUnreliableSafe,
     true,
   )

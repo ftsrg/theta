@@ -36,7 +36,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -62,10 +61,9 @@ public class Ic3Checker
     private final boolean filterOpt;
     private int currentFrameNumber;
     private final boolean propertyOpt;
-    private final Logger logger;
 
-    public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
-        this(monolithicExpr, solverFactory, true, true, true, true, true, true, logger);
+    public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory) {
+        this(monolithicExpr, solverFactory, true, true, true, true, true, true);
     }
 
     public Ic3Checker(
@@ -76,8 +74,7 @@ public class Ic3Checker
             boolean notBOpt,
             boolean propagateOpt,
             boolean filterOpt,
-            boolean propertyOpt,
-            Logger logger) {
+            boolean propertyOpt) {
         this.monolithicExpr = monolithicExpr;
         this.formerFramesOpt = formerFramesOpt;
         this.unSatOpt = unSatOpt;
@@ -85,7 +82,6 @@ public class Ic3Checker
         this.propagateOpt = propagateOpt;
         this.filterOpt = filterOpt;
         this.propertyOpt = propertyOpt;
-        this.logger = logger;
         this.solverFactory = solverFactory;
         frames = new ArrayList<>();
         solver = solverFactory.createUCSolver();

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,10 +38,6 @@ import java.util.List;
 @Deprecated
 public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
-    public CVC4SmtLibSolverInstaller(final Logger logger) {
-        super(logger);
-    }
-
     @Override
     protected String getSolverName() {
         return "cvc4";
@@ -59,17 +55,14 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                                 .toAbsolutePath()
                                                 .toString())
                                 .getChannel()) {
-            logger.write(
-                    Logger.Level.MAINSTEP,
-                    "Starting download (%s)...\n",
-                    getDownloadUrl(version).toString());
+            Logger.mainStep("Starting download (%s)...\n", getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        Logger.mainStep("Download finished\n");
     }
 
     @Override

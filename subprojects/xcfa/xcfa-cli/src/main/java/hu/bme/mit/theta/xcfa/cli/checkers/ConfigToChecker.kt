@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -36,27 +35,24 @@ fun getSafetyChecker(
   mcm: MCM?,
   config: XcfaConfig<*, *>,
   parseContext: ParseContext?,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(xcfa, config, parseContext, logger)
+    InProcessChecker(xcfa, config, parseContext)
   } else {
     xcfa!!
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,
       Backend.KINDIMC,
-      Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config, logger)
-      Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
+      Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config)
+      Backend.OC -> getOcChecker(xcfa, mcm, config)
       Backend.LAZY -> TODO()
-      Backend.PORTFOLIO ->
-        getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-      Backend.MDD -> getMddChecker(xcfa, parseContext, config, logger)
+      Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext)
+      Backend.MDD -> getMddChecker(xcfa, parseContext, config)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
@@ -65,9 +61,9 @@ fun getSafetyChecker(
         > { _ ->
           SafetyResult.unknown()
         }
-      Backend.CHC -> getHornChecker(xcfa, mcm, config, logger, parseContext)
-      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
-      Backend.LIVENESS_CEGAR -> getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
+      Backend.CHC -> getHornChecker(xcfa, mcm, config, parseContext)
+      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config)
+      Backend.LIVENESS_CEGAR -> getAsgCegarChecker(xcfa, parseContext, mcm, config)
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"
@@ -80,14 +76,12 @@ fun getChecker(
   mcm: MCM?,
   config: XcfaConfig<*, *>,
   parseContext: ParseContext?,
-  logger: Logger,
-  uniqueLogger: Logger,
 ): Checker<*, XcfaPrec<*>> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(xcfa, config, parseContext, logger)
+    InProcessChecker(xcfa, config, parseContext)
   } else {
     when (config.backendConfig.backend) {
-      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, parseContext!!, mcm, config, logger)
+      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, parseContext!!, mcm, config)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,

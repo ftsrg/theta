@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -43,7 +42,6 @@ fun getTracegenChecker(
   parseContext: ParseContext,
   mcm: MCM?,
   config: XcfaConfig<*, *>,
-  logger: Logger,
 ): Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
   val tracegenConfig = config.backendConfig.specConfig as TracegenConfig
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
@@ -76,7 +74,6 @@ fun getTracegenChecker(
       tracegenConfig.abstractorConfig.maxEnum,
       waitlist,
       StopCriterions.fullExploration(),
-      logger,
       lts,
       errorDetector,
       corePartialOrd,
@@ -84,7 +81,7 @@ fun getTracegenChecker(
       coi,
     ) as BasicArgAbstractor<ExprState, ExprAction, Prec>
 
-  val tracegenChecker = CegarTraceGenerationChecker.create(logger, abstractor, false)
+  val tracegenChecker = CegarTraceGenerationChecker.create(abstractor, false)
 
   return Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> { prec ->
     tracegenChecker.check(prec) as Result<AbstractTraceSummary<XcfaState<*>, XcfaAction>>

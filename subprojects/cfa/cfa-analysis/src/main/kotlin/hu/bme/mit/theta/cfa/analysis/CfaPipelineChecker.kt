@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.cfa.CFA
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 
 class CfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
@@ -39,9 +37,8 @@ constructor(
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
   validators: List<MonolithicExprPassValidator<in Pr>> =
     MonolithicExprPassPipelineChecker.defaultValidators(),
-  logger: Logger = NullLogger.getInstance(),
 ) :
   FormalismPipelineChecker<CFA, CfaState<ExplState>, CfaAction, Pr, InvariantProof>(
     CfaToMonolithicAdapter(cfa),
-    MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
+    MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators),
   )

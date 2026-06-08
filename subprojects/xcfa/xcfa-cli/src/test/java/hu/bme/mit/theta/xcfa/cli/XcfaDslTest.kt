@@ -15,8 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.common.logging.NullLogger
-import hu.bme.mit.theta.common.logging.UniqueWarningLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
@@ -28,9 +27,19 @@ import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class XcfaDslTest {
+
+  companion object {
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      Logger.close()
+      Logger.init(Logger.ALL)
+    }
+  }
 
   private fun getSyncXcfa() =
     xcfa("example") {
@@ -88,29 +97,13 @@ class XcfaDslTest {
       )
     run {
       val xcfa = getSyncXcfa()
-      val checker =
-        getSafetyChecker(
-          xcfa,
-          emptySet(),
-          config,
-          ParseContext(),
-          NullLogger.getInstance(),
-          UniqueWarningLogger(NullLogger.getInstance()),
-        )
+      val checker = getSafetyChecker(xcfa, emptySet(), config, ParseContext())
       val safetyResult = checker.check()
       Assertions.assertTrue(safetyResult.isSafe)
     }
     run {
       val xcfa = getAsyncXcfa()
-      val checker =
-        getSafetyChecker(
-          xcfa,
-          emptySet(),
-          config,
-          ParseContext(),
-          NullLogger.getInstance(),
-          UniqueWarningLogger(NullLogger.getInstance()),
-        )
+      val checker = getSafetyChecker(xcfa, emptySet(), config, ParseContext())
       val safetyResult = checker.check()
       Assertions.assertTrue(safetyResult.isUnsafe)
     }

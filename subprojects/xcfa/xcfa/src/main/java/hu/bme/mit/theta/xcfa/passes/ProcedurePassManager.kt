@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
@@ -30,7 +29,7 @@ open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
     ProcedurePassManager(this.passes + listOf(passes))
 }
 
-class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class CPasses(property: XcfaProperty, parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -96,17 +95,13 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(OverflowDetectionPass(property, parseContext)),
     listOf(
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger, property),
+      UnusedVarPass(property),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
   )
 
-class NontermValidationPasses(
-  property: XcfaProperty,
-  parseContext: ParseContext,
-  uniqueWarningLogger: Logger,
-) :
+class NontermValidationPasses(property: XcfaProperty, parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -138,13 +133,13 @@ class NontermValidationPasses(
       NondetFunctionPass(),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger, property),
+      UnusedVarPass(property),
       UnusedLocRemovalPass(),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
-class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class ChcPasses(parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -166,13 +161,13 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       //      NormalizePass(), // needed after lbe, TODO
       //      DeterministicPass(), // needed after lbe, TODO
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger),
+      UnusedVarPass(),
     ),
   )
 
 class LitmusPasses : ProcedurePassManager()
 
-class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class Btor2Passes(parseContext: ParseContext) :
   ProcedurePassManager(
     listOf(
       LbePass(parseContext),
@@ -181,7 +176,7 @@ class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
       SimplifyExprsPass(parseContext),
-      UnusedVarPass(uniqueWarningLogger),
+      UnusedVarPass(),
     )
   )
 
