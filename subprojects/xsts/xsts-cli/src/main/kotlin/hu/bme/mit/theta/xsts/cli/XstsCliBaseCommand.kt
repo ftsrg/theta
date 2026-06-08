@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
@@ -39,9 +40,14 @@ import hu.bme.mit.theta.xsts.cli.optiongroup.InputOptions
 import hu.bme.mit.theta.xsts.cli.optiongroup.OutputOptions
 import java.io.File
 import java.io.PrintWriter
+import kotlin.system.exitProcess
 
-abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
-  CliktCommand(name = name, help = help, printHelpOnEmptyArgs = true) {
+abstract class XstsCliBaseCommand(name: String? = null, val help: String = "") :
+  CliktCommand(name = name) {
+
+  override fun help(c: Context) = help
+
+  override val printHelpOnEmptyArgs = true
 
   init {
     versionOption(javaClass.`package`.implementationVersion ?: "unknown")
@@ -58,6 +64,18 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     else ConsoleLogger(outputOptions.logLevel)
   }
   protected val writer = BasicTableWriter(System.out, ",", "\"", "\"")
+
+  protected abstract fun doRun()
+
+  final override fun run() {
+    try {
+      registerSolverManagers()
+      doRun()
+    } catch (e: Exception) {
+      printError(e)
+      exitProcess(1)
+    }
+  }
 
   fun printError(exception: Exception) {
     val message = exception.message ?: ""
@@ -85,7 +103,19 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
       .forEach(writer::cell)
   }
 
-  fun registerSolverManagers() {
+  protected open fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {}
+
+  protected fun printBenchmarkResult(status: SafetyResult<*, *>, xsts: XSTS, totalTimeMs: Long) {
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
+    printCommonResult(status, xsts, totalTimeMs)
+    printExtraBenchmarkCells(status)
+    writer.newRow()
+  }
+
+  private fun registerSolverManagers() {
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create())
     SolverManager.registerSolverManager(SmtLibSolverManager.create(smtHome.toPath(), logger))
@@ -98,9 +128,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     val concreteTrace =
       XstsTraceConcretizerUtil.concretize(trace, SolverManager.resolveSolverFactory(solver), xsts)
     val outputFile: File = outputOptions.cexfile!!
-    if (!outputFile.parentFile.exists()) {
-      outputFile.parentFile.mkdir()
-    }
+    outputFile.parentFile?.let { parent -> if (!parent.exists()) parent.mkdirs() }
     PrintWriter(outputFile).use { printWriter -> printWriter.write(concreteTrace.toString()) }
   }
 }

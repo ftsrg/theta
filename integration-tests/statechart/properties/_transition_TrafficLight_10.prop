@@ -1,0 +1,3 @@
+prop {
+	!( (( _transition_TrafficLight == 10)))
+}

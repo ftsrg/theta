@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@ package hu.bme.mit.theta.xsts.cli.optiongroup
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
-import com.github.ajalt.clikt.parameters.types.inputStream
 import com.github.ajalt.clikt.parameters.types.int
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.frontend.dve.DveParser
+import hu.bme.mit.theta.frontend.dve.transformation.DveToXsts
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
 import hu.bme.mit.theta.frontend.petrinet.model.PropType
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
@@ -35,14 +38,11 @@ import java.io.*
 class InputOptions :
   OptionGroup(name = "Input options", help = "Options related to model and property input") {
   val model: File by
-    option(
-        help =
-          "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input"
-      )
+    option("--model", "--input", help = "Path of the input model (XSTS, DVE, or Pnml).")
       .file(mustExist = true, canBeDir = false)
       .required()
-  private val property: InputStream? by
-    option(help = "Path of the property file. Has priority over --inlineProperty").inputStream()
+  private val property: File? by
+    option(help = "Path of the property file. Has priority over --inlineProperty").file()
   private val inlineProperty: String? by
     option(help = "Input property as a string. Ignored if --property is defined")
   private val flattenDepth: Int by
@@ -54,23 +54,53 @@ class InputOptions :
       .default(0)
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
-  val pnProperty: PropType by
-    option(help = "Property type for Petri-nets")
+  private val pnProperty: PropType? by
+    option(help = "Property type for Petri-nets. Has priority over --property.")
       .enum<PropType>()
       .default(PropType.FULL_EXPLORATION)
+  private val dvePropType: DveToXsts.PropType by
+    option(
+        help =
+          "Property type for DVE models. ASSERTIONS uses assert statements; FULL_EXPLORATION enumerates the whole state space."
+      )
+      .enum<DveToXsts.PropType>()
+      .default(DveToXsts.PropType.ASSERTIONS)
+  private val dveSimplifySingleStateProcesses: Boolean by
+    option(
+        "--dve-simplify-single-state",
+        help = "Simplify single-state processes by eliminating their state variable.",
+      )
+      .flag("--no-dve-simplify-single-state", default = true)
 
   fun isPnml() = model.path.endsWith("pnml")
 
+  fun isDve() = model.path.endsWith("dve")
+
+  /**
+   * Mapping from XSTS variable declarations to original source-format names. Empty if not
+   * available.
+   */
+  var variableTraceability: Map<VarDecl<*>, String> = emptyMap()
+    private set
+
+  fun getPetrinetProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
+
   fun loadXsts(): XSTS {
-    if(flattenDepth != 0) throw UnsupportedOperationException("XSTS flattening is incorrect, don't use it for now! (--flatten-depth must be 0)")
     val propertyStream =
-      if (property != null) property
-      else
-        (if (inlineProperty != null) ByteArrayInputStream("prop { $inlineProperty }".toByteArray())
-        else null)
+      property?.inputStream()
+        ?: if (inlineProperty != null)
+          ByteArrayInputStream("prop { $inlineProperty }".toByteArray())
+        else null
     if (isPnml()) {
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
-      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, pnProperty)
+      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, getPetrinetProperty())
+    }
+    if (isDve()) {
+      val dveModel = model.inputStream().use { DveParser.parse(it) }
+      val result =
+        DveToXsts.transformWithNames(dveModel, dvePropType, dveSimplifySingleStateProcesses)
+      variableTraceability = result.variableTraceability
+      return result.xsts
     }
     val parsedXsts =
       XstsDslManager.createXsts(
@@ -79,6 +109,6 @@ class InputOptions :
     return XstsStmtFlatteningTransformer.transform(parsedXsts, flattenDepth)
   }
 
-  fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/
+  fun loadPetriNet(): MutableList<PetriNet> =
     mutableListOf(XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking))
 }
