@@ -1,0 +1,138 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var MX0_0 : bool
+	var MX0_1 : bool
+	var MX0_2 : bool
+	var IX0_3 : bool
+	var IX0_4 : bool
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	loc verificationLoop_VerificationLoop_l2
+	loc verificationLoop_VerificationLoop_l3
+	loc verificationLoop_VerificationLoop_l4
+	loc verificationLoop_VerificationLoop_l5
+	loc verificationLoop_VerificationLoop_l6
+	loc verificationLoop_VerificationLoop_l7
+	loc verificationLoop_VerificationLoop_l8
+	loc verificationLoop_VerificationLoop_l9
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		MX0_0 := false
+		MX0_1 := false
+		MX0_2 := false
+		IX0_3 := false
+		IX0_4 := false
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+		havoc IX0_3
+		havoc IX0_4
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_t1
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l1 {
+		MX0_0 := true
+	}
+	
+	// verificationLoop_VerificationLoop_t2
+	verificationLoop_VerificationLoop_l1 -> verificationLoop_VerificationLoop_l2 {
+		MX0_1 := true
+	}
+	
+	// verificationLoop_VerificationLoop_t3
+	verificationLoop_VerificationLoop_l2 -> verificationLoop_VerificationLoop_l3 {
+		MX0_2 := true
+	}
+	
+	// verificationLoop_VerificationLoop_t4
+	verificationLoop_VerificationLoop_l3 -> verificationLoop_VerificationLoop_l4 {
+		assume IX0_3
+	}
+	
+	// verificationLoop_VerificationLoop_t6
+	verificationLoop_VerificationLoop_l3 -> verificationLoop_VerificationLoop_l6 {
+		assume (not (IX0_3))  and  (IX0_4)
+	}
+	
+	// verificationLoop_VerificationLoop_t8
+	verificationLoop_VerificationLoop_l3 -> verificationLoop_VerificationLoop_l8 {
+		assume (not (IX0_3))  and  (not ((not (IX0_3))  and  (IX0_4)))
+	}
+	
+	// verificationLoop_VerificationLoop_t9
+	verificationLoop_VerificationLoop_l5 -> verificationLoop_VerificationLoop_l9 {
+	}
+	
+	// verificationLoop_VerificationLoop_t10
+	verificationLoop_VerificationLoop_l7 -> verificationLoop_VerificationLoop_l9 {
+	}
+	
+	// verificationLoop_VerificationLoop_t11
+	verificationLoop_VerificationLoop_l8 -> verificationLoop_VerificationLoop_l9 {
+	}
+	
+	// verificationLoop_VerificationLoop_jump5
+	verificationLoop_VerificationLoop_l4 -> verificationLoop_VerificationLoop_l1 {
+	}
+	
+	// verificationLoop_VerificationLoop_jump7
+	verificationLoop_VerificationLoop_l6 -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_l9 -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}

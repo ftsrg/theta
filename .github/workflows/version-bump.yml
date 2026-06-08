@@ -17,9 +17,11 @@ jobs:
   version-bump:
     runs-on: ubuntu-24.04
     steps:
-    - name: Set java home to java 17
-      run: |
-        echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+    - name: Setup Java 21
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: temurin
+        java-version: 21
     - uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
       id: generate-token
       with:

@@ -20,8 +20,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Build
-        uses: ./.github/actions/build-action
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Gradle build (no tests)
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: build -x test
       - name: Positive outcome badge
         if: ${{ matrix.os == 'macos-latest' }}
         uses: ./.github/actions/badge-creation
@@ -38,8 +45,10 @@ jobs:
           status: "Failure"
           color: "red"
           path: "badges/build-${{ runner.os }}"
-      - name: Run tests
-        uses: ./.github/actions/test-action
+      - name: Gradle test
+        uses: ./.github/actions/cache-build
+        with:
+          arguments: test
       - name: Positive outcome badge
         if: ${{ matrix.os == 'macos-latest' }}
         uses: ./.github/actions/badge-creation

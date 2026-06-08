@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ plugins {
     id("kotlin-common")
     id("kaml-serialization")
     id("cli-tool")
+    id("archive-packaging")
 }
 
 dependencies {
@@ -48,9 +49,45 @@ dependencies {
     implementation(Deps.z3)
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
+    implementation(project(":theta-btor2-frontend"))
+    implementation(project(":theta-btor2xcfa"))
     testImplementation(kotlin("script-runtime"))
 }
 
 application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
+}
+
+archivePackaging {
+    variant {
+        toolName = "Theta-svcomp"
+        inputFlags = "--svcomp --portfolio STABLE"
+        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
+        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
+        inputSource = file("src/main/resources/archive-packaging/input.c")
+    }
+    variant {
+        toolName = "EmergenTheta-svcomp"
+        inputFlags = "--svcomp --portfolio EMERGENT"
+        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
+        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
+        inputSource = file("src/main/resources/archive-packaging/input.c")
+    }
+    variant {
+        toolName = "Thorn-svcomp"
+        inputFlags = "--svcomp --porfolio HORN"
+        solvers = listOf("z3:4.15.3", "eldarica:2.2", "golem:0.9.0")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
+        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
+        inputSource = file("src/main/resources/archive-packaging/input.c")
+    }
+    variant {
+        toolName = "Theta-chccomp"
+        inputFlags = "--backend PORTFOLIO \\ \n--input-type CHC \\ \n--portfolio CHC-COMP \\ \n--print-model"
+        solvers = listOf("cvc5:1.0.8", "mathsat:5.6.10")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-CHCCOMP.md")
+        scriptName = "chc"
+    }
 }

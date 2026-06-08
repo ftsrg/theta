@@ -30,9 +30,7 @@ import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -58,14 +56,14 @@ import hu.bme.mit.theta.solver.UCSolver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public final class Z3SolverTest {
 
     private Solver solver;
 
-    @Before
+    @BeforeEach
     public void setup() {
         solver = Z3LegacySolverFactory.getInstance().createSolver();
     }
@@ -211,13 +209,17 @@ public final class Z3SolverTest {
         assertTrue(status.isSat());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testResetStack() {
-        solver.push();
-        solver.push();
-        solver.pop();
-        solver.reset();
-        solver.pop();
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    solver.push();
+                    solver.push();
+                    solver.pop();
+                    solver.reset();
+                    solver.pop();
+                });
     }
 
     @Test

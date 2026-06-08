@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xta.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy.BFS;
 import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -37,14 +37,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
 
     private static final String MODEL_CSMA = "/csma-2.xta";
@@ -65,14 +60,8 @@ public final class LazyXtaCheckerTest {
 
     private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS =
             ImmutableSet.of(MODEL_FDDI, MODEL_ENGINE, MODEL_BROADCAST);
-
-    @Parameter(0)
     public String filepath;
-
-    @Parameter(1)
     public DataStrategy dataStrategy;
-
-    @Parameter(2)
     public ClockStrategy clockStrategy;
 
     private SafetyChecker<
@@ -81,7 +70,6 @@ public final class LazyXtaCheckerTest {
                     UnitPrec>
             checker;
 
-    @Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
     public static Collection<Object[]> data() {
         final Collection<Object[]> result = new ArrayList<>();
         for (final String model : MODELS) {
@@ -97,15 +85,17 @@ public final class LazyXtaCheckerTest {
         return result;
     }
 
-    @Before
     public void initialize() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
         checker = LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, BFS);
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "model: {0}, discrete: {1}, clock: {2}")
+    public void test(String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
+            throws IOException {
+        initLazyXtaCheckerTest(filepath, dataStrategy, clockStrategy);
         // Act
         final SafetyResult<
                         ? extends ARG<? extends XtaState<?>, XtaAction>,
@@ -117,5 +107,14 @@ public final class LazyXtaCheckerTest {
                 ArgChecker.create(Z3LegacySolverFactory.getInstance().createSolver());
         final boolean argCheckResult = argChecker.isWellLabeled(status.getProof());
         assertTrue(argCheckResult);
+    }
+
+    public void initLazyXtaCheckerTest(
+            String filepath, DataStrategy dataStrategy, ClockStrategy clockStrategy)
+            throws IOException {
+        this.filepath = filepath;
+        this.dataStrategy = dataStrategy;
+        this.clockStrategy = clockStrategy;
+        this.initialize();
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.*;
 import hu.bme.mit.theta.common.visualization.Shape;
@@ -51,7 +51,7 @@ public final class CfaVisualizer {
 
     public static Graph visualize(final CFA cfa) {
         final Graph graph = new Graph(CFA_ID, CFA_LABEL);
-        final Map<Loc, String> ids = Containers.createMap();
+        final Map<Loc, String> ids = CollectionUtil.createMap();
         addVars(graph, cfa);
         for (final Loc loc : cfa.getLocs()) {
             addLocation(graph, cfa, loc, ids);

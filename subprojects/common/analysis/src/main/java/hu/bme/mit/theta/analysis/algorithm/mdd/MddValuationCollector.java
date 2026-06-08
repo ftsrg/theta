@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -49,7 +49,7 @@ public class MddValuationCollector {
      */
     public static Set<Valuation> collect(MddHandle node) {
         final Stack<Assignment> assignments = new Stack<>();
-        final Set<Valuation> valuations = Containers.createSet();
+        final Set<Valuation> valuations = CollectionUtil.createSet();
 
         collect(node, assignments, valuations);
 
@@ -73,7 +73,7 @@ public class MddValuationCollector {
                                     node.getVariableHandle().getVariable().orElseThrow(),
                                     cursor.key()));
 
-                    collect(cursor.value(), assignments, valuations);
+                    collect((MddHandle) cursor.value(), assignments, valuations);
 
                     assignments.pop();
                 }

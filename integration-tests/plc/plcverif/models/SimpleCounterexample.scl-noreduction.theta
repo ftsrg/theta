@@ -1,0 +1,114 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var instance_in1 : bool
+	var instance_in2 : bool
+	var instance_out : int
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	loc verificationLoop_VerificationLoop_l2
+	loc verificationLoop_VerificationLoop_l3
+	loc verificationLoop_VerificationLoop_l4
+	loc verificationLoop_VerificationLoop_end
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		instance_in1 := false
+		instance_in2 := false
+		instance_out := 0
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+		havoc instance_in1
+		havoc instance_in2
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_t1
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l1 {
+		assume (instance_in1)  and  (not (instance_in2))
+	}
+	
+	// verificationLoop_VerificationLoop_t2
+	verificationLoop_VerificationLoop_l1 -> verificationLoop_VerificationLoop_l2 {
+		instance_out := (instance_out) + (1)
+	}
+	
+	// verificationLoop_VerificationLoop_t3
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l3 {
+		assume not ((instance_in1)  and  (not (instance_in2)))
+	}
+	
+	// verificationLoop_VerificationLoop_t4
+	verificationLoop_VerificationLoop_l2 -> verificationLoop_VerificationLoop_l4 {
+	}
+	
+	// verificationLoop_VerificationLoop_t5
+	verificationLoop_VerificationLoop_l3 -> verificationLoop_VerificationLoop_l4 {
+	}
+	
+	// verificationLoop_VerificationLoop_t6
+	verificationLoop_VerificationLoop_l4 -> verificationLoop_VerificationLoop_end {
+		assume not (not ((instance_out) < (3)))
+	}
+	
+	// verificationLoop_VerificationLoop_fail
+	verificationLoop_VerificationLoop_l4 -> verificationLoop_VerificationLoop_end {
+		assume not ((instance_out) < (3))
+		__assertion_error := 1
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_end -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}
