@@ -18,34 +18,20 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ctl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-/**
- * Abstract syntax of CTL formulas evaluated by [MddCtlChecker].
- *
- * EX, EU and EG are the primitives; every other operator desugars to these plus boolean combinators
- * (see [MddCtlChecker.eval]). The sealed hierarchy makes the evaluator's dispatch exhaustive.
- */
+/** CTL formulas evaluated by [MddCtlChecker]. EX, EU and EG are the primitives. */
 sealed interface CtlExpr {
 
-  // --- atomic ---------------------------------------------------------------------------------
-
-  /** A state predicate, lifted to an MDD node during evaluation. */
+  /** A state predicate. */
   data class Atom(val expr: Expr<BoolType>) : CtlExpr
 
-  /**
-   * Structural "all (reachable) states" — the semantic universe. Deliberately not `Atom(True())`:
-   * it avoids building a solver-backed expression node just to denote the reachable state space.
-   */
+  /** All reachable states (avoids building a solver-backed node just for `true`). */
   data object Top : CtlExpr
-
-  // --- boolean --------------------------------------------------------------------------------
 
   data class Not(val op: CtlExpr) : CtlExpr
 
   data class And(val l: CtlExpr, val r: CtlExpr) : CtlExpr
 
   data class Or(val l: CtlExpr, val r: CtlExpr) : CtlExpr
-
-  // --- primitives -----------------------------------------------------------------------------
 
   data class EX(val op: CtlExpr) : CtlExpr
 
@@ -54,9 +40,7 @@ sealed interface CtlExpr {
 
   data class EG(val op: CtlExpr) : CtlExpr
 
-  // --- derived (desugar to primitives, no dedicated providers) --------------------------------
-
-  data class EF(val op: CtlExpr) : CtlExpr // = EU(Top, op)
+  data class EF(val op: CtlExpr) : CtlExpr // = E[Top U op]
 
   data class AX(val op: CtlExpr) : CtlExpr // = !EX !op
 

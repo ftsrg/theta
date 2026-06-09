@@ -27,27 +27,13 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Constrained next-state descriptor: restricts the image of a wrapped relation to the states of a
- * {@code constraint} set, descending the constraint node in lockstep with the relation, level by
- * level. This is the "constrained saturation" hook used for CTL EU: wrapping the reversed
- * transition relation with the constraint {@code phi ∪ psi} lets the unmodified {@link
- * hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider} compute the
- * least fixed point {@code mu Z. psi | (phi & pre(Z))} in a single call.
+ * Restricts the image of a wrapped relation to the states of a {@code constraint} set, descending
+ * the constraint node in lockstep with the relation. Used for constrained saturation (CTL EU).
  *
- * <p>Modeled on {@link OnTheFlyReachabilityNextStateDescriptor}, with two essential differences:
- *
- * <ul>
- *   <li>The constraint is part of the relation's meaning, so it is included in {@link #equals}/
- *       {@link #hashCode} (otherwise distinct constraints collide in the saturation cache).
- *   <li>Pruning is by <b>key absence</b>: the diagonal / off-diagonal maps are trimmed to the
- *       constraint's key set, so a step into a state outside the constraint simply does not appear.
- *       This satisfies two joint requirements of the (unmodified) saturation engine that the naive
- *       approach violates: {@code satFire} asserts off-diagonal <i>values</i> are never {@code
- *       terminalEmpty} (so we must not map a pruned key to {@code terminalEmpty}), and {@code
- *       relProd} assumes every branch it descends reaches a terminal with {@code evaluate() ==
- *       true} (so we must not let a pruned branch be descended at all — it would hit a terminal
- *       whose constraint slice is zero). Dropping the key entirely avoids both.
- * </ul>
+ * <p>The views prune constraint-zero keys by key absence: satFire asserts that off-diagonal values
+ * are never {@code terminalEmpty}, and relProd assumes every descended branch reaches a terminal
+ * with {@code evaluate() == true}. The constraint is part of equals/hashCode, otherwise distinct
+ * constraints collide in the saturation cache.
  */
 public final class AndNextStateDescriptor implements AbstractNextStateDescriptor {
 
@@ -62,12 +48,7 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
     public static AbstractNextStateDescriptor of(
             AbstractNextStateDescriptor wrapped, MddHandle constraint) {
-        // Only short-circuit on an empty *relation*. Do NOT short-circuit on a zero constraint
-        // here:
-        // that would inject terminalEmpty into the off-diagonal map and trip saturation's
-        // assertion.
-        // A zero constraint is pruned later, in evaluate().
-        if (wrapped == AbstractNextStateDescriptor.terminalEmpty()) {
+        if (wrapped == AbstractNextStateDescriptor.terminalEmpty() || constraint.isTerminalZero()) {
             return AbstractNextStateDescriptor.terminalEmpty();
         }
         return new AndNextStateDescriptor(wrapped, constraint);
@@ -75,8 +56,6 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        // Keep only keys present in the constraint (its non-zero children), then thread the
-        // corresponding constraint slice into each surviving continuation.
         return new IntObjMapViews.Transforming<>(
                 wrapped.getDiagonal(localStateSpace).trim(constraint.keySet()),
                 (descriptor, key) -> {
@@ -88,9 +67,8 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
-        // The constraint restricts the *target* (the new state reached), i.e. the inner key. The
-        // reversed relation's inner off-diagonal view supports only cursor()/get() (not trim), so
-        // we filter with a cursor that skips constraint-zero targets rather than trimming.
+        // the constraint restricts the target (the inner key); the inner view supports only
+        // cursor()/get(), so constraint-zero targets are skipped with a cursor instead of trim
         return new IntObjMapViews.Transforming<>(
                 wrapped.getOffDiagonal(localStateSpace), this::constrainInner);
     }
@@ -176,8 +154,6 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
     @Override
     public boolean evaluate() {
-        // The relation accepts iff the wrapped relation accepts AND the fully-descended state lies
-        // in the constraint set (its terminal slice is non-zero).
         return wrapped.evaluate() && !constraint.isTerminalZero();
     }
 

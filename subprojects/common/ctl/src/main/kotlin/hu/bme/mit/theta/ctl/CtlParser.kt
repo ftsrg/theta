@@ -31,7 +31,6 @@ class CtlParseException(message: String) : RuntimeException(message)
 /** Parses CTL formulas (the `CtlDsl` grammar) into [CtlExpr] over a given set of variables. */
 object CtlParser {
 
-  /** Parses [input] into a [CtlExpr], resolving atoms against [vars] (keyed by name). */
   fun parse(input: String, vars: Map<String, VarDecl<*>>): CtlExpr {
     val lexer = CtlDslLexer(CharStreams.fromString(input))
     val parser = CtlDslParser(CommonTokenStream(lexer))
@@ -56,7 +55,6 @@ object CtlParser {
     return CtlExprVisitor(vars).visit(parser.model())
   }
 
-  /** Parses [input], resolving atoms against [vars] (keyed by [VarDecl.getName]). */
   fun parse(input: String, vars: Collection<VarDecl<*>>): CtlExpr =
     parse(input, vars.associateBy { it.name })
 }

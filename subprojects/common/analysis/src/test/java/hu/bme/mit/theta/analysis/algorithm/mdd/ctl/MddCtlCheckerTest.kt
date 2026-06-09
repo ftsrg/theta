@@ -37,12 +37,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * Validates [MddCtlChecker] on a small counter model:
- *
- * x in {0,1,2,3}, init x=0, transition x' = x+1 while x<3 and a self-loop x'=x at x=3. The
- * reachable state space is {0,1,2,3}; state 3 carries an infinite path via its self-loop.
- */
+/** Counter model: x in {0,1,2,3}, init x=0, x' = x+1 while x<3, self-loop at x=3. */
 class MddCtlCheckerTest {
 
   private val x = Decls.Var("x", IntType.getInstance())
@@ -61,7 +56,6 @@ class MddCtlCheckerTest {
     block: (MddCtlChecker) -> T,
   ): T {
     val init = Eq(x.ref, Int(0))
-    // (x < 3 & x' = x+1) | (x = 3 & x' = x)  — total over the reachable states
     val trans =
       Or(
         And(Lt(x.ref, Int(3)), Eq(Prime(x.ref), Add(x.ref, Int(1)))),
@@ -82,25 +76,23 @@ class MddCtlCheckerTest {
   @Test
   fun stateSpaceHasFourStates() = withChecker { c ->
     assertEquals(4L, MddInterpreter.calculateNonzeroCount(c.stateSpace))
-    // atoms are clamped to the reachable universe
     assertEquals(1L, count(c, xIs3))
     assertEquals(3L, count(c, xLt3))
   }
 
   @Test
   fun exactSetSizes() = withChecker { c ->
-    // EX(x=1): only state 0 has a successor where x=1
+    // only state 0 has a successor where x=1
     assertEquals(1L, count(c, CtlExpr.EX(xIs1)))
-    // EF(x=3): every state reaches 3
+    // every state reaches 3
     assertEquals(4L, count(c, CtlExpr.EF(xIs3)))
-    // EG(x=3): the only x=3 cycle is the self-loop at 3
+    // the only x=3 cycle is the self-loop at 3
     assertEquals(1L, count(c, CtlExpr.EG(xIs3)))
-    // EG(true): every state has an infinite path (all eventually reach the self-loop)
+    // every state has an infinite path
     assertEquals(4L, count(c, CtlExpr.EG(CtlExpr.Top)))
-    // E[x<3 U x=3]: 0,1,2 stay <3 and reach 3; 3 is already there
+    // 0,1,2 stay <3 and reach 3; 3 is already there
     assertEquals(4L, count(c, CtlExpr.EU(xLt3, xIs3)))
-    // E[x<2 U x=3]: only state 3 qualifies (psi already holds there); 0/1 cannot reach 3 without
-    // passing through x=2 which is not <2
+    // only state 3 qualifies; 0/1 cannot reach 3 without passing through x=2
     assertEquals(1L, count(c, CtlExpr.EU(xLt2, xIs3)))
   }
 
@@ -109,16 +101,15 @@ class MddCtlCheckerTest {
     assertTrue(c.isSatisfied(CtlExpr.EF(xIs3)))
     assertTrue(c.isSatisfied(CtlExpr.EX(xIs1)))
     assertFalse(c.isSatisfied(CtlExpr.EX(xIs2)))
-    assertTrue(c.isSatisfied(CtlExpr.AF(xIs3))) // all paths eventually reach 3
-    assertFalse(c.isSatisfied(CtlExpr.EG(xIs3))) // 0 is not on a x=3 cycle
-    assertTrue(c.isSatisfied(CtlExpr.AG(xLt3.let { CtlExpr.Or(it, xIs3) }))) // x<=3 everywhere
-    assertFalse(c.isSatisfied(CtlExpr.AG(CtlExpr.Not(xIs2)))) // x=2 is reachable
-    assertFalse(c.isSatisfied(CtlExpr.AG(CtlExpr.EF(xIs0)))) // cannot return to 0 from 1,2,3
+    assertTrue(c.isSatisfied(CtlExpr.AF(xIs3)))
+    assertFalse(c.isSatisfied(CtlExpr.EG(xIs3)))
+    assertTrue(c.isSatisfied(CtlExpr.AG(xLt3.let { CtlExpr.Or(it, xIs3) })))
+    assertFalse(c.isSatisfied(CtlExpr.AG(CtlExpr.Not(xIs2))))
+    assertFalse(c.isSatisfied(CtlExpr.AG(CtlExpr.EF(xIs0))))
   }
 
   @Test
   fun euStrategiesAgree() {
-    // EU appears directly, via EF (= EU(Top, .)), and via the AU rewrite; all must match.
     val formulas =
       listOf(
         CtlExpr.EU(xLt3, xIs3),

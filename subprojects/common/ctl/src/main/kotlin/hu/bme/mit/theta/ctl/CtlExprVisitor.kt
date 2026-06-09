@@ -38,21 +38,14 @@ import hu.bme.mit.theta.ctl.dsl.gen.CtlDslBaseVisitor
 import hu.bme.mit.theta.ctl.dsl.gen.CtlDslParser.*
 
 /**
- * Folds a `CtlDsl` parse tree into a [CtlExpr].
- *
- * The CTL boolean operators (`!`, `&`, `|`, `->`, `<->`) live at the formula level and become
- * [CtlExpr.Not]/[CtlExpr.And]/[CtlExpr.Or] (with `->`/`<->` desugared). An atom is a relational
- * expression over arithmetic (or a bare boolean variable/literal); it is turned into an
- * `Expr<BoolType>` with the supplied [vars] symbol table and wrapped in [CtlExpr.Atom].
- *
- * The visitor is pure — it produces the AST only; all MDD/semantic work happens later in the
- * checker.
+ * Folds a `CtlDsl` parse tree into a [CtlExpr]. Atoms are resolved against the [vars] symbol table;
+ * `->` and `<->` are desugared into and/or/not.
  */
 class CtlExprVisitor(private val vars: Map<String, VarDecl<*>>) : CtlDslBaseVisitor<CtlExpr>() {
 
   override fun visitModel(ctx: ModelContext): CtlExpr = visit(ctx.iffExpr())
 
-  // a <-> b  ==  (!a | b) & (!b | a); left-folded over the operand list.
+  // a <-> b  ==  (!a | b) & (!b | a)
   override fun visitIffExpr(ctx: IffExprContext): CtlExpr {
     var acc = visit(ctx.ops[0])
     for (i in 1 until ctx.ops.size) {
@@ -62,7 +55,7 @@ class CtlExprVisitor(private val vars: Map<String, VarDecl<*>>) : CtlDslBaseVisi
     return acc
   }
 
-  // a -> b  ==  !a | b; right-associative (a -> b -> c == a -> (b -> c)).
+  // a -> b  ==  !a | b, right-associative
   override fun visitImplyExpr(ctx: ImplyExprContext): CtlExpr {
     var acc = visit(ctx.ops.last())
     for (i in ctx.ops.size - 2 downTo 0) {
@@ -102,13 +95,12 @@ class CtlExprVisitor(private val vars: Map<String, VarDecl<*>>) : CtlDslBaseVisi
   override fun visitAtomExpr(ctx: AtomExprContext): CtlExpr =
     CtlExpr.Atom(buildBool(ctx.atom().relationExpr()))
 
-  // --- atom (state-predicate) construction ----------------------------------------------------
-
   private fun buildBool(ctx: RelationExprContext): Expr<BoolType> {
     val left = buildArith(ctx.ops[0])
     if (ctx.oper == null) {
-      // bare boolean atom: a boolean variable or literal
-      require(left.type is BoolType) { "Atom '${ctx.text}' is not a boolean expression" }
+      if (left.type !is BoolType) {
+        throw CtlParseException("Atom '${ctx.text}' is not a boolean expression")
+      }
       @Suppress("UNCHECKED_CAST") return left as Expr<BoolType>
     }
     val right = buildArith(ctx.ops[1])
@@ -121,7 +113,7 @@ class CtlExprVisitor(private val vars: Map<String, VarDecl<*>>) : CtlDslBaseVisi
         op.GT() != null -> Gt(left, right)
         op.LEQ() != null -> Leq(left, right)
         op.GEQ() != null -> Geq(left, right)
-        else -> error("Unknown relational operator '${op.text}'")
+        else -> throw CtlParseException("Unknown relational operator '${op.text}'")
       }
     @Suppress("UNCHECKED_CAST") return result as Expr<BoolType>
   }
@@ -156,10 +148,10 @@ class CtlExprVisitor(private val vars: Map<String, VarDecl<*>>) : CtlDslBaseVisi
       is BoolLitExprContext -> if (ctx.value.text == "true") True() else False()
       is VarExprContext -> {
         val name = ctx.name.text
-        (vars[name] ?: error("Unknown variable '$name'")).ref
+        (vars[name] ?: throw CtlParseException("Unknown variable '$name'")).ref
       }
       is NegArithExprContext -> Neg(buildPrimary(ctx.op))
       is ParenArithExprContext -> buildArith(ctx.additiveExpr())
-      else -> error("Unknown arithmetic expression '${ctx.text}'")
+      else -> throw CtlParseException("Unknown arithmetic expression '${ctx.text}'")
     }
 }

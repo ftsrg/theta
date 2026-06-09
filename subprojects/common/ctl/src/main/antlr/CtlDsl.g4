@@ -15,14 +15,9 @@
  */
 grammar CtlDsl;
 
-// ---------- Parser ----------
-//
 // Precedence, loosest to tightest: <-> , -> , | , & , unary (! EX EG EF AX AG AF),
-// the binary path quantifiers E[_ U _] / A[_ U _], then atoms / parentheses.
-// Each precedence level is its own rule (the standard layered technique), which keeps the
-// tree unambiguous and left-recursion free. Boolean combinators live at the CTL level; an
-// atom is a relational expression over arithmetic (as in the LTL grammar), so a conjunction
-// like `x >= 0 & x <= 9` is And(Atom(x>=0), Atom(x<=9)).
+// E[_ U _] / A[_ U _], then atoms / parentheses. An atom is a relational expression over
+// arithmetic (as in the LTL grammar), so `x >= 0 & x <= 9` is And(Atom(x>=0), Atom(x<=9)).
 
 model : iffExpr EOF ;
 
@@ -52,8 +47,6 @@ quantExpr
     | atom                                        # AtomExpr
     ;
 
-// An atom is an embedded state predicate: a relational expression over arithmetic, or a bare
-// boolean variable / literal.
 atom : relationExpr ;
 
 relationExpr : ops+=additiveExpr (oper=relationOp ops+=additiveExpr)? ;
@@ -76,12 +69,8 @@ primaryArith
     | LPAREN additiveExpr RPAREN  # ParenArithExpr
     ;
 
-// ---------- Lexer ----------
-//
-// Temporal / path keywords are declared before ID so they are not swallowed by it. They win
-// over ID only on an exact-length match (ANTLR prefers the longest match, then the earlier
-// rule), so `EXtra` still lexes as an identifier while `EX` is the operator. A variable named
-// literally EX/EF/EG/AX/AF/AG/E/A/U would clash with a keyword.
+// Keywords are declared before ID but win only on an exact match (`EXtra` is an identifier);
+// a variable named literally EX/EF/EG/AX/AF/AG/E/A/U clashes with a keyword.
 
 EX     : 'EX' ;
 EF     : 'EF' ;

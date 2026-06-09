@@ -45,8 +45,6 @@ class CtlParserTest {
 
   private fun parse(s: String): CtlExpr = CtlParser.parse(s, vars)
 
-  // --- pure parsing (no MDD backend) ----------------------------------------------------------
-
   @Test
   fun parsesPrimitivesAndAtoms() {
     assertEquals(CtlExpr.EX(CtlExpr.Atom(Eq(x.ref, Int(1)))), parse("EX x = 1"))
@@ -59,7 +57,7 @@ class CtlParserTest {
 
   @Test
   fun parsesBooleanCombinatorsAtFormulaLevel() {
-    // `&` binds tighter than `|`; atoms are relational, so this is Or(And(a,b), c)
+    // & binds tighter than |
     val expected =
       CtlExpr.Or(
         CtlExpr.And(CtlExpr.Atom(Lt(x.ref, Int(3))), CtlExpr.Atom(Eq(x.ref, Int(1)))),
@@ -70,7 +68,6 @@ class CtlParserTest {
 
   @Test
   fun desugarsImplicationAndNegation() {
-    // a -> b == !a | b
     assertEquals(
       CtlExpr.Or(CtlExpr.Not(CtlExpr.Atom(Eq(x.ref, Int(0)))), CtlExpr.Atom(Eq(x.ref, Int(1)))),
       parse("x = 0 -> x = 1"),
@@ -86,11 +83,10 @@ class CtlParserTest {
   @Test
   fun rejectsGarbageAndUnknownVariables() {
     assertThrows(CtlParseException::class.java) { parse("EX EX") }
-    assertThrows(IllegalStateException::class.java) { parse("y = 0") }
+    assertThrows(CtlParseException::class.java) { parse("y = 0") }
   }
 
-  // --- end to end: parse -> check (same counter model as MddCtlCheckerTest) --------------------
-
+  // same counter model as MddCtlCheckerTest
   private fun <T> withChecker(block: (MddCtlChecker) -> T): T {
     val init = Eq(x.ref, Int(0))
     val trans =
@@ -114,7 +110,6 @@ class CtlParserTest {
     assertTrue(c.isSatisfied(parse("AG x <= 3")))
     assertFalse(c.isSatisfied(parse("AG !(x = 2)")))
     assertTrue(c.isSatisfied(parse("E[ x < 3 U x = 3 ]")))
-    // EF x=3 set has all 4 states
     assertEquals(4L, MddInterpreter.calculateNonzeroCount(c.check(parse("EF x = 3"))))
   }
 }
