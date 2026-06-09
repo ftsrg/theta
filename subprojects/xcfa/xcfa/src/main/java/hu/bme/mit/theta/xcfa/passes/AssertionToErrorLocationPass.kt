@@ -47,35 +47,48 @@ class AssertionToErrorLocationPass(private val property: XcfaProperty) : Procedu
           val label = (it.label as SequenceLabel).labels[0]
           if (predicate(label)) {
             val assertLabel = label as InvokeLabel
-            // params convention: c2xcfa puts the return-value slot first, then arguments.
-            // For assert(cond), the condition is always the last param.
-            val cond = getCondition(assertLabel.params.last())
 
             if (builder.errorLoc.isEmpty) builder.createErrorLoc()
 
-            builder.addEdge(
-              XcfaEdge(
-                it.source,
-                builder.errorLoc.get(),
-                SequenceLabel(
-                  listOf(StmtLabel(Stmts.Assume(Not(cond)), metadata = label.metadata)),
+            if (assertLabel.name == "__assert_fail") {
+              // Unconditional failure: only add the error edge, no passing branch.
+              builder.addEdge(
+                XcfaEdge(
+                  it.source,
+                  builder.errorLoc.get(),
+                  SequenceLabel(listOf(), metadata = label.metadata),
                   metadata = label.metadata,
-                ),
-                metadata = label.metadata,
+                )
               )
-            )
+            } else {
+              // params convention: c2xcfa puts the return-value slot first, then arguments.
+              // For assert(cond), the condition is always the last param.
+              val cond = getCondition(assertLabel.params.last())
 
-            builder.addEdge(
-              XcfaEdge(
-                it.source,
-                it.target,
-                SequenceLabel(
-                  listOf(StmtLabel(Stmts.Assume(cond), metadata = label.metadata)),
+              builder.addEdge(
+                XcfaEdge(
+                  it.source,
+                  builder.errorLoc.get(),
+                  SequenceLabel(
+                    listOf(StmtLabel(Stmts.Assume(Not(cond)), metadata = label.metadata)),
+                    metadata = label.metadata,
+                  ),
                   metadata = label.metadata,
-                ),
-                metadata = label.metadata,
+                )
               )
-            )
+
+              builder.addEdge(
+                XcfaEdge(
+                  it.source,
+                  it.target,
+                  SequenceLabel(
+                    listOf(StmtLabel(Stmts.Assume(cond), metadata = label.metadata)),
+                    metadata = label.metadata,
+                  ),
+                  metadata = label.metadata,
+                )
+              )
+            }
           } else {
             builder.addEdge(it)
           }
@@ -85,7 +98,8 @@ class AssertionToErrorLocationPass(private val property: XcfaProperty) : Procedu
     return builder
   }
 
-  private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name == "assert"
+  private fun predicate(it: XcfaLabel): Boolean =
+    it is InvokeLabel && (it.name == "assert" || it.name == "__assert_fail")
 
   @Suppress("UNCHECKED_CAST")
   private fun getCondition(param: Expr<*>): Expr<BoolType> =
