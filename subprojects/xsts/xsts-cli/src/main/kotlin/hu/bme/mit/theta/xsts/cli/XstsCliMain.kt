@@ -51,6 +51,7 @@ fun main(args: Array<String>): kotlin.Unit =
       XstsCliLtlCegar(),
       XstsCliBounded(),
       XstsCliMdd(),
+      XstsCliCtl(),
       XstsCliPetrinetMdd(),
       XstsCliChc(),
       XstsCliIC3(),
