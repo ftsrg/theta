@@ -34,8 +34,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinit
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SingleStepProvider
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
 import hu.bme.mit.theta.common.collection.CollectionUtil
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
@@ -60,6 +61,7 @@ constructor(
   private val monolithicExpr: MonolithicExpr,
   private val solverPool: SolverPool,
   private val logger: Logger,
+  private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
   private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
@@ -84,7 +86,7 @@ constructor(
 
   private val reversedNS: AbstractNextStateDescriptor
 
-  private val gsat: GeneralizedSaturationProvider
+  private val stateSpaceProvider: StateSpaceEnumerationProvider
   private val singleStepProvider: SingleStepProvider
 
   private val memo = HashMap<CtlExpr, MddHandle>()
@@ -150,8 +152,8 @@ constructor(
     }
     val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
-    gsat = GeneralizedSaturationProvider(stateSig.variableOrder)
-    stateSpace = gsat.compute(MddNodeInitializer.of(initNode), nextStates, topVar)
+    stateSpaceProvider = iterationStrategy.createProvider(stateSig.variableOrder)
+    stateSpace = stateSpaceProvider.compute(MddNodeInitializer.of(initNode), nextStates, topVar)
     logger.write(
       Logger.Level.INFO,
       "Calculated state space, size: ${MddInterpreter.calculateNonzeroCount(stateSpace)}\n",
@@ -184,13 +186,13 @@ constructor(
     singleStepProvider.compute(MddNodeInitializer.of(x), reversedNS, topVar)
 
   /**
-   * `E[phi U psi]` as a single constrained backward saturation call. The constraint is phi | psi
+   * `E[phi U psi]` as a single constrained backward fixed-point call. The constraint is phi | psi
    * (not phi alone) so that seed states outside phi are not pruned.
    */
   private fun euSaturation(p: MddHandle, q: MddHandle): MddHandle {
     val constraint = p.union(q) as MddHandle
     val saturated =
-      gsat.compute(
+      stateSpaceProvider.compute(
         MddNodeInitializer.of(q),
         AndNextStateDescriptor.of(reversedNS, constraint),
         topVar,

@@ -35,6 +35,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
@@ -288,7 +289,7 @@ public class CfaCli {
     @Parameter(
             names = {"--iteration-strategy"},
             description = "MDD iteration strategy")
-    MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
+    IterationStrategy iterationStrategy = IterationStrategy.GSAT;
 
     @Parameter(names = "--loglevel", description = "Detailedness of logging")
     Logger.Level logLevel = Level.SUBSTEP;

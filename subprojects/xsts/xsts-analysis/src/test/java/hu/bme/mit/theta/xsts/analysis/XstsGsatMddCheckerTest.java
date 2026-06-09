@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
