@@ -47,3 +47,6 @@ fun XcfaBuilder.allocateUnit(parseContext: ParseContext, base: Expr<*>): StmtLab
   val type = Fitsall(null, parseContext)
   return allocate(parseContext, base, type.unitValue)
 }
+
+var ptrCnt: Long = 1 // counts up, uses 3k+1
+  get() = field.also { field += 3 }

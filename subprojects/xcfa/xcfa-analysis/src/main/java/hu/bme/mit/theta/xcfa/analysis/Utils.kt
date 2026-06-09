@@ -90,3 +90,12 @@ val XCFA.isInlined: Boolean by LazyDelegate {
 fun XcfaProcessState.foldVarLookup(): Map<VarDecl<*>, VarDecl<*>> =
   this.varLookup.reduceRightOrNull { lookup, acc -> acc + lookup }
     ?: emptyMap() // right map overrides left's keys
+
+fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> {
+  val result = LinkedHashMap<K, V>()
+  for ((key, value) in this) {
+    if (value != null)
+      result[key] = value
+  }
+  return result
+}

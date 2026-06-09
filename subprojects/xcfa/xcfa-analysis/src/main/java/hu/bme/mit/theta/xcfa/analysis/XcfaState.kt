@@ -366,6 +366,16 @@ data class XcfaProcessState(
                   cast(it.key.changeVars(tempLookup).ref, it.key.type),
                 )
               )
+            } +
+          xcfaProcedure.varInits
+            .filterNotNullValues()
+            .map { (varDecl, initializer) ->
+              StmtLabel(
+                Assign(
+                  cast(varDecl.changeVars(lookup), varDecl.type),
+                  cast(initializer(), varDecl.type),
+                )
+              )
             }
         ),
         /* deinit */

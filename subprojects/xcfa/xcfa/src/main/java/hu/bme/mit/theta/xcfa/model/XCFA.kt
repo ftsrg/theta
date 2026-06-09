@@ -127,7 +127,7 @@ class XCFA(
 data class XcfaProcedure(
   val name: String,
   val params: List<Pair<VarDecl<*>, ParamDirection>>, // procedure params
-  val vars: Set<VarDecl<*>>, // local variables
+  val varInits: Map<VarDecl<*>, (() -> Expr<*>)?>, // local variables and their initializers
   val locs: Set<XcfaLocation>, // locations
   val edges: Set<XcfaEdge>, // edges
   val initLoc: XcfaLocation, // initial location
@@ -137,6 +137,8 @@ data class XcfaProcedure(
 ) {
 
   internal lateinit var parent: XCFA
+  val vars: Set<VarDecl<*>>
+    get() = varInits.keys
 }
 
 data class XcfaLocation

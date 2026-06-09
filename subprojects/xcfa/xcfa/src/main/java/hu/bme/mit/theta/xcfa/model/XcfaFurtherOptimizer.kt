@@ -25,7 +25,7 @@ fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
         name = name,
         manager = passManager,
         params = params.toMutableList(),
-        vars = vars.toMutableSet(),
+        varInits = varInits.toMutableMap(),
         locs = locs.map { newLocs[it]!! }.toMutableSet(),
         edges =
           edges

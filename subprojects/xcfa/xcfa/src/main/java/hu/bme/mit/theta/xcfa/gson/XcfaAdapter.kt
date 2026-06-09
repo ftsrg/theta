@@ -211,7 +211,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
         XcfaProcedure(
             name,
             params,
-            vars,
+            vars.associateWith { null },
             locs.values.toSet(),
             edges,
             initLoc,
