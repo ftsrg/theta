@@ -13,20 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
+package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint
 
-dependencies {
-    implementation(project(":theta-core"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-xsts"))
-    implementation(project(":theta-petrinet-model"))
+import hu.bme.mit.delta.java.mdd.MddVariableOrder
 
-    testImplementation(project(":theta-xsts-analysis"))
-    testImplementation(project(":theta-solver-z3-legacy"))
-    testImplementation(project(":theta-solver"))
-    testImplementation(project(":theta-analysis"))
-    testImplementation(project(":theta-ctl"))
+/** The state space enumeration algorithm of the MDD-based checkers. */
+enum class IterationStrategy {
+  BFS,
+  SAT,
+  GSAT;
+
+  fun createProvider(variableOrder: MddVariableOrder): StateSpaceEnumerationProvider =
+    when (this) {
+      BFS -> BfsProvider(variableOrder)
+      SAT -> SimpleSaturationProvider(variableOrder)
+      GSAT -> GeneralizedSaturationProvider(variableOrder)
+    }
 }
