@@ -224,7 +224,7 @@ constructor(
           universe.intersection(node) as MddHandle
         }
 
-        CtlExpr.Top -> universe
+        is CtlExpr.Top -> universe
 
         is CtlExpr.Not -> universe.minus(eval(phi.op)) as MddHandle
         is CtlExpr.And -> eval(phi.l).intersection(eval(phi.r)) as MddHandle

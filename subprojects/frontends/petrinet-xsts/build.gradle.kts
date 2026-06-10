@@ -28,4 +28,5 @@ dependencies {
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver"))
     testImplementation(project(":theta-analysis"))
+    testImplementation(project(":theta-ctl"))
 }
