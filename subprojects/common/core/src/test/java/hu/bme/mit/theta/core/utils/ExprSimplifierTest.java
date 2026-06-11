@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -317,6 +317,10 @@ public class ExprSimplifierTest {
         assertEquals(False(), simplify(Eq(Int(2), Int(-2))));
         assertEquals(True(), simplify(Eq(a, a)));
         assertEquals(Eq(a, b), simplify(Eq(a, b)));
+        assertEquals(x, simplify(Eq(Ite(x, Int(1), Int(0)), Int(1))));
+        assertEquals(Not(x), simplify(Eq(Ite(x, Int(1), Int(0)), Int(0))));
+        assertEquals(x, simplify(Eq(Int(1), Ite(x, Int(1), Int(0)))));
+        assertEquals(Not(x), simplify(Eq(Int(0), Ite(x, Int(1), Int(0)))));
     }
 
     @Test
@@ -325,6 +329,10 @@ public class ExprSimplifierTest {
         assertEquals(True(), simplify(Neq(Int(2), Int(-2))));
         assertEquals(False(), simplify(Neq(a, a)));
         assertEquals(Neq(a, b), simplify(Neq(a, b)));
+        assertEquals(x, simplify(Neq(Ite(x, Int(1), Int(0)), Int(0))));
+        assertEquals(Not(x), simplify(Neq(Ite(x, Int(1), Int(0)), Int(1))));
+        assertEquals(x, simplify(Neq(Int(0), Ite(x, Int(1), Int(0)))));
+        assertEquals(Not(x), simplify(Neq(Int(1), Ite(x, Int(1), Int(0)))));
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
+import hu.bme.mit.theta.analysis.utils.PrecCache;
 import hu.bme.mit.theta.analysis.utils.ProofVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -156,6 +157,9 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         assert cegarResult != null;
         logger.write(Level.MAINSTEP, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
+
+        PrecCache.INSTANCE.store(prec);
+
         return cegarResult;
     }
 

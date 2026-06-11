@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
@@ -679,6 +680,11 @@ enum class InitPrec(
         PtrPrec(Prod2Prec.of(ExplPrec.empty(), PredPrec.of(xcfa.collectAssumes())), emptySet())
       )
     },
+  ),
+  REUSE(
+    explPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<ExplPrec>())) },
+    predPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<PredPrec>())) },
+    prod2Prec = { error("REUSE is not supported for the product domain.") },
   ),
 }
 

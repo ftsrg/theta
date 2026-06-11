@@ -56,6 +56,7 @@ specific_success_response
     | get_model_response
     | proof_response
     | get_interpolants_response_smtinterpol
+    | precision_response
     ;
 
 check_sat_response
@@ -122,6 +123,10 @@ proof_funs
 
 get_interpolants_response_smtinterpol
     : ParOpen term* ParClose
+    ;
+
+precision_response
+    : proof_funs* (ParOpen CMD_Assert term ParClose)*
     ;
 
 // Parser Rules End
@@ -795,6 +800,8 @@ PK_Version
 
 UndefinedSymbol:
     Sym (Digit | Sym)*;
+
+SetInfo : ParOpen CMD_SetInfo ~[\r\n]* -> skip;
 
 WS  :  [ \t\r\n]+ -> skip
     ;

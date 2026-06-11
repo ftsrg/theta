@@ -54,7 +54,6 @@ internal fun postVerificationLogging(
   uniqueLogger: Logger,
 ) {
   val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
-
   val ltlSpecification =
     if (safetyResult.isUnsafe) {
       (safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>).let {
@@ -168,6 +167,10 @@ internal fun postVerificationLogging(
         }
 
         else -> {}
+      }
+
+      config.outputConfig.precOutputConfig.format.forEach {
+        PrecReuse.write(it, resultFolder, config, parseContext, logger)
       }
     } catch (e: Throwable) {
       logger.info("Could not output files: ${e.stackTraceToString()}")

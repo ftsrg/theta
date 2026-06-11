@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ data class YamlWitness(
 enum class EntryType {
   @SerialName("violation_sequence") VIOLATION,
   @SerialName("invariant_set") INVARIANTS,
+  @SerialName("precision_set") PRECISION,
 }
 
 /**
@@ -166,7 +167,11 @@ enum class Language {
  *   a mapping that describes one invariant.
  */
 @Serializable
-data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null) {
+data class ContentItem(
+  val segment: Segment? = null,
+  val invariant: Invariant? = null,
+  val precision: Precision? = null,
+) {
 
   constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
 }
@@ -286,7 +291,7 @@ enum class Format {
  */
 @Serializable
 data class Location(
-  @SerialName("file_name") val fileName: String,
+  @SerialName("file_name") val fileName: String? = null,
   val line: Int,
   val column: Int? = null,
   val function: String? = null,
@@ -315,4 +320,31 @@ data class Invariant(
 enum class InvariantType {
   @SerialName("loop_invariant") LOOP_INVARIANT,
   @SerialName("location_invariant") LOCATION_INVARIANT,
+}
+
+@Serializable
+data class Precision(
+  val format: Format,
+  val scope: PrecisionScope,
+  val type: PrecisionType,
+  val values: List<String>,
+)
+
+enum class PrecisionType {
+  @SerialName("predicates") PREDICATE,
+  @SerialName("memory_locations") EXPLICIT,
+}
+
+@Serializable
+data class PrecisionScope(
+  val type: PrecisionScopeType,
+  @SerialName("function_name") val functionName: String? = null,
+  val location: Location? = null,
+)
+
+enum class PrecisionScopeType {
+  @SerialName("global") GLOBAL,
+  @SerialName("function") FUNCTION,
+  @SerialName("loop_location") LOOP_LOCATION,
+  @SerialName("location") LOCATION,
 }

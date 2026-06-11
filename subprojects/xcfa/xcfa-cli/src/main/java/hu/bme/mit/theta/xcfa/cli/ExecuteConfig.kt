@@ -33,7 +33,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -47,6 +46,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
@@ -112,6 +112,14 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     WebDebuggerLogger.enableWebDebuggerLogger()
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
   }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (
+      cegarConfig.initPrec == InitPrec.REUSE ||
+        config.outputConfig.precOutputConfig.format.isNotEmpty()
+    ) {
+      PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
+    }
+  }
 
   LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
   LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
@@ -171,7 +179,6 @@ private fun parseInputFiles(
     Triple(null, null, null)
   } else {
     var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
-
     preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     Triple(xcfa, mcm, parseContext)
   }
@@ -206,6 +213,10 @@ private fun frontend(
     } else {
       emptySet()
     }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (cegarConfig.initPrec == InitPrec.REUSE)
+      PrecReuse.load(cegarConfig.precFile, xcfa.collectVars(), parseContext, logger)
+  }
 
   if (
     parseContext.multiThreading &&
