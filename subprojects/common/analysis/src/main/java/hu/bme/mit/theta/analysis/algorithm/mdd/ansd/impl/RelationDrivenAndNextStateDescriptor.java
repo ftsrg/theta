@@ -30,18 +30,25 @@ import java.util.Optional;
  * Restricts the image of a wrapped relation to the states of a {@code constraint} set, descending
  * the constraint node in lockstep with the relation. Used for constrained saturation (CTL EU).
  *
+ * <p>RELATION-DRIVEN: enumeration cursors the wrapped relation's views and probes the constraint by
+ * key. Use this variant when the relation is explicit and cheap to enumerate (e.g. the reversed
+ * explicit relation in CTL EU). When the relation is symbolic and the constraint is explicit, use
+ * {@link ConstraintDrivenAndNextStateDescriptor} instead, or enumeration triggers solver-driven
+ * expansion of the symbolic image.
+ *
  * <p>The views prune constraint-zero keys by key absence: satFire asserts that off-diagonal values
  * are never {@code terminalEmpty}, and relProd assumes every descended branch reaches a terminal
  * with {@code evaluate() == true}. The constraint is part of equals/hashCode, otherwise distinct
  * constraints collide in the saturation cache.
  */
-public final class AndNextStateDescriptor implements AbstractNextStateDescriptor {
+public final class RelationDrivenAndNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final AbstractNextStateDescriptor wrapped;
 
     private final MddHandle constraint;
 
-    private AndNextStateDescriptor(AbstractNextStateDescriptor wrapped, MddHandle constraint) {
+    private RelationDrivenAndNextStateDescriptor(
+            AbstractNextStateDescriptor wrapped, MddHandle constraint) {
         this.wrapped = wrapped;
         this.constraint = Preconditions.checkNotNull(constraint);
     }
@@ -51,16 +58,31 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         if (wrapped == AbstractNextStateDescriptor.terminalEmpty() || constraint.isTerminalZero()) {
             return AbstractNextStateDescriptor.terminalEmpty();
         }
-        return new AndNextStateDescriptor(wrapped, constraint);
+        return new RelationDrivenAndNextStateDescriptor(wrapped, constraint);
     }
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+        final IntObjMapView<AbstractNextStateDescriptor> diagonal =
+                wrapped.getDiagonal(localStateSpace);
+        // A default-only (don't-care) constraint level has an empty explicit key set; trimming to
+        // it
+        // would silently empty the diagonal and lose transitions. In that case every key maps to
+        // the
+        // default child (constraint.get(key)), so descend without trimming.
+        final IntObjMapView<AbstractNextStateDescriptor> trimmed =
+                constraint.keySet().isEmpty() ? diagonal : diagonal.trim(constraint.keySet());
         return new IntObjMapViews.Transforming<>(
-                wrapped.getDiagonal(localStateSpace).trim(constraint.keySet()),
+                trimmed,
                 (descriptor, key) -> {
-                    if (key == null) return descriptor;
-                    return AndNextStateDescriptor.of(descriptor, constraint.get(key));
+                    // trim drops the wrapped view's default value; SimpleSaturationProvider
+                    // dereferences the diagonal default as the next-level dsat, so map the
+                    // resulting null to terminalEmpty (matching MddNodeNextStateDescriptor)
+                    if (key == null)
+                        return descriptor == null
+                                ? AbstractNextStateDescriptor.terminalEmpty()
+                                : descriptor;
+                    return RelationDrivenAndNextStateDescriptor.of(descriptor, constraint.get(key));
                 });
     }
 
@@ -87,7 +109,8 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
                     @Override
                     public AbstractNextStateDescriptor value() {
-                        return AndNextStateDescriptor.of(c.value(), constraint.get(c.key()));
+                        return RelationDrivenAndNextStateDescriptor.of(
+                                c.value(), constraint.get(c.key()));
                     }
 
                     @Override
@@ -105,7 +128,7 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
                 final MddHandle childConstraint = constraint.get(key);
                 if (childConstraint.isTerminalZero())
                     return AbstractNextStateDescriptor.terminalEmpty();
-                return AndNextStateDescriptor.of(inner.get(key), childConstraint);
+                return RelationDrivenAndNextStateDescriptor.of(inner.get(key), childConstraint);
             }
 
             @Override
@@ -142,7 +165,10 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
                         iterable -> {
                             var list = new ArrayList<AbstractNextStateDescriptor>();
                             iterable.forEach(
-                                    it -> list.add(new AndNextStateDescriptor(it, constraint)));
+                                    it ->
+                                            list.add(
+                                                    new RelationDrivenAndNextStateDescriptor(
+                                                            it, constraint)));
                             return list;
                         });
     }
@@ -161,7 +187,7 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AndNextStateDescriptor that = (AndNextStateDescriptor) o;
+        RelationDrivenAndNextStateDescriptor that = (RelationDrivenAndNextStateDescriptor) o;
         return Objects.equals(wrapped, that.wrapped) && Objects.equals(constraint, that.constraint);
     }
 
@@ -172,6 +198,6 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
     @Override
     public String toString() {
-        return "And(" + wrapped + ", " + constraint + ")";
+        return "AndByRelation(" + wrapped + ", " + constraint + ")";
     }
 }

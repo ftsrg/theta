@@ -25,10 +25,10 @@ import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.RelationDrivenAndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
@@ -194,7 +194,7 @@ constructor(
     val saturated =
       stateSpaceProvider.compute(
         MddNodeInitializer.of(q),
-        AndNextStateDescriptor.of(reversedNS, constraint),
+        RelationDrivenAndNextStateDescriptor.of(reversedNS, constraint),
         topVar,
       )
     return saturated.intersection(universe) as MddHandle
