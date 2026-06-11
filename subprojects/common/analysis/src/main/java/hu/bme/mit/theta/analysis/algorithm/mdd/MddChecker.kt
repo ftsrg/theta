@@ -50,7 +50,6 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
-import java.util.concurrent.*
 
 class MddChecker
 @JvmOverloads
@@ -200,60 +199,20 @@ constructor(
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
-      val executor = Executors.newSingleThreadExecutor()
-      val future =
-        executor.submit<Trace<ExplState, ExprAction>> {
-          val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
-          for (transNode in transNodes) {
-            val explTrans =
-              MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
-            reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
-          }
-          val orReversed = OrNextStateDescriptor.create(reversedDescriptors)
-
-          val traceProvider = TraceProvider(stateSig.variableOrder)
-          val mddTrace =
-            traceProvider.compute(propViolating, orReversed, initNode, stateSig.topVariableHandle)
-          val valuations =
-            mddTrace
-              .map {
-                PathUtils.extractValuation(
-                  MddValuationCollector.collect(it).stream().findFirst().orElseThrow(),
-                  0,
-                )
-              }
-              .toList()
-          return@submit Trace.of(
-            valuations.stream().map(ExplState::of).toList(),
-            monolithicExpr.action(),
-          )
-        }
-
-      try {
-        logger.mainStep("Starting trace generation.\n")
-        val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
-      } catch (e: TimeoutException) {
-        logger.mainStep("Trace generation timed out, returning empty trace!\n")
-        future.cancel(true)
-        return SafetyResult.unsafe(
-          Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace, proofStrategy),
-          statistics,
-        )
-      } catch (e: InterruptedException) {
-        logger.mainStep("Trace generation timed out, returning empty trace!\n")
-        future.cancel(true)
-        return SafetyResult.unsafe(
-          Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace, proofStrategy),
-          statistics,
-        )
-      } catch (e: ExecutionException) {
-        throw RuntimeException(e)
-      } finally {
-        executor.shutdownNow()
-      }
+      // on trace generation timeout, fall back to an empty trace
+      val trace =
+        generateTrace(
+          transNodes,
+          transSig,
+          stateSpace,
+          propViolating,
+          initNode,
+          stateSig,
+          monolithicExpr,
+          traceTimeout,
+          logger,
+        ) ?: Trace.of(listOf(ExplState.top()), listOf())
+      result = SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
     } else {
       result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)
     }
