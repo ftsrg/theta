@@ -92,8 +92,6 @@ constructor(
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
-  private val transBinding = transitionBinding(concreteModel)
-
   init {
     require(!(useReachConstraint && useOnTheFlyReachability)) {
       "useReachConstraint and useOnTheFlyReachability cannot both be enabled: combining them is not sound"
@@ -105,7 +103,15 @@ constructor(
     MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
 
     val orders = CegarOrders(concreteModel, useTransitionSeeding)
-    val seed = if (useTransitionSeeding) SeedKnowledge() else null
+    val seed =
+      if (useTransitionSeeding)
+        SeedKnowledge(
+          transitionBinding(concreteModel),
+          orders.transDataBoundary,
+          orders.stateDataBoundary,
+          logger,
+        )
+      else null
 
     val abstractor = ImplicitPredicateAbstractor(concreteModel)
     val traceChecker = traceCheckerFactory(concreteModel)
@@ -213,15 +219,7 @@ constructor(
 
     // build + seed the three node kinds
     val initNode = stateNode(PathUtils.unfold(model.initExpr, 0), stateExprSig ?: stateSig)
-    seedFromPrevious(
-      seed?.init?.prev,
-      listOf(initNode),
-      newLits,
-      literalToPred,
-      stateBinding,
-      logger,
-      "Init",
-    )
+    seed?.init?.seed(listOf(initNode), newLits, literalToPred)
 
     val relSolverBefore = solverPool.checkCount
     val transNodes =
@@ -232,32 +230,14 @@ constructor(
           MddExpressionTemplate.of(transExpr, { it as Decl<*> }, solverPool, true)
         )
       }
-    seedFromPrevious(
-      seed?.trans?.prev,
-      transNodes,
-      newLits,
-      literalToPred,
-      transBinding,
-      logger,
-      "Transition",
-    )
+    seed?.trans?.seed(transNodes, newLits, literalToPred)
 
     val propNode =
       stateNode(
         PathUtils.unfold(Not(model.propExpr), 0),
         if (propSeedable) stateExprSig!! else stateSig,
       )
-    if (propSeedable) {
-      seedFromPrevious(
-        seed?.prop?.prev,
-        listOf(propNode),
-        newLits,
-        literalToPred,
-        stateBinding,
-        logger,
-        "Property",
-      )
-    }
+    if (propSeedable) seed?.prop?.seed(listOf(propNode), newLits, literalToPred)
     val relSolverCalls = solverPool.checkCount - relSolverBefore
 
     // relation = (⋃ transNodes) ∧ its accumulated upper bound, then constrained / on-the-fly killed
@@ -313,9 +293,9 @@ constructor(
 
     // after trace generation, so its probes land in the extracted bounds too
     if (seed != null) {
-      seed.trans.update(transNodes, orders.transDataBoundary)
-      seed.init.update(listOf(initNode), orders.stateDataBoundary)
-      if (propSeedable) seed.prop.update(listOf(propNode), orders.stateDataBoundary)
+      seed.trans.update()
+      seed.init.update()
+      if (propSeedable) seed.prop.update()
     }
 
     return IterationResult(
