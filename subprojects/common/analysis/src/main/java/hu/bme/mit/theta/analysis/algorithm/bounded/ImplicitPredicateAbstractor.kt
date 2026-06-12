@@ -36,9 +36,7 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
-/**
- * Implicit predicate abstraction over a [MonolithicExpr].
- */
+/** Implicit predicate abstraction over a [MonolithicExpr]. */
 class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
 
   private val predToLiteral = LinkedHashMap<Expr<BoolType>, VarDecl<BoolType>>()
