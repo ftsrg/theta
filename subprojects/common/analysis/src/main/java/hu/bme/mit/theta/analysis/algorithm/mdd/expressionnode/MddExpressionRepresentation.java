@@ -276,12 +276,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
         if (!mddVariable.isNullOrZero(childNode)) {
             explicitRepresentation.cacheNode(key, childNode);
-            completeIfBoolFullyCached();
-        }
-        if (childNode == null) {
+        } else {
+            // also for the zero node of a non-bottom level: the absence must land in the
+            // explicit caches for later iterations' bounds to see it
             explicitRepresentation.cacheNegative(key);
-            completeIfBoolFullyCached();
         }
+        completeIfBoolFullyCached();
         return childNode;
     }
 
@@ -385,6 +385,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         public boolean isNegativelyCached(int key) {
             return negativeCache.contains(key);
+        }
+
+        public HashIntSet getNegativeKeys() {
+            return negativeCache;
         }
 
         public void cacheDefault(MddNode defaultValue) {

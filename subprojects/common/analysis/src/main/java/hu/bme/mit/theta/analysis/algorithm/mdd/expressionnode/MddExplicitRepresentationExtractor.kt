@@ -28,8 +28,6 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityTemplate
 
 object MddExplicitRepresentationExtractor {
 
-  val structToSym: MutableMap<MddHandle, MddHandle> = mutableMapOf()
-
   /**
    * Builds a variable order mirroring [top]'s chain on a fresh graph. Extracting through it keeps
    * the explicit nodes out of the source order's unique tables, where hash collisions with the
@@ -118,25 +116,6 @@ object MddExplicitRepresentationExtractor {
 
         result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
       }
-
-      //      if (
-      //        structToSym.get(result) != null &&
-      //          (node.node.representation as
-      // MddExpressionRepresentation).explicitRepresentation.size != 0
-      //      ) {
-      //        println("Collision:")
-      //        val expr1 =
-      //          (structToSym.get(result)!!.node.representation as
-      // MddExpressionRepresentation).expr
-      //        val expr2 = (node.node.representation as MddExpressionRepresentation).expr
-      //
-      //        val expr1Canonized = ExprUtils.canonize(expr1)
-      //        val expr2Canonized = ExprUtils.canonize(expr2)
-      //        println(expr2Canonized.equals(expr1Canonized))
-      //        println("expr1:" + expr1)
-      //        println("expr2:" + expr2)
-      //      }
-      //      structToSym.put(result, node)
     }
     cache.addToCache(node, result)
     return result

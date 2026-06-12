@@ -22,105 +22,78 @@ import hu.bme.mit.delta.collections.impl.IntObjMapViews
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
 import java.util.Objects
 
 /**
- * Prunes a wrapped relation by the previous iteration's node, consulting only its cached knowledge
- * (explicit children, negative cache, completeness) — never the solver. Refinement only conjoins
- * constraints, so the new relation is a subset of the old one: branches the old node is known to
- * lack are dropped, and where the old node is complete, target enumeration is driven by its
- * explicit keys, replacing open solver enumeration of the new node with bounded point queries.
- * Unknown knowledge falls back to the wrapped behavior. The new-literal levels on top have no old
- * counterpart; consultation starts where the level's trace info matches the old node's top.
+ * The wrapped relation intersected with a structural upper bound of it (an extracted bound MDD, see
+ * `extractBound`). Keys the bound knows absent are pruned without consulting the wrapped
+ * (procedural) relation, and where the bound has no default edge its keys are exhaustive: target
+ * enumeration is driven by bounded point queries instead of open solver enumeration. The bound
+ * overapproximates the relation, so pruning is semantically the identity — only the effort changes.
+ * The new-literal levels on top have no counterpart in a bound extracted earlier; consultation
+ * starts where the level's trace info matches the bound's top, and bounds are level-dense below
+ * their top, consuming one level per step from there.
  */
 class NegativeNextStateDescriptor
 private constructor(
   private val wrapped: AbstractNextStateDescriptor,
-  private val prev: MddHandle,
+  private val bound: MddHandle,
 ) : AbstractNextStateDescriptor {
 
   companion object {
     @JvmStatic
-    fun of(wrapped: AbstractNextStateDescriptor, prev: MddHandle?): AbstractNextStateDescriptor =
+    fun of(wrapped: AbstractNextStateDescriptor, bound: MddHandle?): AbstractNextStateDescriptor =
       when {
         wrapped == AbstractNextStateDescriptor.terminalEmpty() -> wrapped
-        prev == null || prev.isTerminal && !prev.isTerminalZero -> wrapped
-        prev.isTerminalZero -> AbstractNextStateDescriptor.terminalEmpty()
-        else -> NegativeNextStateDescriptor(wrapped, prev)
+        bound == null || bound.isTerminal && !bound.isTerminalZero -> wrapped
+        bound.isTerminalZero -> AbstractNextStateDescriptor.terminalEmpty()
+        else -> NegativeNextStateDescriptor(wrapped, bound)
       }
 
     @JvmStatic
     fun of(
       wrapped: AbstractNextStateDescriptor.Postcondition,
-      prev: MddHandle?,
+      bound: MddHandle?,
     ): AbstractNextStateDescriptor.Postcondition =
       when {
         wrapped == AbstractNextStateDescriptor.Postcondition.terminalEmpty() -> wrapped
-        prev == null || prev.isTerminal && !prev.isTerminalZero -> wrapped
-        prev.isTerminalZero -> AbstractNextStateDescriptor.Postcondition.terminalEmpty()
-        else -> Postcondition(wrapped, prev)
+        bound == null || bound.isTerminal && !bound.isTerminalZero -> wrapped
+        bound.isTerminalZero -> AbstractNextStateDescriptor.Postcondition.terminalEmpty()
+        else -> Postcondition(wrapped, bound)
       }
 
-    /** The old node knows the key has no edge. Cached knowledge only, no solver. */
-    internal fun knownAbsent(prev: MddHandle, key: Int): Boolean {
-      val repr = prev.node.representation
-      if (repr !is MddExpressionRepresentation) return false
-      val explicit = repr.explicitRepresentation
-      if (explicit.cacheView.defaultValue() != null) return false
-      return explicit.isNegativelyCached(key) ||
-        explicit.isComplete && !explicit.cacheView.containsKey(key)
+    /** The bound's child for [key]; null = known absent. Missing keys fall back to the default. */
+    internal fun childOf(bound: MddHandle, key: Int): MddHandle? {
+      val node = bound.node.get(key) ?: bound.node.defaultValue() ?: return null
+      if (node == bound.variableHandle.mddGraph.terminalZeroNode) return null
+      return bound.variableHandle.lower.orElseThrow().getHandleFor(node)
     }
 
-    /** The old node's cached child for the key, or null if unknown. */
-    internal fun knownChild(prev: MddHandle, key: Int): MddHandle? {
-      val repr = prev.node.representation
-      if (repr !is MddExpressionRepresentation) return null
-      val explicit = repr.explicitRepresentation
-      val child = explicit.cacheView.defaultValue() ?: explicit.cacheView.get(key) ?: return null
-      return prev.variableHandle.lower.orElseThrow().getHandleFor(child)
-    }
+    /** The bound's full edge set when exhaustive (no default edge), else null. */
+    internal fun boundedKeys(bound: MddHandle): IntSetView? =
+      if (bound.node.defaultValue() == null) bound.node.keySet() else null
 
-    /** The old node's full edge set when known (complete, no default), else null. */
-    internal fun boundedKeys(prev: MddHandle): IntSetView? {
-      val repr = prev.node.representation
-      if (repr !is MddExpressionRepresentation) return null
-      val explicit = repr.explicitRepresentation
-      return if (explicit.isComplete && explicit.cacheView.defaultValue() == null)
-        explicit.cacheView.keySet()
-      else null
-    }
-
-    private fun aligned(localStateSpace: StateSpaceInfo, prev: MddHandle): Boolean =
-      localStateSpace.traceInfo == prev.variableHandle.variable.orElseThrow().traceInfo
+    private fun aligned(localStateSpace: StateSpaceInfo, bound: MddHandle): Boolean =
+      localStateSpace.traceInfo == bound.variableHandle.variable.orElseThrow().traceInfo
   }
 
   override fun getDiagonal(
     localStateSpace: StateSpaceInfo
   ): IntObjMapView<AbstractNextStateDescriptor> {
     val diagonal = wrapped.getDiagonal(localStateSpace)
-    if (!aligned(localStateSpace, prev)) {
-      return IntObjMapViews.Transforming(diagonal) { d, _ -> of(d, prev) }
-    }
-    val repr = prev.node.representation
-    if (repr is IdentityRepresentation) {
-      val cont =
-        prev.variableHandle.lower
-          .orElseThrow()
-          .lower
-          .orElseThrow()
-          .getHandleFor(repr.continuation)
-      return IntObjMapViews.Transforming(diagonal) { d, _ -> of(d, cont) }
+    if (!aligned(localStateSpace, bound)) {
+      return IntObjMapViews.Transforming(diagonal) { d, _ -> of(d, bound) }
     }
     return IntObjMapViews.Transforming(diagonal) { d, key ->
       if (d == null || key == null) AbstractNextStateDescriptor.terminalEmpty()
-      else if (knownAbsent(prev, key)) AbstractNextStateDescriptor.terminalEmpty()
       else {
-        val oldFrom = knownChild(prev, key)
-        if (oldFrom == null) d
-        else if (knownAbsent(oldFrom, key)) AbstractNextStateDescriptor.terminalEmpty()
-        else of(d, knownChild(oldFrom, key))
+        val from = childOf(bound, key)
+        if (from == null) AbstractNextStateDescriptor.terminalEmpty()
+        else if (from.isTerminal) d
+        else {
+          val to = childOf(from, key)
+          if (to == null) AbstractNextStateDescriptor.terminalEmpty() else of(d, to)
+        }
       }
     }
   }
@@ -129,39 +102,36 @@ private constructor(
     localStateSpace: StateSpaceInfo
   ): IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> {
     val offDiagonal = wrapped.getOffDiagonal(localStateSpace)
-    if (!aligned(localStateSpace, prev)) {
+    if (!aligned(localStateSpace, bound)) {
       return IntObjMapViews.Transforming(offDiagonal) { inner ->
-        IntObjMapViews.Transforming(inner) { d, _ -> of(d, prev) }
+        IntObjMapViews.Transforming(inner) { d, _ -> of(d, bound) }
       }
     }
-    val repr = prev.node.representation
-    if (repr is IdentityRepresentation) {
-      // an identity relation has no off-diagonal edges
-      return IntObjMapView.empty(IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()))
-    }
     return IntObjMapViews.Transforming(offDiagonal) { inner, from ->
-      if (inner == null || from == null) IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty())
-      else if (knownAbsent(prev, from))
+      if (inner == null || from == null)
         IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty())
-      else constrainInner(inner, knownChild(prev, from))
+      else {
+        val boundFrom = childOf(bound, from)
+        if (boundFrom == null) IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty())
+        else constrainInner(inner, boundFrom)
+      }
     }
   }
 
   private fun constrainInner(
     inner: IntObjMapView<AbstractNextStateDescriptor>,
-    oldTo: MddHandle?,
+    boundTo: MddHandle,
   ): IntObjMapView<AbstractNextStateDescriptor> {
-    if (oldTo == null || oldTo.isTerminal && !oldTo.isTerminalZero) return inner
-    if (oldTo.isTerminalZero) return IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty())
+    if (boundTo.isTerminal) return inner
     return object : IntObjMapView<AbstractNextStateDescriptor> {
       override fun cursor(): IntObjCursor<out AbstractNextStateDescriptor> {
-        val bounded = boundedKeys(oldTo)
-        return if (bounded != null) oldDrivenCursor(bounded) else filteredCursor()
+        val bounded = boundedKeys(boundTo)
+        return if (bounded != null) boundDrivenCursor(bounded) else filteredCursor()
       }
 
-      // the old node's edge set is fully known and bounds the new one: probe the new relation by
-      // key instead of open solver enumeration
-      private fun oldDrivenCursor(keys: IntSetView): IntObjCursor<AbstractNextStateDescriptor> {
+      // the bound's edge set is exhaustive: probe the relation by key instead of open solver
+      // enumeration
+      private fun boundDrivenCursor(keys: IntSetView): IntObjCursor<AbstractNextStateDescriptor> {
         val c = keys.cursor()
         return object : IntObjCursor<AbstractNextStateDescriptor> {
           private var value: AbstractNextStateDescriptor =
@@ -174,7 +144,7 @@ private constructor(
           override fun moveNext(): Boolean {
             while (c.moveNext()) {
               val target = inner.get(c.elem()) ?: continue
-              val and = of(target, knownChild(oldTo, c.elem()))
+              val and = of(target, childOf(boundTo, c.elem()))
               if (and != AbstractNextStateDescriptor.terminalEmpty()) {
                 value = and
                 return true
@@ -190,20 +160,21 @@ private constructor(
         return object : IntObjCursor<AbstractNextStateDescriptor> {
           override fun key() = c.key()
 
-          override fun value() = of(c.value(), knownChild(oldTo, c.key()))
+          override fun value() = of(c.value(), childOf(boundTo, c.key()))
 
           override fun moveNext(): Boolean {
             while (c.moveNext()) {
-              if (!knownAbsent(oldTo, c.key())) return true
+              if (childOf(boundTo, c.key()) != null) return true
             }
             return false
           }
         }
       }
 
-      override fun get(key: Int): AbstractNextStateDescriptor =
-        if (knownAbsent(oldTo, key)) AbstractNextStateDescriptor.terminalEmpty()
-        else of(inner.get(key), knownChild(oldTo, key))
+      override fun get(key: Int): AbstractNextStateDescriptor {
+        val child = childOf(boundTo, key) ?: return AbstractNextStateDescriptor.terminalEmpty()
+        return of(inner.get(key), child)
+      }
 
       override fun isEmpty() = throw UnsupportedOperationException()
 
@@ -218,7 +189,7 @@ private constructor(
   }
 
   override fun split(): java.util.Optional<Iterable<AbstractNextStateDescriptor>> =
-    wrapped.split().map { iterable -> iterable.map { of(it, prev) } }
+    wrapped.split().map { iterable -> iterable.map { of(it, bound) } }
 
   override fun isLocallyIdentity(stateSpaceInfo: StateSpaceInfo): Boolean =
     wrapped.isLocallyIdentity(stateSpaceInfo)
@@ -228,32 +199,32 @@ private constructor(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is NegativeNextStateDescriptor) return false
-    return wrapped == other.wrapped && prev == other.prev
+    return wrapped == other.wrapped && bound == other.bound
   }
 
-  override fun hashCode(): Int = Objects.hash(wrapped, prev)
+  override fun hashCode(): Int = Objects.hash(wrapped, bound)
 
-  override fun toString(): String = "AndByPrev($wrapped, $prev)"
+  override fun toString(): String = "AndByBound($wrapped, $bound)"
 
   private class Postcondition(
     private val wrapped: AbstractNextStateDescriptor.Postcondition,
-    private val prev: MddHandle,
+    private val bound: MddHandle,
   ) : AbstractNextStateDescriptor.Postcondition {
 
     override fun getValuations(
       localStateSpace: StateSpaceInfo
     ): IntObjMapView<AbstractNextStateDescriptor> {
       val valuations = wrapped.getValuations(localStateSpace)
-      if (!aligned(localStateSpace, prev)) {
-        return IntObjMapViews.Transforming(valuations) { d, _ -> wrap(d, prev) }
+      if (!aligned(localStateSpace, bound)) {
+        return IntObjMapViews.Transforming(valuations) { d, _ -> wrap(d, bound) }
       }
       return object : IntObjMapView<AbstractNextStateDescriptor> {
         override fun cursor(): IntObjCursor<out AbstractNextStateDescriptor> {
-          val bounded = boundedKeys(prev)
-          return if (bounded != null) oldDrivenCursor(bounded) else filteredCursor()
+          val bounded = boundedKeys(bound)
+          return if (bounded != null) boundDrivenCursor(bounded) else filteredCursor()
         }
 
-        private fun oldDrivenCursor(keys: IntSetView): IntObjCursor<AbstractNextStateDescriptor> {
+        private fun boundDrivenCursor(keys: IntSetView): IntObjCursor<AbstractNextStateDescriptor> {
           val c = keys.cursor()
           return object : IntObjCursor<AbstractNextStateDescriptor> {
             private var value: AbstractNextStateDescriptor =
@@ -266,7 +237,7 @@ private constructor(
             override fun moveNext(): Boolean {
               while (c.moveNext()) {
                 val target = valuations.get(c.elem()) ?: continue
-                val and = wrap(target, knownChild(prev, c.elem()))
+                val and = wrap(target, childOf(bound, c.elem()))
                 if (and != AbstractNextStateDescriptor.terminalEmpty()) {
                   value = and
                   return true
@@ -282,35 +253,36 @@ private constructor(
           return object : IntObjCursor<AbstractNextStateDescriptor> {
             override fun key() = c.key()
 
-            override fun value() = wrap(c.value(), knownChild(prev, c.key()))
+            override fun value() = wrap(c.value(), childOf(bound, c.key()))
 
             override fun moveNext(): Boolean {
               while (c.moveNext()) {
-                if (!knownAbsent(prev, c.key())) return true
+                if (childOf(bound, c.key()) != null) return true
               }
               return false
             }
           }
         }
 
-        override fun get(key: Int): AbstractNextStateDescriptor =
-          if (knownAbsent(prev, key)) AbstractNextStateDescriptor.terminalEmpty()
-          else wrap(valuations.get(key), knownChild(prev, key))
+        override fun get(key: Int): AbstractNextStateDescriptor {
+          val child = childOf(bound, key) ?: return AbstractNextStateDescriptor.terminalEmpty()
+          return wrap(valuations.get(key), child)
+        }
 
         // the initializer relational product canonizes a template over this view, which needs
         // the metadata of the wrapped view; with bounded keys the view is effectively explicit
         // (statistics iterate the bounded cursor instead of draining an open enumeration)
         override fun isEmpty() = valuations.isEmpty()
 
-        override fun isProcedural() = boundedKeys(prev) == null && valuations.isProcedural()
+        override fun isProcedural() = boundedKeys(bound) == null && valuations.isProcedural()
 
         override fun containsKey(key: Int) =
-          !knownAbsent(prev, key) && valuations.containsKey(key)
+          childOf(bound, key) != null && valuations.containsKey(key)
 
         override fun defaultValue(): AbstractNextStateDescriptor? = valuations.defaultValue()
 
         override fun size(): Int {
-          if (boundedKeys(prev) == null) return valuations.size()
+          if (boundedKeys(bound) == null) return valuations.size()
           var n = 0
           val c = cursor()
           while (c.moveNext()) n++
@@ -319,12 +291,17 @@ private constructor(
       }
     }
 
-    /** The relProd initializer patch dispatches on Postcondition, so children stay Postconditions. */
-    private fun wrap(d: AbstractNextStateDescriptor?, old: MddHandle?): AbstractNextStateDescriptor =
+    /**
+     * The relProd initializer patch dispatches on Postcondition, so children stay Postconditions.
+     */
+    private fun wrap(
+      d: AbstractNextStateDescriptor?,
+      bound: MddHandle?,
+    ): AbstractNextStateDescriptor =
       when (d) {
         null -> AbstractNextStateDescriptor.terminalEmpty()
-        is AbstractNextStateDescriptor.Postcondition -> of(d, old)
-        else -> of(d, old)
+        is AbstractNextStateDescriptor.Postcondition -> of(d, bound)
+        else -> of(d, bound)
       }
 
     override fun evaluate(): Boolean = wrapped.evaluate()
@@ -332,11 +309,11 @@ private constructor(
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Postcondition) return false
-      return wrapped == other.wrapped && prev == other.prev
+      return wrapped == other.wrapped && bound == other.bound
     }
 
-    override fun hashCode(): Int = Objects.hash(wrapped, prev)
+    override fun hashCode(): Int = Objects.hash(wrapped, bound)
 
-    override fun toString(): String = "AndByPrev($wrapped, $prev)"
+    override fun toString(): String = "AndByBound($wrapped, $bound)"
   }
 }

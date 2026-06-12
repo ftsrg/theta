@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/** The union of the operand relations: an image is the union of the operands' images. */
 public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
     private static final UniqueTable<OrNextStateDescriptor> uniqueTable = new MapUniqueTable<>();
 
