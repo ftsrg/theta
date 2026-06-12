@@ -175,6 +175,15 @@ class MddCegarConstraintComparisonTest {
     val unconstrained = run(initExpr, tranExpr, propExpr, useReachConstraint = false)
     val seeded =
       run(initExpr, tranExpr, propExpr, useReachConstraint = true, useTransitionSeeding = true)
+    val otfSeeded =
+      run(
+        initExpr,
+        tranExpr,
+        propExpr,
+        useReachConstraint = false,
+        useTransitionSeeding = true,
+        useOnTheFlyReachability = true,
+      )
     val nonCegar = runNonCegar(initExpr, tranExpr, propExpr)
 
     println(
@@ -182,12 +191,14 @@ class MddCegarConstraintComparisonTest {
         "constrained: solverChecks=${constrained.solverChecks}, time=${constrained.timeMs}ms; " +
         "unconstrained: solverChecks=${unconstrained.solverChecks}, time=${unconstrained.timeMs}ms; " +
         "constrained+seeded: solverChecks=${seeded.solverChecks}, time=${seeded.timeMs}ms; " +
+        "otf+seeded: solverChecks=${otfSeeded.solverChecks}, time=${otfSeeded.timeMs}ms; " +
         "nonCegar: solverChecks=${nonCegar.solverChecks}, time=${nonCegar.timeMs}ms"
     )
 
     assertEquals(safe, constrained.safe)
     assertEquals(safe, unconstrained.safe)
     assertEquals(safe, seeded.safe)
+    assertEquals(safe, otfSeeded.safe)
     assertEquals(safe, nonCegar.safe)
   }
 
@@ -216,6 +227,7 @@ class MddCegarConstraintComparisonTest {
     propExpr: Expr<BoolType>,
     useReachConstraint: Boolean,
     useTransitionSeeding: Boolean = false,
+    useOnTheFlyReachability: Boolean = false,
   ): RunResult {
     SolverPool(Z3LegacySolverFactory.getInstance()).use { solverPool ->
       val logger = ConsoleLogger(Logger.Level.MAINSTEP)
@@ -226,7 +238,7 @@ class MddCegarConstraintComparisonTest {
           logger,
           createSeqItpCheckerFactory(Z3LegacySolverFactory.getInstance()),
           useReachConstraint = useReachConstraint,
-          useOnTheFlyReachability = false,
+          useOnTheFlyReachability = useOnTheFlyReachability,
           useTransitionSeeding = useTransitionSeeding,
         )
       val stopwatch = Stopwatch.createStarted()

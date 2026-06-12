@@ -22,12 +22,29 @@ import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
+import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityTemplate
 
 object MddExplicitRepresentationExtractor {
 
   val structToSym: MutableMap<MddHandle, MddHandle> = mutableMapOf()
+
+  /**
+   * Builds a variable order mirroring [top]'s chain on a fresh graph. Extracting through it keeps
+   * the explicit nodes out of the source order's unique tables, where hash collisions with the
+   * procedural expression nodes force solver-driven equality enumeration.
+   */
+  fun mirrorTopOf(top: MddVariableHandle): MddVariableHandle {
+    val mirrorOrder =
+      JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
+    generateSequence(top) { it.lower.orElse(null) }
+      .mapNotNull { it.variable.orElse(null) }
+      .toList()
+      .asReversed()
+      .forEach { mirrorOrder.createOnTop(MddVariableDescriptor.copy(it)) }
+    return mirrorOrder.defaultSetSignature.topVariableHandle
+  }
 
   fun transform(node: MddHandle, variable: MddVariableHandle): MddHandle =
     transform(node, variable, UnaryOperationCache())
@@ -42,6 +59,8 @@ object MddExplicitRepresentationExtractor {
       return cached
     }
 
+    // node is descended through its own variableHandle; variable is only the check-in
+    // target and may belong to a different order mirroring the source levels
     val result: MddHandle
     if (node.isTerminal) {
       if (node.isTerminalZero) {
@@ -54,7 +73,7 @@ object MddExplicitRepresentationExtractor {
       if (node.node.representation is IdentityRepresentation) {
         val s =
           transform(
-            variable.lower
+            node.variableHandle.lower
               .get()
               .lower
               .get()
@@ -77,7 +96,9 @@ object MddExplicitRepresentationExtractor {
         if (explicitRepresentation.cacheView.defaultValue() != null) {
           val s =
             transform(
-              variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
+              node.variableHandle.lower
+                .get()
+                .getHandleFor(explicitRepresentation.cacheView.defaultValue()),
               variable.lower.orElse(null),
               cache,
             )
@@ -87,7 +108,7 @@ object MddExplicitRepresentationExtractor {
           while (cursor.moveNext()) {
             val s =
               transform(
-                variable.lower.get().getHandleFor(cursor.value()),
+                node.variableHandle.lower.get().getHandleFor(cursor.value()),
                 variable.lower.orElse(null),
                 cache,
               )

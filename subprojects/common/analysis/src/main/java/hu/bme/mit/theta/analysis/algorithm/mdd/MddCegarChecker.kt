@@ -139,12 +139,20 @@ constructor(
     val traceChecker = traceCheckerFactory(concreteModel)
     var currentPrec = initPrec(concreteModel)
     var reachExplicit: MddHandle? = null
-    var prevTransNodes: List<MddHandle>? = null
-    var ctrlPlaced = false
+    var prevTransNodes: List<MddHandle> = emptyList()
     // ctrl vars sit at the bottom, in the concrete model's relative ordering
     val orderedVars = concreteModel.orderVars()
     val ctrlOrdered = orderedVars.filter { it in concreteModel.ctrlVars }
     val dataOrdered = orderedVars.filter { it !in concreteModel.ctrlVars }
+
+    if (useTransitionSeeding) {
+      // concrete witness levels sit below all abstract levels; only the trans order gets them
+      dataOrdered.reversed().forEach {
+        createTransLevelOnTop(it, concreteModel.transOffsetIndex[it], transOrder, identityExprs)
+      }
+    }
+    // createOnTop builds bottom-up, so reverse to keep ctrlOrdered[0] highest within the block
+    ctrlOrdered.reversed().forEach { createLevelOnTop(it, stateOrder, transOrder, identityExprs) }
 
     var totalSolverCalls = 0L
     var i = 0
@@ -153,20 +161,7 @@ constructor(
       i++
       val (model, newLits) = abstractor.abstractModel(currentPrec)
 
-      if (!ctrlPlaced) {
-        if (useTransitionSeeding) {
-          // concrete witness levels sit below all abstract levels; only the trans order gets them
-          dataOrdered.reversed().forEach {
-            createTransLevelOnTop(it, concreteModel.transOffsetIndex[it], transOrder, identityExprs)
-          }
-        }
-        // createOnTop builds bottom-up, so reverse to keep ctrlOrdered[0] highest within the block
-        ctrlOrdered.reversed().forEach {
-          createLevelOnTop(it, model, stateOrder, transOrder, identityExprs)
-        }
-        ctrlPlaced = true
-      }
-      newLits.forEach { createLevelOnTop(it, model, stateOrder, transOrder, identityExprs) }
+      newLits.forEach { createLevelOnTop(it, stateOrder, transOrder, identityExprs) }
 
       val constraint =
         if (useReachConstraint && reachExplicit != null)
@@ -174,18 +169,16 @@ constructor(
         else null
 
       val iter =
-        runIteration(model, constraint, stateOrder, transOrder, identityExprs) { transNodes ->
-          if (useTransitionSeeding && prevTransNodes != null) {
-            seedTransitions(
-              prevTransNodes!!,
-              transNodes,
-              newLits,
-              abstractor.literalToPred,
-              concreteModel,
-              logger,
-            )
-          }
-        }
+        runIteration(
+          model,
+          constraint,
+          stateOrder,
+          transOrder,
+          identityExprs,
+          newLits,
+          abstractor.literalToPred,
+          prevTransNodes,
+        )
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
 
       logger.write(
@@ -239,7 +232,7 @@ constructor(
       currentPrec = precRefiner.refine(currentPrec, predTrace, refutation)
 
       reachExplicit = iter.stateSpace
-      prevTransNodes = iter.transNodes
+      if (useTransitionSeeding) prevTransNodes = iter.transNodes
     }
   }
 
@@ -263,7 +256,9 @@ constructor(
     stateOrder: MddVariableOrder,
     transOrder: MddVariableOrder,
     identityExprs: List<Expr<BoolType>>,
-    seedRelation: (List<MddHandle>) -> Unit,
+    newLits: List<VarDecl<BoolType>>,
+    literalToPred: Map<Decl<*>, Expr<BoolType>>,
+    prevTransNodes: List<MddHandle>,
   ): IterationResult {
     val stateSig: MddSignature = stateOrder.defaultSetSignature
     val transSig: MddSignature = transOrder.defaultSetSignature
@@ -277,7 +272,7 @@ constructor(
     val relSolverBefore = solverPool.checkCount
     val transNodes =
       transitionNodeBuilder.build(model, transSig.topVariableHandle, identityExprs, solverPool)
-    seedRelation(transNodes)
+    seedTransitions(prevTransNodes, transNodes, newLits, literalToPred, concreteModel, logger)
     val descriptors = transNodes.map { MddNodeNextStateDescriptor.of(it) }
     val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
@@ -349,13 +344,13 @@ constructor(
    */
   private fun createLevelOnTop(
     v: VarDecl<*>,
-    model: MonolithicExpr,
     stateOrder: MddVariableOrder,
     transOrder: MddVariableOrder,
     identityExprs: MutableList<Expr<BoolType>>,
   ) {
     stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
-    createTransLevelOnTop(v, model.transOffsetIndex[v], transOrder, identityExprs)
+    // abstract vars (ctrl vars and literals) always have offset 1 in the abstract relation
+    createTransLevelOnTop(v, 1, transOrder, identityExprs)
   }
 
   private fun createTransLevelOnTop(
