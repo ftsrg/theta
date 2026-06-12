@@ -44,10 +44,10 @@ import org.junit.jupiter.params.provider.MethodSource
  * Runs [MddCegarChecker] on the same model with identical configuration except for
  * [MddCegarChecker.useReachConstraint] and [MddCegarChecker.useTransitionSeeding], to compare the
  * effect of constraining each iteration's saturation to the previous iteration's reach set and of
- * seeding each iteration's relation from the previous iteration's concrete witnesses. On-the-fly reachability is disabled in both
- * runs because it cannot be used in constrained iterations. The models are the multi-iteration
- * rows of [MddCegarCheckerTest]; single-iteration models never build a constraint, so a
- * comparison on them would be vacuous.
+ * seeding each iteration's relation from the previous iteration's concrete witnesses. On-the-fly
+ * reachability is disabled in both runs because it cannot be used in constrained iterations. The
+ * models are the multi-iteration rows of [MddCegarCheckerTest]; single-iteration models never build
+ * a constraint, so a comparison on them would be vacuous.
  */
 class MddCegarConstraintComparisonTest {
 
