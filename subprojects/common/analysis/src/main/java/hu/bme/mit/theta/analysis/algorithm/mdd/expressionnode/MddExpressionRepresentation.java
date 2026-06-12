@@ -186,6 +186,21 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return lazyTraverser;
     }
 
+    /** Seeds the explicit caches along {@code model}, which must satisfy {@link #getExpr()}. */
+    public void cacheModel(Valuation model) {
+        getLazyTraverser().cacheModel(model);
+    }
+
+    /** A bool decl has exactly the keys 0 and 1, so caching both makes the node complete. */
+    private void completeIfBoolFullyCached() {
+        if (decl.getType() instanceof BoolType
+                && !explicitRepresentation.isComplete()
+                && explicitRepresentation.getCacheView().containsKey(0)
+                && explicitRepresentation.getCacheView().containsKey(1)) {
+            explicitRepresentation.setComplete();
+        }
+    }
+
     @Override
     public boolean isEmpty() {
         //        return false;
@@ -255,7 +270,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 }
             }
         }
-        if (!mddVariable.isNullOrZero(childNode)) explicitRepresentation.cacheNode(key, childNode);
+        if (!mddVariable.isNullOrZero(childNode)) {
+            explicitRepresentation.cacheNode(key, childNode);
+            completeIfBoolFullyCached();
+        }
         if (childNode == null) explicitRepresentation.cacheNegative(key);
         return childNode;
     }
@@ -684,9 +702,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         assert !representation.mddVariable.isNullOrZero(childNode)
                                 : "This would mean the model returned by the solver is incorrect";
                         if (literal.isPresent()
-                                && !representation.explicitRepresentation.isComplete())
+                                && !representation.explicitRepresentation.isComplete()) {
                             representation.explicitRepresentation.cacheNode(
                                     LitExprConverter.toInt(literal.get()), childNode);
+                            representation.completeIfBoolFullyCached();
+                        }
                         // TODO update domainSize
                     }
                 }
