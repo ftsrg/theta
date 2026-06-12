@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class MddExpressionTemplate implements MddNode.Template {
@@ -51,13 +52,15 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final boolean transExpr;
     private final boolean knownSat;
 
-    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
+    // caches the model, not just satness: the model seeds the witness caches of every node
+    // created for this expression, keeping the levels below explorable without the solver
+    private static UnaryOperationCache<Expr<BoolType>, Optional<Valuation>> satCache =
             new UnaryOperationCache();
 
     private static Valuation checkSat(Expr<BoolType> expr, SolverPool solverPool) {
-        Boolean cached = satCache.getOrNull(expr);
+        Optional<Valuation> cached = satCache.getOrNull(expr);
         if (cached != null) {
-            return cached ? ImmutableValuation.empty() : null;
+            return cached.orElse(null);
         }
         final var solver = solverPool.requestSolver();
         final Valuation model;
@@ -67,7 +70,7 @@ public class MddExpressionTemplate implements MddNode.Template {
         } finally {
             solverPool.returnSolver(solver);
         }
-        satCache.addToCache(expr, model != null);
+        satCache.addToCache(expr, Optional.ofNullable(model));
         return model;
     }
 
