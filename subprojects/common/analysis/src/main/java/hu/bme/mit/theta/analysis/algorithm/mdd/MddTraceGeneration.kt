@@ -63,9 +63,9 @@ internal fun generateTrace(
   val future =
     executor.submit<Trace<ExplState, ExprAction>> {
       val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+      val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
       for (transNode in transNodes) {
-        val explTrans =
-          MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+        val explTrans = MddExplicitRepresentationExtractor.transform(transNode, mirrorTop)
         reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
       }
       val orReversed = OrNextStateDescriptor.create(reversedDescriptors)

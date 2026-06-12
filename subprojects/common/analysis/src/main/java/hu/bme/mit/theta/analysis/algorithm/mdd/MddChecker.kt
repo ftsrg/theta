@@ -227,9 +227,9 @@ constructor(
     ssgTimeMs: Long,
   ) {
     val structDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+    val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
     for (transNode in transNodes) {
-      val structTransNode =
-        MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+      val structTransNode = MddExplicitRepresentationExtractor.transform(transNode, mirrorTop)
       structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
     }
     val structNextStates: AbstractNextStateDescriptor =

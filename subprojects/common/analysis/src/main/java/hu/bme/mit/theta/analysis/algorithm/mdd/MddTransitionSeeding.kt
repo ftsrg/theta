@@ -61,9 +61,10 @@ internal fun seedTransitions(
   if (node.isTerminal) return
   val newRelation = node.representation as? MddExpressionRepresentation ?: return
 
+  val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(prevTransNodes[0].variableHandle)
   val struct =
     prevTransNodes
-      .map { MddExplicitRepresentationExtractor.transform(it, it.variableHandle) }
+      .map { MddExplicitRepresentationExtractor.transform(it, mirrorTop) }
       .reduce { a, b -> a.union(b) as MddHandle }
 
   val srcExprs = newLiterals.map { PathUtils.unfold(literalToPred[it]!!, 0) }
