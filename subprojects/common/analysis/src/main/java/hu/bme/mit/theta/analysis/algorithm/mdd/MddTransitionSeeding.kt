@@ -49,29 +49,56 @@ internal fun seedTransitions(
   literalToPred: Map<Decl<*>, Expr<BoolType>>,
   concreteModel: MonolithicExpr,
   logger: Logger,
-) {
-  // single relation node assumed: with several split nodes, a witness of one split could be
-  // cached into another split's node, corrupting it
-  if (newLiterals.isEmpty() || newTransNodes.size != 1 || prevTransNodes.isEmpty()) return
+) =
+  seedExpressionNode(prevTransNodes, newTransNodes, newLiterals, logger, "Transition") { literal ->
+    val pred = literalToPred[literal]!!
+    listOf(
+      literal.getConstDecl(0) to PathUtils.unfold(pred, 0),
+      literal.getConstDecl(1) to
+        PathUtils.unfold(ExprUtils.applyPrimes(pred, concreteModel.transOffsetIndex), 0),
+    )
+  }
 
-  var node = newTransNodes[0].node
+/** [seedTransitions] for state expressions (init, property): one unprimed level per literal. */
+internal fun seedStateNode(
+  prevNode: MddHandle?,
+  newNode: MddHandle,
+  newLiterals: List<VarDecl<BoolType>>,
+  literalToPred: Map<Decl<*>, Expr<BoolType>>,
+  logger: Logger,
+  label: String,
+) =
+  seedExpressionNode(listOfNotNull(prevNode), listOf(newNode), newLiterals, logger, label) {
+    literal ->
+    listOf(literal.getConstDecl(0) to PathUtils.unfold(literalToPred[literal]!!, 0))
+  }
+
+private fun seedExpressionNode(
+  prevNodes: List<MddHandle>,
+  newNodes: List<MddHandle>,
+  newLiterals: List<VarDecl<BoolType>>,
+  logger: Logger,
+  label: String,
+  literalCases: (VarDecl<BoolType>) -> List<Pair<Decl<*>, Expr<BoolType>>>,
+) {
+  // single node assumed: with several split nodes, a witness of one split could be
+  // cached into another split's node, corrupting it
+  if (newLiterals.isEmpty() || newNodes.size != 1 || prevNodes.isEmpty()) return
+
+  var node = newNodes[0].node
   while (!node.isTerminal && node.representation is IdentityRepresentation) {
     node = (node.representation as IdentityRepresentation).continuation
   }
   if (node.isTerminal) return
-  val newRelation = node.representation as? MddExpressionRepresentation ?: return
+  val newTop = node.representation as? MddExpressionRepresentation ?: return
 
-  val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(prevTransNodes[0].variableHandle)
+  val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(prevNodes[0].variableHandle)
   val struct =
-    prevTransNodes
+    prevNodes
       .map { MddExplicitRepresentationExtractor.transform(it, mirrorTop) }
       .reduce { a, b -> a.union(b) as MddHandle }
 
-  val srcExprs = newLiterals.map { PathUtils.unfold(literalToPred[it]!!, 0) }
-  val tgtExprs =
-    newLiterals.map {
-      PathUtils.unfold(ExprUtils.applyPrimes(literalToPred[it]!!, concreteModel.transOffsetIndex), 0)
-    }
+  val cases = newLiterals.map(literalCases)
 
   var seeded = 0L
   // witnesses that do not assign all predicate variables (identity and default levels carry no
@@ -83,17 +110,17 @@ internal fun seedTransitions(
     val builder = ImmutableValuation.builder()
     assignments.forEach { (decl, value) -> builder.put(decl, value) }
     val witness = builder.build()
-    for ((j, literal) in newLiterals.withIndex()) {
-      val src = ExprUtils.simplify(srcExprs[j], witness) as? BoolLitExpr
-      val tgt = ExprUtils.simplify(tgtExprs[j], witness) as? BoolLitExpr
-      if (src == null || tgt == null) {
-        unresolved++
-        return
+    for (case in cases) {
+      for ((decl, expr) in case) {
+        val value = ExprUtils.simplify(expr, witness) as? BoolLitExpr
+        if (value == null) {
+          unresolved++
+          return
+        }
+        builder.put(decl, Bool(value.value))
       }
-      builder.put(literal.getConstDecl(0), Bool(src.value))
-      builder.put(literal.getConstDecl(1), Bool(tgt.value))
     }
-    newRelation.cacheModel(builder.build())
+    newTop.cacheModel(builder.build())
     seeded++
   }
 
@@ -128,7 +155,8 @@ internal fun seedTransitions(
 
   logger.write(
     Logger.Level.MAINSTEP,
-    "Transition seeding: newLiterals=%d, seeded=%d, unresolved=%d\n",
+    "%s seeding: newLiterals=%d, seeded=%d, unresolved=%d\n",
+    label,
     newLiterals.size,
     seeded,
     unresolved,

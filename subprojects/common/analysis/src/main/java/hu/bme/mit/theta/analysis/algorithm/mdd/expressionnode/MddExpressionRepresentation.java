@@ -191,12 +191,15 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         getLazyTraverser().cacheModel(model);
     }
 
-    /** A bool decl has exactly the keys 0 and 1, so caching both makes the node complete. */
-    private void completeIfBoolFullyCached() {
+    /** A bool decl has exactly the keys 0 and 1, so deciding both makes the node complete. */
+    public void completeIfBoolFullyCached() {
         if (decl.getType() instanceof BoolType
                 && !explicitRepresentation.isComplete()
-                && explicitRepresentation.getCacheView().containsKey(0)
-                && explicitRepresentation.getCacheView().containsKey(1)) {
+                && explicitRepresentation.getCacheView().defaultValue() == null
+                && (explicitRepresentation.getCacheView().containsKey(0)
+                        || explicitRepresentation.isNegativelyCached(0))
+                && (explicitRepresentation.getCacheView().containsKey(1)
+                        || explicitRepresentation.isNegativelyCached(1))) {
             explicitRepresentation.setComplete();
         }
     }
@@ -231,6 +234,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         final LitExpr<?> litExpr = LitExprConverter.toLitExpr(key, decl.getType());
         if (litExpr.isInvalid()) {
             explicitRepresentation.cacheNegative(key);
+            completeIfBoolFullyCached();
             return null;
         }
 
@@ -274,7 +278,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             explicitRepresentation.cacheNode(key, childNode);
             completeIfBoolFullyCached();
         }
-        if (childNode == null) explicitRepresentation.cacheNegative(key);
+        if (childNode == null) {
+            explicitRepresentation.cacheNegative(key);
+            completeIfBoolFullyCached();
+        }
         return childNode;
     }
 
@@ -491,6 +498,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     return true;
                 } else {
                     currentRepresentation.explicitRepresentation.cacheNegative(assignment);
+                    currentRepresentation.completeIfBoolFullyCached();
                 }
             }
             return false;
