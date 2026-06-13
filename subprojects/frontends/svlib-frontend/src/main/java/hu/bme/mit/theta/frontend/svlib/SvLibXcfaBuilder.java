@@ -1,25 +1,23 @@
 package hu.bme.mit.theta.frontend.svlib;
 
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
-import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.relationalBoolExpr;
-import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
-import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
 import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
+
 import java.util.*;
 
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.*;
+import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
 
 
 public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
@@ -43,7 +41,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     this.procedurePassManager = procedurePassManager;
   }
 
-  XCFA buildXcfa(SvLibParser.ScriptContext script){
+  XCFA buildXcfa(SvLibParser.ScriptContext script) {
     collectGlobalsAndEntry(script);
     XcfaBuilder xcfaBuilder = new XcfaBuilder("SvLibXCFA");
     for (VarDecl<?> declaration : declarations.values()) {
@@ -66,7 +64,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
         SvLibUtils.registerVar(declaration, true);
       } else if (command instanceof SvLibParser.SMTLIBv2CommandContext smtlibCommandContext
           && smtlibCommandContext.command()
-              instanceof SvLibParser.DeclareConstCommandContext declareConstCommandContext) {
+          instanceof SvLibParser.DeclareConstCommandContext declareConstCommandContext) {
         String name = declareConstCommandContext.cmd_declareConst().symbol().getText();
         VarDecl<?> declaration =
             Var(name, sortOf(declareConstCommandContext.cmd_declareConst().sort()));
@@ -91,7 +89,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
       if (attribute instanceof SvLibParser.TagPropertyContext tagPropertyContext
           && tagPropertyContext.property()
-              instanceof SvLibParser.EnsuresPropertyContext ensuresPropertyContext) {
+          instanceof SvLibParser.EnsuresPropertyContext ensuresPropertyContext) {
         postconditions.add(ensuresPropertyContext.relationalTerm());
       }
     }
@@ -129,6 +127,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   private SvLibMetadata metadata(String sourceName) {
     return new SvLibMetadata(sourceName);
   }
+
   private XcfaLocation nextLoc(String sourceName) {
     return new XcfaLocation("l" + locCounter++, metadata(sourceName));
   }
@@ -245,7 +244,6 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     }
     return unsupported("sort '" + sort.getText() + "'");
   }
-
 
 
 }

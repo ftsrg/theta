@@ -127,6 +127,19 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
         return endLoc;
     }
 
+    @Override
+    public XcfaLocation visitWhileStatement(SvLibParser.WhileStatementContext ctx) {
+        XcfaLocation head = currentEntry;
+
+        Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
+        XcfaLocation bodyEntry = addLabel(head, new StmtLabel(AssumeStmt.of(condition)));
+        XcfaLocation exit = visit(ctx.statement(), bodyEntry);
+
+        builder.addEdge(new XcfaEdge(exit, head, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+
+        return addLabel(head, new StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))));
+    }
+
     private XcfaLocation addLabel(XcfaLocation from, XcfaLabel label) {
         return addLabels(from, List.of(label));
     }

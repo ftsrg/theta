@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.xcfa.model.VisualizerKt.toDot;
 import static org.junit.jupiter.api.Assertions.*;
@@ -102,6 +103,33 @@ class SvLibFrontendTest {
     assertTrue(dot.startsWith("digraph G"));
     assertTrue(dot.contains("SvLibXCFA"));
     assertFalse(dot.isBlank());
+  }
+
+  @Test
+  void whileLoopCreatesLoopHeadAndBackEdge()throws IOException {
+    var xcfa = parseResource("loop-simple-safe.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+
+    var incomingCounts =
+        procedure.getEdges().stream()
+            .collect(Collectors.groupingBy(edge -> edge.getTarget(), Collectors.counting()));
+    var outgoingCounts =
+        procedure.getEdges().stream()
+            .collect(Collectors.groupingBy(edge -> edge.getSource(), Collectors.counting()));
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("svlib-loop.dot"),
+        dot);
+
+    assertTrue(
+        procedure.getLocs().stream()
+            .anyMatch(
+                loc ->
+                    incomingCounts.getOrDefault(loc, 0L) >= 2
+                        && outgoingCounts.getOrDefault(loc, 0L) >= 2));
+
+
   }
 
   private static hu.bme.mit.theta.xcfa.model.XCFA parseResource(String name) {
