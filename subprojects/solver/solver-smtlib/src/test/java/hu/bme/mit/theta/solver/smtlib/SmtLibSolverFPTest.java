@@ -20,10 +20,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -41,15 +38,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.kframework.mpfr.BigFloat;
 
-@RunWith(Parameterized.class)
 public class SmtLibSolverFPTest {
 
     private static boolean solverInstalled = false;
@@ -57,17 +52,11 @@ public class SmtLibSolverFPTest {
 
     private static final String SOLVER = "cvc5";
     private static final String VERSION = "1.0.2";
-
-    @Parameterized.Parameter(0)
     public Class<?> exprType;
-
-    @Parameterized.Parameter(1)
     public Expr<?> expected;
-
-    @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws SmtLibSolverInstallerException, IOException {
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
@@ -81,21 +70,23 @@ public class SmtLibSolverFPTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void destroy() throws SmtLibSolverInstallerException {
         if (solverInstalled) {
             solverManager.uninstall(SOLVER, VERSION);
         }
     }
 
-    @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return FpTestUtils.GetOperations().collect(Collectors.toUnmodifiableList());
     }
 
-    @Test
-    public void testOperationEquals() throws Exception {
-        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expr: {0}, expected: {1}, actual: {2}")
+    public void testOperationEquals(Class<?> exprType, Expr<?> expected, Expr<?> actual)
+            throws Exception {
+        initSmtLibSolverFPTest(exprType, expected, actual);
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
 
         // Sanity check
         assertNotNull(exprType);
@@ -104,19 +95,19 @@ public class SmtLibSolverFPTest {
 
         // Type checks
         assertTrue(
+                exprType.isInstance(actual),
                 "The type of actual is "
                         + actual.getClass().getName()
                         + " instead of "
-                        + exprType.getName(),
-                exprType.isInstance(actual));
+                        + exprType.getName());
         assertEquals(
+                expected.getType(),
+                actual.getType(),
                 "The type of expected ("
                         + expected.getType()
                         + ") must match the type of actual ("
                         + actual.getType()
-                        + ")",
-                expected.getType(),
-                actual.getType());
+                        + ")");
 
         // Equality check
         try (final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
@@ -150,5 +141,11 @@ public class SmtLibSolverFPTest {
             SolverStatus status = solver.check();
             assertTrue(status.isSat());
         }
+    }
+
+    public void initSmtLibSolverFPTest(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        this.exprType = exprType;
+        this.expected = expected;
+        this.actual = actual;
     }
 }

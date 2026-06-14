@@ -31,8 +31,8 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class PredInitFuncTest {
 
@@ -47,7 +47,7 @@ public class PredInitFuncTest {
         final PredPrec prec =
                 PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
         final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
-        Assert.assertEquals(4, initFunc.getInitStates(prec).size());
+        Assertions.assertEquals(4, initFunc.getInitStates(prec).size());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class PredInitFuncTest {
         final PredPrec prec =
                 PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
         final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(0)));
-        Assert.assertEquals(2, initFunc.getInitStates(prec).size());
+        Assertions.assertEquals(2, initFunc.getInitStates(prec).size());
     }
 
     @Test
@@ -65,7 +65,7 @@ public class PredInitFuncTest {
         final PredPrec prec =
                 PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
         final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(1)));
-        Assert.assertEquals(2, initFunc.getInitStates(prec).size());
+        Assertions.assertEquals(2, initFunc.getInitStates(prec).size());
     }
 
     @Test
@@ -74,7 +74,7 @@ public class PredInitFuncTest {
         final PredPrec prec =
                 PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
         final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
-        Assert.assertEquals(3, initFunc.getInitStates(prec).size());
+        Assertions.assertEquals(3, initFunc.getInitStates(prec).size());
     }
 
     @Test
@@ -85,7 +85,7 @@ public class PredInitFuncTest {
                 PredInitFunc.create(
                         predAbstractor, And(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
         final Collection<? extends PredState> initStates = initFunc.getInitStates(prec);
-        Assert.assertEquals(1, initStates.size());
-        Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(initStates));
+        Assertions.assertEquals(1, initStates.size());
+        Assertions.assertEquals(PredState.bottom(), Utils.singleElementOf(initStates));
     }
 }

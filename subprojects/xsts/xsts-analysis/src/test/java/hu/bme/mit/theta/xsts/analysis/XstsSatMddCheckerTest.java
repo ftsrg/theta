@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,33 +15,32 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
-@Ignore // causes CI runners to give up
+@Disabled // causes CI runners to give up
 public class XstsSatMddCheckerTest {
-
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public String propPath;
-
-    @Parameterized.Parameter(value = 2)
     public boolean safe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static java.util.Collection<Object[]> data() {
         return XstsMddCheckerTest.data();
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}")
+    public void test(String filePath, String propPath, boolean safe) throws Exception {
+        initXstsSatMddCheckerTest(filePath, propPath, safe);
         XstsMddCheckerTest.runTestWithIterationStrategy(
                 filePath, propPath, safe, IterationStrategy.SAT);
+    }
+
+    public void initXstsSatMddCheckerTest(String filePath, String propPath, boolean safe) {
+        this.filePath = filePath;
+        this.propPath = propPath;
+        this.safe = safe;
     }
 }

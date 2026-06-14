@@ -1,0 +1,103 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var instance_Perst_PIWDef : bool
+	var instance_Perst_ReadByte : bool
+	var instance_Perst_index : int
+	var instance_Perst_FEType : int
+	var instance_Perst_InterfaceParam1 : int
+	var instance_Perst_InterfaceParam2 : int
+	var instance_Perst_AuPosR : int
+	var instance_Perst_PosSt : int
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		instance_Perst_PIWDef := false
+		instance_Perst_ReadByte := false
+		instance_Perst_index := 0
+		instance_Perst_FEType := 0
+		instance_Perst_InterfaceParam1 := 0
+		instance_Perst_InterfaceParam2 := 0
+		instance_Perst_AuPosR := 0
+		instance_Perst_PosSt := 0
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+		havoc instance_Perst_AuPosR
+		instance_Perst_AuPosR := (instance_Perst_AuPosR mod 65536) 
+		havoc instance_Perst_FEType
+		instance_Perst_FEType := (instance_Perst_FEType mod 65536) - 32768 
+		havoc instance_Perst_InterfaceParam1
+		instance_Perst_InterfaceParam1 := (instance_Perst_InterfaceParam1 mod 65536) - 32768 
+		havoc instance_Perst_InterfaceParam2
+		instance_Perst_InterfaceParam2 := (instance_Perst_InterfaceParam2 mod 65536) - 32768 
+		havoc instance_Perst_PIWDef
+		havoc instance_Perst_PosSt
+		instance_Perst_PosSt := (instance_Perst_PosSt mod 65536) 
+		havoc instance_Perst_ReadByte
+		havoc instance_Perst_index
+		instance_Perst_index := (instance_Perst_index mod 65536) - 32768 
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_t1
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l1 {
+		instance_Perst_PosSt := instance_Perst_AuPosR
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_l1 -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}

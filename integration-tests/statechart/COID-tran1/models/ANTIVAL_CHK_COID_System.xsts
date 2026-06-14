@@ -1,0 +1,990 @@
+type MyBool : { ERVENYTELEN, _0, _1}
+type Main_region_of_mo_antivalchk_AntivalenceChecker : { __Inactive__, _1_0, Hibatarolassal_0_1, Hibatarolassal_1_2, Hibatarolassal_0_rol_1_re_3, _1_rol_0_ra_4, _0_5, _0_rol_1_re_6, Hibatarolassal_1_rol_0_ra_7, Hibaallapot_8}
+type CeloldasIdozites : { CELOLDAS_IDOZITES, NINCS_CELOLDAS_IDOZITES, NERV1}
+type Activeness : { ACTIVE, PASSIVE}
+type Main_region_of_bJbCOID_allapotgep_bJbCOID_allapotgep : { __Inactive__, Oldas_4, Celoldas_idozites_nem_fut_5, Funkcio_kikapcsolva_6, Celoldas_idozites_fut_8}
+type Region_1_in_Celoldas_idozites_nem_fut_5_bJbCOID_allapotgep : { __Inactive__, Ervenytelen_0, Tranziens_2, Idozites_nem_fut_1}
+var Signals_n_In_antival_chk_I_CR : boolean = false
+var Signals_n_In_nValue_antival_chk_I_CR : MyBool = ERVENYTELEN
+var Signals_p_In_antival_chk_I_CR : boolean = false
+var Signals_p_In_pValue_antival_chk_I_CR : MyBool = ERVENYTELEN
+var OutSignals_e_Out_antival_chk_I_CR : boolean = false
+var OutSignals_e_Out_eValue_antival_chk_I_CR : MyBool = ERVENYTELEN
+var OutSignals_i_Out_antival_chk_I_CR : boolean = false
+var OutSignals_i_Out_iValue_antival_chk_I_CR : MyBool = ERVENYTELEN
+ctrl var main_region_of_mo_antivalchk_antival_chk_I_CR : Main_region_of_mo_antivalchk_AntivalenceChecker = __Inactive__
+var _0_rol_1_re_6Timeout_antival_chk_I_CR : integer = 0
+var Signals_p_In_antival_chk_I_FT : boolean = false
+var Signals_p_In_pValue_antival_chk_I_FT : MyBool = ERVENYTELEN
+var Signals_n_In_antival_chk_I_FT : boolean = false
+var Signals_n_In_nValue_antival_chk_I_FT : MyBool = ERVENYTELEN
+var OutSignals_i_Out_antival_chk_I_FT : boolean = false
+var OutSignals_i_Out_iValue_antival_chk_I_FT : MyBool = ERVENYTELEN
+ctrl var main_region_of_mo_antivalchk_antival_chk_I_FT : Main_region_of_mo_antivalchk_AntivalenceChecker = __Inactive__
+var _0_rol_1_re_6Timeout_antival_chk_I_FT : integer = 0
+var I_FT_h_In_coid : boolean = false
+var I_FT_h_In_hValue_coid : MyBool = ERVENYTELEN
+var I_FT_e_In_coid : boolean = false
+var I_FT_e_In_eValue_coid : MyBool = ERVENYTELEN
+var StateMachine_OutPort_O_COID_Out_coid : boolean = false
+ctrl var StateMachine_OutPort_O_COID_Out_O_COIDValue_coid : Activeness = ACTIVE
+var I_CR_h_In_coid : boolean = false
+var I_CR_h_In_hValue_coid : MyBool = ERVENYTELEN
+ctrl var main_region_of_bJbCOID_allapotgep_coid : Main_region_of_bJbCOID_allapotgep_bJbCOID_allapotgep = __Inactive__
+ctrl var region_1_in_Celoldas_idozites_nem_fut_5_coid : Region_1_in_Celoldas_idozites_nem_fut_5_bJbCOID_allapotgep = __Inactive__
+var P_COIDH_Timeout_coid : integer = 0
+var P_COIDT_Timeout_coid : integer = 0
+var tran2_coid : boolean = false
+var tran1_coid : boolean = false
+var tran11_coid : boolean = false
+var tran13_coid : boolean = false
+var tran3_coid : boolean = false
+ctrl var RS_COID_coid : CeloldasIdozites = CELOLDAS_IDOZITES
+var tran8_coid : boolean = false
+var tran12_coid : boolean = false
+var tran4_coid : boolean = false
+var tran10_coid : boolean = false
+var tran9_coid : boolean = false
+var tran6_coid : boolean = false
+var Oldas_Exit_coid : boolean = false
+
+trans {
+	_0_rol_1_re_6Timeout_antival_chk_I_CR := (_0_rol_1_re_6Timeout_antival_chk_I_CR + 495);
+	_0_rol_1_re_6Timeout_antival_chk_I_FT := (_0_rol_1_re_6Timeout_antival_chk_I_FT + 495);
+	P_COIDH_Timeout_coid := (P_COIDH_Timeout_coid + 495);
+	P_COIDT_Timeout_coid := (P_COIDT_Timeout_coid + 495);
+	choice {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibaallapot_8) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1) && (true == true));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_1;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1) && (true == true))) && !(((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1) && (true == false))) && !(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0) && (true == false))) && ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0) && (true == true)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_2;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_1) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _1;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) && (!((((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)))) && !(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))))));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_1;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) && !((!((((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)))) && !(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)))))) && (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_rol_1_re_3;
+			_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_5) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_rol_1_re_6;
+			_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && (!(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))))));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && !((!(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)))))) && ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _1;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_2) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) && (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_rol_0_ra_7;
+			_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) && !((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))) && !(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))))));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_2;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _1;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) && ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_1;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _1;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) && ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) && ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _1;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_2;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) && ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_0) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+		choice {
+			assume (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_rol_0_ra_4;
+			_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && (!(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _1;
+			I_CR_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && !((!(((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))))) && ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+			OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+			OutSignals_e_Out_antival_chk_I_CR := true;
+			OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+			OutSignals_i_Out_antival_chk_I_CR := true;
+			I_CR_h_In_hValue_coid := _0;
+			I_CR_h_In_coid := true;
+		}
+	} or {
+		assume !(((((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibaallapot_8) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)))))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_1) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_5) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_2) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7) && (!((503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR)) && (true && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) || (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_0) && true))));
+	}
+	choice {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibaallapot_8) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1) && (true == true));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_1;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1) && (true == true))) && !(((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1) && (true == false))) && !(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0) && (true == false))) && ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0) && (true == true)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_2;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_2) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) && (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_rol_0_ra_7;
+			_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) && !((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))) && !(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))))));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_2;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) && ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _1;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _1;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) && ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_1;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _1;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) && ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_5) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_rol_1_re_6;
+			_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && (!(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))))));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && !((!(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)))))) && ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _1;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_0) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_rol_0_ra_4;
+			_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && (!(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _1;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && !((!(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)))) && !((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))) && ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_1) && true));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+			I_FT_e_In_eValue_coid := _1;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _1;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) && (!((((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)))) && !(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))))));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_1;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) && !((!((((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)))) && !(((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)))))) && (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_rol_1_re_3;
+			_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+		choice {
+			assume ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_2;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		} or {
+			assume (!(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) && ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)));
+			main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+			I_FT_e_In_eValue_coid := _0;
+			I_FT_e_In_coid := true;
+			OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+			OutSignals_i_Out_antival_chk_I_FT := true;
+			I_FT_h_In_hValue_coid := _0;
+			I_FT_h_In_coid := true;
+		}
+	} or {
+		assume !(((((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibaallapot_8) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_2) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_5) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_0) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_1) && true)) || (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7) && (!((501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT)) && (true && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)))))))));
+	}
+	choice {
+		assume ((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0)) && (true && (I_FT_e_In_eValue_coid == _0))));
+		tran4_coid := true;
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := Idozites_nem_fut_1;
+		RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+	} or {
+		assume ((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2)) && (497 <= P_COIDT_Timeout_coid)));
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := __Inactive__;
+		tran2_coid := true;
+		choice {
+			assume (I_FT_e_In_eValue_coid == _0);
+			tran9_coid := true;
+			region_1_in_Celoldas_idozites_nem_fut_5_coid := Idozites_nem_fut_1;
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		} or {
+			assume (I_FT_e_In_eValue_coid != _0);
+			tran11_coid := true;
+			region_1_in_Celoldas_idozites_nem_fut_5_coid := Ervenytelen_0;
+			RS_COID_coid := NERV1;
+		}
+	} or {
+		assume ((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1)) && (true && (I_FT_h_In_hValue_coid != _0))));
+		tran3_coid := true;
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := Ervenytelen_0;
+		RS_COID_coid := NERV1;
+	} or {
+		assume ((!((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0)) && (true && (I_FT_e_In_eValue_coid == _0)))) && !((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2)) && (497 <= P_COIDT_Timeout_coid))) && !((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1)) && (true && (I_FT_h_In_hValue_coid != _0))))) && ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (true && ((I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1)))));
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := __Inactive__;
+		tran8_coid := true;
+		main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_fut_8;
+		P_COIDH_Timeout_coid := 0;
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		RS_COID_coid := CELOLDAS_IDOZITES;
+	} or {
+		assume (((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && (true && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1)))));
+		tran13_coid := true;
+		main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_nem_fut_5;
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := Tranziens_2;
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		choice {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0);
+			RS_COID_coid := NERV1;
+		} or {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2);
+			P_COIDT_Timeout_coid := 0;
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		} or {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1);
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		}
+	} or {
+		assume (((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && ((499 <= P_COIDH_Timeout_coid) && ((I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1)))));
+		tran1_coid := true;
+		main_region_of_bJbCOID_allapotgep_coid := Oldas_4;
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := ACTIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		RS_COID_coid := CELOLDAS_IDOZITES;
+	} or {
+		assume (((main_region_of_bJbCOID_allapotgep_coid == Oldas_4) && (true && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1)))));
+		Oldas_Exit_coid := true;
+		tran6_coid := true;
+		main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_nem_fut_5;
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := Tranziens_2;
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		choice {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0);
+			RS_COID_coid := NERV1;
+		} or {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2);
+			P_COIDT_Timeout_coid := 0;
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		} or {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1);
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		}
+	} or {
+		assume !((((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0)) && (true && (I_FT_e_In_eValue_coid == _0)))) || ((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2)) && (497 <= P_COIDT_Timeout_coid))) || ((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1)) && (true && (I_FT_h_In_hValue_coid != _0)))) || ((!((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0)) && (true && (I_FT_e_In_eValue_coid == _0)))) && !((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2)) && (497 <= P_COIDT_Timeout_coid))) && !((((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1)) && (true && (I_FT_h_In_hValue_coid != _0))))) && ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (true && ((I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1))))) || (((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && (true && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1))))) || (((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && ((499 <= P_COIDH_Timeout_coid) && ((I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1))))) || (((main_region_of_bJbCOID_allapotgep_coid == Oldas_4) && (true && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1)))))));
+	}
+	I_FT_h_In_coid := false;
+	I_CR_h_In_coid := false;
+	I_FT_e_In_coid := false;
+	Signals_p_In_antival_chk_I_FT := false;
+	Signals_n_In_antival_chk_I_FT := false;
+	Signals_p_In_antival_chk_I_CR := false;
+	Signals_n_In_antival_chk_I_CR := false;
+}
+init {
+	_0_rol_1_re_6Timeout_antival_chk_I_CR := (((((((503 + 503) + 503) + 503) + 503) + 503) + 503) + 503);
+	main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+	Signals_n_In_antival_chk_I_CR := false;
+	Signals_p_In_antival_chk_I_CR := false;
+	OutSignals_e_Out_antival_chk_I_CR := false;
+	OutSignals_i_Out_antival_chk_I_CR := false;
+	_0_rol_1_re_6Timeout_antival_chk_I_FT := (((((((501 + 501) + 501) + 501) + 501) + 501) + 501) + 501);
+	main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+	Signals_p_In_antival_chk_I_FT := false;
+	Signals_n_In_antival_chk_I_FT := false;
+	OutSignals_i_Out_antival_chk_I_FT := false;
+	RS_COID_coid := CELOLDAS_IDOZITES;
+	Oldas_Exit_coid := false;
+	tran6_coid := false;
+	tran2_coid := false;
+	tran4_coid := false;
+	tran3_coid := false;
+	tran1_coid := false;
+	tran8_coid := false;
+	tran9_coid := false;
+	tran11_coid := false;
+	tran10_coid := false;
+	tran12_coid := false;
+	tran13_coid := false;
+	P_COIDH_Timeout_coid := 499;
+	P_COIDT_Timeout_coid := 497;
+	main_region_of_bJbCOID_allapotgep_coid := __Inactive__;
+	region_1_in_Celoldas_idozites_nem_fut_5_coid := __Inactive__;
+	I_FT_h_In_coid := false;
+	I_FT_e_In_coid := false;
+	I_CR_h_In_coid := false;
+	StateMachine_OutPort_O_COID_Out_coid := false;
+	choice {
+		assume (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+	} or {
+		assume (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+	} or {
+		assume (!((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) && !(((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) && ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1)));
+		main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+	}
+	choice {
+		assume (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+	} or {
+		assume (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+	} or {
+		assume (!((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) && !(((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) && ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1)));
+		main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+	}
+	tran10_coid := true;
+	main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_nem_fut_5;
+	region_1_in_Celoldas_idozites_nem_fut_5_coid := Tranziens_2;
+	choice {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == _1_0);
+		OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := _1;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_1);
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_2);
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3);
+		_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4);
+		_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := _1;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := _0;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == _0_5);
+		OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := _0;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := _0;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6);
+		_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := _0;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := _1;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := _0;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7);
+		_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_CR == Hibaallapot_8);
+		OutSignals_e_Out_eValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_e_Out_antival_chk_I_CR := true;
+		OutSignals_i_Out_iValue_antival_chk_I_CR := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_CR := true;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	}
+	choice {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == _1_0);
+		I_FT_e_In_eValue_coid := _1;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := _1;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_1);
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_2);
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3);
+		_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4);
+		_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+		I_FT_e_In_eValue_coid := _1;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := _0;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == _0_5);
+		I_FT_e_In_eValue_coid := _0;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := _0;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := _0;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6);
+		_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+		I_FT_e_In_eValue_coid := _0;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := _1;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := _0;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7);
+		_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	} or {
+		assume (main_region_of_mo_antivalchk_antival_chk_I_FT == Hibaallapot_8);
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		OutSignals_i_Out_iValue_antival_chk_I_FT := ERVENYTELEN;
+		OutSignals_i_Out_antival_chk_I_FT := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	}
+	choice {
+		assume (main_region_of_bJbCOID_allapotgep_coid == Oldas_4);
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := ACTIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		RS_COID_coid := CELOLDAS_IDOZITES;
+	} or {
+		assume (main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5);
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		choice {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0);
+			RS_COID_coid := NERV1;
+		} or {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2);
+			P_COIDT_Timeout_coid := 0;
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		} or {
+			assume (region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1);
+			RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+		}
+	} or {
+		assume (main_region_of_bJbCOID_allapotgep_coid == Funkcio_kikapcsolva_6);
+		RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+	} or {
+		assume (main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8);
+		P_COIDH_Timeout_coid := 0;
+		StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+		StateMachine_OutPort_O_COID_Out_coid := true;
+		RS_COID_coid := CELOLDAS_IDOZITES;
+	}
+}
+env {
+	choice {
+		Signals_p_In_antival_chk_I_CR := true;
+	} or {
+		Signals_p_In_antival_chk_I_CR := false;
+	}
+	choice {
+		assume (Signals_p_In_antival_chk_I_CR == true);
+		choice {
+			Signals_p_In_pValue_antival_chk_I_CR := _1;
+		} or {
+			Signals_p_In_pValue_antival_chk_I_CR := ERVENYTELEN;
+		} or {
+			Signals_p_In_pValue_antival_chk_I_CR := _0;
+		}
+	} or {
+		assume !((Signals_p_In_antival_chk_I_CR == true));
+	}
+	choice {
+		Signals_n_In_antival_chk_I_CR := true;
+	} or {
+		Signals_n_In_antival_chk_I_CR := false;
+	}
+	choice {
+		assume (Signals_n_In_antival_chk_I_CR == true);
+		choice {
+			Signals_n_In_nValue_antival_chk_I_CR := _1;
+		} or {
+			Signals_n_In_nValue_antival_chk_I_CR := ERVENYTELEN;
+		} or {
+			Signals_n_In_nValue_antival_chk_I_CR := _0;
+		}
+	} or {
+		assume !((Signals_n_In_antival_chk_I_CR == true));
+	}
+	Signals_n_In_antival_chk_I_FT := Signals_n_In_antival_chk_I_CR;
+	choice {
+		assume (Signals_n_In_antival_chk_I_FT == true);
+		Signals_n_In_nValue_antival_chk_I_FT := Signals_n_In_nValue_antival_chk_I_CR;
+	} or {
+		assume !((Signals_n_In_antival_chk_I_FT == true));
+	}
+	Signals_p_In_antival_chk_I_FT := Signals_p_In_antival_chk_I_CR;
+	choice {
+		assume (Signals_p_In_antival_chk_I_FT == true);
+		Signals_p_In_pValue_antival_chk_I_FT := Signals_p_In_pValue_antival_chk_I_CR;
+	} or {
+		assume !((Signals_p_In_antival_chk_I_FT == true));
+	}
+	StateMachine_OutPort_O_COID_Out_coid := false;
+}

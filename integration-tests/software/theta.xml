@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="theta" walltimelimit="60 s">
+
+<!-- config -->
+
+  <rundefinition name="Theta-software-Integration-Test">
+    <tasks name="unreach-call">
+      <propertyfile>properties/unreach-call.prp</propertyfile>
+      <include>svcomp25/test_locks_14-2.c.yml</include>
+      <include>svcomp25/test_locks_15-1.c.yml</include>
+      <include>svcomp25/test_locks_5.c.yml</include>
+      <include>svcomp25/test_locks_6.c.yml</include>
+      <include>svcomp25/test_locks_7.c.yml</include>
+      <include>svcomp25/test_while_int.c_1.i.yml</include>
+      <include>svcomp25/test_while_int.i.yml</include>
+      <include>svcomp25/trex02-1.c.yml</include>
+      <include>svcomp25/trex02-2.c.yml</include>
+      <include>svcomp25/trex03-1.c.yml</include>
+      <include>svcomp25/trex03-2.c.yml</include>
+      <include>svcomp25/trex04_abstracted.c.yml</include>
+      <include>svcomp25/trex04.c.yml</include>
+      <include>svcomp25/underapprox_1-1.c.yml</include>
+      <include>svcomp25/while_infinite_loop_1.c.yml</include>
+    </tasks>
+
+    <tasks name="termination">
+      <propertyfile>properties/termination.prp</propertyfile>
+      <include>svcomp25/Division-2.c.yml</include>
+      <include>svcomp25/NO_01.c.yml</include>
+      <include>svcomp25/dijkstra1-both-nt.c.yml</include>
+      <include>svcomp25/dijkstra2-both-nt.c.yml</include>
+      <include>svcomp25/Ex06.c.yml</include>
+      <include>svcomp25/Flip.c.yml</include>
+      <include>svcomp25/IntPath.c.yml</include>
+      <include>svcomp25/Loop-2.c.yml</include>
+    </tasks>
+  </rundefinition>
+
+</benchmark>

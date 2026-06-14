@@ -18,30 +18,29 @@ package hu.bme.mit.theta.core.expr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.ExpressionUtils;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class IdentityTest {
-    @Parameter(value = 0)
     public String className;
-
-    @Parameter(value = 1)
     public Expr<?> expr;
 
-    @Parameters(name = "Expression {0}: {1}")
     public static Collection<Object[]> data() {
         return ExpressionUtils.AllExpressions().entrySet().stream()
                 .map(e -> new Object[] {e.getKey(), e.getValue()})
                 .toList();
     }
 
-    @Test
-    public void testRoundtrip() {
-        Assert.assertEquals(expr.withOps(expr.getOps()), expr);
+    @MethodSource("data")
+    @ParameterizedTest(name = "Expression {0}: {1}")
+    public void testRoundtrip(String className, Expr<?> expr) {
+        initIdentityTest(className, expr);
+        Assertions.assertEquals(expr.withOps(expr.getOps()), expr);
+    }
+
+    public void initIdentityTest(String className, Expr<?> expr) {
+        this.className = className;
+        this.expr = expr;
     }
 }

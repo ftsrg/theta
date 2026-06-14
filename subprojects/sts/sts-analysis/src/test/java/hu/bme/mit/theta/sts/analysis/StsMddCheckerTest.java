@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
@@ -36,19 +36,13 @@ import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class StsMddCheckerTest {
-    @Parameterized.Parameter(value = 0)
     public String filePath;
-
-    @Parameterized.Parameter(value = 1)
     public boolean safe;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -69,8 +63,10 @@ public class StsMddCheckerTest {
                 });
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}")
+    public void test(String filePath, boolean safe) throws Exception {
+        initStsMddCheckerTest(filePath, safe);
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final STS sts;
@@ -97,5 +93,10 @@ public class StsMddCheckerTest {
             assertTrue(status.isUnsafe());
             assertTrue(status.asUnsafe().getCex().length() >= 0);
         }
+    }
+
+    public void initStsMddCheckerTest(String filePath, boolean safe) {
+        this.filePath = filePath;
+        this.safe = safe;
     }
 }

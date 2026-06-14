@@ -8,8 +8,14 @@ runs:
     - name: Install benchexec
       shell: bash
       run: |
-        sudo add-apt-repository ppa:sosy-lab/benchmarking
-        sudo apt install benchexec
+        sudo add-apt-repository -y ppa:sosy-lab/benchmarking
+        sudo apt-get update -y
+        sudo apt-get install -y benchexec || true
+    - name: Ensure xmlstarlet is installed
+      shell: bash
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y xmlstarlet || true
     - name: Download artifacts
       uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
@@ -21,67 +27,49 @@ runs:
         cd artifacts
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
-        header1=$(printf '| Rundefinition |'; for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u | xargs printf '%s|')
-        header2=$(printf '|--|'; for ff in $(for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u); do printf -- '--|'; done)
-        echo "$header1" >> $GITHUB_OUTPUT
-        printf "$header2" >> $GITHUB_OUTPUT
+        echo "| Rundefinition | Correct | Incorrect | All | Status |" >> $GITHUB_OUTPUT
+        echo "|--|--|--|--|--|" >> $GITHUB_OUTPUT
         lasttask=""
         for i in *
         do 
-          if (ls $i/*xml.bz2 >/dev/null 2>/dev/null)
+          if (ls "$i"/*xml.bz2 >/dev/null 2>/dev/null)
           then
-            pushd $i
-            table-generator -d *xml.bz2
-            sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
-            for zipfile in *.zip
-            do
-              correct=0
-              incorrect=0
-              all=0
-              for txt in *.txt
-              do
-                new_correct=$(tail -n9 $txt | grep '  correct:' | awk ' { print $2 } ' || echo 0)
-                correct=$((correct + new_correct))
-                new_incorrect=$(tail -n9 $txt | grep '  incorrect:' | awk ' { print $2 } ' || echo 0)
-                incorrect=$((incorrect + new_incorrect))
-                new_all=$(tail -n9 $txt | grep 'Statistics:' | awk ' { print $2 } ' || echo 0)
-                all=$((all + new_all))
-                echo "Found $new_correct correct and $new_incorrect incorrect results out of $new_all tasks in $txt"
-              done
-            done
-            echo "Summary: found $correct correct and $incorrect incorrect results out of $all tasks in $i"
-            emoji=":white_check_mark:"
-            [ $correct -eq 0 ] && emoji=":question:"
-            [ $incorrect -eq 0 ] || emoji=":exclamation:"
+            pushd "$i"
             filename=${i#BenchexecResults-}
             portfolio=${filename##*-}
             task=${filename%-$portfolio}
             if [ "$task" != "$lasttask" ]
-            then printf "\n| $task | " >> $GITHUB_OUTPUT
+            then printf "| $task | " >> $GITHUB_OUTPUT
             fi
             lasttask="$task"
-            printf " $emoji ($correct / $incorrect / $all) [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.ref }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.ref }}/$i/$(ls *.csv)) | " >> $GITHUB_OUTPUT
+            # Compute correct/incorrect/all from XML directly
+            correct=0
+            incorrect=0
+            all=0
+            for xf in *.xml.bz2; do
+              [ -e "$xf" ] || continue
+              new_correct=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run/column[@title='category' and @value='correct'])" 2>/dev/null || echo 0)
+              new_incorrect=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run/column[@title='category' and @value='incorrect'])" 2>/dev/null || echo 0)
+              new_all=$(bzcat "$xf" | xmlstarlet sel -t -v "count(/result/run)" 2>/dev/null || echo 0)
+              correct=$((correct + ${new_correct:-0}))
+              incorrect=$((incorrect + ${new_incorrect:-0}))
+              all=$((all + ${new_all:-0}))
+            done
+            emoji=":white_check_mark:"
+            [ "$correct" -eq 0 ] && emoji=":question:"
+            [ "$incorrect" -eq 0 ] || emoji=":exclamation:"
+            printf "$correct | $incorrect | $all | $emoji |\n" >> $GITHUB_OUTPUT
             popd
           else
-            rm -rf $i
+            rm -rf "$i"
           fi
         done
-        echo >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
         name: BenchexecResults
         path: artifacts
-    - name: Deploy to GHPages
-      if: github.event_name == 'pull_request'
-      uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
-      continue-on-error: true # if we are in a fork, this will fail, but we don't care (tables will be missing)
-      with:
-        branch: gh-pages
-        folder: artifacts
-        target-folder: benchmark-results/${{ github.ref }}/
-        single-commit: true
     - name: Comment on PR
       if: github.event_name == 'pull_request'
       uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -40,33 +41,20 @@ import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class MddCheckerTest {
 
     private static final VarDecl<IntType> X = Decls.Var("x", IntType.getInstance());
     private static final VarDecl<IntType> Y = Decls.Var("y", IntType.getInstance());
     private static final VarDecl<IntType> Z = Decls.Var("z", IntType.getInstance());
-
-    @Parameterized.Parameter(value = 0)
     public Expr<BoolType> initExpr;
-
-    @Parameterized.Parameter(value = 1)
     public Expr<BoolType> tranExpr;
-
-    @Parameterized.Parameter(value = 2)
     public Expr<BoolType> propExpr;
-
-    @Parameterized.Parameter(value = 3)
     public boolean safe;
-
-    @Parameterized.Parameter(value = 4)
     public Long stateSpaceSize;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -150,23 +138,46 @@ public class MddCheckerTest {
                 });
     }
 
-    @Test
-    public void testBfs() throws Exception {
-        testWithIterationStrategy(MddChecker.IterationStrategy.BFS);
-    }
-
-    @Test
-    public void testSat() throws Exception {
-        testWithIterationStrategy(MddChecker.IterationStrategy.SAT);
-    }
-
-    @Test
-    public void testGsat() throws Exception {
-        testWithIterationStrategy(MddChecker.IterationStrategy.GSAT);
-    }
-
-    public void testWithIterationStrategy(MddChecker.IterationStrategy iterationStrategy)
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
+    public void testBfs(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize)
             throws Exception {
+        initMddCheckerTest(initExpr, tranExpr, propExpr, safe, stateSpaceSize);
+        testWithIterationStrategy(IterationStrategy.BFS);
+    }
+
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
+    public void testSat(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize)
+            throws Exception {
+        initMddCheckerTest(initExpr, tranExpr, propExpr, safe, stateSpaceSize);
+        testWithIterationStrategy(IterationStrategy.SAT);
+    }
+
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}")
+    public void testGsat(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize)
+            throws Exception {
+        initMddCheckerTest(initExpr, tranExpr, propExpr, safe, stateSpaceSize);
+        testWithIterationStrategy(IterationStrategy.GSAT);
+    }
+
+    public void testWithIterationStrategy(IterationStrategy iterationStrategy) throws Exception {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
@@ -186,5 +197,18 @@ public class MddCheckerTest {
             assertTrue(stateSpaceSize >= status.getProof().size());
             assertTrue(status.asUnsafe().getCex().length() >= 0);
         }
+    }
+
+    public void initMddCheckerTest(
+            Expr<BoolType> initExpr,
+            Expr<BoolType> tranExpr,
+            Expr<BoolType> propExpr,
+            boolean safe,
+            Long stateSpaceSize) {
+        this.initExpr = initExpr;
+        this.tranExpr = tranExpr;
+        this.propExpr = propExpr;
+        this.safe = safe;
+        this.stateSpaceSize = stateSpaceSize;
     }
 }

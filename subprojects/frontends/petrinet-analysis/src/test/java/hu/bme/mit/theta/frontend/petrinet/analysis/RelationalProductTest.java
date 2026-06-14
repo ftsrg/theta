@@ -21,7 +21,7 @@ import hu.bme.mit.delta.java.mdd.MddSignature;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public final class RelationalProductTest {
     private static final int[] tupleSignature = new int[] {0, 0, 0};
@@ -30,7 +30,7 @@ public final class RelationalProductTest {
     private MddVariableOrder order;
     private MddSignature signature;
 
-    @Before
+    @BeforeEach
     public void prepare() {
         System.out.println("Preparing...");
         graph = JavaMddFactory.getDefault().createMddGraph(LatticeDefinition.forSets());

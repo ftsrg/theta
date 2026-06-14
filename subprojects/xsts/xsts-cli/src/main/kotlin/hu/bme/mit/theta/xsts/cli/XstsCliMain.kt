@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.deprecated
 import com.github.ajalt.clikt.parameters.options.option
@@ -24,7 +25,7 @@ import com.github.ajalt.clikt.parameters.options.versionOption
 class XstsCliMainCommand : CliktCommand() {
 
   init {
-    versionOption(javaClass.`package`.implementationVersion ?: "unknown")
+    versionOption(javaClass.`package`.implementationVersion ?: "unknown") { it }
   }
 
   val algorithm by
@@ -43,13 +44,14 @@ class XstsCliMainCommand : CliktCommand() {
   override fun run() = Unit
 }
 
-fun main(args: Array<String>) =
+fun main(args: Array<String>): kotlin.Unit =
   XstsCliMainCommand()
     .subcommands(
       XstsCliCegar(),
       XstsCliLtlCegar(),
       XstsCliBounded(),
       XstsCliMdd(),
+      XstsCliCtl(),
       XstsCliPetrinetMdd(),
       XstsCliChc(),
       XstsCliIC3(),
