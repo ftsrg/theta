@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.frontend.ParseContext
@@ -382,7 +382,7 @@ fun baseMddConfig(
           MddConfig(
             solver = "Z3",
             validateSolver = false,
-            iterationStrategy = MddChecker.IterationStrategy.GSAT,
+            iterationStrategy = IterationStrategy.GSAT,
             reversed = false,
             cegar = false,
             initPrec = EMPTY,
