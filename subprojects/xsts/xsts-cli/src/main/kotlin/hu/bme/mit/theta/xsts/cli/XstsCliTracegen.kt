@@ -186,7 +186,7 @@ class XstsCliTracegen :
 
       filesToDelete?.forEach { file -> file.delete() }
     } else {
-      traceDirPath.mkdir()
+      traceDirPath.mkdirs()
     }
 
     val propStream = ByteArrayInputStream(("prop {\n" + "\ttrue\n" + "}\n").toByteArray())

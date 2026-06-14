@@ -23,6 +23,7 @@ include(
     "common/multi-tests",
     "common/ltl",
     "common/ltl-cli",
+    "common/ctl",
 
     "frontends/btor2-frontend",
     "frontends/c-frontend",
