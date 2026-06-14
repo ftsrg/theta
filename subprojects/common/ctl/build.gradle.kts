@@ -16,17 +16,14 @@
 plugins {
     id("java-common")
     id("kotlin-common")
+    id("antlr-grammar")
 }
 
 dependencies {
-    implementation(project(":theta-core"))
     implementation(project(":theta-common"))
-    implementation(project(":theta-xsts"))
-    implementation(project(":theta-petrinet-model"))
-
-    testImplementation(project(":theta-xsts-analysis"))
-    testImplementation(project(":theta-solver-z3-legacy"))
+    implementation(project(":theta-core"))
+    api(project(":theta-analysis"))
+    testImplementation(files(rootDir.resolve(Deps.delta)))
     testImplementation(project(":theta-solver"))
-    testImplementation(project(":theta-analysis"))
-    testImplementation(project(":theta-ctl"))
+    testImplementation(project(":theta-solver-z3-legacy"))
 }

@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
