@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -199,8 +199,19 @@ fun getCoreXcfaLts() =
                     } else label
                   }
                 )
-              XcfaAction(proc.key, edge.withLabel(newNewLabel), s.sGlobal.lastWrites, s.sGlobal.nextCnt)
-            } else XcfaAction(proc.key, edge.withLabel(newLabel), s.sGlobal.lastWrites, s.sGlobal.nextCnt)
+              XcfaAction(
+                proc.key,
+                edge.withLabel(newNewLabel),
+                s.sGlobal.lastWrites,
+                s.sGlobal.nextCnt,
+              )
+            } else
+              XcfaAction(
+                proc.key,
+                edge.withLabel(newLabel),
+                s.sGlobal.lastWrites,
+                s.sGlobal.nextCnt,
+              )
           }
         }
       }

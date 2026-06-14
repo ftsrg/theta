@@ -492,6 +492,7 @@ enum class Domain(
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
+  ),
   UNIT(
     abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(UnitXcfaAnalysis(a, j), d, e, f, g, h)

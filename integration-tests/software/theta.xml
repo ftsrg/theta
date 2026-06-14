@@ -22,6 +22,8 @@
       <include>svcomp25/trex04.c.yml</include>
       <include>svcomp25/underapprox_1-1.c.yml</include>
       <include>svcomp25/while_infinite_loop_1.c.yml</include>
+      <include>svcomp25/singleton.i.yml</include>
+      <include>svcomp25/stack-1.i.yml</include>
     </tasks>
 
     <tasks name="termination">
