@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ class PassTests {
     private val fpParseContext =
       ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
     private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+    private val assertionProperty = XcfaProperty(ErrorDetection.NO_ASSERTION_VIOLATION)
 
     @JvmStatic
     val data: List<Arguments> =
@@ -150,6 +151,20 @@ class PassTests {
           passes = listOf(NormalizePass(), DeterministicPass(), ErrorLocationPass(property)),
           input = { (init to final) { "reach_error"() } },
           output = { (init to err) { skip() } },
+        ),
+        PassTestData(
+          global = { "x" type Int() init "0" },
+          passes =
+            listOf(
+              NormalizePass(),
+              DeterministicPass(),
+              AssertionToErrorLocationPass(assertionProperty),
+            ),
+          input = { (init to final) { "assert"("(> x 0)") } },
+          output = {
+            (init to err) { assume("(not (> x 0))") }
+            (init to final) { assume("(> x 0)") }
+          },
         ),
         PassTestData(
           global = {},
