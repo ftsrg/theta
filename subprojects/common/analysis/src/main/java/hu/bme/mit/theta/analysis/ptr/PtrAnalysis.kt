@@ -75,6 +75,6 @@ fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(
       action
     }
   getSuccStates(state.innerState, exprAction, patchedPrec).map {
-    PtrState(it.repatch(), action.cnts.values.maxOrNull() ?: action.inCnt, writeTriples)
+    PtrState(it.repatch(), action.cnts.values.maxOrNull() ?: action.inCnt)
   }
 }

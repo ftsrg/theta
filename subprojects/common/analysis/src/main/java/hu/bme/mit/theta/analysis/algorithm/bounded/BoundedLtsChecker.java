@@ -38,6 +38,9 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P extends Prec>
@@ -50,6 +53,7 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
     private final P defaultPrec;
     private final Deque<Transition<S, A>> transitions;
     private final ExprSimplifier simplifier = ExprSimplifier.create();
+    private final BiFunction<A, List<A>, A> actionEnricher;
 
     public BoundedLtsChecker(
             LTS<? super S, A> lts,
@@ -57,7 +61,7 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
             Predicate<? super S> target,
             int bound,
             Solver solver) {
-        this(lts, analysis, target, bound, null, solver);
+        this(lts, analysis, target, bound, null, solver, (a, path) -> a);
     }
 
     public BoundedLtsChecker(
@@ -67,12 +71,24 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
             int bound,
             P defaultPrec,
             Solver solver) {
+        this(lts, analysis, target, bound, defaultPrec, solver, (a, path) -> a);
+    }
+
+    public BoundedLtsChecker(
+            LTS<? super S, A> lts,
+            Analysis<S, A, ? super P> analysis,
+            Predicate<? super S> target,
+            int bound,
+            P defaultPrec,
+            Solver solver,
+            BiFunction<A, List<A>, A> actionEnricher) {
         this.solver = solver;
         this.analysis = analysis;
         this.target = target;
         this.lts = lts;
         this.bound = bound;
         this.defaultPrec = defaultPrec;
+        this.actionEnricher = actionEnricher;
         transitions = new ArrayDeque<>(bound + 1);
     }
 
@@ -127,15 +143,22 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
         }
         var indexing = transition.succIndexing();
         var actions = lts.getEnabledActionsFor(state);
+        // Collect the enriched actions from the current path (excluding the null initial action).
+        // Each stored action's nextWriteTriples() already includes all accumulated writes up to
+        // that point, so the last entry in this list carries the full accumulated write history.
+        var pathActions =
+                transitions.stream().map(Transition::action).filter(Objects::nonNull).toList();
         boolean safe = true;
         for (var action : actions) {
+            var enrichedAction = actionEnricher.apply(action, pathActions);
             try (var wpp = new WithPushPop(solver)) {
-                solver.add(PathUtils.unfold(action.toExpr(), indexing));
+                solver.add(PathUtils.unfold(enrichedAction.toExpr(), indexing));
                 if (!solver.check().isSat()) {
                     continue;
                 }
-                var nextIndexing = action.nextIndexing();
-                for (var succState : analysis.getTransFunc().getSuccStates(state, action, prec)) {
+                var nextIndexing = enrichedAction.nextIndexing();
+                for (var succState :
+                        analysis.getTransFunc().getSuccStates(state, enrichedAction, prec)) {
                     if (succState.isBottom()) {
                         continue;
                     }
@@ -157,7 +180,8 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
                             }
                         }
                         try {
-                            transitions.addLast(new Transition<>(action, succState, succIndexing));
+                            transitions.addLast(
+                                    new Transition<>(enrichedAction, succState, succIndexing));
                             var result = expand(prec);
                             if (result.isUnsafe()) {
                                 return result;

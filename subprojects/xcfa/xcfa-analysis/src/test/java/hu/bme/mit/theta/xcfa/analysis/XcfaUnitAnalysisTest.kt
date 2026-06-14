@@ -20,8 +20,8 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
-import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -33,12 +33,12 @@ class XcfaUnitAnalysisTest {
     @JvmStatic
     fun data(): Collection<Array<Any>> {
       return listOf(
-        arrayOf("/00assignment.c", 8, SafetyResult<*, *>::isUnsafe),
+        arrayOf("/00assignment.c", 16, SafetyResult<*, *>::isUnsafe),
         arrayOf("/00assignment.c", 2, this::isUnknown),
         arrayOf("/01function.c", 16, SafetyResult<*, *>::isUnsafe),
         arrayOf("/02functionparam.c", 16, SafetyResult<*, *>::isSafe),
-        arrayOf("/03nondetfunction.c", 16, SafetyResult<*, *>::isUnsafe),
-        arrayOf("/04multithread.c", 40, SafetyResult<*, *>::isUnsafe),
+        arrayOf("/03nondetfunction.c", 32, SafetyResult<*, *>::isUnsafe),
+        arrayOf("/04multithread.c", 64, SafetyResult<*, *>::isUnsafe),
         arrayOf("/05assignment_safe.c", 16, SafetyResult<*, *>::isSafe),
         arrayOf("/05assignment_safe.c", 2, this::isUnknown),
       )
@@ -53,8 +53,15 @@ class XcfaUnitAnalysisTest {
   fun testNoporBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+    val xcfa =
+      getXcfaFromC(
+          stream!!,
+          ParseContext(),
+          false,
+          XcfaProperty(ErrorDetection.ERROR_LOCATION),
+          NullLogger.getInstance(),
+        )
+        .first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val checker = getBoundedXcfaChecker(xcfa, ErrorDetection.ERROR_LOCATION, bound, solver)
@@ -68,8 +75,15 @@ class XcfaUnitAnalysisTest {
   fun testSporBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing SPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+    val xcfa =
+      getXcfaFromC(
+          stream!!,
+          ParseContext(),
+          false,
+          XcfaProperty(ErrorDetection.ERROR_LOCATION),
+          NullLogger.getInstance(),
+        )
+        .first
     val lts = XcfaSporLts(xcfa)
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()

@@ -110,7 +110,6 @@ fun getCoreXcfaLts() =
                 ),
                 proc.value.locs.peek().metadata,
               ),
-              lastWrites = s.sGlobal.lastWrites,
               nextCnt = s.sGlobal.nextCnt,
             )
           )
@@ -124,7 +123,6 @@ fun getCoreXcfaLts() =
                 proc.value.paramStmts.peek().first,
                 proc.value.locs.peek().metadata,
               ),
-              lastWrites = s.sGlobal.lastWrites,
               nextCnt = s.sGlobal.nextCnt,
             )
           )
@@ -200,19 +198,8 @@ fun getCoreXcfaLts() =
                     } else label
                   }
                 )
-              XcfaAction(
-                proc.key,
-                edge.withLabel(newNewLabel),
-                s.sGlobal.lastWrites,
-                s.sGlobal.nextCnt,
-              )
-            } else
-              XcfaAction(
-                proc.key,
-                edge.withLabel(newLabel),
-                s.sGlobal.lastWrites,
-                s.sGlobal.nextCnt,
-              )
+              XcfaAction(proc.key, edge.withLabel(newNewLabel), nextCnt = s.sGlobal.nextCnt)
+            } else XcfaAction(proc.key, edge.withLabel(newLabel), nextCnt = s.sGlobal.nextCnt)
           }
         }
       }
@@ -586,5 +573,16 @@ fun getBoundedXcfaChecker(
   val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
   val target = getXcfaErrorDetector(errorDetection)
   val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
-  return BoundedLtsChecker(lts, analysis, target, bound, prec, solver)
+  // Mirror the refiner's write-triple accumulation: the last enriched action's nextWriteTriples()
+  // already carries the full accumulated write history up to that point, so we only need the
+  // last entry to seed the next action — identical to how XcfaSingleExprTraceRefiner chains them.
+  val actionEnricher =
+    java.util.function.BiFunction<XcfaAction, List<XcfaAction>, XcfaAction> { action, path ->
+      val last = path.lastOrNull()
+      action.withLastWrites(
+        last?.nextWriteTriples() ?: emptyMap(),
+        last?.let { it.cnts.values.maxOrNull() ?: it.inCnt } ?: 0,
+      )
+    }
+  return BoundedLtsChecker(lts, analysis, target, bound, prec, solver, actionEnricher)
 }
