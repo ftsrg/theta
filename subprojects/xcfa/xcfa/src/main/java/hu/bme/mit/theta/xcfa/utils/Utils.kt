@@ -173,16 +173,17 @@ private fun <T : Type> Expr<T>.withMetadata(
   parseContext: ParseContext,
   metadataSource: Expr<*>,
 ): Expr<T> {
-  val oldType = parseContext.metadata.getMetadataValue(this, "cType")
-  if (oldType.isPresent) {
-    val type = CComplexType.getType(metadataSource, parseContext)
-    if (type != oldType.get()) {
-      val newExpr = Pos(this)
-      parseContext.metadata.create(newExpr, "cType", type)
-      return newExpr as Expr<T>
-    }
+  if (!parseContext.metadata.getMetadataValue(metadataSource, "cType").isPresent) return this
+  val type = CComplexType.getType(metadataSource, parseContext)
+  val thisTypeOpt = parseContext.metadata.getMetadataValue(this, "cType")
+  return if (thisTypeOpt.isPresent && thisTypeOpt.get() != type) {
+    val newExpr = Pos(this)
+    parseContext.metadata.create(newExpr, "cType", type)
+    newExpr as Expr<T>
+  } else {
+    if (!thisTypeOpt.isPresent) parseContext.metadata.create(this, "cType", type)
+    this
   }
-  return this
 }
 
 /**
