@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
           propertyFile.name.endsWith("valid-memsafety.prp") -> MEMSAFETY
           propertyFile.name.endsWith("valid-memcleanup.prp") -> MEMCLEANUP
           propertyFile.name.endsWith("termination.prp") -> TERMINATION
+          propertyFile.name.endsWith("no-assertion-violation.prp") -> NO_ASSERTION_VIOLATION
 
           else -> {
             logger.write(
