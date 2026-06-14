@@ -37,3 +37,4 @@ xcfa.json
 xcfa-*.smt2
 witness.yml
 invariants.txt
+*.salive

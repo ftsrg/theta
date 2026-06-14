@@ -27,26 +27,17 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class StmtDslTest {
-
-    @Parameterized.Parameter(value = 0)
     public String actual;
-
-    @Parameterized.Parameter(value = 1)
     public Stmt expected;
-
-    @Parameterized.Parameter(value = 2)
     public Collection<Decl<?>> decls;
 
     private static VarDecl<IntType> x = Decls.Var("x", Int());
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -56,14 +47,22 @@ public class StmtDslTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String actual, Stmt expected, Collection<Decl<?>> decls) {
+        initStmtDslTest(actual, expected, decls);
         final CoreDslManager manager = new CoreDslManager();
 
         if (decls != null) {
             decls.forEach(decl -> manager.declare(decl));
         }
 
-        Assert.assertEquals(expected, manager.parseStmt(actual));
+        Assertions.assertEquals(expected, manager.parseStmt(actual));
+    }
+
+    public void initStmtDslTest(String actual, Stmt expected, Collection<Decl<?>> decls) {
+        this.actual = actual;
+        this.expected = expected;
+        this.decls = decls;
     }
 }

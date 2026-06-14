@@ -19,7 +19,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -28,25 +28,14 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class PrimeCounterTest {
-
-    @Parameter(value = 0)
     public String exprString;
-
-    @Parameter(value = 1)
     public int nPrimesOnX;
-
-    @Parameter(value = 2)
     public int nPrimesOnY;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return asList(
                 new Object[][] {
@@ -65,8 +54,10 @@ public final class PrimeCounterTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String exprString, int nPrimesOnX, int nPrimesOnY) {
+        initPrimeCounterTest(exprString, nPrimesOnX, nPrimesOnY);
         // Arrange
         final ConstDecl<BoolType> a = Const("a", Bool());
         final VarDecl<BoolType> x = Var("x", Bool());
@@ -85,5 +76,11 @@ public final class PrimeCounterTest {
         // Assert
         assertEquals(nPrimesOnX, indexing.get(x));
         assertEquals(nPrimesOnY, indexing.get(y));
+    }
+
+    public void initPrimeCounterTest(String exprString, int nPrimesOnX, int nPrimesOnY) {
+        this.exprString = exprString;
+        this.nPrimesOnX = nPrimesOnX;
+        this.nPrimesOnY = nPrimesOnY;
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -223,10 +224,15 @@ public class StsCli {
     PredSplit predSplit = PredSplit.WHOLE;
 
     @Parameter(
-            names = {"--model"},
+            names = {"--model", "--input"},
             description = "Path of the input STS model",
             required = true)
     String model;
+
+    @Parameter(
+            names = {"--property"},
+            description = "Property placeholder (ignored)")
+    String property;
 
     @Parameter(
             names = {"--initprec"},
@@ -256,7 +262,7 @@ public class StsCli {
     @Parameter(
             names = {"--iteration-strategy"},
             description = "MDD iteration strategy")
-    MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
+    IterationStrategy iterationStrategy = IterationStrategy.GSAT;
 
     @Parameter(
             names = {"--smt-home"},

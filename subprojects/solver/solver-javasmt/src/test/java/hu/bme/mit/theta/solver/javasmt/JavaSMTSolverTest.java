@@ -30,9 +30,7 @@ import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
@@ -62,59 +60,47 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 
-@RunWith(Parameterized.class)
 public final class JavaSMTSolverTest {
-
-    @Parameterized.Parameter(0)
     public Solvers solvers;
-
-    @Parameterized.Parameter(1)
     public Solver solver;
 
-    @Parameters(name = "solver: {0}")
-    public static Collection<?> operations() {
+    public static Collection<Arguments> operations() {
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
             return Arrays.asList(
-                    new Object[][] {
-                        {
+                    Arguments.of(
                             Solvers.Z3,
-                            JavaSMTSolverFactory.create(Solvers.Z3, new String[] {}).createSolver()
-                        },
-                        {
+                            JavaSMTSolverFactory.create(Solvers.Z3, new String[] {})
+                                    .createSolver()),
+                    Arguments.of(
                             Solvers.CVC5,
                             JavaSMTSolverFactory.create(Solvers.CVC5, new String[] {})
-                                    .createSolver()
-                        },
-                        {
+                                    .createSolver()),
+                    Arguments.of(
                             Solvers.PRINCESS,
                             JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
-                                    .createSolver()
-                        },
-                    });
+                                    .createSolver()));
         } else {
             return Arrays.asList(
-                    new Object[][] {
-                        {
+                    Arguments.of(
                             Solvers.Z3,
-                            JavaSMTSolverFactory.create(Solvers.Z3, new String[] {}).createSolver()
-                        },
-                        {
+                            JavaSMTSolverFactory.create(Solvers.Z3, new String[] {})
+                                    .createSolver()),
+                    Arguments.of(
                             Solvers.PRINCESS,
                             JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
-                                    .createSolver()
-                        },
-                    });
+                                    .createSolver()));
         }
     }
 
-    @Test
-    public void testSimple() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testSimple(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         // Create two integer constants x and y
         final ConstDecl<IntType> cx = Const("x", Int());
         final ConstDecl<IntType> cy = Const("y", Int());
@@ -134,25 +120,27 @@ public final class JavaSMTSolverTest {
         assertTrue(status.isUnsat());
     }
 
-    @Test
-    public void testTrack() {
-        final UCSolver solver =
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testTrack(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
+        final UCSolver ucSolver =
                 JavaSMTSolverFactory.create(Solvers.Z3, new String[] {}).createUCSolver();
         final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
         final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
 
-        solver.push();
-        solver.track(expr);
+        ucSolver.push();
+        ucSolver.track(expr);
 
-        final SolverStatus status = solver.check();
+        final SolverStatus status = ucSolver.check();
 
         assertTrue(status.isSat());
 
-        final Valuation model = solver.getModel();
+        final Valuation model = ucSolver.getModel();
 
         assertNotNull(model);
 
-        solver.pop();
+        ucSolver.pop();
     }
 
     //    @Test
@@ -264,8 +252,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV1() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV1(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -281,8 +271,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV2() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV2(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cz = Const("z", BvType(4));
 
@@ -301,8 +293,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV3() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV3(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -327,8 +321,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV4() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV4(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -350,8 +346,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV5() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV5(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -370,8 +368,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV6() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV6(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -396,8 +396,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV7() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV7(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -416,8 +418,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV8() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV8(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -439,8 +443,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV9() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV9(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -462,8 +468,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV10() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV10(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -485,8 +493,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV11() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV11(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -508,8 +518,10 @@ public final class JavaSMTSolverTest {
         solver.pop();
     }
 
-    @Test
-    public void testBV12() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBV12(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
         final ConstDecl<BvType> cx = Const("x", BvType(4));
         final ConstDecl<BvType> cy = Const("y", BvType(4));
 
@@ -530,5 +542,10 @@ public final class JavaSMTSolverTest {
         assertNotNull(model.toMap());
 
         solver.pop();
+    }
+
+    public void initJavaSMTSolverTest(Solvers solvers, Solver solver) {
+        this.solvers = solvers;
+        this.solver = solver;
     }
 }

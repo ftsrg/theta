@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
@@ -28,7 +29,6 @@ import hu.bme.mit.delta.mdd.LatticeDefinition
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
@@ -44,7 +44,6 @@ import java.io.File
 import java.io.PrintStream
 import java.util.*
 import javax.imageio.ImageIO
-import kotlin.system.exitProcess
 
 class XstsCliPetrinetMdd :
   XstsCliBaseCommand(
@@ -53,28 +52,41 @@ class XstsCliPetrinetMdd :
   ) {
 
   private val ordering: File? by
-    option(help = "Path of the input variable ordering")
+    option(help = "Path to a file containing variable ordering (one name per line)")
       .file(mustExist = true, canBeDir = false, mustBeReadable = true)
+  private val dumpOrdering: Boolean by
+    option("--dump-ordering", help = "Dump the computed variable ordering to <model>.ordering")
+      .flag()
   private val id: String by
     option(help = "ID of the input model. Used for symbolic output").default("")
-  private val iterationStrategy: MddChecker.IterationStrategy by
-    option(help = "The state space generation algorithm to use")
-      .enum<MddChecker.IterationStrategy>()
-      .default(MddChecker.IterationStrategy.GSAT)
+  private val iterationStrategy: IterationStrategy by
+    option(help = "The state space enumeration algorithm to use")
+      .enum<IterationStrategy>()
+      .default(IterationStrategy.GSAT)
   private val dependencyOutput by PetrinetDependencyOutputOptions()
 
   private fun loadOrdering(petriNet: PetriNet): List<Place> =
     if (ordering == null) PetriNetForceVarOrdering.orderVars(petriNet)
     else VariableOrderingFactory.fromFile(ordering, petriNet)
 
-  private fun petrinetAnalysis() {
-    checkArgument(inputOptions.pnProperty == PropType.FULL_EXPLORATION) {
+  private fun dumpOrdering(effectiveOrdering: List<Place>) {
+    if (!dumpOrdering) return
+    val file = File("${inputOptions.model.path}.ordering")
+    val lines = effectiveOrdering.map { it.id }
+    file.writeText(lines.joinToString("\n") + "\n")
+    logger.writeln(Logger.Level.MAINSTEP, "Variable ordering dumped to ${file.path}")
+  }
+
+  override fun doRun() {
+    if (!inputOptions.isPnml()) return
+    checkArgument(inputOptions.getPetrinetProperty() == PropType.FULL_EXPLORATION) {
       "Only full exploration is supported for dedicated PN mode. Use XSTS-based analysis for other properties."
     }
 
     val totalTimer = Stopwatch.createStarted()
     val petriNet = inputOptions.loadPetriNet()[0]
     val effectiveOrdering = loadOrdering(petriNet)
+    dumpOrdering(effectiveOrdering)
     val system = PtNetSystem(petriNet, effectiveOrdering)
     createDepGxl(system)
     createDepGxlGSat(system)
@@ -84,12 +96,7 @@ class XstsCliPetrinetMdd :
       JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets())
     effectiveOrdering.forEach { variableOrder.createOnTop(MddVariableDescriptor.create(it)) }
     val ssgTimer = Stopwatch.createStarted()
-    val provider: StateSpaceEnumerationProvider =
-      when (iterationStrategy) {
-        MddChecker.IterationStrategy.BFS -> BfsProvider(variableOrder)
-        MddChecker.IterationStrategy.SAT -> SimpleSaturationProvider(variableOrder)
-        MddChecker.IterationStrategy.GSAT -> GeneralizedSaturationProvider(variableOrder)
-      }
+    val provider: StateSpaceEnumerationProvider = iterationStrategy.createProvider(variableOrder)
     val stateSpace =
       provider.compute(
         system.initializer,
@@ -128,17 +135,11 @@ class XstsCliPetrinetMdd :
           unionProvider.hitCount,
         )
         .forEach(writer::cell)
-      if (
-        iterationStrategy in
-          setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-      ) {
+      if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
         listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
       }
       listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
-      if (
-        iterationStrategy in
-          setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-      ) {
+      if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
         val collector: MutableSet<MddNode> = mutableSetOf()
         provider.clear()
         listOf(collector.size).forEach(writer::cell)
@@ -175,15 +176,6 @@ class XstsCliPetrinetMdd :
     val file = dependencyOutput.depGxl ?: return
     file.createNewFile()
     with(PrintStream(file)) { print(PtNetDependency2Gxl.toGxl(system, false)) }
-  }
-
-  override fun run() {
-    try {
-      if (inputOptions.isPnml()) petrinetAnalysis()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
   }
 
   private fun numberOfNodes(root: MddHandle): Int {

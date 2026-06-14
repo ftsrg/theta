@@ -1,0 +1,156 @@
+main process network {
+	// Variables
+	// ----------------------------------------
+	var IX0_0 : bool
+	var basic_OB1_result : bool
+	var basic_foo_in : bool
+	var basic_foo_in2 : int
+	var basic_foo_temp : bool
+	var basic_foo_RET_VAL : bool
+	var __assertion_error : int
+	
+	// Locations
+	// ----------------------------------------
+	init loc theta_init // Extra location for setting initial values of variables
+	final loc end_pv
+	error loc theta_error
+	loc init_pv
+	loc loop_start
+	loc prepare_BoC
+	loc l_main_call
+	loc callEnd
+	loc prepare_EoC
+	loc verificationLoop_VerificationLoop_init
+	loc verificationLoop_VerificationLoop_l1
+	loc verificationLoop_VerificationLoop_l2
+	loc verificationLoop_VerificationLoop_end
+	loc verificationLoop_VerificationLoop_basic_OB1_init
+	loc verificationLoop_VerificationLoop_basic_OB1_l1
+	loc verificationLoop_VerificationLoop_basic_OB1_l2
+	loc verificationLoop_VerificationLoop_basic_OB1_l3
+	loc verificationLoop_VerificationLoop_basic_OB1_l4
+	loc verificationLoop_VerificationLoop_basic_OB1_l5
+	loc verificationLoop_VerificationLoop_basic_OB1_l6
+	loc verificationLoop_VerificationLoop_basic_OB1_l7
+	
+	// Set the initial values of variables and go to the original initial location
+	// ----------------------------------------
+	theta_init -> init_pv {
+		IX0_0 := false
+		basic_OB1_result := false
+		basic_foo_in := false
+		basic_foo_in2 := 0
+		basic_foo_temp := false
+		basic_foo_RET_VAL := false
+		__assertion_error := 0
+	}
+
+	// Transitions
+	// ----------------------------------------
+	
+	// t_params
+	init_pv -> loop_start {
+	}
+	
+	// set_BoC
+	loop_start -> prepare_BoC {
+		havoc IX0_0
+	}
+	
+	// t_inputs
+	prepare_BoC -> l_main_call {
+	}
+	
+	// set_EoC
+	callEnd -> prepare_EoC {
+	}
+	
+	// restart
+	prepare_EoC -> loop_start {
+		assume (__assertion_error) = (0) // Requirement holds
+	}
+	
+	// end1
+	loop_start -> end_pv {
+		assume false
+	}
+	
+	// verificationLoop_VerificationLoop_temp_reinit1
+	verificationLoop_VerificationLoop_init -> verificationLoop_VerificationLoop_l1 {
+		basic_OB1_result := false
+	}
+	
+	// verificationLoop_VerificationLoop_t3
+	verificationLoop_VerificationLoop_l2 -> verificationLoop_VerificationLoop_end {
+		assume not (not ((basic_OB1_result)  imply  (not (IX0_0))))
+	}
+	
+	// verificationLoop_VerificationLoop_fail
+	verificationLoop_VerificationLoop_l2 -> verificationLoop_VerificationLoop_end {
+		assume not ((basic_OB1_result)  imply  (not (IX0_0)))
+		__assertion_error := 1
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_temp_reinit1
+	verificationLoop_VerificationLoop_basic_OB1_init -> verificationLoop_VerificationLoop_basic_OB1_l1 {
+		basic_foo_temp := false
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t2
+	verificationLoop_VerificationLoop_basic_OB1_l1 -> verificationLoop_VerificationLoop_basic_OB1_l2 {
+		assume (basic_foo_in2) > (0)
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t3
+	verificationLoop_VerificationLoop_basic_OB1_l2 -> verificationLoop_VerificationLoop_basic_OB1_l3 {
+		basic_foo_temp := not (basic_foo_in)
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t4
+	verificationLoop_VerificationLoop_basic_OB1_l1 -> verificationLoop_VerificationLoop_basic_OB1_l4 {
+		assume not ((basic_foo_in2) > (0))
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t5
+	verificationLoop_VerificationLoop_basic_OB1_l4 -> verificationLoop_VerificationLoop_basic_OB1_l5 {
+		basic_foo_temp := basic_foo_in
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t6
+	verificationLoop_VerificationLoop_basic_OB1_l3 -> verificationLoop_VerificationLoop_basic_OB1_l6 {
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t7
+	verificationLoop_VerificationLoop_basic_OB1_l5 -> verificationLoop_VerificationLoop_basic_OB1_l6 {
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_t8
+	verificationLoop_VerificationLoop_basic_OB1_l6 -> verificationLoop_VerificationLoop_basic_OB1_l7 {
+		basic_foo_RET_VAL := basic_foo_temp
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_inputs
+	verificationLoop_VerificationLoop_l1 -> verificationLoop_VerificationLoop_basic_OB1_init {
+		basic_foo_in := IX0_0
+		basic_foo_in2 := 5
+	}
+	
+	// verificationLoop_VerificationLoop_basic_OB1_outputs
+	verificationLoop_VerificationLoop_basic_OB1_l7 -> verificationLoop_VerificationLoop_l2 {
+		basic_OB1_result := basic_foo_RET_VAL
+	}
+	
+	// verificationLoop_VerificationLoop_inputs
+	l_main_call -> verificationLoop_VerificationLoop_init {
+	}
+	
+	// verificationLoop_VerificationLoop_outputs
+	verificationLoop_VerificationLoop_end -> callEnd {
+	}
+	
+	// Requirement violation
+	// ----------------------------------------
+	prepare_EoC -> theta_error { 
+		assume not ((__assertion_error) = (0))
+	}
+}

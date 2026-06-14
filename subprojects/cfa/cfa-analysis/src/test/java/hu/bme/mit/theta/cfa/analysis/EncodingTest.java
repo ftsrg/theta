@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaSbeLts;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EncodingTest {
 
@@ -46,7 +46,7 @@ public class EncodingTest {
     }
 
     private Set<String> getNextLocs(CfaLts lts, String loc) {
-        Set<String> locs = Containers.createSet();
+        Set<String> locs = CollectionUtil.createSet();
         SS ss = new SS();
         for (var act : lts.getEnabledActionsFor(CfaState.of(getLocByName(loc), ss))) {
             locs.add(act.getTarget().getName());
@@ -67,7 +67,7 @@ public class EncodingTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void load() throws IOException {
         try (var fis = new FileInputStream("src/test/resources/block-encoding.cfa")) {
             cfa = CfaDslManager.createCfa(fis);
@@ -77,39 +77,39 @@ public class EncodingTest {
     @Test
     public void testSbe() {
         CfaSbeLts lts = CfaSbeLts.getInstance();
-        Assert.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
-        Assert.assertEquals(ImmutableSet.of("L2", "L4"), getNextLocs(lts, "L1"));
-        Assert.assertEquals(ImmutableSet.of("L3"), getNextLocs(lts, "L2"));
-        Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L3"));
-        Assert.assertEquals(ImmutableSet.of("L5"), getNextLocs(lts, "L4"));
-        Assert.assertEquals(ImmutableSet.of("L1", "L6"), getNextLocs(lts, "L5"));
-        Assert.assertEquals(ImmutableSet.of("L7"), getNextLocs(lts, "L6"));
-        Assert.assertEquals(ImmutableSet.of(), getNextLocs(lts, "L7"));
+        Assertions.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
+        Assertions.assertEquals(ImmutableSet.of("L2", "L4"), getNextLocs(lts, "L1"));
+        Assertions.assertEquals(ImmutableSet.of("L3"), getNextLocs(lts, "L2"));
+        Assertions.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L3"));
+        Assertions.assertEquals(ImmutableSet.of("L5"), getNextLocs(lts, "L4"));
+        Assertions.assertEquals(ImmutableSet.of("L1", "L6"), getNextLocs(lts, "L5"));
+        Assertions.assertEquals(ImmutableSet.of("L7"), getNextLocs(lts, "L6"));
+        Assertions.assertEquals(ImmutableSet.of(), getNextLocs(lts, "L7"));
     }
 
     @Test
     public void testLbe1() {
         CfaLbeLts lts = CfaLbeLts.of(getLocByName("L7"));
-        Assert.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
-        Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L1"));
-        Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L2"));
-        Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L3"));
-        Assert.assertEquals(ImmutableSet.of("L5"), getNextLocs(lts, "L4"));
-        Assert.assertEquals(ImmutableSet.of("L1", "L7"), getNextLocs(lts, "L5"));
-        Assert.assertEquals(ImmutableSet.of("L7"), getNextLocs(lts, "L6"));
-        Assert.assertEquals(ImmutableSet.of(), getNextLocs(lts, "L7"));
+        Assertions.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
+        Assertions.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L1"));
+        Assertions.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L2"));
+        Assertions.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L3"));
+        Assertions.assertEquals(ImmutableSet.of("L5"), getNextLocs(lts, "L4"));
+        Assertions.assertEquals(ImmutableSet.of("L1", "L7"), getNextLocs(lts, "L5"));
+        Assertions.assertEquals(ImmutableSet.of("L7"), getNextLocs(lts, "L6"));
+        Assertions.assertEquals(ImmutableSet.of(), getNextLocs(lts, "L7"));
     }
 
     @Test
     public void testLbe2() {
         CfaLbeLts lts = CfaLbeLts.of(getLocByName("L3"));
-        Assert.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
-        Assert.assertEquals(ImmutableSet.of("L3", "L4"), getNextLocs(lts, "L1"));
-        Assert.assertEquals(ImmutableSet.of("L3"), getNextLocs(lts, "L2"));
-        Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L3"));
-        Assert.assertEquals(ImmutableSet.of("L5"), getNextLocs(lts, "L4"));
-        Assert.assertEquals(ImmutableSet.of("L1", "L7"), getNextLocs(lts, "L5"));
-        Assert.assertEquals(ImmutableSet.of("L7"), getNextLocs(lts, "L6"));
-        Assert.assertEquals(ImmutableSet.of(), getNextLocs(lts, "L7"));
+        Assertions.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
+        Assertions.assertEquals(ImmutableSet.of("L3", "L4"), getNextLocs(lts, "L1"));
+        Assertions.assertEquals(ImmutableSet.of("L3"), getNextLocs(lts, "L2"));
+        Assertions.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L3"));
+        Assertions.assertEquals(ImmutableSet.of("L5"), getNextLocs(lts, "L4"));
+        Assertions.assertEquals(ImmutableSet.of("L1", "L7"), getNextLocs(lts, "L5"));
+        Assertions.assertEquals(ImmutableSet.of("L7"), getNextLocs(lts, "L6"));
+        Assertions.assertEquals(ImmutableSet.of(), getNextLocs(lts, "L7"));
     }
 }
