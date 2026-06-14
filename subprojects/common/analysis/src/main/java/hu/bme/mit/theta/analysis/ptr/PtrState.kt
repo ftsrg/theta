@@ -21,13 +21,19 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 
 data class PtrState<S : ExprState>
 @JvmOverloads
-constructor(val innerState: S, val nextCnt: Int = 0) : ExprState {
+constructor(val innerState: S, val nextCnt: Int = 0, val lastWrites: WriteTriples = emptyMap()) :
+  ExprState {
 
-  override fun isBottom(): Boolean {
-    return innerState.isBottom()
+  override fun isBottom(): Boolean = innerState.isBottom()
+
+  override fun toExpr(): Expr<BoolType> = innerState.toExpr()
+
+  // lastWrites is auxiliary data for action construction and does not define the abstract state.
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PtrState<*>) return false
+    return innerState == other.innerState && nextCnt == other.nextCnt
   }
 
-  override fun toExpr(): Expr<BoolType> {
-    return innerState.toExpr()
-  }
+  override fun hashCode(): Int = 31 * innerState.hashCode() + nextCnt
 }
