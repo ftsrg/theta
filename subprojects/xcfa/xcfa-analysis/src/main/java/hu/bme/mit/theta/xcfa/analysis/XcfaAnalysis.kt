@@ -51,6 +51,7 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
@@ -530,7 +531,7 @@ private fun getUnitXcfaInitFunc(
           XcfaProcessState(
             initLocStack,
             prefix = "T$i",
-            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i", ""))),
           ),
         )
       }
@@ -583,7 +584,7 @@ fun getBoundedXcfaChecker(
   isHavoc: Boolean = false,
 ): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
   val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
-  val target = getXcfaErrorPredicate(errorDetection)
+  val target = getXcfaErrorDetector(errorDetection)
   val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
   return BoundedLtsChecker(lts, analysis, target, bound, prec, solver)
 }

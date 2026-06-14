@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -494,10 +494,35 @@ enum class Domain(
     stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   UNIT(
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          xcfa,
+          solver,
+          getExplPredStmtXcfaTransFunc(solver, false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(UnitXcfaAnalysis(a, j), d, e, f, g, h)
     },
-    itpPrecRefiner = {
+    itpPrecRefiner = { a, b ->
       XcfaPrecRefiner<PtrState<UnitState>, UnitPrec, ItpRefutation>(
         ItpRefToPtrPrec(
           object : RefutationToPrec<UnitPrec, ItpRefutation> {

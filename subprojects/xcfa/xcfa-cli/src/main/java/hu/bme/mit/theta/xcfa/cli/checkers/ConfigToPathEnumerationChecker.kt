@@ -30,16 +30,19 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.PathEnumerationConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.dereferences
 
 fun getPathEnumerationChecker(
   xcfa: XCFA,
+  parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<
@@ -49,7 +52,7 @@ fun getPathEnumerationChecker(
 > {
   val pathEnumerationConfig = config.backendConfig.specConfig as PathEnumerationConfig
   if (
-    config.inputConfig.property == ErrorDetection.DATA_RACE &&
+    config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE &&
       xcfa.procedures.any { it.edges.any { it.label.dereferences.isNotEmpty() } }
   ) {
     throw RuntimeException("DATA_RACE cannot be checked when pointers exist in the file.")
@@ -73,7 +76,12 @@ fun getPathEnumerationChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
   val lts =
-    pathEnumerationConfig.coi.getLts(xcfa, ignoredVarRegistry, pathEnumerationConfig.porLevel)
+    pathEnumerationConfig.coi.getLts(
+      xcfa,
+      parseContext,
+      pathEnumerationConfig.porLevel,
+      ignoredVarRegistry,
+    )
 
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()
   val globalStatePartialOrd =
@@ -90,10 +98,11 @@ fun getPathEnumerationChecker(
       PriorityWaitlist.create(),
       StopCriterions.fullExploration(),
       logger,
-      lts,
-      config.inputConfig.property,
+      lts.second,
+      getXcfaErrorDetector(config.inputConfig.property.verifiedProperty),
       corePartialOrd,
       pathEnumerationConfig.havocMemory,
+      lts.first,
     ) as ArgAbstractor<XcfaState<PtrState<ExprState>>, XcfaAction, XcfaPrec<PtrPrec<Prec>>>
   val argBuilder = abstractor.argBuilder
   val analysis =
@@ -106,7 +115,7 @@ fun getPathEnumerationChecker(
 
   val pathEnumerationSolverInstance = pathEnumerationSolverFactory.createSolver()
   return BoundedLtsChecker(
-    lts,
+    lts.second,
     analysis,
     target,
     pathEnumerationConfig.maxBound,
