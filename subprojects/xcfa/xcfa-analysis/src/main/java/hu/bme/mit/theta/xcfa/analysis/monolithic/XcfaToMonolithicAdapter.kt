@@ -69,7 +69,9 @@ abstract class XcfaToMonolithicAdapter(
   protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
 
   init {
-    check(property.verifiedProperty in listOf(ERROR_LOCATION, TERMINATION, NO_ASSERTION_VIOLATION)) {
+    check(
+      property.verifiedProperty in listOf(ERROR_LOCATION, TERMINATION, NO_ASSERTION_VIOLATION)
+    ) {
       "Unsupported property for monolithic conversion: ${property.verifiedProperty}"
     }
   }
