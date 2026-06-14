@@ -109,6 +109,7 @@ fun getCoreXcfaLts() =
                 ),
                 proc.value.locs.peek().metadata,
               ),
+              lastWrites = s.sGlobal.lastWrites,
               nextCnt = s.sGlobal.nextCnt,
             )
           )
@@ -122,6 +123,7 @@ fun getCoreXcfaLts() =
                 proc.value.paramStmts.peek().first,
                 proc.value.locs.peek().metadata,
               ),
+              lastWrites = s.sGlobal.lastWrites,
               nextCnt = s.sGlobal.nextCnt,
             )
           )
@@ -197,8 +199,8 @@ fun getCoreXcfaLts() =
                     } else label
                   }
                 )
-              XcfaAction(proc.key, edge.withLabel(newNewLabel), nextCnt = s.sGlobal.nextCnt)
-            } else XcfaAction(proc.key, edge.withLabel(newLabel), nextCnt = s.sGlobal.nextCnt)
+              XcfaAction(proc.key, edge.withLabel(newNewLabel), s.sGlobal.lastWrites, s.sGlobal.nextCnt)
+            } else XcfaAction(proc.key, edge.withLabel(newLabel), s.sGlobal.lastWrites, s.sGlobal.nextCnt)
           }
         }
       }

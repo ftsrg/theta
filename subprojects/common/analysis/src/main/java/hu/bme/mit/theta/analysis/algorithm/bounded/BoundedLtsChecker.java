@@ -179,7 +179,7 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
         return getSafeResult(safe);
     }
 
-    boolean isTrue(Expr<BoolType> expr) {
+    private boolean isTrue(Expr<BoolType> expr) {
         return expr instanceof BoolLitExpr boolLitExpr && boolLitExpr.getValue();
     }
 

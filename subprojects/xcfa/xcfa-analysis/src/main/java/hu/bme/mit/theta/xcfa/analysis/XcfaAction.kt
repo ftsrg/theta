@@ -58,7 +58,7 @@ constructor(
   }
 
   fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-    return XcfaAction(pid, source, target, sequenceLabel, edge.metadata, nextCnt = nextCnt)
+    return XcfaAction(pid, source, target, sequenceLabel, edge.metadata, lastWrites, nextCnt)
   }
 
   fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
