@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker
 import hu.bme.mit.theta.analysis.expr.refinement.createSeqItpCheckerFactory
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger

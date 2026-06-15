@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
+package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
@@ -22,7 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.model.BasicExprSubstitution;

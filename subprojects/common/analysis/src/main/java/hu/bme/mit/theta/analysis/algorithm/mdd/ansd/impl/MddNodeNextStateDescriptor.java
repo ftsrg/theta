@@ -26,7 +26,7 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;

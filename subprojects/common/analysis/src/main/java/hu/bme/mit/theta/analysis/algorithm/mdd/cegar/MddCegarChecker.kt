@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd
+package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
@@ -29,6 +29,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.ImplicitPredicateAbstractor
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ConstraintDrivenAndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer
@@ -36,9 +38,10 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescrip
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.NegativeNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider
 import hu.bme.mit.theta.analysis.expl.ExplState
