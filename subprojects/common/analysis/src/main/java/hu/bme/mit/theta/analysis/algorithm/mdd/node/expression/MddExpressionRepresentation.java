@@ -107,8 +107,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         this.transExpr = transExpr;
     }
 
-    // TODO only for debugging
-    public ExplicitRepresentation getExplicitRepresentation() {
+    /** Read-only view of this node's explored structure, for consumers that must not mutate it. */
+    public Explored explored() {
         return explicitRepresentation;
     }
 
@@ -356,7 +356,20 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return Objects.hash(expr, decl, mddVariable);
     }
 
-    public static class ExplicitRepresentation {
+    /**
+     * Read-only view of what exploration has established about an expression node: the edges and
+     * default it has cached so far (a lower bound on the node's edges), the keys proven absent, and
+     * whether exploration has exhausted the node. None of the cache's mutators are reachable here.
+     */
+    public interface Explored {
+        IntObjMapView<MddNode> knownEdges();
+
+        IntSetView knownAbsentKeys();
+
+        boolean isComplete();
+    }
+
+    static class ExplicitRepresentation implements Explored {
         private final HashIntObjMap<MddNode> cache;
         private final GrowingIntArray edgeOrdering;
         private final HashIntSet negativeCache;
@@ -371,7 +384,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             this.complete = false;
         }
 
-        public void cacheNode(int key, MddNode node) {
+        void cacheNode(int key, MddNode node) {
             Preconditions.checkState(!complete);
             Preconditions.checkState(defaultValue == null);
             if (this.cache.size() > 1000) {
@@ -381,7 +394,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             this.edgeOrdering.add(key);
         }
 
-        public void cacheNegative(int key) {
+        void cacheNegative(int key) {
             negativeCache.add(key);
         }
 
@@ -393,12 +406,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return negativeCache;
         }
 
-        public void cacheDefault(MddNode defaultValue) {
+        void cacheDefault(MddNode defaultValue) {
             Preconditions.checkState(!complete);
             this.defaultValue = defaultValue;
         }
 
-        public void setComplete() {
+        void setComplete() {
             this.complete = true;
         }
 
@@ -406,8 +419,19 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return IntObjMapView.of(cache, defaultValue);
         }
 
+        @Override
         public boolean isComplete() {
             return complete;
+        }
+
+        @Override
+        public IntObjMapView<MddNode> knownEdges() {
+            return getCacheView();
+        }
+
+        @Override
+        public IntSetView knownAbsentKeys() {
+            return IntSetView.of(negativeCache);
         }
 
         public int getEdge(int index) {

@@ -60,7 +60,7 @@ object MddKnownValuationCollector {
       // the edges exploration has already established, answered purely from the caches (expression
       // nodes) or the node itself (structural already explicit); never calls solvers
       val known: IntObjMapView<MddNode> =
-        if (repr is MddExpressionRepresentation) repr.explicitRepresentation.cacheView
+        if (repr is MddExpressionRepresentation) repr.explored().knownEdges()
         else handle.node
       known.defaultValue()?.let { walk(lower.getHandleFor(it)) }
       val decl = handle.variableHandle.variable.orElseThrow().getTraceInfo(Decl::class.java)

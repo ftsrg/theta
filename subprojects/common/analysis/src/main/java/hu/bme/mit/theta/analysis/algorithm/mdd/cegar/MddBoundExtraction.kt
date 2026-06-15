@@ -85,18 +85,19 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
             mergeLevel(emptyMap(), lower.getHandleFor(repr.continuation), pEff, varHandle)
           }
           is MddExpressionRepresentation -> {
-            val explicit = repr.explicitRepresentation
+            val explored = repr.explored()
             val eMap = LinkedHashMap<Int, MddHandle?>()
-            val cached = explicit.cacheView
+            val cached = explored.knownEdges()
             val cursor = cached.cursor()
             while (cursor.moveNext()) eMap[cursor.key()] = lower.getHandleFor(cursor.value())
             // a default edge subsumes per-key knowledge
             if (cached.defaultValue() == null) {
-              for (k in explicit.negativeKeys) eMap[k] = zeroHandle
+              val absent = explored.knownAbsentKeys().cursor()
+              while (absent.moveNext()) eMap[absent.elem()] = zeroHandle
             }
             val eDefault =
               cached.defaultValue()?.let { lower.getHandleFor(it) }
-                ?: if (explicit.isComplete) zeroHandle else null
+                ?: if (explored.isComplete) zeroHandle else null
             mergeLevel(eMap, eDefault, pEff, varHandle)
           }
           else -> error("Unexpected representation in bound extraction: $repr")
