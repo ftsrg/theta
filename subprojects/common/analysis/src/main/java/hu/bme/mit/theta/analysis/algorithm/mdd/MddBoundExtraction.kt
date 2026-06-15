@@ -21,7 +21,6 @@ import hu.bme.mit.delta.java.mdd.MddGraph
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.MddVariableHandle
-import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
@@ -57,11 +56,10 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
   private val zeroHandle: MddHandle = graph.terminalZeroHandle
   private val terminalVariableHandle = graph.terminalVariableHandle
 
-  // walkNode is a binary operation over the expression node and the previous bound node, unary when
-  // there is no previous bound. An absent result (null) is memoized as the zero node, which the walk
+  // walkNode is a binary operation over the expression node and the previous bound node (null when
+  // there is no previous bound). An absent result (null) is memoized as the zero node, which the walk
   // never produces as a real result, so a cache hit is distinguishable from a miss.
-  private val binaryCache = BinaryOperationCache<MddNode, MddNode, MddNode>()
-  private val unaryCache = UnaryOperationCache<MddNode, MddNode>()
+  private val cache = BinaryOperationCache<MddNode, MddNode?, MddNode>()
 
   fun walkNode(e: MddHandle, p: MddHandle?): MddNode? {
     if (p != null && p.isTerminalZero) return null
@@ -70,7 +68,7 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
     val pEff = if (p != null && p.isTerminal) null else p
 
     val pNode = pEff?.node
-    val cached = if (pNode == null) unaryCache.getOrNull(e.node) else binaryCache.getOrNull(e.node, pNode)
+    val cached = cache.getOrNull(e.node, pNode)
     if (cached != null) return if (cached === zero) null else cached
 
     val varHandle = e.variableHandle
@@ -103,9 +101,7 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
           }
           else -> error("Unexpected representation in bound extraction: $repr")
         }
-    val stored = result ?: zero
-    if (pNode == null) unaryCache.addToCache(e.node, stored)
-    else binaryCache.addToCache(e.node, pNode, stored)
+    cache.addToCache(e.node, pNode, result ?: zero)
     return result
   }
 
