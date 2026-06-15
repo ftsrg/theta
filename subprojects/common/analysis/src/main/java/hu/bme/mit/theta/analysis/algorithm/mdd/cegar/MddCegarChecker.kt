@@ -275,7 +275,7 @@ constructor(
 
     val propViolating =
       if (propSeedable) filterStates(stateSpace, propNode, seed?.prop?.bound)
-      else stateSpace.intersection(propNode) as MddHandle
+      else stateSpace.intersection(propNode)
     val violatingSize = MddInterpreter.calculateNonzeroCount(propViolating)
     val stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace)
 
@@ -344,7 +344,7 @@ constructor(
       val filtered =
         filterStates(
           cursor.value() as MddHandle,
-          exprNode.get(cursor.key()) as MddHandle,
+          exprNode.get(cursor.key()),
           childBound,
         )
       if (!filtered.isTerminalZero) templateBuilder.set(cursor.key(), filtered.node)
