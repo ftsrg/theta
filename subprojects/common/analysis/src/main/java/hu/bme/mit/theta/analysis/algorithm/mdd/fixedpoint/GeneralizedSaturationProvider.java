@@ -38,7 +38,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
     private MddNode terminalZeroNode;
 
     public GeneralizedSaturationProvider(final MddVariableOrder variableOrder) {
-        this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
+        this(variableOrder, new RelationalProductProviderImpl(variableOrder));
     }
 
     public GeneralizedSaturationProvider(
