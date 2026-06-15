@@ -15,11 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd
 
+import hu.bme.mit.delta.java.mdd.BinaryOperationCache
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddGraph
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.MddVariableHandle
+import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
@@ -55,23 +57,11 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
   private val zeroHandle: MddHandle = graph.terminalZeroHandle
   private val terminalVariableHandle = graph.terminalVariableHandle
 
-  /** null result = the branch is known absent. */
-  private val memo = HashMap<Pair<MddNode, MddNode?>, MddNode?>()
-
-  /** The expression side's knowledge about an edge into the level below. */
-  private sealed interface Sub
-
-  /** Known absent. */
-  private object Absent : Sub
-
-  /** Unknown, permitted: the bound is the previous bound's remainder. */
-  private object Unknown : Sub
-
-  /** The expression tree continues at this handle (positioned at the consuming level). */
-  private class At(val handle: MddHandle) : Sub
-
-  /** Virtual level without constraint: every key maps to [sub] one more level down. */
-  private class DefaultBelow(val sub: Sub) : Sub
+  // walkNode is a binary operation over the expression node and the previous bound node, unary when
+  // there is no previous bound. An absent result (null) is memoized as the zero node, which the walk
+  // never produces as a real result, so a cache hit is distinguishable from a miss.
+  private val binaryCache = BinaryOperationCache<MddNode, MddNode, MddNode>()
+  private val unaryCache = UnaryOperationCache<MddNode, MddNode>()
 
   fun walkNode(e: MddHandle, p: MddHandle?): MddNode? {
     if (p != null && p.isTerminalZero) return null
@@ -79,46 +69,54 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
     if (atCut(e.variableHandle)) return one
     val pEff = if (p != null && p.isTerminal) null else p
 
-    val key = e.node to pEff?.node
-    if (memo.containsKey(key)) return memo[key]
+    val pNode = pEff?.node
+    val cached = if (pNode == null) unaryCache.getOrNull(e.node) else binaryCache.getOrNull(e.node, pNode)
+    if (cached != null) return if (cached === zero) null else cached
 
     val varHandle = e.variableHandle
+    val lower = lowerOf(varHandle)
     val result =
       if (e.isSkippedLevel) {
-        val lowered = lowerOf(varHandle).getHandleFor(e.node)
-        mergeLevel(emptyMap(), At(lowered), pEff, varHandle)
+        // a skipped level constrains nothing: widen to a default edge into the node one level down
+        mergeLevel(emptyMap(), lower.getHandleFor(e.node), pEff, varHandle)
       } else
         when (val repr = e.node.representation) {
           is IdentityRepresentation -> {
-            val cont = lowerOf(lowerOf(varHandle)).getHandleFor(repr.continuation)
-            mergeLevel(emptyMap(), DefaultBelow(At(cont)), pEff, varHandle)
+            // identity spans the var and its primed copy, neither constrained: place the
+            // continuation as a skipped level one down, so both levels widen to default edges
+            mergeLevel(emptyMap(), lower.getHandleFor(repr.continuation), pEff, varHandle)
           }
           is MddExpressionRepresentation -> {
             val explicit = repr.explicitRepresentation
-            val lower = lowerOf(varHandle)
-            val eMap = LinkedHashMap<Int, Sub>()
+            val eMap = LinkedHashMap<Int, MddHandle?>()
             val cached = explicit.cacheView
             val cursor = cached.cursor()
-            while (cursor.moveNext()) eMap[cursor.key()] = At(lower.getHandleFor(cursor.value()))
+            while (cursor.moveNext()) eMap[cursor.key()] = lower.getHandleFor(cursor.value())
             // a default edge subsumes per-key knowledge
             if (cached.defaultValue() == null) {
-              for (k in explicit.negativeKeys) eMap[k] = Absent
+              for (k in explicit.negativeKeys) eMap[k] = zeroHandle
             }
             val eDefault =
-              cached.defaultValue()?.let { At(lower.getHandleFor(it)) }
-                ?: if (explicit.isComplete) Absent else Unknown
+              cached.defaultValue()?.let { lower.getHandleFor(it) }
+                ?: if (explicit.isComplete) zeroHandle else null
             mergeLevel(eMap, eDefault, pEff, varHandle)
           }
           else -> error("Unexpected representation in bound extraction: $repr")
         }
-    memo[key] = result
+    val stored = result ?: zero
+    if (pNode == null) unaryCache.addToCache(e.node, stored)
+    else binaryCache.addToCache(e.node, pNode, stored)
     return result
   }
 
-  /** Builds the bound node at [varHandle] from the expression side's edges and [p]'s. */
+  /**
+   * Builds the bound node at [varHandle] from the expression side's edges and [p]'s. An edge target
+   * (in [eMap] or [eDefault]) is null = unknown (permitted, falls back to [p]'s remainder), the
+   * terminal zero handle = known absent, any other handle = the expression continues there.
+   */
   private fun mergeLevel(
-    eMap: Map<Int, Sub>,
-    eDefault: Sub,
+    eMap: Map<Int, MddHandle?>,
+    eDefault: MddHandle?,
     p: MddHandle?,
     varHandle: MddVariableHandle,
   ): MddNode? {
@@ -145,12 +143,12 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
       }
     }
 
-    val defaultNode = walkSub(eDefault, pDefault, lower)
+    val defaultNode = walkEdge(eDefault, pDefault, lower)
     val builder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
     if (defaultNode != null) builder.setDefault(defaultNode)
     var any = false
     for (k in keys) {
-      val child = walkSub(eMap[k] ?: eDefault, pChildFor(k), lower)
+      val child = walkEdge(eMap.getOrDefault(k, eDefault), pChildFor(k), lower)
       if (child != null) {
         builder.set(k, child)
         any = true
@@ -164,18 +162,21 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
     return varHandle.checkInNode(MddStructuralTemplate.of(builder.buildAndReset())).node
   }
 
-  /** The bound below an edge with expression knowledge [sub] and bound remainder [pChild]. */
-  private fun walkSub(sub: Sub, pChild: MddHandle?, varHandle: MddVariableHandle): MddNode? {
-    if (sub == Absent) return null
+  /**
+   * The bound below one edge. [target] is the expression side's continuation: null = unknown
+   * (permitted, falls back to [pChild]'s remainder), the terminal zero handle = known absent, any
+   * other handle = the expression continues there. [pChild] is the previous bound's remainder.
+   */
+  private fun walkEdge(
+    target: MddHandle?,
+    pChild: MddHandle?,
+    varHandle: MddVariableHandle,
+  ): MddNode? {
+    if (target != null && target.isTerminalZero) return null
     if (pChild != null && pChild.isTerminalZero) return null
     val pEff = if (pChild != null && pChild.isTerminal) null else pChild
     if (atCut(varHandle)) return one
-    return when (sub) {
-      Unknown -> materialize(pEff, varHandle)
-      is At -> walkNode(sub.handle, pEff)
-      is DefaultBelow -> mergeLevel(emptyMap(), sub.sub, pEff, varHandle)
-      Absent -> error("unreachable")
-    }
+    return if (target == null) materialize(pEff, varHandle) else walkNode(target, pEff)
   }
 
   /** [p]'s remainder as a node at [varHandle], lifted through unconstrained levels. */

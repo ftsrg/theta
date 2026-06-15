@@ -20,7 +20,12 @@ import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 
-object MddSinglePathExtractor {
+/**
+ * SatOne: returns one satisfying assignment of [node] as a single root-to-one path. The default
+ * edge is preferred (and normalized to key 0), so the result is a cube — levels taken via a default
+ * keep no concrete value.
+ */
+object MddSatOne {
 
   fun transform(node: MddHandle): MddHandle {
 
