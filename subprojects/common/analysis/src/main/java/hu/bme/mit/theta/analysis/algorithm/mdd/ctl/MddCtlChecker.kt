@@ -95,10 +95,10 @@ constructor(
     get() = stateSpace
 
   init {
-    MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
-
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    mddGraph2.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
     val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
