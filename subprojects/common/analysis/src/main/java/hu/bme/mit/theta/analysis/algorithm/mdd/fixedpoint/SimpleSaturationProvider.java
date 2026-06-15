@@ -38,7 +38,7 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
     private MddNode terminalZeroNode;
 
     public SimpleSaturationProvider(final MddVariableOrder variableOrder) {
-        this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
+        this(variableOrder, new RelationalProductProviderImpl(variableOrder));
     }
 
     public SimpleSaturationProvider(

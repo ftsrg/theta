@@ -15,8 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
@@ -24,12 +26,12 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class CursorRelationalProductProvider implements RelationalProductProvider {
+public final class RelationalProductProviderImpl implements RelationalProductProvider {
     private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>
             cacheManager = new CacheManager<>(v -> new BinaryOperationCache<>());
     private final MddVariableOrder variableOrder;
 
-    public CursorRelationalProductProvider(final MddVariableOrder variableOrder) {
+    public RelationalProductProviderImpl(final MddVariableOrder variableOrder) {
         this.variableOrder = variableOrder;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
     }
@@ -37,18 +39,13 @@ public final class CursorRelationalProductProvider implements RelationalProductP
     private MddNode recurse(
             final MddNode mddNode,
             final AbstractNextStateDescriptor nextState,
-            final AbstractNextStateDescriptor.Cursor nextStateCursor,
             MddVariable currentVariable,
             final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>
                             .CacheHolder
                     currentCache) {
         if (currentVariable.getLower().isPresent()) {
             return doCompute(
-                    mddNode,
-                    nextState,
-                    nextStateCursor,
-                    currentVariable.getLower().get(),
-                    currentCache.getLower());
+                    mddNode, nextState, currentVariable.getLower().get(), currentCache.getLower());
         } else {
             return computeTerminal(mddNode, nextState, currentVariable.getMddGraph());
         }
@@ -71,7 +68,6 @@ public final class CursorRelationalProductProvider implements RelationalProductP
         return doCompute(
                 mddNode,
                 abstractNextStateDescriptor,
-                abstractNextStateDescriptor.rootCursor(),
                 mddVariable,
                 cacheManager.getCacheFor(mddVariable));
     }
@@ -79,7 +75,6 @@ public final class CursorRelationalProductProvider implements RelationalProductP
     private MddNode doCompute(
             final MddNode lhs,
             final AbstractNextStateDescriptor nextState,
-            final AbstractNextStateDescriptor.Cursor nextStateCursor,
             final MddVariable variable,
             final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>
                             .CacheHolder
@@ -96,13 +91,6 @@ public final class CursorRelationalProductProvider implements RelationalProductP
         }
 
         boolean lhsSkipped = !lhs.isOn(variable);
-
-        if ((lhsSkipped || !variable.isNullOrZero(lhs.defaultValue()))
-                && !(lhs.isTerminal()
-                        && nextState instanceof AbstractNextStateDescriptor.Postcondition)) {
-            throw new UnsupportedOperationException(
-                    "Default values are not yet supported in relational product.");
-        }
 
         MddNode ret = cache.getCache().getOrNull(lhs, nextState);
         if (ret != null) {
@@ -127,12 +115,7 @@ public final class CursorRelationalProductProvider implements RelationalProductP
                                     ns == null
                                             ? null
                                             : terminalZeroToNull(
-                                                    recurse(
-                                                            lhs,
-                                                            ns,
-                                                            nextStateCursor,
-                                                            variable,
-                                                            cache),
+                                                    recurse(lhs, ns, variable, cache),
                                                     variable.getMddGraph().getTerminalZeroNode()));
             // } else if (diagonal.isEmpty() && offDiagonal.isEmpty() &&
             // AbstractNextStateDescriptor.isNullOrEmpty(
@@ -148,54 +131,45 @@ public final class CursorRelationalProductProvider implements RelationalProductP
         } else {
             MddUnsafeTemplateBuilder templateBuilder =
                     JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-            for (IntObjCursor<? extends MddNode> c = lhs.cursor(); c.moveNext(); ) {
-                // TODO we might not need this
-                //                try(var valueCursor = nextStateCursor.valueCursor(c.key())) {
-                //                    valueCursor.moveTo(c.key());
-                //                    final MddNode res = recurse(c.value(), diagonal.get(c.key()),
-                // valueCursor, variable, cache);
-                //                    final MddNode unioned = unionChildren(res,
-                // templateBuilder.get(c.key()), variable);
-                //
-                //                    templateBuilder.set(c.key(), terminalZeroToNull(unioned,
-                // variable.getMddGraph().getTerminalZeroNode()));
-                //                }
-                try (var valueCursor = nextStateCursor.valueCursor(c.key(), stateSpaceInfo)) {
-                    //                  for (IntObjCursor<? extends AbstractNextStateDescriptor>
-                    // next = offDiagonal.get(c.key()).cursor(); next.moveNext(); ) {
-                    for (; valueCursor.moveNext(); ) {
+            RecursiveIntObjMapView<MddNode> lhsInterpreter;
+            if ((lhsSkipped || (lhs.defaultValue() != null && lhs.isEmpty()))
+                    && !variable.isBounded()) {
+                final MddNode childCandidate = lhsSkipped ? lhs : lhs.defaultValue();
+                // We use the keyset of the ANSD to trim
+                lhsInterpreter =
+                        RecursiveIntObjMapView.of(
+                                IntObjMapView.empty(childCandidate).trim(offDiagonal.keySet()));
+            } else {
+                lhsInterpreter =
+                        variable.getNodeInterpreter(
+                                lhs); // using the interpreter might cause a performance overhead
+            }
+            for (IntObjCursor<? extends MddNode> c = lhsInterpreter.cursor(); c.moveNext(); ) {
+                final MddNode res = recurse(c.value(), diagonal.get(c.key()), variable, cache);
+                final MddNode unioned = unionChildren(res, templateBuilder.get(c.key()), variable);
 
-                        final MddNode res1 =
-                                recurse(
-                                        c.value(),
-                                        valueCursor.value(),
-                                        valueCursor,
-                                        variable,
-                                        cache);
-                        final MddNode unioned1 =
-                                unionChildren(
-                                        res1, templateBuilder.get(valueCursor.key()), variable);
+                templateBuilder.set(
+                        c.key(),
+                        terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode()));
 
-                        templateBuilder.set(
-                                valueCursor.key(),
-                                terminalZeroToNull(
-                                        unioned1, variable.getMddGraph().getTerminalZeroNode()));
-                    }
+                for (IntObjCursor<? extends AbstractNextStateDescriptor> next =
+                                offDiagonal.get(c.key()).cursor();
+                        next.moveNext(); ) {
+                    final MddNode res1 = recurse(c.value(), next.value(), variable, cache);
+                    final MddNode unioned1 =
+                            unionChildren(res1, templateBuilder.get(next.key()), variable);
+
+                    templateBuilder.set(
+                            next.key(),
+                            terminalZeroToNull(
+                                    unioned1, variable.getMddGraph().getTerminalZeroNode()));
                 }
-
-                //				for (IntObjCursor<? extends AbstractNextStateDescriptor> next =
-                // offDiagonal.get(c.key()).cursor();
-                //				     next.moveNext(); ) {
-                //					final MddNode res1 = recurse(c.value(), next.value(), variable, cache);
-                //					final MddNode unioned1 = unionChildren(res1, templateBuilder.get(next.key()),
-                // variable);
-                //
-                //					templateBuilder.set(next.key(),
-                //						terminalZeroToNull(unioned1, variable.getMddGraph().getTerminalZeroNode())
-                //					);
-                //				}
             }
             template = templateBuilder.buildAndReset();
+            if (!template.isEmpty())
+                Preconditions.checkArgument(
+                        lhs.defaultValue() == null,
+                        "Default value is not supported with explicit edges");
         }
 
         ret = variable.checkInNode(MddStructuralTemplate.of(template));

@@ -43,7 +43,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepr
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.RelationalProductProviderImpl
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
@@ -362,7 +362,7 @@ constructor(
     bound: MddHandle?,
     stateSig: MddSignature,
   ): MddHandle =
-    LegacyRelationalProductProvider(stateSig.variableOrder)
+    RelationalProductProviderImpl(stateSig.variableOrder)
       .compute(
         stateSig.variableOrder.mddGraph.handleForTop,
         NegativeNextStateDescriptor.of(MddNodeInitializer.of(node), bound),
