@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,6 +47,9 @@ import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
+import hu.bme.mit.theta.analysis.unit.UnitAnalysis
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -87,6 +90,7 @@ enum class Backend {
   KIND,
   IMC,
   KINDIMC,
+  PATH_ENUMERATION,
   CHC,
   OC,
   LAZY,
@@ -488,6 +492,51 @@ enum class Domain(
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
+  ),
+  UNIT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          xcfa,
+          solver,
+          getExplPredStmtXcfaTransFunc(solver, false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(UnitXcfaAnalysis(a, j), d, e, f, g, h)
+    },
+    itpPrecRefiner = { a, b ->
+      XcfaPrecRefiner<PtrState<UnitState>, UnitPrec, ItpRefutation>(
+        ItpRefToPtrPrec(
+          object : RefutationToPrec<UnitPrec, ItpRefutation> {
+            override fun join(prec1: UnitPrec?, prec2: UnitPrec?) = UnitPrec.getInstance()
+
+            override fun toPrec(refutation: ItpRefutation?, index: Int) = UnitPrec.getInstance()
+          }
+        )
+      )
+    },
+    initPrec = { _, _ -> XcfaPrec(PtrPrec(UnitPrec.getInstance())) },
+    partialOrd = { UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd() },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<UnitState>>, XcfaAction>(),
+    stateType = TypeToken.get(UnitState::class.java).type,
   ),
 }
 

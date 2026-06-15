@@ -54,6 +54,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.xcfa
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
@@ -98,6 +99,13 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
   }
+  if (config.backendConfig.backend == Backend.PATH_ENUMERATION) {
+    val pathEnumerationConfig = config.backendConfig.specConfig
+    pathEnumerationConfig as PathEnumerationConfig
+    val random = Random(pathEnumerationConfig.porRandomSeed)
+    XcfaSporLts.random = random
+    XcfaDporLts.random = random
+  }
   if (
     config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
       config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
@@ -130,9 +138,19 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
+  rule("NoDataRaceWithPathEnumeration") {
+    config.backendConfig.backend == Backend.PATH_ENUMERATION &&
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+    // technically only when pointers are present, but we don't know that yet
+  }
   rule("NoAaporWhenDataRace") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+  }
+  rule("NoAaporOrDporPathEnumeration") {
+    (config.backendConfig.specConfig as? PathEnumerationConfig)?.porLevel.let {
+      it != null && (it.isAbstractionAware || it.isDynamic)
+    }
   }
   rule("DPORWithoutDFS") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&
