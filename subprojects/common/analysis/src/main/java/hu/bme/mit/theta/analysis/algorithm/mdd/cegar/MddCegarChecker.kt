@@ -103,9 +103,14 @@ constructor(
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
-    MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
 
     val orders = CegarOrders(concreteModel, useTransitionSeeding)
+    orders.stateOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    orders.transOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    orders.stateExprOrder?.mddGraph?.setAttribute(
+      MddExpressionRepresentation.LOOK_AHEAD,
+      lookAheadStrategy,
+    )
     val seed =
       if (useTransitionSeeding)
         SeedKnowledge(

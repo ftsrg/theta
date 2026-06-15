@@ -52,12 +52,16 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final boolean transExpr;
     private final boolean knownSat;
 
-    // caches the model, not just satness: the model seeds the witness caches of every node
-    // created for this expression, keeping the levels below explorable without the solver
-    private static UnaryOperationCache<Expr<BoolType>, Optional<Valuation>> satCache =
-            new UnaryOperationCache();
+    // caches the model, not just satness: the model seeds the witness caches of every node created
+    // for this expression, keeping the levels below explorable without the solver. Attached per
+    // graph (run-scoped) so it is dropped with the graph instead of living for the whole JVM.
+    public static final MddGraph.Key<UnaryOperationCache<Expr<BoolType>, Optional<Valuation>>>
+            SAT_CACHE = new MddGraph.Key<>("satCache");
 
-    private static Valuation checkSat(Expr<BoolType> expr, SolverPool solverPool) {
+    private static Valuation checkSat(
+            Expr<BoolType> expr,
+            SolverPool solverPool,
+            UnaryOperationCache<Expr<BoolType>, Optional<Valuation>> satCache) {
         Optional<Valuation> cached = satCache.getOrNull(expr);
         if (cached != null) {
             return cached.orElse(null);
@@ -112,6 +116,7 @@ public class MddExpressionTemplate implements MddNode.Template {
     public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(
             MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
         final Decl decl = extractDecl.apply(mddVariable.getTraceInfo());
+        final var satCache = mddVariable.getMddGraph().getAttribute(SAT_CACHE, UnaryOperationCache::new);
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
 
@@ -122,7 +127,7 @@ public class MddExpressionTemplate implements MddNode.Template {
         } else if (canonizedExpr instanceof FalseExpr) {
             return null;
         } else {
-            satModel = checkSat(canonizedExpr, solverPool);
+            satModel = checkSat(canonizedExpr, solverPool, satCache);
             if (satModel == null) return null;
         }
 
@@ -183,7 +188,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                 if (underConstants.contains(decl) || underConstants.contains(nextDecl)) {
                     // Check if expr and not(x' = x) is sat
                     final var andExpr = And(expr, Neq(decl.getRef(), nextDecl.getRef()));
-                    if (checkSat(andExpr, solverPool) == null) {
+                    if (checkSat(andExpr, solverPool, satCache) == null) {
                         identityNeeded = true;
                     }
                 } else {
