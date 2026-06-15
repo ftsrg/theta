@@ -13,11 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd;
+package hu.bme.mit.theta.analysis.algorithm.mdd.trace;
 
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;

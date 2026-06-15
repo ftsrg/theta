@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 import com.google.common.collect.Lists;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddSatOne;
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.MddSatOne;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import java.util.List;
 import java.util.Stack;

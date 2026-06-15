@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
+package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
@@ -28,7 +28,7 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprUtilKt;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;

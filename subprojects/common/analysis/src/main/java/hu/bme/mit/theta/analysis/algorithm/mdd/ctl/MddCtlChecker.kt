@@ -30,10 +30,10 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescrip
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.RelationDrivenAndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SingleStepProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider

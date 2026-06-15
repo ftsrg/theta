@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd
+package hu.bme.mit.theta.analysis.algorithm.mdd.trace
 
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.TraceProvider
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Backward trace generation shared by [MddChecker] and [MddCegarChecker]: reverses the transition
+ * Backward trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and [MddCegarChecker]: reverses the transition
  * nodes over the computed state space and walks from [propViolating] back to [initNode]. Returns
  * null if generation does not finish within [traceTimeout] seconds.
  */

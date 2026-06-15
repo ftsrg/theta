@@ -13,13 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd;
+package hu.bme.mit.theta.analysis.algorithm.mdd.result;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;

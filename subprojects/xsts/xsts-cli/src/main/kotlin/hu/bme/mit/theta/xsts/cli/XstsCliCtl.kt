@@ -22,9 +22,9 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ctl.MddCtlChecker
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.ctl.CtlParser
