@@ -89,20 +89,20 @@ object MddExplicitRepresentationExtractor {
         val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
         Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
         val expressionRepresentation = node.node.representation as MddExpressionRepresentation
-        val explicitRepresentation = expressionRepresentation.explicitRepresentation
+        val knownEdges = expressionRepresentation.explored().knownEdges()
 
-        if (explicitRepresentation.cacheView.defaultValue() != null) {
+        if (knownEdges.defaultValue() != null) {
           val s =
             transform(
               node.variableHandle.lower
                 .get()
-                .getHandleFor(explicitRepresentation.cacheView.defaultValue()),
+                .getHandleFor(knownEdges.defaultValue()),
               variable.lower.orElse(null),
               cache,
             )
           if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
         } else {
-          val cursor = explicitRepresentation.cacheView.cursor()
+          val cursor = knownEdges.cursor()
           while (cursor.moveNext()) {
             val s =
               transform(
