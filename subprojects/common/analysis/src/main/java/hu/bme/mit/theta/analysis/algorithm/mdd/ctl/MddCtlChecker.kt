@@ -177,7 +177,7 @@ constructor(
   fun isSatisfied(expr: CtlExpr): Boolean {
     // the symbolic initNode cannot drive set operations, so instead of subtracting from it, it is
     // intersected with the explicit complement (which queries it key-by-key only)
-    val violating = eval(CtlExpr.Not(expr)).intersection(initNode) as MddHandle
+    val violating = eval(CtlExpr.Not(expr)).intersection(initNode)
     return MddInterpreter.calculateNonzeroCount(violating) == 0L
   }
 
@@ -190,21 +190,21 @@ constructor(
    * (not phi alone) so that seed states outside phi are not pruned.
    */
   private fun euSaturation(p: MddHandle, q: MddHandle): MddHandle {
-    val constraint = p.union(q) as MddHandle
+    val constraint = p.union(q)
     val saturated =
       stateSpaceProvider.compute(
         MddNodeInitializer.of(q),
         RelationDrivenAndNextStateDescriptor.of(reversedNS, constraint),
         topVar,
       )
-    return saturated.intersection(universe) as MddHandle
+    return saturated.intersection(universe)
   }
 
   /** `E[phi U psi]` by the lfp loop `mu Z. psi | (phi & pre(Z))`. */
   private fun euFixpointLoop(p: MddHandle, q: MddHandle): MddHandle {
     var z = q
     while (true) {
-      val next = q.union(p.intersection(pre(z))) as MddHandle
+      val next = q.union(p.intersection(pre(z)))
       if (next.node === z.node) break
       z = next
     }
@@ -221,14 +221,14 @@ constructor(
             )
           // the explicit universe must drive the intersection: the symbolic atom node has an
           // unbounded keyset and can only be queried key-by-key
-          universe.intersection(node) as MddHandle
+          universe.intersection(node)
         }
 
         is CtlExpr.Top -> universe
 
-        is CtlExpr.Not -> universe.minus(eval(phi.op)) as MddHandle
-        is CtlExpr.And -> eval(phi.l).intersection(eval(phi.r)) as MddHandle
-        is CtlExpr.Or -> eval(phi.l).union(eval(phi.r)) as MddHandle
+        is CtlExpr.Not -> universe.minus(eval(phi.op))
+        is CtlExpr.And -> eval(phi.l).intersection(eval(phi.r))
+        is CtlExpr.Or -> eval(phi.l).union(eval(phi.r))
 
         is CtlExpr.EX -> pre(eval(phi.op))
 
@@ -245,7 +245,7 @@ constructor(
         is CtlExpr.EG -> {
           var x = eval(phi.op)
           while (true) {
-            val next = x.intersection(pre(x)) as MddHandle
+            val next = x.intersection(pre(x))
             if (next.node === x.node) break
             x = next
           }

@@ -18,7 +18,6 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 import com.google.common.collect.Lists;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.trace.MddSatOne;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import java.util.List;
 import java.util.Stack;
@@ -70,9 +69,9 @@ public final class TraceProvider implements MddGraph.CleanupListener {
                                     highestAffectedVariable)
                             .minus(alreadyExplored);
             if (MddInterpreter.calculateNonzeroCount(newLayer) > 0) {
-                currentState = MddSatOne.INSTANCE.transform((MddHandle) newLayer);
+                currentState = newLayer.satOne();
                 states.push(currentState);
-                alreadyExplored = (MddHandle) alreadyExplored.union(currentState);
+                alreadyExplored = alreadyExplored.union(currentState);
             } else {
                 states.pop();
                 currentState = states.peek();

@@ -171,7 +171,7 @@ constructor(
 
     totalTime.stop()
 
-    val propViolating = stateSpace.intersection(propNode) as MddHandle
+    val propViolating = stateSpace.intersection(propNode)
 
     logger.write(Logger.Level.INFO, "Calculated violating states\n")
 

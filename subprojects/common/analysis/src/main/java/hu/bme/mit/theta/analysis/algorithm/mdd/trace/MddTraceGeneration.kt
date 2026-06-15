@@ -55,7 +55,7 @@ internal fun generateTrace(
   // when an initial state itself violates, seed with the initial violating states: TraceProvider
   // would accept the whole violating set as a length-1 trace and the valuation collector could
   // pick a non-initial state from it, producing a trace that fails concretization
-  val initViolating = propViolating.intersection(initNode) as MddHandle
+  val initViolating = propViolating.intersection(initNode)
   val traceSeed =
     if (MddInterpreter.calculateNonzeroCount(initViolating) > 0) initViolating else propViolating
 
