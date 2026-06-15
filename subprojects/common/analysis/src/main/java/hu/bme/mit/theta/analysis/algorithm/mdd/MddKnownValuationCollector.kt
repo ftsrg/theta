@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd
 
+import hu.bme.mit.delta.collections.IntObjMapView
 import hu.bme.mit.delta.java.mdd.MddHandle
+import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddPresentView
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.model.ImmutableValuation
@@ -25,9 +27,10 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.LitExpr
 
 /**
- * [MddValuationCollector] restricted to the known part of a subtree: walks [MddPresentView]s, never
- * calling solvers. Identity and default levels carry no assignment, so the collected valuations may
- * be partial.
+ * [MddValuationCollector] restricted to the known part of a subtree: walks only the edges already
+ * established by exploration (expression caches and explicit structural nodes), never calling
+ * solvers. Identity and default levels carry no assignment, so the collected valuations may be
+ * partial.
  */
 object MddKnownValuationCollector {
 
@@ -54,7 +57,11 @@ object MddKnownValuationCollector {
         walk(lower.lower.orElseThrow().getHandleFor(repr.continuation))
         return
       }
-      val known = MddPresentView.of(handle.node)
+      // the edges exploration has already established, answered purely from the caches (expression
+      // nodes) or the node itself (structural already explicit); never calls solvers
+      val known: IntObjMapView<MddNode> =
+        if (repr is MddExpressionRepresentation) repr.explicitRepresentation.cacheView
+        else handle.node
       known.defaultValue()?.let { walk(lower.getHandleFor(it)) }
       val decl = handle.variableHandle.variable.orElseThrow().getTraceInfo(Decl::class.java)
       val cursor = known.cursor()
