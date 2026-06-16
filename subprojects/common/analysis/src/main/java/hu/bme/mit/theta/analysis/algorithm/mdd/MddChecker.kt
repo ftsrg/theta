@@ -159,7 +159,7 @@ constructor(
 
     val stateSpace =
       stateSpaceProvider.compute(
-        MddNodeInitializer.of(initNode),
+        MddNodePostcondition.of(initNode),
         targetedNextStates,
         stateSig.topVariableHandle,
       )
@@ -243,7 +243,7 @@ constructor(
     val rerunTime = Stopwatch.createStarted()
     val rerunStateSpace =
       rerunProvider.compute(
-        MddNodeInitializer.of(initNode),
+        MddNodePostcondition.of(initNode),
         structNextStates,
         stateSig.topVariableHandle,
       )

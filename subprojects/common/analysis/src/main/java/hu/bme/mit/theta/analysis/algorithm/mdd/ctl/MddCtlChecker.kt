@@ -26,8 +26,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
@@ -153,7 +153,7 @@ constructor(
     val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
     stateSpaceProvider = iterationStrategy.createProvider(stateSig.variableOrder)
-    stateSpace = stateSpaceProvider.compute(MddNodeInitializer.of(initNode), nextStates, topVar)
+    stateSpace = stateSpaceProvider.compute(MddNodePostcondition.of(initNode), nextStates, topVar)
     logger.write(
       Logger.Level.INFO,
       "Calculated state space, size: ${MddInterpreter.calculateNonzeroCount(stateSpace)}\n",
@@ -183,7 +183,7 @@ constructor(
 
   /** States with at least one successor in [x]. */
   private fun pre(x: MddHandle): MddHandle =
-    singleStepProvider.compute(MddNodeInitializer.of(x), reversedNS, topVar)
+    singleStepProvider.compute(MddNodePostcondition.of(x), reversedNS, topVar)
 
   /**
    * `E[phi U psi]` as a single constrained backward fixed-point call. The constraint is phi | psi
@@ -193,8 +193,8 @@ constructor(
     val constraint = p.union(q)
     val saturated =
       stateSpaceProvider.compute(
-        MddNodeInitializer.of(q),
-        AndNextStateDescriptor.of(reversedNS, MddNodeInitializer.of(constraint)),
+        MddNodePostcondition.of(q),
+        AndNextStateDescriptor.of(reversedNS, MddNodePostcondition.of(constraint)),
         topVar,
       )
     return saturated.intersection(universe)

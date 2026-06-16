@@ -25,13 +25,14 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.Objects;
 
-public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondition {
+/** The target-only (postcondition) descriptor of an MDD node, descending one level per key. */
+public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcondition {
 
     private final MddNode node;
 
     private final MddVariableHandle variableHandle;
 
-    private MddNodeInitializer(final MddNode node, final MddVariableHandle variableHandle) {
+    private MddNodePostcondition(MddNode node, MddVariableHandle variableHandle) {
         this.node = Preconditions.checkNotNull(node);
         this.variableHandle = Preconditions.checkNotNull(variableHandle);
         Preconditions.checkArgument(
@@ -40,18 +41,17 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     }
 
     private static AbstractNextStateDescriptor.Postcondition of(
-            final MddNode node, final MddVariableHandle variableHandle) {
-        if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) {
+            MddNode node, MddVariableHandle variableHandle) {
+        if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
-        }
         if (node.isTerminal() && !variableHandle.isTerminal()) {
             // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
             return AbstractNextStateDescriptor.Postcondition.acceptAll();
         }
-        return new MddNodeInitializer(node, variableHandle);
+        return new MddNodePostcondition(node, variableHandle);
     }
 
-    public static AbstractNextStateDescriptor.Postcondition of(final MddHandle handle) {
+    public static AbstractNextStateDescriptor.Postcondition of(MddHandle handle) {
         return of(handle.getNode(), handle.getVariableHandle());
     }
 
@@ -61,8 +61,7 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getValuations(
-            StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
         return new IntObjMapViews.Transforming<>(
                 node, n -> of(n, variableHandle.getLower().orElseThrow()));
     }
@@ -71,7 +70,7 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MddNodeInitializer that = (MddNodeInitializer) o;
+        MddNodePostcondition that = (MddNodePostcondition) o;
         return Objects.equals(node, that.node)
                 && Objects.equals(variableHandle, that.variableHandle);
     }
@@ -79,5 +78,10 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     @Override
     public int hashCode() {
         return Objects.hash(node, variableHandle);
+    }
+
+    @Override
+    public String toString() {
+        return node + ", " + variableHandle;
     }
 }

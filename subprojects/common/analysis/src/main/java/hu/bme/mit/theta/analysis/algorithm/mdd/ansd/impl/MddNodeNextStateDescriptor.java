@@ -31,30 +31,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+/** The full-relation (source and target) descriptor of an MDD node, descending two levels per key. */
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddNode node;
 
     private final MddVariableHandle variableHandle;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MddNodeNextStateDescriptor that = (MddNodeNextStateDescriptor) o;
-        return Objects.equals(node, that.node)
-                && Objects.equals(variableHandle, that.variableHandle);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(node, variableHandle);
-    }
-
-    @Override
-    public String toString() {
-        return node + ", " + variableHandle;
-    }
 
     private MddNodeNextStateDescriptor(MddNode node, MddVariableHandle variableHandle) {
         this.node = Preconditions.checkNotNull(node);
@@ -182,16 +164,6 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return wrapped.moveTo(key);
         }
 
-        //        @Override
-        //        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
-        //            var fromCursor = wrapped.valueCursor();
-        //            if (fromCursor.moveTo(from)) {
-        //                return new Cursor(fromCursor.valueCursor(),
-        // Cursor.this.variableHandle.getLower().orElseThrow().getLower().orElseThrow(), () ->
-        // fromCursor.close());
-        //            } else return new EmptyCursor(() -> fromCursor.close());
-        //        }
-
         @Override
         public AbstractNextStateDescriptor.Cursor valueCursor(
                 int from, StateSpaceInfo localStateSpace) {
@@ -221,74 +193,6 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return Optional.of(List.of(this));
         }
     }
-
-    //    public class Cursor extends CursorBase {
-    //
-    //        private final RecursiveIntObjCursor<? extends MddHandle> fromCursor;
-    //
-    //        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped,
-    // RecursiveIntObjCursor<? extends MddHandle> fromCursor){
-    //            super(wrapped);
-    //            this.fromCursor = fromCursor;
-    //        }
-    //
-    //        @Override
-    //        public void close() {
-    //            super.close();
-    //            fromCursor.close();
-    //        }
-    //    }
-    //
-    //    public class RootCursor extends CursorBase {
-    //
-    //        private final MddNodeNextStateDescriptor descriptor;
-    //
-    //        private int currentPosition;
-    //
-    //        public RootCursor(MddNodeNextStateDescriptor descriptor) {
-    //            super(descriptor.node.cursor());
-    //            this.descriptor = descriptor;
-    //            this.currentPosition = -1;
-    //        }
-    //
-    //        @Override
-    //        public int key() {
-    //            throw new UnsupportedOperationException("This operation is not supported on the
-    // root cursor");
-    //        }
-    //
-    //        @Override
-    //        public AbstractNextStateDescriptor value() {
-    //            return descriptor;
-    //        }
-    //
-    //        @Override
-    //        public boolean moveNext() {
-    //            currentPosition++;
-    //            return currentPosition == 0;
-    //        }
-    //
-    //        @Override
-    //        public boolean moveTo(int key) {
-    //            throw new UnsupportedOperationException("This operation is not supported on the
-    // root cursor");
-    //        }
-    //
-    //        @Override
-    //        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
-    //            var fromCursor = descriptor.node.cursor();
-    //            if(fromCursor.moveTo(from)) {
-    //                return new Cursor(fromCursor.valueCursor(), fromCursor);
-    //            } else {
-    //                return EmptyCursor.INSTANCE;
-    //            }
-    //
-    //        }
-    //
-    //        @Override
-    //        public void close() {}
-    //
-    //    }
 
     public static class EmptyCursor implements AbstractNextStateDescriptor.Cursor {
 
@@ -359,5 +263,24 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         public IntObjCursor<? extends E> cursor() {
             return target.cursor(constraint);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MddNodeNextStateDescriptor that = (MddNodeNextStateDescriptor) o;
+        return Objects.equals(node, that.node)
+                && Objects.equals(variableHandle, that.variableHandle);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(node, variableHandle);
+    }
+
+    @Override
+    public String toString() {
+        return node + ", " + variableHandle;
     }
 }
