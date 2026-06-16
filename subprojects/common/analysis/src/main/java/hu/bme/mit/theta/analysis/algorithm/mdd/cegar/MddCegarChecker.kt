@@ -34,8 +34,8 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.LiftNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
@@ -253,7 +253,7 @@ constructor(
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
     val structural =
       listOfNotNull(
-          lift(constraint) { MddNodeInitializer.of(it) },
+          lift(constraint) { MddNodePostcondition.of(it) },
           lift(seed?.trans?.bound) { MddNodeNextStateDescriptor.of(it) },
         )
         .reduceOrNull(AndNextStateDescriptor::of)
@@ -333,8 +333,8 @@ constructor(
     node: MddHandle,
     bound: MddHandle?,
   ): AbstractNextStateDescriptor.Postcondition {
-    val nodeInit = MddNodeInitializer.of(node)
-    return when (val lifted = lift(bound) { MddNodeInitializer.of(it) }) {
+    val nodeInit = MddNodePostcondition.of(node)
+    return when (val lifted = lift(bound) { MddNodePostcondition.of(it) }) {
       null -> nodeInit
       is AbstractNextStateDescriptor.Postcondition -> AndNextStateDescriptor.of(lifted, nodeInit)
       else -> AbstractNextStateDescriptor.Postcondition.terminalEmpty()
@@ -375,7 +375,7 @@ constructor(
    * A reach set or accumulated [handle] as an [AndNextStateDescriptor] operand, lifted over the
    * literal levels added since it was built; null if fully permissive (terminal-nonzero),
    * terminalEmpty if zero. [toDescriptor] wraps it ([MddNodeNextStateDescriptor] for the relation
-   * bound, [MddNodeInitializer] for an init/prop state bound).
+   * bound, [MddNodePostcondition] for an init/prop state bound).
    */
   private fun lift(
     handle: MddHandle?,
