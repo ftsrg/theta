@@ -32,10 +32,10 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ConstraintDrivenAndNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.LiftNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.NegativeNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
@@ -135,10 +135,9 @@ constructor(
 
       newLits.forEach(orders::createLevelOnTop)
 
-      val constraint =
-        if (useReachConstraint && reachExplicit != null)
-          orders.stateOrder.defaultSetSignature.topVariableHandle.getHandleFor(reachExplicit.node)
-        else null
+      // the previous iteration's reach set at its own (shorter) top; the constraint descriptor
+      // lifts it over the literal levels added this iteration
+      val constraint = if (useReachConstraint) reachExplicit else null
 
       val iter = runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred)
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
@@ -248,16 +247,21 @@ constructor(
     if (propSeedable) seed?.prop?.seed(listOf(propNode), newLits, literalToPred)
     val relSolverCalls = solverPool.checkCount - relSolverBefore
 
-    // relation = (⋃ transNodes) ∧ its accumulated upper bound, then constrained / on-the-fly killed
-    val nextStates: AbstractNextStateDescriptor =
-      NegativeNextStateDescriptor.of(
-        OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) }),
-        seed?.trans?.bound,
-      )
+    // relation = (⋃ transNodes) ∧ the fused reach constraint and accumulated bound, so the combined
+    // structural operand drives the relation probe once per key
+    val relationOr =
+      OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
+    val structural =
+      listOfNotNull(
+          lift(constraint) { MddNodeInitializer.of(it) },
+          lift(seed?.trans?.bound) { MddNodeNextStateDescriptor.of(it) },
+        )
+        .reduceOrNull(AndNextStateDescriptor::of)
+    val nextStates =
+      if (structural != null) AndNextStateDescriptor.of(structural, relationOr) else relationOr
 
     val effectiveNextStates =
-      if (constraint != null) ConstraintDrivenAndNextStateDescriptor.of(nextStates, constraint)
-      else if (useOnTheFlyReachability)
+      if (useOnTheFlyReachability)
         OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
       else nextStates
 
@@ -266,7 +270,7 @@ constructor(
     val provider = iterationStrategy.createProvider(stateSig.variableOrder)
     val stateSpace =
       provider.compute(
-        NegativeNextStateDescriptor.of(MddNodeInitializer.of(initNode), seed?.init?.bound),
+        boundedInitializer(initNode, seed?.init?.bound),
         effectiveNextStates,
         stateSig.topVariableHandle,
       )
@@ -321,11 +325,26 @@ constructor(
   }
 
   /**
-   * Filters [states] to those whose extension below [exprNode] is non-empty. Replaces
-   * `states.intersection(exprNode)` when the expression node lives in the state-expression order (a
-   * different graph with concrete witness levels), which delta set operations cannot combine with
-   * state-order handles. The get() probes cache witnesses into the expression node like any other
-   * exploration; keys the accumulated [bound] knows absent are skipped unprobed.
+   * The saturation initializer for state set [node], restricted by its accumulated [bound]: the
+   * bound drives by point probes where exhaustive, [node] through the lifted prefix where it permits.
+   * The bound over-approximates [node], so this only changes the exploration effort.
+   */
+  private fun boundedInitializer(
+    node: MddHandle,
+    bound: MddHandle?,
+  ): AbstractNextStateDescriptor.Postcondition {
+    val nodeInit = MddNodeInitializer.of(node)
+    return when (val lifted = lift(bound) { MddNodeInitializer.of(it) }) {
+      null -> nodeInit
+      is AbstractNextStateDescriptor.Postcondition -> AndNextStateDescriptor.of(lifted, nodeInit)
+      else -> AbstractNextStateDescriptor.Postcondition.terminalEmpty()
+    }
+  }
+
+  /**
+   * `states ∩ exprNode` when [exprNode] lives in the taller state-expression order, which delta set
+   * ops cannot combine with state-order handles. The get() probes cache witnesses into [exprNode];
+   * keys the accumulated [bound] knows absent are skipped unprobed.
    */
   private fun filterStates(states: MddHandle, exprNode: MddHandle, bound: MddHandle?): MddHandle {
     if (states.isTerminalZero || exprNode.isTerminalZero || bound?.isTerminalZero == true)
@@ -338,15 +357,13 @@ constructor(
     val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
     val cursor = states.cursor()
     while (cursor.moveNext()) {
-      val childBound =
-        if (boundAligned) NegativeNextStateDescriptor.childOf(boundEff!!, cursor.key()) ?: continue
-        else boundEff
-      val filtered =
-        filterStates(
-          cursor.value() as MddHandle,
-          exprNode.get(cursor.key()),
-          childBound,
-        )
+      val childBound: MddHandle?
+      if (boundAligned) {
+        val child = boundEff!!.node.get(cursor.key()) ?: boundEff.node.defaultValue()
+        if (child == null || child == boundEff.variableHandle.mddGraph.terminalZeroNode) continue
+        childBound = boundEff.variableHandle.lower.orElseThrow().getHandleFor(child)
+      } else childBound = boundEff
+      val filtered = filterStates(cursor.value() as MddHandle, exprNode.get(cursor.key()), childBound)
       if (!filtered.isTerminalZero) templateBuilder.set(cursor.key(), filtered.node)
     }
     return states.variableHandle.checkInNode(
@@ -354,13 +371,34 @@ constructor(
     )
   }
 
+  /**
+   * A reach set or accumulated [handle] as an [AndNextStateDescriptor] operand, lifted over the
+   * literal levels added since it was built; null if fully permissive (terminal-nonzero),
+   * terminalEmpty if zero. [toDescriptor] wraps it ([MddNodeNextStateDescriptor] for the relation
+   * bound, [MddNodeInitializer] for an init/prop state bound).
+   */
+  private fun lift(
+    handle: MddHandle?,
+    toDescriptor: (MddHandle) -> AbstractNextStateDescriptor,
+  ): AbstractNextStateDescriptor? =
+    handle?.let {
+      when {
+        it.isTerminal && !it.isTerminalZero -> null
+        it.isTerminalZero -> AbstractNextStateDescriptor.terminalEmpty()
+        else ->
+          LiftNextStateDescriptor.of(
+            toDescriptor(it),
+            it.variableHandle.variable.orElseThrow().traceInfo,
+          )
+      }
+    }
+
   private fun stateNode(expr: Expr<BoolType>, sig: MddSignature): MddHandle =
     sig.topVariableHandle.checkInNode(MddExpressionTemplate.of(expr, { it as Decl<*> }, solverPool))
 
   /**
-   * Projects the taller state-expression-order [node] to a state-order set, consulting the
-   * accumulated [bound] like the saturation initializer does: keys known absent are skipped and an
-   * exhaustive bound replaces open enumeration with point probes.
+   * Projects the taller state-expression-order [node] to a state-order set, bounding the projection
+   * by the accumulated [bound] via [boundedInitializer] so it explores only the bounded region.
    */
   private fun projectToStateOrder(
     node: MddHandle,
@@ -370,7 +408,7 @@ constructor(
     RelationalProductProviderImpl(stateSig.variableOrder)
       .compute(
         stateSig.variableOrder.mddGraph.handleForTop,
-        NegativeNextStateDescriptor.of(MddNodeInitializer.of(node), bound),
+        boundedInitializer(node, bound),
         stateSig.topVariableHandle,
       )
 

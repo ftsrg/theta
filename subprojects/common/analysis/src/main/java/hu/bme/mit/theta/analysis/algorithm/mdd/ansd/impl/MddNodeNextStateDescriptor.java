@@ -67,6 +67,10 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     private static AbstractNextStateDescriptor of(MddNode node, MddVariableHandle variableHandle) {
         if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
             return AbstractNextStateDescriptor.terminalEmpty();
+        if (node.isTerminal() && !variableHandle.isTerminal()) {
+            // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
+            return AbstractNextStateDescriptor.terminalIdentity();
+        }
         if (node.getRepresentation()
                 instanceof IdentityRepresentation identityExpressionRepresentation) {
             final var cont = identityExpressionRepresentation.getContinuation();

@@ -91,6 +91,31 @@ public interface AbstractNextStateDescriptor {
         static AbstractNextStateDescriptor.Postcondition terminalEmpty() {
             return TERMINAL_EMPTY;
         }
+
+        /** The full set (accepts every continuation): a bound cut at the data boundary, AND's identity. */
+        final class AcceptAll implements AbstractNextStateDescriptor.Postcondition {
+            @Override
+            public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+                    StateSpaceInfo localStateSpace) {
+                return IntObjMapView.empty(ACCEPT_ALL);
+            }
+
+            @Override
+            public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+                return Optional.empty();
+            }
+
+            @Override
+            public boolean evaluate() {
+                return true;
+            }
+        }
+
+        AcceptAll ACCEPT_ALL = new AcceptAll();
+
+        static AbstractNextStateDescriptor.Postcondition acceptAll() {
+            return ACCEPT_ALL;
+        }
     }
 
     static AbstractNextStateDescriptor terminalIdentity() {
