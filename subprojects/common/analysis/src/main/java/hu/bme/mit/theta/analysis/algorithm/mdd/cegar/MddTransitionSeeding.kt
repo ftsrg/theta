@@ -38,8 +38,8 @@ import hu.bme.mit.theta.core.utils.PathUtils
  * - under: a witness cached in iteration j's node decides every later literal syntactically;
  *   extended with those values it is a model of iteration k's node — [seedFromPrevious];
  * - upper: what iteration j knows absent stays absent after lifting — [extractBound] materializes
- *   the explored upper bound as a structural MDD, consumed by
- *   [hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.NegativeNextStateDescriptor].
+ *   the explored upper bound as a structural MDD, consumed as an AndNextStateDescriptor operand (the
+ *   relation bound and the init/prop initializer bound) and by `filterStates` for the property.
  */
 
 /** Cross-iteration knowledge of one seeded node kind. */

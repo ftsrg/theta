@@ -114,7 +114,7 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
                     @Override
                     public AbstractNextStateDescriptor defaultValue() {
-                        throw new UnsupportedOperationException();
+                        return null; // no default edge; lets a consumer probe this cursor-only view
                     }
 
                     @Override
@@ -153,7 +153,7 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
             @Override
             public boolean isEmpty() {
-                throw new UnsupportedOperationException();
+                return false; // never locally identity, so don't enumerate sources to decide
             }
 
             @Override
@@ -168,7 +168,8 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
             @Override
             public IntObjMapView<AbstractNextStateDescriptor> defaultValue() {
-                throw new UnsupportedOperationException();
+                // no default edge (the reversed relation is explicit)
+                return null;
             }
 
             @Override

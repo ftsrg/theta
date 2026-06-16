@@ -43,9 +43,12 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
             final MddNode node, final MddVariableHandle variableHandle) {
         if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) {
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
-        } else {
-            return new MddNodeInitializer(node, variableHandle);
         }
+        if (node.isTerminal() && !variableHandle.isTerminal()) {
+            // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
+            return AbstractNextStateDescriptor.Postcondition.acceptAll();
+        }
+        return new MddNodeInitializer(node, variableHandle);
     }
 
     public static AbstractNextStateDescriptor.Postcondition of(final MddHandle handle) {
