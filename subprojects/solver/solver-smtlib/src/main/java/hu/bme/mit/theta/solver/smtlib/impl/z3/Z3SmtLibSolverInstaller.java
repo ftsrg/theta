@@ -273,7 +273,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             case LINUX:
                 return "z3";
             case MAC:
-                return "z3.dmg";
+                return "z3";
             default:
                 throw new AssertionError();
         }
