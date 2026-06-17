@@ -94,6 +94,12 @@ class WitnessPredPrecSerializer : PredPrecSerializer {
         content = contents,
       )
 
+    logger.writeln(INFO, "FinalPrecisionsUsed: ${prec.preds.size}")
+    logger.writeln(
+      INFO,
+      "FinalPrecisionsExported: ${contents.mapNotNull { it.precision }.sumOf { it.values.size }}",
+    )
+
     return WitnessYamlConfig.encodeToString(listOf(witness))
   }
 
@@ -107,25 +113,27 @@ class WitnessPredPrecSerializer : PredPrecSerializer {
 
     val witness =
       WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), input)[0]
+    val predicates =
+      witness.content.mapNotNull { it.precision }.filter { it.type == PrecisionType.PREDICATE }
     val predSet =
-      witness.content
-        .mapNotNull { it.precision }
-        .filter { it.type == PrecisionType.PREDICATE }
-        .flatMap {
-          val vars = currentVars.filterInScope(it.scope, parseContext)
-          it.values.mapNotNull { value ->
-            try {
-              val expr = getBoolExpressionFromC(value, parseContext, false, false, logger, vars)
-              ExprUtils.simplify(expr)
-            } catch (e: RuntimeException) {
-              logger.writeln(
-                INFO,
-                "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})",
-              )
-              null
-            }
+      predicates.flatMap {
+        val vars = currentVars.filterInScope(it.scope, parseContext)
+        it.values.mapNotNull { value ->
+          try {
+            val expr = getBoolExpressionFromC(value, parseContext, false, false, logger, vars)
+            ExprUtils.simplify(expr)
+          } catch (e: RuntimeException) {
+            logger.writeln(
+              INFO,
+              "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})",
+            )
+            null
           }
         }
+      }
+
+    logger.writeln(INFO, "InitialPrecisionsFound: ${predicates.sumOf { it.values.size }}")
+    logger.writeln(INFO, "InitialPrecisionsUsed: ${predSet.size}")
 
     return PredPrec.of(predSet)
   }
@@ -160,6 +168,12 @@ class WitnessExplPrecSerializer : ExplPrecSerializer {
         content = contents,
       )
 
+    logger.writeln(INFO, "FinalPrecisionsUsed: ${prec.vars.size}")
+    logger.writeln(
+      INFO,
+      "FinalPrecisionsExported: ${contents.mapNotNull { it.precision }.sumOf { it.values.size }}",
+    )
+
     return WitnessYamlConfig.encodeToString(listOf(witness))
   }
 
@@ -173,27 +187,29 @@ class WitnessExplPrecSerializer : ExplPrecSerializer {
 
     val witness =
       WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), input)[0]
-    val vars =
-      witness.content
-        .mapNotNull { it.precision }
-        .filter { it.type == PrecisionType.EXPLICIT }
-        .flatMap {
-          val vars = currentVars.filterInScope(it.scope, parseContext)
-          it.values.flatMap { value ->
-            try {
-              val expr = getExpressionFromC(value, parseContext, false, false, logger, vars)
-              ExprUtils.getVars(expr)
-            } catch (e: RuntimeException) {
-              logger.writeln(
-                INFO,
-                "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})",
-              )
-              emptySet()
-            }
+    val variables =
+      witness.content.mapNotNull { it.precision }.filter { it.type == PrecisionType.EXPLICIT }
+    val varSet =
+      variables.flatMap {
+        val vars = currentVars.filterInScope(it.scope, parseContext)
+        it.values.flatMap { value ->
+          try {
+            val expr = getExpressionFromC(value, parseContext, false, false, logger, vars)
+            ExprUtils.getVars(expr)
+          } catch (e: RuntimeException) {
+            logger.writeln(
+              INFO,
+              "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})",
+            )
+            emptySet()
           }
         }
+      }
 
-    return ExplPrec.of(vars)
+    logger.writeln(INFO, "InitialPrecisionsFound: ${variables.sumOf { it.values.size }}")
+    logger.writeln(INFO, "InitialPrecisionsUsed: ${varSet.size}")
+
+    return ExplPrec.of(varSet)
   }
 }
 
