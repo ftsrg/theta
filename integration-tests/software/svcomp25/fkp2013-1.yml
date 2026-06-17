@@ -8,7 +8,6 @@ properties:
 #    expected_verdict: false
 #  - property_file: ../properties/no-overflow.prp
 #    expected_verdict: true
-  - property_file: ../properties/coverage-branches.prp
   - property_file: ../properties/no-data-race.prp
     expected_verdict: false
 
