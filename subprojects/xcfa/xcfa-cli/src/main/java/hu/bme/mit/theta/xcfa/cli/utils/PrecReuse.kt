@@ -182,7 +182,14 @@ class GenericExplPrecSerializer : ExplPrecSerializer {
     config: XcfaConfig<*, *>,
     parseContext: ParseContext,
     logger: Logger,
-  ) = "*:\n" + prec.usedVars.joinToString(separator = "\n") { it.name }
+  ) =
+    "*:\n" +
+      prec.usedVars
+        .joinToString(separator = "\n") { it.name }
+        .also {
+          logger.writeln(INFO, "FinalPrecisionsUsed: ${prec.usedVars.size}")
+          logger.writeln(INFO, "FinalPrecisionsExported: ${prec.usedVars.size}")
+        }
 
   override fun parse(
     input: String,
@@ -192,6 +199,10 @@ class GenericExplPrecSerializer : ExplPrecSerializer {
   ): ExplPrec {
     val varNames = removeScopes(input).trim().split(Regex("\\s+"))
     val vars = currentVars.filter { varNames.contains(it.name) }
+
+    logger.writeln(INFO, "InitialPrecisionsFound: ${varNames.size}")
+    logger.writeln(INFO, "InitialPrecisionsUsed: ${vars.size}")
+
     return ExplPrec.of(vars)
   }
 }
@@ -227,9 +238,12 @@ class GenericPredPrecSerializer : PredPrecSerializer {
             null
           }
         }
-        .joinToString(separator = "\n") { "(assert $it)" }
+    val joinedPreds = predicates.joinToString(separator = "\n") { "(assert $it)" }
 
-    return "$varDecls\n\n*:\n$predicates"
+    logger.writeln(INFO, "FinalPrecisionsUsed: ${prec.preds.size}")
+    logger.writeln(INFO, "FinalPrecisionsExported: ${predicates.size}")
+
+    return (if (varDecls.isNotEmpty()) "$varDecls\n\n" else "") + "*:\n$joinedPreds"
   }
 
   override fun parse(
@@ -271,6 +285,10 @@ class GenericPredPrecSerializer : PredPrecSerializer {
           null
         }
       }
+
+    logger.writeln(INFO, "InitialPrecisionsFound: ${savedPrec.terms.size}")
+    logger.writeln(INFO, "InitialPrecisionsUsed: ${preds.size}")
+
     return PredPrec.of(preds)
   }
 }
