@@ -53,7 +53,7 @@ jobs:
             MSG="${PR_TITLE}"$'\n\n'"${PR_BODY}"
 
           elif [[ "${{ github.event_name }}" == "push" ]]; then
-            PR_JSON=$(gh pr list --head "${{ github.ref_name }}" --state open --json title,body --limit 1 --jq '.[0] // empty')
+            PR_JSON=$(gh pr list --repo "${{ github.repository }}" --head "${{ github.ref_name }}" --state open --json title,body --limit 1 --jq '.[0] // empty')
             if [ -n "$PR_JSON" ]; then
               TITLE=$(echo "$PR_JSON" | jq -r '.title')
               BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
