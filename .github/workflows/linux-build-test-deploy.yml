@@ -3,6 +3,7 @@ on:
   push:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:
   workflow_dispatch:
     inputs:
       message:
