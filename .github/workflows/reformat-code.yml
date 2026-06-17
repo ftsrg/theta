@@ -1,5 +1,5 @@
 
-name: Reformat code
+name: Reformat code and apply copyright headers
 on: 
   workflow_dispatch:
     inputs:

@@ -34,7 +34,7 @@ jobs:
           comment_tag: 'reformat'
           mode: 'recreate'
           message: |
-            :exclamation: Please run `./gradlew spotlessApply` on your branch to fix formatting.
+            :exclamation: Please run `./gradlew spotlessApply` on your branch to fix formatting, or add a comment with `/format` to let the bot do it for you.
 
       - name: Delete Comment
         if: github.event_name == 'pull_request'
