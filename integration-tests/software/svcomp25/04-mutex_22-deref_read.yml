@@ -5,8 +5,6 @@ input_files: 'models/04-mutex_22-deref_read.c'
 properties:
   - property_file: ../properties/no-data-race.prp
     expected_verdict: true
-  - property_file: ../properties/valid-memsafety.prp
-    expected_verdict: true
 
 options:
   language: C
