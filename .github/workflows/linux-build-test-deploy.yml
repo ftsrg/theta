@@ -29,6 +29,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_MESSAGE: ${{ inputs.message }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           IS_RELEASE="false"
           MSG=""
@@ -36,11 +38,23 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "$WORKFLOW_MESSAGE" && "${{ github.ref }}" == "refs/heads/master" ]]; then
             IS_RELEASE="true"
             MSG="$WORKFLOW_MESSAGE"
+
           elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/master" ]]; then
             PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
               -H "Accept: application/vnd.github+json" --jq '.[0] // empty')
             if [ -n "$PR_JSON" ]; then
               IS_RELEASE="true"
+              TITLE=$(echo "$PR_JSON" | jq -r '.title')
+              BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
+              MSG="${TITLE}"$'\n\n'"${BODY}"
+            fi
+
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            MSG="${PR_TITLE}"$'\n\n'"${PR_BODY}"
+
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            PR_JSON=$(gh pr list --head "${{ github.ref_name }}" --state open --json title,body --limit 1 --jq '.[0] // empty')
+            if [ -n "$PR_JSON" ]; then
               TITLE=$(echo "$PR_JSON" | jq -r '.title')
               BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
               MSG="${TITLE}"$'\n\n'"${BODY}"
