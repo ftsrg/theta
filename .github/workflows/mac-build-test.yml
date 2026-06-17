@@ -8,7 +8,7 @@ on:
 permissions: write-all
 
 concurrency: 
-  group: mac-${{ github.ref }}
+  group: mac-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

@@ -8,7 +8,7 @@ on:
 permissions: write-all
 
 concurrency: 
-  group: win-${{ github.ref }}
+  group: win-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

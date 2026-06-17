@@ -8,7 +8,7 @@ on:
 permissions: read-all
 
 concurrency:
-  group: sonar-${{ github.ref }}
+  group: sonar-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

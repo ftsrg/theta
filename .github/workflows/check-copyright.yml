@@ -8,7 +8,7 @@ on:
 permissions: write-all
 
 concurrency: 
-  group: copyright-${{ github.ref }}
+  group: copyright-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
