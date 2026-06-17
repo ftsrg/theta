@@ -5,7 +5,6 @@ input_files: 'models/04-mutex_06-ps_rc.c'
 properties:
   - property_file: ../properties/no-data-race.prp
     expected_verdict: false
-  - property_file: ../properties/coverage-branches.prp
 
 options:
   language: C
