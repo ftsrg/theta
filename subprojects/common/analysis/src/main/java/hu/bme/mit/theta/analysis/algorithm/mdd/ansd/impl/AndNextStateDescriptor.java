@@ -27,9 +27,11 @@ import java.util.Optional;
 /**
  * The intersection of two next-state relations, descended in lockstep. Operand shapes follow the
  * {@link AbstractNextStateDescriptor} algebra: a {@link AbstractNextStateDescriptor.Postcondition}
- * constrains the target only, a full relation constrains source and target, and a don't-care prefix
- * is supplied by {@link LiftNextStateDescriptor}. Enumeration drives the exhaustive (no-default)
- * side and probes the other by key, so pass the structural/explicit operand as {@code lhs}.
+ * constrains the target only, a full relation constrains source and target, and a bound presented
+ * over taller levels floats down the don't-care prefix itself (see {@link MddNodeNextStateDescriptor}
+ * and {@link MddNodePostcondition} on a skipped-level handle). Enumeration drives the exhaustive
+ * (no-default) side and probes the other by key, so pass the structural/explicit operand as {@code
+ * lhs}.
  */
 public final class AndNextStateDescriptor implements AbstractNextStateDescriptor {
 
@@ -322,7 +324,7 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
     }
 
     // isLocallyIdentity uses the interface default (inspects the intersected diagonal/off-diagonal),
-    // correct whether an operand is identity or a Lift prefix leaves the other constraining.
+    // correct whether an operand is identity or a don't-care prefix leaves the other constraining.
 
     @Override
     public boolean evaluate() {

@@ -25,34 +25,32 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.Objects;
 
-/** The target-only (postcondition) descriptor of an MDD node, descending one level per key. */
+/**
+ * The target-only (postcondition) descriptor of an MDD node, descending one level per key. The
+ * descriptor reads its children through the {@link MddHandle}'s own {@link
+ * hu.bme.mit.delta.collections.IntObjMapView} interpreter, so a bound presented over taller levels
+ * added since it was built (a handle whose node sits below its variable handle) is floated down the
+ * don't-care prefix automatically: the interpreter serves every value from the same node via a
+ * default edge until the node's own level is reached.
+ */
 public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcondition {
 
-    private final MddNode node;
+    private final MddHandle handle;
 
-    private final MddVariableHandle variableHandle;
-
-    private MddNodePostcondition(MddNode node, MddVariableHandle variableHandle) {
-        this.node = Preconditions.checkNotNull(node);
-        this.variableHandle = Preconditions.checkNotNull(variableHandle);
-        Preconditions.checkArgument(
-                (variableHandle.isTerminal() && node.isTerminal())
-                        || node.isOn(variableHandle.getVariable().orElseThrow()));
+    private MddNodePostcondition(MddHandle handle) {
+        this.handle = Preconditions.checkNotNull(handle);
     }
 
-    private static AbstractNextStateDescriptor.Postcondition of(
-            MddNode node, MddVariableHandle variableHandle) {
+    public static AbstractNextStateDescriptor.Postcondition of(MddHandle handle) {
+        final MddNode node = handle.getNode();
+        final MddVariableHandle variableHandle = handle.getVariableHandle();
         if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
         if (node.isTerminal() && !variableHandle.isTerminal()) {
             // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
             return AbstractNextStateDescriptor.Postcondition.acceptAll();
         }
-        return new MddNodePostcondition(node, variableHandle);
-    }
-
-    public static AbstractNextStateDescriptor.Postcondition of(MddHandle handle) {
-        return of(handle.getNode(), handle.getVariableHandle());
+        return new MddNodePostcondition(handle);
     }
 
     @Override
@@ -62,8 +60,7 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<>(
-                node, n -> of(n, variableHandle.getLower().orElseThrow()));
+        return new IntObjMapViews.Transforming<>(handle, h -> of((MddHandle) h));
     }
 
     @Override
@@ -71,17 +68,16 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MddNodePostcondition that = (MddNodePostcondition) o;
-        return Objects.equals(node, that.node)
-                && Objects.equals(variableHandle, that.variableHandle);
+        return Objects.equals(handle, that.handle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(node, variableHandle);
+        return Objects.hashCode(handle);
     }
 
     @Override
     public String toString() {
-        return node + ", " + variableHandle;
+        return handle.toString();
     }
 }
