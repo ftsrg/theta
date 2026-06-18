@@ -245,8 +245,8 @@ constructor(
 
     val relationOr =
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
-    // each bound sits at its own (shorter) top; presented under the current order top it is a skip
-    // handle that the descriptor's interpreter floats over the literal levels added since
+    // present each bound under the current top so the descriptor's interpreter floats it over the
+    // literal levels added since it was built
     val constraint =
       listOfNotNull(
           prevStateSpace?.let {
@@ -325,9 +325,8 @@ constructor(
   }
 
   /**
-   * The saturation initializer for state set [node], restricted by its accumulated [bound]: the
-   * bound drives by point probes where exhaustive, [node] through the lifted prefix where it permits.
-   * The bound over-approximates [node], so this only changes the exploration effort.
+   * The saturation initializer for [node], restricted by its accumulated [bound] — an
+   * over-approximation, so this only changes the exploration effort, not the set.
    */
   private fun boundedInitializer(
     node: MddHandle,

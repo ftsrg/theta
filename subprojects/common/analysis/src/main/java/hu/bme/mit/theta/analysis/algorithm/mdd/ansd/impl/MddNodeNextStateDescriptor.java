@@ -33,11 +33,8 @@ import java.util.Optional;
 
 /**
  * The full-relation (source and target) descriptor of an MDD node, descending two levels per key.
- * The descriptor reads its children through the {@link MddHandle}'s own {@link
- * hu.bme.mit.delta.collections.IntObjMapView} interpreter, so a bound presented over taller levels
- * added since it was built (a handle whose node sits below its variable handle) is floated down the
- * don't-care prefix automatically: the interpreter serves every value from the same node via a
- * default edge until the node's own level is reached.
+ * Read through the handle's interpreter, so a node sitting below its variable handle floats down the
+ * don't-care prefix (default edges) until its own level.
  */
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
@@ -81,9 +78,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
         final RecursiveIntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
-        // the handle indexes the source; on the diagonal the target equals the source, so the source
-        // child is indexed by the same key — the interpreter floats both for a below-node, and an
-        // absent source default yields the (empty) terminal so a real relation level still drives
+        // diagonal: target equals source, so index the source child by the same key (null = default)
         return new ConstrainedIntObjMapView<>(
                 new IntObjMapViews.Transforming<>(
                         handle,
