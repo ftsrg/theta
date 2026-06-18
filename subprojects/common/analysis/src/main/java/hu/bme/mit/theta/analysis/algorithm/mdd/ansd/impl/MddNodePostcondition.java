@@ -24,12 +24,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.Objects;
 
 /**
- * The target-only (postcondition) descriptor of an MDD node, descending one level per key. The
- * descriptor reads its children through the {@link MddHandle}'s own {@link
- * hu.bme.mit.delta.collections.IntObjMapView} interpreter, so a bound presented over taller levels
- * added since it was built (a handle whose node sits below its variable handle) is floated down the
- * don't-care prefix automatically: the interpreter serves every value from the same node via a
- * default edge until the node's own level is reached.
+ * The target-only (postcondition) descriptor of an MDD node, descending one level per key. Read
+ * through the handle's interpreter, so a node sitting below its variable handle floats down the
+ * don't-care prefix (default edges) until its own level.
  */
 public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcondition {
 
@@ -41,8 +38,7 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
 
     public static AbstractNextStateDescriptor.Postcondition of(MddHandle handle) {
         if (handle.isTerminalZero()) return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
-        // a non-zero terminal above the bottom is a bound cut at the data boundary: the interpreter
-        // floats it as a default edge, accepting any continuation below
+        // a non-zero terminal above the bottom is the data-boundary cut: floats, accepting below
         return new MddNodePostcondition(handle);
     }
 
