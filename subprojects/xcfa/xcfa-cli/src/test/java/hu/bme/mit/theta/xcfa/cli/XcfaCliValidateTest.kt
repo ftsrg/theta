@@ -160,6 +160,41 @@ class XcfaCliValidateTest {
         )
       )
     }
+
+    @JvmStatic
+    fun multithreadedWitnesses(): Stream<Arguments> {
+      return Stream.of(
+        // a valid concurrent (format 2.2, thread_id) witness is confirmed
+        Arguments.of(
+          "/c/witness-validation/concurrent-unreach.i",
+          "/c/witness-validation/concurrent-unreach.witness.yml",
+          null,
+          "SafetyResult Unsafe",
+        ),
+        // a witness whose segment sequence is infeasible is refuted
+        Arguments.of(
+          "/c/witness-validation/concurrent-unreach.i",
+          "/c/witness-validation/concurrent-unreach.refuted-witness.yml",
+          null,
+          "SafetyResult Safe",
+        ),
+        // a no-data-race witness with a multi-follow final segment is confirmed
+        Arguments.of(
+          "/c/witness-validation/concurrent-data-race.i",
+          "/c/witness-validation/concurrent-data-race.witness.yml",
+          "--property no-data-race.prp",
+          "SafetyResult Unsafe",
+        ),
+      )
+    }
+
+    @JvmStatic
+    fun multithreadedRoundTrips(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of("/c/witness-validation/concurrent-unreach.i", null),
+        Arguments.of("/c/witness-validation/concurrent-data-race.i", "--property no-data-race.prp"),
+      )
+    }
   }
 
   @ParameterizedTest
@@ -220,6 +255,79 @@ class XcfaCliValidateTest {
       "${output.getVerdict()} != ${validationOutput.getVerdict()}"
     }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
+  }
+
+  @ParameterizedTest
+  @MethodSource("multithreadedWitnesses")
+  fun testMultithreadedWitnessValidation(
+    filePath: String,
+    witnessPath: String,
+    extraArgs: String?,
+    expectedVerdict: String,
+  ) {
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--witness",
+        javaClass.getResource(witnessPath)!!.path,
+        "--stacktrace",
+        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
+        "--search",
+        "DFS",
+        "--por",
+        "SPOR",
+      )
+    val output = runCatchingOutput(params)
+    assertTrue(output.getVerdict().contains(expectedVerdict)) {
+      "Expected $expectedVerdict for $filePath with $witnessPath, got: ${output.getVerdict()}"
+    }
+    println("Witness validation of $filePath with $witnessPath: ${output.getVerdict()}")
+  }
+
+  @ParameterizedTest
+  @MethodSource("multithreadedRoundTrips")
+  fun testMultithreadedWitnessRoundTrip(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
+        "--search",
+        "DFS",
+        "--por",
+        "SPOR",
+      )
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    assertTrue(witness.extension == "yml") {
+      "Expected a YAML (format 2.2) witness for the multi-threaded violation, got $witness"
+    }
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
+    println("Round-trip witness validation of $filePath: ${output.getVerdict()}")
   }
 
   @ParameterizedTest
