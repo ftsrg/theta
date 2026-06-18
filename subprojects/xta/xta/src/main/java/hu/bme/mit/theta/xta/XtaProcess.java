@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -45,7 +45,7 @@ public final class XtaProcess {
     private XtaProcess(final XtaSystem system, final String name) {
         this.system = checkNotNull(system);
         this.name = checkNotNull(name);
-        locs = Containers.createSet();
+        locs = CollectionUtil.createSet();
         edges = new ArrayList<>();
 
         unmodLocs = Collections.unmodifiableCollection(locs);

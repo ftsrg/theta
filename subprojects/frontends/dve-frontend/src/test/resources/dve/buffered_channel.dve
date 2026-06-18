@@ -1,0 +1,23 @@
+// Buffered channel: two processes communicating via a buffered channel
+
+channel buf_ch {byte} [2];
+
+process Producer {
+    state p0, p1;
+    init p0;
+    trans
+        p0 -> p1 { sync buf_ch!42; },
+        p1 -> p0 {};
+}
+
+process Consumer {
+    byte received = 0;
+    state c0, c1;
+    init c0;
+    trans
+        c0 -> c1 { sync buf_ch?received; },
+        c1 -> c0 {};
+}
+
+system async;
+

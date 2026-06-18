@@ -191,7 +191,7 @@ afterEvaluate {
 							line.replace("TOOL_NAME", toolName)
 								.replace("TOOL_VERSION", versionStr)
 						}
-						rename { scriptName because "Executable entry point of tool" }
+						rename { "theta-start.sh" because "Executable entry point of tool" }
             filePermissions { unix(0b111101101) } // 0755 in octal = rwxr-xr-x
 					}
 				} else {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String =
   XstsCliBaseCommand(name = name, help = help) {
 
   protected val reversed: Boolean by option(help = "Reversed state space exploration").flag()
-  private val livenessToSafety: Boolean by
+  protected val livenessToSafety: Boolean by
     option(help = "Use liveness to safety transformation").flag()
-  private val cegar: Boolean by option(help = "Wrap analysis in CEGAR loop").flag()
+  protected val cegar: Boolean by option(help = "Wrap analysis in CEGAR loop").flag()
 
   fun <Pr : InvariantProof> createChecker(
     xsts: XSTS,

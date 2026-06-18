@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,21 +22,17 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 class XstsCliCegar :
   XstsCliBaseCommand(
@@ -50,8 +46,8 @@ class XstsCliCegar :
     option(help = "Refinement strategy to use").enum<Refinement>().default(Refinement.SEQ_ITP)
   private val search: Search by
     option(help = "Search strategy to use").enum<Search>().default(Search.BFS)
-  private val refinementSolver: String? by option(help = "Use a different solver for abstraction")
-  private val abstractionSolver: String? by option(help = "Use a different solver for refinement")
+  private val refinementSolver: String? by option(help = "Use a different solver for refinement")
+  private val abstractionSolver: String? by option(help = "Use a different solver for abstraction")
   private val predsplit: PredSplit by option().enum<PredSplit>().default(PredSplit.WHOLE)
   private val maxenum: Int by option().int().default(0)
   private val autoexpl: AutoExpl by option().enum<AutoExpl>().default(AutoExpl.NEWOPERANDS)
@@ -61,32 +57,24 @@ class XstsCliCegar :
   private val optimizestmts: OptimizeStmts by
     option().enum<OptimizeStmts>().default(OptimizeStmts.ON)
 
-  private fun printResult(
-    status: SafetyResult<out ARG<*, *>?, out Trace<*, *>?>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
-    if (!outputOptions.benchmarkMode) {
-      logger.writeln(Logger.Level.RESULT, status.toString())
-      return
-    }
-    printCommonResult(status, xsts, totalTimeMs)
+  override fun printExtraBenchmarkCells(status: SafetyResult<*, *>) {
     val stats = status.stats.orElse(CegarStatistics(0, 0, 0, 0)) as CegarStatistics
+    val arg = status.proof as ARG<*, *>
     listOf(
         stats.algorithmTimeMs,
         stats.abstractorTimeMs,
         stats.refinerTimeMs,
         stats.iterations,
-        status.proof!!.size(),
-        status.proof!!.depth,
-        status.proof!!.meanBranchingFactor,
+        arg.size(),
+        arg.depth,
+        arg.meanBranchingFactor,
       )
       .forEach(writer::cell)
-    writer.newRow()
   }
 
   private fun writeVisualStatus(
-    status: SafetyResult<out ARG<*, *>?, out Trace<out State?, out Action?>?>
+    status:
+      SafetyResult<out ARG<*, *>?, out hu.bme.mit.theta.analysis.Trace<out State?, out Action?>?>
   ) {
     if (outputOptions.visualize == null) return
     val graph =
@@ -95,17 +83,7 @@ class XstsCliCegar :
     GraphvizWriter.getInstance().writeFile(graph, outputOptions.visualize!!)
   }
 
-  override fun run() {
-    try {
-      doRun()
-    } catch (e: Exception) {
-      printError(e)
-      exitProcess(1)
-    }
-  }
-
-  private fun doRun() {
-    registerSolverManagers()
+  override fun doRun() {
     val abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver ?: solver)
     val refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver ?: solver)
     val xsts = inputOptions.loadXsts()
@@ -123,7 +101,7 @@ class XstsCliCegar :
     val sw = Stopwatch.createStarted()
     val result = config.check()
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
     writeVisualStatus(result)
   }

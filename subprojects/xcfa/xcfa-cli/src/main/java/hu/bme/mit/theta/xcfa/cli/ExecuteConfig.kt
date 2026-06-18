@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -50,8 +51,10 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.xcfa
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
@@ -96,6 +99,13 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
   }
+  if (config.backendConfig.backend == Backend.PATH_ENUMERATION) {
+    val pathEnumerationConfig = config.backendConfig.specConfig
+    pathEnumerationConfig as PathEnumerationConfig
+    val random = Random(pathEnumerationConfig.porRandomSeed)
+    XcfaSporLts.random = random
+    XcfaDporLts.random = random
+  }
   if (
     config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
       config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
@@ -128,9 +138,19 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
+  rule("NoDataRaceWithPathEnumeration") {
+    config.backendConfig.backend == Backend.PATH_ENUMERATION &&
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+    // technically only when pointers are present, but we don't know that yet
+  }
   rule("NoAaporWhenDataRace") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+  }
+  rule("NoAaporOrDporPathEnumeration") {
+    (config.backendConfig.specConfig as? PathEnumerationConfig)?.porLevel.let {
+      it != null && (it.isAbstractionAware || it.isDynamic)
+    }
   }
   rule("DPORWithoutDFS") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&
@@ -393,11 +413,22 @@ internal fun concretizeTrace(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
 ): Trace<XcfaState<ExplState>, XcfaAction> =
-  XcfaTraceConcretizer.concretize(
-    trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-    getSolver(
-      config.outputConfig.witnessConfig.concretizerSolver,
-      config.outputConfig.witnessConfig.validateConcretizerSolver,
-    ),
-    parseContext,
-  )
+  if (config.frontendConfig.inputType == InputType.BTOR2) {
+    Btor2XcfaTraceConcretizer.concretize(
+      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+      getSolver(
+        config.outputConfig.witnessConfig.concretizerSolver,
+        config.outputConfig.witnessConfig.validateConcretizerSolver,
+      ),
+      parseContext,
+    )
+  } else {
+    XcfaTraceConcretizer.concretize(
+      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+      getSolver(
+        config.outputConfig.witnessConfig.concretizerSolver,
+        config.outputConfig.witnessConfig.validateConcretizerSolver,
+      ),
+      parseContext,
+    )
+  }

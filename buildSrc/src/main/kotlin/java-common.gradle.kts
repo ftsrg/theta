@@ -112,7 +112,7 @@ spotless {
     java {
         importOrder("java|javax", "hu.bme.", "")
         removeUnusedImports()
-        googleJavaFormat("1.25.2").aosp().reflowLongStrings()
+        googleJavaFormat("1.35.0").aosp().reflowLongStrings()
         formatAnnotations()
     }
     kotlin {

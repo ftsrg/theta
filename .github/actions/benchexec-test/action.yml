@@ -31,7 +31,7 @@ runs:
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       name: Get tool
       with:
-        name: ${{ inputs.tool }}
+        name: release-${{ inputs.tool }}
         path: release/
     - name: Unzip tool
       shell: bash
@@ -50,7 +50,7 @@ runs:
         cat "$XML"
 
         folder=$(dirname $(find . -name "theta.jar" | head -n1))
-        benchexec "$XML" -n 2 --no-container --tool-directory "$folder"
+        timeout -k 60 3600 benchexec "$XML" --no-container --tool-directory "$folder"
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:

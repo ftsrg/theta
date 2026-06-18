@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import com.google.common.collect.Sets;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.clock.constr.*;
 import hu.bme.mit.theta.core.clock.op.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -458,7 +458,7 @@ final class DBM {
     }
 
     public Collection<ClockConstr> getConstrs() {
-        final Collection<ClockConstr> result = Containers.createSet();
+        final Collection<ClockConstr> result = CollectionUtil.createSet();
 
         for (final VarDecl<RatType> leftVar : signature) {
             for (final VarDecl<RatType> rightVar : signature) {

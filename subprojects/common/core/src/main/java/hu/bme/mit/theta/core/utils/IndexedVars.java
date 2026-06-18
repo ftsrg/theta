@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import java.util.Collection;
@@ -97,14 +97,14 @@ public final class IndexedVars {
         private boolean built;
 
         private Builder() {
-            varSets = Containers.createMap();
+            varSets = CollectionUtil.createMap();
             built = false;
         }
 
         public void add(final int i, final VarDecl<?> varDecl) {
             checkState(!built, "Already built.");
             if (!varSets.containsKey(i)) {
-                varSets.put(i, Containers.createSet());
+                varSets.put(i, CollectionUtil.createSet());
             }
             varSets.get(i).add(varDecl);
         }
@@ -116,7 +116,7 @@ public final class IndexedVars {
             }
 
             if (!varSets.containsKey(i)) {
-                varSets.put(i, Containers.createSet());
+                varSets.put(i, CollectionUtil.createSet());
             }
             varSets.get(i).addAll(varDecls);
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.z3.*;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -83,7 +83,7 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
         this.z3Solver = z3Solver;
 
         assertions = new StackImpl<>();
-        assumptions = Containers.createMap();
+        assumptions = CollectionUtil.createMap();
         markers = new StackImpl<>();
     }
 
@@ -352,7 +352,7 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
 
         public Z3Model(final Model z3Model) {
             this.z3Model = z3Model;
-            constToExpr = Containers.createMap();
+            constToExpr = CollectionUtil.createMap();
         }
 
         @Override

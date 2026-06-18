@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
@@ -83,7 +83,7 @@ public class MddNodeCacheVisualizer {
     public Graph visualize(final MddNode rootNode) {
         final Graph graph = new Graph(SYMBOLIC_NODE_ID, SYMBOLIC_NODE_LABEL);
 
-        final Set<MddNode> traversed = Containers.createSet();
+        final Set<MddNode> traversed = CollectionUtil.createSet();
 
         traverse(graph, rootNode, traversed);
 

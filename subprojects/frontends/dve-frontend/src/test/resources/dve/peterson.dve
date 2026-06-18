@@ -1,0 +1,35 @@
+// Peterson's mutual-exclusion algorithm — 2 processes
+// Safety property: !(P_0.CS && P_1.CS)
+
+byte turn = 0;
+byte flag[2] = {0, 0};
+
+process P_0 {
+    byte j = 0;
+    state NCS, CS, wait, q2, q3;
+    init NCS;
+    trans
+        NCS  -> q2   { effect flag[0] = 1, j = 1; },
+        q2   -> q3   { guard j < 2; },
+        q3   -> q2   { guard flag[j] == 0 || turn == 0; effect j = j + 1; },
+        q3   -> wait { guard flag[j] != 0 && turn != 0; },
+        wait -> q2   { guard flag[j] == 0 || turn == 0; effect j = j + 1; },
+        q2   -> CS   { guard j == 2; },
+        CS   -> NCS  { effect flag[0] = 0, turn = 1; };
+}
+
+process P_1 {
+    byte j = 0;
+    state NCS, CS, wait, q2, q3;
+    init NCS;
+    trans
+        NCS  -> q2   { effect flag[1] = 1, j = 0; },
+        q2   -> q3   { guard j < 2; },
+        q3   -> q2   { guard flag[j] == 0 || turn == 1; effect j = j + 1; },
+        q3   -> wait { guard flag[j] != 0 && turn != 1; },
+        wait -> q2   { guard flag[j] == 0 || turn == 1; effect j = j + 1; },
+        q2   -> CS   { guard j == 2; },
+        CS   -> NCS  { effect flag[1] = 0, turn = 0; };
+}
+
+system async;
