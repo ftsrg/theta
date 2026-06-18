@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 
 import hu.bme.mit.delta.java.mdd.MddHandle
+import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation
@@ -37,15 +38,18 @@ import hu.bme.mit.theta.core.utils.PathUtils
  * k > j. Both sides of the exploration sandwich transfer:
  * - under: a witness cached in iteration j's node decides every later literal syntactically;
  *   extended with those values it is a model of iteration k's node — [seedFromPrevious];
- * - upper: what iteration j knows absent stays absent after lifting — [extractBound] materializes
- *   the explored upper bound as a structural MDD, consumed as an AndNextStateDescriptor operand (the
- *   relation bound and the init/prop initializer bound) and by `filterStates` for the property.
+ * - upper: what iteration j confirmed present (its SAT cache) over-approximates iteration k after
+ *   lifting — [extractBound] materializes that present cache as a structural MDD, consumed as an
+ *   AndNextStateDescriptor operand (the relation bound and the init/prop initializer bound) and by
+ *   `filterStates` for the property. Only iteration j is read: its constrained exploration already
+ *   excludes everything earlier iterations pruned, so the bound needs no accumulation.
  */
 
 /** Cross-iteration knowledge of one seeded node kind. */
 internal class KindKnowledge(
   private val binding: LiteralBinding,
   private val dataBoundary: Any?,
+  private val boundOrder: MddVariableOrder,
   private val label: String,
   private val logger: Logger,
 ) {
@@ -53,7 +57,7 @@ internal class KindKnowledge(
   var prev: MddHandle? = null
     private set
 
-  /** The accumulated upper bound, consumed by NegativeNextStateDescriptor. */
+  /** The previous iteration's upper bound: its SAT cache snapshot, lifted and AND-ed on consumption. */
   var bound: MddHandle? = null
     private set
 
@@ -76,7 +80,7 @@ internal class KindKnowledge(
   fun update() {
     val node = nodes.singleOrNull() ?: return
     prev = node
-    bound = extractBound(node, bound, dataBoundary)
+    bound = extractBound(node, boundOrder.defaultSetSignature.topVariableHandle, dataBoundary)
   }
 }
 
@@ -85,11 +89,13 @@ internal class SeedKnowledge(
   transBinding: LiteralBinding,
   transDataBoundary: Any?,
   stateDataBoundary: Any?,
+  transBoundOrder: MddVariableOrder,
+  stateBoundOrder: MddVariableOrder,
   logger: Logger,
 ) {
-  val trans = KindKnowledge(transBinding, transDataBoundary, "Transition", logger)
-  val init = KindKnowledge(stateBinding, stateDataBoundary, "Init", logger)
-  val prop = KindKnowledge(stateBinding, stateDataBoundary, "Property", logger)
+  val trans = KindKnowledge(transBinding, transDataBoundary, transBoundOrder, "Transition", logger)
+  val init = KindKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Init", logger)
+  val prop = KindKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Property", logger)
 }
 
 /** Binds a literal's defining predicate to the decls of the levels the literal occupies. */

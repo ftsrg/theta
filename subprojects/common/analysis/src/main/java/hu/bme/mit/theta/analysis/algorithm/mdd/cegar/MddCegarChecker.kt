@@ -115,6 +115,8 @@ constructor(
           transitionBinding(concreteModel),
           orders.transDataBoundary,
           orders.stateDataBoundary,
+          orders.transBoundOrder!!,
+          orders.stateBoundOrder!!,
           logger,
         )
       else null
@@ -216,6 +218,10 @@ constructor(
     val stateSig: MddSignature = orders.stateOrder.defaultSetSignature
     val transSig: MddSignature = orders.transOrder.defaultSetSignature
     val stateExprSig: MddSignature? = orders.stateExprOrder?.defaultSetSignature
+    // the bounds live in mirror orders; their current top floats a bound built last iteration over
+    // this iteration's new literal levels, exactly as the source top would
+    val transBoundSig: MddSignature? = orders.transBoundOrder?.defaultSetSignature
+    val stateBoundSig: MddSignature? = orders.stateBoundOrder?.defaultSetSignature
     // the on-the-fly kill switch fires on reaching a terminal below the prop node, which a
     // node with concrete witness levels never does
     val propSeedable = stateExprSig != null && !useOnTheFlyReachability
@@ -253,7 +259,7 @@ constructor(
             MddNodePostcondition.of(stateSig.topVariableHandle.getHandleFor(it.node))
           },
           seed?.trans?.bound?.let {
-            MddNodeNextStateDescriptor.of(transSig.topVariableHandle.getHandleFor(it.node))
+            MddNodeNextStateDescriptor.of(transBoundSig!!.topVariableHandle.getHandleFor(it.node))
           },
         )
         .reduceOrNull(AndNextStateDescriptor::of)
@@ -270,7 +276,10 @@ constructor(
     val provider = iterationStrategy.createProvider(stateSig.variableOrder)
     val stateSpace =
       provider.compute(
-        boundedInitializer(initNode, seed?.init?.bound),
+        boundedInitializer(
+          initNode,
+          seed?.init?.bound?.let { stateBoundSig!!.topVariableHandle.getHandleFor(it.node) },
+        ),
         effectiveNextStates,
         stateSig.topVariableHandle,
       )
@@ -325,15 +334,16 @@ constructor(
   }
 
   /**
-   * The saturation initializer for [node], restricted by its accumulated [bound] — an
-   * over-approximation, so this only changes the exploration effort, not the set.
+   * The saturation initializer for [node], restricted by [boundLift] — its previous-iteration bound,
+   * already lifted to the current top — an over-approximation, so this only changes the exploration
+   * effort, not the set.
    */
   private fun boundedInitializer(
     node: MddHandle,
-    bound: MddHandle?,
+    boundLift: MddHandle?,
   ): AbstractNextStateDescriptor.Postcondition {
     val nodeInit = MddNodePostcondition.of(node)
-    val boundInit = bound?.let { MddNodePostcondition.of(node.variableHandle.getHandleFor(it.node)) }
+    val boundInit = boundLift?.let { MddNodePostcondition.of(it) }
     return if (boundInit != null) AndNextStateDescriptor.of(boundInit, nodeInit) else nodeInit
   }
 
@@ -416,6 +426,18 @@ private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: B
     if (useTransitionSeeding)
       JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
     else null
+  // the extracted bounds live in fresh mirror graphs growing in lockstep with the trans /
+  // state-expression orders: checking the structural bound nodes into the source graphs would
+  // collide them with the procedural expression nodes there and force solver-driven equality
+  // enumeration during canonization
+  val transBoundOrder: MddVariableOrder? =
+    if (useTransitionSeeding)
+      JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
+    else null
+  val stateBoundOrder: MddVariableOrder? =
+    if (useTransitionSeeding)
+      JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
+    else null
   val identityExprs = mutableListOf<Expr<BoolType>>()
 
   // topmost concrete witness level of each order; bound extraction cuts here, keeping the
@@ -436,7 +458,7 @@ private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: B
       // concrete witness levels sit below all abstract levels; the state order does not get them
       dataOrdered.reversed().forEach {
         createTransLevelOnTop(it, concreteModel.transOffsetIndex[it])
-        stateExprOrder!!.createOnTop(MddVariableDescriptor.create(it.getConstDecl(0), 0))
+        createStateExprLevelOnTop(MddVariableDescriptor.create(it.getConstDecl(0), 0))
       }
       transDataBoundary =
         transOrder.defaultSetSignature.topVariableHandle.variable.map { it.traceInfo }.orElse(null)
@@ -461,7 +483,7 @@ private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: B
    */
   fun createLevelOnTop(v: VarDecl<*>) {
     stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
-    stateExprOrder?.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
+    createStateExprLevelOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
     // abstract vars (ctrl vars and literals) always have offset 1 in the abstract relation
     createTransLevelOnTop(v, 1)
   }
@@ -469,11 +491,23 @@ private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: B
   private fun createTransLevelOnTop(v: VarDecl<*>, targetIndex: Int) {
     val domainSize = 0
     if (targetIndex > 0) {
-      transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(targetIndex), domainSize))
+      addTransLevel(MddVariableDescriptor.create(v.getConstDecl(targetIndex), domainSize))
     } else {
-      transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize))
+      addTransLevel(MddVariableDescriptor.create(v.getConstDecl(1), domainSize))
       identityExprs.add(Eq(v.getConstDecl(0).ref, v.getConstDecl(1).ref))
     }
-    transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize))
+    addTransLevel(MddVariableDescriptor.create(v.getConstDecl(0), domainSize))
+  }
+
+  // the trans / state-expression orders and their bound mirrors grow in lockstep, so a bound built
+  // at one iteration's top lifts over later literal levels exactly as the source node does
+  private fun addTransLevel(desc: MddVariableDescriptor) {
+    transOrder.createOnTop(desc)
+    transBoundOrder?.createOnTop(desc)
+  }
+
+  private fun createStateExprLevelOnTop(desc: MddVariableDescriptor) {
+    stateExprOrder?.createOnTop(desc)
+    stateBoundOrder?.createOnTop(desc)
   }
 }
