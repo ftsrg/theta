@@ -325,7 +325,7 @@ jobs:
           PGP_KEY: ${{ secrets.PGP_KEY }}
           PGP_PWD: ${{ secrets.PGP_PWD }}
         with:
-          arguments: publish
+          arguments: publishAggregationToCentralPortal
   
   test-docker:
     strategy:
