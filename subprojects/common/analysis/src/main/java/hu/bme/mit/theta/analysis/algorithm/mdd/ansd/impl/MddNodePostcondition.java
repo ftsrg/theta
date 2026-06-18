@@ -48,7 +48,7 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
         if (node.isTerminal() && !variableHandle.isTerminal()) {
             // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
-            return AbstractNextStateDescriptor.Postcondition.acceptAll();
+            return AnyNextStateDescriptor.ANY;
         }
         return new MddNodePostcondition(handle);
     }
