@@ -46,12 +46,10 @@ interface XcfaWitnessWriter {
       when (property.inputProperty) {
         ErrorDetection.ERROR_LOCATION,
         ErrorDetection.OVERFLOW ->
-          if (parseContext.multiThreading) {
-            safetyResult.getWitnessWriter(YamlWitnessWriter(), GraphmlWitnessWriter())
-          } else {
-            YamlWitnessWriter()
-            // not supported witness for Arrays, Floats, and Heap is not detected
-          }
+          // multi-threaded violation witnesses use the format 2.2 concurrency extension
+          // (thread_id, multi-follow segments)
+          YamlWitnessWriter()
+        // not supported witness for Arrays, Floats, and Heap is not detected
 
         ErrorDetection.MEMSAFETY ->
           if (parseContext.multiThreading) {
@@ -62,7 +60,7 @@ interface XcfaWitnessWriter {
 
         ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
 
-        ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
+        ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
         ErrorDetection.TERMINATION -> YamlWitnessWriter()
 

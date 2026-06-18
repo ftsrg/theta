@@ -236,6 +236,12 @@ typealias Segment = List<Waypoint>
  *   syntactically invalid.
  * @param action Action `follow` means that the waypoint should be passed through. Action `avoid`
  *   means that the waypoint should be avoided.
+ * @param threadId The optional `thread_id` (witness format 2.2, concurrency extension) names the
+ *   thread that executes the waypoint: `0` (or an absent field) is the main thread, and `k` is the
+ *   thread registered by the k-th thread-creating `function_enter` waypoint of the witness (a
+ *   `function_enter` waypoint located at a thread-creating call such as `pthread_create`, which
+ *   itself belongs to the spawning thread). The segment order of the witness is the cross-thread
+ *   (happens-before) order of the waypoints.
  */
 @Serializable
 data class WaypointContent(
@@ -243,6 +249,7 @@ data class WaypointContent(
   val constraint: Constraint? = null,
   val location: Location,
   val action: Action,
+  @SerialName("thread_id") val threadId: Int? = null,
 )
 
 @Serializable
