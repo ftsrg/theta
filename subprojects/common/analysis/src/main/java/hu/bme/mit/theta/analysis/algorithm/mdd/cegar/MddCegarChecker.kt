@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
+import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.delta.mdd.MddInterpreter
@@ -33,7 +34,6 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.LiftNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor
@@ -135,8 +135,6 @@ constructor(
 
       newLits.forEach(orders::createLevelOnTop)
 
-      // the previous iteration's reach set at its own (shorter) top; the constraint descriptor
-      // lifts it over the literal levels added this iteration
       val constraint = if (useReachConstraint) reachExplicit else null
 
       val iter = runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred)
@@ -211,7 +209,7 @@ constructor(
 
   private fun runIteration(
     model: MonolithicExpr,
-    constraint: MddHandle?,
+    prevStateSpace: MddHandle?,
     orders: CegarOrders,
     seed: SeedKnowledge?,
     newLits: List<VarDecl<BoolType>>,
@@ -247,18 +245,18 @@ constructor(
     if (propSeedable) seed?.prop?.seed(listOf(propNode), newLits, literalToPred)
     val relSolverCalls = solverPool.checkCount - relSolverBefore
 
-    // relation = (⋃ transNodes) ∧ the fused reach constraint and accumulated bound, so the combined
-    // structural operand drives the relation probe once per key
     val relationOr =
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
-    val structural =
+    val constraint =
       listOfNotNull(
-          lift(constraint) { MddNodePostcondition.of(it) },
-          lift(seed?.trans?.bound) { MddNodeNextStateDescriptor.of(it) },
+          lift(prevStateSpace, stateSig.topVariableHandle) { MddNodePostcondition.of(it) },
+          lift(seed?.trans?.bound, transSig.topVariableHandle) {
+            MddNodeNextStateDescriptor.of(it)
+          },
         )
         .reduceOrNull(AndNextStateDescriptor::of)
     val nextStates =
-      if (structural != null) AndNextStateDescriptor.of(structural, relationOr) else relationOr
+      if (constraint != null) AndNextStateDescriptor.of(constraint, relationOr) else relationOr
 
     val effectiveNextStates =
       if (useOnTheFlyReachability)
@@ -334,7 +332,7 @@ constructor(
     bound: MddHandle?,
   ): AbstractNextStateDescriptor.Postcondition {
     val nodeInit = MddNodePostcondition.of(node)
-    return when (val lifted = lift(bound) { MddNodePostcondition.of(it) }) {
+    return when (val lifted = lift(bound, node.variableHandle) { MddNodePostcondition.of(it) }) {
       null -> nodeInit
       is AbstractNextStateDescriptor.Postcondition -> AndNextStateDescriptor.of(lifted, nodeInit)
       else -> AbstractNextStateDescriptor.Postcondition.terminalEmpty()
@@ -379,17 +377,16 @@ constructor(
    */
   private fun lift(
     handle: MddHandle?,
+    top: MddVariableHandle,
     toDescriptor: (MddHandle) -> AbstractNextStateDescriptor,
   ): AbstractNextStateDescriptor? =
     handle?.let {
       when {
         it.isTerminal && !it.isTerminalZero -> null
         it.isTerminalZero -> AbstractNextStateDescriptor.terminalEmpty()
-        else ->
-          LiftNextStateDescriptor.of(
-            toDescriptor(it),
-            it.variableHandle.variable.orElseThrow().traceInfo,
-          )
+        // the bound sits at its own (shorter) top; presented under the current [top] it becomes a
+        // skip handle that delta self-aligns over the literal levels added since (default-edge wraps)
+        else -> toDescriptor(top.getHandleFor(it.node))
       }
     }
 
