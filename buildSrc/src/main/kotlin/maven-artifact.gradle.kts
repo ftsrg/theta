@@ -106,19 +106,6 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            name = "OSSRH"
-            val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            credentials {
-                // Support both username/password and token-based credentials
-                username = System.getenv("OSSRH_USERNAME") ?: System.getenv("OSSRH_TOKEN_USERNAME")
-                password = System.getenv("OSSRH_PASSWORD") ?: System.getenv("OSSRH_TOKEN_PASSWORD")
-            }
-        }
-    }
 }
 
 signing {
