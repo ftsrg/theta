@@ -56,15 +56,13 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         return new AndNextStateDescriptor(lhs, rhs);
     }
 
-    /** Two postconditions AND into a postcondition (the init/prop initializer); the accept-all Any is the identity. */
+    /** Two postconditions AND into a postcondition (the init/prop initializer). */
     public static AbstractNextStateDescriptor.Postcondition of(
             AbstractNextStateDescriptor.Postcondition lhs,
             AbstractNextStateDescriptor.Postcondition rhs) {
         if (isEmptyDescriptor(lhs) || isEmptyDescriptor(rhs)) {
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
         }
-        if (lhs == AnyNextStateDescriptor.ANY) return rhs;
-        if (rhs == AnyNextStateDescriptor.ANY) return lhs;
         return new AndPostcondition(lhs, rhs);
     }
 

@@ -18,7 +18,6 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
-import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.delta.mdd.MddInterpreter
@@ -247,11 +246,15 @@ constructor(
 
     val relationOr =
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
+    // each bound sits at its own (shorter) top; presented under the current order top it is a skip
+    // handle that the descriptor's interpreter floats over the literal levels added since
     val constraint =
       listOfNotNull(
-          lift(prevStateSpace, stateSig.topVariableHandle) { MddNodePostcondition.of(it) },
-          lift(seed?.trans?.bound, transSig.topVariableHandle) {
-            MddNodeNextStateDescriptor.of(it)
+          prevStateSpace?.let {
+            MddNodePostcondition.of(stateSig.topVariableHandle.getHandleFor(it.node))
+          },
+          seed?.trans?.bound?.let {
+            MddNodeNextStateDescriptor.of(transSig.topVariableHandle.getHandleFor(it.node))
           },
         )
         .reduceOrNull(AndNextStateDescriptor::of)
@@ -332,11 +335,8 @@ constructor(
     bound: MddHandle?,
   ): AbstractNextStateDescriptor.Postcondition {
     val nodeInit = MddNodePostcondition.of(node)
-    return when (val lifted = lift(bound, node.variableHandle) { MddNodePostcondition.of(it) }) {
-      null -> nodeInit
-      is AbstractNextStateDescriptor.Postcondition -> AndNextStateDescriptor.of(lifted, nodeInit)
-      else -> AbstractNextStateDescriptor.Postcondition.terminalEmpty()
-    }
+    val boundInit = bound?.let { MddNodePostcondition.of(node.variableHandle.getHandleFor(it.node)) }
+    return if (boundInit != null) AndNextStateDescriptor.of(boundInit, nodeInit) else nodeInit
   }
 
   /**
@@ -368,26 +368,6 @@ constructor(
       MddStructuralTemplate.of(templateBuilder.buildAndReset())
     )
   }
-
-  /**
-   * A reach set or accumulated [handle] as an [AndNextStateDescriptor] operand, lifted over the
-   * literal levels added since it was built; null if fully permissive (terminal-nonzero),
-   * terminalEmpty if zero. [toDescriptor] wraps it ([MddNodeNextStateDescriptor] for the relation
-   * bound, [MddNodePostcondition] for an init/prop state bound).
-   */
-  private fun lift(
-    handle: MddHandle?,
-    top: MddVariableHandle,
-    toDescriptor: (MddHandle) -> AbstractNextStateDescriptor,
-  ): AbstractNextStateDescriptor? =
-    handle?.let {
-      when {
-        it.isTerminal && !it.isTerminalZero -> null
-        // the bound sits at its own (shorter) top; presented under the current [top] it becomes a
-        // skip handle that delta self-aligns over the literal levels added since (default-edge wraps)
-        else -> toDescriptor(top.getHandleFor(it.node))
-      }
-    }
 
   private fun stateNode(expr: Expr<BoolType>, sig: MddSignature): MddHandle =
     sig.topVariableHandle.checkInNode(MddExpressionTemplate.of(expr, { it as Decl<*> }, solverPool))

@@ -19,8 +19,6 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.Objects;
@@ -42,14 +40,9 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
     }
 
     public static AbstractNextStateDescriptor.Postcondition of(MddHandle handle) {
-        final MddNode node = handle.getNode();
-        final MddVariableHandle variableHandle = handle.getVariableHandle();
-        if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
-            return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
-        if (node.isTerminal() && !variableHandle.isTerminal()) {
-            // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
-            return AnyNextStateDescriptor.ANY;
-        }
+        if (handle.isTerminalZero()) return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
+        // a non-zero terminal above the bottom is a bound cut at the data boundary: the interpreter
+        // floats it as a default edge, accepting any continuation below
         return new MddNodePostcondition(handle);
     }
 
