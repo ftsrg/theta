@@ -23,13 +23,15 @@ import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import java.util.*;
 
 public final class XtaSystem {
-
     private final List<XtaProcess> processes;
     private final Collection<VarDecl<?>> dataVars;
     private final Collection<VarDecl<RatType>> clockVars;
@@ -38,6 +40,9 @@ public final class XtaSystem {
     private final List<XtaProcess> unmodProcesses;
     private final Collection<VarDecl<?>> unmodDataVars;
     private final Collection<VarDecl<RatType>> unmodClockVars;
+
+    private Expr<BoolType> prop;
+    private PropertyKind propertyKind = PropertyKind.NONE;
 
     private XtaSystem() {
         processes = new ArrayList<>();
@@ -95,5 +100,59 @@ public final class XtaSystem {
         final XtaProcess process = XtaProcess.create(this, name);
         processes.add(process);
         return process;
+    }
+
+    public Expr<BoolType> getProp() {
+        return prop;
+    }
+
+    public PropertyKind getPropertyKind() {
+        return propertyKind;
+    }
+
+    public void setProp(final Expr<BoolType> _prop, final PropertyKind _propertyKind) {
+
+        prop = _prop;
+        propertyKind = _propertyKind;
+        // ErrorProcess
+        XtaProcess process = createProcess("ErrorProc");
+        final Collection<Expr<BoolType>> invars = Collections.emptySet();
+        Loc initloc = process.createLoc("InitLoc", XtaProcess.LocKind.NORMAL, invars);
+        process.setInitLoc(initloc);
+        Loc errorLoc = process.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
+        final Collection<Expr<BoolType>> guards = ExprUtils.getConjuncts(ExprUtils.simplify(prop));
+        process.createEdge(
+                initloc,
+                errorLoc,
+                Collections.emptyList(),
+                guards,
+                Optional.empty(),
+                Collections.emptyList());
+
+        // Edges to ErrorLocations from COMMITTED locations
+
+        for (XtaProcess proc : processes) {
+            if (!proc.getName().equals("ErrorProc")) {
+                Loc own_errorLoc = proc.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
+                for (Loc loc : proc.getLocs()) {
+                    if (loc.getKind().equals(XtaProcess.LocKind.COMMITTED))
+                        proc.createEdge(
+                                loc,
+                                own_errorLoc,
+                                Collections.emptyList(),
+                                guards,
+                                Optional.empty(),
+                                Collections.emptyList());
+                }
+            }
+        }
+    }
+
+    public enum PropertyKind {
+        AG,
+        AF,
+        EG,
+        EF,
+        NONE
     }
 }

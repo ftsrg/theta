@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -122,7 +122,6 @@ public abstract class XtaAction extends StmtAction {
     }
 
     public static final class BasicXtaAction extends XtaAction {
-
         private final Edge edge;
         private final List<Loc> targetLocs;
 
@@ -176,6 +175,7 @@ public abstract class XtaAction extends StmtAction {
                 final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
                 addClocksNonNegative(builder, getClockVars());
                 addInvariants(builder, getSourceLocs());
+                addSelections(builder, edge);
                 addGuards(builder, edge);
                 addUpdates(builder, edge);
                 addInvariants(builder, targetLocs);
@@ -188,10 +188,41 @@ public abstract class XtaAction extends StmtAction {
             return result;
         }
 
+        private static final int HASH_SEED = 1519;
+        private volatile int hashCode = 0;
+
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + getClockVars().hashCode();
+                result = 31 * result + getSourceLocs().hashCode();
+                result = 31 * result + edge.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof BasicXtaAction) {
+                final BasicXtaAction that = (BasicXtaAction) obj;
+                return this.getClockVars().equals(that.getClockVars())
+                        && this.getSourceLocs().equals(that.getSourceLocs())
+                        && this.edge.equals(that.edge);
+            } else {
+                return false;
+            }
+        }
+
         @Override
         public String toString() {
             return Utils.lispStringBuilder(getClass().getSimpleName())
                     .body()
+                    .addAll(edge.getSelections())
                     .addAll(edge.getGuards())
                     .addAll(edge.getUpdates())
                     .toString();
@@ -199,7 +230,6 @@ public abstract class XtaAction extends StmtAction {
     }
 
     public static final class BinaryXtaAction extends XtaAction {
-
         private final Edge emitEdge;
         private final Edge recvEdge;
         private final List<Loc> targetLocs;
@@ -276,6 +306,8 @@ public abstract class XtaAction extends StmtAction {
                 final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
                 addClocksNonNegative(builder, getClockVars());
                 addInvariants(builder, getSourceLocs());
+                addSelections(builder, emitEdge);
+                addSelections(builder, recvEdge);
                 addSync(builder, emitEdge, recvEdge);
                 addGuards(builder, emitEdge);
                 addGuards(builder, recvEdge);
@@ -291,9 +323,43 @@ public abstract class XtaAction extends StmtAction {
             return result;
         }
 
+        private static final int HASH_SEED = 2737;
+        private volatile int hashCode = 0;
+
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + getClockVars().hashCode();
+                result = 31 * result + getSourceLocs().hashCode();
+                result = 31 * result + emitEdge.hashCode();
+                result = 31 * result + recvEdge.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof BinaryXtaAction) {
+                final BinaryXtaAction that = (BinaryXtaAction) obj;
+                return this.getClockVars().equals(that.getClockVars())
+                        && this.getSourceLocs().equals(that.getSourceLocs())
+                        && this.emitEdge.equals(that.emitEdge)
+                        && this.recvEdge.equals(that.recvEdge);
+            } else {
+                return false;
+            }
+        }
+
         @Override
         public String toString() {
             return Utils.lispStringBuilder(getClass().getSimpleName())
+                    .add(emitEdge.getSelections())
+                    .add(recvEdge.getSelections())
                     .add(emitEdge.getSync().get())
                     .add(recvEdge.getSync().get())
                     .body()
@@ -306,7 +372,6 @@ public abstract class XtaAction extends StmtAction {
     }
 
     public static final class BroadcastXtaAction extends XtaAction {
-
         private final Edge emitEdge;
         private final List<Edge> recvEdges;
         private final List<Collection<Edge>> nonRecvEdges;
@@ -441,6 +506,8 @@ public abstract class XtaAction extends StmtAction {
                 final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
                 addClocksNonNegative(builder, getClockVars());
                 addInvariants(builder, getSourceLocs());
+                addSelections(builder, emitEdge);
+                recvEdges.stream().forEachOrdered(recvEdge -> addSelections(builder, recvEdge));
                 recvEdges.stream().forEachOrdered(recvEdge -> addSync(builder, emitEdge, recvEdge));
                 addGuards(builder, emitEdge);
                 recvEdges.stream().forEachOrdered(recvEdge -> addGuards(builder, recvEdge));
@@ -469,9 +536,43 @@ public abstract class XtaAction extends StmtAction {
             return result;
         }
 
+        private static final int HASH_SEED = 3778;
+        private volatile int hashCode = 0;
+
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + getClockVars().hashCode();
+                result = 31 * result + getSourceLocs().hashCode();
+                result = 31 * result + emitEdge.hashCode();
+                result = 31 * result + recvEdges.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof BroadcastXtaAction) {
+                final BroadcastXtaAction that = (BroadcastXtaAction) obj;
+                return this.getClockVars().equals(that.getClockVars())
+                        && this.getSourceLocs().equals(that.getSourceLocs())
+                        && this.emitEdge.equals(that.emitEdge)
+                        && this.recvEdges.equals(that.recvEdges);
+            } else {
+                return false;
+            }
+        }
+
         @Override
         public String toString() {
             final LispStringBuilder builder = Utils.lispStringBuilder(getClass().getSimpleName());
+
+            builder.add(emitEdge.getSelections());
 
             builder.add(emitEdge.getSync().get()).body();
 
@@ -484,6 +585,7 @@ public abstract class XtaAction extends StmtAction {
                                             Utils.lispStringBuilder("enabled")
                                                     .add(edge.getSync().get())
                                                     .body()
+                                                    .add(edge.getSelections())
                                                     .addAll(edge.getGuards())));
 
             builder.addAll(
@@ -518,6 +620,10 @@ public abstract class XtaAction extends StmtAction {
     private static void addInvariants(
             final ImmutableList.Builder<Stmt> builder, final List<Loc> locs) {
         locs.forEach(l -> l.getInvars().forEach(i -> builder.add(Assume(i.toExpr()))));
+    }
+
+    private static void addSelections(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
+        edge.getSelections().forEach(s -> builder.add(s.toStmt()));
     }
 
     private static void addSync(

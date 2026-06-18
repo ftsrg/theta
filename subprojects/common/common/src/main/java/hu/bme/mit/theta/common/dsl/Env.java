@@ -15,7 +15,9 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import hu.bme.mit.theta.common.Utils;
@@ -55,19 +57,8 @@ public final class Env {
     public Object eval(final Symbol symbol) {
         checkNotNull(symbol);
         final Object value = currentFrame.eval(symbol);
-        checkArgument(symbol != null, "Symbol " + symbol.getName() + " is undefined");
+        checkArgument(value != null, "Symbol " + symbol.getName() + " is undefined");
         return value;
-    }
-
-    @Override
-    public String toString() {
-        StringJoiner sj = new StringJoiner("\n", "Env( ", " )");
-        Frame frame = currentFrame;
-        while (frame != null) {
-            sj.add(frame.toString());
-            frame = frame.parent;
-        }
-        return sj.toString();
     }
 
     public <S extends Symbol, V extends Object> Object compute(
@@ -83,6 +74,23 @@ public final class Env {
         return value;
     }
 
+    public void defineInParent(final Symbol symbol, final Object value) {
+        checkNotNull(symbol);
+        checkNotNull(value);
+        currentFrame.parent.define(symbol, value);
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner sj = new StringJoiner("\n", "Env( ", " )");
+        Frame frame = currentFrame;
+        while (frame != null) {
+            sj.add(frame.toString());
+            frame = frame.parent;
+        }
+        return sj.toString();
+    }
+
     private static final class Frame {
         private final Frame parent;
         private final Map<Symbol, Object> symbolToValue;
@@ -94,8 +102,7 @@ public final class Env {
 
         public void define(final Symbol symbol, final Object value) {
             checkArgument(
-                    symbolToValue.get(symbol) == null,
-                    "Symbol " + symbol.getName() + " is already defined");
+                    eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
             symbolToValue.put(symbol, value);
         }
 

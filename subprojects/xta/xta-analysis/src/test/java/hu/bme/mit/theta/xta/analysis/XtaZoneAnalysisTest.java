@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ public final class XtaZoneAnalysisTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {"/csma-2.xta"},
-                    {"/fddi-2.xta"},
-                    {"/fischer-2-32-64.xta"},
-                    {"/lynch-2-16.xta"},
-                    {"/broadcast.xta"},
+                    {"/model/csma-2.xta"},
+                    {"/model/fddi-2.xta"},
+                    {"/model/fischer-2-32-64.xta"},
+                    {"/model/lynch-2-16.xta"},
+                    {"/model/broadcast.xta"},
                 });
     }
 
@@ -67,7 +67,8 @@ public final class XtaZoneAnalysisTest {
         final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
         final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis =
                 XtaExplAnalysis.create(system);
-        final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.getInstance();
+        final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis =
+                XtaZoneAnalysis.create(system.getInitLocs());
         final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>>
                 prodAnalysis = Prod2Analysis.create(explAnalysis, zoneAnalysis);
         final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis =

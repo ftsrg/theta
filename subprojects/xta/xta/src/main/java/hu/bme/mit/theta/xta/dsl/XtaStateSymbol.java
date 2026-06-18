@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.Collections;
 
 final class XtaStateSymbol implements Symbol {
 
-    private final String name;
+    private String name;
     private final LocKind kind;
     private final XtaExpression expression;
 
@@ -89,5 +89,16 @@ final class XtaStateSymbol implements Symbol {
 
         final Loc loc = process.createLoc(process.getName() + "_" + name, kind, invars);
         return loc;
+    }
+
+    public XtaStateSymbol copyAndChangeName(String _name) {
+        XtaStateSymbol res = new XtaStateSymbol(this);
+        res.name = _name;
+        return res;
+    }
+
+    private XtaStateSymbol(XtaStateSymbol _state) {
+        kind = _state.kind;
+        expression = _state.expression;
     }
 }

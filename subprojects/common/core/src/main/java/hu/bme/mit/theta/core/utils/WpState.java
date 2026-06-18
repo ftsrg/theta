@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
+import com.google.common.collect.Lists;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
@@ -172,8 +173,12 @@ public final class WpState {
         }
 
         @Override
-        public WpState visit(SequenceStmt stmt, WpState param) {
-            throw new UnsupportedOperationException();
+        public WpState visit(final SequenceStmt stmt, WpState state) {
+            WpState res = state;
+            for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
+                res = subStmt.accept(this, state);
+            }
+            return res;
         }
 
         @Override
@@ -240,8 +245,12 @@ public final class WpState {
         }
 
         @Override
-        public WpState visit(SequenceStmt stmt, WpState param) {
-            throw new UnsupportedOperationException();
+        public WpState visit(final SequenceStmt stmt, WpState state) {
+            WpState res = state;
+            for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
+                res = subStmt.accept(this, state);
+            }
+            return res;
         }
 
         @Override
