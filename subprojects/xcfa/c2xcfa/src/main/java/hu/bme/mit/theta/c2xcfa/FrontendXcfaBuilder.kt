@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -210,9 +210,7 @@ class FrontendXcfaBuilder(
       }
       val type = CComplexType.getType(flatVariable.ref, parseContext)
       if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
-        builder.addVar(flatVariable) {
-          type.getValue("$ptrCnt")
-        }
+        builder.addVar(flatVariable) { type.getValue("$ptrCnt") }
         if (MemsafetyPass.enabled) {
           val fitsall = Fitsall(null, parseContext)
           val size = type.fields.size
