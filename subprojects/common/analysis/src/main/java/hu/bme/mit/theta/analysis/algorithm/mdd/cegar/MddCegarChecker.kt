@@ -42,7 +42,6 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepr
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.RelationalProductProviderImpl
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
@@ -286,10 +285,10 @@ constructor(
 
     val trace =
       if (violatingSize != 0L) {
-        // trace generation does set operations between state sets and the init node, so the
-        // taller init node is projected to a state-order set first
+        // trace generation does set operations between state sets and the taller init node, so the
+        // init node is brought to a state-order set: reachable ∩ init = init (init ⊆ reachable)
         val traceInitNode =
-          if (stateExprSig != null) projectToStateOrder(initNode, seed?.init?.bound, stateSig)
+          if (stateExprSig != null) filterStates(stateSpace, initNode, seed?.init?.bound)
           else initNode
         generateTrace(
           transNodes,
@@ -371,22 +370,6 @@ constructor(
 
   private fun stateNode(expr: Expr<BoolType>, sig: MddSignature): MddHandle =
     sig.topVariableHandle.checkInNode(MddExpressionTemplate.of(expr, { it as Decl<*> }, solverPool))
-
-  /**
-   * Projects the taller state-expression-order [node] to a state-order set, bounding the projection
-   * by the accumulated [bound] via [boundedInitializer] so it explores only the bounded region.
-   */
-  private fun projectToStateOrder(
-    node: MddHandle,
-    bound: MddHandle?,
-    stateSig: MddSignature,
-  ): MddHandle =
-    RelationalProductProviderImpl(stateSig.variableOrder)
-      .compute(
-        stateSig.variableOrder.mddGraph.handleForTop,
-        boundedInitializer(node, bound),
-        stateSig.topVariableHandle,
-      )
 
   private fun statisticsOf(iter: IterationResult, totalTimeMs: Long) =
     MddAnalysisStatistics(
