@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -364,6 +364,14 @@ data class XcfaProcessState(
                 Assign(
                   cast(it.key.changeVars(lookup), it.key.type),
                   cast(it.key.changeVars(tempLookup).ref, it.key.type),
+                )
+              )
+            } +
+            xcfaProcedure.varInits.filterNotNullValues().map { (varDecl, initializer) ->
+              StmtLabel(
+                Assign(
+                  cast(varDecl.changeVars(lookup), varDecl.type),
+                  cast(initializer(), varDecl.type),
                 )
               )
             }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
         name = name,
         manager = passManager,
         params = params.toMutableList(),
-        vars = vars.toMutableSet(),
+        varInits = varInits.toMutableMap(),
         locs = locs.map { newLocs[it]!! }.toMutableSet(),
         edges =
           edges
