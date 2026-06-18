@@ -1,0 +1,12 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/termination-memory-linkedlists/cll_by_lseg_traverse-alloca.i --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/termination-memory-linkedlists/cll_by_lseg_traverse-alloca.i' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64 --input sv-benchmarks/c/termination-memory-linkedlists/cll_by_lseg_traverse-alloca.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.lambda$visitUnaryExpressionSizeOrAlignOf$16(ExpressionVisitor.java:581), java.lang.NullPointerException: Cannot invoke "hu.bme.mit.theta.core.decl.VarDecl.getRef()" because the return value of "hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(String)" is null)
+Error: class java.lang.NullPointerException Cannot invoke "hu.bme.mit.theta.core.decl.VarDecl.getRef()" because the return value of "hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(String)" is null (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#lambda$visitUnaryExpressionSizeOrAlignOf$16:581, java.util.Optional#or:313)

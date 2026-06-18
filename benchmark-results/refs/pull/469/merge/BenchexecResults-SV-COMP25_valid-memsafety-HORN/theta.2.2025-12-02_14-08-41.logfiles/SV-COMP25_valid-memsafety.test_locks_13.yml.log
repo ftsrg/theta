@@ -1,0 +1,26 @@
+Thorn/theta-start.sh sv-benchmarks/c/locks/test_locks_13.c --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/locks/test_locks_13.c' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32 --input sv-benchmarks/c/locks/test_locks_13.c --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 510 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Using CHC portfolio
+
+Current configuration: Eldarica-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/locks/test_locks_13.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=eldarica:2.2, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/locks/test_locks_13.c), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 561 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []

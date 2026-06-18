@@ -1,0 +1,37 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Heap
+date:                    Mon, 2025-12-01 16:10:14 UTC
+tool:                    Theta 6.27.11
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3239.773 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Heap
+Run set 1 of 6 with options '--svcomp --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                              status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------
+ldv-regression/1_3.yml                                 ERROR (frontend failed, before parsing finished)        1.45        0.57        None
+ldv-regression/alias_of_return.c_1.yml                 true                             5.16        2.66        None
+ldv-regression/alias_of_return.yml                     true                             5.34        2.61        None
+ldv-regression/alias_of_return_2.c_1.yml               true                             5.26        2.60        None
+ldv-regression/alias_of_return_2.yml                   true                             5.41        2.64        None
+ldv-regression/alt_test.yml                            false(unreach-call)              9.39        3.81        None
+ldv-regression/callfpointer.yml                        ERROR (frontend failed, before parsing finished)        1.55        0.61        None
+ldv-regression/ex3_forlist.yml                         TIMEOUT                         40.31       35.24        None

@@ -1,0 +1,152 @@
+Thorn/theta-start.sh sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64 --input sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 335 ms)
+ParsingResult Success
+Alias graph size: 3 -> [2, 1, 1]
+Using CHC portfolio
+
+Current configuration: Eldarica-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=eldarica:2.2, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 432 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 3 -> [2, 1, 1]
+subprocess: Exception in thread "main" java.lang.IllegalStateException: Only inlined XCFAs work right now
+subprocess: 	at com.google.common.base.Preconditions.checkState(Preconditions.java:534)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:72)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:270)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=1))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: Golem-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=golem:0.9.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 371 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 3 -> [2, 1, 1]
+subprocess: Exception in thread "main" java.lang.IllegalStateException: Only inlined XCFAs work right now
+subprocess: 	at com.google.common.base.Preconditions.checkState(Preconditions.java:534)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:72)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:270)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=1))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: Z3native-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=Z3:new, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 399 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 3 -> [2, 1, 1]
+subprocess: Exception in thread "main" java.lang.IllegalStateException: Only inlined XCFAs work right now
+subprocess: 	at com.google.common.base.Preconditions.checkState(Preconditions.java:534)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:72)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:270)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=1))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: Z3-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=z3:4.15.3, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 371 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 3 -> [2, 1, 1]
+subprocess: Exception in thread "main" java.lang.IllegalStateException: Only inlined XCFAs work right now
+subprocess: 	at com.google.common.base.Preconditions.checkState(Preconditions.java:534)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:72)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:270)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+subprocess: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=1))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=1)
+Could not handle trigger ErrorCodeException(code=1) (Available triggers: [])
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: Eldarica-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=eldarica:2.2, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 49 ms)
+ParsingResult Success
+Alias graph size: 3 -> [2, 1, 1]
+Caught exception: java.lang.IllegalStateException: Only inlined XCFAs work right now
+Handling exception as Anything
+Current configuration: Golem-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=300000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=golem:0.9.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 41 ms)
+ParsingResult Success
+Alias graph size: 3 -> [2, 1, 1]
+Caught exception: java.lang.IllegalStateException: Only inlined XCFAs work right now
+Handling exception as Anything
+Current configuration: Z3native-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=Z3:new, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 34 ms)
+ParsingResult Success
+Alias graph size: 3 -> [2, 1, 1]
+Caught exception: java.lang.IllegalStateException: Only inlined XCFAs work right now
+Handling exception as Anything
+Current configuration: Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=z3:4.15.3, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 34 ms)
+ParsingResult Success
+Alias graph size: 3 -> [2, 1, 1]
+Caught exception: java.lang.IllegalStateException: Only inlined XCFAs work right now
+Could not handle trigger java.lang.IllegalStateException: Only inlined XCFAs work right now (Available triggers: [])
+Caught exception: java.lang.IllegalStateException: Only inlined XCFAs work right now
+Could not handle trigger java.lang.IllegalStateException: Only inlined XCFAs work right now (Available triggers: [])
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:72), java.lang.IllegalStateException: Only inlined XCFAs work right now)
+Error: class java.lang.IllegalStateException Only inlined XCFAs work right now (com.google.common.base.Preconditions#checkState:534, hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt#getHornChecker:72)

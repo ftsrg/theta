@@ -1,0 +1,42 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i' using arguments '--svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio EMERGENT --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 342 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Using portfolio: PTR
+
+Current configuration: EXPL_PRED_STMT-NWT_IT_WP-Z3-true
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/unreach-call.prp, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=ILP32)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL_PRED_STMT, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+subprocess: ParsingResult Success
+subprocess: Arithmetic: []
+subprocess: 
+subprocess: Frontend finished:   (in 337 ms)
+subprocess: ParsingResult Success
+subprocess: Alias graph size: 0 -> []
+subprocess: Process failed! (hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$1.visit(ExprTraceNewtonChecker.java:305), java.lang.UnsupportedOperationException: MemoryAssignStmt not supported (yet))
+subprocess: Error: class java.lang.UnsupportedOperationException MemoryAssignStmt not supported (yet) (hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$1#visit:305, hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$1#visit:283)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:140), ErrorCodeException(code=202))
+Error: class hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException - (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker#check:140, hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$result$1#invoke:282)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [TimeoutOrNotSolvableError, SolverError])
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: EXPL_PRED_STMT-NWT_IT_WP-Z3-false
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/unreach-call.prp, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=ILP32)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=200000, inProcess=false, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, por=NOPOR, porSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL_PRED_STMT, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/alias_of_return_2.c_1.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=BENCHMARK, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+
+Frontend finished:   (in 36 ms)
+ParsingResult Success
+Alias graph size: 0 -> []

@@ -1,0 +1,281 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Heap
+date:                    Mon, 2025-12-01 14:22:56 UTC
+tool:                    Theta 6.27.7
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3188.479 MHz
+ram:                     16772.575232 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Heap
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                              status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------
+ldv-regression/1_3.yml                                 ERROR (frontend failed, before parsing finished)        1.49        0.58        None
+ldv-regression/alias_of_return.c_1.yml                 ERROR (server error, after parsing finished)       11.49        5.66        None
+ldv-regression/alias_of_return.yml                     ERROR (server error, after parsing finished)       11.70        5.73        None
+ldv-regression/alias_of_return_2.c_1.yml               ERROR (server error, after parsing finished)       11.63        5.64        None
+ldv-regression/alias_of_return_2.yml                   ERROR (server error, after parsing finished)       12.11        5.77        None
+ldv-regression/alt_test.yml                            false(unreach-call)             12.80        5.27        None
+ldv-regression/callfpointer.yml                        ERROR (frontend failed, before parsing finished)        1.57        0.61        None
+ldv-regression/ex3_forlist.yml                         ERROR (server error, after parsing finished)       16.46        7.13        None
+ldv-regression/fo_test.yml                             ERROR (server error, after parsing finished)       20.44        8.08        None
+ldv-regression/just_assert.yml                         true                             6.26        3.25        None
+ldv-regression/mutex_lock_int.c_1.yml                  true                            11.14        4.70        None
+ldv-regression/mutex_lock_int.yml                      
+ldv-regression/mutex_lock_struct.c_1.yml               
+ldv-regression/mutex_lock_struct.yml                   
+ldv-regression/nested_structure-1.yml                  
+ldv-regression/nested_structure-2.yml                  
+ldv-regression/nested_structure_noptr-1.yml            
+ldv-regression/nested_structure_noptr-2.yml            
+ldv-regression/nested_structure_ptr-1.yml              
+ldv-regression/nested_structure_ptr-2.yml              
+ldv-regression/oomInt.c_1.yml                          
+ldv-regression/oomInt.yml                              
+ldv-regression/recursive_list.yml                      
+ldv-regression/rule57_ebda_blast.c_1.yml               
+ldv-regression/rule57_ebda_blast.yml                   
+ldv-regression/rule57_ebda_blast_2.yml                 
+ldv-regression/rule60_list.yml                         
+ldv-regression/rule60_list2.c_1.yml                    
+ldv-regression/rule60_list2.yml                        
+ldv-regression/sizeofparameters_test.yml               
+ldv-regression/stateful_check.yml                      
+ldv-regression/structure_assignment.yml                
+ldv-regression/test01.yml                              
+ldv-regression/test02.yml                              
+ldv-regression/test03.yml                              
+ldv-regression/test04.yml                              
+ldv-regression/test05.yml                              
+ldv-regression/test06.yml                              
+ldv-regression/test07.yml                              
+ldv-regression/test08.yml                              
+ldv-regression/test09.yml                              
+ldv-regression/test10.yml                              
+ldv-regression/test11.yml                              
+ldv-regression/test12.yml                              
+ldv-regression/test13.yml                              
+ldv-regression/test14.yml                              
+ldv-regression/test15.yml                              
+ldv-regression/test16.yml                              
+ldv-regression/test17.yml                              
+ldv-regression/test18.yml                              
+ldv-regression/test19.yml                              
+ldv-regression/test20.yml                              
+ldv-regression/test21-1.yml                            
+ldv-regression/test21-2.yml                            
+ldv-regression/test22-1.yml                            
+ldv-regression/test22-3.yml                            
+ldv-regression/test23-1.yml                            
+ldv-regression/test23-2.yml                            
+ldv-regression/test24-1.yml                            
+ldv-regression/test24-2.yml                            
+ldv-regression/test25-1.yml                            
+ldv-regression/test25-2.yml                            
+ldv-regression/test26-1.yml                            
+ldv-regression/test26-2.yml                            
+ldv-regression/test27-1.yml                            
+ldv-regression/test28-1.yml                            
+ldv-regression/test28-2.yml                            
+ldv-regression/test29-1.yml                            
+ldv-regression/test29-2.yml                            
+ldv-regression/test30-1.yml                            
+ldv-regression/test30-2.yml                            
+ldv-regression/test_address.yml                        
+ldv-regression/test_cut_trace.yml                      
+ldv-regression/test_malloc-1.yml                       
+ldv-regression/test_malloc-2.yml                       
+ldv-regression/test_overflow.yml                       
+ldv-regression/test_union.c_1.yml                      
+ldv-regression/test_union.yml                          
+ldv-regression/test_union_cast-1.yml                   
+ldv-regression/test_union_cast-2.yml                   
+ldv-regression/test_union_cast.c_1.yml                 
+ldv-regression/test_union_cast.yml                     
+ldv-regression/test_while_int.c_1.yml                  
+ldv-regression/test_while_int.yml                      
+ldv-regression/volatile_alias.c_1.yml                  
+ldv-regression/volatile_alias.yml                      
+list-ext-properties/list-ext.yml                       
+list-ext-properties/simple-ext.yml                     
+list-ext2-properties/list_and_tree_cnstr-1.yml         
+list-ext2-properties/list_and_tree_cnstr-2.yml         
+list-ext2-properties/simple_and_skiplist_2lvl-1.yml    
+list-ext2-properties/simple_and_skiplist_2lvl-2.yml    
+list-ext2-properties/simple_search_value-1.yml         
+list-ext2-properties/simple_search_value-2.yml         
+ldv-sets/test_add-1.yml                                
+ldv-sets/test_add-2.yml                                
+ldv-sets/test_mutex.yml                                
+ldv-sets/test_mutex_double_lock.yml                    
+ldv-sets/test_mutex_double_unlock.yml                  
+ldv-sets/test_mutex_unbounded-1.yml                    
+ldv-sets/test_mutex_unbounded-2.yml                    
+ldv-sets/test_mutex_unlock_at_exit.yml                 
+heap-data/calendar.yml                                 
+heap-data/cart.yml                                     
+heap-data/hash_fun.yml                                 
+heap-data/min_max.yml                                  
+heap-data/packet_filter.yml                            
+heap-data/process_queue.yml                            
+heap-data/quick_sort_split.yml                         
+heap-data/running_example.yml                          
+heap-data/shared_mem1.yml                              
+heap-data/shared_mem2.yml                              
+heap-manipulation/bubble_sort_linux-1.yml              
+heap-manipulation/bubble_sort_linux-2.yml              
+heap-manipulation/dancing.yml                          
+heap-manipulation/dll_of_dll-1.yml                     
+heap-manipulation/dll_of_dll-2.yml                     
+heap-manipulation/merge_sort-1.yml                     
+heap-manipulation/merge_sort-2.yml                     
+heap-manipulation/sll_to_dll_rev-1.yml                 
+heap-manipulation/sll_to_dll_rev-2.yml                 
+heap-manipulation/tree-2.yml                           
+heap-manipulation/tree-3.yml                           
+heap-manipulation/tree-4.yml                           
+forester-heap/dll-01-1.yml                             
+forester-heap/dll-01-2.yml                             
+forester-heap/dll-circular-1.yml                       
+forester-heap/dll-circular-2.yml                       
+forester-heap/dll-optional-1.yml                       
+forester-heap/dll-optional-2.yml                       
+forester-heap/dll-queue-1.yml                          
+forester-heap/dll-queue-2.yml                          
+forester-heap/dll-rb-cnstr_1-1.yml                     
+forester-heap/dll-rb-cnstr_1-2.yml                     
+forester-heap/dll-rb-sentinel-1.yml                    
+forester-heap/dll-rb-sentinel-2.yml                    
+forester-heap/dll-reverse.yml                          
+forester-heap/dll-simple-white-blue-1.yml              
+forester-heap/dll-simple-white-blue-2.yml              
+forester-heap/dll-sorted-1.yml                         
+forester-heap/dll-sorted-2.yml                         
+forester-heap/dll-token-1.yml                          
+forester-heap/dll-token-2.yml                          
+forester-heap/sll-01-1.yml                             
+forester-heap/sll-01-2.yml                             
+forester-heap/sll-buckets-1.yml                        
+forester-heap/sll-buckets-2.yml                        
+forester-heap/sll-circular-1.yml                       
+forester-heap/sll-circular-2.yml                       
+forester-heap/sll-optional-1.yml                       
+forester-heap/sll-optional-2.yml                       
+forester-heap/sll-queue-1.yml                          
+forester-heap/sll-queue-2.yml                          
+forester-heap/sll-rb-cnstr_1-1.yml                     
+forester-heap/sll-rb-cnstr_1-2.yml                     
+forester-heap/sll-rb-sentinel-1.yml                    
+forester-heap/sll-rb-sentinel-2.yml                    
+forester-heap/sll-reverse_simple.yml                   
+forester-heap/sll-simple-white-blue-1.yml              
+forester-heap/sll-simple-white-blue-2.yml              
+forester-heap/sll-sorted-1.yml                         
+forester-heap/sll-sorted-2.yml                         
+forester-heap/sll-token-1.yml                          
+forester-heap/sll-token-2.yml                          
+list-properties/alternating_list-1.yml                 
+list-properties/alternating_list-2.yml                 
+list-properties/list-1.yml                             
+list-properties/list-2.yml                             
+list-properties/list_flag-1.yml                        
+list-properties/list_flag-2.yml                        
+list-properties/list_search-1.yml                      
+list-properties/list_search-2.yml                      
+list-properties/simple-1.yml                           
+list-properties/simple-2.yml                           
+list-properties/simple_built_from_end.yml              
+list-properties/splice-1.yml                           
+list-properties/splice-2.yml                           
+ddv-machzwd/ddv_machzwd_all.yml                        
+ddv-machzwd/ddv_machzwd_inb.yml                        
+ddv-machzwd/ddv_machzwd_inb_p.yml                      
+ddv-machzwd/ddv_machzwd_inl.yml                        
+ddv-machzwd/ddv_machzwd_inl_p.yml                      
+ddv-machzwd/ddv_machzwd_inw.yml                        
+ddv-machzwd/ddv_machzwd_inw_p.yml                      
+ddv-machzwd/ddv_machzwd_outb.yml                       
+ddv-machzwd/ddv_machzwd_outb_p.yml                     
+ddv-machzwd/ddv_machzwd_outl.yml                       
+ddv-machzwd/ddv_machzwd_outl_p.yml                     
+ddv-machzwd/ddv_machzwd_outw_p.yml                     
+ddv-machzwd/ddv_machzwd_pthread_mutex_unlock.yml       
+list-simple/dll2c_append_equal.yml                     
+list-simple/dll2c_append_unequal.yml                   
+list-simple/dll2c_insert_equal.yml                     
+list-simple/dll2c_insert_unequal.yml                   
+list-simple/dll2c_prepend_equal.yml                    
+list-simple/dll2c_prepend_unequal.yml                  
+list-simple/dll2c_remove_all.yml                       
+list-simple/dll2c_remove_all_reverse.yml               
+list-simple/dll2c_update_all.yml                       
+list-simple/dll2c_update_all_reverse.yml               
+list-simple/dll2n_append_equal.yml                     
+list-simple/dll2n_append_unequal.yml                   
+list-simple/dll2n_insert_equal.yml                     
+list-simple/dll2n_insert_unequal.yml                   
+list-simple/dll2n_prepend_equal.yml                    
+list-simple/dll2n_prepend_unequal.yml                  
+list-simple/dll2n_remove_all.yml                       
+list-simple/dll2n_remove_all_reverse.yml               
+list-simple/dll2n_update_all.yml                       
+list-simple/dll2n_update_all_reverse.yml               
+list-simple/sll2c_append_equal.yml                     
+list-simple/sll2c_append_unequal.yml                   
+list-simple/sll2c_insert_equal.yml                     
+list-simple/sll2c_insert_unequal.yml                   
+list-simple/sll2c_prepend_equal.yml                    
+list-simple/sll2c_prepend_unequal.yml                  
+list-simple/sll2c_remove_all.yml                       
+list-simple/sll2c_remove_all_reverse.yml               
+list-simple/sll2c_update_all.yml                       
+list-simple/sll2c_update_all_reverse.yml               
+list-simple/sll2n_append_equal.yml                     
+list-simple/sll2n_append_unequal.yml                   
+list-simple/sll2n_insert_equal.yml                     
+list-simple/sll2n_insert_unequal.yml                   
+list-simple/sll2n_prepend_equal.yml                    
+list-simple/sll2n_prepend_unequal.yml                  
+list-simple/sll2n_remove_all.yml                       
+list-simple/sll2n_remove_all_reverse.yml               
+list-simple/sll2n_update_all.yml                       
+list-simple/sll2n_update_all_reverse.yml               
+list-ext3-properties/dll_circular_traversal-2.yml      
+list-ext3-properties/dll_nullified-1.yml               
+list-ext3-properties/dll_nullified-2.yml               
+list-ext3-properties/sll_circular_traversal-1.yml      
+list-ext3-properties/sll_length_check-1.yml            
+list-ext3-properties/sll_length_check-2.yml            
+list-ext3-properties/sll_nondet_insert-1.yml           
+list-ext3-properties/sll_nondet_insert-2.yml           
+list-ext3-properties/sll_of_sll_nondet_append-1.yml    
+list-ext3-properties/sll_of_sll_nondet_append-2.yml    
+--------------------------------------------------------------------------------------------------------------------
+Run set 1                                              done                           117.81       55.24           -
+
+Statistics:             11 Files
+  correct:               3
+    correct true:        2
+    correct false:       1
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               8
+  Score:                 5 (max: 18)

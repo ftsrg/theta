@@ -1,0 +1,59 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_no-overflow.ConcurrencySafety-NoOverflows
+date:                    Tue, 2025-11-25 20:43:22 UTC
+tool:                    Theta 6.27.4
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3300.598 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow.ConcurrencySafety-NoOverflows
+Run set 5 of 6 with options '--svcomp --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                                                                                          status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread/butterfly.yml                                                                                                                                                              true                            15.39        7.87        None
+pthread/fib_safe-10.yml                                                                                                                                                            TIMEOUT                         41.18       23.65        None
+pthread/fib_safe-11.yml                                                                                                                                                            TIMEOUT                         40.76       29.09        None
+pthread/fib_safe-12.yml                                                                                                                                                            TIMEOUT                         40.86       31.74        None
+pthread/fib_safe-5.yml                                                                                                                                                             true                            17.48        8.25        None
+pthread/fib_safe-6.yml                                                                                                                                                             true                            29.85       18.55        None
+pthread/fib_safe-7.yml                                                                                                                                                             TIMEOUT                         40.30       28.33        None
+pthread/fib_unsafe-10.yml                                                                                                                                                          TIMEOUT                         42.18       23.64        None
+pthread/fib_unsafe-11.yml                                                                                                                                                          TIMEOUT                         40.59       29.12        None
+pthread/fib_unsafe-12.yml                                                                                                                                                          TIMEOUT                         40.86       31.68        None
+pthread/fib_unsafe-5.yml                                                                                                                                                           true                            18.46        8.65        None
+pthread/fib_unsafe-6.yml                                                                                                                                                           true                            30.86       19.49        None
+pthread/fib_unsafe-7.yml                                                                                                                                                           TIMEOUT                         40.51       27.36        None
+pthread/lazy01.yml                                                                                                                                                                 true                            10.41        3.93        None
