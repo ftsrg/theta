@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.svlib;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.boolExpr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
+import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.relationalBoolExpr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.resolveVar;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
@@ -99,7 +100,29 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
 
     @Override
     public XcfaLocation visitAnnotatedStatement(SvLibParser.AnnotatedStatementContext ctx) {
-        return visit(ctx.statement(), currentEntry);
+        XcfaLocation statementEntry = currentEntry;
+
+        for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
+            if (attribute instanceof SvLibParser.TagPropertyContext tagProperty
+                && tagProperty.property()
+                    instanceof SvLibParser.CheckTruePropertyContext checkTrueProperty) {
+                Expr<BoolType> condition =
+                    relationalBoolExpr(
+                        checkTrueProperty.relationalTerm(), builder, declarations);
+
+                builder.addEdge(
+                    new XcfaEdge(
+                        statementEntry,
+                        builder.getErrorLoc().orElseThrow(),
+                        new StmtLabel(AssumeStmt.of(Not(condition))),
+                        EmptyMetaData.INSTANCE));
+
+                statementEntry =
+                    addLabel(statementEntry, new StmtLabel(AssumeStmt.of(condition)));
+            }
+        }
+
+        return visit(ctx.statement(), statementEntry);
     }
 
     @Override

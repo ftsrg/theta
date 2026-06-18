@@ -57,7 +57,7 @@ class SvLibFrontendTest {
     var xcfa = parseResource("if-simple-safe.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
 
-    var hasBranchingLoc =
+    var branchingLocCount =
         procedure.getEdges().stream()
             .collect(
                 java.util.stream.Collectors.groupingBy(
@@ -65,9 +65,12 @@ class SvLibFrontendTest {
                     java.util.stream.Collectors.counting()))
             .values()
             .stream()
-            .anyMatch(count -> count >= 2);
+            .filter(count -> count >= 2)
+            .count();
 
-    assertTrue(hasBranchingLoc, "Expected if translation to create a branching location");
+    assertTrue(
+        branchingLocCount >= 2,
+        "Expected if and check-true translations to create branching locations");
   }
 
   @Test
@@ -77,6 +80,25 @@ class SvLibFrontendTest {
 
     assertTrue(procedure.getErrorLoc().isPresent());
     assertTrue(procedure.getEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
+  }
+
+  @Test
+  void checkTrueCreatesNormalAndErrorBranches() {
+    var xcfa = parseResource("check-true-middle.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+
+    var checkLocation =
+        procedure.getEdges().stream()
+            .filter(edge -> edge.getTarget().getError())
+            .map(edge -> edge.getSource())
+            .findFirst()
+            .orElseThrow();
+
+    assertEquals(
+        2,
+        procedure.getEdges().stream()
+            .filter(edge -> edge.getSource().equals(checkLocation))
+            .count());
   }
 
   @Test
@@ -98,6 +120,19 @@ class SvLibFrontendTest {
     var dot = toDot(xcfa, null);
     java.nio.file.Files.writeString(
         java.nio.file.Path.of("svlib-if-assign.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertFalse(dot.isBlank());
+  }
+
+  @Test
+  void translatedCheckTrueMiddleXcfaCanBeExportedToDot() throws IOException {
+    var xcfa = parseResource("check-true-middle.svlib");
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("svlib-check-true-middle.dot"),
         dot);
 
     assertTrue(dot.startsWith("digraph G"));

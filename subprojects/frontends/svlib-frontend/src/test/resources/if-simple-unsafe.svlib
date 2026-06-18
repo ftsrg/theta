@@ -6,16 +6,14 @@
   ((x0 Int))
   ((x Int))
   ()
-  (!
-    (sequence
-      (if (<= 0 x0)
-        (assign (x 1))
-        (assign (x 2))))
-    :tag proc-if-example))
-
-(annotate-tag proc-if-example
-  :requires true
-  :ensures (= x 0))
+  (sequence
+    (if (<= 0 x0)
+      (assign (x 1))
+      (assign (x 2)))
+    (!
+      (assign (x (+ x 1)))
+      :tag check-before-increment
+      :check-true (= x 0))))
 
 (declare-const input Int)
 

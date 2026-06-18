@@ -6,16 +6,14 @@
   ((x0 Int))
   ((x Int))
   ()
-  (!
-    (sequence
-      (assign (x x0))
-      (while (< x 3)
-        (assign (x (+ x 1)))))
-    :tag proc-loop-example))
-
-(annotate-tag proc-loop-example
-  :requires true
-  :ensures (>= x 3))
+  (sequence
+    (assign (x x0))
+    (while (< x 3)
+      (assign (x (+ x 1))))
+    (!
+      (assign (x (+ x 1)))
+      :tag check-before-increment
+      :check-true (>= x 3))))
 
 (declare-const input Int)
 
