@@ -383,7 +383,6 @@ constructor(
     handle?.let {
       when {
         it.isTerminal && !it.isTerminalZero -> null
-        it.isTerminalZero -> AbstractNextStateDescriptor.terminalEmpty()
         // the bound sits at its own (shorter) top; presented under the current [top] it becomes a
         // skip handle that delta self-aligns over the literal levels added since (default-edge wraps)
         else -> toDescriptor(top.getHandleFor(it.node))
