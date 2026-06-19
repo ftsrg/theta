@@ -238,8 +238,10 @@ constructor(
     // node with concrete witness levels never does
     val propSeedable = stateExprSig != null && !useOnTheFlyReachability
 
-    // build + seed the three node kinds
-    val initNode = stateNode(PathUtils.unfold(model.initExpr, 0), stateExprSig ?: stateSig)
+    // build + seed the three node kinds. the abstract init and relation are non-empty whenever the
+    // concrete ones are (the v⟺pred literal definitions are always satisfiable), so their root
+    // satisfiability check is skippable; the prop node has no such guarantee and stays checked
+    val initNode = stateNode(PathUtils.unfold(model.initExpr, 0), stateExprSig ?: stateSig, true)
     seed?.init?.seed(listOf(initNode), newLits, literalToPred)
 
     val relSolverBefore = solverPool.checkCount
@@ -248,7 +250,7 @@ constructor(
         val transExpr =
           And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(orders.identityExprs))
         transSig.topVariableHandle.checkInNode(
-          MddExpressionTemplate.of(transExpr, { it as Decl<*> }, solverPool, true)
+          MddExpressionTemplate.ofKnownSat(transExpr, { it as Decl<*> }, solverPool, true)
         )
       }
     seed?.trans?.seed(transNodes, newLits, literalToPred)
@@ -388,8 +390,15 @@ constructor(
     )
   }
 
-  private fun stateNode(expr: Expr<BoolType>, sig: MddSignature): MddHandle =
-    sig.topVariableHandle.checkInNode(MddExpressionTemplate.of(expr, { it as Decl<*> }, solverPool))
+  private fun stateNode(
+    expr: Expr<BoolType>,
+    sig: MddSignature,
+    knownSat: Boolean = false,
+  ): MddHandle =
+    sig.topVariableHandle.checkInNode(
+      if (knownSat) MddExpressionTemplate.ofKnownSat(expr, { it as Decl<*> }, solverPool, false)
+      else MddExpressionTemplate.of(expr, { it as Decl<*> }, solverPool)
+    )
 
   private fun statisticsOf(iter: IterationResult, totalTimeMs: Long) =
     MddAnalysisStatistics(
