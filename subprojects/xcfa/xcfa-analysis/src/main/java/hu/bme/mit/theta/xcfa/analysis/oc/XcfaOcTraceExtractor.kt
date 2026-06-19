@@ -55,20 +55,19 @@ internal class XcfaOcTraceExtractor(
       val (eventTrace, violation) = getEventTrace(model)
 
       val processes =
-        threads.associate { t ->
-          t.pid to
+        mapOf(
+          0 to
             XcfaProcessState(
-              locs = LinkedList(listOf(t.procedure.initLoc)),
+              locs = LinkedList(listOf(threads.find { it.pid == 0 }!!.procedure.initLoc)),
               varLookup = LinkedList(listOf()),
             )
-        }
+        )
       var explState = PtrState(ExplState.of(ImmutableValuation.from(mapOf())))
       stateList.add(XcfaState(xcfa, processes, explState))
       var lastEdge: XcfaEdge = eventTrace[0].edge
 
       for ((index, event) in eventTrace.withIndex()) {
-        extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let {
-          (midActions, midStates) ->
+        extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let { (midActions, midStates) ->
           actionList.addAll(midActions)
           stateList.addAll(midStates)
         }
@@ -79,9 +78,24 @@ internal class XcfaOcTraceExtractor(
           explState = PtrState(ExplState.of(ImmutableValuation.from(newVal)))
         }
 
+        var state = stateList.last()
+        val startedThread = threads.find { it.startEvent == event }
+        if (startedThread != null) {
+          state = state.copy(
+            processes = state.processes.toMutableMap().apply {
+              put(
+                startedThread.pid,
+                XcfaProcessState(
+                  locs = LinkedList(listOf(startedThread.procedure.initLoc)),
+                  varLookup = LinkedList(emptyList()),
+                ),
+              )
+            }
+          )
+        }
+
         val nextEdge = eventTrace.getOrNull(index + 1)?.edge
         if (nextEdge != lastEdge) {
-          val state = stateList.last()
           actionList.add(XcfaAction(event.pid, lastEdge))
           stateList.add(
             state.copy(
@@ -104,8 +118,9 @@ internal class XcfaOcTraceExtractor(
       }
 
       if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
-        extend(stateList.last(), violation.pid, violation.errorLoc, explState.innerState)?.let {
-          (midActions, midStates) ->
+        extend(
+          stateList.last(), violation.pid, violation.errorLoc, explState.innerState
+        )?.let { (midActions, midStates) ->
           actionList.addAll(midActions)
           stateList.addAll(midStates)
         }
