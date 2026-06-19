@@ -146,6 +146,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         logger.benchmark(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
+        logger.info(e.message)
         val bestEffortWitness =
           generateBestEffortWitness(
             safetyResult,
@@ -764,7 +765,7 @@ private fun WitnessNode.toSegment(
           (outgoingEdge.edge?.metadata as CMetaData).astNodes.first {
             it is CCall && it.functionId.contains("__VERIFIER_nondet_")
           },
-        ) ?: return null
+        )
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
         location = loc,
@@ -786,7 +787,7 @@ private fun WitnessNode.toSegment(
       )
     } else {
       // we only want assumptions that are actually about something in a function
-      if ((outgoingEdge.edge!!.metadata as CMetaData).functionName != "notC") {
+      if ((outgoingEdge.edge!!.metadata as CMetaData).functionName == "NotC") {
         return null
       } else {
         val constraint =
@@ -800,7 +801,7 @@ private fun WitnessNode.toSegment(
                   splitName.subList(2, splitName.size).joinToString("::")
                 else varDecl.name
               if (
-                splitName[splitName.size - 2] !=
+                splitName.size > 1 && splitName[splitName.size - 2] !=
                   (outgoingEdge.edge!!.metadata as CMetaData).functionName
               ) {
                 null
