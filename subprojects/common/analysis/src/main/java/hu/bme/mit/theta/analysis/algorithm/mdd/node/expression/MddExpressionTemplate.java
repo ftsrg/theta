@@ -51,10 +51,11 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final SolverPool solverPool;
     private final boolean transExpr;
     private final boolean knownSat;
+    // never query the solver: decide structure purely by substitution, an undetermined bottom edge
+    // being absent.
+    private final boolean substitutionOnly;
 
-    // caches the model, not just satness: the model seeds the witness caches of every node created
-    // for this expression, keeping the levels below explorable without the solver. Attached per
-    // graph (run-scoped) so it is dropped with the graph instead of living for the whole JVM.
+    // caches the model, not just satness, per-graph (run-scoped) so it is dropped with the graph instead of living for the whole JVM.
     public static final MddGraph.Key<UnaryOperationCache<Expr<BoolType>, Optional<Valuation>>>
             SAT_CACHE = new MddGraph.Key<>("satCache");
 
@@ -83,17 +84,19 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr,
-            boolean knownSat) {
+            boolean knownSat,
+            boolean substitutionOnly) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
         this.transExpr = transExpr;
         this.knownSat = knownSat;
+        this.substitutionOnly = substitutionOnly;
     }
 
     public static MddExpressionTemplate of(
             Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false, false);
     }
 
     public static MddExpressionTemplate of(
@@ -101,7 +104,7 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false, false);
     }
 
     public static MddExpressionTemplate ofKnownSat(
@@ -109,7 +112,21 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true, false);
+    }
+
+    public static MddExpressionTemplate ofSubstitution(
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false, true);
+    }
+
+    private MddExpressionTemplate knownChild(Expr<BoolType> childExpr) {
+        return substitutionOnly
+                ? ofSubstitution(childExpr, o -> (Decl) o, solverPool, transExpr)
+                : ofKnownSat(childExpr, o -> (Decl) o, solverPool, transExpr);
     }
 
     @Override
@@ -126,6 +143,9 @@ public class MddExpressionTemplate implements MddNode.Template {
             satModel = null;
         } else if (canonizedExpr instanceof FalseExpr) {
             return null;
+        } else if (substitutionOnly) {
+            // an explicit False prunes; otherwise assume satisfiable and let substitution decide below
+            satModel = null;
         } else {
             satModel = checkSat(canonizedExpr, solverPool, satCache);
             if (satModel == null) return null;
@@ -136,25 +156,18 @@ public class MddExpressionTemplate implements MddNode.Template {
                 && !ExprUtils.getConstants(canonizedExpr).contains(decl)) {
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
-                childNode =
-                        mddVariable
-                                .getLower()
-                                .get()
-                                .checkInNode(
-                                        MddExpressionTemplate.ofKnownSat(
-                                                canonizedExpr,
-                                                o -> (Decl) o,
-                                                solverPool,
-                                                transExpr));
+                childNode = mddVariable.getLower().get().checkInNode(knownChild(canonizedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(canonizedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
-                    canonizedExpr, decl, mddVariable, solverPool, childNode, transExpr);
+                    canonizedExpr, decl, mddVariable, solverPool, childNode, transExpr,
+                    substitutionOnly);
         }
 
         if (transExpr
+                && !substitutionOnly
                 && decl instanceof IndexedConstDecl<?> constDecl
                 && constDecl.getIndex() == 0) {
 
@@ -230,27 +243,19 @@ public class MddExpressionTemplate implements MddNode.Template {
 
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
-                childNode =
-                        mddVariable
-                                .getLower()
-                                .get()
-                                .checkInNode(
-                                        MddExpressionTemplate.ofKnownSat(
-                                                substitutedExpr,
-                                                o -> (Decl) o,
-                                                solverPool,
-                                                transExpr));
+                childNode = mddVariable.getLower().get().checkInNode(knownChild(substitutedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(substitutedExpr);
             }
 
             return MddExpressionRepresentation.ofDetermined(
-                    canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
+                    canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr,
+                    substitutionOnly);
         }
 
         return MddExpressionRepresentation.of(
-                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel, substitutionOnly);
     }
 
     private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
