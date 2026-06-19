@@ -33,6 +33,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.cli.utils.PrecReuseFormat
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -676,8 +677,10 @@ data class ChcOutputConfig(
 ) : Config
 
 data class PrecOutputConfig(
-  @Parameter(names = ["--enable-prec-serialization"], variableArity = true)
-  var format: List<PrecReuseFormat> = emptyList()
+  @Parameter(names = ["--prec-serialization-format"], variableArity = true)
+  var format: List<PrecReuseFormat> = PrecReuseFormat.entries,
+  @Parameter(names = ["--prec-serialization-mode"])
+  var serializationMode: PrecSerializationMode = PrecSerializationMode.NEVER
 ) : Config
 
 data class COutputConfig(

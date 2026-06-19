@@ -20,12 +20,22 @@ import hu.bme.mit.theta.analysis.Prec
 
 object PrecCache {
   private var cached: Prec? = null
+  private var listeners: MutableList<PrecChangeListener> = mutableListOf()
 
   fun <P : Prec> store(prec: P) {
     cached = prec
+    listeners.forEach { it.onChange() }
   }
 
   fun get(): Prec? {
     return cached
   }
+
+  fun register(listener: PrecChangeListener) {
+    listeners.add(listener)
+  }
+}
+
+fun interface PrecChangeListener {
+  fun onChange()
 }

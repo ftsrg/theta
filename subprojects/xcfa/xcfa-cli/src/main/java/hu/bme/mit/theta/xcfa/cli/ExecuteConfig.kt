@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
 import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
@@ -115,7 +116,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
     if (
       cegarConfig.initPrec == InitPrec.REUSE ||
-        config.outputConfig.precOutputConfig.format.isNotEmpty()
+        config.outputConfig.precOutputConfig.serializationMode != PrecSerializationMode.NEVER
     ) {
       PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
     }
