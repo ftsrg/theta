@@ -135,7 +135,7 @@ constructor(
     val abstractor = ImplicitPredicateAbstractor(concreteModel)
     val traceChecker = traceCheckerFactory(concreteModel)
     var currentPrec = initPrec(concreteModel)
-    var reachExplicit: MddHandle? = null
+    var prevStateSpace: MddHandle? = null
 
     var totalSolverCalls = 0L
     var i = 0
@@ -146,7 +146,7 @@ constructor(
 
       newLits.forEach(orders::createLevelOnTop)
 
-      val constraint = if (applyReachConstraint) reachExplicit else null
+      val constraint = if (applyReachConstraint) prevStateSpace else null
 
       val iter = runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred)
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
@@ -201,7 +201,7 @@ constructor(
       val refutation = res.asInfeasible().refutation
       currentPrec = precRefiner.refine(currentPrec, predTrace, refutation)
 
-      reachExplicit = iter.stateSpace
+      prevStateSpace = iter.stateSpace
     }
   }
 

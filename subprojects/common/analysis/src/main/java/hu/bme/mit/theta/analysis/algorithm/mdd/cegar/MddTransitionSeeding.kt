@@ -45,10 +45,9 @@ import hu.bme.mit.theta.core.utils.PathUtils
  */
 
 /** Cross-iteration knowledge of one seeded node kind. */
-internal class KindKnowledge(
+internal class CrossIterationKnowledge(
   private val binding: LiteralBinding,
   private val dataBoundary: Any?,
-  // null when the upper bound is disabled (witness caching without the SAT-cache bound)
   private val boundOrder: MddVariableOrder?,
   private val label: String,
   private val logger: Logger,
@@ -94,9 +93,9 @@ internal class SeedKnowledge(
   stateBoundOrder: MddVariableOrder?,
   logger: Logger,
 ) {
-  val trans = KindKnowledge(transBinding, transDataBoundary, transBoundOrder, "Transition", logger)
-  val init = KindKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Init", logger)
-  val prop = KindKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Property", logger)
+  val trans = CrossIterationKnowledge(transBinding, transDataBoundary, transBoundOrder, "Transition", logger)
+  val init = CrossIterationKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Init", logger)
+  val prop = CrossIterationKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Property", logger)
 }
 
 /** Binds a literal's defining predicate to the decls of the levels the literal occupies. */
