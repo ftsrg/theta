@@ -22,11 +22,10 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepres
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation
-import hu.bme.mit.theta.analysis.algorithm.mdd.trace.MddValuationCollector
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.model.MutableValuation
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -169,19 +168,21 @@ internal fun seedFromPrevious(
   for (combo in 0 until (1 shl cases.size)) {
     val predConstraint =
       And(cases.mapIndexed { i, (_, pred) -> if ((combo shr i) and 1 == 1) pred else Not(pred) })
+    // restrict the known relation to this predicate combination over prev's order (no new literal
+    // levels yet, so neither operand is a skip handle); the constraint is solver-free
     val constraintNode =
       mirrorTop.checkInNode(
         MddExpressionTemplate.ofSubstitution(predConstraint, { it as Decl<*> }, solverPool, true)
       )
     val restricted = known.intersection(constraintNode)
     if (restricted.isTerminalZero) continue
-    val litValues = cases.mapIndexed { i, (decl, _) -> decl to Bool((combo shr i) and 1 == 1) }
-    MddValuationCollector.collect(restricted) { witness ->
-      val model = MutableValuation.copyOf(witness)
-      litValues.forEach { (decl, value) -> model.put(decl, value) }
-      newTop.cacheModel(model)
-      seeded++
-    }
+    // walk the restricted structure, caching it below the new-literal prefix (the combo values)
+    val prefix =
+      ImmutableValuation.builder()
+        .apply { cases.forEachIndexed { i, (decl, _) -> put(decl, Bool((combo shr i) and 1 == 1)) } }
+        .build()
+    newTop.cacheModel(prefix, restricted.node)
+    seeded++
   }
 
   logger.write(

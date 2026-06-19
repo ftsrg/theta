@@ -198,7 +198,109 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     /** Seeds the explicit caches along {@code model}, which must satisfy {@link #getExpr()}. */
     public void cacheModel(Valuation model) {
-        getLazyTraverser().cacheModel(model);
+        cacheModel(model, null, new IdentityHashMap<>());
+    }
+
+    /**
+     * Caches the known structure {@code source} into this node as explorable expression children, built
+     * fresh in this node's graph (so {@code source} may live in another graph, read only for structure).
+     * {@code prefix} decides the new-literal levels on top (per combination); below them this node
+     * mirrors {@code source}. A null {@code source} is a plain valuation path.
+     */
+    public void cacheModel(Valuation prefix, MddNode source) {
+        cacheModel(prefix, source, new IdentityHashMap<>());
+    }
+
+    private void cacheModel(
+            Valuation prefix,
+            MddNode source,
+            IdentityHashMap<MddExpressionRepresentation, Set<MddNode>> done) {
+        if (source != null && source.isTerminal()) {
+            return;
+        }
+        final MddNode existingDefault = explicitRepresentation.getCacheView().defaultValue();
+        if (existingDefault != null) {
+            // already a skip level: descend its default, the source unchanged
+            final MddExpressionRepresentation child = childRepresentation(existingDefault);
+            if (child != null) child.cacheModel(prefix, source, done);
+            return;
+        }
+        final Optional<? extends LitExpr<?>> lit = prefix.eval(decl);
+        if (lit.isPresent()) {
+            final MddExpressionRepresentation child =
+                    cacheChild(LitExprConverter.toInt(lit.get()), true);
+            if (child != null) child.cacheModel(prefix, source, done);
+            return;
+        }
+        if (source == null) {
+            // plain valuation, unassigned level: don't-care, the level stays explorable
+            final MddExpressionRepresentation child = cacheChild(0, false);
+            if (child != null) child.cacheModel(prefix, null, done);
+            return;
+        }
+        // below the prefix: mirror source's structure, memoized so a shared sub-DAG is walked once
+        if (!done.computeIfAbsent(this, k -> new HashSet<>()).add(source)) {
+            return;
+        }
+        for (var cursor = source.cursor(); cursor.moveNext(); ) {
+            final MddExpressionRepresentation child = cacheChild(cursor.key(), true);
+            if (child != null) child.cacheModel(prefix, (MddNode) cursor.value(), done);
+        }
+        final MddNode sourceDefault = source.defaultValue();
+        if (sourceDefault != null) {
+            // a don't-care level in source: keep this level explorable, descend
+            final MddExpressionRepresentation child = cacheChild(0, false);
+            if (child != null) child.cacheModel(prefix, sourceDefault, done);
+        }
+    }
+
+    /**
+     * Builds the explorable expression child for {@code key} (its expression substituted), caching the
+     * edge when {@code cacheEdge}; returns its representation, or null at a terminal/identity bottom.
+     */
+    private MddExpressionRepresentation cacheChild(int key, boolean cacheEdge) {
+        MddNode childNode = cacheEdge ? explicitRepresentation.getCacheView().get(key) : null;
+        if (childNode == null) {
+            final Expr<BoolType> substituted =
+                    cacheEdge
+                            ? ExprUtils.simplify(
+                                    expr,
+                                    ImmutableValuation.builder()
+                                            .put(decl, LitExprConverter.toLitExpr(key, decl.getType()))
+                                            .build())
+                            : expr;
+            if (mddVariable.getLower().isPresent()) {
+                childNode =
+                        mddVariable
+                                .getLower()
+                                .get()
+                                .checkInNode(
+                                        MddExpressionTemplate.ofKnownSat(
+                                                substituted, o -> (Decl) o, solverPool, transExpr));
+            } else {
+                childNode = ((MddGraph<Expr>) mddVariable.getMddGraph()).getNodeFor(True());
+            }
+            if (cacheEdge
+                    && !explicitRepresentation.isComplete()
+                    && explicitRepresentation.getCacheView().defaultValue() == null
+                    && !mddVariable.isNullOrZero(childNode)) {
+                explicitRepresentation.cacheNode(key, childNode);
+                completeIfBoolFullyCached();
+            }
+        }
+        return childRepresentation(childNode);
+    }
+
+    /** The expression node a child resolves to, unwrapping identity levels; null at a terminal. */
+    private static MddExpressionRepresentation childRepresentation(MddNode childNode) {
+        if (childNode.isTerminal()) return null;
+        var repr = childNode.getRepresentation();
+        while (repr instanceof IdentityRepresentation) {
+            final MddNode cont = ((IdentityRepresentation) repr).getContinuation();
+            if (cont.isTerminal()) return null;
+            repr = cont.getRepresentation();
+        }
+        return (MddExpressionRepresentation) repr;
     }
 
     /** A bool decl has exactly the keys 0 and 1, so deciding both makes the node complete. */
@@ -702,90 +804,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         //        }
 
         void cacheModel(Valuation valuation) {
-            MddExpressionRepresentation representation = currentRepresentation;
-
-            while (true) {
-
-                final MddNode childNode;
-                if (representation.explicitRepresentation.getCacheView().defaultValue() != null) {
-
-                    childNode = representation.explicitRepresentation.getCacheView().defaultValue();
-
-                } else {
-
-                    // Substitute literal if available
-                    final Optional<? extends LitExpr<?>> literal =
-                            valuation.eval(representation.getDecl());
-                    final Expr<BoolType> substitutedExpr;
-                    if (literal.isPresent()) {
-                        substitutedExpr =
-                                ExprUtils.simplify(
-                                        representation.expr,
-                                        ImmutableValuation.builder()
-                                                .put(representation.getDecl(), literal.get())
-                                                .build());
-                    } else {
-                        substitutedExpr = representation.expr;
-                    }
-
-                    if (literal.isPresent()
-                            && representation
-                                    .explicitRepresentation
-                                    .getCacheView()
-                                    .containsKey(LitExprConverter.toInt(literal.get()))) {
-                        // Return cached if available
-                        childNode =
-                                representation
-                                        .explicitRepresentation
-                                        .getCacheView()
-                                        .get(LitExprConverter.toInt(literal.get()));
-                    } else {
-                        final Optional<? extends MddVariable> lower =
-                                representation.mddVariable.getLower();
-                        if (lower.isPresent()) {
-                            final MddExpressionTemplate template =
-                                    MddExpressionTemplate.ofKnownSat(
-                                            substitutedExpr,
-                                            o -> (Decl) o,
-                                            representation.solverPool,
-                                            currentRepresentation.transExpr);
-                            childNode = lower.get().checkInNode(template);
-                        } else {
-                            final Expr<BoolType> canonizedExpr =
-                                    ExprUtils.canonize(substitutedExpr);
-                            MddGraph<Expr> mddGraph =
-                                    (MddGraph<Expr>) representation.mddVariable.getMddGraph();
-                            assert !(canonizedExpr instanceof FalseExpr);
-                            // TODO replace this with canonizedExpr if remainder expression is
-                            // needed
-                            childNode = mddGraph.getNodeFor(True());
-                        }
-
-                        assert !representation.mddVariable.isNullOrZero(childNode)
-                                : "This would mean the model returned by the solver is incorrect";
-                        if (literal.isPresent()
-                                && !representation.explicitRepresentation.isComplete()) {
-                            representation.explicitRepresentation.cacheNode(
-                                    LitExprConverter.toInt(literal.get()), childNode);
-                            representation.completeIfBoolFullyCached();
-                        }
-                        // TODO update domainSize
-                    }
-                }
-
-                if (childNode.isTerminal()) return;
-
-                // Preconditions.checkArgument(childNode.getRepresentation() instanceof
-                // MddExpressionRepresentation);
-                // TODO assert
-                var nextRepr = childNode.getRepresentation();
-                while (nextRepr instanceof IdentityRepresentation identity) {
-                    var cont = identity.getContinuation();
-                    if (cont.isTerminal()) return;
-                    nextRepr = cont.getRepresentation();
-                }
-                representation = (MddExpressionRepresentation) nextRepr;
-            }
+            currentRepresentation.cacheModel(valuation);
         }
 
         private void setCurrentRepresentation(MddExpressionRepresentation representation) {
