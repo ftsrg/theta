@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation
 import hu.bme.mit.theta.common.logging.Logger
@@ -38,10 +39,10 @@ import hu.bme.mit.theta.core.utils.PathUtils
  * - under: a witness cached in the previous node decides every later literal by substitution, so
  *   extended it is a model of the next node — [seedFromPrevious];
  * - upper: what the previous iteration confirmed present over-approximates the next once lifted —
- *   [extractBound], consumed as an AndNextStateDescriptor operand (the relation and init/prop bound)
- *   and by `filterStates` for the property. Only the last iteration is read: its constrained
- *   exploration already excludes everything earlier iterations pruned, so the bound needs no
- *   accumulation.
+ *   [update] extracts it as a structural bound (MddExplicitRepresentationExtractor), consumed as an
+ *   AndNextStateDescriptor operand (the relation and init/prop bound) and by `filterStates` for the
+ *   property. Only the last iteration is read: its constrained exploration already excludes everything
+ *   earlier iterations pruned, so the bound needs no accumulation.
  */
 
 /** Cross-iteration knowledge of one seeded node kind. */
@@ -79,8 +80,17 @@ internal class CrossIterationKnowledge(
   fun update() {
     val node = nodes.singleOrNull() ?: return
     prev = node
+    // the upper bound: the node's present-cache structure, extracted over the abstract levels and
+    // truncated at the concrete witness boundary. The present cache is exhaustive — an unprobed key is
+    // unsatisfiable, since GSAT probes every transition of every reachable source
     bound =
-      boundOrder?.let { extractBound(node, it.defaultSetSignature.topVariableHandle, dataBoundary) }
+      boundOrder?.let {
+        MddExplicitRepresentationExtractor.transform(
+          node,
+          it.defaultSetSignature.topVariableHandle,
+          dataBoundary,
+        )
+      }
   }
 }
 
