@@ -81,6 +81,12 @@ enum class PrecReuseFormat(
   ),
 }
 
+enum class PrecSerializationMode {
+  NEVER,
+  LAST,
+  CONTINUOUS,
+}
+
 object PrecReuse {
   private const val ERROR_MESSAGE = "Misconfigured WitnessPrecSerializer"
 
@@ -135,19 +141,20 @@ object PrecReuse {
     prec as? P ?: throw RuntimeException("$ERROR_MESSAGE - incompatible domains")
 
   fun write(
-    format: PrecReuseFormat,
     outputFolder: File,
     config: XcfaConfig<*, *>,
     parseContext: ParseContext,
     logger: Logger,
   ) {
-    val outputFileName = "prec.${format.extension}"
-    val outputFile = File(outputFolder, outputFileName)
-    outputFile.writeText(
-      (PrecCache.get()?.unwrap() ?: emptyPrec).let {
-        serializer(format).serialize(it, config, parseContext, logger)
-      }
-    )
+    config.outputConfig.precOutputConfig.format.forEach { format ->
+      val outputFileName = "prec.${format.extension}"
+      val outputFile = File(outputFolder, outputFileName)
+      outputFile.writeText(
+        (PrecCache.get()?.unwrap() ?: emptyPrec).let {
+          serializer(format).serialize(it, config, parseContext, logger)
+        }
+      )
+    }
   }
 
   private fun warnInitEmptyPrec(logger: Logger, message: String) {

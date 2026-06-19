@@ -135,6 +135,8 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
                 }
             }
 
+            PrecCache.INSTANCE.store(prec);
+
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
         stopwatch.stop();
@@ -157,8 +159,6 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         assert cegarResult != null;
         logger.write(Level.MAINSTEP, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
-
-        PrecCache.INSTANCE.store(prec);
 
         return cegarResult;
     }
