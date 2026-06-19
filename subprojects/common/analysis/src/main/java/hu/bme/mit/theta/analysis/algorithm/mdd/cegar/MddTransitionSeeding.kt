@@ -18,19 +18,16 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.MddValuationCollector
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
@@ -179,7 +176,7 @@ internal fun seedFromPrevious(
     val restricted = known.intersection(constraintNode)
     if (restricted.isTerminalZero) continue
     val litValues = cases.mapIndexed { i, (decl, _) -> decl to Bool((combo shr i) and 1 == 1) }
-    walkTransitions(restricted) { witness ->
+    MddValuationCollector.collect(restricted) { witness ->
       val model = MutableValuation.copyOf(witness)
       litValues.forEach { (decl, value) -> model.put(decl, value) }
       newTop.cacheModel(model)
@@ -194,34 +191,6 @@ internal fun seedFromPrevious(
     newLiterals.size,
     seeded,
   )
-}
-
-/** Streams every vector of [handle] to [onTransition], a default edge carrying no assignment. */
-private fun walkTransitions(handle: MddHandle, onTransition: (Valuation) -> Unit) {
-  val assignments = ArrayDeque<Pair<Decl<*>, LitExpr<*>>>()
-  fun walk(node: MddHandle) {
-    if (node.isTerminal) {
-      if (!node.isTerminalZero) {
-        val builder = ImmutableValuation.builder()
-        assignments.forEach { (decl, value) -> builder.put(decl, value) }
-        onTransition(builder.build())
-      }
-      return
-    }
-    val default = node.defaultValue()
-    if (default != null && !default.isTerminalZero) {
-      walk(default)
-      return
-    }
-    val decl = node.variableHandle.variable.orElseThrow().getTraceInfo(Decl::class.java)
-    val cursor = node.cursor()
-    while (cursor.moveNext()) {
-      assignments.addLast(decl to LitExprConverter.toLitExpr(cursor.key(), decl.type))
-      walk(cursor.value() as MddHandle)
-      assignments.removeLast()
-    }
-  }
-  walk(handle)
 }
 
 /** The expression node at the top of [handle], unwrapping identity levels. */
