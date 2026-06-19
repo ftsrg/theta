@@ -295,7 +295,12 @@ data class Location(
   val line: Int,
   val column: Int? = null,
   val function: String? = null,
-)
+) : Comparable<Location> {
+
+  override fun compareTo(other: Location): Int =
+    this.line.compareTo(other.line).takeIf { it != 0 }
+      ?: (this.column ?: Int.MIN_VALUE).compareTo(other.column ?: Int.MIN_VALUE)
+}
 
 /**
  * Action `follow` means that the waypoint should be passed through. Action `avoid` means that the
