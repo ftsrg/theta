@@ -202,10 +202,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     }
 
     /**
-     * Caches the known structure {@code source} into this node as explorable expression children, built
-     * fresh in this node's graph (so {@code source} may live in another graph, read only for structure).
-     * {@code prefix} decides the new-literal levels on top (per combination); below them this node
-     * mirrors {@code source}. A null {@code source} is a plain valuation path.
+     * Caches the known structure {@code source} into this node.
      */
     public void cacheModel(Valuation prefix, MddNode source) {
         cacheModel(prefix, source, new IdentityHashMap<>());
@@ -238,7 +235,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             if (child != null) child.cacheModel(prefix, null, done);
             return;
         }
-        // below the prefix: mirror source's structure, memoized so a shared sub-DAG is walked once
+        // below the prefix: mirror source's structure, memoized so a shared sub-DAG (a compact MDD has
+        // exponentially many paths) is walked once per node, not once per path
         if (!done.computeIfAbsent(this, k -> new HashSet<>()).add(source)) {
             return;
         }
