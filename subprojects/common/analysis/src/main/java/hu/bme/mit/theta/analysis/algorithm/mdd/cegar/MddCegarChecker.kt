@@ -86,23 +86,34 @@ constructor(
   private val useReachConstraint: Boolean = true,
   private val useOnTheFlyReachability: Boolean = false,
   private val traceTimeout: Long = 10,
+  // the lower bound: cache the previous iteration's witnesses into this iteration's nodes
   private val useTransitionSeeding: Boolean = false,
+  // the upper bound: prune by the previous relation's SAT cache (needs the seeding infrastructure)
+  private val useTransitionBound: Boolean = useTransitionSeeding,
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NONE,
   private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
+  // the transition bound (upper) subsumes the reach-set constraint's source pruning, so the reach
+  // constraint is dropped when it is used; witness caching (lower) is the orthogonal seeding knob
+  private val applyReachConstraint = useReachConstraint && !useTransitionBound
+
   init {
-    require(!(useReachConstraint && useOnTheFlyReachability)) {
-      "useReachConstraint and useOnTheFlyReachability cannot both be enabled: combining them is not sound"
+    require(!useTransitionBound || useTransitionSeeding) {
+      "the transition bound needs the witness-order infrastructure of transition seeding"
+    }
+    require(!(useOnTheFlyReachability && (useReachConstraint || useTransitionBound))) {
+      "on-the-fly reachability is sound only without an upper bound: it cannot combine with the " +
+        "reach-set constraint or the transition bound (early termination leaves the bound unsound)"
     }
   }
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    val orders = CegarOrders(concreteModel, useTransitionSeeding)
+    val orders = CegarOrders(concreteModel, useTransitionSeeding, useTransitionBound)
     orders.stateOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     orders.transOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     orders.stateExprOrder?.mddGraph?.setAttribute(
@@ -115,8 +126,8 @@ constructor(
           transitionBinding(concreteModel),
           orders.transDataBoundary,
           orders.stateDataBoundary,
-          orders.transBoundOrder!!,
-          orders.stateBoundOrder!!,
+          orders.transBoundOrder,
+          orders.stateBoundOrder,
           logger,
         )
       else null
@@ -135,7 +146,7 @@ constructor(
 
       newLits.forEach(orders::createLevelOnTop)
 
-      val constraint = if (useReachConstraint) reachExplicit else null
+      val constraint = if (applyReachConstraint) reachExplicit else null
 
       val iter = runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred)
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
@@ -251,9 +262,9 @@ constructor(
 
     val relationOr =
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
-    // present each bound under the current top so the descriptor's interpreter floats it over the
-    // literal levels added since it was built
-    val constraint =
+    // lift each bound under the current top so the interpreter floats it over the literal levels
+    // added since it was built, then AND it onto the relation
+    val nextStates =
       listOfNotNull(
           prevStateSpace?.let {
             MddNodePostcondition.of(stateSig.topVariableHandle.getHandleFor(it.node))
@@ -261,10 +272,9 @@ constructor(
           seed?.trans?.bound?.let {
             MddNodeNextStateDescriptor.of(transBoundSig!!.topVariableHandle.getHandleFor(it.node))
           },
+          relationOr,
         )
-        .reduceOrNull(AndNextStateDescriptor::of)
-    val nextStates =
-      if (constraint != null) AndNextStateDescriptor.of(constraint, relationOr) else relationOr
+        .reduce(AndNextStateDescriptor::of)
 
     val effectiveNextStates =
       if (useOnTheFlyReachability)
@@ -394,11 +404,11 @@ constructor(
   private fun logSummary(iterations: Int, totalSolverCalls: Long, totalTimeMs: Long) {
     logger.write(
       Logger.Level.MAINSTEP,
-      "CEGAR finished: iterations=%d, totalSolverChecks=%d, totalTime=%dms, useReachConstraint=%b\n",
+      "CEGAR finished: iterations=%d, totalSolverChecks=%d, totalTime=%dms, reachConstraint=%b\n",
       iterations,
       totalSolverCalls,
       totalTimeMs,
-      useReachConstraint,
+      applyReachConstraint,
     )
   }
 }
@@ -408,7 +418,11 @@ constructor(
  * per refinement, above the ctrl levels and — with seeding — the concrete witness levels at the
  * bottom of the trans and state-expression orders.
  */
-private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: Boolean) {
+private class CegarOrders(
+  concreteModel: MonolithicExpr,
+  useTransitionSeeding: Boolean,
+  useTransitionBound: Boolean,
+) {
 
   val stateOrder: MddVariableOrder =
     JavaMddFactory.getDefault()
@@ -431,11 +445,11 @@ private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: B
   // collide them with the procedural expression nodes there and force solver-driven equality
   // enumeration during canonization
   val transBoundOrder: MddVariableOrder? =
-    if (useTransitionSeeding)
+    if (useTransitionBound)
       JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
     else null
   val stateBoundOrder: MddVariableOrder? =
-    if (useTransitionSeeding)
+    if (useTransitionBound)
       JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
     else null
   val identityExprs = mutableListOf<Expr<BoolType>>()
@@ -475,11 +489,8 @@ private class CegarOrders(concreteModel: MonolithicExpr, useTransitionSeeding: B
   }
 
   /**
-   * v1 insertion policy: top-insertion. This is the single seam where a reordering / mid-order
-   * placement policy would plug in (guide decision 3). A non-top policy must also rebuild the
-   * constraint for the new order, because the skip-level handle then stops being a pure
-   * default-edge lift. Phase 2's bottom-sub-MDD sharing also assumes this literals-on-top
-   * placement; other placements only degrade reuse, never correctness.
+   * Top-insertion: new literal levels go above the ctrl and witness levels. The bound lift depends on
+   * this — placed elsewhere, the skip-level handle would stop being a pure default-edge lift.
    */
   fun createLevelOnTop(v: VarDecl<*>) {
     stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))

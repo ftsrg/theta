@@ -172,34 +172,52 @@ class MddCegarConstraintComparisonTest {
     propExpr: Expr<BoolType>,
     safe: Boolean,
   ) {
-    val constrained = run(initExpr, tranExpr, propExpr, useReachConstraint = true)
+    // the lower bound (witness caching) and the upper bound (reach set vs SAT-cache bound) are
+    // separated: constrained and seeded share the same caching lower bound, so their difference is
+    // purely the upper bound — reach postcondition vs the strictly tighter transition bound
     val unconstrained = run(initExpr, tranExpr, propExpr, useReachConstraint = false)
-    val seeded =
-      run(initExpr, tranExpr, propExpr, useReachConstraint = true, useTransitionSeeding = true)
-    val otfSeeded =
+    val cached =
       run(
         initExpr,
         tranExpr,
         propExpr,
         useReachConstraint = false,
         useTransitionSeeding = true,
-        useOnTheFlyReachability = true,
+        useTransitionBound = false,
+      )
+    val constrained =
+      run(
+        initExpr,
+        tranExpr,
+        propExpr,
+        useReachConstraint = true,
+        useTransitionSeeding = true,
+        useTransitionBound = false,
+      )
+    val seeded =
+      run(
+        initExpr,
+        tranExpr,
+        propExpr,
+        useReachConstraint = false,
+        useTransitionSeeding = true,
+        useTransitionBound = true,
       )
     val nonCegar = runNonCegar(initExpr, tranExpr, propExpr)
 
     println(
-      "Reach-constraint comparison for $tranExpr ($propExpr): " +
-        "constrained: solverChecks=${constrained.solverChecks}, time=${constrained.timeMs}ms; " +
+      "Bound comparison for $tranExpr ($propExpr): " +
         "unconstrained: solverChecks=${unconstrained.solverChecks}, time=${unconstrained.timeMs}ms; " +
-        "constrained+seeded: solverChecks=${seeded.solverChecks}, time=${seeded.timeMs}ms; " +
-        "otf+seeded: solverChecks=${otfSeeded.solverChecks}, time=${otfSeeded.timeMs}ms; " +
+        "cached(lower only): solverChecks=${cached.solverChecks}, time=${cached.timeMs}ms; " +
+        "reach+cached: solverChecks=${constrained.solverChecks}, time=${constrained.timeMs}ms; " +
+        "bound+cached: solverChecks=${seeded.solverChecks}, time=${seeded.timeMs}ms; " +
         "nonCegar: solverChecks=${nonCegar.solverChecks}, time=${nonCegar.timeMs}ms"
     )
 
-    assertEquals(safe, constrained.safe)
     assertEquals(safe, unconstrained.safe)
+    assertEquals(safe, cached.safe)
+    assertEquals(safe, constrained.safe)
     assertEquals(safe, seeded.safe)
-    assertEquals(safe, otfSeeded.safe)
     assertEquals(safe, nonCegar.safe)
   }
 
@@ -228,6 +246,7 @@ class MddCegarConstraintComparisonTest {
     propExpr: Expr<BoolType>,
     useReachConstraint: Boolean,
     useTransitionSeeding: Boolean = false,
+    useTransitionBound: Boolean = useTransitionSeeding,
     useOnTheFlyReachability: Boolean = false,
   ): RunResult {
     SolverPool(Z3LegacySolverFactory.getInstance()).use { solverPool ->
@@ -241,6 +260,7 @@ class MddCegarConstraintComparisonTest {
           useReachConstraint = useReachConstraint,
           useOnTheFlyReachability = useOnTheFlyReachability,
           useTransitionSeeding = useTransitionSeeding,
+          useTransitionBound = useTransitionBound,
         )
       val stopwatch = Stopwatch.createStarted()
       val status = checker.check(null)
