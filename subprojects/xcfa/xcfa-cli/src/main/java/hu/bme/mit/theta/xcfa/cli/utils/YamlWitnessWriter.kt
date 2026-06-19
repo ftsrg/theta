@@ -539,7 +539,13 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                 (witnessTrace.states.getOrNull(i + 1)?.violation ?: false)),
           threadId = threadIds.ofNode(witnessTrace.states[i], incoming, outgoing),
         )
-        ?.let { waypoints.add(it) }
+        ?.let {
+          // to avoid multiple segments for the target location, we need to remove the existing follow waypoint and only keep the target
+          if (it.type == WaypointType.TARGET && waypoints.last().location == it.location) {
+            waypoints.removeLast()
+          }
+          waypoints.add(it)
+        }
       if (outgoing != null) {
         waypoints.addAll(threadIds.registrations(outgoing, inputFile))
         outgoing.toSegment(inputFile, threadId = threadIds.ofEdge(outgoing))?.let {
