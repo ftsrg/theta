@@ -26,20 +26,17 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFor
-import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
-import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
+import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
-import java.util.LinkedList
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 /**
@@ -74,7 +71,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val threadProcedures: Map<Int, String>,
   )
 
-  private companion object {
+  companion object {
+
+    const val SEGMENT_COUNTER = "__THETA__segment__counter__"
+    const val LAST_SEGMENT_PASSED = "__THETA__last__segment__passed__"
 
     /**
      * State shared between the per-procedure runs of this pass (each procedure builder has its own
@@ -98,7 +98,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       mutableMapOf<
         XcfaEdge,
         MutableMap<XcfaLabel, MutableSet<Expr<BoolType>>>,
-      >() // on which edges, which labels must have these new assumptions beforehand.
+        >() // on which edges, which labels must have these new assumptions beforehand.
     for (item in witness.content) {
       item.invariant?.let {
         val loc = it.location
@@ -198,16 +198,18 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     if (builder.parent.getInitProcedures().any { it.first.name == builder.name }) {
       for (outgoingEdge in builder.initLoc.outgoingEdges.toSet()) {
         builder.removeEdge(outgoingEdge)
-        builder.addEdge(
-          outgoingEdge.withLabel(
-            SequenceLabel(
-              listOf(
-                AssignStmtLabel(segmentCounter, Int(0)),
-                AssignStmtLabel(segmentFlag, False()),
-              ) + outgoingEdge.getFlatLabels()
+        val intermediateLoc =
+          XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = outgoingEdge.metadata)
+        val annotationEdge = XcfaEdge(
+          outgoingEdge.source, intermediateLoc, SequenceLabel(
+            listOf(
+              AssignStmtLabel(segmentCounter, Int(0)),
+              AssignStmtLabel(segmentFlag, False()),
             )
-          )
+          ), outgoingEdge.metadata
         )
+        builder.addEdge(annotationEdge)
+        builder.addEdge(outgoingEdge.withSource(intermediateLoc))
       }
     }
 
@@ -305,14 +307,31 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     modifications.forEach { (edge, allAnnots) ->
       builder.removeEdge(edge)
       val oldLabels = edge.getFlatLabels()
-      val newLabels = LinkedList<XcfaLabel>()
+      var newLabels = LinkedList<XcfaLabel>()
       val indexToAnnots =
         allAnnots.groupBy { oldLabels.indexOf(it.beforeLabel) }.toList().sortedBy { it.first }
       var i = 0
+
+      var lastLoc = edge.source
+      val flushLabels = { target: XcfaLocation ->
+        if (newLabels.isNotEmpty()) {
+          val newEdge = XcfaEdge(lastLoc, target, SequenceLabel(newLabels), edge.metadata)
+          builder.addEdge(newEdge)
+          lastLoc = target
+          newLabels = LinkedList<XcfaLabel>()
+        }
+      }
+      val flushLabelsIntermediate = {
+        flushLabels(XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = edge.label.metadata))
+      }
+
       for ((index, annots) in indexToAnnots) {
         while (i < index) {
           newLabels.add(oldLabels[i++])
         }
+
+        flushLabelsIntermediate()
+
         newLabels.addAll(annots.map { it.assumption })
         newLabels.addAll(annots.mapNotNull { it.flagUpdate })
         var expr = segmentCounter.ref as Expr<IntType>
@@ -320,11 +339,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           expr = Ite(cond, then, expr)
         }
         newLabels.add(AssignStmtLabel(segmentCounter, expr))
+
+        flushLabelsIntermediate()
       }
       while (i < oldLabels.size) {
         newLabels.add(oldLabels[i++])
       }
-      builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
+
+      flushLabels(edge.target)
     }
 
     if (firstCycle == -1) { // we are checking reachability, TODO refactor
@@ -419,22 +441,22 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
             .mapNotNull { (statement, _, _) ->
               if (
                 statement.lineNumberStart == loc.line &&
-                  (loc.column == null || statement.colNumberStart + 1 == loc.column)
+                (loc.column == null || statement.colNumberStart + 1 == loc.column)
               )
                 statement
               else null
             }
             .filter { it is CWhile || it is CFor || it is CIf || it is CDoWhile }
             .firstOrNull() // we hope it's a single ast node..
-          ?: error("Branching not on iteration/branching statement.")
+            ?: error("Branching not on iteration/branching statement.")
 
         val guardAssume =
           statementToEdge.mapNotNull {
             if (
               it.first == branching &&
-                it.second is StmtLabel &&
-                (it.second as StmtLabel).stmt is AssumeStmt &&
-                (it.second as StmtLabel).choiceType != ChoiceType.NONE
+              it.second is StmtLabel &&
+              (it.second as StmtLabel).stmt is AssumeStmt &&
+              (it.second as StmtLabel).choiceType != ChoiceType.NONE
             )
               Pair((it.second as StmtLabel).choiceType, (it.second as StmtLabel).stmt as AssumeStmt)
             else null
@@ -481,8 +503,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
   }
 
   private fun createInstrumentation(parent: XcfaBuilder): Instrumentation {
-    val segmentCounter = Var("__THETA__segment__counter__", Int())
-    val segmentFlag = Var("__THETA__last__segment__passed__", Bool())
+    val segmentCounter = Var(SEGMENT_COUNTER, Int())
+    val segmentFlag = Var(LAST_SEGMENT_PASSED, Bool())
     // Global: waypoints of different threads must see the same segment progression.
     // Atomic: the instrumentation itself must never introduce a data race -- a non-atomic
     // counter would make every pair of instrumented edges a (spurious) race, breaking the
