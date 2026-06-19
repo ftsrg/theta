@@ -128,6 +128,7 @@ constructor(
           orders.stateDataBoundary,
           orders.transBoundOrder,
           orders.stateBoundOrder,
+          solverPool,
           logger,
         )
       else null
