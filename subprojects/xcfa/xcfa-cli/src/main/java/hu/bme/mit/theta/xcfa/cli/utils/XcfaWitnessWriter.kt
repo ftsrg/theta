@@ -53,12 +53,12 @@ interface XcfaWitnessWriter {
 
         ErrorDetection.MEMSAFETY ->
           if (parseContext.multiThreading) {
-            safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
+            safetyResult.getWitnessWriter(null, YamlWitnessWriter())
           } else {
             safetyResult.getWitnessWriter(null, YamlWitnessWriter())
           }
 
-        ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
+        ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
         ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
