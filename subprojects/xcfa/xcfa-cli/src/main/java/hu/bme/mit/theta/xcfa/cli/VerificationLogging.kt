@@ -169,8 +169,8 @@ internal fun postVerificationLogging(
         else -> {}
       }
 
-      config.outputConfig.precOutputConfig.format.forEach {
-        PrecReuse.write(it, resultFolder, config, parseContext, logger)
+      if (config.outputConfig.precOutputConfig.serializationMode != PrecSerializationMode.NEVER) {
+        PrecReuse.write(resultFolder, config, parseContext, logger)
       }
     } catch (e: Throwable) {
       logger.info("Could not output files: ${e.stackTraceToString()}")

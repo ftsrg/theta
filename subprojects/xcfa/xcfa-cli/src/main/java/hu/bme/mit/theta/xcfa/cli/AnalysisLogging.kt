@@ -17,11 +17,14 @@ package hu.bme.mit.theta.xcfa.cli
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
+import hu.bme.mit.theta.analysis.utils.PrecCache
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.getGson
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
@@ -47,6 +50,12 @@ internal fun preAnalysisLogging(
       logger.info(
         "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}"
       )
+
+      if (config.outputConfig.precOutputConfig.serializationMode == PrecSerializationMode.CONTINUOUS) {
+        PrecCache.register {
+          PrecReuse.write(resultFolder, config, parseContext, logger)
+        }
+      }
 
       if (enabled || config.outputConfig.chcOutputConfig.enabled) {
         writeChc(xcfa, resultFolder, config, logger)
