@@ -33,23 +33,23 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 
 /*
- * Cross-iteration knowledge transfer of the CEGAR loop. Refinement only conjoins constraints, so
- * with π the projection deleting the literal levels added after iteration j, S_k ⊆ π⁻¹(S_j) for
- * k > j. Both sides of the exploration sandwich transfer:
- * - under: a witness cached in iteration j's node decides every later literal syntactically;
- *   extended with those values it is a model of iteration k's node — [seedFromPrevious];
- * - upper: what iteration j confirmed present (its SAT cache) over-approximates iteration k after
- *   lifting — [extractBound] materializes that present cache as a structural MDD, consumed as an
- *   AndNextStateDescriptor operand (the relation bound and the init/prop initializer bound) and by
- *   `filterStates` for the property. Only iteration j is read: its constrained exploration already
- *   excludes everything earlier iterations pruned, so the bound needs no accumulation.
+ * Cross-iteration knowledge transfer of the CEGAR loop. Refinement only conjoins constraints, so the
+ * previous iteration's knowledge carries to the next on both sides of the exploration sandwich:
+ * - under: a witness cached in the previous node decides every later literal by substitution, so
+ *   extended it is a model of the next node — [seedFromPrevious];
+ * - upper: what the previous iteration confirmed present over-approximates the next once lifted —
+ *   [extractBound], consumed as an AndNextStateDescriptor operand (the relation and init/prop bound)
+ *   and by `filterStates` for the property. Only the last iteration is read: its constrained
+ *   exploration already excludes everything earlier iterations pruned, so the bound needs no
+ *   accumulation.
  */
 
 /** Cross-iteration knowledge of one seeded node kind. */
 internal class KindKnowledge(
   private val binding: LiteralBinding,
   private val dataBoundary: Any?,
-  private val boundOrder: MddVariableOrder,
+  // null when the upper bound is disabled (witness caching without the SAT-cache bound)
+  private val boundOrder: MddVariableOrder?,
   private val label: String,
   private val logger: Logger,
 ) {
@@ -80,7 +80,8 @@ internal class KindKnowledge(
   fun update() {
     val node = nodes.singleOrNull() ?: return
     prev = node
-    bound = extractBound(node, boundOrder.defaultSetSignature.topVariableHandle, dataBoundary)
+    bound =
+      boundOrder?.let { extractBound(node, it.defaultSetSignature.topVariableHandle, dataBoundary) }
   }
 }
 
@@ -89,8 +90,8 @@ internal class SeedKnowledge(
   transBinding: LiteralBinding,
   transDataBoundary: Any?,
   stateDataBoundary: Any?,
-  transBoundOrder: MddVariableOrder,
-  stateBoundOrder: MddVariableOrder,
+  transBoundOrder: MddVariableOrder?,
+  stateBoundOrder: MddVariableOrder?,
   logger: Logger,
 ) {
   val trans = KindKnowledge(transBinding, transDataBoundary, transBoundOrder, "Transition", logger)
@@ -118,11 +119,9 @@ internal val stateBinding = LiteralBinding { literal, pred ->
 }
 
 /**
- * Best-effort transfer of [prev]'s cached witnesses onto [newNodes]: a witness already assigns the
- * levels shared with the previous iteration, so only the new literals are classified — by
- * substitution, without solver calls — and the extended witness is cached as a model of the new
- * node. Witnesses relay: models cached here are part of the new node's caches, so the next
- * iteration's walk of that node sees everything accumulated so far.
+ * Transfers [prev]'s cached witnesses onto [newNodes]: a witness already assigns the shared levels,
+ * so only the new literals are classified — by substitution, no solver calls — and the extended
+ * witness is cached as a model of the new node, relaying it to later iterations' walks.
  */
 internal fun seedFromPrevious(
   prev: MddHandle?,

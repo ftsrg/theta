@@ -28,23 +28,17 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 
 /**
- * Materializes [node]'s solver-confirmed (cached-as-present) edges as a structural
- * over-approximation MDD over the abstract levels. The present cache is treated as exhaustive: a key
- * not cached is pruned (no default edge), sound because GSAT fires only from reachable sources and
- * probes every off-diagonal transition of each, so an unprobed key is unsatisfiable, not unknown
- * (relies on the abstract levels being bounded). Only the last iteration's node is read: its
- * exploration ran constrained by the previous bound, so it already excludes everything earlier
- * iterations pruned — no cross-iteration accumulation is needed.
+ * Materializes [node]'s cached-as-present edges as a structural over-approximation over the abstract
+ * levels. The present cache is exhaustive: an uncached key is pruned (no default edge), sound because
+ * GSAT probes every transition of every reachable source, so an unprobed key is unsatisfiable. Only
+ * the last iteration's node is read — its constrained exploration already excludes what earlier
+ * iterations pruned.
  *
- * The bound is built under [boundTop], a mirror order on a fresh graph. Checking the structural nodes
- * into the source order instead would land them in the unique tables holding the procedural
- * expression nodes, where a hash collision forces solver-driven equality enumeration; the mirror
- * graph has no such nodes, so extraction stays solver-free. [node] is descended through its own
- * handle and [boundTop] is advanced in lockstep — both orders mirror the same level chain.
- *
- * Identity and skipped levels constrain nothing and widen to default edges; the walk is cut at
- * [dataBoundary], the topmost concrete witness level, below which saturation never consults the
- * relation. The result is level-dense to the cut, so consumers descend exactly one level per key.
+ * The bound is built under [boundTop], a mirror order on a fresh graph: checking the structural nodes
+ * into the source order would collide them with its procedural expression nodes and force
+ * solver-driven equality enumeration. [node] is descended through its own handle while [boundTop]
+ * advances in lockstep. Identity and skipped levels widen to default edges; the walk is cut at
+ * [dataBoundary], the topmost concrete witness level, below which saturation never consults the bound.
  */
 internal fun extractBound(
   node: MddHandle,
