@@ -42,6 +42,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepr
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
@@ -138,6 +139,11 @@ constructor(
     var currentPrec = initPrec(concreteModel)
     var prevStateSpace: MddHandle? = null
 
+    // one provider for the whole run: its saturation/relProd caches are keyed by (node, descriptor),
+    // so a refined relation never gets a false hit, while the unchanged concrete sub-structure is
+    // reused across iterations; the graph cleanup listener prunes entries whose nodes have died
+    val provider = iterationStrategy.createProvider(orders.stateOrder)
+
     var totalSolverCalls = 0L
     var i = 0
 
@@ -149,7 +155,8 @@ constructor(
 
       val constraint = if (applyReachConstraint) prevStateSpace else null
 
-      val iter = runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred)
+      val iter =
+        runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred, provider)
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
 
       logger.write(
@@ -226,6 +233,7 @@ constructor(
     seed: SeedKnowledge?,
     newLits: List<VarDecl<BoolType>>,
     literalToPred: Map<Decl<*>, Expr<BoolType>>,
+    provider: StateSpaceEnumerationProvider,
   ): IterationResult {
     val stateSig: MddSignature = orders.stateOrder.defaultSetSignature
     val transSig: MddSignature = orders.transOrder.defaultSetSignature
@@ -286,7 +294,6 @@ constructor(
 
     val satSolverBefore = solverPool.checkCount
     val ssgTime = Stopwatch.createStarted()
-    val provider = iterationStrategy.createProvider(stateSig.variableOrder)
     val stateSpace =
       provider.compute(
         boundedInitializer(
