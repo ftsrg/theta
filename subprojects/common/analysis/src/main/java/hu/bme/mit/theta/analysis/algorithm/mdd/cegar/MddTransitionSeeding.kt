@@ -18,20 +18,26 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
+import hu.bme.mit.theta.solver.SolverPool
 
 /*
  * Cross-iteration knowledge transfer of the CEGAR loop. Refinement only conjoins constraints, so the
@@ -50,6 +56,7 @@ internal class CrossIterationKnowledge(
   private val binding: LiteralBinding,
   private val dataBoundary: Any?,
   private val boundOrder: MddVariableOrder?,
+  private val solverPool: SolverPool,
   private val label: String,
   private val logger: Logger,
 ) {
@@ -70,7 +77,7 @@ internal class CrossIterationKnowledge(
     literalToPred: Map<Decl<*>, Expr<BoolType>>,
   ) {
     nodes = newNodes
-    seedFromPrevious(prev, newNodes, newLiterals, literalToPred, binding, logger, label)
+    seedFromPrevious(prev, newNodes, newLiterals, literalToPred, binding, solverPool, logger, label)
   }
 
   /**
@@ -101,11 +108,18 @@ internal class SeedKnowledge(
   stateDataBoundary: Any?,
   transBoundOrder: MddVariableOrder?,
   stateBoundOrder: MddVariableOrder?,
+  solverPool: SolverPool,
   logger: Logger,
 ) {
-  val trans = CrossIterationKnowledge(transBinding, transDataBoundary, transBoundOrder, "Transition", logger)
-  val init = CrossIterationKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Init", logger)
-  val prop = CrossIterationKnowledge(stateBinding, stateDataBoundary, stateBoundOrder, "Property", logger)
+  val trans =
+    CrossIterationKnowledge(
+      transBinding, transDataBoundary, transBoundOrder, solverPool, "Transition", logger)
+  val init =
+    CrossIterationKnowledge(
+      stateBinding, stateDataBoundary, stateBoundOrder, solverPool, "Init", logger)
+  val prop =
+    CrossIterationKnowledge(
+      stateBinding, stateDataBoundary, stateBoundOrder, solverPool, "Property", logger)
 }
 
 /** Binds a literal's defining predicate to the decls of the levels the literal occupies. */
@@ -128,9 +142,12 @@ internal val stateBinding = LiteralBinding { literal, pred ->
 }
 
 /**
- * Transfers [prev]'s cached witnesses onto [newNodes]: a witness already assigns the shared levels,
- * so only the new literals are classified — by substitution, no solver calls — and the extended
- * witness is cached as a model of the new node, relaying it to later iterations' walks.
+ * Seeds [newNodes] from [prev]'s known transitions without flattening them to a set of witnesses. The
+ * previous relation is extracted solver-free into a fresh mirror graph and then, for every truth-value
+ * combination of the new literals, restricted by the matching predicate cofactor — an intersection
+ * over [prev]'s order (the new literal levels are not added yet, so neither operand is a skip handle).
+ * Each restricted transition is cached as a model of the new node with those literal values added. The
+ * cofactor constraint is decided purely by substitution, so seeding stays solver-free.
  */
 internal fun seedFromPrevious(
   prev: MddHandle?,
@@ -138,50 +155,73 @@ internal fun seedFromPrevious(
   newLiterals: List<VarDecl<BoolType>>,
   literalToPred: Map<Decl<*>, Expr<BoolType>>,
   binding: LiteralBinding,
+  solverPool: SolverPool,
   logger: Logger,
   label: String,
 ) {
-  // single node assumed: with several split nodes, a witness of one split could be cached into
+  // single node assumed: with several split nodes, a transition of one split could be cached into
   // another split's node, corrupting it
   if (prev == null || newLiterals.isEmpty() || newNodes.size != 1) return
   val newTop = expressionTop(newNodes[0]) ?: return
   val cases = newLiterals.flatMap { binding.bind(it, literalToPred[it]!!) }
 
+  val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(prev.variableHandle)
+  val known = MddExplicitRepresentationExtractor.transform(prev, mirrorTop)
+
   var seeded = 0L
-  // witnesses that do not assign all predicate variables (identity and default levels carry no
-  // assignment), leaving a predicate undecided
-  var unresolved = 0L
-  for (witness in MddKnownValuationCollector.collect(prev)) {
-    val classified = classify(witness, cases)
-    if (classified == null) {
-      unresolved++
-    } else {
-      newTop.cacheModel(classified)
+  for (combo in 0 until (1 shl cases.size)) {
+    val predConstraint =
+      And(cases.mapIndexed { i, (_, pred) -> if ((combo shr i) and 1 == 1) pred else Not(pred) })
+    val constraintNode =
+      mirrorTop.checkInNode(
+        MddExpressionTemplate.ofSubstitution(predConstraint, { it as Decl<*> }, solverPool, true)
+      )
+    val restricted = known.intersection(constraintNode)
+    if (restricted.isTerminalZero) continue
+    val litValues = cases.mapIndexed { i, (decl, _) -> decl to Bool((combo shr i) and 1 == 1) }
+    walkTransitions(restricted) { witness ->
+      val model = MutableValuation.copyOf(witness)
+      litValues.forEach { (decl, value) -> model.put(decl, value) }
+      newTop.cacheModel(model)
       seeded++
     }
   }
 
   logger.write(
     Logger.Level.MAINSTEP,
-    "%s seeding: newLiterals=%d, seeded=%d, unresolved=%d\n",
+    "%s seeding: newLiterals=%d, seeded=%d\n",
     label,
     newLiterals.size,
     seeded,
-    unresolved,
   )
 }
 
-/** Extends [witness] with the truth value of every literal case; null if any is undecided. */
-private fun classify(
-  witness: Valuation,
-  cases: List<Pair<Decl<*>, Expr<BoolType>>>,
-): Valuation? {
-  val extended = MutableValuation.copyOf(witness)
-  for ((decl, expr) in cases) {
-    val value = ExprUtils.simplify(expr, witness) as? BoolLitExpr ?: return null
-    extended.put(decl, Bool(value.value))
+/** Streams every vector of [handle] to [onTransition], a default edge carrying no assignment. */
+private fun walkTransitions(handle: MddHandle, onTransition: (Valuation) -> Unit) {
+  val assignments = ArrayDeque<Pair<Decl<*>, LitExpr<*>>>()
+  fun walk(node: MddHandle) {
+    if (node.isTerminal) {
+      if (!node.isTerminalZero) {
+        val builder = ImmutableValuation.builder()
+        assignments.forEach { (decl, value) -> builder.put(decl, value) }
+        onTransition(builder.build())
+      }
+      return
+    }
+    val default = node.defaultValue()
+    if (default != null && !default.isTerminalZero) {
+      walk(default)
+      return
+    }
+    val decl = node.variableHandle.variable.orElseThrow().getTraceInfo(Decl::class.java)
+    val cursor = node.cursor()
+    while (cursor.moveNext()) {
+      assignments.addLast(decl to LitExprConverter.toLitExpr(cursor.key(), decl.type))
+      walk(cursor.value() as MddHandle)
+      assignments.removeLast()
+    }
   }
-  return extended
+  walk(handle)
 }
 
 /** The expression node at the top of [handle], unwrapping identity levels. */
