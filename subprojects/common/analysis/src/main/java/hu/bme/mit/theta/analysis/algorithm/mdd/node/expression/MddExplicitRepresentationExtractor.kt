@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression
 
-import com.google.common.base.Preconditions
+import hu.bme.mit.delta.collections.IntObjMapView
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddGraph
 import hu.bme.mit.delta.java.mdd.MddHandle
@@ -45,79 +45,99 @@ object MddExplicitRepresentationExtractor {
   }
 
   fun transform(node: MddHandle, variable: MddVariableHandle): MddHandle =
-    transform(node, variable, UnaryOperationCache())
+    transform(node, variable, dataBoundary = null)
+
+  /**
+   * Extracts [node] into the [variable] order. With a non-null [dataBoundary] the walk is truncated at
+   * that level: every variable at and below it is accepted (the lattice top).
+   */
+  fun transform(node: MddHandle, variable: MddVariableHandle, dataBoundary: Any?): MddHandle =
+    transform(node, variable, UnaryOperationCache(), dataBoundary)
 
   fun transform(
     node: MddHandle,
     variable: MddVariableHandle,
     cache: UnaryOperationCache<MddHandle, MddHandle>,
+    dataBoundary: Any?,
   ): MddHandle {
-    val cached = cache.getOrNull(node)
-    if (cached != null) {
-      return cached
+    cache.getOrNull(node)?.let {
+      return it
     }
 
-    // node is descended through its own variableHandle; variable is only the check-in
-    // target and may belong to a different order mirroring the source levels
-    val result: MddHandle
-    if (node.isTerminal) {
-      if (node.isTerminalZero) {
-        result = variable.mddGraph.terminalZeroHandle
-      } else {
-        val mddGraph: MddGraph<Any> = variable.mddGraph as MddGraph<Any>
-        result = mddGraph.terminalVariableHandle.getHandleFor(mddGraph.getNodeFor(node.data))
-      }
-    } else {
-      if (node.node.representation is IdentityRepresentation) {
-        val s =
-          transform(
-            node.variableHandle.lower
-              .get()
-              .lower
-              .get()
-              .getHandleFor((node.node.representation as IdentityRepresentation).continuation),
-            variable.lower.get().lower.orElse(null),
-            cache,
-          )
-        result =
-          if (!s.isTerminalZero) {
-            variable.checkInNode(IdentityTemplate(s.node))
-          } else {
-            variable.mddGraph.terminalZeroHandle
-          }
-      } else {
-        val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-        Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
-        val expressionRepresentation = node.node.representation as MddExpressionRepresentation
-        val knownEdges = expressionRepresentation.explored().knownEdges()
-
-        if (knownEdges.defaultValue() != null) {
+    val result: MddHandle =
+      when {
+        node.isTerminalZero -> variable.mddGraph.terminalZeroHandle
+        node.isTerminal -> {
+          val mddGraph: MddGraph<Any> = variable.mddGraph as MddGraph<Any>
+          mddGraph.terminalVariableHandle.getHandleFor(mddGraph.getNodeFor(node.data))
+        }
+        dataBoundary != null && atBoundary(node.variableHandle, dataBoundary) ->
+          variable.mddGraph.handleForTop
+        node.isSkippedLevel -> {
+          val s =
+            transform(
+              lowerOf(node.variableHandle).getHandleFor(node.node),
+              lowerOf(variable),
+              cache,
+              dataBoundary,
+            )
+          if (s.isTerminalZero) variable.mddGraph.terminalZeroHandle
+          else variable.checkInNode(MddStructuralTemplate.of(IntObjMapView.empty(s.node)))
+        }
+        node.node.representation is IdentityRepresentation -> {
           val s =
             transform(
               node.variableHandle.lower
                 .get()
-                .getHandleFor(knownEdges.defaultValue()),
-              variable.lower.orElse(null),
+                .lower
+                .get()
+                .getHandleFor((node.node.representation as IdentityRepresentation).continuation),
+              variable.lower.get().lower.orElse(null),
               cache,
+              dataBoundary,
             )
-          if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
-        } else {
-          val cursor = knownEdges.cursor()
-          while (cursor.moveNext()) {
+          if (!s.isTerminalZero) variable.checkInNode(IdentityTemplate(s.node))
+          else variable.mddGraph.terminalZeroHandle
+        }
+        node.node.representation is MddExpressionRepresentation -> {
+          val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
+          val knownEdges =
+            (node.node.representation as MddExpressionRepresentation).explored().knownEdges()
+          if (knownEdges.defaultValue() != null) {
             val s =
               transform(
-                node.variableHandle.lower.get().getHandleFor(cursor.value()),
+                node.variableHandle.lower.get().getHandleFor(knownEdges.defaultValue()),
                 variable.lower.orElse(null),
                 cache,
+                dataBoundary,
               )
-            if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
+            if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
+          } else {
+            val cursor = knownEdges.cursor()
+            while (cursor.moveNext()) {
+              val s =
+                transform(
+                  node.variableHandle.lower.get().getHandleFor(cursor.value()),
+                  variable.lower.orElse(null),
+                  cache,
+                  dataBoundary,
+                )
+              if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
+            }
           }
+          variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
         }
-
-        result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
+        else -> error("Unexpected representation in extraction: ${node.node.representation}")
       }
-    }
+
     cache.addToCache(node, result)
     return result
   }
+
+  private fun atBoundary(varHandle: MddVariableHandle, dataBoundary: Any): Boolean =
+    varHandle.variable.map { it.traceInfo }.orElse(null) == dataBoundary
+
+  private fun lowerOf(varHandle: MddVariableHandle): MddVariableHandle =
+    if (varHandle.lower.isPresent) varHandle.lower.get()
+    else varHandle.mddGraph.terminalVariableHandle
 }
