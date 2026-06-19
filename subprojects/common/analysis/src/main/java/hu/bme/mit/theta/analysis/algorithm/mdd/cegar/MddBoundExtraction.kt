@@ -15,7 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 
-import hu.bme.mit.delta.java.mdd.JavaMddFactory
+import hu.bme.mit.delta.collections.IntObjMapView
+import hu.bme.mit.delta.collections.impl.IntObjMapViews
 import hu.bme.mit.delta.java.mdd.MddGraph
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
@@ -28,25 +29,25 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 
 /**
- * Materializes [node]'s cached-as-present edges as a structural over-approximation over the abstract
+ * Materializes [sourceHandle]'s cached-as-present edges as a structural over-approximation over the abstract
  * levels. The present cache is exhaustive: an uncached key is pruned (no default edge), sound because
  * GSAT probes every transition of every reachable source, so an unprobed key is unsatisfiable. Only
  * the last iteration's node is read — its constrained exploration already excludes what earlier
  * iterations pruned.
  *
- * The bound is built under [boundTop], a mirror order on a fresh graph: checking the structural nodes
+ * The bound is built under [targetVariable], a mirror order on a fresh graph: checking the structural nodes
  * into the source order would collide them with its procedural expression nodes and force
- * solver-driven equality enumeration. [node] is descended through its own handle while [boundTop]
+ * solver-driven equality enumeration. [sourceHandle] is descended through its own handle while [targetVariable]
  * advances in lockstep. Identity and skipped levels widen to default edges; the walk is cut at
  * [dataBoundary], the topmost concrete witness level, below which saturation never consults the bound.
  */
 internal fun extractBound(
-  node: MddHandle,
-  boundTop: MddVariableHandle,
+  sourceHandle: MddHandle,
+  targetVariable: MddVariableHandle,
   dataBoundary: Any?,
 ): MddHandle {
-  val result = BoundExtraction(boundTop.mddGraph, dataBoundary).walkNode(node, boundTop)
-  return if (result == null) boundTop.mddGraph.terminalZeroHandle else boundTop.getHandleFor(result)
+  val result = BoundExtraction(targetVariable.mddGraph, dataBoundary).walkNode(sourceHandle, targetVariable)
+  return if (result == null) targetVariable.mddGraph.terminalZeroHandle else targetVariable.getHandleFor(result)
 }
 
 private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?) {
@@ -72,47 +73,34 @@ private class BoundExtraction(graph: MddGraph<*>, private val dataBoundary: Any?
 
     val srcLower = lowerOf(e.variableHandle)
     val tgtLower = lowerOf(target)
-    val result =
+    val template =
       if (e.isSkippedLevel) {
-        // a skipped level constrains nothing: widen to a default edge into the node one level down
-        level(emptyMap(), walkNode(srcLower.getHandleFor(e.node), tgtLower), target)
+        // a skipped level constrains nothing: widen to a default edge one level down
+        MddStructuralTemplate.of(
+          IntObjMapView.empty(walkNode(srcLower.getHandleFor(e.node), tgtLower))
+        )
       } else
         when (val repr = e.node.representation) {
           is IdentityRepresentation ->
-            // identity spans the var and its primed copy, neither constrained: widen to default edges
-            level(emptyMap(), walkNode(srcLower.getHandleFor(repr.continuation), tgtLower), target)
-          is MddExpressionRepresentation -> {
-            val known = repr.explored().knownEdges()
-            val edges = LinkedHashMap<Int, MddNode>()
-            val cursor = known.cursor()
-            while (cursor.moveNext()) {
-              walkNode(srcLower.getHandleFor(cursor.value()), tgtLower)?.let {
-                edges[cursor.key()] = it
+            // identity spans the var and its primed copy, neither constrained: widen to a default edge
+            MddStructuralTemplate.of(
+              IntObjMapView.empty(walkNode(srcLower.getHandleFor(repr.continuation), tgtLower))
+            )
+          is MddExpressionRepresentation ->
+            // edges + default never coexist, so one transform handles both: a present default widens,
+            // while a key whose child prunes to null is dropped, making the present cache exhaustive
+            MddStructuralTemplate.of(
+              IntObjMapViews.Transforming(repr.explored().knownEdges()) { child ->
+                child?.let { walkNode(srcLower.getHandleFor(it), tgtLower) }
               }
-            }
-            // a present default edge (skip / ofDefault) is kept; without one, an uncached key is
-            // pruned (no default), making the present cache exhaustive
-            val default =
-              known.defaultValue()?.let { walkNode(srcLower.getHandleFor(it), tgtLower) }
-            level(edges, default, target)
-          }
+            )
           else -> error("Unexpected representation in bound extraction: $repr")
         }
+    // an empty template canonizes to the terminal zero node; map it back to the absent (null) result
+    val node = target.checkInNode(template).node
+    val result = if (node === zero) null else node
     cache.addToCache(e.node, result ?: zero)
     return result
-  }
-
-  /** The bound node at [target]; null when it has neither an edge nor a default (fully absent). */
-  private fun level(
-    edges: Map<Int, MddNode>,
-    default: MddNode?,
-    target: MddVariableHandle,
-  ): MddNode? {
-    if (edges.isEmpty() && default == null) return null
-    val builder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-    if (default != null) builder.setDefault(default)
-    edges.forEach { (key, child) -> builder.set(key, child) }
-    return target.checkInNode(MddStructuralTemplate.of(builder.buildAndReset())).node
   }
 
   private fun atCut(varHandle: MddVariableHandle): Boolean =
