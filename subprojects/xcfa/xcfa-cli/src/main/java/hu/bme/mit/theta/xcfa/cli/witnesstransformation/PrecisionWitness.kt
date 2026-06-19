@@ -40,6 +40,7 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
+import kotlin.collections.LinkedHashMap
 
 class WitnessPredPrecSerializer : PredPrecSerializer {
   override fun serialize(
@@ -49,20 +50,17 @@ class WitnessPredPrecSerializer : PredPrecSerializer {
     logger: Logger,
   ): String {
     val precVars = prec.usedVars
-    val scopedVars = precVars.groupByScope(parseContext)
+    val varScopes = precVars.withScope(parseContext)
     val scopedPreds =
       (prec as PredPrec)
         .preds
         .filter { ExprUtils.getVars(it).none { it.isInternal(parseContext) } }
-        .groupBy { pred ->
-          val usedVars = ExprUtils.getVars(pred)
-          scopedVars.entries.fold(PrecisionScope(PrecisionScopeType.GLOBAL)) {
-            tightest,
-            (scope, vars) ->
-            if (usedVars.any { vars.contains(it) } && scope.type > tightest.type) scope
-            else tightest
-          }
+        .associateWith { pred ->
+          ExprUtils.getVars(pred)
+            .associateWith { varScopes.getValue(it) }.entries
+            .reduceUntilNull(::merge)?.component2()
         }
+        .groupByValue()
 
     val contents =
       scopedPreds.map { (scope, preds) ->
@@ -147,7 +145,10 @@ class WitnessExplPrecSerializer : ExplPrecSerializer {
     logger: Logger,
   ): String {
     val procedureVars =
-      (prec as ExplPrec).vars.filterNot { it.isInternal(parseContext) }.groupByScope(parseContext)
+      (prec as ExplPrec).vars
+        .filterNot { it.isInternal(parseContext) }
+        .withScope(parseContext)
+        .groupByValue()
 
     val contents =
       procedureVars.map { (scope, vars) ->
@@ -213,8 +214,8 @@ class WitnessExplPrecSerializer : ExplPrecSerializer {
   }
 }
 
-private fun Collection<VarDecl<*>>.groupByScope(parseContext: ParseContext) =
-  this.groupBy {
+private fun Collection<VarDecl<*>>.withScope(parseContext: ParseContext) =
+  this.associateWith {
     val scopes = it.name.split("::")
     when (scopes.size) {
       1 -> PrecisionScope(PrecisionScopeType.GLOBAL)
@@ -223,7 +224,7 @@ private fun Collection<VarDecl<*>>.groupByScope(parseContext: ParseContext) =
         val functionName = scopes.first()
         val line =
           parseContext.metadata.getMetadataValue(it.name, "locationLine").getOrNull() as? Int
-            ?: return@groupBy PrecisionScope(
+            ?: return@associateWith PrecisionScope(
               PrecisionScopeType.FUNCTION,
               functionName = functionName,
             )
@@ -300,4 +301,41 @@ fun Iterable<VarDecl<*>>.filterInScope(
       vars
     }
   return varsInScope.map { it.value.first }
+}
+
+private fun merge(lhs: Map.Entry<VarDecl<*>, PrecisionScope>, rhs: Map.Entry<VarDecl<*>, PrecisionScope>): Map.Entry<VarDecl<*>, PrecisionScope>? {
+  val (tighter, wider) = if (lhs.value.type > rhs.value.type) Pair(lhs, rhs) else Pair(rhs, lhs)
+
+  return when (wider.value.type) {
+    PrecisionScopeType.GLOBAL -> tighter
+    PrecisionScopeType.FUNCTION -> { // tighter is at least FUNCTION scope
+      tighter.takeIf { wider.value.functionName == tighter.value.functionName }
+    }
+    else -> { // both are (LOOP_)LOCATION scope
+      if (wider.key.name.substringBeforeLast("::") != tighter.key.name.substringBeforeLast("::"))
+        return null
+
+      listOf(wider, tighter).sortedBy { it.value.location }.last()
+    }
+  }
+}
+
+fun <K, V> Map<K, V?>.groupByValue(): Map<V, List<K>> {
+  val destination = LinkedHashMap<V, MutableList<K>>()
+  for ((key, value) in this) {
+    if (value == null) continue
+    val list = destination.getOrPut(value) { mutableListOf() }
+    list.add(key)
+  }
+  return destination
+}
+
+inline fun <S, T : S> Iterable<T>.reduceUntilNull(operation: (S, T) -> S?): S? {
+  val iterator = this.iterator()
+  if (!iterator.hasNext()) return null
+  var accumulator: S? = iterator.next()
+  while (accumulator != null && iterator.hasNext()) {
+    accumulator = operation(accumulator, iterator.next())
+  }
+  return accumulator
 }
