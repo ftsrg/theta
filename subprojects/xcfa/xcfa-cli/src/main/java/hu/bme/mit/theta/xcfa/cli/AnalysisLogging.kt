@@ -51,10 +51,10 @@ internal fun preAnalysisLogging(
         "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}"
       )
 
-      if (config.outputConfig.precOutputConfig.serializationMode == PrecSerializationMode.CONTINUOUS) {
-        PrecCache.register {
-          PrecReuse.write(resultFolder, config, parseContext, logger)
-        }
+      if (
+        config.outputConfig.precOutputConfig.serializationMode == PrecSerializationMode.CONTINUOUS
+      ) {
+        PrecCache.register { PrecReuse.write(resultFolder, config, parseContext, logger) }
       }
 
       if (enabled || config.outputConfig.chcOutputConfig.enabled) {
