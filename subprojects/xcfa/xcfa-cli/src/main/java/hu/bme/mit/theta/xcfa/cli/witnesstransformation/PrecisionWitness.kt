@@ -36,11 +36,11 @@ import hu.bme.mit.theta.xcfa.cli.utils.PredPrecSerializer
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.*
+import kotlin.collections.LinkedHashMap
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
-import kotlin.collections.LinkedHashMap
 
 class WitnessPredPrecSerializer : PredPrecSerializer {
   override fun serialize(
@@ -57,8 +57,10 @@ class WitnessPredPrecSerializer : PredPrecSerializer {
         .filter { ExprUtils.getVars(it).none { it.isInternal(parseContext) } }
         .associateWith { pred ->
           ExprUtils.getVars(pred)
-            .associateWith { varScopes.getValue(it) }.entries
-            .reduceUntilNull(::merge)?.component2()
+            .associateWith { varScopes.getValue(it) }
+            .entries
+            .reduceUntilNull(::merge)
+            ?.component2()
         }
         .groupByValue()
 
@@ -145,7 +147,8 @@ class WitnessExplPrecSerializer : ExplPrecSerializer {
     logger: Logger,
   ): String {
     val procedureVars =
-      (prec as ExplPrec).vars
+      (prec as ExplPrec)
+        .vars
         .filterNot { it.isInternal(parseContext) }
         .withScope(parseContext)
         .groupByValue()
@@ -303,7 +306,10 @@ fun Iterable<VarDecl<*>>.filterInScope(
   return varsInScope.map { it.value.first }
 }
 
-private fun merge(lhs: Map.Entry<VarDecl<*>, PrecisionScope>, rhs: Map.Entry<VarDecl<*>, PrecisionScope>): Map.Entry<VarDecl<*>, PrecisionScope>? {
+private fun merge(
+  lhs: Map.Entry<VarDecl<*>, PrecisionScope>,
+  rhs: Map.Entry<VarDecl<*>, PrecisionScope>,
+): Map.Entry<VarDecl<*>, PrecisionScope>? {
   val (tighter, wider) = if (lhs.value.type > rhs.value.type) Pair(lhs, rhs) else Pair(rhs, lhs)
 
   return when (wider.value.type) {

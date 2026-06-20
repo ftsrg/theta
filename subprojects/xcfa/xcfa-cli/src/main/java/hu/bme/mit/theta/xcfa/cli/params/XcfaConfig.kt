@@ -680,7 +680,7 @@ data class PrecOutputConfig(
   @Parameter(names = ["--prec-serialization-format"], variableArity = true)
   var format: List<PrecReuseFormat> = PrecReuseFormat.entries,
   @Parameter(names = ["--prec-serialization-mode"])
-  var serializationMode: PrecSerializationMode = PrecSerializationMode.NEVER
+  var serializationMode: PrecSerializationMode = PrecSerializationMode.NEVER,
 ) : Config
 
 data class COutputConfig(
