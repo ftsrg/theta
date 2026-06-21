@@ -239,7 +239,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
       val segmentFlagUpdate =
         if (isLastSegment) {
-          AssignStmtLabel(segmentFlag, Ite(currentSegmentPred, currentSegmentPred, segmentFlag.ref))
+          AssignStmtLabel(segmentFlag, Ite(currentSegmentPred, True(), segmentFlag.ref))
         } else null
 
       for (wp in waypoints) {
