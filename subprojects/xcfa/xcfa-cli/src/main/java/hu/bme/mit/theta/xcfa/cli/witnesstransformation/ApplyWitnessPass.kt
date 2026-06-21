@@ -270,6 +270,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
         val expr =
           Imply(currentSegmentPred, waypointConstraint(wp.waypoint, statementToEdge, builder))
+        val assumption = StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData)
 
         val edgeLabels = LinkedHashMap<XcfaEdge, MutableList<XcfaLabel>>()
         for ((label, edge) in labelsOnEdges) {
@@ -294,7 +295,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 Annotation(
                   edge,
                   label,
-                  StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData),
+                  assumption,
                   segmentUpdate,
                   segmentFlagUpdate,
                 )
@@ -313,23 +314,51 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       var i = 0
 
       var lastLoc = edge.source
-      val flushLabels = { target: XcfaLocation ->
-        if (newLabels.isNotEmpty()) {
+      var lastNewLabelsSize = 0
+      val flushLabels = { target: XcfaLocation, flushAnyway: Boolean ->
+        if (flushAnyway) {
           val newEdge = XcfaEdge(lastLoc, target, SequenceLabel(newLabels), edge.metadata)
           builder.addEdge(newEdge)
           lastLoc = target
-          newLabels = LinkedList<XcfaLabel>()
+          newLabels = LinkedList()
+        } else {
+          val newSlice = newLabels.safeSlice(lastNewLabelsSize..newLabels.size)
+          if (newSlice.any { it is StartLabel || it is JoinLabel || it is FenceLabel }) {
+            val previousSlice = newLabels.safeSlice(0 until lastNewLabelsSize)
+            var source = lastLoc
+            if (previousSlice.isNotEmpty()) {
+              val loc = XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = edge.label.metadata)
+              val newEdge = XcfaEdge(source, loc, SequenceLabel(previousSlice), edge.metadata)
+              builder.addEdge(newEdge)
+              source = loc
+            }
+            val newEdge = XcfaEdge(source, target, SequenceLabel(newSlice), edge.metadata)
+            builder.addEdge(newEdge)
+            lastLoc = target
+            newLabels = LinkedList()
+          }
         }
+        lastNewLabelsSize = newLabels.size
       }
+
       val flushLabelsIntermediate = {
-        flushLabels(XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = edge.label.metadata))
+        val loc = XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = edge.label.metadata)
+        flushLabels(loc, false)
       }
+
+      // assumptions first (to keep assumptions at the beginning for branching)
+      while (i < oldLabels.size) {
+        if (oldLabels[i] is StmtLabel && (oldLabels[i] as StmtLabel).stmt is AssumeStmt) {
+          newLabels.add(oldLabels[i])
+          i++
+        } else break
+      }
+      flushLabelsIntermediate()
 
       for ((index, annots) in indexToAnnots) {
         while (i < index) {
           newLabels.add(oldLabels[i++])
         }
-
         flushLabelsIntermediate()
 
         newLabels.addAll(annots.map { it.assumption })
@@ -346,7 +375,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         newLabels.add(oldLabels[i++])
       }
 
-      flushLabels(edge.target)
+      flushLabels(edge.target, true)
     }
 
     if (firstCycle == -1) { // we are checking reachability, TODO refactor
@@ -446,8 +475,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 statement
               else null
             }
-            .filter { it is CWhile || it is CFor || it is CIf || it is CDoWhile }
-            .firstOrNull() // we hope it's a single ast node..
+            .firstOrNull { it is CWhile || it is CFor || it is CIf || it is CDoWhile } // we hope it's a single ast node..
             ?: error("Branching not on iteration/branching statement.")
 
         val guardAssume =
@@ -565,16 +593,6 @@ fun getStatementToEdge(
   return statementToEdge
 }
 
-fun getStatementToEdge(
-  proc: XcfaProcedure
-): LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>> {
-  val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
-  for (edge in proc.edges) {
-    extractEdge(edge, statementToEdge)
-  }
-  return statementToEdge
-}
-
 private fun extractEdge(
   edge: XcfaEdge,
   statementToEdge: LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>,
@@ -596,10 +614,14 @@ private fun extractEdge(
   }
 }
 
+fun <T> List<T>.safeSlice(range: IntRange): List<T> =
+  drop(range.first).take(range.last - range.first + 1)
+
+
 private data class Annotation(
   val edge: XcfaEdge,
   val beforeLabel: XcfaLabel,
   val assumption: XcfaLabel,
   val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
-) {}
+)
