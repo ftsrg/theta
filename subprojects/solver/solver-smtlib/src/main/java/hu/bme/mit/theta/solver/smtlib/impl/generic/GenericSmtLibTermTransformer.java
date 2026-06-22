@@ -112,25 +112,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
-import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpExprs;
-import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -757,6 +739,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             case "Array":
                 assert ctx.sort().size() == 2;
                 return Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
+            case "FloatingPoint":
+                assert ctx.identifier().index().size() == 2;
+                return FpType.of(
+                        Integer.parseInt(ctx.identifier().index(0).getText()),
+                        Integer.parseInt(ctx.identifier().index(1).getText()));
             default:
                 throw new SmtLibSolverException("");
         }
