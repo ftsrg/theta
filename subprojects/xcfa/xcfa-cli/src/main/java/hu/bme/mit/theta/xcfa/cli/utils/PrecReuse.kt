@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.rattype.RatExprs
@@ -345,6 +346,11 @@ private fun transformSort(ctx: SMTLIBv2Parser.SortContext): Type {
     "Array" -> {
       assert(ctx.sort().size == 2)
       ArrayExprs.Array(transformSort(ctx.sort()[0]), transformSort(ctx.sort()[1]))
+    }
+
+    "FloatingPoint" -> {
+      assert(ctx.identifier().index().size == 2)
+      FpExprs.FpType(ctx.identifier().index(0).text.toInt(), ctx.identifier().index(1).text.toInt())
     }
 
     else -> throw UnsupportedOperationException()
