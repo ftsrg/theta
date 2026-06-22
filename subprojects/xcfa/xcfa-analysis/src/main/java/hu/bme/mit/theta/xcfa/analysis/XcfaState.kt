@@ -158,6 +158,8 @@ constructor(
           is NondetLabel -> label
           is StmtLabel -> label
           NopLabel -> null
+          is ClockOpLabel -> label
+          is ClockDelayLabel -> label
         }
       }
 
@@ -193,11 +195,12 @@ constructor(
       )
 
     val pid = pidCnt++
-    val lookup = procedure.createLookup("T$pid")
+    val lookup = procedure.createLookup("T$pid", includeThreadLocals = true)
     newThreadLookup[startLabel.pidVar] = pid
     newProcesses[pid] =
       XcfaProcessState(
         LinkedList(listOf(procedure.initLoc)),
+        procedure = procedure,
         prefix = "T$pid",
         varLookup = LinkedList(listOf(lookup)),
         returnStmts = LinkedList(listOf(returnStmt)),
@@ -319,6 +322,7 @@ data class XcfaProcessState(
     LinkedList(listOf(Pair(NopLabel, NopLabel))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
+  val procedure: XcfaProcedure? = null,
   val invokeParameterCounter: Int = 0,
 ) {
 
@@ -433,8 +437,15 @@ data class XcfaProcessState(
     fun XcfaProcedure.createLookup(
       threadPrefix: String = "",
       procPrefix: String = "",
-    ): Map<VarDecl<*>, VarDecl<*>> =
-      listOf(params.map { it.first }, vars)
+      includeThreadLocals: Boolean = false
+    ): Map<VarDecl<*>, VarDecl<*>> {
+
+      val varDecls = mutableListOf(params.map { it.first }, vars)
+      if (includeThreadLocals) {
+        varDecls.add(parent.globalVars.filter { it.threadLocal }.map { it.wrappedVar })
+      }
+
+      return varDecls
         .flatten()
         .associateWith {
           val sj = StringJoiner("::")
@@ -445,6 +456,7 @@ data class XcfaProcessState(
           if (name != it.name) Var(sj.toString(), it.type) else it
         }
         .filter { it.key != it.value }
+    }
   }
 }
 

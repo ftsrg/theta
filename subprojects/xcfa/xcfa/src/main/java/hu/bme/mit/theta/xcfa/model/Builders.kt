@@ -15,10 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.core.clock.constr.ClockConstr
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 
@@ -28,12 +31,14 @@ import java.util.*
 class XcfaBuilder
 @JvmOverloads
 constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet()) {
-
+  private val clocks: MutableSet<XcfaGlobalVar> = LinkedHashSet()
   private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet()
   private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList()
   val metaData: MutableMap<String, Any> = LinkedHashMap()
 
   fun getVars(): Set<XcfaGlobalVar> = vars
+
+  fun getClocks(): Set<XcfaGlobalVar> = clocks
 
   fun getProcedures(): Set<XcfaProcedureBuilder> = procedures
 
@@ -43,6 +48,7 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
     return XCFA(
       name = name,
       globalVars = vars,
+      clocks = clocks,
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
     )
@@ -50,6 +56,10 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
 
   fun addVar(toAdd: XcfaGlobalVar) {
     vars.add(toAdd)
+  }
+
+  fun addClock(toAdd: XcfaGlobalVar) {
+    clocks.add(toAdd)
   }
 
   fun addProcedure(toAdd: XcfaProcedureBuilder) {
@@ -79,6 +89,7 @@ constructor(
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
   private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
+  private val clocks: MutableSet<VarDecl<RatType>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
@@ -117,6 +128,13 @@ constructor(
       this::partlyOptimized.isInitialized -> partlyOptimized.vars
       else -> vars
     }
+
+  fun getClocks(): Set<VarDecl<RatType>> =
+      when {
+          this::optimized.isInitialized -> optimized.clocks
+          this::partlyOptimized.isInitialized -> partlyOptimized.clocks
+          else -> clocks
+      }
 
   fun VarDecl<*>.isAtomic() =
     when {
@@ -177,6 +195,7 @@ constructor(
         name = optimized.name,
         params = optimized.params,
         vars = optimized.vars,
+        clocks = optimized.clocks,
         locs = optimized.locs,
         edges = optimized.edges,
         initLoc = optimized.initLoc,
@@ -208,6 +227,13 @@ constructor(
       "Cannot add/remove/modify elements after optimization passes!"
     }
     atomicVars.add(v)
+  }
+
+  fun addClock(toAdd: VarDecl<RatType>) {
+    check(!this::optimized.isInitialized) {
+      "Cannot add/remove new elements after optimization passes!"
+    }
+    clocks.add(toAdd)
   }
 
   fun removeVar(toRemove: VarDecl<*>) {
@@ -323,6 +349,10 @@ constructor(
         }
       }
     }
+  }
+
+  fun addInvariant(loc: XcfaLocation, invariant: ClockConstr) {
+    loc.invariant = invariant
   }
 
   fun changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>) {

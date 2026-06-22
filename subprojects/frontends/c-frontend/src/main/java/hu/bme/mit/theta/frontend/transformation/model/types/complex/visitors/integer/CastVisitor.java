@@ -23,11 +23,16 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
@@ -215,6 +220,19 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return param;
         } else {
             return Ite(Eq(param, Int(0)), Int(0), Int(1));
+        }
+    }
+
+    @Override
+    public Expr<?> visit(CClock type, Expr<?> param) {
+        CComplexType that = CComplexType.getType(param, parseContext);
+        if (that instanceof CClock) {
+            return param;
+        } else if (that instanceof CInteger) {
+            final Expr<IntType> intExpr = TypeUtils.cast(param, Int());
+            return IntExprs.ToRat(intExpr);
+        } else {
+            throw new UnsupportedOperationException();
         }
     }
 

@@ -17,7 +17,9 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.core.clock.op.ClockOp
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
@@ -25,6 +27,8 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.rattype.RatExprs.*
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.xcfa.model.RWLockReadLockLabel.Companion.readHandle
@@ -429,6 +433,44 @@ object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
 
   override fun toString(): String {
     return "Nop"
+  }
+}
+
+data class ClockOpLabel(
+  val op : ClockOp,
+  override val metadata: MetaData = EmptyMetaData,
+) :
+  XcfaLabel(metadata = metadata) {
+
+  override fun toStmt(): Stmt {
+    return op.toStmt()
+  }
+
+  override fun toString(): String {
+    return op.toString()
+  }
+}
+
+data class ClockDelayLabel(
+  val activeClocks : Collection<VarDecl<RatType>>? = null,
+  override val metadata: MetaData = EmptyMetaData,
+) :
+  XcfaLabel(metadata = metadata) {
+
+  override fun toStmt(): Stmt {
+    val delayVar = Var("__theta_delay", Rat())
+    return SequenceStmt(listOf(
+      Havoc(delayVar),
+      Assume(Geq(delayVar.ref, Rat(0, 1))),
+      SequenceStmt(
+        checkNotNull(activeClocks)
+          .map { Assign(it, Add(it.ref, delayVar.ref)) }
+      ),
+    ))
+  }
+
+  override fun toString(): String {
+    return "ClockDelay"
   }
 }
 

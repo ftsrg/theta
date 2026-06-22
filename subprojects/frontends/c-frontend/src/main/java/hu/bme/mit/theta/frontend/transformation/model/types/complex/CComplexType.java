@@ -151,6 +151,7 @@ public abstract class CComplexType {
             case "float" -> new CFloat(null, parseContext);
             case "double" -> new CDouble(null, parseContext);
             case "longdouble" -> new CLongDouble(null, parseContext);
+            case "__clock" -> new CClock(null, parseContext);
             default -> {
                 if (s.endsWith("*")) {
                     yield new CPointer(null, null, parseContext);
@@ -443,6 +444,10 @@ public abstract class CComplexType {
 
         public R visit(CPointer type, T param) {
             return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
+        }
+
+        public R visit(CClock type, T param) {
+            return visit(((CComplexType) type), param);
         }
     }
 }

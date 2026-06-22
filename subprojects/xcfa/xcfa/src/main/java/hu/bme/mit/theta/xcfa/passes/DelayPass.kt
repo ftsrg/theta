@@ -13,28 +13,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xta.utils;
 
-import hu.bme.mit.theta.core.type.DomainSize;
-import hu.bme.mit.theta.core.type.Type;
+package hu.bme.mit.theta.xcfa.passes
 
-public final class ClockType implements Type {
+import hu.bme.mit.theta.xcfa.model.ClockDelayLabel
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import java.util.ArrayList
 
-    private static final ClockType INSTANCE = new ClockType();
+class DelayPass(val timed : Boolean) : ProcedurePass {
 
-    private ClockType() {}
-
-    public static ClockType getInstance() {
-        return INSTANCE;
-    }
-
-    @Override
-    public String toString() {
-        return "Clock";
-    }
-
-    @Override
-    public DomainSize getDomainSize() {
-        return DomainSize.INFINITY;
+    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+        if (timed) {
+            for (edge in ArrayList(builder.getEdges())) {
+                builder.removeEdge(edge)
+                val withDelay = addLabelToEdge(edge, ClockDelayLabel())
+                builder.addEdge(withDelay)
+            }
+        }
+        return builder
     }
 }

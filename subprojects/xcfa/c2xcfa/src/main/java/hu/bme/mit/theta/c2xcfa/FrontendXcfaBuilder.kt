@@ -20,6 +20,7 @@ package hu.bme.mit.theta.c2xcfa
 import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.clock.op.ClockOps.Reset
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -42,6 +43,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -49,6 +52,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -70,6 +74,7 @@ class FrontendXcfaBuilder(
   val uniqueWarningLogger: Logger,
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
+  private val timed : Boolean = parseContext.metadata.types.values.any{ it is CClock }
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   private var ptrCnt = 1 // counts up, uses 3k+1
     get() = field.also { field += 3 }
@@ -154,6 +159,7 @@ class FrontendXcfaBuilder(
         globalDeclaration.get2().ref,
         initStmtList,
         globalDeclaration.get1().initExpr,
+        globalDeclaration.get1().type.isThreadLocal,
         globalDeclaration.get1().type.isAtomic,
       )
     }
@@ -175,7 +181,7 @@ class FrontendXcfaBuilder(
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
-      XcfaProcedureBuilder(funcDecl.name, CPasses(property, parseContext, uniqueWarningLogger))
+      XcfaProcedureBuilder(funcDecl.name, CPasses(property, timed, parseContext, uniqueWarningLogger))
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
     if (param.size > 0 && builder.name.equals("main")) {
@@ -260,6 +266,7 @@ class FrontendXcfaBuilder(
     globalDeclaration: Expr<*>,
     initStmtList: MutableList<XcfaLabel>,
     initExpr: CStatement? = null,
+    isThreadLocal : Boolean = false,
     isAtomic: Boolean = false,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
@@ -268,10 +275,27 @@ class FrontendXcfaBuilder(
     }
     if (globalDeclaration is RefExpr<*>) {
       builder.addVar(
-        XcfaGlobalVar(globalDeclaration.decl as VarDecl<*>, type.nullValue, atomic = isAtomic)
+        XcfaGlobalVar(
+          globalDeclaration.decl as VarDecl<*>,
+          type.nullValue,
+          threadLocal = isThreadLocal,
+          atomic = isAtomic
+        )
       )
     }
-    if (type is CArray) {
+    if (type is CClock) {
+      check(globalDeclaration is RefExpr<*>)
+      val clock = cast(globalDeclaration.decl as VarDecl<*>, Rat())
+      builder.addClock(
+        XcfaGlobalVar(
+          clock,
+          type.nullValue,
+          threadLocal = isThreadLocal,
+          atomic = isAtomic
+        )
+      )
+      initStmtList.add(ClockOpLabel(Reset(clock, 0)))
+    } else if (type is CArray) {
       initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
       if (MemsafetyPass.enabled) {
         val bounds = type.arrayDimension.expression

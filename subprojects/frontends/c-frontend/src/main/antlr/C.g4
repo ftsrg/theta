@@ -258,6 +258,7 @@ typeSpecifier
     |   'short'
     |   'int'
     |   'long'
+    |   '__clock'
     |   'signed'
     |   'unsigned'
     |   '_Bool'

@@ -15,11 +15,14 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.core.clock.constr.ClockConstr
+import hu.bme.mit.theta.core.clock.constr.ClockConstrs
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
@@ -29,6 +32,7 @@ import java.util.*
 class XCFA(
   val name: String,
   val globalVars: Set<XcfaGlobalVar>, // global variables
+  val clocks: Set<XcfaGlobalVar> = emptySet(),
   val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
   val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList(),
   var unsafeUnrollUsed: Boolean = false,
@@ -128,15 +132,16 @@ data class XcfaProcedure(
   val name: String,
   val params: List<Pair<VarDecl<*>, ParamDirection>>, // procedure params
   val vars: Set<VarDecl<*>>, // local variables
+  val clocks: Set<VarDecl<RatType>> = emptySet(),
   val locs: Set<XcfaLocation>, // locations
   val edges: Set<XcfaEdge>, // edges
   val initLoc: XcfaLocation, // initial location
   val finalLoc: Optional<XcfaLocation>, // final location (optional)
   val errorLoc: Optional<XcfaLocation>, // error location (optional)
-  val prop: Expr<BoolType> = True(),
+  val prop: Expr<BoolType> = BoolExprs.True(),
 ) {
 
-  internal lateinit var parent: XCFA
+  lateinit var parent: XCFA
 }
 
 data class XcfaLocation
@@ -146,6 +151,7 @@ constructor(
   val initial: Boolean = false, // is this the initial location?
   val final: Boolean = false, // is this the final location?
   val error: Boolean = false, // is this the error location?
+  var invariant: ClockConstr = ClockConstrs.True(),
   val metadata: MetaData,
 ) {
 

@@ -19,6 +19,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -101,6 +102,9 @@ public class NamedType extends CSimpleType {
                 break;
             case "float":
                 type = new CFloat(this, parseContext);
+                break;
+            case "__clock":
+                type = new CClock(this, parseContext);
                 break;
             case "void":
                 type = new CVoid(this, parseContext);

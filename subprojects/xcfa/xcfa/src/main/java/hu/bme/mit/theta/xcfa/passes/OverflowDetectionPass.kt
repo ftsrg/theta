@@ -51,6 +51,8 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.AtomicBeginLabel
 import hu.bme.mit.theta.xcfa.model.AtomicEndLabel
+import hu.bme.mit.theta.xcfa.model.ClockDelayLabel
+import hu.bme.mit.theta.xcfa.model.ClockOpLabel
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.JoinLabel
 import hu.bme.mit.theta.xcfa.model.MetaData
@@ -210,6 +212,8 @@ private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
     is SequenceLabel -> return labels.flatMap { it.getExpressions(f) }.toSet()
     is StartLabel -> return params.flatMap { it.getExpressions(f) }.toSet()
     is StmtLabel -> return stmt.getExpressions(f).toSet()
+    is ClockOpLabel -> return op.toStmt().getExpressions(f).toSet()
+    is ClockDelayLabel -> return toStmt().getExpressions(f).toSet()
   }
 }
 

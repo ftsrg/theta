@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.clock.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import com.google.common.collect.ImmutableList;
@@ -25,11 +26,14 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
@@ -58,8 +62,12 @@ public final class ClockConstrs {
 
     ////
 
-    public static ClockConstr formExpr(final Expr<BoolType> expr) {
+    public static ClockConstr fromExpr(final Expr<BoolType> expr) {
         return FromExprHelper.INSTANCE.transform(expr);
+    }
+
+    public static ClockConstr fromIntExpr(final Expr<IntType> expr) {
+        return FromExprHelper.INSTANCE.transformIntExpr(expr);
     }
 
     ////
@@ -163,6 +171,8 @@ public final class ClockConstrs {
                             .addCase(RatGeqExpr.class, this::transformGeq)
                             .addCase(RatEqExpr.class, this::transformEq)
                             .addCase(AndExpr.class, this::transformAnd)
+                            .addCase(IntNeqExpr.class, this::transformNeq)
+                            .addCase(IteExpr.class, this::transformIte)
                             .addDefault(
                                     o -> {
                                         throw new IllegalArgumentException();
@@ -171,6 +181,10 @@ public final class ClockConstrs {
         }
 
         public ClockConstr transform(final Expr<BoolType> expr) {
+            return table.dispatch(expr);
+        }
+
+        public ClockConstr transformIntExpr(final Expr<IntType> expr) {
             return table.dispatch(expr);
         }
 
@@ -270,6 +284,23 @@ public final class ClockConstrs {
             } else {
                 throw new IllegalArgumentException();
             }
+        }
+
+        private ClockConstr transformNeq(final IntNeqExpr expr) {
+            if (expr.getLeftOp().equals(Int(0))) {
+                return transformIntExpr(expr.getRightOp());
+            }
+            if (expr.getRightOp().equals(Int(0))) {
+                return transformIntExpr(expr.getLeftOp());
+            }
+            throw new IllegalArgumentException();
+        }
+
+        private ClockConstr transformIte(final IteExpr<IntType> expr) {
+            if (expr.getThen().equals(Int(1)) && expr.getElse().equals(Int(0))) {
+                return transform(expr.getCond());
+            }
+            throw new IllegalArgumentException();
         }
 
         private AndConstr transformAnd(final AndExpr expr) {

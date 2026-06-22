@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -39,7 +40,6 @@ import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
 import hu.bme.mit.theta.xta.utils.ChanType;
-import hu.bme.mit.theta.xta.utils.ClockType;
 import java.util.List;
 
 final class XtaVariableSymbol implements Symbol {

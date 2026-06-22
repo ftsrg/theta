@@ -30,7 +30,7 @@ open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
     ProcedurePassManager(this.passes + listOf(passes))
 }
 
-class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class CPasses(property: XcfaProperty, timed : Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -44,6 +44,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      CollectClockVarsPass(timed, parseContext),
+      ClockLabelPass(timed),
       CLibraryFunctionsPass(),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
@@ -74,7 +76,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      LbePass(parseContext),
+      LbePass(parseContext), // default level, TODO
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),
@@ -99,6 +101,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       UnusedVarPass(uniqueWarningLogger, property),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
+      DelayPass(timed),
+      InvariantPass(timed),
     ),
   )
 

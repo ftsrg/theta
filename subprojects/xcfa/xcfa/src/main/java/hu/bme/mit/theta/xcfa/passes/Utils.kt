@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.clock.op.ClockOpSubstitutionVisitor
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
+import java.util.function.Function
 
 /** XcfaEdge must be in a `deterministic` ProcedureBuilder */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
@@ -123,6 +125,22 @@ fun XcfaLabel.changeVars(
         }
       }
 
+      is FenceLabel -> {
+        when (this) {
+          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is MutexTryLockLabel ->
+            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
+          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
+          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
+          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
+          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
+          else -> this
+        }
+      }
+
+      is ClockOpLabel ->
+        ClockOpLabel(this.op.accept(ClockOpSubstitutionVisitor(), Function { v -> v.changeVars(varLut) }))
+
       else -> this
     }
   else this
@@ -178,6 +196,12 @@ fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Decl<T>
 fun <T : Type> VarDecl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
   (varLut[this] ?: this) as VarDecl<T>
 
+fun <T : Type> Decl<T>.allVarInstances(lookups: Collection<Map<out Decl<*>, VarDecl<*>>>) : Set<VarDecl<T>> {
+  val newVars = mutableSetOf<VarDecl<T>>()
+  lookups.forEach { varLut -> varLut[this] ?.let { newVars.add(it as VarDecl<T>) } }
+  return if (newVars.isEmpty()) setOf(this as VarDecl<T>) else newVars
+}
+
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
 
 private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
@@ -202,6 +226,12 @@ fun combineMetadata(vararg metaData: MetaData): MetaData = combineMetadata(metaD
 
 fun combineMetadata(metaData: Collection<MetaData>): MetaData =
   metaData.reduce { i1, i2 -> i1.combine(i2) }
+
+fun addLabelToEdge(edge : XcfaEdge, newLabel: XcfaLabel) : XcfaEdge {
+  val newLabels = ArrayList((edge.label as SequenceLabel).labels)
+  newLabels.add(newLabel)
+  return edge.withLabel(SequenceLabel(newLabels))
+}
 
 /**
  * Find loop locations and edges starting from the loop head. The loop head is the target of the

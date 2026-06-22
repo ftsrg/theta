@@ -31,7 +31,7 @@ public abstract class Guard {
     }
 
     static ClockGuard clockGuard(final Expr<BoolType> expr) {
-        return new ClockGuard(ClockConstrs.formExpr(expr));
+        return new ClockGuard(ClockConstrs.fromExpr(expr));
     }
 
     public abstract Expr<BoolType> toExpr();
