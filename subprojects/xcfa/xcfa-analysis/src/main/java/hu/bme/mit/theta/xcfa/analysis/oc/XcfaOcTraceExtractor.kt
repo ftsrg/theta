@@ -67,7 +67,8 @@ internal class XcfaOcTraceExtractor(
       var lastEdge: XcfaEdge = eventTrace[0].edge
 
       for ((index, event) in eventTrace.withIndex()) {
-        extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let { (midActions, midStates) ->
+        extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let {
+          (midActions, midStates) ->
           actionList.addAll(midActions)
           stateList.addAll(midStates)
         }
@@ -81,17 +82,19 @@ internal class XcfaOcTraceExtractor(
         var state = stateList.last()
         val startedThread = threads.find { it.startEvent == event }
         if (startedThread != null) {
-          state = state.copy(
-            processes = state.processes.toMutableMap().apply {
-              put(
-                startedThread.pid,
-                XcfaProcessState(
-                  locs = LinkedList(listOf(startedThread.procedure.initLoc)),
-                  varLookup = LinkedList(emptyList()),
-                ),
-              )
-            }
-          )
+          state =
+            state.copy(
+              processes =
+                state.processes.toMutableMap().apply {
+                  put(
+                    startedThread.pid,
+                    XcfaProcessState(
+                      locs = LinkedList(listOf(startedThread.procedure.initLoc)),
+                      varLookup = LinkedList(emptyList()),
+                    ),
+                  )
+                }
+            )
         }
 
         val nextEdge = eventTrace.getOrNull(index + 1)?.edge
@@ -118,9 +121,8 @@ internal class XcfaOcTraceExtractor(
       }
 
       if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
-        extend(
-          stateList.last(), violation.pid, violation.errorLoc, explState.innerState
-        )?.let { (midActions, midStates) ->
+        extend(stateList.last(), violation.pid, violation.errorLoc, explState.innerState)?.let {
+          (midActions, midStates) ->
           actionList.addAll(midActions)
           stateList.addAll(midStates)
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -183,6 +183,34 @@ class XcfaCliValidateTest {
           "/c/witness-validation/concurrent-data-race.i",
           "/c/witness-validation/concurrent-data-race.witness.yml",
           "--property no-data-race.prp",
+          "SafetyResult Unsafe",
+        ),
+        // a spawned thread's nondet write is pinned via a thread-id-guarded assumption
+        Arguments.of(
+          "/c/witness-validation/concurrent-nondet.i",
+          "/c/witness-validation/concurrent-nondet.witness.yml",
+          null,
+          "SafetyResult Unsafe",
+        ),
+        // the same witness pinned to the wrong value is infeasible, hence refuted
+        Arguments.of(
+          "/c/witness-validation/concurrent-nondet.i",
+          "/c/witness-validation/concurrent-nondet.refuted-witness.yml",
+          null,
+          "SafetyResult Safe",
+        ),
+        // the spawned thread uses its (kept) argument; the added thread-id param must not break it
+        Arguments.of(
+          "/c/witness-validation/concurrent-thread-param.i",
+          "/c/witness-validation/concurrent-thread-param.witness.yml",
+          null,
+          "SafetyResult Unsafe",
+        ),
+        // the same thread-creating call is visited twice, only one visit registers a logical thread
+        Arguments.of(
+          "/c/witness-validation/concurrent-multi-start.i",
+          "/c/witness-validation/concurrent-multi-start.witness.yml",
+          null,
           "SafetyResult Unsafe",
         ),
       )
