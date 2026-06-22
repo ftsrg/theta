@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -540,7 +540,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           threadId = threadIds.ofNode(witnessTrace.states[i], incoming, outgoing),
         )
         ?.let {
-          // to avoid multiple segments for the target location, we need to remove the existing follow waypoint and only keep the target
+          // to avoid multiple segments for the target location, we need to remove the existing
+          // follow waypoint and only keep the target
           if (it.type == WaypointType.TARGET && waypoints.last().location == it.location) {
             waypoints.removeLast()
           }
@@ -807,8 +808,9 @@ private fun WitnessNode.toSegment(
                   splitName.subList(2, splitName.size).joinToString("::")
                 else varDecl.name
               if (
-                splitName.size > 1 && splitName[splitName.size - 2] !=
-                  (outgoingEdge.edge!!.metadata as CMetaData).functionName
+                splitName.size > 1 &&
+                  splitName[splitName.size - 2] !=
+                    (outgoingEdge.edge!!.metadata as CMetaData).functionName
               ) {
                 null
               } else {
