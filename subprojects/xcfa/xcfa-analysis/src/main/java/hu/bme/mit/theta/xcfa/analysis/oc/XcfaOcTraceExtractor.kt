@@ -132,52 +132,76 @@ internal class XcfaOcTraceExtractor(
     }
 
   private fun getEventTrace(model: Valuation): Pair<List<E>, Violation> {
-    val valuation = model.toMap()
     val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
     val relations = ocChecker.getHappensBefore()!!
     val reverseRelations =
       Array(relations.size) { i -> Array(relations.size) { j -> relations[j, i] } }
     val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
+    val posByClk = pos.filter { it.from.clkId == it.to.clkId }.groupBy { it.from.clkId }
 
-    val lastEvents = violation.lastEvents.filter { it.enabled(model) == true }.toMutableList()
-    val finished = mutableListOf<E>() // topological order
-    while (lastEvents.isNotEmpty()) { // DFS from startEvents as root nodes
-      val stack = Stack<StackItem>()
-      stack.push(StackItem(lastEvents.removeAt(0)))
-      while (stack.isNotEmpty()) {
-        val top = stack.peek()
-        if (top.eventsToVisit == null) {
-          val previous =
-            reverseRelations[top.event.clkId]
-              .flatMapIndexed { i, r -> if (r == null) listOf() else eventsByClk[i] ?: listOf() }
-              .filter { it.enabled(model) == true } union
-              pos
-                .filter {
-                  it.to == top.event &&
-                    it.enabled(valuation) == true &&
-                    it.from.enabled(model) == true
-                }
-                .map { it.from }
-          top.eventsToVisit = previous.toMutableList()
-        }
+    val lastEvent = violation.lastEvents.first { it.enabled(model) == true }
+    val finished = mutableListOf<Int>() // topological order
+    val stack = Stack<StackItem>()
+    stack.push(StackItem(lastEvent.clkId))
+    while (stack.isNotEmpty()) {
+      val top = stack.peek()
+      if (top.eventsToVisit == null) {
+        val previous =
+          reverseRelations[top.clk].mapIndexedNotNull { i, r -> if (r == null) null else i }
+        top.eventsToVisit = previous.toMutableList()
+      }
 
-        if (top.eventsToVisit!!.isEmpty()) {
-          stack.pop()
-          finished.add(top.event)
-          continue
-        }
+      if (top.eventsToVisit!!.isEmpty()) {
+        stack.pop()
+        finished.add(top.clk)
+        continue
+      }
 
-        val visiting =
-          top.eventsToVisit!!.find { it.clkId == top.event.clkId } ?: top.eventsToVisit!!.first()
-        top.eventsToVisit!!.remove(visiting)
-        if (visiting !in finished) {
-          stack.push(StackItem(visiting))
-        }
+      val visiting = top.eventsToVisit!!.find { it == top.clk - 1 } ?: top.eventsToVisit!!.first()
+      top.eventsToVisit!!.remove(visiting)
+      if (visiting !in finished) {
+        stack.push(StackItem(visiting))
       }
     }
-    return finished to violation
+
+    val eventTrace =
+      finished.flatMap { clk ->
+        val blockPos = posByClk[clk]?.filter { it.enabled(model) }?.toMutableSet() ?: mutableSetOf()
+        val deque: Deque<E> = LinkedList()
+        val event =
+          eventsByClk[clk]?.firstOrNull { it.enabled(model) == true } ?: return@flatMap emptyList()
+        deque.add(event)
+
+        while (blockPos.isNotEmpty()) {
+          blockPos
+            .find { it.to == deque.first }
+            ?.let {
+              blockPos.remove(it)
+              deque.addFirst(it.from)
+            }
+            ?: blockPos
+              .find { it.from == deque.last }
+              ?.let {
+                blockPos.remove(it)
+                deque.addLast(it.to)
+              }
+            ?: break
+        }
+
+        deque
+      }
+
+    return eventTrace to violation
   }
+
+  private data class StackItem(val clk: Int) {
+
+    var eventsToVisit: MutableList<Int>? = null
+  }
+
+  private fun R.enabled(model: Valuation): Boolean =
+    from.enabled(model) == true && to.enabled(model) == true
 
   private fun extend(
     state: XcfaState<PtrState<ExplState>>,

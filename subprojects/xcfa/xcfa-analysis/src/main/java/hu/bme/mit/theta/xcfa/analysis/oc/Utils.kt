@@ -90,8 +90,3 @@ internal data class SearchItem(val loc: XcfaLocation) {
   val atomics: MutableList<Int?> = mutableListOf()
   var incoming: Int = 0
 }
-
-internal data class StackItem(val event: XcfaEvent) {
-
-  var eventsToVisit: MutableList<XcfaEvent>? = null
-}
