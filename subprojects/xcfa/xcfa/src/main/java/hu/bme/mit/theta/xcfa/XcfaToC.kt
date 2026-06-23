@@ -35,12 +35,14 @@ import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntModExpr
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType.CComplexTypeVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -51,6 +53,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import java.math.BigInteger
 
 private const val arraySize = 10
 
@@ -415,14 +418,18 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
       "($lhs < $rhs ? $lhs : $rhs)"
     }
     this is ModExpr<*> -> {
-      // Emulate SMT-LIB semantics: always positive
-      //  5 mod  3 = 2
-      //  5 mod -3 = 2
-      // -5 mod  3 = 1
-      // -5 mod -3 = 1
-      val lhs = leftOp.toC(parseContext)
-      val rhs = rightOp.toC(parseContext)
-      "( ($lhs % $rhs + ($rhs < 0 ? - $rhs : $rhs)) % $rhs )"
+      if (this is IntModExpr && this.isDomainBound(parseContext)) {
+        leftOp.toC(parseContext)
+      } else {
+        // Emulate SMT-LIB semantics: always positive
+        //  5 mod  3 = 2
+        //  5 mod -3 = 2
+        // -5 mod  3 = 1
+        // -5 mod -3 = 1
+        val lhs = leftOp.toC(parseContext)
+        val rhs = rightOp.toC(parseContext)
+        "( ($lhs % $rhs + ($rhs < 0 ? - $rhs : $rhs)) % $rhs )"
+      }
     }
     this is RemExpr<*> -> {
       // Emulate SMT-LIB semantics:
@@ -482,3 +489,21 @@ fun Expr<*>.arrayCOperator() =
   }
 
 fun String.toC() = this.replace(Regex("[^A-Za-z_0-9$]"), "_")
+
+private fun IntModExpr.isDomainBound(parseContext: ParseContext): Boolean {
+  val m = rightOp as? IntLitExpr ?: return false
+
+  val type =
+    try {
+      CComplexType.getType(leftOp, parseContext)
+    } catch (e: UnsupportedFrontendElementException) {
+      return false
+    }
+
+  val width = parseContext.architecture.getBitWidth(type.typeName)
+  val minValue = BigInteger.TWO.pow(width - 1).negate()
+  val maxValue = BigInteger.TWO.pow(width)
+
+  return if (type.origin.isSigned) m.value == minValue || m.value == maxValue
+  else m.value == maxValue
+}
