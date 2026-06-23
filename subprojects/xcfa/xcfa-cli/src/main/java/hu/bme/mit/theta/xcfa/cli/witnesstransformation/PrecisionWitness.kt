@@ -76,7 +76,8 @@ class WitnessPredPrecSerializer : PredPrecSerializer {
             } catch (e: NotImplementedError) {
               logger.writeln(
                 INFO,
-                "WARNING: Couldn't serialize precision predicate, skipping it (${e.message})",
+                "WARNING: Couldn't serialize precision predicate, skipping it (%s)",
+                e.message,
               )
               null
             }
@@ -125,7 +126,9 @@ class WitnessPredPrecSerializer : PredPrecSerializer {
           } catch (e: RuntimeException) {
             logger.writeln(
               INFO,
-              "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})",
+              "WARNING: Couldn't parse initial precision %s, skipping it (%s)",
+              value,
+              e.message,
             )
             null
           }
@@ -203,7 +206,9 @@ class WitnessExplPrecSerializer : ExplPrecSerializer {
           } catch (e: RuntimeException) {
             logger.writeln(
               INFO,
-              "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})",
+              "WARNING: Couldn't parse initial precision %n, skipping it (%s)",
+              value,
+              e.message,
             )
             emptySet()
           }
