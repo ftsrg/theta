@@ -341,7 +341,13 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
       val condWithConsts = this.cond.with(consts)
       val asAssign =
         consts.size == 1 &&
-          consts.keys.first().let { it is VarDecl<*> && it.threadVar(pid) !in lastWrites }
+          consts.keys.first().let { c ->
+            c is VarDecl<*> &&
+              c.threadVar(pid).let { v ->
+                v !in lastWrites ||
+                  lastWrites[v]?.let { it.size == 1 && it.first().assignment == True() } == true
+              }
+          }
       if (edge.source.outgoingEdges.size > 1 || !asAssign) {
         guard = guard + condWithConsts
         if (firstLabel) {

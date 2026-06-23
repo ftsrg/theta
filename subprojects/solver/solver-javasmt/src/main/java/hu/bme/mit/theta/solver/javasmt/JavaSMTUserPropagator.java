@@ -126,11 +126,6 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     public final void propagateConsequence(
             final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
-        for (var expr : exprs) {
-            if (registeredTerms.get(expr) == null) {
-                System.err.println(expr);
-            }
-        }
         checkState(
                 Arrays.stream(terms).noneMatch(Objects::isNull),
                 "Registered terms failed to look up one or more expressions from %s. Registered"
