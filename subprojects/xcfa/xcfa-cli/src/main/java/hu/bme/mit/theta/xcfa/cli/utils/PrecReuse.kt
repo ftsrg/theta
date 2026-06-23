@@ -160,7 +160,7 @@ object PrecReuse {
 
   private fun warnInitEmptyPrec(logger: Logger, message: String) {
     prec = emptyPrec
-    logger.writeln(INFO, "$message Proceeding with empty initial precision.")
+    logger.writeln(INFO, "%s Proceeding with empty initial precision.", message)
   }
 }
 
@@ -241,7 +241,8 @@ class GenericPredPrecSerializer : PredPrecSerializer {
           } catch (e: Exception) {
             logger.writeln(
               INFO,
-              "WARNING: Couldn't serialize precision predicate, skipping it (${e.message})",
+              "WARNING: Couldn't serialize precision predicate, skipping it (%s)",
+              e.message,
             )
             null
           }
@@ -288,7 +289,9 @@ class GenericPredPrecSerializer : PredPrecSerializer {
         } catch (e: Exception) {
           logger.writeln(
             INFO,
-            "WARNING: Couldn't parse initial precision $t, skipping it (${e.message})",
+            "WARNING: Couldn't parse initial precision %s, skipping it (%s)",
+            t,
+            e.message,
           )
           null
         }
