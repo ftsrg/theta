@@ -384,15 +384,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           ?: exit("unknown procedure name: ${this.name}")
       val newPid = Thread.uniqueId()
 
-      // assign parameter
-      val consts = this.params[1].toEvents()
-      procedure.params
-        .firstOrNull { it.second != ParamDirection.OUT }
-        ?.first
-        ?.let { arg ->
-          last = event(arg, WRITE, newPid)
-          last.first().assignment = Eq(last.first().const.ref, this.params[1].with(consts))
+      // assign parameters
+      procedure.params.forEachIndexed { index, param ->
+        if (param.second != ParamDirection.OUT) {
+          val consts = this.params[index].toEvents()
+          last = event(param.first, WRITE, newPid)
+          val e = last.first()
+          e.assignment = Eq(e.const.ref, this.params[index].with(consts))
         }
+      }
 
       last = event(this.pidVar, WRITE)
       val pidVar = this.pidVar.threadVar(pid)

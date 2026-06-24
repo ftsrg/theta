@@ -400,7 +400,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       var lastNewLabelsSize = 0
       val flushLabels = { target: XcfaLocation, flushAnyway: Boolean ->
         val newSlice = newLabels.safeSlice(lastNewLabelsSize..newLabels.size)
-        if (flushAnyway || newSlice.any { it is StartLabel || it is JoinLabel || it is FenceLabel }) {
+        if (
+          flushAnyway || newSlice.any { it is StartLabel || it is JoinLabel || it is FenceLabel }
+        ) {
           val previousSlice = newLabels.safeSlice(0 until lastNewLabelsSize)
           var source = lastLoc
           if (previousSlice.isNotEmpty()) {
