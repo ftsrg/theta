@@ -58,6 +58,7 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -812,6 +813,13 @@ private fun WitnessNode.toSegment(
                   splitName[splitName.size - 2] !=
                     (outgoingEdge.edge!!.metadata as CMetaData).functionName
               ) {
+                null
+              } else if (
+                parseContext.metadata.getMetadataValue(rootName, SYNC_VAR_METADATA_KEY).isPresent
+              ) {
+                // A non-scalar C synchronization object (e.g. pthread_mutex_t) that Theta models
+                // internally as an integer: a term like `m == 0` is not a valid C expression over
+                // the original program, so it must not appear in a c_expression constraint.
                 null
               } else {
                 if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
