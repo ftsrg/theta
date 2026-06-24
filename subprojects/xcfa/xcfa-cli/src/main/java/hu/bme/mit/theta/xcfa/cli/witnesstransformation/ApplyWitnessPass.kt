@@ -363,26 +363,30 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         val expr = Imply(guardPred, waypointConstraint(wp.waypoint, statementToEdge, builder))
         val assumption = StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData)
 
-        val edgeLabels = LinkedHashMap<XcfaEdge, MutableList<XcfaLabel>>()
+        val edgeLabels = LinkedHashMap<XcfaEdge, MutableSet<XcfaLabel>>()
         for ((label, edge) in labelsOnEdges) {
-          edgeLabels.computeIfAbsent(edge) { LinkedList() }.add(label)
+          edgeLabels.computeIfAbsent(edge) { LinkedHashSet() }.add(label)
         }
 
-        for ((edge, labels) in edgeLabels) {
+        for ((edge, matchedLabels) in edgeLabels) {
           val oldLabels = edge.getFlatLabels()
-          val annotatedLabels =
-            labels
-              .map { label ->
-                oldLabels.indexOf(label) +
-                  if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1
-                  else 0 // for function_return, we want to add it next.
-              }
+          // Instrument *every* occurrence of a matched label on the edge. Inlining places several
+          // structurally identical labels (same statement and metadata) on one edge -- e.g. the
+          // three inlined copies of f()'s `return` all look the same -- and the witness carries a
+          // separate segment for each visit. Each occurrence must get the guarded check/advance so
+          // the counter is updated whenever that location is reached (the ITE guards let only the
+          // matching segment fire). Indexing by label (indexOf) would instead collapse every
+          // occurrence onto the first, leaving later visits uninstrumented and stalling the
+          // sequence.
+          val annotatedIndices =
+            oldLabels.indices
+              .filter { oldLabels[it] in matchedLabels }
+              .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
               .sorted()
-              .map { oldLabels[it] }
-          for (label in annotatedLabels) {
+          for (index in annotatedIndices) {
             modifications
               .computeIfAbsent(edge) { LinkedList() }
-              .add(Annotation(edge, label, assumption, segmentUpdate, segmentFlagUpdate))
+              .add(Annotation(edge, index, assumption, segmentUpdate, segmentFlagUpdate))
           }
         }
       }
@@ -392,8 +396,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       builder.removeEdge(edge)
       val oldLabels = edge.getFlatLabels()
       var newLabels = LinkedList<XcfaLabel>()
-      val indexToAnnots =
-        allAnnots.groupBy { oldLabels.indexOf(it.beforeLabel) }.toList().sortedBy { it.first }
+      val indexToAnnots = allAnnots.groupBy { it.beforeIndex }.toList().sortedBy { it.first }
       var i = 0
 
       var lastLoc = edge.source
@@ -844,7 +847,11 @@ fun <T> List<T>.safeSlice(range: IntRange): List<T> =
 
 private data class Annotation(
   val edge: XcfaEdge,
-  val beforeLabel: XcfaLabel,
+  /**
+   * Position in `edge.getFlatLabels()` to insert before; an index (not a label) so that several
+   * identical inlined occurrences of the same statement stay distinct.
+   */
+  val beforeIndex: Int,
   val assumption: XcfaLabel,
   val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
