@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import hu.bme.mit.theta.xcfa.witnesses.Format
 import hu.bme.mit.theta.xcfa.witnesses.WaypointType
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
@@ -229,6 +230,15 @@ class XcfaCliValidateTest {
     }
 
     /**
+     * Tasks declaring a `pthread_mutex_t` whose violation witness must not reference the mutex
+     * object in a `c_expression` constraint. The second argument is the C name of the mutex.
+     */
+    @JvmStatic
+    fun mutexWitnessFiles(): Stream<Arguments> {
+      return Stream.of(Arguments.of("/c/witness-validation/concurrent-mutex.i", "themutex"))
+    }
+
+    /**
      * Tasks whose violation depends on a `__VERIFIER_nondet_*` call: the exported witness must pin
      * the returned value with a `function_return` waypoint located at the call site. The third
      * argument is the source line of the nondet call.
@@ -244,6 +254,62 @@ class XcfaCliValidateTest {
         Arguments.of("/c/witness-validation/concurrent-nondet.i", "--domain EXPL", 17),
       )
     }
+  }
+
+  /**
+   * Regression for the bug where a violation witness referenced a `pthread_mutex_t` object (which
+   * Theta models internally as an integer) inside a `c_expression` assumption, e.g. `m == 0`. Such
+   * a term is not a valid C expression over the original program, so no emitted `c_expression`
+   * constraint may mention a synchronization-object variable.
+   */
+  @ParameterizedTest
+  @MethodSource("mutexWitnessFiles")
+  fun testWitnessOmitsSynchronizationObjects(filePath: String, mutexCName: String) {
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
+        "--search",
+        "DFS",
+        "--por",
+        "SPOR",
+      )
+    val output = runCatchingOutput(params)
+    assertTrue(output.getVerdict().contains("Unsafe")) {
+      "Expected an Unsafe verdict (so that a violation witness is emitted) for $filePath, got: ${output.getVerdict()}"
+    }
+
+    val witness = temp.getWitness()
+    assertTrue(witness.extension == "yml") { "Expected a YAML witness, got $witness" }
+
+    val cExpressionConstraints =
+      WitnessYamlConfig.decodeFromString<List<YamlWitness>>(witness.readText())
+        .flatMap { it.content }
+        .mapNotNull { it.segment }
+        .flatten()
+        .map { it.waypoint }
+        .mapNotNull { it.constraint }
+        .filter { it.format == Format.C_EXPRESSION }
+        .map { it.value }
+
+    val mutexReference = Regex("\\b${Regex.escape(mutexCName)}\\b")
+    assertTrue(cExpressionConstraints.none { mutexReference.containsMatchIn(it) }) {
+      "No c_expression constraint may reference the pthread_mutex_t object '$mutexCName', " +
+        "but found: ${cExpressionConstraints.filter { mutexReference.containsMatchIn(it) }}"
+    }
+    println(
+      "Witness of $filePath does not reference the mutex '$mutexCName'; c_expression constraints: $cExpressionConstraints"
+    )
   }
 
   @ParameterizedTest
