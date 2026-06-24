@@ -188,7 +188,9 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                 "pthread_cond_signal", // No need for special handling due to spurious wakeup
                 "pthread_mutex_init",
                 "pthread_cond_init" -> {
-                  invokeLabel.markSyncParam(1) // the mutex/condition object (non-scalar source type)
+                  invokeLabel.markSyncParam(
+                    1
+                  ) // the mutex/condition object (non-scalar source type)
                   listOf(NopLabel)
                 }
 
