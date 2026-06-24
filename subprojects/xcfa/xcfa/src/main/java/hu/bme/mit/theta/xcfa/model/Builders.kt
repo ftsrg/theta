@@ -340,4 +340,6 @@ constructor(
   fun setUnsafeUnroll() {
     unsafeUnrollUsed = true
   }
+
+  override fun toString(): String = name
 }
