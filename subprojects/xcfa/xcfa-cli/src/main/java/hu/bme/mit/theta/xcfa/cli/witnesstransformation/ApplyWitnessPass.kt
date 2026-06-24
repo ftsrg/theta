@@ -447,11 +447,16 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
         newLabels.addAll(annots.map { it.assumption })
         newLabels.addAll(annots.mapNotNull { it.flagUpdate })
-        var expr = segmentCounter.ref as Expr<IntType>
+        // Apply the segment-counter advances of this group sequentially, in segment order. When
+        // several waypoints fall on the same edge position (e.g. a function_return immediately
+        // followed by the next segment's assumption), each advance must see the counter value left
+        // by the previous one, so the counter can step e.g. 1 -> 2 -> 3 within a single edge
+        // traversal. Folding them into one nested-ite assignment instead lets only the first
+        // matching guard fire (every guard is evaluated against the same pre-advance value), which
+        // stalls the segment sequence and gates off the violation.
         for ((cond, then) in annots.mapNotNull { it.segmentUpdate }) {
-          expr = Ite(cond, then, expr)
+          newLabels.add(AssignStmtLabel(segmentCounter, Ite(cond, then, segmentCounter.ref)))
         }
-        newLabels.add(AssignStmtLabel(segmentCounter, expr))
 
         flushLabelsIntermediate()
       }
