@@ -399,31 +399,24 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       var lastLoc = edge.source
       var lastNewLabelsSize = 0
       val flushLabels = { target: XcfaLocation, flushAnyway: Boolean ->
-        if (flushAnyway) {
-          val newEdge = XcfaEdge(lastLoc, target, SequenceLabel(newLabels), edge.metadata)
+        val newSlice = newLabels.safeSlice(lastNewLabelsSize..newLabels.size)
+        if (flushAnyway || newSlice.any { it is StartLabel || it is JoinLabel || it is FenceLabel }) {
+          val previousSlice = newLabels.safeSlice(0 until lastNewLabelsSize)
+          var source = lastLoc
+          if (previousSlice.isNotEmpty()) {
+            val loc =
+              XcfaLocation(
+                "__loc_witness_" + XcfaLocation.uniqueCounter(),
+                metadata = edge.label.metadata,
+              )
+            val newEdge = XcfaEdge(source, loc, SequenceLabel(previousSlice), edge.metadata)
+            builder.addEdge(newEdge)
+            source = loc
+          }
+          val newEdge = XcfaEdge(source, target, SequenceLabel(newSlice), edge.metadata)
           builder.addEdge(newEdge)
           lastLoc = target
           newLabels = LinkedList()
-        } else {
-          val newSlice = newLabels.safeSlice(lastNewLabelsSize..newLabels.size)
-          if (newSlice.any { it is StartLabel || it is JoinLabel || it is FenceLabel }) {
-            val previousSlice = newLabels.safeSlice(0 until lastNewLabelsSize)
-            var source = lastLoc
-            if (previousSlice.isNotEmpty()) {
-              val loc =
-                XcfaLocation(
-                  "__loc_witness_" + XcfaLocation.uniqueCounter(),
-                  metadata = edge.label.metadata,
-                )
-              val newEdge = XcfaEdge(source, loc, SequenceLabel(previousSlice), edge.metadata)
-              builder.addEdge(newEdge)
-              source = loc
-            }
-            val newEdge = XcfaEdge(source, target, SequenceLabel(newSlice), edge.metadata)
-            builder.addEdge(newEdge)
-            lastLoc = target
-            newLabels = LinkedList()
-          }
         }
         lastNewLabelsSize = newLabels.size
       }
