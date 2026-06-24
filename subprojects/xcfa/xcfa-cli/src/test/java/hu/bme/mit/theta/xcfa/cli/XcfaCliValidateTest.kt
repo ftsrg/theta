@@ -715,7 +715,12 @@ class XcfaCliValidateTest {
     return witness
   }
 
+  // Round-trip checks compare verdicts only (Safe vs Unsafe). The trace length is an artifact of
+  // the particular search and legitimately differs between the verification run and the
+  // witness-guided validation run (e.g. a different interleaving is explored under POR), so it is
+  // stripped here -- comparing it would over-constrain the test.
   private fun String.getVerdict(): String {
-    return split(System.lineSeparator()).lastOrNull { "SafetyResult" in it } ?: "unsolved"
+    return (split(System.lineSeparator()).lastOrNull { "SafetyResult" in it } ?: "unsolved")
+      .replace(Regex(" Trace length: \\d+"), "")
   }
 }
