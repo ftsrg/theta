@@ -39,6 +39,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
@@ -207,6 +208,10 @@ public class XcfaTraceConcretizer {
 
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
         final Set<VarDecl<?>> varSoFar = new LinkedHashSet<>();
+        // result variables of __VERIFIER_nondet_* calls: these are internal temporaries without a
+        // cName, but their concrete values are needed to emit function_return witness waypoints, so
+        // they are kept in the concretized state even though they are filtered out otherwise.
+        final Set<VarDecl<?>> nondetVars = new LinkedHashSet<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             final var revLookup = new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
             sbeTrace.getState(i).getProcesses().values().stream()
@@ -226,7 +231,10 @@ public class XcfaTraceConcretizer {
                                                     .filter(
                                                             it ->
                                                                     varSoFar.contains(it.getKey())
-                                                                            && (parseContext
+                                                                            && (nondetVars.contains(
+                                                                                            it
+                                                                                                    .getKey())
+                                                                                    || parseContext
                                                                                             .getMetadata()
                                                                                             .getMetadataValue(
                                                                                                     it.getKey()
@@ -258,11 +266,25 @@ public class XcfaTraceConcretizer {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
                     //                    if (flatLabel.getMetadata().isSubstantial()) {
                     var accesses = collectVarsWithAccessType(flatLabel);
-                    varSoFar.addAll(
+                    final var written =
                             accesses.entrySet().stream()
                                     .filter(it -> isWritten(it.getValue()))
                                     .map(it -> it.getKey())
-                                    .toList());
+                                    .toList();
+                    varSoFar.addAll(written);
+                    // the havoc replacing a __VERIFIER_nondet_* call carries the call's CMetaData;
+                    // its written variable is the nondet result and must be kept (see nondetVars).
+                    final var meta = getCMetaData(flatLabel);
+                    if (meta != null
+                            && meta.getAstNodes().stream()
+                                    .anyMatch(
+                                            n ->
+                                                    n instanceof CCall cc
+                                                            && cc.getFunctionId()
+                                                                    .contains(
+                                                                            "__VERIFIER_nondet_"))) {
+                        nondetVars.addAll(written);
+                    }
                     //                    }
                 }
             }
