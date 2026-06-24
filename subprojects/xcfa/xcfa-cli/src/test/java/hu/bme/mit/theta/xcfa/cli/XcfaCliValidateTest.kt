@@ -21,6 +21,9 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import hu.bme.mit.theta.xcfa.witnesses.WaypointType
+import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -29,6 +32,7 @@ import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
+import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
@@ -223,6 +227,79 @@ class XcfaCliValidateTest {
         Arguments.of("/c/witness-validation/concurrent-data-race.i", "--property no-data-race.prp"),
       )
     }
+
+    /**
+     * Tasks whose violation depends on a `__VERIFIER_nondet_*` call: the exported witness must pin
+     * the returned value with a `function_return` waypoint located at the call site. The third
+     * argument is the source line of the nondet call.
+     */
+    @JvmStatic
+    fun nondetFunctionReturnFiles(): Stream<Arguments> {
+      return Stream.of(
+        // single-threaded: `int i = __VERIFIER_nondet_int();` on line 5, error needs i == -1
+        Arguments.of("/c/litmustest/singlethread/witness_test.c", "--domain PRED_CART", 5),
+        // nondet feeding a branch: `if(__VERIFIER_nondet_char() % 2)` on line 5
+        Arguments.of("/c/litmustest/singlethread/22nondet.c", "--domain PRED_CART", 5),
+        // multi-threaded: the spawned writer does `x = __VERIFIER_nondet_int();` on line 17
+        Arguments.of("/c/witness-validation/concurrent-nondet.i", "--domain EXPL", 17),
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("nondetFunctionReturnFiles")
+  fun testNondetFunctionReturnWaypoint(filePath: String, extraArgs: String?, nondetCallLine: Int) {
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
+        "--search",
+        "DFS",
+        "--por",
+        "SPOR",
+      )
+    val output = runCatchingOutput(params)
+    assertTrue(output.getVerdict().contains("Unsafe")) {
+      "Expected an Unsafe verdict (so that a violation witness is emitted) for $filePath, got: ${output.getVerdict()}"
+    }
+
+    val witness = temp.getWitness()
+    assertTrue(witness.extension == "yml") { "Expected a YAML witness, got $witness" }
+
+    val waypoints =
+      WitnessYamlConfig.decodeFromString<List<YamlWitness>>(witness.readText())
+        .flatMap { it.content }
+        .mapNotNull { it.segment }
+        .flatten()
+        .map { it.waypoint }
+    val functionReturns = waypoints.filter { it.type == WaypointType.FUNCTION_RETURN }
+
+    assertTrue(functionReturns.isNotEmpty()) {
+      "Expected a function_return waypoint for the __VERIFIER_nondet_* call in $filePath, " +
+        "got waypoint types ${waypoints.map { it.type }}"
+    }
+    assertTrue(functionReturns.any { it.location.line == nondetCallLine }) {
+      "Expected a function_return waypoint at line $nondetCallLine (the nondet call site), " +
+        "got lines ${functionReturns.map { it.location.line }}"
+    }
+    assertTrue(functionReturns.all { it.constraint?.value?.startsWith("\\result") == true }) {
+      "Expected every function_return waypoint to constrain the call result as '\\result ...', " +
+        "got constraints ${functionReturns.map { it.constraint?.value }}"
+    }
+    println(
+      "Witness of $filePath pins the nondet result(s): ${functionReturns.map { it.constraint?.value }}"
+    )
   }
 
   @ParameterizedTest
