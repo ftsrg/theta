@@ -45,7 +45,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      CLibraryFunctionsPass(),
+      CLibraryFunctionsPass(parseContext),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
@@ -121,7 +121,7 @@ class NontermValidationPasses(
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      CLibraryFunctionsPass(),
+      CLibraryFunctionsPass(parseContext),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
