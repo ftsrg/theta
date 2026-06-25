@@ -712,11 +712,18 @@ private fun isRaceFlagName(flagName: String): Boolean =
   flagName.startsWith("_write_flag_") || flagName.startsWith("_read_flag_")
 
 /**
- * The location of the most recent action up to and including [fromIndex] (inclusive, searching
- * backwards) belonging to [pid] whose edge carries a resolvable source location. Branching checks
- * inserted by `DataRaceToReachabilityPass` (the location's outgoing edges all start with an
- * `assume`) get their assume/error edges stamped with `EmptyMetaData` rather than the racing
- * access's own metadata, so the nearest located predecessor on the same thread is used instead.
+ * The C location of [action]'s racing access. `DataRaceToReachabilityPass` stamps the inserted
+ * guard/error edges with `EmptyMetaData`, so the edge's own metadata is often empty; the access's
+ * source line survives on the edge's source (and, failing that, target) location instead.
+ */
+private fun XcfaAction.accessLocation(inputFile: File): Location? =
+  getLocation(inputFile, edge.metadata)
+    ?: getLocation(inputFile, edge.source.metadata)
+    ?: getLocation(inputFile, edge.target.metadata)
+
+/**
+ * The access location of the most recent action up to and including [fromIndex] (inclusive,
+ * searching backwards) belonging to [pid].
  */
 private fun nearestLocatedAction(
   actions: List<XcfaAction>,
@@ -727,7 +734,7 @@ private fun nearestLocatedAction(
   for (i in fromIndex downTo 0) {
     val action = actions[i]
     if (action.pid != pid) continue
-    getLocation(inputFile, action.edge.metadata)?.let {
+    action.accessLocation(inputFile)?.let {
       return it
     }
   }
@@ -812,10 +819,8 @@ private fun targetWaypointAtViolation(
     lastState.processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
       ?: concrTrace.actions.last().pid
   val loc =
-    concrTrace.actions
-      .lastOrNull { it.pid == pidA }
-      ?.let { getLocation(inputFile, it.edge.metadata) }
-      ?: getLocation(inputFile, concrTrace.actions.last().edge.metadata)
+    concrTrace.actions.lastOrNull { it.pid == pidA }?.accessLocation(inputFile)
+      ?: concrTrace.actions.last().accessLocation(inputFile)
       ?: error("No source location for the data-race violation")
   return WaypointContent(
     type = WaypointType.TARGET,
