@@ -47,6 +47,9 @@ fun getOcChecker(
       autoConflictBound = ocConfig.autoConflictBound,
       memoryModel = ocConfig.memoryConsistencyModel,
       acceptUnreliableSafe = config.outputConfig.acceptUnreliableSafe,
+      forceUnrollBoundStart = ocConfig.forceUnrollBoundStart,
+      forceUnrollBoundEnd = ocConfig.forceUnrollBoundEnd,
+      forceUnrollBoundStep = ocConfig.forceUnrollBoundStep,
     )
   return SafetyChecker { ocChecker.check() }
 }

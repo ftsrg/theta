@@ -554,6 +554,21 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--oc-unroll-start"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStart: Int = 2,
+  @Parameter(
+    names = ["--oc-unroll-end"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundEnd: Int = 2,
+  @Parameter(
+    names = ["--oc-unroll-step"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStep: Int = 1,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

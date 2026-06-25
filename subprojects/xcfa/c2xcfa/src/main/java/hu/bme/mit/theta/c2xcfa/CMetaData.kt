@@ -40,30 +40,30 @@ data class CMetaData(
         CMetaData(
           lineNumberStart =
             min(
-              lineNumberStart ?: other.lineNumberStart ?: -1,
-              other.lineNumberStart ?: lineNumberStart ?: -1,
-            )
+                lineNumberStart ?: other.lineNumberStart ?: -1,
+                other.lineNumberStart ?: lineNumberStart ?: -1,
+              )
               .takeIf { it > 0 } ?: 0,
           colNumberStart =
             min(
-              colNumberStart ?: other.colNumberStart ?: -1,
-              other.colNumberStart ?: colNumberStart ?: -1,
-            )
+                colNumberStart ?: other.colNumberStart ?: -1,
+                other.colNumberStart ?: colNumberStart ?: -1,
+              )
               .takeIf { it > 0 } ?: 0,
           offsetStart =
             min(offsetStart ?: other.offsetStart ?: -1, other.offsetStart ?: offsetStart ?: -1)
               .takeIf { it > 0 } ?: 0,
           lineNumberStop =
             max(
-              lineNumberStop ?: other.lineNumberStop ?: -1,
-              other.lineNumberStop ?: lineNumberStop ?: -1,
-            )
+                lineNumberStop ?: other.lineNumberStop ?: -1,
+                other.lineNumberStop ?: lineNumberStop ?: -1,
+              )
               .takeIf { it > 0 } ?: 0,
           colNumberStop =
             max(
-              colNumberStop ?: other.colNumberStop ?: -1,
-              other.colNumberStop ?: colNumberStop ?: -1,
-            )
+                colNumberStop ?: other.colNumberStop ?: -1,
+                other.colNumberStop ?: colNumberStop ?: -1,
+              )
               .takeIf { it > 0 } ?: 0,
           offsetEnd =
             max(offsetEnd ?: other.offsetEnd ?: -1, other.offsetEnd ?: offsetEnd ?: -1).takeIf {
@@ -104,15 +104,11 @@ data class CMetaData(
     return true
   }
 
-  val asExportableCMetadata: CMetaData? =
-    if (notStatementStart) null else this
+  val asExportableCMetadata: CMetaData? = if (notStatementStart) null else this
 }
 
-fun XcfaLabel.getCMetaData(): CMetaData? =
-  (metadata as? CMetaData)?.asExportableCMetadata
+fun XcfaLabel.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
 
-fun XcfaLocation.getCMetaData(): CMetaData? =
-  (metadata as? CMetaData)?.asExportableCMetadata
+fun XcfaLocation.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
 
-fun XcfaEdge.getCMetaData(): CMetaData? =
-  (metadata as? CMetaData)?.asExportableCMetadata
+fun XcfaEdge.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
