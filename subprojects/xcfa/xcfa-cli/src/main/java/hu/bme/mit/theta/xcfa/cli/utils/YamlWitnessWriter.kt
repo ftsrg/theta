@@ -29,12 +29,15 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -562,7 +565,6 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
-    functionReturnOnly: Boolean = false,
   ): YamlWitness {
     val witnessTrace =
       traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
@@ -571,14 +573,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     val content =
       witnessTraceWaypoints(witnessTrace, threadIds, inputFile, parseContext, withTargets = true)
         .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
-        .let { list ->
-          list.filter {
-            !functionReturnOnly ||
-              it.type == WaypointType.TARGET ||
-              it.type == WaypointType.FUNCTION_RETURN ||
-              it.type == WaypointType.FUNCTION_ENTER // thread registrations must be kept
-          }
-        }
+        .let(::keepEssentialWaypoints)
         .map { ContentItem(it) }
 
     return YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = content)
@@ -598,6 +593,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     // no target waypoints along the trace: the violation is the racing pair below
     val content =
       witnessTraceWaypoints(witnessTrace, threadIds, inputFile, parseContext, withTargets = false)
+        .let(::keepEssentialWaypoints)
         .map { ContentItem(it) }
         .toMutableList()
 
@@ -607,23 +603,36 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     // removes the very race the witness exhibits).
     val lastState = concrTrace.states.last()
     val race =
-      findDataRace(
-        XcfaState(
-          lastState.xcfa,
-          lastState.processes,
-          PtrState(lastState.sGlobal),
-          lastState.mutexes,
-          lastState.threadLookup,
-          lastState.bottom,
+      try {
+        findDataRace(
+          XcfaState(
+            lastState.xcfa,
+            lastState.processes,
+            PtrState(lastState.sGlobal),
+            lastState.mutexes,
+            lastState.threadLookup,
+            lastState.bottom,
+          )
         )
-      ) ?: error("No data race found after the final state of the counterexample")
-    content.add(
-      ContentItem(
+      } catch (_: Exception) {
+        // the final state of a --datarace-to-reachability trace is an inserted error location, not
+        // necessarily one findDataRace's interleaving-search assumptions hold for (e.g. a process
+        // that has not yet entered a procedure); fall through to flag-based reconstruction below.
+        null
+      }
+    val targetWaypoints =
+      if (race != null) {
         listOf(race.access1, race.access2).map { access ->
           Waypoint(access.toTargetWaypoint(inputFile, threadIds))
         }
-      )
-    )
+      } else {
+        // --datarace-to-reachability rewrote the property to an inserted error location, so the
+        // final state no longer has both conflicting accesses enabled: reconstruct the racing pair
+        // from the flag the error state is blocked on (see DataRaceToReachabilityPass) instead.
+        reconstructDataRaceFromFlags(concrTrace, inputFile, threadIds)
+          ?: listOf(Waypoint(targetWaypointAtViolation(concrTrace, inputFile, threadIds)))
+      }
+    content.add(ContentItem(targetWaypoints))
 
     return YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = content)
   }
@@ -667,6 +676,156 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         )
       }
     }
+}
+
+/**
+ * Keeps only the waypoints a test-based validator needs: the target, every `function_enter` (thread
+ * registrations) and `function_return` (nondet results), and -- for every context switch -- the
+ * last waypoint of the outgoing thread and the first of the incoming thread, to pin the
+ * interleaving without the dense per-step assumptions in between.
+ */
+private fun keepEssentialWaypoints(waypoints: List<WaypointContent>): List<WaypointContent> =
+  waypoints.filterIndexed { i, w ->
+    w.type == WaypointType.TARGET ||
+      w.type == WaypointType.FUNCTION_RETURN ||
+      w.type == WaypointType.FUNCTION_ENTER ||
+      (i > 0 && waypoints[i - 1].threadId != w.threadId) ||
+      (i < waypoints.lastIndex && waypoints[i + 1].threadId != w.threadId)
+  }
+
+/** The integer value of a flag literal, regardless of whether it is modeled as int or bitvector. */
+private val LitExpr<*>.intValue: Int
+  get() =
+    when (this) {
+      is IntLitExpr -> value.toInt()
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this).toInt()
+      else -> error("Unknown integer type for flag value: $type")
+    }
+
+/**
+ * True if [flagName] is a `_write_flag_`/`_read_flag_` flag declaration name introduced by
+ * `DataRaceToReachabilityPass` for some racing variable.
+ */
+private fun isRaceFlagName(flagName: String): Boolean =
+  flagName.startsWith("_write_flag_") || flagName.startsWith("_read_flag_")
+
+/**
+ * The C location of [action]'s racing access. `DataRaceToReachabilityPass` stamps the inserted
+ * guard/error edges with `EmptyMetaData`, so the edge's own metadata is often empty; the access's
+ * source line survives on the edge's source (and, failing that, target) location instead.
+ */
+private fun XcfaAction.accessLocation(inputFile: File): Location? =
+  getLocation(inputFile, edge.metadata)
+    ?: getLocation(inputFile, edge.source.metadata)
+    ?: getLocation(inputFile, edge.target.metadata)
+
+/**
+ * The access location of the most recent action up to and including [fromIndex] (inclusive,
+ * searching backwards) belonging to [pid].
+ */
+private fun nearestLocatedAction(
+  actions: List<XcfaAction>,
+  fromIndex: Int,
+  pid: Int,
+  inputFile: File,
+): Location? {
+  for (i in fromIndex downTo 0) {
+    val action = actions[i]
+    if (action.pid != pid) continue
+    action.accessLocation(inputFile)?.let {
+      return it
+    }
+  }
+  return null
+}
+
+/**
+ * Reconstructs the racing pair from a `--datarace-to-reachability` counterexample, whose final
+ * state is an inserted error location rather than a state with both conflicting accesses enabled
+ * (see `DataRaceToReachabilityPass`): thread A is the process stuck at the error location, and the
+ * guard it got stuck on (the failed `assume` of the inserted error edge) names the flag(s) of the
+ * racing variable. Thread B is whichever thread most recently set one of those flags to 1 before
+ * the error -- the access immediately following the flag-set edge is the one that conflicts with
+ * A's. The flag values themselves are not read from the trace's global state: the OC backend's
+ * concretized states do not necessarily track these auxiliary flag variables (they are folded into
+ * the backend's own event-ordering constraints), so only the trace's actions/edges are relied on.
+ * Returns null if no held flag can be identified.
+ */
+private fun reconstructDataRaceFromFlags(
+  concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+  inputFile: File,
+  threadIds: ThreadIdEmission,
+): List<Waypoint>? {
+  val lastState = concrTrace.states.last()
+  val pidA =
+    lastState.processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
+      ?: return null
+  val actions = concrTrace.actions
+  val errorActionIndex = actions.indexOfLast { it.pid == pidA }
+  if (errorActionIndex < 0) return null
+  val errorAction = actions[errorActionIndex]
+  val locA = nearestLocatedAction(actions, errorActionIndex, pidA, inputFile) ?: return null
+
+  val raceFlagNames =
+    errorAction.edge.label.collectVars().map { it.name }.filter(::isRaceFlagName).toSet()
+  if (raceFlagNames.isEmpty()) return null
+
+  val flagSetActionIndex =
+    actions.indexOfLast { action ->
+      action.edge.getFlatLabels().any { label ->
+        label is StmtLabel &&
+          label.stmt is AssignStmt<*> &&
+          (label.stmt as AssignStmt<*>).varDecl.name in raceFlagNames &&
+          ((label.stmt as AssignStmt<*>).expr as? LitExpr<*>)?.intValue == 1
+      }
+    }
+  if (flagSetActionIndex < 0) return null
+  val pidB = actions[flagSetActionIndex].pid
+  val locB = nearestLocatedAction(actions, flagSetActionIndex, pidB, inputFile) ?: return null
+
+  return listOf(
+    Waypoint(
+      WaypointContent(
+        type = WaypointType.TARGET,
+        location = locA,
+        action = Action.FOLLOW,
+        threadId = threadIds.ofPid(pidA),
+      )
+    ),
+    Waypoint(
+      WaypointContent(
+        type = WaypointType.TARGET,
+        location = locB,
+        action = Action.FOLLOW,
+        threadId = threadIds.ofPid(pidB),
+      )
+    ),
+  )
+}
+
+/**
+ * Safe fallback when the racing pair cannot be reconstructed: a single target waypoint at the
+ * violating (error) location, so the witness still points at the violation instead of being empty.
+ */
+private fun targetWaypointAtViolation(
+  concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+  inputFile: File,
+  threadIds: ThreadIdEmission,
+): WaypointContent {
+  val lastState = concrTrace.states.last()
+  val pidA =
+    lastState.processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
+      ?: concrTrace.actions.last().pid
+  val loc =
+    concrTrace.actions.lastOrNull { it.pid == pidA }?.accessLocation(inputFile)
+      ?: concrTrace.actions.last().accessLocation(inputFile)
+      ?: error("No source location for the data-race violation")
+  return WaypointContent(
+    type = WaypointType.TARGET,
+    location = loc,
+    action = Action.FOLLOW,
+    threadId = threadIds.ofPid(pidA),
+  )
 }
 
 private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
