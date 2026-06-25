@@ -29,12 +29,9 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
@@ -53,20 +50,21 @@ import hu.bme.mit.theta.xcfa.analysis.DataRaceAccess
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.findDataRace
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
-import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
+import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.*
-import kotlinx.serialization.encodeToString
 
 class YamlWitnessWriter : XcfaWitnessWriter {
 
@@ -93,17 +91,17 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         val trace =
           safetyResult.asUnsafe().cex.let {
             if (it is HackyAsgTrace<*>) {
-              val actions = (it as HackyAsgTrace<*>).trace.actions
-              val explStates = (it as HackyAsgTrace<*>).trace.states
+              val actions = it.trace.actions
+              val explStates = it.trace.states
               val states =
-                (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+                it.originalStates.mapIndexed { i, state ->
                   state as XcfaState<PtrState<*>>
                   state.withState(PtrState(explStates[i]))
                 }
 
               Trace.of(states, actions)
             } else if (it is ASGTrace<*, *>) {
-              (it as ASGTrace<*, *>).toTrace()
+              it.toTrace()
             } else {
               it
             }
@@ -189,17 +187,17 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     val trace =
       safetyResult.asUnsafe().cex.let {
         if (it is HackyAsgTrace<*>) {
-          val actions = (it as HackyAsgTrace<*>).trace.actions
-          val explStates = (it as HackyAsgTrace<*>).trace.states
+          val actions = it.trace.actions
+          val explStates = it.trace.states
           val states =
-            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+            it.originalStates.mapIndexed { i, state ->
               state as XcfaState<PtrState<*>>
               state.withState(PtrState(explStates[i]))
             }
 
           Trace.of(states, actions)
         } else if (it is ASGTrace<*, *>) {
-          (it as ASGTrace<*, *>).toTrace()
+          it.toTrace()
         } else {
           it as Trace<*, XcfaAction>
         }
@@ -209,7 +207,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
       (trace as Trace<*, XcfaAction>)
         .actions
         .flatMap { it.label.getFlatLabels() }
-        .findLast { it -> it.metadata.isSubstantial() }
+        .findLast { it.metadata.isSubstantial() }
     if (lastLabel == null)
       return generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
     val metadata = lastLabel.getCMetaData()
@@ -459,8 +457,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         (0..(stemTrace.length() - 1))
           .flatMap {
             listOfNotNull(
-              stemTrace.states
-                .get(it)
+              stemTrace.states[it]
                 ?.toSegment(
                   stemTrace.actions.getOrNull(it - 1),
                   stemTrace.actions.getOrNull(it),
@@ -475,8 +472,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           (0..<(lassoTrace.length()))
             .flatMap {
               listOfNotNull(
-                lassoTrace.states
-                  .get(it)
+                lassoTrace.states[it]
                   ?.toSegment(
                     lassoTrace.actions.getOrNull(it - 1),
                     lassoTrace.actions.getOrNull(it),
@@ -493,14 +489,15 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                   .flatMap { it.edge?.getFlatLabels() ?: listOf() }
                   .reversed()
                   .first { it.metadata.isSubstantial() }
+              val metadata = (lastLoc.metadata as? CMetaData)?.asExportableCMetadata
               listOf(
                 WaypointContent(
                   WaypointType.ASSUMPTION,
                   Constraint("1", Format.C_EXPRESSION),
                   Location(
                     fileName = inputFile.name,
-                    line = (lastLoc.metadata as? CMetaData)?.lineNumberStart ?: -1,
-                    column = (lastLoc.metadata as? CMetaData)?.colNumberStart?.plus(1) ?: -1,
+                    line = metadata?.lineNumberStart ?: -1,
+                    column = metadata?.colNumberStart?.plus(1) ?: -1,
                   ),
                   Action.CYCLE,
                 )
@@ -638,9 +635,9 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
-  ): YamlWitness {
-    val witness =
-      if (property.inputProperty == ErrorDetection.TERMINATION) {
+  ): YamlWitness =
+    when (property.inputProperty) {
+      ErrorDetection.TERMINATION -> {
         terminationViolationWitnessFromConcreteTrace(
           concrTrace,
           metadata,
@@ -649,7 +646,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           parseContext,
           witnessfile,
         )
-      } else if (property.inputProperty == ErrorDetection.DATA_RACE) {
+      }
+      ErrorDetection.DATA_RACE -> {
         dataRaceViolationWitnessFromConcreteTrace(
           concrTrace,
           metadata,
@@ -657,7 +655,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           property,
           parseContext,
         )
-      } else {
+      }
+      else -> {
         reachabilityViolationWitnessFromConcreteTrace(
           concrTrace,
           metadata,
@@ -667,25 +666,13 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           witnessfile,
         )
       }
-    return witness
-  }
-}
-
-private fun Expr<BoolType>.replaceVars(parseContext: ParseContext): Expr<BoolType> {
-  val vars =
-    ExprUtils.getVars(this).associateWith {
-      val cname = parseContext.metadata.getMetadataValue(it.name, "cName")
-      if (cname.isPresent) Var(cname.get() as String, it.type) else it
     }
-  return this.changeVars(vars)
 }
 
 private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
-  val line =
-    (metadata as? CMetaData)?.lineNumberStart
-      ?: (metadata as? CMetaData)?.lineNumberStop
-      ?: return null
-  val column = (metadata as? CMetaData)?.colNumberStart ?: (metadata as? CMetaData)?.colNumberStop
+  val m = (metadata as? CMetaData)?.asExportableCMetadata ?: return null
+  val line = m.lineNumberStart ?: m.lineNumberStop ?: return null
+  val column = m.colNumberStart ?: m.colNumberStop
   return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
 
@@ -779,12 +766,14 @@ private fun WitnessNode.toSegment(
       val typeName = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName
       val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
       val (cast, valueString) =
-        if (assignedValue is BvLitExpr) "" to assignedValue.toString().replace("#", "0")
-        else if (assignedValue is FpLitExpr)
-          (typeName?.let { "($it)" } ?: "") to
+        when (assignedValue) {
+          is BvLitExpr -> "" to assignedValue.toString().replace("#", "0")
+          is FpLitExpr -> (typeName?.let { "($it)" } ?: "") to
             FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
               .toString()
-        else "" to assignedValue.toString()
+
+          else -> "" to assignedValue.toString()
+        }
 
       val constraint = "\\result == $cast$valueString"
       loc =
@@ -852,7 +841,7 @@ private fun WitnessNode.toSegment(
               }
             }
             ?.joinToString("&&")
-            ?.let { if (it.isEmpty()) "1" else it }
+            ?.let { it.ifEmpty { "1" } }
         prevVal = globalState?.toMap() ?: prevVal
 
         return if (constraint != null && constraint.isNotEmpty()) {
@@ -922,7 +911,9 @@ private fun DataRaceAccess.toTargetWaypoint(
   inputFile: File,
   threadIds: ThreadIdEmission,
 ): WaypointContent {
-  val metadata = label.getCMetaData() ?: (edge.metadata as? CMetaData)
+  // important do not use getCMetadata() helpers here because they only return exportable metadata
+  // however, data race may occur at a non-statement start location as well
+  val metadata = (label.metadata as? CMetaData) ?: (edge.metadata as? CMetaData)
   val line =
     metadata?.lineNumberStart
       ?: metadata?.lineNumberStop
@@ -1008,16 +999,12 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
         .mapNotNull {
           it as ArgNode<XcfaState<*>, XcfaAction>
           val loc = it.state.processes.values.firstOrNull()?.locs?.peek() ?: return@mapNotNull null
+          val metadata = loc.getCMetaData()
           val locLoc =
             Location(
               fileName = inputFile.name,
-              line =
-                (loc.metadata as? CMetaData)?.lineNumberStart
-                  ?: (loc.metadata as? CMetaData)?.lineNumberStop
-                  ?: return@mapNotNull null,
-              column =
-                (loc.metadata as? CMetaData)?.colNumberStart
-                  ?: (loc.metadata as? CMetaData)?.colNumberStop,
+              line = metadata?.lineNumberStart ?: metadata?.lineNumberStop ?: return@mapNotNull null,
+              column = metadata?.colNumberStart ?: metadata?.colNumberStop,
             )
           locLoc to it.state.sGlobal.toExpr()
         }
