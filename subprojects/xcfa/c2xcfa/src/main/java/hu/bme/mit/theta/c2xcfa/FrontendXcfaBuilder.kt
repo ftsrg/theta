@@ -99,21 +99,18 @@ class FrontendXcfaBuilder(
   }
 
   private fun getMetadata(source: CStatement): MetaData =
-    if (alreadyHandledStatements.contains(source)) {
-      EmptyMetaData
-    } else {
-      CMetaData(
-        lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
-        lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
-        colNumberStart = source.colNumberStart.takeIf { it != -1 },
-        colNumberStop = source.colNumberStop.takeIf { it != -1 },
-        offsetStart = source.offsetStart.takeIf { it != -1 },
-        offsetEnd = source.offsetEnd.takeIf { it != -1 },
-        sourceText = source.sourceText,
-        astNodes = listOf(source),
-        functionName = source.functionName.takeIf { it != "" },
-      )
-    }
+    CMetaData(
+      lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
+      lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
+      colNumberStart = source.colNumberStart.takeIf { it != -1 },
+      colNumberStop = source.colNumberStop.takeIf { it != -1 },
+      offsetStart = source.offsetStart.takeIf { it != -1 },
+      offsetEnd = source.offsetEnd.takeIf { it != -1 },
+      sourceText = source.sourceText,
+      astNodes = listOf(source),
+      functionName = source.functionName.takeIf { it != "" },
+      notStatementStart = alreadyHandledStatements.contains(source),
+    )
 
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")

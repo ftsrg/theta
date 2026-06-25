@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -235,12 +234,12 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
           (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>)
             .actions
             .flatMap { it.label.getFlatLabels() }
-            .findLast { it -> it.metadata.isSubstantial() }
+            .findLast { it.metadata.isSubstantial() }
         val metadata = lastLabel?.getCMetaData()
-        val startline: Int? = (metadata as? CMetaData)?.lineNumberStart
-        val endline: Int? = (metadata as? CMetaData)?.lineNumberStop
-        val startoffset: Int? = (metadata as? CMetaData)?.offsetStart
-        val endoffset: Int? = (metadata as? CMetaData)?.offsetEnd
+        val startline: Int? = metadata?.lineNumberStart
+        val endline: Int? = metadata?.lineNumberStop
+        val startoffset: Int? = metadata?.offsetStart
+        val endoffset: Int? = metadata?.offsetEnd
         val witness =
           if (startline != null && endline != null && startoffset != null && endoffset != null) {
             generateTrivialViolationWitness(
