@@ -122,7 +122,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   }
 
   LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
-  LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
+  LoopUnrollPass.FORCE_UNROLL_LIMIT =
+    if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
