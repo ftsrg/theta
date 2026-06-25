@@ -97,8 +97,9 @@ internal class XcfaOcTraceExtractor(
             )
         }
 
-        val nextEdge = eventTrace.getOrNull(index + 1)?.edge
-        if (nextEdge != lastEdge) {
+        val nextEvent = eventTrace.getOrNull(index + 1)
+        val nextEdge = nextEvent?.edge
+        if (nextEvent?.pid != event.pid || nextEdge != lastEdge) {
           actionList.add(XcfaAction(event.pid, lastEdge))
           stateList.add(
             state.copy(
