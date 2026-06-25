@@ -66,9 +66,9 @@ import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
-import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.*
+import kotlinx.serialization.encodeToString
 
 class YamlWitnessWriter : XcfaWitnessWriter {
 
@@ -461,14 +461,13 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         (0..(stemTrace.length() - 1))
           .flatMap {
             listOfNotNull(
-              stemTrace.states[it]
-                ?.toSegment(
-                  stemTrace.actions.getOrNull(it - 1),
-                  stemTrace.actions.getOrNull(it),
-                  inputFile,
-                  parseContext = parseContext,
-                  violation = false,
-                ),
+              stemTrace.states[it]?.toSegment(
+                stemTrace.actions.getOrNull(it - 1),
+                stemTrace.actions.getOrNull(it),
+                inputFile,
+                parseContext = parseContext,
+                violation = false,
+              ),
               stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
             )
           }
@@ -476,14 +475,13 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           (0..<(lassoTrace.length()))
             .flatMap {
               listOfNotNull(
-                lassoTrace.states[it]
-                  ?.toSegment(
-                    lassoTrace.actions.getOrNull(it - 1),
-                    lassoTrace.actions.getOrNull(it),
-                    inputFile,
-                    Action.CYCLE,
-                    parseContext = parseContext,
-                  ),
+                lassoTrace.states[it]?.toSegment(
+                  lassoTrace.actions.getOrNull(it - 1),
+                  lassoTrace.actions.getOrNull(it),
+                  inputFile,
+                  Action.CYCLE,
+                  parseContext = parseContext,
+                ),
                 lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
               )
             }
@@ -956,9 +954,10 @@ private fun WitnessNode.toSegment(
       val (cast, valueString) =
         when (assignedValue) {
           is BvLitExpr -> "" to assignedValue.toString().replace("#", "0")
-          is FpLitExpr -> (typeName?.let { "($it)" } ?: "") to
-            FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
-              .toString()
+          is FpLitExpr ->
+            (typeName?.let { "($it)" } ?: "") to
+              FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
+                .toString()
 
           else -> "" to assignedValue.toString()
         }
@@ -1100,8 +1099,14 @@ private fun DataRaceAccess.toTargetWaypoint(
   threadIds: ThreadIdEmission,
 ): WaypointContent {
   // important do not use getCMetadata() helpers here because they only return exportable metadata
-  // however, data race may occur at a non-statement start location as well
-  val metadata = (label.metadata as? CMetaData) ?: (edge.metadata as? CMetaData)
+  // however, data race may occur at a non-statement start location as well. The label's own
+  // metadata can also be present but line-less (e.g. a ternary condition lowered to an `assume`,
+  // whose CIf metadata carries no source line), so prefer whichever of the label and the edge
+  // actually has a source line.
+  val metadata =
+    listOfNotNull(label.metadata as? CMetaData, edge.metadata as? CMetaData).firstOrNull {
+      it.lineNumberStart != null || it.lineNumberStop != null
+    }
   val line =
     metadata?.lineNumberStart
       ?: metadata?.lineNumberStop
@@ -1191,7 +1196,8 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
           val locLoc =
             Location(
               fileName = inputFile.name,
-              line = metadata?.lineNumberStart ?: metadata?.lineNumberStop ?: return@mapNotNull null,
+              line =
+                metadata?.lineNumberStart ?: metadata?.lineNumberStop ?: return@mapNotNull null,
               column = metadata?.colNumberStart ?: metadata?.colNumberStop,
             )
           locLoc to it.state.sGlobal.toExpr()

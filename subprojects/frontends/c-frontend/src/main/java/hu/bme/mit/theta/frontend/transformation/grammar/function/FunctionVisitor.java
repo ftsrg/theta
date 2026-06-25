@@ -889,12 +889,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             ifFalsePost.setPreStatements(new CNullStatement(parseContext));
 
             if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
-                preStatements.addCStatement(
-                        new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
+                CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
+                recordMetadata(ctx, preIf);
+                preStatements.addCStatement(preIf);
             }
             if (!ifTruePostList.isEmpty() || !ifFalsePostList.isEmpty()) {
-                postStatements.addCStatement(
-                        new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
+                CIf postIf = new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext);
+                recordMetadata(ctx, postIf);
+                postStatements.addCStatement(postIf);
             }
 
             CComplexType smallestCommonType =
