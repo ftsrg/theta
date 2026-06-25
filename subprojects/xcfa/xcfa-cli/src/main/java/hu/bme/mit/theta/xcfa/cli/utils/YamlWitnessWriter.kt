@@ -693,21 +693,34 @@ private fun keepEssentialWaypoints(waypoints: List<WaypointContent>): List<Waypo
       (i < waypoints.lastIndex && waypoints[i + 1].threadId != w.threadId)
   }
 
-/** The integer value of a flag literal, regardless of whether it is modeled as int or bitvector. */
-private val LitExpr<*>.intValue: Int
+/** The integer value of a flag literal (int or bitvector), or null for any other literal kind. */
+private val LitExpr<*>.intValue: Int?
   get() =
     when (this) {
       is IntLitExpr -> value.toInt()
       is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this).toInt()
-      else -> error("Unknown integer type for flag value: $type")
+      else -> null
     }
 
 /**
- * True if [flagName] is a `_write_flag_`/`_read_flag_` flag declaration name introduced by
- * `DataRaceToReachabilityPass` for some racing variable.
+ * True if [flagName] is a flag declaration name introduced by `DataRaceToReachabilityPass`: a
+ * per-variable `_write_flag_`/`_read_flag_`, or one of the shared `_deref_*` pointer-access flags.
  */
 private fun isRaceFlagName(flagName: String): Boolean =
-  flagName.startsWith("_write_flag_") || flagName.startsWith("_read_flag_")
+  flagName.startsWith("_write_flag_") ||
+    flagName.startsWith("_read_flag_") ||
+    flagName.startsWith("_deref_")
+
+/**
+ * True if this assignment sets a racing flag in [raceFlagNames] to its "held" value: the
+ * per-variable flags are held at `1`, while the shared pointer-dereference flags store the accessed
+ * array/offset and are unset to the sentinel `-1`, so any value other than `-1` means held.
+ */
+private fun AssignStmt<*>.isHeldFlagSet(raceFlagNames: Set<String>): Boolean {
+  if (varDecl.name !in raceFlagNames) return false
+  val value = (expr as? LitExpr<*>)?.intValue
+  return if (varDecl.name.startsWith("_deref_")) value != -1 else value == 1
+}
 
 /**
  * The C location of [action]'s racing access. `DataRaceToReachabilityPass` stamps the inserted
@@ -770,14 +783,17 @@ private fun reconstructDataRaceFromFlags(
     errorAction.edge.label.collectVars().map { it.name }.filter(::isRaceFlagName).toSet()
   if (raceFlagNames.isEmpty()) return null
 
+  // Thread B is the other thread holding the racing access: the most recent edge that set one of
+  // the racing flags to its "held" value (1 for the per-variable flags, any non `-1` for the shared
+  // pointer-dereference flags, whose unset sentinel is `-1`) and that does not belong to thread A.
   val flagSetActionIndex =
     actions.indexOfLast { action ->
-      action.edge.getFlatLabels().any { label ->
-        label is StmtLabel &&
-          label.stmt is AssignStmt<*> &&
-          (label.stmt as AssignStmt<*>).varDecl.name in raceFlagNames &&
-          ((label.stmt as AssignStmt<*>).expr as? LitExpr<*>)?.intValue == 1
-      }
+      action.pid != pidA &&
+        action.edge.getFlatLabels().any { label ->
+          label is StmtLabel &&
+            label.stmt is AssignStmt<*> &&
+            (label.stmt as AssignStmt<*>).isHeldFlagSet(raceFlagNames)
+        }
     }
   if (flagSetActionIndex < 0) return null
   val pidB = actions[flagSetActionIndex].pid
