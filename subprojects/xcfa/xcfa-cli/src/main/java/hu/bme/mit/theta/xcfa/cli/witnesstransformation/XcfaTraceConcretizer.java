@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -175,7 +176,19 @@ public class XcfaTraceConcretizer {
                 final XcfaLocation source = j == 0 ? action.getSource() : placeholder;
                 final XcfaLocation target =
                         j == labels.size() - 1 ? action.getTarget() : placeholder;
-                final XcfaLabel label = labels.get(j);
+                XcfaLabel label = labels.get(j);
+                // The OC encoding writes the spawned thread's id into the (opaque) pthread_t handle
+                // at the start, but StartLabel.toStmt() is a no-op, so the sequential re-check
+                // would
+                // freeze the handle at its zero initializer and contradict that thread-id write.
+                // Havoc the handle here so it stays the opaque value the trace assigns it.
+                if (label instanceof StartLabel) {
+                    label =
+                            new StmtLabel(
+                                    HavocStmt.of(((StartLabel) label).getPidVar()),
+                                    ChoiceType.NONE,
+                                    label.getMetadata());
+                }
                 final MetaData metadata = label.getMetadata();
                 final XcfaState<PtrState<?>> nextState =
                         j == labels.size() - 1
