@@ -24,8 +24,6 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
-import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
@@ -51,11 +49,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.analysis.DataRaceAccess
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.findDataRace
-import hu.bme.mit.theta.xcfa.analysis.getDataRaceDetector
+import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -68,9 +62,9 @@ import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
+import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.*
-import kotlinx.serialization.encodeToString
 
 class YamlWitnessWriter : XcfaWitnessWriter {
 
@@ -114,19 +108,12 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             }
           }
         if (trace is Trace<*, *>) {
-          val traceCheckerWrapper:
-            (ExprTraceChecker<ItpRefutation>) -> ExprTraceChecker<ItpRefutation> =
-            if (property.verifiedProperty == ErrorDetection.DATA_RACE) {
-              getDataRaceDetector()::exprTraceCheckerWrapper
-            } else {
-              { it }
-            }
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             XcfaTraceConcretizer.concretize(
               trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
               cexSolverFactory,
               parseContext,
-              traceCheckerWrapper,
+              wrapExprTraceCheckerWithDataRaceCondition(property),
             )
 
           val witness =
