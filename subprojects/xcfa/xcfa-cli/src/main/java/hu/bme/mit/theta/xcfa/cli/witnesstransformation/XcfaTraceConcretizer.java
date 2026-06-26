@@ -54,6 +54,77 @@ import kotlin.Triple;
  * output a concrete counterexample
  */
 public class XcfaTraceConcretizer {
+
+    /**
+     * Reverse map (renamed/SSA variable -> original declaration) over all of `state`'s processes.
+     */
+    private static Map<VarDecl<?>, VarDecl<?>> revLookup(XcfaState<?> state) {
+        final var revLookup = new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
+        state.getProcesses().values().stream()
+                .flatMap(process -> process.getVarLookup().stream())
+                .flatMap(lookup -> lookup.entrySet().stream())
+                .forEach(entry -> revLookup.put(entry.getValue(), entry.getKey()));
+        return revLookup;
+    }
+
+    /** Whether `decl` corresponds to a named C variable (carries a `cName` metadata entry). */
+    private static boolean hasCName(VarDecl<?> decl, ParseContext parseContext) {
+        return parseContext.getMetadata().getMetadataValue(decl.getName(), "cName").isPresent();
+    }
+
+    /**
+     * Rebuild `state`'s global valuation keeping only variables that map back to a named C
+     * variable, so the re-checked trace carries just the C-visible state.
+     */
+    private static XcfaState<PtrState<?>> keepNamedVars(
+            XcfaState<PtrState<?>> state, ParseContext parseContext) {
+        if (!(state.getSGlobal().getInnerState() instanceof ExplState explState)) {
+            return state;
+        }
+        final var revLookup = revLookup(state);
+        final var kept =
+                explState.toMap().entrySet().stream()
+                        .filter(
+                                entry -> {
+                                    final var decl = (VarDecl<?>) entry.getKey();
+                                    return hasCName(
+                                            revLookup.getOrDefault(decl, decl), parseContext);
+                                })
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return state.withState(new PtrState<>(ExplState.of(ImmutableValuation.from(kept))));
+    }
+
+    /**
+     * The concrete `ExplState` for a trace state: the model `valuation` restricted to variables
+     * already written (`varSoFar`) that are either a kept nondet result (`nondetVars`) or map back
+     * to a named C variable.
+     */
+    private static ExplState concreteState(
+            XcfaState<?> state,
+            Valuation valuation,
+            Set<VarDecl<?>> varSoFar,
+            Set<VarDecl<?>> nondetVars,
+            ParseContext parseContext) {
+        final var revLookup = revLookup(state);
+        final var kept =
+                valuation.toMap().entrySet().stream()
+                        .filter(
+                                entry -> {
+                                    final var decl = (VarDecl<?>) entry.getKey();
+                                    return varSoFar.contains(decl)
+                                            && (nondetVars.contains(decl)
+                                                    || hasCName(decl, parseContext)
+                                                    || hasCName(
+                                                            revLookup.getOrDefault(decl, decl),
+                                                            parseContext));
+                                })
+                        .collect(
+                                Collectors.toMap(
+                                        Map.Entry<Decl<?>, LitExpr<?>>::getKey,
+                                        Map.Entry::getValue));
+        return ExplState.of(ImmutableValuation.from(kept));
+    }
+
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
@@ -61,63 +132,7 @@ public class XcfaTraceConcretizer {
         trace =
                 Trace.of(
                         trace.getStates().stream()
-                                .map(
-                                        ptrStateXcfaState -> {
-                                            final var revLookup =
-                                                    new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
-                                            ptrStateXcfaState.getProcesses().values().stream()
-                                                    .flatMap(
-                                                            it ->
-                                                                    it.getVarLookup().stream()
-                                                                            .flatMap(
-                                                                                    lookup ->
-                                                                                            lookup
-                                                                                                    .entrySet()
-                                                                                                    .stream()))
-                                                    .forEach(
-                                                            entry ->
-                                                                    revLookup.put(
-                                                                            entry.getValue(),
-                                                                            entry.getKey()));
-                                            return ptrStateXcfaState.getSGlobal().getInnerState()
-                                                            instanceof ExplState explState
-                                                    ? ptrStateXcfaState.withState(
-                                                            new PtrState(
-                                                                    ExplState.of(
-                                                                            ImmutableValuation.from(
-                                                                                    explState
-                                                                                            .toMap()
-                                                                                            .entrySet()
-                                                                                            .stream()
-                                                                                            .filter(
-                                                                                                    declLitExprEntry ->
-                                                                                                            parseContext
-                                                                                                                    .getMetadata()
-                                                                                                                    .getMetadataValue(
-                                                                                                                            revLookup
-                                                                                                                                    .getOrDefault(
-                                                                                                                                            (VarDecl<
-                                                                                                                                                            ?>)
-                                                                                                                                                    declLitExprEntry
-                                                                                                                                                            .getKey(),
-                                                                                                                                            (VarDecl<
-                                                                                                                                                            ?>)
-                                                                                                                                                    declLitExprEntry
-                                                                                                                                                            .getKey())
-                                                                                                                                    .getName(),
-                                                                                                                            "cName")
-                                                                                                                    .isPresent())
-                                                                                            .collect(
-                                                                                                    Collectors
-                                                                                                            .toMap(
-                                                                                                                    Map
-                                                                                                                                    .Entry
-                                                                                                                            ::getKey,
-                                                                                                                    Map
-                                                                                                                                    .Entry
-                                                                                                                            ::getValue))))))
-                                                    : ptrStateXcfaState;
-                                        })
+                                .map(state -> keepNamedVars(state, parseContext))
                                 .toList(),
                         trace.getActions());
 
@@ -226,55 +241,16 @@ public class XcfaTraceConcretizer {
         // they are kept in the concretized state even though they are filtered out otherwise.
         final Set<VarDecl<?>> nondetVars = new LinkedHashSet<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
-            final var revLookup = new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
-            sbeTrace.getState(i).getProcesses().values().stream()
-                    .flatMap(
-                            it ->
-                                    it.getVarLookup().stream()
-                                            .flatMap(lookup -> lookup.entrySet().stream()))
-                    .forEach(entry -> revLookup.put(entry.getValue(), entry.getKey()));
-
             cfaStates.add(
                     new XcfaState<>(
                             sbeTrace.getState(i).getXcfa(),
                             sbeTrace.getState(i).getProcesses(),
-                            ExplState.of(
-                                    ImmutableValuation.from(
-                                            valuations.getState(i).toMap().entrySet().stream()
-                                                    .filter(
-                                                            it ->
-                                                                    varSoFar.contains(it.getKey())
-                                                                            && (nondetVars.contains(
-                                                                                            it
-                                                                                                    .getKey())
-                                                                                    || parseContext
-                                                                                            .getMetadata()
-                                                                                            .getMetadataValue(
-                                                                                                    it.getKey()
-                                                                                                            .getName(),
-                                                                                                    "cName")
-                                                                                            .isPresent()
-                                                                                    || parseContext
-                                                                                            .getMetadata()
-                                                                                            .getMetadataValue(
-                                                                                                    revLookup
-                                                                                                            .getOrDefault(
-                                                                                                                    (VarDecl<
-                                                                                                                                    ?>)
-                                                                                                                            it
-                                                                                                                                    .getKey(),
-                                                                                                                    (VarDecl<
-                                                                                                                                    ?>)
-                                                                                                                            it
-                                                                                                                                    .getKey())
-                                                                                                            .getName(),
-                                                                                                    "cName")
-                                                                                            .isPresent()))
-                                                    .collect(
-                                                            Collectors.toMap(
-                                                                    Map.Entry<Decl<?>, LitExpr<?>>
-                                                                            ::getKey,
-                                                                    Map.Entry::getValue))))));
+                            concreteState(
+                                    sbeTrace.getState(i),
+                                    valuations.getState(i),
+                                    varSoFar,
+                                    nondetVars,
+                                    parseContext)));
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
                     //                    if (flatLabel.getMetadata().isSubstantial()) {
