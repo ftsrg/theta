@@ -122,9 +122,9 @@ fun getDataRaceDetector() =
 
     override fun test(s: XcfaState<out PtrState<out ExprState>>): Boolean = findDataRace(s) != null
 
-    override fun exprTraceCheckerWrapper(
-      exprTraceChecker: ExprTraceChecker<Refutation>
-    ): ExprTraceChecker<Refutation> = ExprTraceChecker { trace ->
+    override fun <T : Refutation> exprTraceCheckerWrapper(
+      exprTraceChecker: ExprTraceChecker<T>
+    ): ExprTraceChecker<T> = ExprTraceChecker { trace ->
       val t =
         if (
           trace.states.isEmpty() ||
