@@ -24,6 +24,8 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
@@ -53,6 +55,7 @@ import hu.bme.mit.theta.xcfa.analysis.DataRaceAccess
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.findDataRace
+import hu.bme.mit.theta.xcfa.analysis.getDataRaceDetector
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -93,31 +96,40 @@ class YamlWitnessWriter : XcfaWitnessWriter {
       try {
         val trace =
           safetyResult.asUnsafe().cex.let {
-            if (it is HackyAsgTrace<*>) {
-              val actions = it.trace.actions
-              val explStates = it.trace.states
-              val states =
-                it.originalStates.mapIndexed { i, state ->
-                  state as XcfaState<PtrState<*>>
-                  state.withState(PtrState(explStates[i]))
-                }
+            when (it) {
+              is HackyAsgTrace<*> -> {
+                val actions = it.trace.actions
+                val explStates = it.trace.states
+                val states =
+                  it.originalStates.mapIndexed { i, state ->
+                    state as XcfaState<PtrState<*>>
+                    state.withState(PtrState(explStates[i]))
+                  }
 
-              Trace.of(states, actions)
-            } else if (it is ASGTrace<*, *>) {
-              it.toTrace()
-            } else {
-              it
+                Trace.of(states, actions)
+              }
+
+              is ASGTrace<*, *> -> it.toTrace()
+              else -> it
             }
           }
         if (trace is Trace<*, *>) {
+          val traceCheckerWrapper:
+            (ExprTraceChecker<ItpRefutation>) -> ExprTraceChecker<ItpRefutation> =
+            if (property.verifiedProperty == ErrorDetection.DATA_RACE) {
+              getDataRaceDetector()::exprTraceCheckerWrapper
+            } else {
+              { it }
+            }
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             XcfaTraceConcretizer.concretize(
               trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
               cexSolverFactory,
               parseContext,
+              traceCheckerWrapper,
             )
 
-          var witness =
+          val witness =
             violationWitnessFromConcreteTrace(
               concrTrace,
               metadata,
@@ -189,20 +201,21 @@ class YamlWitnessWriter : XcfaWitnessWriter {
 
     val trace =
       safetyResult.asUnsafe().cex.let {
-        if (it is HackyAsgTrace<*>) {
-          val actions = it.trace.actions
-          val explStates = it.trace.states
-          val states =
-            it.originalStates.mapIndexed { i, state ->
-              state as XcfaState<PtrState<*>>
-              state.withState(PtrState(explStates[i]))
-            }
+        when (it) {
+          is HackyAsgTrace<*> -> {
+            val actions = it.trace.actions
+            val explStates = it.trace.states
+            val states =
+              it.originalStates.mapIndexed { i, state ->
+                state as XcfaState<PtrState<*>>
+                state.withState(PtrState(explStates[i]))
+              }
 
-          Trace.of(states, actions)
-        } else if (it is ASGTrace<*, *>) {
-          it.toTrace()
-        } else {
-          it as Trace<*, XcfaAction>
+            Trace.of(states, actions)
+          }
+
+          is ASGTrace<*, *> -> it.toTrace()
+          else -> it as Trace<*, XcfaAction>
         }
       }
 
