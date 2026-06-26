@@ -46,6 +46,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import kotlin.Triple;
 
@@ -129,6 +130,15 @@ public class XcfaTraceConcretizer {
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext) {
+        return concretize(trace, solverFactory, parseContext, Function.identity());
+    }
+
+    public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
+            SolverFactory solverFactory,
+            ParseContext parseContext,
+            Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
+                    exprTraceCheckerWrapper) {
         trace =
                 Trace.of(
                         trace.getStates().stream()
@@ -226,8 +236,11 @@ public class XcfaTraceConcretizer {
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
         final ExprTraceChecker<ItpRefutation> checker =
-                ExprTraceFwBinItpChecker.create(
-                        BoolExprs.True(), BoolExprs.True(), solverFactory.createItpSolver());
+                exprTraceCheckerWrapper.apply(
+                        ExprTraceFwBinItpChecker.create(
+                                BoolExprs.True(),
+                                BoolExprs.True(),
+                                solverFactory.createItpSolver()));
         final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
