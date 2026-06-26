@@ -33,7 +33,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -54,7 +53,6 @@ import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.xcfa
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
@@ -266,6 +264,10 @@ private fun backend(
     } else if (config.backendConfig.backend == Backend.TRACEGEN) {
       tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
     } else {
+      logger.info(
+        "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
+      )
+
       // we would not do post analysis logging if running in a portfolio otherwise
       if (
         config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
@@ -289,10 +291,6 @@ private fun backend(
       } else {
         val stopwatch = Stopwatch.createStarted()
         val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-
-        logger.info(
-          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
-        )
 
         logger.info(
           "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}"

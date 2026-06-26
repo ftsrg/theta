@@ -118,15 +118,6 @@ constructor(
       else -> vars
     }
 
-  fun VarDecl<*>.isAtomic() =
-    when {
-      this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
-      this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
-        partlyOptimized.vars.contains(this)
-
-      else -> atomicVars.contains(this)
-    }
-
   fun getLocs(): Set<XcfaLocation> =
     when {
       this::optimized.isInitialized -> optimized.locs
@@ -307,6 +298,9 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     locs.remove(toRemove)
+    if (toRemove.error) {
+      errorLoc = Optional.empty()
+    }
   }
 
   fun removeLocs(pred: (XcfaLocation) -> Boolean) {
