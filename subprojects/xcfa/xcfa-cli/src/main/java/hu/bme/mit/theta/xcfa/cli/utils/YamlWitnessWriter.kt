@@ -694,19 +694,26 @@ class YamlWitnessWriter : XcfaWitnessWriter {
 }
 
 /**
- * Keeps only the waypoints a test-based validator needs: the target, every `function_enter` (thread
- * registrations) and `function_return` (nondet results), and -- for every context switch -- the
- * last waypoint of the outgoing thread and the first of the incoming thread, to pin the
- * interleaving without the dense per-step assumptions in between.
+ * Keeps only essential waypoints to avoid having too many waypoints.
+ *
+ * For preserving a correct witness, we would need to include all waypoints that occur in a loop.
+ * Furthermore, we should keep only the waypoints a test-based validator needs: the target, every
+ * `function_enter` (thread registrations) and `function_return` (nondet results), and -- for
+ * every context switch -- the last waypoint of the outgoing thread and the first of the incoming
+ * thread, to pin the interleaving without the dense per-step assumptions in between.
+ *
+ * Until we do not have the loop information, we cannot do any sound filtering.
  */
 private fun keepEssentialWaypoints(waypoints: List<WaypointContent>): List<WaypointContent> =
-  waypoints.filterIndexed { i, w ->
-    w.type == WaypointType.TARGET ||
-      w.type == WaypointType.FUNCTION_RETURN ||
-      w.type == WaypointType.FUNCTION_ENTER ||
-      (i > 0 && waypoints[i - 1].threadId != w.threadId) ||
-      (i < waypoints.lastIndex && waypoints[i + 1].threadId != w.threadId)
-  }
+  waypoints
+//  waypoints.filterIndexed { i, w ->
+//    w.type == WaypointType.TARGET ||
+//      w.type == WaypointType.FUNCTION_RETURN ||
+//      w.type == WaypointType.FUNCTION_ENTER ||
+//      (i > 0 && waypoints[i - 1].threadId != w.threadId) ||
+//      (i < waypoints.lastIndex && waypoints[i + 1].threadId != w.threadId)
+//      TODO: or w is in a loop
+//  }
 
 /** The integer value of a flag literal (int or bitvector), or null for any other literal kind. */
 private val LitExpr<*>.intValue: Int?
