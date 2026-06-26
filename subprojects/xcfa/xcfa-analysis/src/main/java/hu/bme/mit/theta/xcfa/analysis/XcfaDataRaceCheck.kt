@@ -34,6 +34,8 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.*
@@ -124,13 +126,19 @@ fun getDataRaceDetector() =
 
     override fun <T : Refutation> exprTraceCheckerWrapper(
       exprTraceChecker: ExprTraceChecker<T>
-    ): ExprTraceChecker<T> = ExprTraceChecker { trace ->
+    ): ExprTraceChecker<T> = wrapExprTraceCheckerWithDataRaceCondition(exprTraceChecker)
+  }
+
+fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
+  exprTraceChecker: ExprTraceChecker<T>
+): ExprTraceChecker<T> =
+    ExprTraceChecker { trace ->
       val t =
         if (
           trace.states.isEmpty() ||
-            trace.actions.isEmpty() ||
-            trace.states.last() !is XcfaState<*> ||
-            trace.actions.last() !is XcfaAction
+          trace.actions.isEmpty() ||
+          trace.states.last() !is XcfaState<*> ||
+          trace.actions.last() !is XcfaAction
         ) {
           trace
         } else {
@@ -149,6 +157,14 @@ fun getDataRaceDetector() =
         }
       exprTraceChecker.check(t)
     }
+
+fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
+  property: XcfaProperty? = null,
+): (ExprTraceChecker<T>) -> ExprTraceChecker<T> =
+  if (property?.verifiedProperty == ErrorDetection.DATA_RACE) {
+    { wrapExprTraceCheckerWithDataRaceCondition(it) }
+  } else {
+    { it }
   }
 
 private sealed class GlobalAccessWithMutexes(
