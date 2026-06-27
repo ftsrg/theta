@@ -63,9 +63,9 @@ import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
-import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.*
+import kotlinx.serialization.encodeToString
 
 class YamlWitnessWriter : XcfaWitnessWriter {
 
@@ -685,14 +685,15 @@ class YamlWitnessWriter : XcfaWitnessWriter {
  *
  * For preserving a correct witness, we would need to include all waypoints that occur in a loop.
  * Furthermore, we should keep only the waypoints a test-based validator needs: the target, every
- * `function_enter` (thread registrations) and `function_return` (nondet results), and -- for
- * every context switch -- the last waypoint of the outgoing thread and the first of the incoming
- * thread, to pin the interleaving without the dense per-step assumptions in between.
+ * `function_enter` (thread registrations) and `function_return` (nondet results), and -- for every
+ * context switch -- the last waypoint of the outgoing thread and the first of the incoming thread,
+ * to pin the interleaving without the dense per-step assumptions in between.
  *
  * Until we do not have the loop information, we cannot do any sound filtering.
  */
 private fun keepEssentialWaypoints(waypoints: List<WaypointContent>): List<WaypointContent> =
   waypoints
+
 //  waypoints.filterIndexed { i, w ->
 //    w.type == WaypointType.TARGET ||
 //      w.type == WaypointType.FUNCTION_RETURN ||
