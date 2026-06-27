@@ -32,6 +32,8 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   private List<SvLibParser.TermContext> entryArguments = List.of();
 
   private final List<SvLibParser.RelationalTermContext> postconditions = new ArrayList<>();
+  private final Map<String, List<SvLibParser.RelationalTermContext>> checkTrueByTag =
+      new LinkedHashMap<>();
 
   private int procedureCount;
 
@@ -76,7 +78,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
         entryProcedureName = verifyCallContext.symbol().getText();
         entryArguments = List.copyOf(verifyCallContext.term());
       } else if (command instanceof SvLibParser.AnnotateTagContext annotateTagContext) {
-        collectPostconditions(annotateTagContext.annotateTagCommand());
+        collectAnnotateTagProperties(annotateTagContext.annotateTagCommand());
       }
     }
     if (procedureCount > 1) {
@@ -85,12 +87,19 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     }
   }
 
-  private void collectPostconditions(SvLibParser.AnnotateTagCommandContext ctx) {
+  private void collectAnnotateTagProperties(SvLibParser.AnnotateTagCommandContext ctx) {
+    String tag = ctx.symbol().getText();
     for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
       if (attribute instanceof SvLibParser.TagPropertyContext tagPropertyContext
           && tagPropertyContext.property()
           instanceof SvLibParser.EnsuresPropertyContext ensuresPropertyContext) {
         postconditions.add(ensuresPropertyContext.relationalTerm());
+      } else if (attribute instanceof SvLibParser.TagPropertyContext tagPropertyContext
+          && tagPropertyContext.property()
+          instanceof SvLibParser.CheckTruePropertyContext checkTruePropertyContext) {
+        checkTrueByTag
+            .computeIfAbsent(tag, unused -> new ArrayList<>())
+            .add(checkTruePropertyContext.relationalTerm());
       }
     }
   }
@@ -125,11 +134,19 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   }
 
   private SvLibMetadata metadata(String sourceName) {
-    return new SvLibMetadata(sourceName);
+    return metadata(sourceName, false);
+  }
+
+  private SvLibMetadata metadata(String sourceName, boolean tag) {
+    return new SvLibMetadata(sourceName, tag);
   }
 
   private XcfaLocation nextLoc(String sourceName) {
-    return new XcfaLocation("l" + locCounter++, metadata(sourceName));
+    return nextLoc(sourceName, false);
+  }
+
+  private XcfaLocation nextLoc(String sourceName, boolean tag) {
+    return new XcfaLocation("l" + locCounter++, metadata(sourceName, tag));
   }
 
   @Override
@@ -182,10 +199,67 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
             .visit(
                 ctx.statement(), start);
 
+    applyTaggedCheckTrueProperties(procedure);
     addExitEdges(procedure, exit);
     this.entryProcedure = procedure;
 
     return null;
+  }
+
+  private void applyTaggedCheckTrueProperties(XcfaProcedureBuilder procedure) {
+    if (checkTrueByTag.isEmpty()) {
+      return;
+    }
+
+    for (XcfaLocation location : new ArrayList<>(procedure.getLocs())) {
+      if (!(location.getMetadata() instanceof SvLibMetadata metadata) || !metadata.isTag()) {
+        continue;
+      }
+
+      List<SvLibParser.RelationalTermContext> checkTrueTerms =
+          checkTrueByTag.get(metadata.getSourceName());
+      if (checkTrueTerms == null || checkTrueTerms.isEmpty()) {
+        continue;
+      }
+
+      insertChecksBeforeOutgoingEdges(procedure, location, checkTrueTerms);
+    }
+  }
+
+  private void insertChecksBeforeOutgoingEdges(
+      XcfaProcedureBuilder procedure,
+      XcfaLocation source,
+      List<SvLibParser.RelationalTermContext> checkTrueTerms) {
+    List<XcfaEdge> originalOutgoingEdges = new ArrayList<>(source.getOutgoingEdges());
+    if (originalOutgoingEdges.isEmpty()) {
+      return;
+    }
+
+    XcfaLocation checkedSource = source;
+    for (SvLibParser.RelationalTermContext checkTrueTerm : checkTrueTerms) {
+      Expr<BoolType> condition = relationalBoolExpr(checkTrueTerm, procedure, declarations);
+      XcfaLocation nextCheckedSource = nextLoc("check-true");
+
+      procedure.addEdge(
+          new XcfaEdge(
+              checkedSource,
+              procedure.getErrorLoc().get(),
+              new StmtLabel(AssumeStmt.of(Not(condition))),
+              EmptyMetaData.INSTANCE));
+      procedure.addEdge(
+          new XcfaEdge(
+              checkedSource,
+              nextCheckedSource,
+              new StmtLabel(AssumeStmt.of(condition)),
+              EmptyMetaData.INSTANCE));
+
+      checkedSource = nextCheckedSource;
+    }
+
+    for (XcfaEdge outgoingEdge : originalOutgoingEdges) {
+      procedure.removeEdge(outgoingEdge);
+      procedure.addEdge(outgoingEdge.withSource(checkedSource));
+    }
   }
 
   private void addExitEdges(XcfaProcedureBuilder procedure, XcfaLocation exit) {

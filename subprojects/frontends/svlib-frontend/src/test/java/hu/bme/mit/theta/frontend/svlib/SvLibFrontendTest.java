@@ -102,6 +102,30 @@ class SvLibFrontendTest {
   }
 
   @Test
+  void annotateTagCheckTrueRewritesTaggedLocation() throws IOException{
+    var xcfa = parseResource("check-true-annotate-tag.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+
+    var taggedLocation =
+        procedure.getLocs().stream()
+            .filter(
+                loc ->
+                    loc.getMetadata() instanceof SvLibMetadata metadata
+                        && metadata.isTag()
+                        && metadata.getSourceName().equals("xto0"))
+            .findFirst()
+            .orElseThrow();
+
+    assertEquals(2, taggedLocation.getOutgoingEdges().size());
+    assertTrue(taggedLocation.getOutgoingEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("check-true-annotate-tag.dot"),
+        dot);
+
+  }
+
+  @Test
   void translatedIfXcfaCanBeExportedToDot() throws IOException {
     var xcfa = parseResource("if-simple-safe.svlib");
     var dot = toDot(xcfa, null);

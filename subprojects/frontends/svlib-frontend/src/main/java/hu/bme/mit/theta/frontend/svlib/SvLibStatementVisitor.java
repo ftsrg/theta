@@ -45,19 +45,19 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
 
     private final XcfaProcedureBuilder builder;
     private final Map<String, VarDecl<?>> declarations;
-    private final Function<String, XcfaLocation> nextLoc;
+    private final BiFunction<String, Boolean, XcfaLocation> nextLoc;
     private XcfaLocation currentEntry;
 
     SvLibStatementVisitor(
             XcfaProcedureBuilder builder,
             Map<String, VarDecl<?>> declarations,
-            Function<String, XcfaLocation> nextLoc) {
+            BiFunction<String, Boolean, XcfaLocation> nextLoc) {
         this.builder = builder;
         this.declarations = declarations;
         this.nextLoc = nextLoc;
@@ -100,7 +100,7 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
 
     @Override
     public XcfaLocation visitAnnotatedStatement(SvLibParser.AnnotatedStatementContext ctx) {
-        XcfaLocation statementEntry = currentEntry;
+        XcfaLocation statementEntry = addTagLocation(ctx, currentEntry);
 
         for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
             if (attribute instanceof SvLibParser.TagPropertyContext tagProperty
@@ -125,6 +125,23 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
         return visit(ctx.statement(), statementEntry);
     }
 
+    private XcfaLocation addTagLocation(
+        SvLibParser.AnnotatedStatementContext ctx, XcfaLocation entry) {
+        for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
+            if (attribute instanceof SvLibParser.TagAttributeContext tagAttribute) {
+                XcfaLocation taggedEntry = nextLoc.apply(tagAttribute.symbol().getText(), true);
+                builder.addEdge(
+                    new XcfaEdge(
+                        entry,
+                        taggedEntry,
+                        NopLabel.INSTANCE,
+                        taggedEntry.getMetadata()));
+                return taggedEntry;
+            }
+        }
+        return entry;
+    }
+
     @Override
     public XcfaLocation visitIfStatement(SvLibParser.IfStatementContext ctx) {
         Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
@@ -142,7 +159,7 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
                 ? visit(ctx.statement(1), elseEntry)
                 : elseEntry;
 
-        XcfaLocation endLoc = nextLoc.apply("if-end");
+        XcfaLocation endLoc = nextLoc.apply("if-end", false);
 
         builder.addEdge(new XcfaEdge(thenEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
         builder.addEdge(new XcfaEdge(elseEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
@@ -176,7 +193,7 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
         if (labels.isEmpty()) {
             return from;
         }
-        XcfaLocation to = nextLoc.apply(sourceName);
+        XcfaLocation to = nextLoc.apply(sourceName, false);
         XcfaLabel label = labels.size() == 1 ? labels.get(0) : new SequenceLabel(labels);
         builder.addEdge(new XcfaEdge(from, to, label, EmptyMetaData.INSTANCE));
         return to;

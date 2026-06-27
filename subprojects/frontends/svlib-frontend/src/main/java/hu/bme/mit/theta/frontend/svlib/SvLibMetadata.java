@@ -22,19 +22,33 @@ import org.jetbrains.annotations.NotNull;
 public class SvLibMetadata extends MetaData {
 
   private final String sourceName;
+  private final boolean tag;
 
   public SvLibMetadata(String sourceName) {
+    this(sourceName, false);
+  }
+
+  public SvLibMetadata(String sourceName, boolean tag) {
     this.sourceName = sourceName;
+    this.tag = tag;
   }
 
   @Override
   @NotNull
   public MetaData combine(@NotNull MetaData other) {
-    return null;
+    return tag || !other.isSubstantial() ? this : other;
   }
 
   @Override
   public boolean isSubstantial() {
-    return false;
+    return tag;
+  }
+
+  public String getSourceName() {
+    return sourceName;
+  }
+
+  public boolean isTag() {
+    return tag;
   }
 }
