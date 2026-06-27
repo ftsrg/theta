@@ -61,6 +61,7 @@ fun getOcChecker(
       forceUnrollBoundStart = forceUnrollBoundStart,
       forceUnrollBoundEnd = forceUnrollBoundEnd,
       forceUnrollBoundStep = ocConfig.forceUnrollBoundStep,
+      witnessOptimizations = ocConfig.witnessOptimizations,
     )
   return SafetyChecker { ocChecker.check() }
 }

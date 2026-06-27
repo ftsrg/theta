@@ -25,6 +25,8 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
@@ -34,6 +36,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.witnesses.ApplyWitnessPass
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -52,6 +55,7 @@ class XcfaOcChecker(
   private val forceUnrollBoundStart: Int = 2,
   private val forceUnrollBoundEnd: Int = 2,
   private val forceUnrollBoundStep: Int = 1,
+  private val witnessOptimizations: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   init {
@@ -218,5 +222,22 @@ class XcfaOcChecker(
           solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
         }
     }
+
+    if (witnessOptimizations) {
+      eg.wss.forEach { (v, rels) ->
+        if (v.name == SEGMENT_COUNTER) {
+          rels.forEach { rel ->
+            val active = And(rel.from.guardExpr, rel.to.guardExpr)
+            solver.add(Imply(And(rel.declRef, active), Leq(rel.from.const.ref, rel.to.const.ref)))
+            solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
+          }
+        }
+      }
+    }
+  }
+
+  companion object {
+    /** The global segment counter introduced by the witness instrumentation (ApplyWitnessPass). */
+    private const val SEGMENT_COUNTER = ApplyWitnessPass.SEGMENT_COUNTER
   }
 }
