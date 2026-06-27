@@ -26,9 +26,11 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
@@ -44,6 +46,25 @@ internal class XcfaOcTraceExtractor(
   private val events: Map<VarDecl<*>, Map<Int, List<E>>> = eventGraph.events
   private val violations: List<Violation> = eventGraph.violations
   private val pos: List<R> = eventGraph.pos
+
+  // Per-thread renaming of procedure-local variables (params + locals) to thread-instance-specific
+  // decls (`T<pid>::_::name`). The event graph already distinguishes thread instances internally
+  // (see `threadVar` in XcfaToEventGraph), but the extracted trace is rebuilt from the raw XCFA
+  // edges, whose labels carry the bare, instance-agnostic decls. Without this renaming two
+  // concurrent instances of the same procedure (e.g. a thread spawned in a loop) would share one
+  // local in the linearized trace, so one instance's write clobbers the other's and the sequential
+  // re-check in XcfaTraceConcretizer reports a spurious "Infeasible trace". The `T<pid>::_::`
+  // prefix
+  // matches the convention used by the interleaving analysis and stripped by the witness writer.
+  private val pidLookups: Map<Int, Map<VarDecl<*>, VarDecl<*>>> =
+    threads.associate { it.pid to it.procedure.createLookup("T${it.pid}") }
+
+  /** Returns [edge] with its label rewritten to use thread [pid]'s instance-specific local vars. */
+  private fun XcfaEdge.renamedFor(pid: Int): XcfaEdge {
+    val lookup = pidLookups[pid]
+    if (lookup.isNullOrEmpty()) return this
+    return XcfaEdge(source, target, label.changeVars(lookup), metadata)
+  }
 
   internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
     get() {
@@ -100,7 +121,7 @@ internal class XcfaOcTraceExtractor(
         val nextEvent = eventTrace.getOrNull(index + 1)
         val nextEdge = nextEvent?.edge
         if (nextEvent?.pid != event.pid || nextEdge != lastEdge) {
-          actionList.add(XcfaAction(event.pid, lastEdge))
+          actionList.add(XcfaAction(event.pid, lastEdge.renamedFor(event.pid)))
           stateList.add(
             state.copy(
               processes =
@@ -223,7 +244,7 @@ internal class XcfaOcTraceExtractor(
       check(stepPid == pid || edge.label.collectVars().isEmpty()) {
         "Atomic mutex is held by another thread which still has events in its atomic block."
       }
-      actions.add(XcfaAction(stepPid, edge))
+      actions.add(XcfaAction(stepPid, edge.renamedFor(stepPid)))
       currentState =
         currentState.copy(
           processes =
