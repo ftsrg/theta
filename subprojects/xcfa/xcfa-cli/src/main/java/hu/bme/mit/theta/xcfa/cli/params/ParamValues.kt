@@ -694,7 +694,10 @@ enum class TracegenAbstraction {
   // TODO add EXPL
 }
 
-/** Names of the bookkeeping variables [ApplyWitnessPass] adds to the XCFA; see [InitPrec.WITNESSVARS]. */
+/**
+ * Names of the bookkeeping variables [ApplyWitnessPass] adds to the XCFA; see
+ * [InitPrec.WITNESSVARS].
+ */
 private val WITNESS_VAR_NAMES =
   setOf(
     ApplyWitnessPass.SEGMENT_COUNTER,
@@ -721,10 +724,11 @@ enum class InitPrec(
       XcfaPrec(PtrPrec(Prod2Prec.of(ExplPrec.of(xcfa.collectVars()), PredPrec.of()), emptySet()))
     },
   ),
-
   WITNESSVARS(
     explPrec = { xcfa ->
-      XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars().filter { it.name in WITNESS_VAR_NAMES }), emptySet()))
+      XcfaPrec(
+        PtrPrec(ExplPrec.of(xcfa.collectVars().filter { it.name in WITNESS_VAR_NAMES }), emptySet())
+      )
     },
     predPrec = { error("WITNESSVARS is not interpreted for the predicate domain.") },
     prod2Prec = { xcfa ->
