@@ -76,13 +76,15 @@ class XcfaOcChecker(
     }
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> {
-    val range = forceUnrollBoundStart..forceUnrollBoundEnd
-    if (range.isEmpty()) {
-      throw IllegalArgumentException(
-        "Empty unroll bound range: $forceUnrollBoundStart..$forceUnrollBoundEnd"
-      )
+    // A negative upper bound means "unbounded": keep deepening the force-unroll bound (BMC-style)
+    // until a reliable result is found or resources run out.
+    val unbounded = forceUnrollBoundEnd < 0
+    require(forceUnrollBoundStep > 0) { "Force unroll bound step must be positive." }
+    require(unbounded || forceUnrollBoundStart <= forceUnrollBoundEnd) {
+      "Empty unroll bound range: $forceUnrollBoundStart..$forceUnrollBoundEnd"
     }
-    for (i in range step forceUnrollBoundStep) {
+    var i = forceUnrollBoundStart
+    while (unbounded || i <= forceUnrollBoundEnd) {
       logger.mainStep("\nChecking with force loop unroll bound: $i")
       val (result, unsafeUnrollUsed) = check(i)
       logger.mainStep("OC checker result: $result")
@@ -90,6 +92,7 @@ class XcfaOcChecker(
         return result
       }
       logger.mainStep("Incomplete loop unroll bound ($i) used: safe result is unreliable.")
+      i += forceUnrollBoundStep
     }
 
     logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())

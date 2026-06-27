@@ -32,14 +32,12 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
-import kotlin.math.max
 
 /**
  * Instruments the XCFA with the constraints of a YAML witness.
@@ -74,11 +72,7 @@ import kotlin.math.max
  *   happens-before edge -- is introduced among them: ordering the racing pair would remove the very
  *   race the witness exhibits.
  */
-class ApplyWitnessPass(
-  val parseContext: ParseContext,
-  val witness: YamlWitness,
-  val forceUnroll: Int,
-) : ProcedurePass {
+class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
 
   private data class Instrumentation(
     val segmentCounter: VarDecl<IntType>,
@@ -494,10 +488,10 @@ class ApplyWitnessPass(
       }
     }
 
-    if (forceUnroll >= 0) {
-      val limit = max(2, max(forceUnroll, segments.size))
-      LoopUnrollPass(limit).run(builder)
-    }
+    // Loops are not unrolled here: the OC backend drives loop unrolling itself (incrementally and,
+    // for witness validation, unboundedly), starting from the witness-implied depth set in
+    // ConfigToOcChecker. Unrolling here as well would only duplicate that work -- and, for loops
+    // containing an atomic block, produce ill-formed multi-instance atomic merges.
 
     builder.prop = segmentFlag.ref
     return builder
