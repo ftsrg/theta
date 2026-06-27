@@ -36,7 +36,6 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
-import hu.bme.mit.theta.xcfa.witnesses.ApplyWitnessPass
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -238,6 +237,6 @@ class XcfaOcChecker(
 
   companion object {
     /** The global segment counter introduced by the witness instrumentation (ApplyWitnessPass). */
-    private const val SEGMENT_COUNTER = ApplyWitnessPass.SEGMENT_COUNTER
+    private const val SEGMENT_COUNTER = "__THETA__segment__counter__"
   }
 }

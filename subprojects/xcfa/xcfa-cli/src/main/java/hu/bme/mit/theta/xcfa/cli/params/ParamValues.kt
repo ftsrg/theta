@@ -65,6 +65,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
+import hu.bme.mit.theta.xcfa.cli.utils.XcfaSegmentOrderComparator
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
@@ -683,6 +684,16 @@ enum class Search {
 
     override fun getComp(cfa: XCFA): ArgNodeComparator {
       return XcfaDistToErrComparator(cfa)
+    }
+  },
+  SEGMENT_ORDER {
+
+    override fun getComp(cfa: XCFA): ArgNodeComparator {
+      // BFS base, but states pinning the witness segment counter are preferred (highest first).
+      return ArgNodeComparators.combine(
+        ArgNodeComparators.targetFirst(),
+        ArgNodeComparators.combine(XcfaSegmentOrderComparator(), ArgNodeComparators.bfs()),
+      )
     }
   };
 
