@@ -131,35 +131,34 @@ fun getDataRaceDetector() =
 
 fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
   exprTraceChecker: ExprTraceChecker<T>
-): ExprTraceChecker<T> =
-    ExprTraceChecker { trace ->
-      val t =
-        if (
-          trace.states.isEmpty() ||
-          trace.actions.isEmpty() ||
-          trace.states.last() !is XcfaState<*> ||
-          trace.actions.last() !is XcfaAction
-        ) {
-          trace
-        } else {
-          val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
-          findDataRace(lastState)?.condition?.let { extraAssumption ->
-            Trace.of(
-              trace.states,
-              trace.actions.subList(0, trace.actions.size - 1) +
-                trace.actions.last().let {
-                  (it as XcfaAction).withLabel(
-                    SequenceLabel(listOf(it.label, StmtLabel(AssumeStmt.of(extraAssumption))))
-                  )
-                },
-            )
-          } ?: trace
-        }
-      exprTraceChecker.check(t)
+): ExprTraceChecker<T> = ExprTraceChecker { trace ->
+  val t =
+    if (
+      trace.states.isEmpty() ||
+        trace.actions.isEmpty() ||
+        trace.states.last() !is XcfaState<*> ||
+        trace.actions.last() !is XcfaAction
+    ) {
+      trace
+    } else {
+      val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
+      findDataRace(lastState)?.condition?.let { extraAssumption ->
+        Trace.of(
+          trace.states,
+          trace.actions.subList(0, trace.actions.size - 1) +
+            trace.actions.last().let {
+              (it as XcfaAction).withLabel(
+                SequenceLabel(listOf(it.label, StmtLabel(AssumeStmt.of(extraAssumption))))
+              )
+            },
+        )
+      } ?: trace
     }
+  exprTraceChecker.check(t)
+}
 
 fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
-  property: XcfaProperty? = null,
+  property: XcfaProperty? = null
 ): (ExprTraceChecker<T>) -> ExprTraceChecker<T> =
   if (property?.verifiedProperty == ErrorDetection.DATA_RACE) {
     { wrapExprTraceCheckerWithDataRaceCondition(it) }
