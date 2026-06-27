@@ -207,6 +207,33 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         }
       }
 
+    // A no-data-race witness must end with a multi-follow segment of exactly two target waypoints
+    // (the conflicting accesses); an empty witness is rejected by the linter. When the trace cannot
+    // be concretized (e.g. an OC counterexample whose sequential replay is infeasible), reconstruct
+    // the racing pair directly from the raw trace's flags so the witness is still conformant.
+    if (property.inputProperty == ErrorDetection.DATA_RACE) {
+      @Suppress("UNCHECKED_CAST") val rawTrace = trace as Trace<XcfaState<*>, XcfaAction>
+      val threadIds = ThreadIdEmission(rawTrace, parseContext)
+      reconstructDataRaceFromFlags(rawTrace, inputFile, threadIds)?.let { targetWaypoints ->
+        val dataRaceMetadata =
+          getMetadata(
+            inputFile,
+            ltlSpecification,
+            architecture,
+            formatVersion = if (parseContext.multiThreading) "2.2" else "2.1",
+          )
+        return WitnessYamlConfig.encodeToString(
+          listOf(
+            YamlWitness(
+              entryType = EntryType.VIOLATION,
+              metadata = dataRaceMetadata,
+              content = listOf(ContentItem(targetWaypoints)),
+            )
+          )
+        )
+      }
+    }
+
     val lastLabel =
       (trace as Trace<*, XcfaAction>)
         .actions
@@ -781,7 +808,7 @@ private fun nearestLocatedAction(
  * Returns null if no held flag can be identified.
  */
 private fun reconstructDataRaceFromFlags(
-  concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+  concrTrace: Trace<out XcfaState<*>, XcfaAction>,
   inputFile: File,
   threadIds: ThreadIdEmission,
 ): List<Waypoint>? {
@@ -840,7 +867,7 @@ private fun reconstructDataRaceFromFlags(
  * violating (error) location, so the witness still points at the violation instead of being empty.
  */
 private fun targetWaypointAtViolation(
-  concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+  concrTrace: Trace<out XcfaState<*>, XcfaAction>,
   inputFile: File,
   threadIds: ThreadIdEmission,
 ): WaypointContent {
@@ -1142,7 +1169,7 @@ private fun DataRaceAccess.toTargetWaypoint(
  * programs no `thread_id`s are emitted.
  */
 private class ThreadIdEmission(
-  concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+  concrTrace: Trace<out XcfaState<*>, XcfaAction>,
   parseContext: ParseContext,
 ) {
   private val enabled = parseContext.multiThreading
