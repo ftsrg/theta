@@ -619,6 +619,12 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val lastPre =
       buildWithoutPostStatement(guard, ParamPack(builder, innerEndLoc, null, null, returnLoc))
+    // The guard test is re-evaluated on every loop cycle, whereas the `do` statement itself is
+    // entered only once. The waypoint location comes from the label's metadata (see
+    // TraceToWitness),
+    // so the label must carry the body's metadata -- not the whole do-while statement's -- to keep
+    // a
+    // cycled witness waypoint off the `do` keyword (matching CWhile/CFor).
     val assume =
       StmtLabel(
         Stmts.Assume(
@@ -628,7 +634,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(statement),
+        metadata = getMetadata(body),
       )
     xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -641,7 +647,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(statement),
+        metadata = EmptyMetaData,
       )
     xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
