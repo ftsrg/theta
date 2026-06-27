@@ -65,6 +65,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -693,6 +694,15 @@ enum class TracegenAbstraction {
   // TODO add EXPL
 }
 
+/** Names of the bookkeeping variables [ApplyWitnessPass] adds to the XCFA; see [InitPrec.WITNESSVARS]. */
+private val WITNESS_VAR_NAMES =
+  setOf(
+    ApplyWitnessPass.SEGMENT_COUNTER,
+    ApplyWitnessPass.LAST_SEGMENT_PASSED,
+    ApplyWitnessPass.LOGICAL_THREAD_ID,
+    ApplyWitnessPass.THREAD_ID_PARAM,
+  )
+
 enum class InitPrec(
   val explPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<ExplPrec>>,
   val predPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<PredPrec>>,
@@ -709,6 +719,24 @@ enum class InitPrec(
     predPrec = { error("ALLVARS is not interpreted for the predicate domain.") },
     prod2Prec = { xcfa ->
       XcfaPrec(PtrPrec(Prod2Prec.of(ExplPrec.of(xcfa.collectVars()), PredPrec.of()), emptySet()))
+    },
+  ),
+
+  WITNESSVARS(
+    explPrec = { xcfa ->
+      XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars().filter { it.name in WITNESS_VAR_NAMES }), emptySet()))
+    },
+    predPrec = { error("WITNESSVARS is not interpreted for the predicate domain.") },
+    prod2Prec = { xcfa ->
+      XcfaPrec(
+        PtrPrec(
+          Prod2Prec.of(
+            ExplPrec.of(xcfa.collectVars().filter { it.name in WITNESS_VAR_NAMES }),
+            PredPrec.of(),
+          ),
+          emptySet(),
+        )
+      )
     },
   ),
   ALLGLOBALS(
