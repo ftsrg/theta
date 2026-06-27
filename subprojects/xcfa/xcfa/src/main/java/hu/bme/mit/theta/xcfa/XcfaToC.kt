@@ -504,6 +504,6 @@ private fun IntModExpr.isDomainBound(parseContext: ParseContext): Boolean {
   val minValue = BigInteger.TWO.pow(width - 1).negate()
   val maxValue = BigInteger.TWO.pow(width)
 
-  return if (type.origin.isSigned) m.value == minValue || m.value == maxValue
+  return if (type.origin?.isSigned == true) m.value == minValue || m.value == maxValue
   else m.value == maxValue
 }
