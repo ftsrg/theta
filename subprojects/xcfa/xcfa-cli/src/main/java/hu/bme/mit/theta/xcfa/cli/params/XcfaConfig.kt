@@ -569,6 +569,12 @@ data class OcConfig(
     description = "Step size for force loop unrolling bound for OC checker",
   )
   var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-witness-optimizations"],
+    description =
+      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
+  )
+  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
