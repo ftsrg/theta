@@ -561,12 +561,12 @@ data class OcConfig(
   var forceUnrollBoundStart: Int = 2,
   @Parameter(
     names = ["--oc-unroll-end"],
-    description = "First force loop unrolling bound for OC checker",
+    description = "Upper force loop unrolling bound for OC checker (-1 for no limit)",
   )
-  var forceUnrollBoundEnd: Int = 2,
+  var forceUnrollBoundEnd: Int = -1,
   @Parameter(
     names = ["--oc-unroll-step"],
-    description = "First force loop unrolling bound for OC checker",
+    description = "Step size for force loop unrolling bound for OC checker",
   )
   var forceUnrollBoundStep: Int = 1,
 ) : SpecBackendConfig

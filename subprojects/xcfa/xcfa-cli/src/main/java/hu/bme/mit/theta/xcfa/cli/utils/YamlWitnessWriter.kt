@@ -684,12 +684,12 @@ class YamlWitnessWriter : XcfaWitnessWriter {
  * Keeps only essential waypoints to avoid having too many waypoints.
  *
  * We keep the waypoints a test-based validator needs: the target, every `function_enter` (thread
- * registrations) and `function_return` (nondet results), and -- for every context switch -- the last
- * waypoint of the outgoing thread and the first of the incoming thread, to pin the interleaving
- * without the dense per-step assumptions in between.
+ * registrations) and `function_return` (nondet results), and -- for every context switch -- the
+ * last waypoint of the outgoing thread and the first of the incoming thread, to pin the
+ * interleaving without the dense per-step assumptions in between.
  *
- * The filtering is done on *locations*, not on individual waypoint occurrences: we first collect the
- * set of "interesting" locations (the ones a per-occurrence filter would single out), then keep
+ * The filtering is done on *locations*, not on individual waypoint occurrences: we first collect
+ * the set of "interesting" locations (the ones a per-occurrence filter would single out), then keep
  * every waypoint sitting on such a location. This way a location that is interesting in one loop
  * iteration is kept in *all* iterations -- otherwise, replaying the witness would mis-match a later
  * visit of the location against the single kept segment and skip the remaining iterations.
