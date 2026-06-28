@@ -24,10 +24,10 @@ import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -227,8 +227,16 @@ class XcfaOcChecker(
         if (v.name == SEGMENT_COUNTER) {
           rels.forEach { rel ->
             val active = And(rel.from.guardExpr, rel.to.guardExpr)
-            solver.add(Imply(And(rel.declRef, active), Leq(rel.from.const.ref, rel.to.const.ref)))
-            //solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
+            solver.add(
+              Imply(
+                And(rel.declRef, active),
+                Or(
+                  Eq(rel.from.const.ref, rel.to.const.ref),
+                  Eq(Add(rel.from.const.ref, Int(1)), rel.to.const.ref),
+                ),
+              )
+            )
+            // solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
           }
         }
       }
