@@ -177,6 +177,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
         InputType.BTOR2 -> BTOR2FrontendConfig() as T
+        InputType.SVLIB -> null
       }
   }
 }

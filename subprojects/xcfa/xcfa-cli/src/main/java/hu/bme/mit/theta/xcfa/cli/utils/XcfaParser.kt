@@ -27,6 +27,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
+import hu.bme.mit.theta.frontend.svlib.SvLibFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
@@ -130,6 +131,8 @@ fun getXcfa(
           uniqueWarningLogger,
         )
       }
+
+      InputType.SVLIB -> parseSvLib(config.inputConfig.input!!)
     }
   } catch (e: Exception) {
     // Give the caller its chance to retry under a memory model that has no pointer splitting at
@@ -352,6 +355,10 @@ private fun parseChc(
       )
     }
   return xcfaBuilder.build()
+}
+
+private fun parseSvLib(input: File): XCFA {
+  return SvLibFrontend().buildXcfa(input)
 }
 
 private fun parseBTOR2(
