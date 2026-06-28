@@ -223,10 +223,12 @@ class XcfaOcChecker(
     }
 
     if (witnessOptimizations) {
+      // this does not really help as-is.
       eg.wss.forEach { (v, rels) ->
         if (v.name == SEGMENT_COUNTER) {
           rels.forEach { rel ->
             val active = And(rel.from.guardExpr, rel.to.guardExpr)
+            // we also tried Leq here
             solver.add(
               Imply(
                 And(rel.declRef, active),
@@ -237,6 +239,7 @@ class XcfaOcChecker(
               )
             )
             // solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
+            // abandoned idea: add segment counter-related events only after the first check(), so we get a constrained solver (which we know is fast, if we produced the same witness), and then check() again with the segment counter events.
           }
         }
       }
