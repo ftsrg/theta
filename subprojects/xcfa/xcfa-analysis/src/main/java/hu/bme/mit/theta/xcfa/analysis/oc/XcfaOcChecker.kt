@@ -228,7 +228,7 @@ class XcfaOcChecker(
           rels.forEach { rel ->
             val active = And(rel.from.guardExpr, rel.to.guardExpr)
             solver.add(Imply(And(rel.declRef, active), Leq(rel.from.const.ref, rel.to.const.ref)))
-            solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
+            //solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
           }
         }
       }
