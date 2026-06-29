@@ -19,7 +19,7 @@ import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.cli.params.OcConfig
@@ -28,12 +28,12 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.witnesses.Action
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
-import java.io.File
 import kotlinx.serialization.builtins.ListSerializer
+import java.io.File
 
 fun getOcChecker(
   xcfa: XCFA,
-  mcm: MCM,
+  parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<EmptyProof, Cex, XcfaPrec<*>> {
@@ -48,6 +48,7 @@ fun getOcChecker(
     XcfaOcChecker(
       xcfa = xcfa,
       property = config.inputConfig.property.verifiedProperty,
+      parseContext = parseContext,
       decisionProcedure = ocConfig.decisionProcedure,
       smtSolver = ocConfig.smtSolver,
       logger = logger,
@@ -61,7 +62,6 @@ fun getOcChecker(
       forceUnrollBoundStart = forceUnrollBoundStart,
       forceUnrollBoundEnd = forceUnrollBoundEnd,
       forceUnrollBoundStep = ocConfig.forceUnrollBoundStep,
-      witnessOptimizations = ocConfig.witnessOptimizations,
     )
   return SafetyChecker { ocChecker.check() }
 }

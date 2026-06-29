@@ -31,6 +31,10 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LAST_SEGMENT_PASSED
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LOGICAL_THREAD_ID
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.THREAD_ID_PARAM
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -99,11 +103,6 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
   )
 
   companion object {
-
-    const val SEGMENT_COUNTER = "__THETA__segment__counter__"
-    const val LAST_SEGMENT_PASSED = "__THETA__last__segment__passed__"
-    const val LOGICAL_THREAD_ID = "__THETA__logical__thread__id__"
-    const val THREAD_ID_PARAM = "__THETA__thread__id__param__"
 
     /** Logical id handed to a thread spawned outside of (or not registered by) the witness. */
     const val INVALID_THREAD_ID = -1
@@ -450,7 +449,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         }
         flushLabelsIntermediate()
 
-        newLabels.addAll(annots.map { it.assumption })
+        newLabels.addAll(annots.mapNotNull { if (it.assumption == AssumeStmt.of(True())) null else it.assumption })
         newLabels.addAll(annots.mapNotNull { it.flagUpdate })
         // Apply the segment-counter advances of this group sequentially, in segment order. When
         // several waypoints fall on the same edge position (e.g. a function_return immediately

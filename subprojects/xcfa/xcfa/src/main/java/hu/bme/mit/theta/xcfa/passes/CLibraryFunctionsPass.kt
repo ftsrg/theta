@@ -112,7 +112,7 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                       val expr = invokeLabel.params[param]
                       val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
                       builder.addVar(arg)
-                      AssignStmtLabel(arg, expr, metadata)
+                      AssignStmtLabel(arg, expr)
                     }
                     .run { ifEmpty { listOf(NopLabel) } }
                 }
@@ -131,7 +131,7 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   val handle = invokeLabel.getParam(1)
                   listOf(
                     JoinLabel(handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
                   )
                 }
 
@@ -142,7 +142,7 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   // int(0) to solve StartLabel not handling return params
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
                   )
                 }
 

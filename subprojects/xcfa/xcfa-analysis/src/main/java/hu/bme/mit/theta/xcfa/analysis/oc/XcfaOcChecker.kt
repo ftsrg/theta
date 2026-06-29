@@ -24,10 +24,9 @@ import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -35,12 +34,16 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
   xcfa: XCFA,
   property: ErrorDetection,
+  private val parseContext: ParseContext,
   decisionProcedure: OcDecisionProcedureType,
   smtSolver: String,
   private val logger: Logger,
@@ -54,7 +57,6 @@ class XcfaOcChecker(
   private val forceUnrollBoundStart: Int = 2,
   private val forceUnrollBoundEnd: Int = 2,
   private val forceUnrollBoundStep: Int = 1,
-  private val witnessOptimizations: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   init {
@@ -64,11 +66,7 @@ class XcfaOcChecker(
   }
 
   val xcfa =
-    xcfa.optimizeFurther(
-      ProcedurePassManager(
-        listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
-      )
-    )
+    xcfa.optimizeFurther(ProcedurePassManager(listOf(AssumeFalseRemovalPass(), MutexToVarPass())))
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
@@ -111,9 +109,10 @@ class XcfaOcChecker(
   private fun check(forceUnrollBound: Int): Pair<SafetyResult<EmptyProof, Cex>, Boolean> {
     // force loop unroll for BMC
     val xcfa = xcfa.optimizeFurther(ProcedurePassManager(listOf(LoopUnrollPass(forceUnrollBound))))
+    logger.info("  -> unsafe unroll ${if (xcfa.unsafeUnrollUsed) "" else "NOT"} used")
 
     logger.mainStep("Creating event graph...")
-    val eg = XcfaToEventGraph(xcfa).create()
+    val eg = XcfaToEventGraph(xcfa, parseContext).create()
 
     return check(eg) to xcfa.unsafeUnrollUsed
   }
@@ -220,29 +219,6 @@ class XcfaOcChecker(
           }
           solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
         }
-    }
-
-    if (witnessOptimizations) {
-      // this does not really help as-is.
-      eg.wss.forEach { (v, rels) ->
-        if (v.name == SEGMENT_COUNTER) {
-          rels.forEach { rel ->
-            val active = And(rel.from.guardExpr, rel.to.guardExpr)
-            // we also tried Leq here
-            solver.add(
-              Imply(
-                And(rel.declRef, active),
-                Or(
-                  Eq(rel.from.const.ref, rel.to.const.ref),
-                  Eq(Add(rel.from.const.ref, Int(1)), rel.to.const.ref),
-                ),
-              )
-            )
-            // solver.add(Imply(And(active, Lt(rel.from.const.ref, rel.to.const.ref)), rel.declRef))
-            // abandoned idea: add segment counter-related events only after the first check(), so we get a constrained solver (which we know is fast, if we produced the same witness), and then check() again with the segment counter events.
-          }
-        }
-      }
     }
   }
 
