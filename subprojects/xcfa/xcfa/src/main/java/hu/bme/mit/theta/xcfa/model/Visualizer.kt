@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
-typealias LabelCustomizer = (XcfaEdge) -> String
+typealias LabelCustomizer = (String, XcfaEdge) -> String
 
 fun XCFA.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
   xcfaToDot(name, procedures.map { DottableProcedure(it) }, edgeLabelCustomizer)
@@ -43,6 +43,12 @@ private class DottableProcedure(
   fun toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
     procedure?.toDot(edgeLabelCustomizer) ?: procedureBuilder!!.toDot(edgeLabelCustomizer)
 }
+
+fun proceduresToDot(
+  name: String,
+  procedures: List<XcfaProcedure>,
+  edgeLabelCustomizer: LabelCustomizer? = null,
+): String = xcfaToDot(name, procedures.map { DottableProcedure(it) }, edgeLabelCustomizer)
 
 private fun xcfaToDot(
   name: String,
@@ -74,7 +80,7 @@ private fun xcfaProcedureToDot(
   locs.forEach { builder.appendLine("${it.name}[];") }
   edges.forEach {
     val label = it.getFlatLabels().joinToString("\\n") { l -> l.toString().replace("\n", "\\n") }
-    val customLabel = edgeLabelCustomizer?.invoke(it) ?: ""
+    val customLabel = edgeLabelCustomizer?.invoke(name, it) ?: ""
     builder.appendLine("${it.source.name} -> ${it.target.name} [label=\"$label $customLabel\"];")
   }
   return builder.toString()

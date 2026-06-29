@@ -44,18 +44,20 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
 
-internal class XcfaToEventGraph(private val xcfa: XCFA) {
+internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext: ParseContext) {
 
   init {
     if (xcfa.initProcedures.size > 1) exit("multiple entry points.")
   }
 
   data class EventGraph(
+    val name: String,
     val threads: Set<Thread>,
     val events: Map<VarDecl<*>, Map<Int, List<E>>>,
     val pos: List<R>, // not transitively closed!
@@ -65,7 +67,24 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     val branchingConditions: List<Expr<BoolType>>,
     val memoryDecl: VarDecl<IntType>,
     val memoryGarbage: IndexedConstDecl<IntType>,
-  )
+  ) {
+
+    override fun toString(): String = proceduresToDot(name, threads.map { it.procedure }) { procedureName, edge ->
+      val thread = threads.find { it.procedure.name == procedureName }
+      " [${
+        events.values
+          .flatMap {
+            if (thread != null) {
+              it[thread.pid] ?: listOf()
+            } else {
+              it.flatMap { e -> e.value }
+            }
+          }
+          .filter { e -> e.pid == (thread?.pid ?: e.pid) && e.edge == edge }
+          .joinToString(",") { it.const.name }
+      }]"
+    }
+  }
 
   private val threads = mutableSetOf<Thread>()
   private var indexing = VarIndexingFactory.indexing(0)
@@ -83,9 +102,10 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     memoryDecl.getNewIndexed().also { XcfaEvent.memoryGarbage = it }
 
   fun create(): EventGraph {
-    ThreadProcessor(Thread(procedure = xcfa.initProcedures.first().first), true).process()
+    ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
     addCrossThreadRelations()
     return EventGraph(
+      xcfa.name,
       threads,
       events,
       pos,
@@ -400,7 +420,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
         multipleUsePidVars.add(pidVar)
       }
       val newHistory = thread.startHistory + thread.procedure.name
-      val newThread = Thread(newPid, procedure, guard, pidVar, last.first(), newHistory, lastWrites)
+      val newThread = Thread.of(procedure, parseContext, params, newPid, guard, pidVar, last.first(), newHistory, lastWrites)
       last.first().assignment = Eq(last.first().const.ref, Int(newPid))
       threadLookup[pidVar] = setOf(Pair(guard, newThread))
       ThreadProcessor(newThread).process()
