@@ -58,6 +58,10 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LAST_SEGMENT_PASSED
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LOGICAL_THREAD_ID
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.THREAD_ID_PARAM
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.autoexpl.xcfaNewOperandsAutoExpl
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
@@ -711,10 +715,10 @@ enum class TracegenAbstraction {
  */
 private val WITNESS_VAR_NAMES =
   setOf(
-    ApplyWitnessPass.SEGMENT_COUNTER,
-    ApplyWitnessPass.LAST_SEGMENT_PASSED,
-    ApplyWitnessPass.LOGICAL_THREAD_ID,
-    ApplyWitnessPass.THREAD_ID_PARAM,
+    SEGMENT_COUNTER,
+    LAST_SEGMENT_PASSED,
+    LOGICAL_THREAD_ID,
+    THREAD_ID_PARAM,
   )
 
 enum class InitPrec(
