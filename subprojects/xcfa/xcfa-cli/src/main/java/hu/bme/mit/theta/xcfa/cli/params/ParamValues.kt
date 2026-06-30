@@ -714,12 +714,7 @@ enum class TracegenAbstraction {
  * [InitPrec.WITNESSVARS].
  */
 private val WITNESS_VAR_NAMES =
-  setOf(
-    SEGMENT_COUNTER,
-    LAST_SEGMENT_PASSED,
-    LOGICAL_THREAD_ID,
-    THREAD_ID_PARAM,
-  )
+  setOf(SEGMENT_COUNTER, LAST_SEGMENT_PASSED, LOGICAL_THREAD_ID, THREAD_ID_PARAM)
 
 enum class InitPrec(
   val explPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<ExplPrec>>,

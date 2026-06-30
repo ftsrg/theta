@@ -66,8 +66,7 @@ class XcfaOcCheckerTest {
     )
     val stream = javaClass.getResourceAsStream(program)
     val parseContext = ParseContext()
-    val xcfa =
-      getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
+    val xcfa = getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
 
     val ocChecker =
       XcfaOcChecker(

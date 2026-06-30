@@ -172,7 +172,13 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     }
 
     is StartLabel ->
-      StartLabel(name, params.map { ExprUtils.simplify(it, valuation) }, pidVar, metadata, tempLookup)
+      StartLabel(
+        name,
+        params.map { ExprUtils.simplify(it, valuation) },
+        pidVar,
+        metadata,
+        tempLookup,
+      )
 
     else -> this
   }
