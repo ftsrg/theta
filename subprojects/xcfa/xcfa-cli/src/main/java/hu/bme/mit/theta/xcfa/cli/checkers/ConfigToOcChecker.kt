@@ -28,8 +28,8 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.witnesses.Action
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
-import kotlinx.serialization.builtins.ListSerializer
 import java.io.File
+import kotlinx.serialization.builtins.ListSerializer
 
 fun getOcChecker(
   xcfa: XCFA,

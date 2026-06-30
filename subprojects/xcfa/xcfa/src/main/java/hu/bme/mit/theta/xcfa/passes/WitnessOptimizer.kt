@@ -32,7 +32,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intersect
 import hu.bme.mit.theta.xcfa.utils.simplify
 
-class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) : ProcedurePass {
+class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) :
+  ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val initialValuation = MutableValuation()
@@ -44,31 +45,35 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
 
     val waitlist = mutableMapOf(builder.initLoc to mutableListOf(initialValuation))
     while (waitlist.isNotEmpty()) {
-      val (loc, valuations) = waitlist.firstNotNullOf { (loc, valuations) ->
-        if (valuations.size >= loc.incomingEdges.size) loc to valuations else null
-      }
+      val (loc, valuations) =
+        waitlist.firstNotNullOf { (loc, valuations) ->
+          if (valuations.size >= loc.incomingEdges.size) loc to valuations else null
+        }
       waitlist.remove(loc)
       val mergedValuation = MutableValuation.copyOf(valuations.reduce(::intersect))
 
       loc.outgoingEdges.toList().forEach { edge ->
         val oldLabels = edge.getFlatLabels()
-        val newLabels = oldLabels.flatMap {
-          val simplified = it.simplify(mergedValuation, parseContext)
-          simplifySegmentCounterAssignment(simplified)
-            ?: simplifyStartLabelLogicalThread(simplified)
-            ?: listOf(simplified)
-        }.filter {
-          if (it is StmtLabel) {
-            val stmt = it.stmt
-            if (stmt is AssignStmt<*> && stmt.varDecl.name == SEGMENT_COUNTER) {
-              val expr = stmt.expr
-              if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
-                return@filter false
-              }
+        val newLabels =
+          oldLabels
+            .flatMap {
+              val simplified = it.simplify(mergedValuation, parseContext)
+              simplifySegmentCounterAssignment(simplified)
+                ?: simplifyStartLabelLogicalThread(simplified)
+                ?: listOf(simplified)
             }
-          }
-          true
-        }
+            .filter {
+              if (it is StmtLabel) {
+                val stmt = it.stmt
+                if (stmt is AssignStmt<*> && stmt.varDecl.name == SEGMENT_COUNTER) {
+                  val expr = stmt.expr
+                  if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
+                    return@filter false
+                  }
+                }
+              }
+              true
+            }
         builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
 
         if (newLabels != oldLabels) {
@@ -92,7 +97,10 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
             val cond = expr.cond
             val then = expr.then
             if (cond is EqExpr<*> && then is LitExpr<*>) {
-              return listOf(StmtLabel(AssumeStmt.of(cond)), AssignStmtLabel(stmt.varDecl, then, label.metadata))
+              return listOf(
+                StmtLabel(AssumeStmt.of(cond)),
+                AssignStmtLabel(stmt.varDecl, then, label.metadata),
+              )
             }
           }
         }
@@ -104,20 +112,21 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
   private fun simplifyStartLabelLogicalThread(label: XcfaLabel): List<XcfaLabel>? {
     if (label !is StartLabel) return null
     var assumption: AssumeStmt? = null
-    val newParams = label.params.map {
-      if (it is IteExpr) {
-        val cond = it.cond
-        val then = it.then
-        if (cond is EqExpr<*> && then is LitExpr<*>) {
-          val left = cond.leftOp
-          if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER) {
-            assumption = AssumeStmt.of(cond)
-            return@map then
+    val newParams =
+      label.params.map {
+        if (it is IteExpr) {
+          val cond = it.cond
+          val then = it.then
+          if (cond is EqExpr<*> && then is LitExpr<*>) {
+            val left = cond.leftOp
+            if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER) {
+              assumption = AssumeStmt.of(cond)
+              return@map then
+            }
           }
         }
+        it
       }
-      it
-    }
     if (assumption == null) return null
     return listOf(StmtLabel(assumption), label.copy(params = newParams))
   }

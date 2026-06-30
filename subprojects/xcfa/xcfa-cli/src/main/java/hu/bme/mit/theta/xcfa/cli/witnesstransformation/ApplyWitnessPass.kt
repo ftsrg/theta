@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.c2xcfa.getExpressionFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
@@ -339,7 +340,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
         val labelsOnEdges =
           statementToEdge
-            .filter { (statement, label, _) ->
+            .filter { (statement, label, edge) ->
               if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) {
                 statement.lineNumberStart == loc.line &&
                   (loc.column == null ||
@@ -348,7 +349,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   label is StmtLabel &&
                   label.stmt is HavocStmt<*>
               } else {
-                statement.lineNumberStart == loc.line &&
+                (wp.waypoint.type != WaypointType.ASSUMPTION ||
+                  edge.getCMetaData()?.notStatementStart == false) &&
+                  statement.lineNumberStart == loc.line &&
                   (loc.column == null || statement.colNumberStart + 1 == loc.column)
               }
             }
@@ -449,7 +452,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         }
         flushLabelsIntermediate()
 
-        newLabels.addAll(annots.mapNotNull { if (it.assumption == AssumeStmt.of(True())) null else it.assumption })
+        newLabels.addAll(
+          annots.mapNotNull { if (it.assumption == AssumeStmt.of(True())) null else it.assumption }
+        )
         newLabels.addAll(annots.mapNotNull { it.flagUpdate })
         // Apply the segment-counter advances of this group sequentially, in segment order. When
         // several waypoints fall on the same edge position (e.g. a function_return immediately

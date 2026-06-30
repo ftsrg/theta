@@ -59,7 +59,10 @@ internal class XcfaOcTraceExtractor(
   private val pidLookups: Map<Int, Map<VarDecl<*>, VarDecl<*>>> =
     threads.associate { it.pid to it.procedure.createLookup("T${it.pid}") }
 
-  /** Returns [edge] with its label rewritten to use thread [pid]'s instance-specific local vars. */
+  /**
+   * Returns [this] edge with its label rewritten to use thread [pid]'s instance-specific local
+   * vars.
+   */
   private fun XcfaEdge.renamedFor(pid: Int): XcfaEdge {
     val lookup = pidLookups[pid]
     if (lookup.isNullOrEmpty()) return this
@@ -236,7 +239,10 @@ internal class XcfaOcTraceExtractor(
     var currentState = state
 
     // extend the trace until the target location is reached
-    while (currentState.processes[pid]!!.locs.peek() != to) {
+    while (
+      currentState.processes[pid]!!.locs.peek() != to ||
+        (currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid) != pid
+    ) {
       // finish atomic block first
       val stepPid = currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid
       val edge =

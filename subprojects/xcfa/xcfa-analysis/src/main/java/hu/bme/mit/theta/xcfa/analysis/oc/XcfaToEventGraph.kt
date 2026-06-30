@@ -69,9 +69,10 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     val memoryGarbage: IndexedConstDecl<IntType>,
   ) {
 
-    override fun toString(): String = proceduresToDot(name, threads.map { it.procedure }) { procedureName, edge ->
-      val thread = threads.find { it.procedure.name == procedureName }
-      " [${
+    override fun toString(): String =
+      proceduresToDot(name, threads.map { it.procedure }) { procedureName, edge ->
+        val thread = threads.find { it.procedure.name == procedureName }
+        " [${
         events.values
           .flatMap {
             if (thread != null) {
@@ -83,7 +84,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
           .filter { e -> e.pid == (thread?.pid ?: e.pid) && e.edge == edge }
           .joinToString(",") { it.const.name }
       }]"
-    }
+      }
   }
 
   private val threads = mutableSetOf<Thread>()
@@ -420,7 +421,18 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
         multipleUsePidVars.add(pidVar)
       }
       val newHistory = thread.startHistory + thread.procedure.name
-      val newThread = Thread.of(procedure, parseContext, params, newPid, guard, pidVar, last.first(), newHistory, lastWrites)
+      val newThread =
+        Thread.of(
+          procedure,
+          parseContext,
+          params,
+          newPid,
+          guard,
+          pidVar,
+          last.first(),
+          newHistory,
+          lastWrites,
+        )
       last.first().assignment = Eq(last.first().const.ref, Int(newPid))
       threadLookup[pidVar] = setOf(Pair(guard, newThread))
       ThreadProcessor(newThread).process()
