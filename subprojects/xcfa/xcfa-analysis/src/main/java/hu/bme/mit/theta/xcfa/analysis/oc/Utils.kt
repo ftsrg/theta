@@ -65,7 +65,8 @@ internal data class Violation(
 )
 
 @ConsistentCopyVisibility
-internal data class Thread private constructor(
+internal data class Thread
+private constructor(
   val pid: Int,
   val procedure: XcfaProcedure,
   val guard: Set<Expr<BoolType>> = setOf(),
@@ -95,7 +96,10 @@ internal data class Thread private constructor(
       startHistory: List<String> = listOf(),
       lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
     ): Thread {
-      val passManager = ProcedurePassManager(listOf(WitnessOptimizer(params, parseContext), AtomicReadsOneWritePass()))
+      val passManager =
+        ProcedurePassManager(
+          listOf(WitnessOptimizer(params, parseContext), AtomicReadsOneWritePass())
+        )
       val p = procedure.optimizeFurther(passManager, "${procedure.name}[$pid]", pid.toString())
       return Thread(pid, p, guard, pidVar, startEvent, startHistory, lastWrites)
     }
