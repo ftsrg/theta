@@ -71,7 +71,7 @@ class XcfaOcCheckerTest {
     val ocChecker =
       XcfaOcChecker(
         xcfa = xcfa,
-        property = property.verifiedProperty,
+        property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
         smtSolver = "Z3:4.13",

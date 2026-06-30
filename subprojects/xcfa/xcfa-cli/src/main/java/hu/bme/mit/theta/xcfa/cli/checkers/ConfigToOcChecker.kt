@@ -47,7 +47,7 @@ fun getOcChecker(
   val ocChecker =
     XcfaOcChecker(
       xcfa = xcfa,
-      property = config.inputConfig.property.verifiedProperty,
+      property = config.inputConfig.property,
       parseContext = parseContext,
       decisionProcedure = ocConfig.decisionProcedure,
       smtSolver = ocConfig.smtSolver,
