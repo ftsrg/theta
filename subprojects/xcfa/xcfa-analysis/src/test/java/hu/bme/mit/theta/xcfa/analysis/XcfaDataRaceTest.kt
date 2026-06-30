@@ -163,7 +163,7 @@ class XcfaDataRaceTest {
     val ocChecker =
       XcfaOcChecker(
         xcfa = xcfa,
-        property = property.verifiedProperty,
+        property = property,
         parseContext = parseContext,
         decisionProcedure = OcDecisionProcedureType.BASIC,
         smtSolver = "Z3:4.13",

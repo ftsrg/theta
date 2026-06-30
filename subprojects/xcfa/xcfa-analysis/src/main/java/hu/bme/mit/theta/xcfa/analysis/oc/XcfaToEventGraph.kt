@@ -25,19 +25,14 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -73,17 +68,17 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       proceduresToDot(name, threads.map { it.procedure }) { procedureName, edge ->
         val thread = threads.find { it.procedure.name == procedureName }
         " [${
-        events.values
-          .flatMap {
-            if (thread != null) {
-              it[thread.pid] ?: listOf()
-            } else {
-              it.flatMap { e -> e.value }
+          events.values
+            .flatMap {
+              if (thread != null) {
+                it[thread.pid] ?: listOf()
+              } else {
+                it.flatMap { e -> e.value }
+              }
             }
-          }
-          .filter { e -> e.pid == (thread?.pid ?: e.pid) && e.edge == edge }
-          .joinToString(",") { it.const.name }
-      }]"
+            .filter { e -> e.pid == (thread?.pid ?: e.pid) && e.edge == edge }
+            .joinToString(",") { it.const.name }
+        }]"
       }
   }
 
@@ -337,6 +332,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
           assumeConsts.forEach { (_, set) ->
             for ((i1, v1) in set.withIndex()) for ((i2, v2) in set.withIndex()) {
               if (i1 == i2) break
+              // the constants in the different branches must be equal
               branchingConditions.add(Eq(v1.ref, v2.ref))
             }
           }
@@ -369,14 +365,16 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
                   lastWrites[v]?.let { it.size == 1 && it.first().assignment == True() } == true
               }
           }
-      if (edge.source.outgoingEdges.size > 1 || !asAssign) {
+
+      val outgoingEdgesSize = edge.source.outgoingEdges.size
+      if (outgoingEdgesSize > 1 || !asAssign) {
         guard = guard + condWithConsts
         if (firstLabel) {
           consts.forEach { (v, c) -> assumeConsts.getOrPut(v) { mutableListOf() }.add(c) }
         }
       }
       this.cond.toEvents(consts, true)
-      if ((edge.source.outgoingEdges.size == 1 || !firstLabel) && asAssign) {
+      if ((outgoingEdgesSize == 1 || !firstLabel) && asAssign) {
         last.first().assignment = condWithConsts
       }
     }

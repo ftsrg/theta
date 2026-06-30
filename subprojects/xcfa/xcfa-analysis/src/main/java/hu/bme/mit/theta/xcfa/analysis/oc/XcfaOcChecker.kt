@@ -30,6 +30,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -42,7 +43,7 @@ import kotlin.time.measureTime
 
 class XcfaOcChecker(
   xcfa: XCFA,
-  property: ErrorDetection,
+  property: XcfaProperty,
   private val parseContext: ParseContext,
   decisionProcedure: OcDecisionProcedureType,
   smtSolver: String,
@@ -60,13 +61,13 @@ class XcfaOcChecker(
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   init {
-    check(property == ErrorDetection.ERROR_LOCATION) {
+    check(property.verifiedProperty == ErrorDetection.ERROR_LOCATION) {
       "Unsupported property by OC checker: $property. Consider using a specification transformation."
     }
   }
 
   val xcfa =
-    xcfa.optimizeFurther(ProcedurePassManager(listOf(AssumeFalseRemovalPass(), MutexToVarPass())))
+    xcfa.optimizeFurther(ProcedurePassManager(listOf(AssumeFalseRemovalPass(property), MutexToVarPass())))
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 

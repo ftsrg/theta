@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -24,6 +25,8 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
 import hu.bme.mit.theta.xcfa.model.*
@@ -31,6 +34,7 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intersect
 import hu.bme.mit.theta.xcfa.utils.simplify
+import java.math.BigInteger
 
 class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) :
   ProcedurePass {
@@ -43,6 +47,8 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       }
     }
 
+    val loopSegmentUpdates = mutableSetOf<BigInteger>()
+
     val waitlist = mutableMapOf(builder.initLoc to mutableListOf(initialValuation))
     while (waitlist.isNotEmpty()) {
       val (loc, valuations) =
@@ -54,27 +60,29 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
 
       loc.outgoingEdges.toList().forEach { edge ->
         val oldLabels = edge.getFlatLabels()
-        val newLabels =
+        val simplifiedLabels =
           oldLabels
             .flatMap {
               val simplified = it.simplify(mergedValuation, parseContext)
-              simplifySegmentCounterAssignment(simplified)
-                ?: simplifyStartLabelLogicalThread(simplified)
+              simplifyStartLabelLogicalThread(simplified)
                 ?: listOf(simplified)
             }
-            .filter {
-              if (it is StmtLabel) {
-                val stmt = it.stmt
-                if (stmt is AssignStmt<*> && stmt.varDecl.name == SEGMENT_COUNTER) {
-                  val expr = stmt.expr
-                  if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
-                    return@filter false
-                  }
-                }
-              }
-              true
-            }
         builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
+
+        val newLabels = simplifySegmentCounterAssignments(simplifiedLabels, loopSegmentUpdates)
+          .filter {
+            if (it is StmtLabel) {
+              if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
+                val expr = it.stmt.expr
+                if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
+                  return@filter false
+                }
+              } else if (it.stmt is AssumeStmt && it.stmt.cond == True()) {
+                return@filter false
+              }
+            }
+            true
+          }
 
         if (newLabels != oldLabels) {
           builder.removeEdge(edge)
@@ -87,7 +95,66 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
     return builder
   }
 
-  private fun simplifySegmentCounterAssignment(label: XcfaLabel): List<XcfaLabel>? {
+  private fun simplifySegmentCounterAssignments(
+    labels: List<XcfaLabel>,
+    alreadyUsedSegmentUpdates: MutableSet<BigInteger>,
+  ): List<XcfaLabel> {
+    var updatedSegment = false
+    val newLabels = mutableListOf<XcfaLabel>()
+    labels.forEach {
+      val segmentUpdate = getCurrentSegmentFromSegmentCounterUpdate(it)
+      if (segmentUpdate != null) {
+        val value = segmentUpdate.then.value
+        if (updatedSegment || value in alreadyUsedSegmentUpdates) {
+          // do not add the segment update
+        } else {
+          alreadyUsedSegmentUpdates.add(value)
+          updatedSegment = true
+          var insertIndex = newLabels.size
+          while (insertIndex > 0) {
+            val l = newLabels[insertIndex - 1]
+            if (l is StmtLabel && l.stmt is AssumeStmt) {
+              insertIndex--
+            }
+          }
+          newLabels.add(insertIndex, StmtLabel(AssumeStmt.of(segmentUpdate.cond)))
+          newLabels.add(AssignStmtLabel(segmentUpdate.varDecl, segmentUpdate.then, segmentUpdate.metadata))
+        }
+      } else {
+        newLabels.add(it)
+      }
+    }
+
+    val valuation = MutableValuation()
+    return newLabels.map {
+      val result = it.simplify(valuation, parseContext)
+      if (result is StmtLabel) {
+        val stmt = result.stmt
+        if (stmt is AssumeStmt) {
+          val cond = stmt.cond
+          if (cond is EqExpr<*>) {
+            val left = cond.leftOp
+            val right = cond.rightOp
+            if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER && right is LitExpr<*>) {
+              valuation.put(left.decl, right)
+            } else if (right is RefExpr<*> && right.decl.name == SEGMENT_COUNTER && left is LitExpr<*>) {
+              valuation.put(right.decl, left)
+            }
+          }
+        }
+      }
+      result
+    }
+  }
+
+  private data class SegmentUpdate(
+    val varDecl: VarDecl<*>,
+    val cond: EqExpr<*>,
+    val then: IntLitExpr,
+    val metadata: MetaData,
+  )
+
+  private fun getCurrentSegmentFromSegmentCounterUpdate(label: XcfaLabel): SegmentUpdate? {
     if (label is StmtLabel) {
       val stmt = label.stmt
       if (stmt is AssignStmt<*>) {
@@ -96,11 +163,8 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           if (expr is IteExpr<*>) {
             val cond = expr.cond
             val then = expr.then
-            if (cond is EqExpr<*> && then is LitExpr<*>) {
-              return listOf(
-                StmtLabel(AssumeStmt.of(cond)),
-                AssignStmtLabel(stmt.varDecl, then, label.metadata),
-              )
+            if (cond is EqExpr<*> && then is IntLitExpr) {
+              return SegmentUpdate(stmt.varDecl, cond, then, label.metadata)
             }
           }
         }
