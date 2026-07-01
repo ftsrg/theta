@@ -19,11 +19,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.model.AtomicBeginLabel
-import hu.bme.mit.theta.xcfa.model.AtomicEndLabel
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /** Removes assume(false) statements and any consequently unreachable edges and locations. */
@@ -68,16 +64,18 @@ class AssumeFalseRemovalPass(private val property: XcfaProperty) : ProcedurePass
           if (toRemove) {
             locsToRemoveIfAtomic.add(current)
           }
-          val incomingEdge = current.incomingEdges.first()
-          incomingEdge.getFlatLabels().reversed().forEach { label ->
-            if (label is AtomicBeginLabel) {
-              locsToRemove.addAll(locsToRemoveIfAtomic)
-              continue@loop
-            } else if (label is AtomicEndLabel) {
-              break@loop
+          val incomingEdge = current.incomingEdges.firstOrNull()
+          if (incomingEdge != null) {
+            incomingEdge.getFlatLabels().reversed().forEach { label ->
+              if (label is AtomicBeginLabel) {
+                locsToRemove.addAll(locsToRemoveIfAtomic)
+                continue@loop
+              } else if (label is AtomicEndLabel) {
+                break@loop
+              }
             }
+            waitlist.add(incomingEdge.source to toRemove)
           }
-          waitlist.add(incomingEdge.source to toRemove)
         }
       }
 
