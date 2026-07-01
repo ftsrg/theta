@@ -156,14 +156,15 @@ class XcfaDataRaceTest {
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+    val parseContext = ParseContext()
+    val xcfa = getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
     DataRaceToReachabilityPass.enabled = false
 
     val ocChecker =
       XcfaOcChecker(
         xcfa = xcfa,
-        property = property.verifiedProperty,
+        property = property,
+        parseContext = parseContext,
         decisionProcedure = OcDecisionProcedureType.BASIC,
         smtSolver = "Z3:4.13",
         logger = NullLogger.getInstance(),

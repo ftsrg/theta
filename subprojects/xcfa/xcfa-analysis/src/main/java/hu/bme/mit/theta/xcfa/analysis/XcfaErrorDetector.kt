@@ -27,9 +27,9 @@ private typealias S = XcfaState<out PtrState<out ExprState>>
 
 fun interface XcfaErrorDetector : Predicate<S> {
 
-  fun exprTraceCheckerWrapper(
-    exprTraceChecker: ExprTraceChecker<Refutation>
-  ): ExprTraceChecker<Refutation> = exprTraceChecker
+  fun <T : Refutation> exprTraceCheckerWrapper(
+    exprTraceChecker: ExprTraceChecker<T>
+  ): ExprTraceChecker<T> = exprTraceChecker
 }
 
 fun getXcfaErrorDetector(errorDetection: ErrorDetection): XcfaErrorDetector =

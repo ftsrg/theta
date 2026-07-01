@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,55 +30,57 @@ data class CMetaData(
   val sourceText: String?,
   val astNodes: List<CStatement>,
   val functionName: String?,
+  val notStatementStart: Boolean = false,
 ) : MetaData() {
 
   // AST nodes must be in order of combination!
-  override fun combine(other: MetaData): MetaData {
-    if (other is CMetaData) {
-      return CMetaData(
-        lineNumberStart =
-          min(
-              lineNumberStart ?: other.lineNumberStart ?: -1,
-              other.lineNumberStart ?: lineNumberStart ?: -1,
-            )
-            .takeIf { it > 0 } ?: 0,
-        colNumberStart =
-          min(
-              colNumberStart ?: other.colNumberStart ?: -1,
-              other.colNumberStart ?: colNumberStart ?: -1,
-            )
-            .takeIf { it > 0 } ?: 0,
-        offsetStart =
-          min(offsetStart ?: other.offsetStart ?: -1, other.offsetStart ?: offsetStart ?: -1)
-            .takeIf { it > 0 } ?: 0,
-        lineNumberStop =
-          max(
-              lineNumberStop ?: other.lineNumberStop ?: -1,
-              other.lineNumberStop ?: lineNumberStop ?: -1,
-            )
-            .takeIf { it > 0 } ?: 0,
-        colNumberStop =
-          max(
-              colNumberStop ?: other.colNumberStop ?: -1,
-              other.colNumberStop ?: colNumberStop ?: -1,
-            )
-            .takeIf { it > 0 } ?: 0,
-        offsetEnd =
-          max(offsetEnd ?: other.offsetEnd ?: -1, other.offsetEnd ?: offsetEnd ?: -1).takeIf {
-            it > 0
-          } ?: 0,
-        sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
-        astNodes = astNodes + other.astNodes,
-        functionName = functionName ?: other.functionName,
-      )
-    } else if (other is EmptyMetaData) {
-      return this
-    } else {
-      error(
-        "Cannot combine metadata of different types or different function names: $this vs $other"
-      )
+  override fun combine(other: MetaData): MetaData =
+    when (other) {
+      is CMetaData ->
+        CMetaData(
+          lineNumberStart =
+            min(
+                lineNumberStart ?: other.lineNumberStart ?: -1,
+                other.lineNumberStart ?: lineNumberStart ?: -1,
+              )
+              .takeIf { it > 0 } ?: 0,
+          colNumberStart =
+            min(
+                colNumberStart ?: other.colNumberStart ?: -1,
+                other.colNumberStart ?: colNumberStart ?: -1,
+              )
+              .takeIf { it > 0 } ?: 0,
+          offsetStart =
+            min(offsetStart ?: other.offsetStart ?: -1, other.offsetStart ?: offsetStart ?: -1)
+              .takeIf { it > 0 } ?: 0,
+          lineNumberStop =
+            max(
+                lineNumberStop ?: other.lineNumberStop ?: -1,
+                other.lineNumberStop ?: lineNumberStop ?: -1,
+              )
+              .takeIf { it > 0 } ?: 0,
+          colNumberStop =
+            max(
+                colNumberStop ?: other.colNumberStop ?: -1,
+                other.colNumberStop ?: colNumberStop ?: -1,
+              )
+              .takeIf { it > 0 } ?: 0,
+          offsetEnd =
+            max(offsetEnd ?: other.offsetEnd ?: -1, other.offsetEnd ?: offsetEnd ?: -1).takeIf {
+              it > 0
+            } ?: 0,
+          sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
+          astNodes = astNodes + other.astNodes,
+          functionName = functionName ?: other.functionName,
+        )
+
+      is EmptyMetaData -> this
+
+      else ->
+        error(
+          "Cannot combine metadata of different types or different function names: $this vs $other"
+        )
     }
-  }
 
   override fun isSubstantial(): Boolean {
     if (astNodes.isEmpty()) {
@@ -96,30 +98,17 @@ data class CMetaData(
     if (colNumberStart < 0 || colNumberStop < 0) {
       return false
     }
+    if (notStatementStart) {
+      return false
+    }
     return true
   }
+
+  val asExportableCMetadata: CMetaData? = if (notStatementStart) null else this
 }
 
-fun XcfaLabel.getCMetaData(): CMetaData? {
-  return if (this.metadata is CMetaData) {
-    this.metadata as CMetaData
-  } else {
-    null
-  }
-}
+fun XcfaLabel.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
 
-fun XcfaLocation.getCMetaData(): CMetaData? {
-  return if (this.metadata is CMetaData) {
-    this.metadata as CMetaData
-  } else {
-    null
-  }
-}
+fun XcfaLocation.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
 
-fun XcfaEdge.getCMetaData(): CMetaData? {
-  return if (this.metadata is CMetaData) {
-    this.metadata as CMetaData
-  } else {
-    null
-  }
-}
+fun XcfaEdge.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata

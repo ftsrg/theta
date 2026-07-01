@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,23 +46,21 @@ interface XcfaWitnessWriter {
       when (property.inputProperty) {
         ErrorDetection.ERROR_LOCATION,
         ErrorDetection.OVERFLOW ->
-          if (parseContext.multiThreading) {
-            safetyResult.getWitnessWriter(YamlWitnessWriter(), GraphmlWitnessWriter())
-          } else {
-            YamlWitnessWriter()
-            // not supported witness for Arrays, Floats, and Heap is not detected
-          }
+          // multi-threaded violation witnesses use the format 2.2 concurrency extension
+          // (thread_id, multi-follow segments)
+          YamlWitnessWriter()
+        // not supported witness for Arrays, Floats, and Heap is not detected
 
         ErrorDetection.MEMSAFETY ->
           if (parseContext.multiThreading) {
-            safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
+            safetyResult.getWitnessWriter(null, YamlWitnessWriter())
           } else {
             safetyResult.getWitnessWriter(null, YamlWitnessWriter())
           }
 
-        ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
+        ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
-        ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, GraphmlWitnessWriter())
+        ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
         ErrorDetection.TERMINATION -> YamlWitnessWriter()
 

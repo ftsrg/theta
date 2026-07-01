@@ -17,45 +17,64 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
+fun XcfaProcedure.deepCopy(
+  passManager: ProcedurePassManager,
+  unsafeUnrollUsed: Boolean = false,
+  identifier: String = "",
+): XcfaProcedureBuilder {
+  val newLocs = locs.associateWith { it.copy(name = "${it.name}_$identifier") }
+  return XcfaProcedureBuilder(
+      name = name,
+      manager = passManager,
+      params = params.toMutableList(),
+      vars = vars.toMutableSet(),
+      locs = locs.map { newLocs[it]!! }.toMutableSet(),
+      edges =
+        edges
+          .map {
+            val source = newLocs[it.source]!!
+            val target = newLocs[it.target]!!
+            val edge = it.withSource(source).withTarget(target)
+            source.outgoingEdges.add(edge)
+            target.incomingEdges.add(edge)
+            edge
+          }
+          .toMutableSet(),
+      metaData = mutableMapOf(),
+      unsafeUnrollUsed = unsafeUnrollUsed,
+      prop = prop,
+    )
+    .also { proc ->
+      proc.copyMetaLocs(
+        newLocs[initLoc]!!,
+        finalLoc.map { newLocs[it] },
+        errorLoc.map { newLocs[it] },
+      )
+    }
+}
+
 fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
   if (passManager.passes.isEmpty()) return this
-  val deepCopy: XcfaProcedure.() -> XcfaProcedureBuilder = {
-    val newLocs = locs.associateWith { it.copy() }
-    XcfaProcedureBuilder(
-        name = name,
-        manager = passManager,
-        params = params.toMutableList(),
-        vars = vars.toMutableSet(),
-        locs = locs.map { newLocs[it]!! }.toMutableSet(),
-        edges =
-          edges
-            .map {
-              val source = newLocs[it.source]!!
-              val target = newLocs[it.target]!!
-              val edge = it.withSource(source).withTarget(target)
-              source.outgoingEdges.add(edge)
-              target.incomingEdges.add(edge)
-              edge
-            }
-            .toMutableSet(),
-        metaData = mutableMapOf(),
-        unsafeUnrollUsed = unsafeUnrollUsed,
-        prop = prop,
-      )
-      .also { proc ->
-        proc.copyMetaLocs(
-          newLocs[initLoc]!!,
-          finalLoc.map { newLocs[it] },
-          errorLoc.map { newLocs[it] },
-        )
-      }
-  }
-
   val builder = XcfaBuilder(name, globalVars.toMutableSet())
-  procedures.forEach { builder.addProcedure(it.deepCopy()) }
+  procedures.forEach { builder.addProcedure(it.deepCopy(passManager, unsafeUnrollUsed)) }
   initProcedures.forEach { (proc, params) ->
-    val initProc = builder.getProcedures().find { it.name == proc.name } ?: proc.deepCopy()
+    val initProc =
+      builder.getProcedures().find { it.name == proc.name }
+        ?: proc.deepCopy(passManager, unsafeUnrollUsed)
     builder.addEntryPoint(initProc, params)
   }
   return builder.build()
+}
+
+fun XcfaProcedure.optimizeFurther(
+  passManager: ProcedurePassManager,
+  name: String? = null,
+  identifier: String = "",
+): XcfaProcedure {
+  val procedureBuilder = deepCopy(passManager, identifier = identifier)
+  if (name != null) procedureBuilder.name = name
+  val xcfaBuilder = XcfaBuilder(parent.name, parent.globalVars.toMutableSet())
+  procedureBuilder.parent = xcfaBuilder
+  procedureBuilder.optimize()
+  return procedureBuilder.build(parent)
 }
