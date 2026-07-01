@@ -115,6 +115,8 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
             val l = newLabels[insertIndex - 1]
             if (l is StmtLabel && l.stmt is AssumeStmt) {
               insertIndex--
+            } else {
+              break
             }
           }
           newLabels.add(insertIndex, StmtLabel(AssumeStmt.of(segmentUpdate.cond)))
