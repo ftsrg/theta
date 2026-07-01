@@ -47,16 +47,14 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       }
     }
 
-    val loopSegmentUpdates = mutableSetOf<BigInteger>()
-
-    val waitlist = mutableMapOf(builder.initLoc to mutableListOf(initialValuation))
+    val waitlist = mutableMapOf(builder.initLoc to mutableListOf(initialValuation to setOf<BigInteger>()))
     while (waitlist.isNotEmpty()) {
       val (loc, valuations) =
         waitlist.firstNotNullOf { (loc, valuations) ->
           if (valuations.size >= loc.incomingEdges.size) loc to valuations else null
         }
       waitlist.remove(loc)
-      val mergedValuation = MutableValuation.copyOf(valuations.reduce(::intersect))
+      val mergedValuation = MutableValuation.copyOf(valuations.map { it.first }.reduce(::intersect))
 
       loc.outgoingEdges.toList().forEach { edge ->
         val oldLabels = edge.getFlatLabels()
@@ -69,6 +67,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
             }
         builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
 
+        val loopSegmentUpdates = valuations.flatMap { it.second }.toMutableSet()
         val newLabels = simplifySegmentCounterAssignments(simplifiedLabels, loopSegmentUpdates)
           .filter {
             if (it is StmtLabel) {
@@ -88,7 +87,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           builder.removeEdge(edge)
           builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
         }
-        waitlist.getOrPut(edge.target) { mutableListOf() }.add(mergedValuation)
+        waitlist.getOrPut(edge.target) { mutableListOf() }.add(mergedValuation to loopSegmentUpdates)
       }
     }
 
