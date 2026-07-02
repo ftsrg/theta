@@ -47,7 +47,8 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       }
     }
 
-    val waitlist = mutableMapOf(builder.initLoc to mutableListOf(initialValuation to setOf<BigInteger>()))
+    val waitlist =
+      mutableMapOf(builder.initLoc to mutableListOf(initialValuation to setOf<BigInteger>()))
     while (waitlist.isNotEmpty()) {
       val (loc, valuations) =
         waitlist.firstNotNullOf { (loc, valuations) ->
@@ -59,17 +60,15 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       loc.outgoingEdges.toList().forEach { edge ->
         val oldLabels = edge.getFlatLabels()
         val simplifiedLabels =
-          oldLabels
-            .flatMap {
-              val simplified = it.simplify(mergedValuation, parseContext)
-              simplifyStartLabelLogicalThread(simplified)
-                ?: listOf(simplified)
-            }
+          oldLabels.flatMap {
+            val simplified = it.simplify(mergedValuation, parseContext)
+            simplifyStartLabelLogicalThread(simplified) ?: listOf(simplified)
+          }
         builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
 
         val loopSegmentUpdates = valuations.flatMap { it.second }.toMutableSet()
-        val newLabels = simplifySegmentCounterAssignments(simplifiedLabels, loopSegmentUpdates)
-          .filter {
+        val newLabels =
+          simplifySegmentCounterAssignments(simplifiedLabels, loopSegmentUpdates).filter {
             if (it is StmtLabel) {
               if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
                 val expr = it.stmt.expr
@@ -87,7 +86,9 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           builder.removeEdge(edge)
           builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
         }
-        waitlist.getOrPut(edge.target) { mutableListOf() }.add(mergedValuation to loopSegmentUpdates)
+        waitlist
+          .getOrPut(edge.target) { mutableListOf() }
+          .add(mergedValuation to loopSegmentUpdates)
       }
     }
 
@@ -119,7 +120,9 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
             }
           }
           newLabels.add(insertIndex, StmtLabel(AssumeStmt.of(segmentUpdate.cond)))
-          newLabels.add(AssignStmtLabel(segmentUpdate.varDecl, segmentUpdate.then, segmentUpdate.metadata))
+          newLabels.add(
+            AssignStmtLabel(segmentUpdate.varDecl, segmentUpdate.then, segmentUpdate.metadata)
+          )
         }
       } else {
         newLabels.add(it)
@@ -138,7 +141,9 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
             val right = cond.rightOp
             if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER && right is LitExpr<*>) {
               valuation.put(left.decl, right)
-            } else if (right is RefExpr<*> && right.decl.name == SEGMENT_COUNTER && left is LitExpr<*>) {
+            } else if (
+              right is RefExpr<*> && right.decl.name == SEGMENT_COUNTER && left is LitExpr<*>
+            ) {
               valuation.put(right.decl, left)
             }
           }

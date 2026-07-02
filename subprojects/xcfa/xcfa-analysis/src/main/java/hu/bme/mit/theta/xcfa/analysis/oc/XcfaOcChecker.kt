@@ -67,7 +67,9 @@ class XcfaOcChecker(
   }
 
   val xcfa =
-    xcfa.optimizeFurther(ProcedurePassManager(listOf(AssumeFalseRemovalPass(property), MutexToVarPass())))
+    xcfa.optimizeFurther(
+      ProcedurePassManager(listOf(AssumeFalseRemovalPass(property), MutexToVarPass()))
+    )
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
