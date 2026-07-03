@@ -155,6 +155,7 @@ afterEvaluate {
 		tasks.register<Zip>(taskName) {
 			group = "distribution"
 			description = "Create $toolName binary archive"
+			isPreserveFileTimestamps = true
 
 			// Dependencies using providers
 			dependsOn(downloadLibsProvider)
