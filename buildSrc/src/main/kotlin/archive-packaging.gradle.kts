@@ -40,6 +40,11 @@ open class ArchivePackagingExtension {
 
 val packagingExt = extensions.create<ArchivePackagingExtension>("archivePackaging")
 
+// TODO simplify when https://github.com/gradle/gradle/issues/13121 is resolved
+interface InjectedExecOps {
+	@get:Inject val execOps: ExecOperations
+}
+
 afterEvaluate {
 	if (packagingExt.variants.isEmpty()) return@afterEvaluate
 
@@ -97,6 +102,8 @@ afterEvaluate {
 			tasks.register(installSolversTaskName) {
 				group = "distribution"
 				description = "Install solvers for $toolName archive"
+
+				val injected = project.objects.newInstance<InjectedExecOps>()
 				
 				// Depend on smtlib-cli jar
 				if (includeSolverCli && hasSolverCli) {
@@ -125,23 +132,17 @@ afterEvaluate {
 					solvers.forEach { solver ->
 						println("Installing solver: $solver into ${solversDir.path}")
 						try {
-							val process = ProcessBuilder(
-								"java", "-jar", smtlibJarFile.absolutePath,
-								"--home", solversDir.absolutePath,
-								"install", solver,
-							).redirectErrorStream(true).start()
-							
-							val output = process.inputStream.bufferedReader().readText()
-							val exitCode = process.waitFor()
-							
-							if (exitCode != 0) {
-								println("Failed to install solver $solver (exit code: $exitCode)")
-								println(output)
+							val result = injected.execOps.javaexec {
+								systemProperties(System.getProperties().mapKeys { it.key.toString() })
+								classpath(smtlibJarFile.absolutePath)
+								args("--home", solversDir.absolutePath, "install", solver)
+								errorOutput = standardOutput
+							}
+
+							if (result.exitValue != 0) {
+								println("Failed to install solver $solver (exit code: ${result.exitValue})")
 							} else {
 								println("Successfully installed: $solver")
-								if (output.isNotBlank()) {
-									println(output)
-								}
 							}
 						} catch (e: Exception) {
 							println("Error installing solver $solver: ${e.message}")
