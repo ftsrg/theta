@@ -134,11 +134,11 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   }
 
   private SvLibMetadata metadata(String sourceName) {
-    return metadata(sourceName, false);
+    return new SvLibMetadata(sourceName);
   }
 
-  private SvLibMetadata metadata(String sourceName, boolean tag) {
-    return new SvLibMetadata(sourceName, tag);
+  private SvLibMetadata tagMetadata(String tag) {
+    return new SvLibMetadata(tag, tag);
   }
 
   private XcfaLocation nextLoc(String sourceName) {
@@ -146,7 +146,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   }
 
   private XcfaLocation nextLoc(String sourceName, boolean tag) {
-    return new XcfaLocation("l" + locCounter++, metadata(sourceName, tag));
+    return new XcfaLocation("l" + locCounter++, tag ? tagMetadata(sourceName) : metadata(sourceName));
   }
 
   @Override
@@ -199,7 +199,6 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
             .visit(
                 ctx.statement(), start);
 
-    applyTaggedCheckTrueProperties(procedure);
     addExitEdges(procedure, exit);
     this.entryProcedure = procedure;
 
@@ -217,7 +216,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
       }
 
       List<SvLibParser.RelationalTermContext> checkTrueTerms =
-          checkTrueByTag.get(metadata.getSourceName());
+          checkTrueByTag.get(metadata.getTag());
       if (checkTrueTerms == null || checkTrueTerms.isEmpty()) {
         continue;
       }
@@ -294,6 +293,16 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   public Void visitVerifyCall(SvLibParser.VerifyCallContext ctx) {
     entryProcedureName = ctx.symbol().getText();
     entryArguments = List.copyOf(ctx.term());
+    return null;
+  }
+
+  @Override
+  public Void visitAnnotateTag(SvLibParser.AnnotateTagContext ctx) {
+    if (entryProcedure != null) {
+      applyTaggedCheckTrueProperties(entryProcedure);
+      checkTrueByTag.clear();
+    }
+
     return null;
   }
 

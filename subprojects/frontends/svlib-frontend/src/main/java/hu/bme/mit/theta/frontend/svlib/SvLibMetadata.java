@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NotNull;
 public class SvLibMetadata extends MetaData {
 
   private final String sourceName;
-  private final boolean tag;
+  private final String tag;
 
   public SvLibMetadata(String sourceName) {
-    this(sourceName, false);
+    this(sourceName, null);
   }
 
-  public SvLibMetadata(String sourceName, boolean tag) {
+  public SvLibMetadata(String sourceName, String tag) {
     this.sourceName = sourceName;
     this.tag = tag;
   }
@@ -20,19 +20,23 @@ public class SvLibMetadata extends MetaData {
   @Override
   @NotNull
   public MetaData combine(@NotNull MetaData other) {
-    return tag || !other.isSubstantial() ? this : other;
+    return isTag() || !other.isSubstantial() ? this : other;
   }
 
   @Override
   public boolean isSubstantial() {
-    return tag;
+    return isTag();
   }
 
   public String getSourceName() {
     return sourceName;
   }
 
-  public boolean isTag() {
+  public String getTag() {
     return tag;
+  }
+
+  public boolean isTag() {
+    return tag != null;
   }
 }

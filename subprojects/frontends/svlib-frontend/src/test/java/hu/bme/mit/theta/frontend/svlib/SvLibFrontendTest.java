@@ -112,7 +112,7 @@ class SvLibFrontendTest {
                 loc ->
                     loc.getMetadata() instanceof SvLibMetadata metadata
                         && metadata.isTag()
-                        && metadata.getSourceName().equals("xto0"))
+                        && metadata.getTag().equals("xto0"))
             .findFirst()
             .orElseThrow();
 
@@ -136,7 +136,7 @@ class SvLibFrontendTest {
                 loc ->
                     loc.getMetadata() instanceof SvLibMetadata metadata
                         && metadata.isTag()
-                        && metadata.getSourceName().equals("loop-body-entry"))
+                        && metadata.getTag().equals("loop-body-entry"))
             .findFirst()
             .orElseThrow();
 
