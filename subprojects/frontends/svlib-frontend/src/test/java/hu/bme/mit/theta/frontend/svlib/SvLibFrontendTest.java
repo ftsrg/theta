@@ -126,6 +126,47 @@ class SvLibFrontendTest {
   }
 
   @Test
+  void loopAnnotateTagCheckTrueRewritesLoopBodyEntry() throws IOException {
+    var xcfa = parseResource("loop-check-true-annotate-tag.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+
+    var taggedLocation =
+        procedure.getLocs().stream()
+            .filter(
+                loc ->
+                    loc.getMetadata() instanceof SvLibMetadata metadata
+                        && metadata.isTag()
+                        && metadata.getSourceName().equals("loop-body-entry"))
+            .findFirst()
+            .orElseThrow();
+
+    assertFalse(taggedLocation.getIncomingEdges().isEmpty());
+    assertEquals(2, taggedLocation.getOutgoingEdges().size());
+    assertTrue(taggedLocation.getOutgoingEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
+
+    var checkPassedLocation =
+        taggedLocation.getOutgoingEdges().stream()
+            .filter(edge -> !edge.getTarget().getError())
+            .map(edge -> edge.getTarget())
+            .findFirst()
+            .orElseThrow();
+
+    assertTrue(
+        checkPassedLocation.getOutgoingEdges().stream()
+            .anyMatch(edge -> edge.getLabel().toString().contains("assign")),
+        "Expected loop body assignment to be moved after the tag-based check-true edge");
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("loop-check-true-annotate-tag.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertFalse(dot.isBlank());
+  }
+
+  @Test
   void translatedIfXcfaCanBeExportedToDot() throws IOException {
     var xcfa = parseResource("if-simple-safe.svlib");
     var dot = toDot(xcfa, null);
