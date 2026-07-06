@@ -60,7 +60,7 @@ runs:
               # These are relative links of the form "(../)*integration-tests/...". Log-file
               # links also contain "integration-tests/" but sit behind a "...logfiles/<rundef>/"
               # prefix, so anchoring on the (../)* climb leaves them (and their zip-local paths) intact.
-              html="${xf%.xml.bz2}.table.html"
+              html="${xf%.xml.bz2}.html"
               [ -f "$html" ] && sed -i -E 's#"((\.\./)*)integration-tests/#"https://github.com/ftsrg/theta/blob/master/integration-tests/#g' "$html" || true
             done
             emoji=":white_check_mark:"
@@ -106,4 +106,4 @@ runs:
 
           ${{ steps.generate.outputs.Message }}
 
-          :package: [Download the results](${{ steps.artifact.outputs.url }}) - extract the zip and open the `*.table.html` files.
+          :package: [Download the results](${{ steps.artifact.outputs.url }}) - extract the zip and open the `*.html` files.
