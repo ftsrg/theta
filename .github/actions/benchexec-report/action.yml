@@ -54,6 +54,14 @@ runs:
               correct=$((correct + ${new_correct:-0}))
               incorrect=$((incorrect + ${new_incorrect:-0}))
               all=$((all + ${new_all:-0}))
+              # Generate one standalone HTML table per result file (uploaded with the artifact)
+              table-generator -q -f html -o . -n "${xf%.xml.bz2}" "$xf" || true
+              # Repoint source-file links under integration-tests/ to the GitHub repo.
+              # These are relative links of the form "(../)*integration-tests/...". Log-file
+              # links also contain "integration-tests/" but sit behind a "...logfiles/<rundef>/"
+              # prefix, so anchoring on the (../)* climb leaves them (and their zip-local paths) intact.
+              html="${xf%.xml.bz2}.table.html"
+              [ -f "$html" ] && sed -i -E 's#"((\.\./)*)integration-tests/#"https://github.com/ftsrg/theta/blob/master/integration-tests/#g' "$html" || true
             done
             emoji=":white_check_mark:"
             [ "$correct" -eq 0 ] && emoji=":question:"
@@ -70,14 +78,32 @@ runs:
       with:
         name: BenchexecResults
         path: artifacts
+    - name: Resolve artifact download link
+      id: artifact
+      if: github.event_name == 'pull_request'
+      shell: bash
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        art_id=$(gh api "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+          --jq '.artifacts[] | select(.name=="BenchexecResults") | .id' 2>/dev/null | head -n1 || true)
+        if [ -n "$art_id" ]; then
+          echo "url=$run_url/artifacts/$art_id" >> "$GITHUB_OUTPUT"
+        else
+          echo "url=$run_url" >> "$GITHUB_OUTPUT"
+        fi
     - name: Comment on PR
       if: github.event_name == 'pull_request'
       uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
       continue-on-error: true # if we are in a fork, this will fail, but we don't care (tables will be missing)
-      with: 
+      with:
         comment_tag: 'diffcheck'
         mode: 'recreate'
         message: |
-          Benchexec test report for a selection of SV-Benchmarks (correct / incorrect / all):
+          Benchexec test report for a selection of benchmarks (correct / incorrect / all):
 
           ${{ steps.generate.outputs.Message }}
+
+          :package: [Download the results](${{ steps.artifact.outputs.url }}) - extract the zip and open the `*.table.html` files.
