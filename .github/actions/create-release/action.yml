@@ -51,9 +51,21 @@ runs:
         path: release/
     - run: mkdir -p upload
       shell: bash
-    - run: for i in $(find jar -name "*-all.jar"); do mv -v "$i" "upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"; done
+    - run: |
+        for i in $(find jar -name "*-all.jar"); do
+          dest="upload/$(basename "${i%-${{steps.value.outputs.version}}-all.jar}.jar")"
+          mv -v "$i" "$dest"
+          echo "$(basename "$dest")|ThetaJars" >> artifact-map.txt
+        done
       shell: bash
-    - run: for i in $(find release -name "*zip"); do echo $i; mv -v "$i" "upload/"; done
+    - run: |
+        for i in $(find release -name "*zip"); do
+          echo "$i"
+          artifact_name=$(basename "$(dirname "$i")")
+          dest="upload/$(basename "$i")"
+          mv -v "$i" "$dest"
+          echo "$(basename "$dest")|$artifact_name" >> artifact-map.txt
+        done
       shell: bash
     - name: List files for release
       id: files
@@ -64,6 +76,29 @@ runs:
         find upload -type f | sort >> $GITHUB_OUTPUT
         echo "" >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
+    - name: Build artifact links for PR comment
+      id: links
+      if: inputs.dry-run == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        artifacts_json=$(gh api "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --paginate)
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "filelist<<$EOF" >> "$GITHUB_OUTPUT"
+        while IFS='|' read -r file artifact; do
+          [ -n "$file" ] || continue
+          art_id=$(echo "$artifacts_json" | jq -r --arg n "$artifact" '.artifacts[] | select(.name==$n) | .id' | head -n1)
+          if [ -n "$art_id" ]; then
+            echo "- [$file]($run_url/artifacts/$art_id) _(from \`$artifact\`)_" >> "$GITHUB_OUTPUT"
+          else
+            echo "- $file" >> "$GITHUB_OUTPUT"
+          fi
+        done < artifact-map.txt
+        echo "" >> "$GITHUB_OUTPUT"
+        echo "$EOF" >> "$GITHUB_OUTPUT"
     - name: Debug release inputs
       shell: bash  
       run: |
@@ -96,6 +131,4 @@ runs:
           ${{steps.value.outputs.message}}
           
           **Files to be uploaded:**
-          ```
-          ${{steps.files.outputs.filelist}}
-          ```
+          ${{steps.links.outputs.filelist}}
