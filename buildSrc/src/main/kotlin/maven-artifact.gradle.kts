@@ -111,12 +111,12 @@ publishing {
 signing {
     // Prefer Gradle properties if provided; fallback to environment variables
     val key = (project.findProperty("signingKey") as String?) ?: System.getenv("PGP_KEY")
-    val pwd = (project.findProperty("signingPassword") as String?) ?: System.getenv("PGP_PWD")
-    if (!key.isNullOrBlank() && !pwd.isNullOrBlank()) {
+    val pwd = (project.findProperty("signingPassword") as String?) ?: System.getenv("PGP_PWD") ?: ""
+    if (!key.isNullOrBlank()) {
         useInMemoryPgpKeys(key, pwd)
         sign(publishing.publications)
     } else {
-        // logger.warn("Signing keys not provided; publications will not be signed.")
+        logger.warn("Signing keys not provided; publications will not be signed.")
     }
 }
 
