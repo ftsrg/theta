@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedLtsChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
@@ -38,7 +39,9 @@ import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtTransFunc
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
+import hu.bme.mit.theta.analysis.unit.*
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
@@ -48,6 +51,7 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
@@ -491,3 +495,94 @@ class ExplPredCombinedXcfaAnalysis(
     coreTransFunc = prod2ExplPredTransFunc,
     coneOfInfluence = coi,
   )
+
+private fun getUnitXcfaPartialOrd(xcfa: XCFA): PartialOrd<XcfaState<PtrState<UnitState>>> {
+  val ptrPartialOrd = UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd()
+  return if (xcfa.isInlined) {
+    getPartialOrder(ptrPartialOrd)
+  } else {
+    getStackPartialOrder(ptrPartialOrd)
+  }
+}
+
+private fun getUnitXcfaInitFunc(
+  xcfa: XCFA
+): (XcfaPrec<PtrPrec<UnitPrec>>) -> List<XcfaState<PtrState<UnitState>>> {
+  val processInitState =
+    xcfa.initProcedures
+      .mapIndexed { i, it ->
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
+        initLocStack.add(it.first.initLoc)
+        Pair(
+          i,
+          XcfaProcessState(
+            initLocStack,
+            prefix = "T$i",
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i", ""))),
+          ),
+        )
+      }
+      .toMap()
+  return { p ->
+    InitFunc<UnitState, UnitPrec> { _ -> listOf(UnitState.getInstance()) }
+      .getPtrInitFunc()
+      .getInitStates(p.p)
+      .map { XcfaState(xcfa, processInitState, it) }
+  }
+}
+
+private fun getUnitXcfaTransFunc(
+  isHavoc: Boolean
+): (XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>) -> List<
+    XcfaState<PtrState<UnitState>>
+  > {
+  val unitTransFunc =
+    TransFunc<UnitState, ExprAction, UnitPrec> { s, _, _ -> listOf(s) }.getPtrTransFunc(isHavoc)
+  return { s, a, p ->
+    val (newSt, newAct) = s.apply(a)
+    unitTransFunc.getSuccStates(s.sGlobal, newAct, p.p).map { newSt.withState(it) }
+  }
+}
+
+class UnitXcfaAnalysis(xcfa: XCFA, isHavoc: Boolean) :
+  XcfaAnalysis<UnitState, PtrPrec<UnitPrec>>(
+    corePartialOrd = getUnitXcfaPartialOrd(xcfa),
+    coreInitFunc = getUnitXcfaInitFunc(xcfa),
+    coreTransFunc = getUnitXcfaTransFunc(isHavoc),
+  )
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
+  val lts = getXcfaLts()
+  return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc)
+}
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
+  val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
+  val target = getXcfaErrorDetector(errorDetection)
+  val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
+  // Mirror the refiner's write-triple accumulation: the last enriched action's nextWriteTriples()
+  // already carries the full accumulated write history up to that point, so we only need the
+  // last entry to seed the next action — identical to how XcfaSingleExprTraceRefiner chains them.
+  val actionEnricher =
+    java.util.function.BiFunction<XcfaAction, List<XcfaAction>, XcfaAction> { action, path ->
+      val last = path.lastOrNull()
+      action.withLastWrites(
+        last?.nextWriteTriples() ?: emptyMap(),
+        last?.let { it.cnts.values.maxOrNull() ?: it.inCnt } ?: 0,
+      )
+    }
+  return BoundedLtsChecker(lts, analysis, target, bound, prec, solver, actionEnricher)
+}

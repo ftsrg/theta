@@ -3,6 +3,7 @@ on:
   push:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:
   workflow_dispatch:
     inputs:
       message:
@@ -17,6 +18,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-release:
+    runs-on: ubuntu-24.04
+    outputs:
+      is-release: ${{ steps.check.outputs.is-release }}
+      message: ${{ steps.check.outputs.message }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Determine if this is a release trigger
+        id: check
+        uses: ./.github/actions/check-release
+        with:
+          workflow-message: ${{ inputs.message }}
+          pr-title: ${{ github.event.pull_request.title }}
+          pr-body: ${{ github.event.pull_request.body }}
+
+
   build:
     runs-on: ubuntu-24.04
     steps:
@@ -172,7 +190,7 @@ jobs:
 
 
   javadoc:
-    needs: build
+    needs: [build, check-release]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
@@ -187,7 +205,7 @@ jobs:
         with:
           arguments: javadoc
       - name: Deploy Javadoc
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        if: needs.check-release.outputs.is-release == 'true'
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
         with:
           branch: gh-pages
@@ -233,7 +251,7 @@ jobs:
 
 
   deploy-release:
-    needs: [create-archives]
+    needs: [create-archives, check-release]
     runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 21
@@ -244,12 +262,12 @@ jobs:
       - name: Create release and deploy JARs
         uses: ./.github/actions/create-release
         with:
-          message: ${{ inputs.message }}
-          dry-run: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master' }}
+          message: ${{ needs.check-release.outputs.message }}
+          dry-run: ${{ needs.check-release.outputs.is-release != 'true' }}
 
   deploy-zenodo:
-    needs: [create-archives]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+    needs: [create-archives, check-release]
+    if: needs.check-release.outputs.is-release == 'true'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
@@ -278,7 +296,7 @@ jobs:
           token: ${{ secrets.zenodo_token }}
 
   deploy-maven:
-    needs: test-linux
+    needs: [test-linux, check-release]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
@@ -289,7 +307,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Publish to Maven Central (Dry Run)
-        if: github.event_name != 'workflow_dispatch' || github.event.inputs.message == '' || github.ref != 'refs/heads/master'
+        if: needs.check-release.outputs.is-release != 'true'
         uses: ./.github/actions/cache-build
         env:
           PGP_KEY: ${{ secrets.PGP_KEY }}
@@ -297,7 +315,7 @@ jobs:
         with:
           arguments: publishToMavenLocal
       - name: Publish to Maven Central
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        if: needs.check-release.outputs.is-release == 'true'
         uses: ./.github/actions/cache-build
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
@@ -350,7 +368,7 @@ jobs:
           push: false
   
   deploy-docker:
-    needs: [test-linux, test-docker]
+    needs: [test-linux, test-docker, check-release]
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
@@ -368,28 +386,28 @@ jobs:
         run: |
           echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
       - name: docker-login
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        if: needs.check-release.outputs.is-release == 'true'
         uses: ./.github/actions/docker-login
         with:
           username: ${{secrets.DOCKER_USERNAME}}
           token: ${{secrets.DOCKER_TOKEN}}
       - name: docker-login-ghcr
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        if: needs.check-release.outputs.is-release == 'true'
         uses: ./.github/actions/docker-login
         with:
           registry: ghcr.io
           username: ${{github.repository_owner}}
           token: ${{secrets.GITHUB_TOKEN}}
-      - name: Build and publish docker file 
+      - name: Build and publish docker file
         uses: ./.github/actions/docker-deploy
         with:
           project: ${{ matrix.dockerprojects }}
           version: ${{ steps.version.outputs.version }}
           user-dockerhub: ftsrg
           user-ghcr: ftsrg
-          push: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}
+          push: ${{ needs.check-release.outputs.is-release == 'true' }}
       - name: Docker Hub Description update
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
+        if: needs.check-release.outputs.is-release == 'true'
         uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -397,6 +415,7 @@ jobs:
           repository: ftsrg/${{ matrix.dockerprojects }}
 
   deploy-docs:
+    needs: [check-release]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
@@ -414,8 +433,8 @@ jobs:
         with:
           arguments: buildDocs
       - name: Deploy docs
+        if: needs.check-release.outputs.is-release == 'true'
         uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.message != '' && github.ref == 'refs/heads/master'
         with:
           branch: gh-pages
           folder: build/doc/wiki
