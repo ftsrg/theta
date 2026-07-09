@@ -20,11 +20,22 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
 
-/** Transforms all procedure calls into havocs. Requires the ProcedureBuilder be `deterministic`. */
+/**
+ * Transforms calls to the `__VERIFIER_nondet*` intrinsics into havocs. Requires the
+ * ProcedureBuilder be `deterministic`.
+ *
+ * Only calls that do NOT resolve to a procedure defined in the XCFA are havoced: a program may
+ * define its own function whose name happens to start with `__VERIFIER_nondet` (SV-COMP's
+ * memory-model benchmarks do), and havocing such a call would silently discard its body -- an
+ * under-approximation that can prove an unsafe program safe.
+ */
 class NondetFunctionPass : ProcedurePass {
+
+  private var definedProcedures: Set<String> = emptySet()
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
+    definedProcedures = builder.parent.getProcedures().map { it.name }.toSet()
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
       if (
@@ -58,6 +69,8 @@ class NondetFunctionPass : ProcedurePass {
   }
 
   private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name.startsWith("__VERIFIER_nondet")
+    return it is InvokeLabel &&
+      it.name.startsWith("__VERIFIER_nondet") &&
+      it.name !in definedProcedures
   }
 }

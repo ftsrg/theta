@@ -52,6 +52,34 @@ class NondetMemoryTest {
   }
 
   @Test
+  fun definedNondetNamedProcedureIsNotHavoced() {
+    // A program may define its own __VERIFIER_nondet*-named function (SV-COMP's memory-model
+    // benchmarks do); havocing it would discard its body and can prove unsafe programs safe.
+    val builder = XcfaBuilder("")
+    builder.procedure("__VERIFIER_nondet_step") {
+      "r" type Int()
+      (init to "L1") { "r".assign("1") }
+    }
+    val ctx =
+      builder.procedure("main") {
+        "x" type Int()
+        (init to "L1") { "__VERIFIER_nondet_step"("x") }
+      }
+    val result =
+      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass()).fold(ctx.builder) {
+        acc,
+        pass ->
+        pass.run(acc)
+      }
+    val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
+    assertTrue(
+      labels.any { it is InvokeLabel },
+      "a call to a defined __VERIFIER_nondet*-named procedure must survive for inlining",
+    )
+    assertTrue(labels.none { it is StmtLabel && it.stmt is HavocStmt<*> })
+  }
+
+  @Test
   fun nondetReturnValueStillHavoced() {
     val result = runPasses {
       "x" type Int()
