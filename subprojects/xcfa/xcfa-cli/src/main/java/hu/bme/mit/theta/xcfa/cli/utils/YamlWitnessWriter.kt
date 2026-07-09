@@ -29,7 +29,6 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
@@ -682,6 +681,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           witnessfile,
         )
       }
+
       ErrorDetection.DATA_RACE -> {
         dataRaceViolationWitnessFromConcreteTrace(
           concrTrace,
@@ -691,6 +691,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           parseContext,
         )
       }
+
       else -> {
         reachabilityViolationWitnessFromConcreteTrace(
           concrTrace,
@@ -701,10 +702,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           witnessfile,
         )
       }
-<<<<<<< HEAD
-=======
-    return witness
-  }
+    }
 }
 
 /**
@@ -885,15 +883,6 @@ private fun targetWaypointAtViolation(
     action = Action.FOLLOW,
     threadId = threadIds.ofPid(pidA),
   )
-}
-
-private fun Expr<BoolType>.replaceVars(parseContext: ParseContext): Expr<BoolType> {
-  val vars =
-    ExprUtils.getVars(this).associateWith {
-      val cname = parseContext.metadata.getMetadataValue(it.name, "cName")
-      if (cname.isPresent) Var(cname.get() as String, it.type) else it
->>>>>>> c5ae70b6bd (tightened waypoint locations)
-    }
 }
 
 private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
