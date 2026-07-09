@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -36,8 +37,14 @@ import java.math.BigInteger
 /**
  * Transforms the library procedure calls with names in supportedFunctions into model elements.
  * Requires the ProcedureBuilder be `deterministic`.
+ *
+ * When a [parseContext] is given, every variable that is used as a handle of a C synchronization
+ * object (a `pthread_mutex_t`/`pthread_cond_t`/`pthread_rwlock_t`) is tagged with the
+ * [SYNC_VAR_METADATA_KEY] metadata flag. Theta models such non-scalar objects as plain integers, so
+ * their valuations (e.g. `m == 0`) are not legal C expressions over the original program; consumers
+ * that emit C-expression constraints (e.g. violation witnesses) use this flag to exclude them.
  */
-class CLibraryFunctionsPass : ProcedurePass {
+class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : ProcedurePass {
 
   private val supportedFunctions =
     setOf(
@@ -64,6 +71,27 @@ class CLibraryFunctionsPass : ProcedurePass {
 
   companion object {
     private var printfCounter = 0
+
+    /**
+     * Metadata flag (keyed by a variable's name, like `cName`) marking a global variable that
+     * encodes a C synchronization object whose source type is non-scalar (e.g. `pthread_mutex_t`,
+     * `pthread_cond_t`, `pthread_rwlock_t`). Witness `c_expression` constraints must not reference
+     * such variables, as their integer encoding (e.g. `m == 0`) is not a valid C expression.
+     */
+    const val SYNC_VAR_METADATA_KEY = "synchronizationObject"
+  }
+
+  /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
+  private fun markSynchronizationObject(handle: VarDecl<*>) {
+    parseContext?.metadata?.create(handle.name, SYNC_VAR_METADATA_KEY, true)
+  }
+
+  /** Best-effort tagging of the synchronization object referenced by parameter [index], if any. */
+  private fun InvokeLabel.markSyncParam(index: Int) {
+    if (index >= params.size) return
+    var param = params[index]
+    while (param is Reference<*, *>) param = param.expr
+    ((param as? RefExpr<*>)?.decl as? VarDecl<*>)?.let(::markSynchronizationObject)
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -89,7 +117,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                       val expr = invokeLabel.params[param]
                       val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
                       builder.addVar(arg)
-                      AssignStmtLabel(arg, expr, metadata)
+                      AssignStmtLabel(arg, expr)
                     }
                     .run { ifEmpty { listOf(NopLabel) } }
                 }
@@ -108,7 +136,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                   val handle = invokeLabel.getParam(1)
                   listOf(
                     JoinLabel(handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
                   )
                 }
 
@@ -123,7 +151,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                   // int(0) to solve StartLabel not handling return params
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
                   )
                 }
 
@@ -159,6 +187,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                 }
 
                 "pthread_cond_wait" -> {
+                  invokeLabel.markSyncParam(1) // the condition variable (non-scalar source type)
                   val handle = invokeLabel.getMutexHandle(builder, 2)
                   // Due to spurious wakeup, it is basically equivalent to unlock+lock
                   listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata))
@@ -167,7 +196,12 @@ class CLibraryFunctionsPass : ProcedurePass {
                 "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
                 "pthread_cond_signal", // No need for special handling due to spurious wakeup
                 "pthread_mutex_init",
-                "pthread_cond_init" -> listOf(NopLabel)
+                "pthread_cond_init" -> {
+                  invokeLabel.markSyncParam(
+                    1
+                  ) // the mutex/condition object (non-scalar source type)
+                  listOf(NopLabel)
+                }
 
                 "pthread_exit" -> {
                   target = builder.finalLoc.get()
@@ -261,6 +295,7 @@ class CLibraryFunctionsPass : ProcedurePass {
   ): VarDecl<*> {
     val handle = getParam(index)
     checkMutexDecl(handle, builder)
+    markSynchronizationObject(handle)
     return handle
   }
 }

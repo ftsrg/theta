@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -268,6 +268,7 @@ data class BackendConfig<T : SpecBackendConfig>(
             as T
         Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
+        Backend.PATH_ENUMERATION -> PathEnumerationConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
@@ -560,6 +561,27 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--oc-unroll-start"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStart: Int = 2,
+  @Parameter(
+    names = ["--oc-unroll-end"],
+    description = "Upper force loop unrolling bound for OC checker (-1 for no limit)",
+  )
+  var forceUnrollBoundEnd: Int = -1,
+  @Parameter(
+    names = ["--oc-unroll-step"],
+    description = "Step size for force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-witness-optimizations"],
+    description =
+      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
+  )
+  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
@@ -715,3 +737,44 @@ data class DebugConfig(
   )
   var argToFile: Boolean = false,
 ) : Config
+
+data class PathEnumerationConfig(
+  @Parameter(names = ["--path-enumeration-solver"], description = "Path enumeration solver name")
+  var pathEnumerationSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-path-enumeration-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validatePathEnumerationSolver: Boolean = false,
+  @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
+  var maxBound: Int = 0,
+  @Parameter(names = ["--prec"], description = "Precision") var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(names = ["--por-level"], description = "POR dependency level")
+  var porLevel: POR = POR.NOPOR,
+  @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
+  var porRandomSeed: Int = -1,
+  @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
+  var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
+  @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+  var abstractionSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-abstraction-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateAbstractionSolver: Boolean = false,
+  @Parameter(names = ["--domain"], description = "Abstraction domain")
+  var domain: Domain = Domain.UNIT,
+  @Parameter(
+    names = ["--maxenum"],
+    description =
+      "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",
+  )
+  var maxEnum: Int = 1,
+  @Parameter(
+    names = ["--havoc-memory"],
+    description = "HAVOC memory model (do not track pointers in transition function)",
+  )
+  var havocMemory: Boolean = false,
+) : SpecBackendConfig

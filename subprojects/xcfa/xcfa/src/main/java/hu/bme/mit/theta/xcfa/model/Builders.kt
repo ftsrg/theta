@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -116,15 +116,6 @@ constructor(
       this::optimized.isInitialized -> optimized.vars
       this::partlyOptimized.isInitialized -> partlyOptimized.vars
       else -> vars
-    }
-
-  fun VarDecl<*>.isAtomic() =
-    when {
-      this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
-      this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
-        partlyOptimized.vars.contains(this)
-
-      else -> atomicVars.contains(this)
     }
 
   fun getLocs(): Set<XcfaLocation> =
@@ -307,6 +298,9 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     locs.remove(toRemove)
+    if (toRemove.error) {
+      errorLoc = Optional.empty()
+    }
   }
 
   fun removeLocs(pred: (XcfaLocation) -> Boolean) {
@@ -340,4 +334,6 @@ constructor(
   fun setUnsafeUnroll() {
     unsafeUnrollUsed = true
   }
+
+  override fun toString(): String = name
 }

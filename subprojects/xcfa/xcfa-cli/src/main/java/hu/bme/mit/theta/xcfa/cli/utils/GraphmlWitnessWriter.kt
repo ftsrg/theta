@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -28,6 +27,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.wrapExprTraceCheckerWithDataRaceCondition
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.targetToWitness
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -222,6 +222,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
             safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
             cexSolverFactory,
             parseContext,
+            wrapExprTraceCheckerWithDataRaceCondition(property),
           )
 
         val witnessTrace =
@@ -235,12 +236,12 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
           (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>)
             .actions
             .flatMap { it.label.getFlatLabels() }
-            .findLast { it -> it.metadata.isSubstantial() }
+            .findLast { it.metadata.isSubstantial() }
         val metadata = lastLabel?.getCMetaData()
-        val startline: Int? = (metadata as? CMetaData)?.lineNumberStart
-        val endline: Int? = (metadata as? CMetaData)?.lineNumberStop
-        val startoffset: Int? = (metadata as? CMetaData)?.offsetStart
-        val endoffset: Int? = (metadata as? CMetaData)?.offsetEnd
+        val startline: Int? = metadata?.lineNumberStart
+        val endline: Int? = metadata?.lineNumberStop
+        val startoffset: Int? = metadata?.offsetStart
+        val endoffset: Int? = metadata?.offsetEnd
         val witness =
           if (startline != null && endline != null && startoffset != null && endoffset != null) {
             generateTrivialViolationWitness(

@@ -29,7 +29,6 @@ import hu.bme.mit.delta.mdd.LatticeDefinition
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
@@ -60,10 +59,10 @@ class XstsCliPetrinetMdd :
       .flag()
   private val id: String by
     option(help = "ID of the input model. Used for symbolic output").default("")
-  private val iterationStrategy: MddChecker.IterationStrategy by
+  private val iterationStrategy: IterationStrategy by
     option(help = "The state space enumeration algorithm to use")
-      .enum<MddChecker.IterationStrategy>()
-      .default(MddChecker.IterationStrategy.GSAT)
+      .enum<IterationStrategy>()
+      .default(IterationStrategy.GSAT)
   private val dependencyOutput by PetrinetDependencyOutputOptions()
 
   private fun loadOrdering(petriNet: PetriNet): List<Place> =
@@ -97,12 +96,7 @@ class XstsCliPetrinetMdd :
       JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets())
     effectiveOrdering.forEach { variableOrder.createOnTop(MddVariableDescriptor.create(it)) }
     val ssgTimer = Stopwatch.createStarted()
-    val provider: StateSpaceEnumerationProvider =
-      when (iterationStrategy) {
-        MddChecker.IterationStrategy.BFS -> BfsProvider(variableOrder)
-        MddChecker.IterationStrategy.SAT -> SimpleSaturationProvider(variableOrder)
-        MddChecker.IterationStrategy.GSAT -> GeneralizedSaturationProvider(variableOrder)
-      }
+    val provider: StateSpaceEnumerationProvider = iterationStrategy.createProvider(variableOrder)
     val stateSpace =
       provider.compute(
         system.initializer,
@@ -141,17 +135,11 @@ class XstsCliPetrinetMdd :
           unionProvider.hitCount,
         )
         .forEach(writer::cell)
-      if (
-        iterationStrategy in
-          setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-      ) {
+      if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
         listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
       }
       listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
-      if (
-        iterationStrategy in
-          setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-      ) {
+      if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
         val collector: MutableSet<MddNode> = mutableSetOf()
         provider.clear()
         listOf(collector.size).forEach(writer::cell)

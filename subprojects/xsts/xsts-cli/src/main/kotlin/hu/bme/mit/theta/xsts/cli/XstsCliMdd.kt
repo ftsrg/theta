@@ -28,6 +28,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.solver.SolverManager
@@ -49,10 +50,10 @@ class XstsCliMdd :
     option("--dump-ordering", help = "Dump the computed variable ordering to <model>.ordering")
       .flag()
 
-  private val iterationStrategy: MddChecker.IterationStrategy by
+  private val iterationStrategy: IterationStrategy by
     option(help = "The state space enumeration algorithm to use")
-      .enum<MddChecker.IterationStrategy>()
-      .default(MddChecker.IterationStrategy.GSAT)
+      .enum<IterationStrategy>()
+      .default(IterationStrategy.GSAT)
 
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy by
     option(help = "The MDD to expression conversion strategy")

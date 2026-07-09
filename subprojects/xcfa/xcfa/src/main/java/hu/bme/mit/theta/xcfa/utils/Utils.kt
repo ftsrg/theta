@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -125,53 +127,78 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
 }
 
 fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel =
-  if (this is StmtLabel) {
-    val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
-    when (stmt) {
-      is MemoryAssignStmt<*, *, *> -> {
-        simplified as MemoryAssignStmt<*, *, *>
-        if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-          parseContext.metadata.create(
-            simplified.expr,
-            "cType",
-            CComplexType.getType(stmt.expr, parseContext),
-          )
-        if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
-          parseContext.metadata.create(
-            simplified.deref,
-            "cType",
-            CComplexType.getType(stmt.deref, parseContext),
-          )
-        StmtLabel(simplified, metadata = metadata)
-      }
-
-      is AssignStmt<*> -> {
-        simplified as AssignStmt<*>
-        if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-          parseContext.metadata.create(
-            simplified.expr,
-            "cType",
-            CComplexType.getType(stmt.expr, parseContext),
-          )
-        StmtLabel(simplified, metadata = metadata)
-      }
-
-      is AssumeStmt -> {
-        simplified as AssumeStmt
-        if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
-          parseContext.metadata.create(
-            simplified.cond,
-            "cType",
-            CComplexType.getType(stmt.cond, parseContext),
-          )
+  when (this) {
+    is StmtLabel -> {
+      val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
+      when (stmt) {
+        is MemoryAssignStmt<*, *, *> -> {
+          simplified as MemoryAssignStmt<*, *, *>
+          if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+            parseContext.metadata.create(
+              simplified.expr,
+              "cType",
+              CComplexType.getType(stmt.expr, parseContext),
+            )
+          if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
+            parseContext.metadata.create(
+              simplified.deref,
+              "cType",
+              CComplexType.getType(stmt.deref, parseContext),
+            )
+          StmtLabel(simplified, metadata = metadata)
         }
-        parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
-        StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
-      }
 
-      else -> this
+        is AssignStmt<*> -> {
+          simplified as AssignStmt<*>
+          val expr = simplified.expr.withMetadata(parseContext, stmt.expr)
+          AssignStmtLabel(simplified.varDecl, expr, metadata = metadata)
+        }
+
+        is AssumeStmt -> {
+          simplified as AssumeStmt
+          if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
+            parseContext.metadata.create(
+              simplified.cond,
+              "cType",
+              CComplexType.getType(stmt.cond, parseContext),
+            )
+          }
+          parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
+          StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+        }
+
+        else -> this
+      }
     }
-  } else this
+
+    is StartLabel ->
+      StartLabel(
+        name,
+        params.map { ExprUtils.simplify(it, valuation) },
+        pidVar,
+        metadata,
+        tempLookup,
+      )
+
+    else -> this
+  }
+
+private fun <T : Type> Expr<T>.withMetadata(
+  parseContext: ParseContext,
+  metadataSource: Expr<*>,
+): Expr<T> {
+  if (!parseContext.metadata.getMetadataValue(metadataSource, "cType").isPresent) return this
+  val type = CComplexType.getType(metadataSource, parseContext)
+  val thisTypeOpt = parseContext.metadata.getMetadataValue(this, "cType")
+  return if (thisTypeOpt.isPresent && thisTypeOpt.get() != type) {
+    val newExpr = Pos(this)
+    parseContext.metadata.create(newExpr, "cType", type)
+    newExpr as Expr<T>
+  } else {
+    if (!thisTypeOpt.isPresent) parseContext.metadata.create(this, "cType", type)
+    this
+  }
+}
 
 /**
  * Returns the set of edges that are before any thread start in the init procedure or after all

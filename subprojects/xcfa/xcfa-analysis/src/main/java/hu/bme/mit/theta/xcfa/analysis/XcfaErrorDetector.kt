@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,15 +27,17 @@ private typealias S = XcfaState<out PtrState<out ExprState>>
 
 fun interface XcfaErrorDetector : Predicate<S> {
 
-  fun exprTraceCheckerWrapper(
-    exprTraceChecker: ExprTraceChecker<Refutation>
-  ): ExprTraceChecker<Refutation> = exprTraceChecker
+  fun <T : Refutation> exprTraceCheckerWrapper(
+    exprTraceChecker: ExprTraceChecker<T>
+  ): ExprTraceChecker<T> = exprTraceChecker
 }
 
 fun getXcfaErrorDetector(errorDetection: ErrorDetection): XcfaErrorDetector =
   when (errorDetection) { // TODO: when refactoring prop in xcfa, it has to be added here as well?
     NO_ERROR -> XcfaErrorDetector { false }
-    ERROR_LOCATION -> XcfaErrorDetector { s -> s.processes.any { it.value.locs.peek().error } }
+    ERROR_LOCATION,
+    NO_ASSERTION_VIOLATION ->
+      XcfaErrorDetector { s -> s.processes.any { it.value.locs.peek().error } }
     DATA_RACE -> getDataRaceDetector()
     else ->
       error(

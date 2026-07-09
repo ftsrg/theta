@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,10 +41,11 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       UnusedLocRemovalPass(),
       // handling intrinsics
       ErrorLocationPass(property),
+      AssertionToErrorLocationPass(property),
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      CLibraryFunctionsPass(),
+      CLibraryFunctionsPass(parseContext),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
@@ -116,10 +117,11 @@ class NontermValidationPasses(
       UnusedLocRemovalPass(),
       // handling intrinsics
       ErrorLocationPass(property),
+      AssertionToErrorLocationPass(property),
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      CLibraryFunctionsPass(),
+      CLibraryFunctionsPass(parseContext),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(

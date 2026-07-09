@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -99,21 +99,18 @@ class FrontendXcfaBuilder(
   }
 
   private fun getMetadata(source: CStatement): MetaData =
-    if (alreadyHandledStatements.contains(source)) {
-      EmptyMetaData
-    } else {
-      CMetaData(
-        lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
-        lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
-        colNumberStart = source.colNumberStart.takeIf { it != -1 },
-        colNumberStop = source.colNumberStop.takeIf { it != -1 },
-        offsetStart = source.offsetStart.takeIf { it != -1 },
-        offsetEnd = source.offsetEnd.takeIf { it != -1 },
-        sourceText = source.sourceText,
-        astNodes = listOf(source),
-        functionName = source.functionName.takeIf { it != "" },
-      )
-    }
+    CMetaData(
+      lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
+      lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
+      colNumberStart = source.colNumberStart.takeIf { it != -1 },
+      colNumberStop = source.colNumberStop.takeIf { it != -1 },
+      offsetStart = source.offsetStart.takeIf { it != -1 },
+      offsetEnd = source.offsetEnd.takeIf { it != -1 },
+      sourceText = source.sourceText,
+      astNodes = listOf(source),
+      functionName = source.functionName.takeIf { it != "" },
+      notStatementStart = alreadyHandledStatements.contains(source),
+    )
 
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
@@ -622,6 +619,12 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val lastPre =
       buildWithoutPostStatement(guard, ParamPack(builder, innerEndLoc, null, null, returnLoc))
+    // The guard test is re-evaluated on every loop cycle, whereas the `do` statement itself is
+    // entered only once. The waypoint location comes from the label's metadata (see
+    // TraceToWitness),
+    // so the label must carry the body's metadata -- not the whole do-while statement's -- to keep
+    // a
+    // cycled witness waypoint off the `do` keyword (matching CWhile/CFor).
     val assume =
       StmtLabel(
         Stmts.Assume(
@@ -631,7 +634,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(statement),
+        metadata = getMetadata(body),
       )
     xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -644,7 +647,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(statement),
+        metadata = EmptyMetaData,
       )
     xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -696,6 +699,10 @@ class FrontendXcfaBuilder(
     val lastTest =
       if (guard == null) lastInit
       else buildWithoutPostStatement(guard, ParamPack(builder, lastInit!!, null, null, returnLoc))
+    // The guard-branch edges below are re-traversed on every loop cycle, whereas the `for`
+    // statement itself is entered only once. Anchoring them to the body's metadata (as CWhile does)
+    // makes a cycled witness waypoint point at the loop body rather than the `for` keyword.
+    val bodyMetadata = if (body == null) getMetadata(statement) else getMetadata(body)
     val assume =
       StmtLabel(
         Stmts.Assume(
@@ -707,10 +714,10 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(statement),
+        metadata = bodyMetadata,
       )
     check(lastTest != null)
-    xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = assume.metadata)
+    xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = bodyMetadata)
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
@@ -723,9 +730,9 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(statement),
+        metadata = EmptyMetaData,
       )
-    xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = assume1.metadata)
+    xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = bodyMetadata)
     builder.addEdge(xcfaEdge)
     val innerLastGuard =
       if (guard == null) endInit
