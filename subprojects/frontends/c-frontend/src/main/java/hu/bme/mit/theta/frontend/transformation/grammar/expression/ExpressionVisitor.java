@@ -36,8 +36,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -698,12 +700,42 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 type = CComplexType.getType(originalOperand, parseContext);
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
                 else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
-                return dereference(
-                        originalOperand,
-                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
-                        type);
+                // C defines *(p + i) as p[i]. Object sizes are keyed on the base expression, so
+                // the index has to become the dereference offset: folding it into the base makes
+                // every such access read an unallocated object and look out of bounds.
+                Expr<?> base = originalOperand;
+                Expr<?> offset = CComplexType.getUnsignedLong(parseContext).getNullValue();
+                if (stripPos(originalOperand) instanceof AddExpr<?> addExpr) {
+                    final List<Expr<?>> pointerOps = new ArrayList<>();
+                    final List<Expr<?>> indexOps = new ArrayList<>();
+                    for (Expr<?> rawOp : addExpr.getOps()) {
+                        Expr<?> op = stripPos(rawOp);
+                        CComplexType opType = CComplexType.getType(op, parseContext);
+                        if (opType instanceof CPointer || opType instanceof CArray) {
+                            pointerOps.add(op);
+                        } else {
+                            indexOps.add(op);
+                        }
+                    }
+                    if (pointerOps.size() == 1 && !indexOps.isEmpty()) {
+                        base = pointerOps.get(0);
+                        offset = indexOps.size() == 1 ? indexOps.get(0) : Add(indexOps);
+                    }
+                }
+                return dereference(base, offset, type);
         }
         return originalOperand;
+    }
+
+    /**
+     * Removes the identity ("unary plus") casts the frontend wraps around promoted operands, so
+     * that the underlying expression -- and the C type recorded for it -- can be inspected.
+     */
+    private static Expr<?> stripPos(Expr<?> expr) {
+        while (expr instanceof PosExpr<?> pos) {
+            expr = pos.getOp();
+        }
+        return expr;
     }
 
     @SuppressWarnings("unchecked")

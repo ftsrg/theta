@@ -95,6 +95,34 @@ class PtrMemberAccessTest {
   }
 
   @Test
+  fun pointerArithmeticBecomesDereferenceOffset() {
+    // C defines *(p + i) as p[i]. Folding the index into the base makes the
+    // pointer-validity model look up an unallocated object -> spurious valid-deref.
+    val derefs =
+      derefsOf(
+        """
+        int main() {
+          static int a[10];
+          int *p = a;
+          int i = 2;
+          if (*(p + i) != 0) { return 1; }
+          return 0;
+        }
+        """
+          .trimIndent()
+      )
+    assertTrue(derefs.isNotEmpty(), "the program must produce dereferences")
+    assertTrue(
+      derefs.any { d -> d.offset.toString() != "0" },
+      "*(p + i) must dereference the base at a non-zero offset, not fold i into the base",
+    )
+    assertFalse(
+      derefs.any { d -> d.array.toString().contains("+") },
+      "the dereferenced base must not contain pointer arithmetic",
+    )
+  }
+
+  @Test
   fun sizeofStructTagIsNotZero() {
     // `sizeof(struct S)` used to fall through every lookup and warn
     // "sizeof got unknown type, using a literal 0 instead", so malloc(0).
