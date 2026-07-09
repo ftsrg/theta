@@ -95,6 +95,10 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     } ?: emptyList(),
     listOf(DataRaceToReachabilityPass(property)),
     listOf(OverflowDetectionPass(property, parseContext)),
+    // Havoc any remaining call to an unresolved external function (all passes that consume
+    // specific calls -- free, malloc, pthread_*, nondet -- have already run), so it does not
+    // crash the analysis later with "No such method ...".
+    listOf(UnresolvedInvokeToHavocPass(uniqueWarningLogger)),
     listOf(
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),
