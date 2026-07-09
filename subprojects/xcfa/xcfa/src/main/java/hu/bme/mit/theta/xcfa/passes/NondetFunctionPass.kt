@@ -35,6 +35,10 @@ class NondetFunctionPass : ProcedurePass {
         edges.forEach {
           if (predicate((it.label as SequenceLabel).labels[0])) {
             val invokeLabel = it.label.labels[0] as InvokeLabel
+            check(invokeLabel.params.size == 1) {
+              "Nondet function ${invokeLabel.name} with arguments is not supported: " +
+                "havocing the return value would silently drop the effect on the arguments."
+            }
             val havoc = HavocStmt.of((invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
             builder.addEdge(
               XcfaEdge(
