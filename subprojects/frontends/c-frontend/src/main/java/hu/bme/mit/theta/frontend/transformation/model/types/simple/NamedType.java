@@ -18,7 +18,6 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -108,7 +107,8 @@ public class NamedType extends CSimpleType {
             default:
                 {
                     uniqueWarningLogger.write(
-                            Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
+                            Level.INFO,
+                            "WARNING: Unknown simple type " + namedType.replace("%", "%%") + "\n");
                     type = new CVoid(this, parseContext);
                     break;
                 }
@@ -195,9 +195,12 @@ public class NamedType extends CSimpleType {
             // deliberately not breaking, let it throw an error (must be above default branch)
             default:
                 if (!cSimpleType.isTypedef()) {
-                    throw new UnsupportedFrontendElementException(
-                            "namedType should be short or long or type specifier, instead it is "
-                                    + namedType);
+                    uniqueWarningLogger.write(
+                            Level.INFO,
+                            "WARNING: namedType should be short or long or type specifier, instead"
+                                    + " it is "
+                                    + namedType.replace("%", "%%")
+                                    + "; ignoring it\n");
                 }
                 break;
         }
