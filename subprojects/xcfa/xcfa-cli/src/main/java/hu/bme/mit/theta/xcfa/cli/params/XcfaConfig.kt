@@ -184,6 +184,14 @@ data class CFrontendConfig(
     description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
   )
   var cir2cDir: File = File("./cir2c"),
+  @Parameter(
+    names = ["--enable-signed-wraparound"],
+    description =
+      "Model signed integer overflow as modular (two's complement) wraparound. Signed overflow is" +
+        " undefined behavior before C23, so this is off by default; it is incompatible with" +
+        " overflow detection (no-overflow).",
+  )
+  var enableSignedWraparound: Boolean = false,
 ) : SpecFrontendConfig
 
 /** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */

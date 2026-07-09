@@ -29,6 +29,7 @@ public class ParseContext {
     private ArchitectureType architecture = ArchitectureType.LP64;
     private Boolean multiThreading = false;
     private ArithmeticType arithmetic = ArithmeticType.efficient;
+    private Boolean signedWraparound = false;
 
     public ParseContext() {
         metadata = new FrontendMetadata();
@@ -41,13 +42,15 @@ public class ParseContext {
             final Set<ArithmeticTrait> arithmeticTraits,
             final ArchitectureType architecture,
             final Boolean multiThreading,
-            final ArithmeticType arithmetic) {
+            final ArithmeticType arithmetic,
+            final Boolean signedWraparound) {
         this.metadata = metadata;
         this.cStmtCounter = cStmtCounter;
         this.arithmeticTraits = arithmeticTraits;
         this.architecture = architecture;
         this.multiThreading = multiThreading;
         this.arithmetic = arithmetic;
+        this.signedWraparound = signedWraparound;
     }
 
     public FrontendMetadata getMetadata() {
@@ -84,6 +87,14 @@ public class ParseContext {
 
     public void setArithmetic(ArithmeticType arithmetic) {
         this.arithmetic = arithmetic;
+    }
+
+    public Boolean getSignedWraparound() {
+        return signedWraparound;
+    }
+
+    public void setSignedWraparound(Boolean signedWraparound) {
+        this.signedWraparound = signedWraparound;
     }
 
     public CStmtCounter getCStmtCounter() {

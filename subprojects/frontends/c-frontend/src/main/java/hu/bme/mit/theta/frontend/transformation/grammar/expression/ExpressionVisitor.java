@@ -843,8 +843,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     && (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus))
                 type = signedLongLong;
             else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (!isUnsigned
-                    && (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus))
+            else if (!isUnsigned && (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus))
                 type = signedLong;
             else if (isUnsigned) type = unsignedInt;
             else type = signedInt;

@@ -65,15 +65,23 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         return null;
     }
 
-    @Override
-    public Expr<?> visit(Fitsall type, Expr<?> param) {
-        if (true) {
+    private Expr<?> signedCast(String widthName, Expr<?> param) {
+        if (!parseContext.getSignedWraparound()) {
+            // signed overflow is undefined behavior before C23; without
+            // --enable-signed-wraparound the value is kept as-is.
             return Pos(param);
         }
-        int width = parseContext.getArchitecture().getBitWidth("fitsall");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
+        int width = parseContext.getArchitecture().getBitWidth(widthName);
+        BigInteger halfMod = BigInteger.TWO.pow(width - 1);
         BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        // two's complement wraparound: ((param + 2^(w-1)) mod 2^w) - 2^(w-1)
+        return Sub(Mod(Add(param, Int(halfMod)), Int(upperLimit)), Int(halfMod));
+    }
+
+    @Override
+    public Expr<?> visit(Fitsall type, Expr<?> param) {
+        // Fitsall is Theta's internal fits-everything integer type, it never wraps.
+        return Pos(param);
     }
 
     @Override
@@ -82,13 +90,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
-            return Pos(param);
-        }
-        int width = parseContext.getArchitecture().getBitWidth("short");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
-        BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        return signedCast("short", param);
     }
 
     @Override
@@ -104,13 +106,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
-            return Pos(param);
-        }
-        int width = parseContext.getArchitecture().getBitWidth("__int128");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
-        BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        return signedCast("__int128", param);
     }
 
     @Override
@@ -126,13 +122,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
-            return Pos(param);
-        }
-        int width = parseContext.getArchitecture().getBitWidth("longlong");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
-        BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        return signedCast("longlong", param);
     }
 
     @Override
@@ -155,13 +145,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
-            return Pos(param);
-        }
-        int width = parseContext.getArchitecture().getBitWidth("long");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
-        BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        return signedCast("long", param);
     }
 
     @Override
@@ -170,13 +154,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
-            return Pos(param);
-        }
-        int width = parseContext.getArchitecture().getBitWidth("int");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
-        BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        return signedCast("int", param);
     }
 
     @Override
@@ -192,13 +170,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (sameSizeExpr != null) {
             return sameSizeExpr;
         }
-        if (true) {
-            return Pos(param);
-        }
-        int width = parseContext.getArchitecture().getBitWidth("char");
-        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
-        BigInteger upperLimit = BigInteger.TWO.pow(width);
-        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+        return signedCast("char", param);
     }
 
     @Override

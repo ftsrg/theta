@@ -168,6 +168,11 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
         OcDecisionProcedureType.PROPAGATOR &&
       (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:new"
   }
+  rule("NoSignedWraparoundWithOverflowCheck") {
+    // Modeling signed overflow as wraparound makes overflow detection vacuous.
+    (config.frontendConfig.specConfig as? CFrontendConfig)?.enableSignedWraparound == true &&
+      config.inputConfig.property.inputProperty == ErrorDetection.OVERFLOW
+  }
   rule("SensibleOutputOptions", false) {
     config.outputConfig.enabled == NONE &&
       (config.outputConfig.xcfaOutputConfig.enabled ||
@@ -205,7 +210,7 @@ private fun frontend(
   val stopwatch = Stopwatch.createStarted()
 
   val input = config.inputConfig.input!!
-  logger.info("Parsing the input $input as ${config.frontendConfig.inputType}")
+  logger.info("%s", "Parsing the input $input as ${config.frontendConfig.inputType}")
 
   val parseContext = ParseContext()
 
@@ -214,6 +219,7 @@ private fun frontend(
     cConfig as CFrontendConfig
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
+    parseContext.signedWraparound = cConfig.enableSignedWraparound
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
@@ -236,12 +242,14 @@ private fun frontend(
   }
 
   logger.benchmark(
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)"
+    "%s",
+    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)",
   )
 
   logger.benchmark("ParsingResult Success")
   logger.benchmark(
-    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}"
+    "%s",
+    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}",
   )
 
   return Triple(xcfa, mcm, parseContext)
@@ -293,7 +301,13 @@ private fun backend(
         val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
 
         logger.info(
-          "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}"
+          "%s",
+          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
+        )
+
+        logger.info(
+          "%s",
+          "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}",
         )
 
         val result =
@@ -306,7 +320,7 @@ private fun backend(
                   (xcfa?.unsafeUnrollUsed ?: false) &&
                   !config.outputConfig.acceptUnreliableSafe -> {
                   // cannot report safe if force unroll was used
-                  logger.benchmark("Analysis result: $result")
+                  logger.benchmark("%s", "Analysis result: $result")
                   logger.benchmark("Incomplete loop unroll used: safe result is unreliable.")
                   if (config.outputConfig.acceptUnreliableSafe)
                     result // for comparison with BMC tools
@@ -321,7 +335,7 @@ private fun backend(
                         result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
                       )
                     } catch (e: UnknownResultException) {
-                      logger.result("Property couldn't be determined: ${e.message}")
+                      logger.result("%s", "Property couldn't be determined: ${e.message}")
                       return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                     }
                   if (!portfolioRun) {
@@ -334,12 +348,12 @@ private fun backend(
               }
             }
 
-        logger.info("Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
+        logger.info("%s", "Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
         result
       }
     }
   if (!portfolioRun) {
-    logger.result(result.toString())
+    logger.result("%s", result.toString())
   }
   return result
 }
@@ -362,9 +376,10 @@ private fun tracegenBackend(
       checker.check(XcfaPrec(PtrPrec(ExplPrec.of(xcfa!!.collectVars()), emptySet())))
     }
   logger.info(
+    "%s",
     "Backend finished (in ${
       stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n"
+    } ms)\n",
   )
 
   return result

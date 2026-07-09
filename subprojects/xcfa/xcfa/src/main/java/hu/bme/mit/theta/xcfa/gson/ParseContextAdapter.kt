@@ -43,6 +43,7 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
     writer.name("architecture").value(value.architecture.name)
     writer.name("arithmetic").value(value.arithmetic.name)
     writer.name("multiThreading").value(value.multiThreading)
+    writer.name("signedWraparound").value(value.signedWraparound)
 
     writer.name("cStmtCounter")
     gson.toJson(gson.toJsonTree(value.cStmtCounter), writer)
@@ -62,6 +63,7 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
     var architecture: ArchitectureConfig.ArchitectureType? = null
     var multiThreading: Boolean? = null
     var arithmetic: ArchitectureConfig.ArithmeticType? = null
+    var signedWraparound: Boolean = false
 
     reader.beginObject()
     while (reader.hasNext()) {
@@ -92,6 +94,10 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
           multiThreading = reader.nextBoolean()
         }
 
+        "signedWraparound" -> {
+          signedWraparound = reader.nextBoolean()
+        }
+
         "arithmetic" -> {
           val arithmeticName = reader.nextString()
           arithmetic = ArchitectureConfig.ArithmeticType.valueOf(arithmeticName)
@@ -111,6 +117,7 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
       architecture,
       multiThreading,
       arithmetic,
+      signedWraparound,
     )
   }
 
