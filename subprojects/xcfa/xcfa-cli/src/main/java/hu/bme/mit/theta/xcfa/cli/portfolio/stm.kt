@@ -67,8 +67,8 @@ class ConfigNode(
 ) : Node(name) {
 
   override fun execute(logger: Logger): Pair<Any, Any> {
-    logger.result("Current configuration: $name")
-    logger.benchmark("Current configuration: $config")
+    logger.result("%s", "Current configuration: $name")
+    logger.benchmark("%s", "Current configuration: $config")
     return Pair(Pair(name, config), check(config))
   }
 
@@ -155,16 +155,17 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
       try {
         return currentNode.execute(logger)
       } catch (e: Throwable) {
-        logger.benchmark("Caught exception: $e")
+        logger.benchmark("%s", "Caught exception: $e")
         val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
         if (edge != null) {
-          logger.benchmark("Handling exception as ${edge.trigger}")
+          logger.benchmark("%s", "Handling exception as ${edge.trigger}")
           currentNode = edge.target
         } else {
           logger.benchmark(
+            "%s",
             "Could not handle trigger $e (Available triggers: ${
                         currentNode.outEdges.map { it.trigger }.toList()
-                    })"
+                    })",
           )
           throw e
         }

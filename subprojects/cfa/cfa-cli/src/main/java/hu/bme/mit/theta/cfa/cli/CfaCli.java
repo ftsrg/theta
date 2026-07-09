@@ -518,7 +518,7 @@ public class CfaCli {
 
     private void printResult(
             final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
-        logger.result(status.toString());
+        logger.result("%s", status.toString());
         final CegarStatistics stats =
                 (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {

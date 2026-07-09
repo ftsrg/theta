@@ -60,6 +60,7 @@ internal fun postTraceGenerationLogging(
   if (forceEnabledOutput && parseContext != null) {
     logger.write(
       Logger.Level.MAINSTEP,
+      "%s",
       "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
     )
     val modelName = config.inputConfig.input!!.name
@@ -94,16 +95,18 @@ internal fun postTraceGenerationLogging(
 
         logger.write(
           Logger.Level.RESULT,
+          "%s",
           "Concrete trace exported to ${concreteTraceFile}, ${yamlWitnessFile} and ${concreteDotFile}\n",
         )
         concreteTraces++
       } catch (e: IllegalArgumentException) {
-        logger.write(Logger.Level.SUBSTEP, e.toString())
+        logger.write(Logger.Level.SUBSTEP, "%s", e.toString())
         logger.write(Logger.Level.SUBSTEP, "\nContinuing concretization with next trace...\n")
       }
     }
     logger.write(
       Logger.Level.RESULT,
+      "%s",
       "\nSuccessfully generated ${concreteTraces-1} concrete traces.\n",
     )
   }

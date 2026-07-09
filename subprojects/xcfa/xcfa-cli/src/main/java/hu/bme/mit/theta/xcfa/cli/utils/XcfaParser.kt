@@ -118,7 +118,7 @@ fun getXcfa(
     if (config.debugConfig.stacktrace) e.printStackTrace()
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
-    logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
+    logger.write(Logger.Level.RESULT, "%s", "Frontend failed! ($location, $e)\n")
     exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
 
@@ -175,25 +175,25 @@ private fun parseC(
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
               val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             is YamlScalar -> {
               val inputFile = Path(input.parent).resolve(files.content).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             else -> {
-              logger.info("Unexpected yml content: $files")
+              logger.info("%s", "Unexpected yml content: $files")
               input
             }
           }
         } else {
-          logger.info("Unexpected yml content: $parsedYaml")
+          logger.info("%s", "Unexpected yml content: $parsedYaml")
           input
         }
       } catch (ex: Exception) {
-        logger.info("Could not parse YAML data: ${ex.message}")
+        logger.info("%s", "Could not parse YAML data: ${ex.message}")
         input
       }
     } else {
@@ -245,7 +245,7 @@ private fun parseC(
         throw e
       }
     }
-  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
+  logger.benchmark("%s", "Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 
@@ -308,7 +308,7 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
-  logger.write(Logger.Level.VERBOSE, xcfa.toDot())
+  logger.write(Logger.Level.VERBOSE, "%s", xcfa.toDot())
   return xcfa
 }
 
