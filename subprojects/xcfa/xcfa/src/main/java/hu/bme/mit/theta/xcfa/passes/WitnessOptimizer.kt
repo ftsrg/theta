@@ -36,6 +36,16 @@ import hu.bme.mit.theta.xcfa.utils.intersect
 import hu.bme.mit.theta.xcfa.utils.simplify
 import java.math.BigInteger
 
+/**
+ * Optimizes witness-specific XCFA instrumentation after witness parsing.
+ *
+ * The pass propagates literal input parameters through the procedure, keeps only values that agree
+ * on all incoming edges at joins, and simplifies edge labels with the resulting valuation. It also
+ * normalizes witness segment-counter updates by turning guarded counter assignments into explicit
+ * assumptions followed by concrete assignments, removing duplicate segment updates and trivial
+ * labels. Thread-start parameters guarded by the segment counter are rewritten similarly, by
+ * extracting the guard as an assumption and passing the selected literal value to the start label.
+ */
 class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) :
   ProcedurePass {
 

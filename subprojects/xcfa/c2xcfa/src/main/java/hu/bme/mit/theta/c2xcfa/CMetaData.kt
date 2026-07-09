@@ -30,6 +30,7 @@ data class CMetaData(
   val sourceText: String?,
   val astNodes: List<CStatement>,
   val functionName: String?,
+  // we only want to export metadata when we encounter the fist label for a statement
   val notStatementStart: Boolean = false,
 ) : MetaData() {
 
