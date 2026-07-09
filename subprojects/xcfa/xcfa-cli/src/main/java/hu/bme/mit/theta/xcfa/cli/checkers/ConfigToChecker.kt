@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ fun getSafetyChecker(
       Backend.IMC,
       Backend.KINDIMC,
       Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config, logger)
+      Backend.PATH_ENUMERATION -> getPathEnumerationChecker(xcfa, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->

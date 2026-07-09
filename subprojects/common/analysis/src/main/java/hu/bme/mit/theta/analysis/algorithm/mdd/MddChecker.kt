@@ -68,12 +68,6 @@ constructor(
   private val solverMeasurements: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
-  enum class IterationStrategy {
-    BFS,
-    SAT,
-    GSAT,
-  }
-
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
@@ -160,18 +154,7 @@ constructor(
       else OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
 
     logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
-    val stateSpaceProvider =
-      when (iterationStrategy) {
-        IterationStrategy.BFS -> {
-          BfsProvider(stateSig.variableOrder)
-        }
-        IterationStrategy.SAT -> {
-          SimpleSaturationProvider(stateSig.variableOrder)
-        }
-        IterationStrategy.GSAT -> {
-          GeneralizedSaturationProvider(stateSig.variableOrder)
-        }
-      }
+    val stateSpaceProvider = iterationStrategy.createProvider(stateSig.variableOrder)
 
     val stateSpace =
       stateSpaceProvider.compute(
@@ -293,12 +276,7 @@ constructor(
     val structNextStates: AbstractNextStateDescriptor =
       OrNextStateDescriptor.create(structDescriptors)
 
-    val rerunProvider =
-      when (iterationStrategy) {
-        IterationStrategy.BFS -> BfsProvider(stateSig.variableOrder)
-        IterationStrategy.SAT -> SimpleSaturationProvider(stateSig.variableOrder)
-        IterationStrategy.GSAT -> GeneralizedSaturationProvider(stateSig.variableOrder)
-      }
+    val rerunProvider = iterationStrategy.createProvider(stateSig.variableOrder)
 
     val rerunSolverCountBefore = solverPool.checkCount
     val rerunTime = Stopwatch.createStarted()
