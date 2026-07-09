@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/31structaccess.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/32localstruct.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }

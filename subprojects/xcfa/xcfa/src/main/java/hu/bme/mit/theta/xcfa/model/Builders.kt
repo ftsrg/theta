@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ constructor(
   var name: String,
   val manager: ProcedurePassManager,
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
-  private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
+  private val varInits: MutableMap<VarDecl<*>, (() -> Expr<*>)?> = LinkedHashMap(),
   private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
@@ -113,16 +113,16 @@ constructor(
 
   fun getVars(): Set<VarDecl<*>> =
     when {
-      this::optimized.isInitialized -> optimized.vars
-      this::partlyOptimized.isInitialized -> partlyOptimized.vars
-      else -> vars
+      this::optimized.isInitialized -> optimized.varInits.keys
+      this::partlyOptimized.isInitialized -> partlyOptimized.varInits.keys
+      else -> varInits.keys
     }
 
   fun VarDecl<*>.isAtomic() =
     when {
       this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
       this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
-        partlyOptimized.vars.contains(this)
+        partlyOptimized.varInits.contains(this)
 
       else -> atomicVars.contains(this)
     }
@@ -176,7 +176,7 @@ constructor(
       XcfaProcedure(
         name = optimized.name,
         params = optimized.params,
-        vars = optimized.vars,
+        varInits = optimized.varInits,
         locs = optimized.locs,
         edges = optimized.edges,
         initLoc = optimized.initLoc,
@@ -193,14 +193,15 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     params.add(Pair(toAdd, dir))
-    vars.add(toAdd)
+    varInits.put(toAdd, null)
   }
 
-  fun addVar(toAdd: VarDecl<*>) {
+  @JvmOverloads
+  fun addVar(toAdd: VarDecl<*>, initializer: (() -> Expr<*>)? = null) {
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    vars.add(toAdd)
+    varInits[toAdd] = initializer
   }
 
   fun setAtomic(v: VarDecl<*>) {
@@ -214,7 +215,7 @@ constructor(
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    vars.remove(toRemove)
+    varInits.remove(toRemove)
   }
 
   @JvmOverloads
@@ -329,9 +330,11 @@ constructor(
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    val savedVars = ArrayList(vars)
-    vars.clear()
-    savedVars.forEach { vars.add(checkNotNull(varLut[it])) }
+    val savedVars = LinkedHashMap(varInits)
+    varInits.clear()
+    savedVars.forEach { (varDecl, initializer) ->
+      varInits[checkNotNull(varLut[varDecl])] = initializer
+    }
     val savedParams = ArrayList(params)
     params.clear()
     savedParams.forEach { params.add(Pair(checkNotNull(varLut[it.first]), it.second)) }

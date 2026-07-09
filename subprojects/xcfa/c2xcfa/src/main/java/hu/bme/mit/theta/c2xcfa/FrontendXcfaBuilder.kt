@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,8 +71,6 @@ class FrontendXcfaBuilder(
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
-  private var ptrCnt = 1 // counts up, uses 3k+1
-    get() = field.also { field += 3 }
 
   /**
    * If a compound statement has pre-statements, the metadata has to appear before the pre-list, but
@@ -212,14 +210,7 @@ class FrontendXcfaBuilder(
       }
       val type = CComplexType.getType(flatVariable.ref, parseContext)
       if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
-        initStmtList.add(
-          StmtLabel(
-            Stmts.Assign(
-              cast(flatVariable, flatVariable.type),
-              cast(type.getValue("$ptrCnt"), flatVariable.type),
-            )
-          )
-        )
+        builder.addVar(flatVariable) { type.getValue("$ptrCnt") }
         if (MemsafetyPass.enabled) {
           val fitsall = Fitsall(null, parseContext)
           val size = type.fields.size

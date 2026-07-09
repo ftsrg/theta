@@ -635,7 +635,7 @@ class PassTests {
       val actualOutputReplacedVars =
         actualOutput.copy(
           params = actualOutput.params.map { it.first.changeVars(varLookUp) to it.second },
-          vars = actualOutput.vars.map { it.changeVars(varLookUp) }.toSet(),
+          varInits = actualOutput.varInits.mapKeys { it.key.changeVars(varLookUp) }.toMap(),
           edges = actualOutput.edges.map { it.withLabel(it.label.changeVars(varLookUp)) }.toSet(),
         )
       println("Expecting output:\t$expectedOutput\n   Actual output:\t$actualOutputReplacedVars")

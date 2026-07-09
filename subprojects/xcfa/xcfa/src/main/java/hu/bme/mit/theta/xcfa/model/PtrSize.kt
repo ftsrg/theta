@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,3 +47,6 @@ fun XcfaBuilder.allocateUnit(parseContext: ParseContext, base: Expr<*>): StmtLab
   val type = Fitsall(null, parseContext)
   return allocate(parseContext, base, type.unitValue)
 }
+
+var ptrCnt: Long = 1 // counts up, uses 3k+1
+  get() = field.also { field += 3 }
