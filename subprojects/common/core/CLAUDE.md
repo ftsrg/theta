@@ -1,4 +1,6 @@
-# common/core — edit-time notes
+# common/core — notes for editing this module
+
+(Not a conceptual overview — that's the README/wiki. This file holds what you need when *changing* code here: invariants, conventions, change recipes.)
 
 Gradle module: `:theta-core` — all modules are named `theta-<dirname>` (see [settings.gradle.kts](../../../settings.gradle.kts)); `:core:...` does **not** resolve.
 

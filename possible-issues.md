@@ -2,9 +2,14 @@
 
 ## common/analysis (Phase A skim, 2026-07-09 — preliminary, fan-out pending)
 
-- [ ] **`build.gradle.kts`** declares `solver-z3-legacy` twice (`implementation(project(...))` and
-  `implementation(project(mapOf("path" to ...)))`); the "generic" analysis module also depends
-  directly on `solver-javasmt`/`z3-legacy`/`graph-solver` — intentional?
+- [ ] **`build.gradle.kts` dependency audit** (grep-verified 2026-07-09):
+  `Deps.delta` (MDD lib) → used by `algorithm/mdd` + visualizers (44 files, justified);
+  `graph-solver` → `algorithm/mcm` (justified); `javasmt` → only
+  `algorithm/oc/UserPropagatorOcChecker.kt` (justified, narrow);
+  **`solver-z3-legacy`: zero imports in `src/main`** and it's declared twice as
+  `implementation` (tests have their own `testImplementation`) — both lines likely removable;
+  **`Deps.hoaf` (jhoafparser): zero uses anywhere in analysis** (only `common/ltl` uses it) —
+  likely removable. Verify with a build after removal.
 - [ ] **`algorithm/arg/ARG.java`** — `public boolean initialized; // Set by ArgBuilder`:
   public mutable field as cross-class protocol.
 

@@ -1,4 +1,6 @@
-# common/analysis — edit-time notes
+# common/analysis — notes for editing this module
+
+(Not a conceptual overview — that's the README/wiki. This file holds what you need when *changing* code here: invariants, conventions, change recipes.)
 
 Gradle module: `:theta-analysis`. Build/tests: `./gradlew :theta-analysis:build` / `:theta-analysis:test` (native solvers in tests need `LD_LIBRARY_PATH=$PROJECT_DIR/lib/`). Formatting/copyright: see root [CLAUDE.md](../../../CLAUDE.md).
 
@@ -12,7 +14,7 @@ Everything is generic over `<S extends State, A extends Action, P extends Prec>`
 
 | Concept | What |
 |---|---|
-| [State](src/main/java/hu/bme/mit/theta/analysis/State.java) | `isBottom()` only |
+| [State](src/main/java/hu/bme/mit/theta/analysis/State.java) | root interface of all abstract states (domain states like `ExplState`/`PredState`, formalism states like `CfaState`, products, …). The only operation *shared by all* is `isBottom()` (is this the contradictory/unreachable state); everything else lives in subinterfaces — most importantly [ExprState](src/main/java/hu/bme/mit/theta/analysis/expr/ExprState.java) (`toExpr()`) |
 | [Action](src/main/java/hu/bme/mit/theta/analysis/Action.java) | empty marker — formalisms define real actions |
 | [Prec](src/main/java/hu/bme/mit/theta/analysis/Prec.java) | abstraction precision; `getUsedVars()` |
 | [Analysis](src/main/java/hu/bme/mit/theta/analysis/Analysis.java) | bundle: `PartialOrd<S>` + `InitFunc<S,P>` + `TransFunc<S,A,P>` |
@@ -33,9 +35,9 @@ Everything is generic over `<S extends State, A extends Action, P extends Prec>`
 
 ## The refinement pipeline ([expr/refinement/](src/main/java/hu/bme/mit/theta/analysis/expr/refinement/))
 
-`ExprTraceChecker<R>` (SeqItp/FwBinItp/BwBinItp/Newton/UCB/UnsatCore variants) checks feasibility of a `Trace<ExprState,ExprAction>` → `ExprTraceStatus`: feasible (with `Valuation`) or infeasible (with `Refutation`, which has `getPruneIndex()`) → [RefutationToPrec](src/main/java/hu/bme/mit/theta/analysis/expr/refinement/RefutationToPrec.java) maps it into the domain's `Prec` (`ItpRefToExplPrec`, `ItpRefToPredPrec`, …) → `JoiningPrecRefiner`/`MultiExprTraceRefiner` implement `Refiner` and prune the ARG.
+`ExprTraceChecker<R>` (SeqItp/FwBinItp/BwBinItp/Newton/UCB/UnsatCore variants) checks feasibility of a `Trace<ExprState,ExprAction>` → `ExprTraceStatus`: feasible (with `Valuation`) or infeasible (with `Refutation`, which has `getPruneIndex()`) → a `PrecRefiner` (e.g. `JoiningPrecRefiner.create(refToPrec)`) maps it into the domain's `Prec` via [RefutationToPrec](src/main/java/hu/bme/mit/theta/analysis/expr/refinement/RefutationToPrec.java) (`ItpRefToExplPrec`, `ItpRefToPredPrec`, …) → `SingleExprTraceRefiner`/`MultiExprTraceRefiner` implement `ArgRefiner`, prune the ARG per `PruneStrategy`.
 
-**Binding a new formalism to CEGAR** (the recurring task): implement `ExprAction` + `LTS`, supply init expr + target predicate, wrap a domain (`expl`/`pred`, or `prod2/` products) in your `Analysis`, then assemble `ArgBuilder.create(lts, analysis, target)` → `BasicArgAbstractor.builder(...)` (projection/waitlist/stopCriterion) → trace checker + `RefutationToPrec` → `JoiningPrecRefiner` → `CegarChecker.create(...)`. Reference consumers: `cfa-analysis`, `xsts-analysis`, `xcfa-analysis`.
+**Binding a new formalism to CEGAR** (the recurring task; verified against [CfaConfigBuilder](../../cfa/cfa-analysis/src/main/java/hu/bme/mit/theta/cfa/analysis/config/CfaConfigBuilder.java)): implement `ExprAction` + `LTS`, supply init expr + target predicate, wrap a domain (`expl`/`pred`, or `prod2/` products) in your `Analysis`, then assemble: `ArgBuilder.create(lts, analysis, target)` → `BasicArgAbstractor.builder(argBuilder)` (projection/waitlist/stopCriterion/logger) → `SingleExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy, logger)` → `ArgCegarChecker.create(abstractor, refiner, logger)`. Reference consumers: `cfa-analysis` (config/), `xsts-analysis`, `xcfa-analysis`.
 
 ## Package map (one-liners; sizes in files)
 
@@ -47,6 +49,6 @@ Everything is generic over `<S extends State, A extends Action, P extends Prec>`
 - [multi/](src/main/java/hu/bme/mit/theta/analysis/multi/) (15) — composed multi-formalism analyses.
 - [waitlist/](src/main/java/hu/bme/mit/theta/analysis/waitlist/), [reachedset/](src/main/java/hu/bme/mit/theta/analysis/reachedset/), [stmtoptimizer/](src/main/java/hu/bme/mit/theta/analysis/stmtoptimizer/), [runtimemonitor/](src/main/java/hu/bme/mit/theta/analysis/runtimemonitor/), [utils/](src/main/java/hu/bme/mit/theta/analysis/utils/) (visualizers), [impl/](src/main/java/hu/bme/mit/theta/analysis/impl/) (prec-mapping adapters) — infrastructure.
 
-## Oddities (build-level)
+## Build-level notes (dependency audit, grep-verified)
 
-`build.gradle.kts` declares direct deps on `solver-javasmt`, `solver-z3-legacy` (twice!), `graph-solver`, and local jars `Deps.delta`/`Deps.hoaf` — the "generic" module is not solver-agnostic in practice.
+Direct deps and why: `Deps.delta` (BME MDD library) → `algorithm/mdd` + MDD visualizers; `graph-solver` → `algorithm/mcm`; `javasmt` → `algorithm/oc/UserPropagatorOcChecker` only (Z3 user propagators).

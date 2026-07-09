@@ -19,11 +19,17 @@ markdown_extensions:
     - pymdownx.snippets:
         auto_append:
             - abbreviations.md
+        base_path:
+            - .        # doc/wiki (mkdocs' working dir) — keeps abbreviations.md resolving
+            - ../..    # repo root — lets pages transclude module docs: --8<-- "subprojects/.../USING.md"
 
 plugins:
     - search
     - awesome-pages:
         collapse_single_pages: true
+
+hooks:
+    - hooks.py
 
 theme: 
     name: material

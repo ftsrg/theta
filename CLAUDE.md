@@ -45,14 +45,8 @@ Two doc systems exist. **Prefer per-subproject `README.md` / `CLAUDE.md` for edi
 - `LBE.md` — Large Block Encoding design note (+ `LBE-images/`), Dec 2021.
 - `copyright-header.txt` — header prepended to every source file.
 
-### `doc/wiki/` — MkDocs-Material site (published wiki)
-Built from `doc/wiki/mkdocs.yml`; sources under `doc/wiki/docs/`. Conceptual, user-facing:
-- `Formalisms/` — one page each: `cfa`, `xcfa`, `sts`, `xsts`, `xta`, `cat`.
-- `Frontends/` — input languages overview.
-- `Algorithms/` — algorithm overview.
-- `index.md` — project intro; `abbreviations.md` — glossary auto-appended to every page.
-
-Last substantially updated Sep 2024; treat as conceptual reference, not current-API truth.
+### `doc/wiki/` — MkDocs-Material site, live but nearly content-empty
+Sources under `doc/wiki/docs/`; built by the `buildDocs` Gradle task (`buildSrc/docs-builder.gradle.kts`) and **deployed by CI on every release** to the `gh-pages` branch under `wiki/` (the same branch hosts `javadoc/` and the publications page). Infrastructure dates to 2022; content was never written — the per-formalism and Frontends pages are "no content" stubs. Has real content only in: `index.md`, `Formalisms/index.md` (short intros), `Algorithms/index.md` (architecture overview, 2026-07). Don't cite stub pages as a source; conceptual truth lives in per-subproject READMEs.
 
 ### Publications
 If a task has a trivial, direct need for a specific paper, the publication list is linked from `README.md`: <https://ftsrg.github.io/theta/publications/> (hosted from this repo's GitHub Pages branch). By default this is not needed — don't reach for it unless the task clearly calls for it.
