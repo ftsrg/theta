@@ -19,8 +19,8 @@ plugins {
 
 nmcpSettings {
     centralPortal {
-        username = System.getenv("OSSRH_TOKEN_USERNAME") ?: System.getenv("OSSRH_USERNAME")
-        password = System.getenv("OSSRH_TOKEN_PASSWORD") ?: System.getenv("OSSRH_PASSWORD")
+        username = System.getenv("OSSRH_USERNAME")
+        password = System.getenv("OSSRH_PASSWORD")
         publishingType = "AUTOMATIC"
     }
 }
