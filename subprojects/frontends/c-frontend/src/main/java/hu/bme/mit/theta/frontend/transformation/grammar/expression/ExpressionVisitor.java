@@ -62,6 +62,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
@@ -580,7 +581,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                             v ->
                                                                     CComplexType.getType(
                                                                             v.getRef(),
-                                                                            parseContext)));
+                                                                            parseContext)))
+                            // struct/union/enum tags (e.g. "sizeof(struct node)") aren't typedef
+                            // names, builtin keywords, or variables, so none of the lookups above
+                            // find them; resolve the tag through the type visitor instead.
+                            .or(
+                                    () -> {
+                                        try {
+                                            CSimpleType simpleType =
+                                                    ctx.typeName()
+                                                            .specifierQualifierList()
+                                                            .accept(typeVisitor);
+                                            return Optional.ofNullable(simpleType)
+                                                    .map(CSimpleType::getActualType);
+                                        } catch (RuntimeException e) {
+                                            return Optional.empty();
+                                        }
+                                    });
 
             if (type.isPresent()) {
                 LitExpr<?> value =
@@ -1036,10 +1053,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                         ((CStruct) structTypeErased).getFieldsAsMap().keySet()));
                 primary =
                         Exprs.Dereference(
-                                Exprs.Dereference(
-                                        cast(primary, primary.getType()),
-                                        type.getNullValue(),
-                                        type.getSmtType()),
+                                cast(primary, primary.getType()),
                                 cast(idxExpr, primary.getType()),
                                 embeddedType.getSmtType());
                 parseContext.getMetadata().create(primary, "cType", embeddedType);

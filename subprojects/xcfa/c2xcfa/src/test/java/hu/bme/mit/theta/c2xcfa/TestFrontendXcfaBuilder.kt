@@ -57,6 +57,7 @@ class TestFrontendXcfaBuilder {
         arrayOf("/24initializer.c"),
         arrayOf("/25enum.c"),
         arrayOf("/27selfrefstruct.c"),
+        arrayOf("/28heapstruct.c"),
       )
     }
   }
