@@ -746,6 +746,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (ret != null) {
                 return ret;
             }
+            // ..then enumeration constants (modeled as plain int values)
+            final Long enumValue =
+                    hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum
+                            .getConstantValue(name);
+            if (enumValue != null) {
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> litExpr = signedInt.getValue(Long.toString(enumValue));
+                parseContext.getMetadata().create(litExpr, "cType", signedInt);
+                return litExpr;
+            }
             throw new RuntimeException("No such variable or macro: " + name);
         } else {
             return variable.getRef();

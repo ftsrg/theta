@@ -21,12 +21,18 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierContext;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierListContext;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.TypeSpecifierPointerContext;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -293,17 +299,62 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public CSimpleType visitEnumDefinition(CParser.EnumDefinitionContext ctx) {
         String id = ctx.Identifier() == null ? null : ctx.Identifier().getText();
         Map<String, Optional<Expr<?>>> fields = new LinkedHashMap<>();
+        // C enumerators take the previous value + 1 (starting at 0) unless given an explicit
+        // constant expression. Register each name -> value so enumerator references resolve later.
+        // If an explicit expression cannot be constant-folded (e.g. it uses shifts, which need
+        // bitvector arithmetic that is unavailable here), the running value becomes unknown and we
+        // stop registering names until the next resolvable explicit value: registering a guessed
+        // value would be unsound (a wrong verdict is worse than an unresolved-name error).
+        long nextValue = 0;
+        boolean valueKnown = true;
         for (CParser.EnumeratorContext enumeratorContext : ctx.enumeratorList().enumerator()) {
-            String value = enumeratorContext.enumerationConstant().getText();
+            String name = enumeratorContext.enumerationConstant().getText();
             CParser.ConstantExpressionContext expressionContext =
                     enumeratorContext.constantExpression();
-            Expr<?> expr =
-                    expressionContext == null
-                            ? null
-                            : null; // expressionContext.accept(null ); // TODO
-            fields.put(value, Optional.ofNullable(expr));
+            if (expressionContext != null) {
+                Long explicit = evaluateEnumConstant(expressionContext);
+                valueKnown = explicit != null;
+                if (valueKnown) {
+                    nextValue = explicit;
+                }
+            }
+            if (valueKnown) {
+                Enum.defineConstant(name, nextValue);
+                nextValue++;
+            }
+            fields.put(name, Optional.empty());
         }
         return Enum(id, fields);
+    }
+
+    /**
+     * Best-effort constant folding of an enumerator's value expression. Returns {@code null} if the
+     * expression cannot be evaluated to an integer constant, in which case the caller falls back to
+     * the implicit "previous + 1" numbering.
+     */
+    private Long evaluateEnumConstant(CParser.ConstantExpressionContext ctx) {
+        try {
+            ExpressionVisitor expressionVisitor =
+                    new ExpressionVisitor(
+                            Set.of(),
+                            parseContext,
+                            null,
+                            new ArrayDeque<>(List.of(Tuple2.of("", Map.of()))),
+                            Map.of(),
+                            typedefVisitor,
+                            this,
+                            uniqueWarningLogger);
+            Expr<?> folded = ExprUtils.simplify(ctx.accept(expressionVisitor));
+            if (folded instanceof IntLitExpr intLit) {
+                return intLit.getValue().longValue();
+            }
+            if (folded instanceof BvLitExpr bvLit) {
+                return BvUtils.neutralBvLitExprToBigInteger(bvLit).longValue();
+            }
+        } catch (Exception e) {
+            // best effort: fall back to implicit numbering
+        }
+        return null;
     }
 
     @Override
