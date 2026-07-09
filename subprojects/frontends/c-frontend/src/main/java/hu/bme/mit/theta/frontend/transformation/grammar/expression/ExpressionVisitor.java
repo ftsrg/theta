@@ -575,11 +575,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                     .map(it -> (CComplexType) it))
                             .or(
                                     () ->
-                                            Optional.ofNullable(
-                                                    CComplexType.getType(
-                                                            getVar(ctx.typeName().getText())
-                                                                    .getRef(),
-                                                            parseContext)));
+                                            Optional.ofNullable(getVar(ctx.typeName().getText()))
+                                                    .map(
+                                                            v ->
+                                                                    CComplexType.getType(
+                                                                            v.getRef(),
+                                                                            parseContext)));
 
             if (type.isPresent()) {
                 LitExpr<?> value =
@@ -754,9 +755,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
         String text = ctx.getText().toLowerCase();
+        boolean isCharLiteral = text.startsWith("'");
         boolean isLong = text.endsWith("l");
         if (isLong) text = text.substring(0, text.length() - 1);
-        if (text.contains(".") || text.contains("e")) {
+        // hex literals use 'p' as exponent marker ('e' is a digit); char literals are never floats
+        boolean isFloatLiteral =
+                !isCharLiteral
+                        && (text.startsWith("0x")
+                                ? text.contains("p") || text.contains(".")
+                                : text.contains(".") || text.contains("e"));
+        if (isFloatLiteral) {
             boolean isFloat = text.endsWith("f");
             if (isFloat) text = text.substring(0, text.length() - 1);
             checkState(!(isFloat && isLong), "A constant shall only have F or L suffix, not both!");
@@ -831,10 +839,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
             CComplexType type;
             if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
-            else if (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus)
+            else if (!isUnsigned
+                    && (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus))
                 type = signedLongLong;
             else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus)
+            else if (!isUnsigned
+                    && (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus))
                 type = signedLong;
             else if (isUnsigned) type = unsignedInt;
             else type = signedInt;
