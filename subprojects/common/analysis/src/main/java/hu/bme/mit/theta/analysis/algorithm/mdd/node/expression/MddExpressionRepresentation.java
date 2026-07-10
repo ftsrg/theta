@@ -212,6 +212,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             Valuation prefix,
             MddNode source,
             IdentityHashMap<MddExpressionRepresentation, Set<MddNode>> done) {
+        while (source != null && source.getRepresentation() instanceof IdentityRepresentation) {
+            // an identity pair in source: this node's expression proves the same pair identical, so
+            // cacheChild has already unwrapped past both levels — the source follows suit
+            source = ((IdentityRepresentation) source.getRepresentation()).getContinuation();
+        }
         if (source != null && source.isTerminal()) {
             return;
         }
