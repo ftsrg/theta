@@ -2,6 +2,21 @@
 
 *Not yet reviewed by developers!*
 
+## xsts-cli (git-history finding, 2026-07-10)
+
+- [ ] **Lost feature: the CEGAR "stuck check" (divergence monitor) in xsts-cli.** Originally added
+  2021-09 (`25239b882`, `ArgCexCheckHandler` + `--no-stuck-check`, on by default). PR **#188**
+  "Progress check partial refactor" (merged 2023-04-25) replaced the old mechanism with
+  `CexMonitor`/`MonitorCheckpoint` but wired it **only into xcfa-cli**; in XstsCli it kept the
+  flags (`--check-arg`, `--no-cex-check`) and left the wiring commented out with
+  `// TODO replace with new classes` — the PR description says "Mitigation is temporary
+  unavailable". That TODO was never picked up; PR **#292** "Xsts cli clikt" (merged 2024-08-09,
+  `33b824064`) silently deleted the commented block and the flags with the old file — **no
+  discussion of the feature in either PR's review thread** (checked 2026-07-10).
+  **Restore**: register a `CexMonitor` on `"CegarChecker.unsafeARG"` in xsts-cli's cegar command
+  (mirror `xcfa-cli/ConfigToCegarChecker.kt:169`), catch `NotSolvableException`, re-add an
+  opt-out flag. Same likely applies to cfa-cli/sts-cli (not verified).
+
 ## common/analysis (full audit 2026-07-09; spot-claims re-verified by grep)
 
 ### Likely genuine bugs / broken paths
