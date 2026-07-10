@@ -758,6 +758,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
+        Expr<?> builtin = handlePassthroughBuiltinCall(ctx);
+        if (builtin != null) {
+            return builtin;
+        }
         Expr<?> primary = ctx.primaryExpression().accept(this);
         if (primary == null) {
             return null;
@@ -766,6 +770,53 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             primary = pfExpr.accept(postfixVisitor).apply(primary);
         }
         return primary;
+    }
+
+    /**
+     * Handles the few GCC builtins that are pure value pass-throughs (or trivially constant) and
+     * have no declaration to resolve, so that they don't fail as "No such variable or macro". These
+     * are compile-time hints with exact, side-effect-free semantics:
+     *
+     * <ul>
+     *   <li>{@code __builtin_expect(exp, c)} and {@code __builtin_expect_with_probability(exp, c,
+     *       p)} evaluate to {@code exp};
+     *   <li>{@code __builtin_constant_p(exp)} evaluates to {@code 0} (a sound, conservative answer:
+     *       "not a compile-time constant").
+     * </ul>
+     *
+     * Returns {@code null} when {@code ctx} is not such a call, so normal handling proceeds.
+     */
+    private Expr<?> handlePassthroughBuiltinCall(CParser.PostfixExpressionContext ctx) {
+        if (!(ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext idCtx)
+                || ctx.pfExprs.isEmpty()) {
+            return null;
+        }
+        CParser.PostfixExpressionBracesContext call = ctx.pfExprs.get(0).postfixExpressionBraces();
+        if (call == null || ctx.pfExprs.size() != 1) {
+            return null;
+        }
+        String name = idCtx.Identifier().getText();
+        List<AssignmentExpressionContext> args =
+                call.argumentExpressionList() == null
+                        ? List.of()
+                        : call.argumentExpressionList().assignmentExpression();
+        switch (name) {
+            case "__builtin_expect", "__builtin_expect_with_probability" -> {
+                if (args.isEmpty()) {
+                    return null;
+                }
+                return args.get(0).accept(this);
+            }
+            case "__builtin_constant_p" -> {
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> zero = signedInt.getNullValue();
+                parseContext.getMetadata().create(zero, "cType", signedInt);
+                return zero;
+            }
+            default -> {
+                return null;
+            }
+        }
     }
 
     @Override
