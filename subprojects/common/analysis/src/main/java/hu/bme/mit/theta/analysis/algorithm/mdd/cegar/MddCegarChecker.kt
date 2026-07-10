@@ -329,6 +329,7 @@ constructor(
           model,
           traceTimeout,
           logger,
+          orders.transDataBoundary,
         )
       } else null
 
