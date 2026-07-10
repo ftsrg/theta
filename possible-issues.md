@@ -1,17 +1,76 @@
 # Possible issues found while documenting Theta modules
 
-## common/analysis (Phase A skim, 2026-07-09 — preliminary, fan-out pending)
+*Not yet reviewed by developers!*
 
-- [ ] **`build.gradle.kts` dependency audit** (grep-verified 2026-07-09):
-  `Deps.delta` (MDD lib) → used by `algorithm/mdd` + visualizers (44 files, justified);
-  `graph-solver` → `algorithm/mcm` (justified); `javasmt` → only
-  `algorithm/oc/UserPropagatorOcChecker.kt` (justified, narrow);
-  **`solver-z3-legacy`: zero imports in `src/main`** and it's declared twice as
-  `implementation` (tests have their own `testImplementation`) — both lines likely removable;
-  **`Deps.hoaf` (jhoafparser): zero uses anywhere in analysis** (only `common/ltl` uses it) —
-  likely removable. Verify with a build after removal.
-- [ ] **`algorithm/arg/ARG.java`** — `public boolean initialized; // Set by ArgBuilder`:
-  public mutable field as cross-class protocol.
+## common/analysis (full audit 2026-07-09; spot-claims re-verified by grep)
+
+### Likely genuine bugs / broken paths
+
+- [ ] **`algorithm/mcm/analysis/FiniteStateChecker.check()` always returns unsafe** — the actual
+  `PartialSolver` invocation is commented out (line ~76); a WiP stub shaped like a working
+  `SafetyChecker`. Zero external consumers, so latent.
+- [ ] **`algorithm/mdd/MddChecker` trace extraction**: on its hard `traceTimeout` (default 10s) it
+  silently returns a degenerate-but-valid `Trace.of([ExplState.top()], [])` — callers get a
+  meaningless counterexample instead of an error.
+- [ ] **`tracegeneration`: `getFullTraces=true` is reachable but broken** — implementation
+  commented out behind `assert !getFullTraces`, yet exposed via
+  `xsts-analysis/XstsTracegenBuilder.setGetFullTraces(true)`.
+- [ ] **`bounded/pipeline/PrimeMEPassValidator`** — the violation `throw` is commented out,
+  downgraded to `System.err.println`: prime-count violations by passes go unenforced.
+- [ ] **`expr/refinement/ItpRefutation`** — "not all-True" guard is `assert`-only; with `-ea` off,
+  an all-True sequence yields `pruneIndex == size` → out-of-bounds in `ArgTrace.node(pruneIndex)`.
+- [ ] **`zone/BasicDbm.hashCode()/equals()`** and **`zone/DBM.isSatisfied(ClockConstr)`** — 
+  `UnsupportedOperationException("TODO")` stubs; safe only while nothing calls them.
+- [ ] **`algorithm/ic3/Ic3Checker.tryBlock`** — author-flagged off-by-one uncertainty in the
+  former-frames optimization: comment `"lehet, hogy 1, vagy 2??"`.
+- [ ] **`algorithm/oc/OcTypes.kt`: `Event.clkSize`** — static mutable counter incremented in every
+  Event ctor; global state across checker instances, corrupts IDL array sizing if not reset.
+- [ ] **`algorithm/asg/ASGTrace`** — lasso-shape invariant checks commented out (with TODO) to
+  accommodate `HackyAsgTrace`; malformed lassos are no longer caught at construction.
+- [ ] **`algorithm/tracegeneration/summary/ExprSummaryFwBinItpChecker.kt`** — declares package
+  `...expr.refinement` while living under `tracegeneration/summary/` (package/dir mismatch).
+
+### Abstraction boundaries
+
+- [ ] **`algorithm/mdd` exposes the external delta library through its public API** — e.g.
+  `MddProof.getMdd()` returns `hu.bme.mit.delta`'s `MddHandle`, and delta types
+  (`MddNode`, `MddVariable`, `IntObjMapView`, …) appear in signatures across the package.
+  Consumers (xcfa-cli, xsts-cli, petrinet-analysis) must import delta directly; a delta
+  upgrade ripples outward. Consider an adapter type if delta is ever swapped/upgraded.
+
+### Unbounded static caches (leaks in long-running/portfolio processes)
+
+- [ ] `algorithm/arg/ArgStructuralEquality` — static hash cache, never evicted.
+- [ ] `utils/MddNodeVisualizer`/`MddHandleVisualizer`/`MddNodeCacheVisualizer` — static
+  `IdentityHashMap` id registries, never cleared.
+
+### Dead / orphaned code candidates (grep-verified zero consumers)
+
+- [ ] `expr/ExprMeetStrategy` enum + `SemanticExprMeetStrategy`/`SyntacticExprMeetStrategy`
+  (enum wired to nothing); `IndexedExprState` family (self-contained, no external consumers);
+  `ExprTraceCombinedChecker`/`ExprTraceStatusMergers` (only their own factories).
+- [ ] `arg/ArgNode.disableCoveringAbility()`/`canCover` — zero callers.
+- [ ] `prod2/prod3/` and `prod2/prod4/` packages — zero consumers, zero tests.
+- [ ] `mdd/fixedpoint/Cursor*Provider`s — implemented but not selectable via `IterationStrategy`;
+  only a petrinet test touches them.
+- [ ] `ptr/`: `PtrPrec.smth` field, `PtrTracking` enum, `TopCollection` — unreferenced.
+- [ ] `algorithm/arg/ArgChecker.isUnwinding` — `UnsupportedOperationException` stub.
+- [ ] `prod2/Prod2ExplPredStrengtheningOperator.strengthen` — computes a `removed` set it never uses.
+
+### Build / structure
+
+- [ ] **`build.gradle.kts` dependency audit**: `Deps.delta` → `algorithm/mdd` (justified);
+  `graph-solver` → `mcm` (justified); `javasmt` → only `UserPropagatorOcChecker.kt` (justified);
+  **`solver-z3-legacy`: zero `src/main` imports, declared twice** — likely removable;
+  **`Deps.hoaf`: unused here** (only `common/ltl` uses jhoafparser) — likely removable.
+- [ ] **Dual source roots**: `multi/` splits between `src/main/java/` and `src/main/kotlin/` —
+  consider consolidating.
+- [ ] `algorithm/arg/ARG.initialized` — public mutable field as cross-class protocol (also set by
+  `ArgAdapterHelper.kt` and `MddExpressionRepresentation`, not just `ArgBuilder`).
+- [ ] `multi/builder/MultiBuilderResult.kt` — documented dead code kept as a Kotlin-plugin-crash
+  workaround next to the real `MultiBuilderResultPOJO.java`; trap for cleanup attempts.
+- [ ] Naming collision: `algorithm/oc/OcTypes.kt` defines `Relation<E>` unrelated to core's
+  CHC `Relation` — grep hazard.
 
 # `common/core` (2026-07-08)
 

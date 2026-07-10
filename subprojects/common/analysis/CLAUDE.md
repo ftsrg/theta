@@ -6,6 +6,8 @@ Gradle module: `:theta-analysis`. Build/tests: `./gradlew :theta-analysis:build`
 
 Conceptual background: [README.md](README.md) (thin) and [doc/CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md) (user-level CEGAR config concepts — read before changing CEGAR behavior).
 
+**Consuming this module from a formalism?** Read [USING.md](USING.md) instead — this file is about editing analysis itself.
+
 Paths below relative to [src/main/java/hu/bme/mit/theta/analysis/](src/main/java/hu/bme/mit/theta/analysis/).
 
 ## Vocabulary — the root interfaces
@@ -39,15 +41,19 @@ Everything is generic over `<S extends State, A extends Action, P extends Prec>`
 
 **Binding a new formalism to CEGAR** (the recurring task; verified against [CfaConfigBuilder](../../cfa/cfa-analysis/src/main/java/hu/bme/mit/theta/cfa/analysis/config/CfaConfigBuilder.java)): implement `ExprAction` + `LTS`, supply init expr + target predicate, wrap a domain (`expl`/`pred`, or `prod2/` products) in your `Analysis`, then assemble: `ArgBuilder.create(lts, analysis, target)` → `BasicArgAbstractor.builder(argBuilder)` (projection/waitlist/stopCriterion/logger) → `SingleExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy, logger)` → `ArgCegarChecker.create(abstractor, refiner, logger)`. Reference consumers: `cfa-analysis` (config/), `xsts-analysis`, `xcfa-analysis`.
 
-## Package map (one-liners; sizes in files)
+## Package map (verified)
 
-- [algorithm/](src/main/java/hu/bme/mit/theta/analysis/algorithm/) (134) — checkers: `arg/` (ARG + builder + debug), `cegar/`, `bounded/` (BMC/k-induction/IMC), `mdd/` (decision-diagram reachability), `ic3/`, `oc/` (ordering-consistency), `loopchecker/` + `asg/` (liveness), `mcm/` (memory models), `chc/`, `tracegeneration/`.
-- [expr/](src/main/java/hu/bme/mit/theta/analysis/expr/) (46) — ExprState/ExprAction + `refinement/` pipeline above.
-- [expl/](src/main/java/hu/bme/mit/theta/analysis/expl/) (14), [pred/](src/main/java/hu/bme/mit/theta/analysis/pred/) (10) — the two base domains.
-- [prod2/](src/main/java/hu/bme/mit/theta/analysis/prod2/) (19), `prod3/`, `prod4/`, [unit/](src/main/java/hu/bme/mit/theta/analysis/unit/) — product/unit domains; [ptr/](src/main/java/hu/bme/mit/theta/analysis/ptr/) — pointer tracking.
-- [zone/](src/main/java/hu/bme/mit/theta/analysis/zone/) (11) — DBM/zone domain (consumes core `clock/`; used by `xta`).
-- [multi/](src/main/java/hu/bme/mit/theta/analysis/multi/) (15) — composed multi-formalism analyses.
-- [waitlist/](src/main/java/hu/bme/mit/theta/analysis/waitlist/), [reachedset/](src/main/java/hu/bme/mit/theta/analysis/reachedset/), [stmtoptimizer/](src/main/java/hu/bme/mit/theta/analysis/stmtoptimizer/), [runtimemonitor/](src/main/java/hu/bme/mit/theta/analysis/runtimemonitor/), [utils/](src/main/java/hu/bme/mit/theta/analysis/utils/) (visualizers), [impl/](src/main/java/hu/bme/mit/theta/analysis/impl/) (prec-mapping adapters) — infrastructure.
+⚠ **Two source roots**: most code is under `src/main/java/` (Java *and* Kotlin mixed), but `multi/` has additional Kotlin files under [src/main/kotlin/](src/main/kotlin/hu/bme/mit/theta/analysis/) — search both when editing `multi`.
+
+- [algorithm/](src/main/java/hu/bme/mit/theta/analysis/algorithm/) (134 files) — all checking algorithms (CEGAR/ARG, BMC/k-ind/IMC, IC3, MDD, CHC, liveness/ASG, oc, mcm, tracegeneration). **Has its own [CLAUDE.md](src/main/java/hu/bme/mit/theta/analysis/algorithm/CLAUDE.md)** — read it before editing there.
+- [expr/](src/main/java/hu/bme/mit/theta/analysis/expr/) (46) — ExprState/ExprAction + the `refinement/` pipeline above. `StmtAction` (abstract) derives `toExpr`/`nextIndexing` from `getStmts()` automatically — the easiest `ExprAction` base for formalisms. Note `ExprState extends InvariantProof`, so every expr-state can serve as a `Proof`.
+- [expl/](src/main/java/hu/bme/mit/theta/analysis/expl/) — explicit-value domain. `ExplState` = partial valuation or bottom singleton; `ExplStmtTransFunc` fast-paths deterministic stmts via `StmtApplier`, falls back to SMT enumeration, and **beyond `maxSuccToEnumerate` returns an approximate (havoc-like) successor rather than failing**.
+- [pred/](src/main/java/hu/bme/mit/theta/analysis/pred/) — predicate domain. `PredAbstractors`: boolean / booleanSplit / cartesian. ⚠ `PredState.isBottom()` is syntactic (`{False()}` only) while `PredOrd` is solver-semantic.
+- [prod2/](src/main/java/hu/bme/mit/theta/analysis/prod2/) — product domain. ⚠ The plain `Prod2Analysis.create(a1,a2)` installs **no joint-satisfiability strengthening** — components can be locally consistent but globally infeasible; use the operator-taking overload (`prod2explpred/` has the real one). `prod3/`/`prod4/` exist but have no consumers.
+- [unit/](src/main/java/hu/bme/mit/theta/analysis/unit/) — trivial singleton domain (location-only tracking). [ptr/](src/main/java/hu/bme/mit/theta/analysis/ptr/) — pointer/memory-write tracking wrapper over an inner analysis (Kotlin, consumed by xcfa).
+- [zone/](src/main/java/hu/bme/mit/theta/analysis/zone/) — DBM zone domain over core `clock/`; index 0 is the implicit zero-clock (ops on it throw); closure (`close()`) is a load-bearing invariant. LU-abstraction lives in `xta-analysis`; this package only provides `BoundFunc` + `isLeq(that, boundFunc)`. Consumed by `xta` only.
+- [multi/](src/main/java/hu/bme/mit/theta/analysis/multi/) — two-formalism product over a shared data state (`MultiAnalysisSide`, `NextSideFunctions`: alternating/nondet). Backbone of LTL checking (system × Büchi) for cfa/xsts via `common/ltl`.
+- [waitlist/](src/main/java/hu/bme/mit/theta/analysis/waitlist/) (FIFO/LIFO/Priority/Random), [reachedset/](src/main/java/hu/bme/mit/theta/analysis/reachedset/) (`Partition` = CEGAR's coverage lookup; `ReachedSet` iface = Impact-only), [stmtoptimizer/](src/main/java/hu/bme/mit/theta/analysis/stmtoptimizer/), [runtimemonitor/](src/main/java/hu/bme/mit/theta/analysis/runtimemonitor/) (`CexMonitor` divergence detection via `MonitorCheckpoint` registry), [utils/](src/main/java/hu/bme/mit/theta/analysis/utils/) (`ProofVisualizer` impls → `common.visualization.Graph`), [impl/](src/main/java/hu/bme/mit/theta/analysis/impl/) (`PrecMappingAnalysis` — present a different Prec type via a mapping function).
 
 ## Build-level notes (dependency audit, grep-verified)
 

@@ -63,6 +63,7 @@ Documented modules follow a two-file convention:
 
 Current pointers:
 - Building/manipulating core exprs, stmts, valuations, or talking to solvers from **any** module: `subprojects/common/core/USING.md`.
+- Binding a formalism to a checking algorithm (CEGAR, BMC/k-ind/IMC, IC3, MDD, CHC, LTL): `subprojects/common/analysis/USING.md`.
 
 ## Running one module's tests
 
