@@ -14,5 +14,10 @@ int main() {
     reach_error();
     abort();
   }
+  double d = 1.0;
+  if (__builtin_isnan(d) || !__builtin_isfinite(d)) {
+    reach_error();
+    abort();
+  }
   return 0;
 }

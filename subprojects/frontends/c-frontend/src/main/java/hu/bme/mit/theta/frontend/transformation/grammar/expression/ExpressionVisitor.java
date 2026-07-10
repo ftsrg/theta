@@ -758,7 +758,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
-        Expr<?> builtin = handlePassthroughBuiltinCall(ctx);
+        Expr<?> builtin = handleBuiltinCall(ctx);
         if (builtin != null) {
             return builtin;
         }
@@ -784,9 +784,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      *       "not a compile-time constant").
      * </ul>
      *
-     * Returns {@code null} when {@code ctx} is not such a call, so normal handling proceeds.
+     * Also aliases the {@code __builtin_}-prefixed floating-point classification builtins that have
+     * no declaration to the plain library names that {@code FpFunctionsToExprsPass} already models
+     * exactly ({@code isnan}, {@code isinf}, {@code isfinite}, {@code isnormal}), by emitting a
+     * call to the plain name.
+     *
+     * <p>Returns {@code null} when {@code ctx} is not such a call, so normal handling proceeds.
      */
-    private Expr<?> handlePassthroughBuiltinCall(CParser.PostfixExpressionContext ctx) {
+    private Expr<?> handleBuiltinCall(CParser.PostfixExpressionContext ctx) {
         if (!(ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext idCtx)
                 || ctx.pfExprs.isEmpty()) {
             return null;
@@ -813,10 +818,41 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(zero, "cType", signedInt);
                 return zero;
             }
+            case "__builtin_isnan" -> {
+                return callModeledLibraryFunction("isnan", args);
+            }
+            case "__builtin_isinf", "__builtin_isinf_sign" -> {
+                return callModeledLibraryFunction("isinf", args);
+            }
+            case "__builtin_isfinite" -> {
+                return callModeledLibraryFunction("isfinite", args);
+            }
+            case "__builtin_isnormal" -> {
+                return callModeledLibraryFunction("isnormal", args);
+            }
             default -> {
                 return null;
             }
         }
+    }
+
+    /**
+     * Emits a call to a library function that a later pass ({@code FpFunctionsToExprsPass}) models,
+     * mirroring the ordinary call-lowering path. Returns {@code null} if calls cannot be built here
+     * (no function visitor), so the caller falls back to normal handling.
+     */
+    private Expr<?> callModeledLibraryFunction(
+            String functionName, List<AssignmentExpressionContext> args) {
+        if (functionVisitor == null) {
+            return null;
+        }
+        List<CStatement> arguments = new ArrayList<>();
+        for (AssignmentExpressionContext arg : args) {
+            arguments.add(arg.accept(functionVisitor));
+        }
+        CCall cCall = new CCall(functionName, arguments, parseContext);
+        preStatements.add(cCall);
+        return cCall.getRet().getRef();
     }
 
     @Override
