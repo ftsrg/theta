@@ -41,7 +41,10 @@ import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 public class MddExpressionTemplate implements MddNode.Template {
@@ -58,6 +61,31 @@ public class MddExpressionTemplate implements MddNode.Template {
     // caches the model, not just satness, per-graph (run-scoped) so it is dropped with the graph instead of living for the whole JVM.
     public static final MddGraph.Key<UnaryOperationCache<Expr<BoolType>, Optional<Valuation>>>
             SAT_CACHE = new MddGraph.Key<>("satCache");
+
+    // simplify outputs are fixed points: remembering them (per graph, by identity) makes the
+    // re-simplify of an expression a caller already simplified O(1) instead of a full traversal
+    private static final MddGraph.Key<Set<Expr<BoolType>>> SIMPLIFIED =
+            new MddGraph.Key<>("simplifiedExprs");
+
+    static Expr<BoolType> simplify(final Expr<BoolType> expr, final MddGraph<?> graph) {
+        final Set<Expr<BoolType>> known =
+                graph.getAttribute(SIMPLIFIED, () -> Collections.newSetFromMap(new IdentityHashMap<>()));
+        if (known.contains(expr)) {
+            return expr;
+        }
+        final Expr<BoolType> result = ExprUtils.simplify(expr);
+        known.add(result);
+        return result;
+    }
+
+    static Expr<BoolType> simplify(
+            final Expr<BoolType> expr, final Valuation valuation, final MddGraph<?> graph) {
+        final Set<Expr<BoolType>> known =
+                graph.getAttribute(SIMPLIFIED, () -> Collections.newSetFromMap(new IdentityHashMap<>()));
+        final Expr<BoolType> result = ExprUtils.simplify(expr, valuation);
+        known.add(result);
+        return result;
+    }
 
     private static Valuation checkSat(
             Expr<BoolType> expr,
@@ -135,34 +163,35 @@ public class MddExpressionTemplate implements MddNode.Template {
         final Decl decl = extractDecl.apply(mddVariable.getTraceInfo());
         final var satCache = mddVariable.getMddGraph().getAttribute(SAT_CACHE, UnaryOperationCache::new);
 
-        final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
+        final Expr<BoolType> simplifiedExpr = simplify(expr, mddVariable.getMddGraph());
 
         // Check if terminal 0
         final Valuation satModel;
         if (knownSat) {
             satModel = null;
-        } else if (canonizedExpr instanceof FalseExpr) {
+        } else if (simplifiedExpr instanceof FalseExpr) {
             return null;
         } else if (substitutionOnly) {
             // an explicit False prunes; otherwise assume satisfiable and let substitution decide below
             satModel = null;
         } else {
-            satModel = checkSat(canonizedExpr, solverPool, satCache);
+            // canonized only here: the canonical form is the solver-cache key, nothing else reads it
+            satModel = checkSat(ExprUtils.canonize(simplifiedExpr), solverPool, satCache);
             if (satModel == null) return null;
         }
 
         // Check if default
         if (mddVariable.getDomainSize() == 0
-                && !ExprUtils.getConstants(canonizedExpr).contains(decl)) {
+                && !ExprUtils.getConstants(simplifiedExpr).contains(decl)) {
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
-                childNode = mddVariable.getLower().get().checkInNode(knownChild(canonizedExpr));
+                childNode = mddVariable.getLower().get().checkInNode(knownChild(simplifiedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                childNode = mddGraph.getNodeFor(canonizedExpr);
+                childNode = mddGraph.getNodeFor(simplifiedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
-                    canonizedExpr, decl, mddVariable, solverPool, childNode, transExpr,
+                    simplifiedExpr, decl, mddVariable, solverPool, childNode, transExpr,
                     substitutionOnly);
         }
 
@@ -191,7 +220,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                     decl.getRef())
                             .build();
             final Expr<BoolType> overApproxExpr =
-                    ExprUtils.simplify(overApproxSub.apply(canonizedExpr));
+                    simplify(overApproxSub.apply(simplifiedExpr), mddVariable.getMddGraph());
 
             boolean identityNeeded = false;
 
@@ -233,13 +262,15 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
         }
 
-        final LitExpr<?> determinedValue = findDeterminedValue(canonizedExpr, decl);
+        final LitExpr<?> determinedValue = findDeterminedValue(simplifiedExpr, decl);
         if (determinedValue != null) {
             final int key = LitExprConverter.toInt(determinedValue);
+
             final Expr<BoolType> substitutedExpr =
-                    ExprUtils.simplify(
-                            canonizedExpr,
-                            ImmutableValuation.builder().put(decl, determinedValue).build());
+                    simplify(
+                            simplifiedExpr,
+                            ImmutableValuation.builder().put(decl, determinedValue).build(),
+                            mddVariable.getMddGraph());
 
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
@@ -250,12 +281,12 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
 
             return MddExpressionRepresentation.ofDetermined(
-                    canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr,
+                    simplifiedExpr, decl, mddVariable, solverPool, key, childNode, transExpr,
                     substitutionOnly);
         }
 
         return MddExpressionRepresentation.of(
-                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel, substitutionOnly);
+                simplifiedExpr, decl, mddVariable, solverPool, transExpr, satModel, substitutionOnly);
     }
 
     private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
