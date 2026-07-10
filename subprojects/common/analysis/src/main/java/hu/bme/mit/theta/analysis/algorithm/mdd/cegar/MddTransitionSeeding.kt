@@ -60,7 +60,7 @@ internal class CrossIterationKnowledge(
   var prev: MddHandle? = null
     private set
 
-  /** The previous iteration's upper bound: its SAT cache snapshot, lifted and AND-ed on consumption. */
+  /** The previous iteration's upper bound: its visited-edge snapshot, lifted and AND-ed on consumption. */
   var bound: MddHandle? = null
     private set
 
@@ -83,9 +83,6 @@ internal class CrossIterationKnowledge(
   fun update() {
     val node = nodes.singleOrNull() ?: return
     prev = node
-    // the upper bound: the node's present-cache structure, extracted over the abstract levels and
-    // truncated at the concrete witness boundary. The present cache is exhaustive — an unprobed key is
-    // unsatisfiable, since GSAT probes every transition of every reachable source
     bound =
       boundOrder?.let {
         MddExplicitRepresentationExtractor.transform(
