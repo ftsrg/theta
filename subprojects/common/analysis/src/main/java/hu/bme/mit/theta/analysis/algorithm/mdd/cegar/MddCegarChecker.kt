@@ -89,7 +89,7 @@ constructor(
   private val traceTimeout: Long = 10,
   // the lower bound: cache the previous iteration's witnesses into this iteration's nodes
   private val useTransitionSeeding: Boolean = false,
-  // the upper bound: prune by the previous relation's SAT cache (needs the seeding infrastructure)
+  // the upper bound: prune by the previous relation's visited edges (needs the seeding infrastructure)
   private val useTransitionBound: Boolean = useTransitionSeeding,
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NONE,

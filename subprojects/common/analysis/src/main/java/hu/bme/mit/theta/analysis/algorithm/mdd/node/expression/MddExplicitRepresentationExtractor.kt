@@ -49,7 +49,9 @@ object MddExplicitRepresentationExtractor {
 
   /**
    * Extracts [node] into the [variable] order. With a non-null [dataBoundary] the walk is truncated at
-   * that level: every variable at and below it is accepted (the lattice top).
+   * that level — every variable at and below it is accepted (the lattice top) — and only the edges
+   * exploration actually consumed (visited via get or cursor) are extracted: the explicit caches also
+   * hold seeded entries the iteration never touched, which must not widen the bound.
    */
   fun transform(node: MddHandle, variable: MddVariableHandle, dataBoundary: Any?): MddHandle =
     transform(node, variable, UnaryOperationCache(), dataBoundary)
@@ -101,8 +103,8 @@ object MddExplicitRepresentationExtractor {
         }
         node.node.representation is MddExpressionRepresentation -> {
           val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-          val knownEdges =
-            (node.node.representation as MddExpressionRepresentation).explored().knownEdges()
+          val explored = (node.node.representation as MddExpressionRepresentation).explored()
+          val knownEdges = explored.knownEdges()
           if (knownEdges.defaultValue() != null) {
             val s =
               transform(
@@ -112,6 +114,19 @@ object MddExplicitRepresentationExtractor {
                 dataBoundary,
               )
             if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
+          } else if (dataBoundary != null) {
+            val keys = explored.visitedKeys().cursor()
+            while (keys.moveNext()) {
+              val child = knownEdges.get(keys.elem()) ?: continue
+              val s =
+                transform(
+                  node.variableHandle.lower.get().getHandleFor(child),
+                  variable.lower.orElse(null),
+                  cache,
+                  dataBoundary,
+                )
+              if (!s.isTerminalZero) templateBuilder.set(keys.elem(), s.node)
+            }
           } else {
             val cursor = knownEdges.cursor()
             while (cursor.moveNext()) {
