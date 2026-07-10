@@ -19,5 +19,11 @@ int main() {
     reach_error();
     abort();
   }
+  double a = 3.0, b = 2.0;
+  if (!__builtin_isgreater(a, b) || __builtin_isless(a, b) ||
+      __builtin_isunordered(a, b)) {
+    reach_error();
+    abort();
+  }
   return 0;
 }

@@ -830,6 +830,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_isnormal" -> {
                 return callModeledLibraryFunction("isnormal", args);
             }
+            case "__builtin_isgreater",
+                    "__builtin_isgreaterequal",
+                    "__builtin_isless",
+                    "__builtin_islessequal",
+                    "__builtin_islessgreater",
+                    "__builtin_isunordered" -> {
+                // FpFunctionsToExprsPass models the plain library names of these comparison macros.
+                return callModeledLibraryFunction(name.substring("__builtin_".length()), args);
+            }
             default -> {
                 return null;
             }
