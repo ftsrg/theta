@@ -123,6 +123,28 @@ class PtrMemberAccessTest {
   }
 
   @Test
+  fun stackStructThroughPointerParamMatchesDirectAccess() {
+    // A stack struct whose address is passed to a function: `a->field` inside the callee (a = &m)
+    // and `m.field` in the caller must address the same cell. ReferenceElimination used to add an
+    // extra indirection for bare reads of the referred struct variable but not for `&m`, so after
+    // p->field became a single dereference the two desynced -> spurious counterexample.
+    val derefs =
+      derefsOf(
+        """
+        struct mutex { int is_locked; };
+        void lock(struct mutex *a) { a->is_locked = 1; }
+        int main() { struct mutex m; m.is_locked = 0; lock(&m); return 0; }
+        """
+          .trimIndent()
+      )
+    assertTrue(derefs.isNotEmpty(), "the program must produce dereferences")
+    assertFalse(
+      derefs.any { it.array is Dereference<*, *, *> },
+      "member access on a referred struct variable must not be a double dereference",
+    )
+  }
+
+  @Test
   fun sizeofStructTagIsNotZero() {
     // `sizeof(struct S)` used to fall through every lookup and warn
     // "sizeof got unknown type, using a literal 0 instead", so malloc(0).

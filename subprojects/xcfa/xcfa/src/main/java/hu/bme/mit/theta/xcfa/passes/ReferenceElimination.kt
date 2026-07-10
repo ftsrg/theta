@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
@@ -761,11 +762,22 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>
   ): Expr<T> =
     varLut[this]?.first?.let {
-      Dereference(
-        cast(it.ref, it.type),
-        cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
-        this.type,
-      )
-        as Expr<T>
+      val cType = CComplexType.getType(this.ref, parseContext)
+      if (cType is CStruct || cType is CArray) {
+        // Struct/array variables already denote their own base id (a struct variable's value IS
+        // its base, see FrontendXcfaBuilder's ptrCnt init and
+        // ExpressionVisitor#visitPostfixExpressionMemberAccess). A bare use of such a variable must
+        // therefore resolve exactly like `&v` does above -- the referred-var pointer's raw value,
+        // with no extra indirection -- so that `m.field` (Deref(m, i)) and `a->field` (a = &m,
+        // Deref(a, i)) address the same cell.
+        cast(it.ref, this.type)
+      } else {
+        Dereference(
+          cast(it.ref, it.type),
+          cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
+          this.type,
+        )
+          as Expr<T>
+      }
     } ?: this.ref
 }
