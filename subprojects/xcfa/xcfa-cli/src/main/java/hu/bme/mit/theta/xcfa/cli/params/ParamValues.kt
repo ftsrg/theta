@@ -103,6 +103,7 @@ enum class Backend {
   PORTFOLIO,
   TRACEGEN,
   MDD,
+  MDD_CEGAR,
   IC3,
   NONE,
 }

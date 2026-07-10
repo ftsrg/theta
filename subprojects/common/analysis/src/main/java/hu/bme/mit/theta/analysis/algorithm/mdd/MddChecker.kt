@@ -24,15 +24,17 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
@@ -50,7 +52,6 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
-import java.util.concurrent.*
 
 class MddChecker
 @JvmOverloads
@@ -71,10 +72,10 @@ constructor(
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
-
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    mddGraph2.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
     val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
@@ -158,7 +159,7 @@ constructor(
 
     val stateSpace =
       stateSpaceProvider.compute(
-        MddNodeInitializer.of(initNode),
+        MddNodePostcondition.of(initNode),
         targetedNextStates,
         stateSig.topVariableHandle,
       )
@@ -170,7 +171,7 @@ constructor(
 
     totalTime.stop()
 
-    val propViolating = stateSpace.intersection(propNode) as MddHandle
+    val propViolating = stateSpace.intersection(propNode)
 
     logger.write(Logger.Level.INFO, "Calculated violating states\n")
 
@@ -200,60 +201,20 @@ constructor(
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L) {
-      val executor = Executors.newSingleThreadExecutor()
-      val future =
-        executor.submit<Trace<ExplState, ExprAction>> {
-          val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
-          for (transNode in transNodes) {
-            val explTrans =
-              MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
-            reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
-          }
-          val orReversed = OrNextStateDescriptor.create(reversedDescriptors)
-
-          val traceProvider = TraceProvider(stateSig.variableOrder)
-          val mddTrace =
-            traceProvider.compute(propViolating, orReversed, initNode, stateSig.topVariableHandle)
-          val valuations =
-            mddTrace
-              .map {
-                PathUtils.extractValuation(
-                  MddValuationCollector.collect(it).stream().findFirst().orElseThrow(),
-                  0,
-                )
-              }
-              .toList()
-          return@submit Trace.of(
-            valuations.stream().map(ExplState::of).toList(),
-            monolithicExpr.action(),
-          )
-        }
-
-      try {
-        logger.mainStep("Starting trace generation.\n")
-        val trace = future.get(traceTimeout, TimeUnit.SECONDS)
-        return SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
-      } catch (e: TimeoutException) {
-        logger.mainStep("Trace generation timed out, returning empty trace!\n")
-        future.cancel(true)
-        return SafetyResult.unsafe(
-          Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace, proofStrategy),
-          statistics,
-        )
-      } catch (e: InterruptedException) {
-        logger.mainStep("Trace generation timed out, returning empty trace!\n")
-        future.cancel(true)
-        return SafetyResult.unsafe(
-          Trace.of(listOf(ExplState.top()), listOf()),
-          MddProof.of(stateSpace, proofStrategy),
-          statistics,
-        )
-      } catch (e: ExecutionException) {
-        throw RuntimeException(e)
-      } finally {
-        executor.shutdownNow()
-      }
+      // on trace generation timeout, fall back to an empty trace
+      val trace =
+        generateTrace(
+          transNodes,
+          transSig,
+          stateSpace,
+          propViolating,
+          initNode,
+          stateSig,
+          monolithicExpr,
+          traceTimeout,
+          logger,
+        ) ?: Trace.of(listOf(ExplState.top()), listOf())
+      result = SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
     } else {
       result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)
     }
@@ -268,9 +229,9 @@ constructor(
     ssgTimeMs: Long,
   ) {
     val structDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+    val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
     for (transNode in transNodes) {
-      val structTransNode =
-        MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+      val structTransNode = MddExplicitRepresentationExtractor.transform(transNode, mirrorTop)
       structDescriptors.add(MddNodeNextStateDescriptor.of(structTransNode))
     }
     val structNextStates: AbstractNextStateDescriptor =
@@ -282,7 +243,7 @@ constructor(
     val rerunTime = Stopwatch.createStarted()
     val rerunStateSpace =
       rerunProvider.compute(
-        MddNodeInitializer.of(initNode),
+        MddNodePostcondition.of(initNode),
         structNextStates,
         stateSig.topVariableHandle,
       )

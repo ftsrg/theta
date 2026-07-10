@@ -20,8 +20,8 @@ import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -167,10 +167,7 @@ public class MddNodeCacheVisualizer {
                     Preconditions.checkState(representation instanceof MddExpressionRepresentation);
                     var expressionRepresentation = (MddExpressionRepresentation) representation;
                     for (var cursor =
-                                    expressionRepresentation
-                                            .getExplicitRepresentation()
-                                            .getCacheView()
-                                            .cursor();
+                                    expressionRepresentation.explored().knownEdges().cursor();
                             cursor.moveNext(); ) {
                         if (cursor.value() != null) {
                             traverse(graph, cursor.value(), traversed);

@@ -26,14 +26,14 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SingleStepProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
@@ -95,10 +95,10 @@ constructor(
     get() = stateSpace
 
   init {
-    MddExpressionRepresentation.setLookAheadStrategy(lookAheadStrategy)
-
     val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    mddGraph2.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
     val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
@@ -153,16 +153,16 @@ constructor(
     val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
     stateSpaceProvider = iterationStrategy.createProvider(stateSig.variableOrder)
-    stateSpace = stateSpaceProvider.compute(MddNodeInitializer.of(initNode), nextStates, topVar)
+    stateSpace = stateSpaceProvider.compute(MddNodePostcondition.of(initNode), nextStates, topVar)
     logger.write(
       Logger.Level.INFO,
       "Calculated state space, size: ${MddInterpreter.calculateNonzeroCount(stateSpace)}\n",
     )
 
     val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
+    val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
     for (transNode in transNodes) {
-      val explTrans =
-        MddExplicitRepresentationExtractor.transform(transNode, transSig.topVariableHandle)
+      val explTrans = MddExplicitRepresentationExtractor.transform(transNode, mirrorTop)
       reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
     }
     reversedNS = OrNextStateDescriptor.create(reversedDescriptors)
@@ -177,34 +177,34 @@ constructor(
   fun isSatisfied(expr: CtlExpr): Boolean {
     // the symbolic initNode cannot drive set operations, so instead of subtracting from it, it is
     // intersected with the explicit complement (which queries it key-by-key only)
-    val violating = eval(CtlExpr.Not(expr)).intersection(initNode) as MddHandle
+    val violating = eval(CtlExpr.Not(expr)).intersection(initNode)
     return MddInterpreter.calculateNonzeroCount(violating) == 0L
   }
 
   /** States with at least one successor in [x]. */
   private fun pre(x: MddHandle): MddHandle =
-    singleStepProvider.compute(MddNodeInitializer.of(x), reversedNS, topVar)
+    singleStepProvider.compute(MddNodePostcondition.of(x), reversedNS, topVar)
 
   /**
    * `E[phi U psi]` as a single constrained backward fixed-point call. The constraint is phi | psi
    * (not phi alone) so that seed states outside phi are not pruned.
    */
   private fun euSaturation(p: MddHandle, q: MddHandle): MddHandle {
-    val constraint = p.union(q) as MddHandle
+    val constraint = p.union(q)
     val saturated =
       stateSpaceProvider.compute(
-        MddNodeInitializer.of(q),
-        AndNextStateDescriptor.of(reversedNS, constraint),
+        MddNodePostcondition.of(q),
+        AndNextStateDescriptor.of(reversedNS, MddNodePostcondition.of(constraint)),
         topVar,
       )
-    return saturated.intersection(universe) as MddHandle
+    return saturated.intersection(universe)
   }
 
   /** `E[phi U psi]` by the lfp loop `mu Z. psi | (phi & pre(Z))`. */
   private fun euFixpointLoop(p: MddHandle, q: MddHandle): MddHandle {
     var z = q
     while (true) {
-      val next = q.union(p.intersection(pre(z))) as MddHandle
+      val next = q.union(p.intersection(pre(z)))
       if (next.node === z.node) break
       z = next
     }
@@ -221,14 +221,14 @@ constructor(
             )
           // the explicit universe must drive the intersection: the symbolic atom node has an
           // unbounded keyset and can only be queried key-by-key
-          universe.intersection(node) as MddHandle
+          universe.intersection(node)
         }
 
         is CtlExpr.Top -> universe
 
-        is CtlExpr.Not -> universe.minus(eval(phi.op)) as MddHandle
-        is CtlExpr.And -> eval(phi.l).intersection(eval(phi.r)) as MddHandle
-        is CtlExpr.Or -> eval(phi.l).union(eval(phi.r)) as MddHandle
+        is CtlExpr.Not -> universe.minus(eval(phi.op))
+        is CtlExpr.And -> eval(phi.l).intersection(eval(phi.r))
+        is CtlExpr.Or -> eval(phi.l).union(eval(phi.r))
 
         is CtlExpr.EX -> pre(eval(phi.op))
 
@@ -245,7 +245,7 @@ constructor(
         is CtlExpr.EG -> {
           var x = eval(phi.op)
           while (true) {
-            val next = x.intersection(pre(x)) as MddHandle
+            val next = x.intersection(pre(x))
             if (next.node === x.node) break
             x = next
           }

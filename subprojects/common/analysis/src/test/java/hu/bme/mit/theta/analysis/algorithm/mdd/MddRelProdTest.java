@@ -26,9 +26,9 @@ import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.RelationalProductProviderImpl;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -315,7 +315,7 @@ public class MddRelProdTest {
             final AbstractNextStateDescriptor nextStateDescriptor =
                     MddNodeNextStateDescriptor.of(transHandle);
 
-            final var provider = new LegacyRelationalProductProvider(stateSig.getVariableOrder());
+            final var provider = new RelationalProductProviderImpl(stateSig.getVariableOrder());
             final var result =
                     provider.compute(
                             stateHandle, nextStateDescriptor, stateSig.getTopVariableHandle());

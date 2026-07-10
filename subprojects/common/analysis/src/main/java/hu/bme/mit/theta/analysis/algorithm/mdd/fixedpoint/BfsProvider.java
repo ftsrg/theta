@@ -28,7 +28,7 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
     private final RelationalProductProvider relProdProvider;
 
     public BfsProvider(final MddVariableOrder variableOrder) {
-        this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
+        this(variableOrder, new RelationalProductProviderImpl(variableOrder));
     }
 
     public BfsProvider(

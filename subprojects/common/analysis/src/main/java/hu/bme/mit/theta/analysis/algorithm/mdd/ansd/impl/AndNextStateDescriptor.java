@@ -15,11 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
-import com.google.common.base.Preconditions;
+import com.koloboke.collect.set.hash.HashIntSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.ArrayList;
@@ -27,105 +25,111 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Restricts the image of a wrapped relation to the states of a {@code constraint} set, descending
- * the constraint node in lockstep with the relation. Used for constrained saturation (CTL EU).
- *
- * <p>The views prune constraint-zero keys by key absence: satFire asserts that off-diagonal values
- * are never {@code terminalEmpty}, and relProd assumes every descended branch reaches a terminal
- * with {@code evaluate() == true}. The constraint is part of equals/hashCode, otherwise distinct
- * constraints collide in the saturation cache.
+ * The intersection of two next-state relations, descended in lockstep. Operand shapes follow the
+ * {@link AbstractNextStateDescriptor} algebra: a {@link AbstractNextStateDescriptor.Postcondition}
+ * constrains the target only, a full relation constrains source and target. Enumeration drives the
+ * exhaustive (no-default) side and probes the other by key, so pass the structural/explicit operand
+ * as {@code lhs}.
  */
 public final class AndNextStateDescriptor implements AbstractNextStateDescriptor {
 
-    private final AbstractNextStateDescriptor wrapped;
+    private final AbstractNextStateDescriptor lhs;
 
-    private final MddHandle constraint;
+    private final AbstractNextStateDescriptor rhs;
 
-    private AndNextStateDescriptor(AbstractNextStateDescriptor wrapped, MddHandle constraint) {
-        this.wrapped = wrapped;
-        this.constraint = Preconditions.checkNotNull(constraint);
+    private AndNextStateDescriptor(AbstractNextStateDescriptor lhs, AbstractNextStateDescriptor rhs) {
+        this.lhs = lhs;
+        this.rhs = rhs;
     }
 
     public static AbstractNextStateDescriptor of(
-            AbstractNextStateDescriptor wrapped, MddHandle constraint) {
-        if (wrapped == AbstractNextStateDescriptor.terminalEmpty() || constraint.isTerminalZero()) {
+            AbstractNextStateDescriptor lhs, AbstractNextStateDescriptor rhs) {
+        if (isEmptyDescriptor(lhs) || isEmptyDescriptor(rhs)) {
             return AbstractNextStateDescriptor.terminalEmpty();
         }
-        return new AndNextStateDescriptor(wrapped, constraint);
+        if (lhs instanceof AbstractNextStateDescriptor.Postcondition l
+                && rhs instanceof AbstractNextStateDescriptor.Postcondition r) {
+            return of(l, r);
+        }
+        return new AndNextStateDescriptor(lhs, rhs);
+    }
+
+    /** Two postconditions AND into a postcondition (the init/prop initializer). */
+    public static AbstractNextStateDescriptor.Postcondition of(
+            AbstractNextStateDescriptor.Postcondition lhs,
+            AbstractNextStateDescriptor.Postcondition rhs) {
+        if (isEmptyDescriptor(lhs) || isEmptyDescriptor(rhs)) {
+            return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
+        }
+        return new AndPostcondition(lhs, rhs);
+    }
+
+    /** Both the plain and the Postcondition terminal-empty singletons count as empty. */
+    private static boolean isEmptyDescriptor(AbstractNextStateDescriptor d) {
+        return d == null
+                || d == AbstractNextStateDescriptor.terminalEmpty()
+                || d == AbstractNextStateDescriptor.Postcondition.terminalEmpty();
+    }
+
+    @Override
+    public boolean isSourceStateDefined() {
+        return lhs.isSourceStateDefined() || rhs.isSourceStateDefined();
+    }
+
+    @Override
+    public boolean isNextStateDefined() {
+        return lhs.isNextStateDefined() || rhs.isNextStateDefined();
     }
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<>(
-                wrapped.getDiagonal(localStateSpace).trim(constraint.keySet()),
-                (descriptor, key) -> {
-                    if (key == null) return descriptor;
-                    return AndNextStateDescriptor.of(descriptor, constraint.get(key));
-                });
+        return andViews(lhs.getDiagonal(localStateSpace), rhs.getDiagonal(localStateSpace));
     }
 
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
-        // the constraint restricts the target (the inner key); the inner view supports only
-        // cursor()/get(), so constraint-zero targets are skipped with a cursor instead of trim
-        return new IntObjMapViews.Transforming<>(
-                wrapped.getOffDiagonal(localStateSpace), this::constrainInner);
-    }
-
-    private IntObjMapView<AbstractNextStateDescriptor> constrainInner(
-            IntObjMapView<AbstractNextStateDescriptor> inner) {
+        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> l =
+                lhs.getOffDiagonal(localStateSpace);
+        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> r =
+                rhs.getOffDiagonal(localStateSpace);
         return new IntObjMapView<>() {
             @Override
-            public IntObjCursor<? extends AbstractNextStateDescriptor> cursor() {
-                final IntObjCursor<? extends AbstractNextStateDescriptor> c = inner.cursor();
-                return new IntObjCursor<>() {
-                    @Override
-                    public int key() {
-                        return c.key();
-                    }
-
-                    @Override
-                    public AbstractNextStateDescriptor value() {
-                        return AndNextStateDescriptor.of(c.value(), constraint.get(c.key()));
-                    }
-
-                    @Override
-                    public boolean moveNext() {
-                        while (c.moveNext()) {
-                            if (!constraint.get(c.key()).isTerminalZero()) return true;
-                        }
-                        return false;
-                    }
-                };
+            public IntObjMapView<AbstractNextStateDescriptor> get(int source) {
+                final IntObjMapView<AbstractNextStateDescriptor> li = childOr(l, source);
+                final IntObjMapView<AbstractNextStateDescriptor> ri = childOr(r, source);
+                if (li == null || ri == null) {
+                    return IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty());
+                }
+                return andViews(li, ri);
             }
 
             @Override
-            public AbstractNextStateDescriptor get(int key) {
-                final MddHandle childConstraint = constraint.get(key);
-                if (childConstraint.isTerminalZero())
-                    return AbstractNextStateDescriptor.terminalEmpty();
-                return AndNextStateDescriptor.of(inner.get(key), childConstraint);
+            public IntObjMapView<AbstractNextStateDescriptor> defaultValue() {
+                if (l.defaultValue() == null || r.defaultValue() == null) return null;
+                return andViews(l.defaultValue(), r.defaultValue());
+            }
+
+            @Override
+            public IntObjCursor<? extends IntObjMapView<AbstractNextStateDescriptor>> cursor() {
+                return mapCursor(l, r, this::get);
             }
 
             @Override
             public boolean isEmpty() {
-                throw new UnsupportedOperationException();
+                return (l.isEmpty() && l.defaultValue() == null)
+                        || (r.isEmpty() && r.defaultValue() == null);
             }
 
             @Override
             public boolean isProcedural() {
-                throw new UnsupportedOperationException();
+                return l.isProcedural() || r.isProcedural();
             }
 
             @Override
             public boolean containsKey(int key) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public AbstractNextStateDescriptor defaultValue() {
-                throw new UnsupportedOperationException();
+                return (l.containsKey(key) || l.defaultValue() != null)
+                        && (r.containsKey(key) || r.defaultValue() != null);
             }
 
             @Override
@@ -135,26 +139,192 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         };
     }
 
-    @Override
-    public Optional<Iterable<AbstractNextStateDescriptor>> split() {
-        return wrapped.split()
-                .map(
-                        iterable -> {
-                            var list = new ArrayList<AbstractNextStateDescriptor>();
-                            iterable.forEach(
-                                    it -> list.add(new AndNextStateDescriptor(it, constraint)));
-                            return list;
-                        });
+    /** Intersects two target views, descending each key to {@code of} of the children. */
+    private static IntObjMapView<AbstractNextStateDescriptor> andViews(
+            IntObjMapView<AbstractNextStateDescriptor> l, IntObjMapView<AbstractNextStateDescriptor> r) {
+        return new IntObjMapView<>() {
+            @Override
+            public AbstractNextStateDescriptor get(int key) {
+                final AbstractNextStateDescriptor a = childOr(l, key);
+                final AbstractNextStateDescriptor b = childOr(r, key);
+                if (a == null || b == null) return AbstractNextStateDescriptor.terminalEmpty();
+                return AndNextStateDescriptor.of(a, b);
+            }
+
+            @Override
+            public AbstractNextStateDescriptor defaultValue() {
+                if (l.defaultValue() == null || r.defaultValue() == null) return null;
+                return AndNextStateDescriptor.of(l.defaultValue(), r.defaultValue());
+            }
+
+            @Override
+            public IntObjCursor<? extends AbstractNextStateDescriptor> cursor() {
+                // drive by cursor value (not get), so a cursor-only operand (the reversed CTL
+                // relation) can drive; both-default falls back to the key-union mapCursor
+                if (isEmptyValue(l.defaultValue())) return driveCursor(l, r, true);
+                if (isEmptyValue(r.defaultValue())) return driveCursor(r, l, false);
+                return mapCursor(l, r, this::get);
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return (l.isEmpty() && l.defaultValue() == null)
+                        || (r.isEmpty() && r.defaultValue() == null);
+            }
+
+            @Override
+            public boolean isProcedural() {
+                // procedural iff the driven (no-default) side is; a bounded driver makes the result
+                // explicit even over a procedural other side, which is only probed
+                if (isEmptyValue(l.defaultValue())) return l.isProcedural();
+                if (isEmptyValue(r.defaultValue())) return r.isProcedural();
+                return l.isProcedural() || r.isProcedural();
+            }
+
+            @Override
+            public boolean containsKey(int key) {
+                return (l.containsKey(key) || l.defaultValue() != null)
+                        && (r.containsKey(key) || r.defaultValue() != null);
+            }
+
+            @Override
+            public int size() {
+                int n = 0;
+                for (var c = cursor(); c.moveNext(); ) n++;
+                return n;
+            }
+        };
+    }
+
+    private static <V> V childOr(IntObjMapView<V> view, int key) {
+        final V child = view.get(key);
+        return child != null ? child : view.defaultValue();
+    }
+
+    /** ANDs [driver]'s cursor values with [other]'s child by key, keeping operand order; never gets [driver]. */
+    private static IntObjCursor<AbstractNextStateDescriptor> driveCursor(
+            IntObjMapView<AbstractNextStateDescriptor> driver,
+            IntObjMapView<AbstractNextStateDescriptor> other,
+            boolean driverIsLeft) {
+        final var dc = driver.cursor();
+        return new IntObjCursor<>() {
+            private AbstractNextStateDescriptor value;
+
+            @Override
+            public int key() {
+                return dc.key();
+            }
+
+            @Override
+            public AbstractNextStateDescriptor value() {
+                return value;
+            }
+
+            @Override
+            public boolean moveNext() {
+                while (dc.moveNext()) {
+                    final AbstractNextStateDescriptor o = childOr(other, dc.key());
+                    if (o == null) continue;
+                    final AbstractNextStateDescriptor combined =
+                            driverIsLeft ? of(dc.value(), o) : of(o, dc.value());
+                    if (!isEmptyValue(combined)) {
+                        value = combined;
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+    }
+
+    /** Like {@link #driveCursor} but recomputes values via [valueOf]; unions both key sets when both default. */
+    private static <V> IntObjCursor<V> mapCursor(
+            IntObjMapView<?> l, IntObjMapView<?> r, java.util.function.IntFunction<V> valueOf) {
+        final var keys = new ArrayList<Integer>();
+        if (isEmptyValue(l.defaultValue())) {
+            for (var c = l.cursor(); c.moveNext(); ) keys.add(c.key());
+        } else if (isEmptyValue(r.defaultValue())) {
+            for (var c = r.cursor(); c.moveNext(); ) keys.add(c.key());
+        } else {
+            final var seen = HashIntSets.newMutableSet();
+            for (var c = l.cursor(); c.moveNext(); ) {
+                keys.add(c.key());
+                seen.add(c.key());
+            }
+            for (var c = r.cursor(); c.moveNext(); ) {
+                if (!seen.contains(c.key())) keys.add(c.key());
+            }
+        }
+        return new IntObjCursor<>() {
+            private int index = -1;
+            private int key;
+            private V value;
+
+            @Override
+            public int key() {
+                return key;
+            }
+
+            @Override
+            public V value() {
+                return value;
+            }
+
+            @Override
+            public boolean moveNext() {
+                while (++index < keys.size()) {
+                    final int k = keys.get(index);
+                    final V v = valueOf.apply(k);
+                    if (!isEmptyValue(v)) {
+                        key = k;
+                        value = v;
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+    }
+
+    private static boolean isEmptyValue(Object v) {
+        if (v == null) return true;
+        if (v instanceof AbstractNextStateDescriptor d) return isEmptyDescriptor(d);
+        if (v instanceof IntObjMapView<?> view) {
+            return view.isEmpty() && view.defaultValue() == null;
+        }
+        return false;
     }
 
     @Override
-    public boolean isLocallyIdentity(StateSpaceInfo stateSpaceInfo) {
-        return wrapped.isLocallyIdentity(stateSpaceInfo);
+    public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+        // only the relation splits (disjunctive partitioning); re-wrap keeping operand order
+        if (lhs.split().isPresent()) {
+            return lhs.split()
+                    .map(
+                            iterable -> {
+                                final var list = new ArrayList<AbstractNextStateDescriptor>();
+                                iterable.forEach(it -> list.add(of(it, rhs)));
+                                return list;
+                            });
+        }
+        if (rhs.split().isPresent()) {
+            return rhs.split()
+                    .map(
+                            iterable -> {
+                                final var list = new ArrayList<AbstractNextStateDescriptor>();
+                                iterable.forEach(it -> list.add(of(lhs, it)));
+                                return list;
+                            });
+        }
+        return Optional.empty();
     }
+
+    // isLocallyIdentity uses the interface default (inspects the intersected diagonal/off-diagonal),
+    // correct whether an operand is identity or a don't-care prefix leaves the other constraining.
 
     @Override
     public boolean evaluate() {
-        return wrapped.evaluate() && !constraint.isTerminalZero();
+        return lhs.evaluate() && rhs.evaluate();
     }
 
     @Override
@@ -162,16 +332,60 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AndNextStateDescriptor that = (AndNextStateDescriptor) o;
-        return Objects.equals(wrapped, that.wrapped) && Objects.equals(constraint, that.constraint);
+        return Objects.equals(lhs, that.lhs) && Objects.equals(rhs, that.rhs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(wrapped, constraint);
+        return Objects.hash(lhs, rhs);
     }
 
     @Override
     public String toString() {
-        return "And(" + wrapped + ", " + constraint + ")";
+        return "And(" + lhs + ", " + rhs + ")";
+    }
+
+    /** The intersection of two postconditions, as a postcondition (the init/prop initializer). */
+    static final class AndPostcondition implements AbstractNextStateDescriptor.Postcondition {
+
+        private final AbstractNextStateDescriptor.Postcondition lhs;
+
+        private final AbstractNextStateDescriptor.Postcondition rhs;
+
+        private AndPostcondition(
+                AbstractNextStateDescriptor.Postcondition lhs,
+                AbstractNextStateDescriptor.Postcondition rhs) {
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
+
+        @Override
+        public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+                StateSpaceInfo localStateSpace) {
+            return andViews(lhs.getValuations(localStateSpace), rhs.getValuations(localStateSpace));
+        }
+
+        @Override
+        public boolean evaluate() {
+            return lhs.evaluate() && rhs.evaluate();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AndPostcondition that = (AndPostcondition) o;
+            return Objects.equals(lhs, that.lhs) && Objects.equals(rhs, that.rhs);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(lhs, rhs);
+        }
+
+        @Override
+        public String toString() {
+            return "AndPost(" + lhs + ", " + rhs + ")";
+        }
     }
 }

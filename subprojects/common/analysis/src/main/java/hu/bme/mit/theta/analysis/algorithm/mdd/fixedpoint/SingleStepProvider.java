@@ -28,7 +28,7 @@ public final class SingleStepProvider implements StateSpaceEnumerationProvider {
     private final RelationalProductProvider relProdProvider;
 
     public SingleStepProvider(final MddVariableOrder variableOrder) {
-        this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
+        this(variableOrder, new RelationalProductProviderImpl(variableOrder));
     }
 
     public SingleStepProvider(

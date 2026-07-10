@@ -21,7 +21,7 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import java.util.Objects;
 
 public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
@@ -114,7 +114,7 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
                     @Override
                     public AbstractNextStateDescriptor defaultValue() {
-                        throw new UnsupportedOperationException();
+                        return null; // no default edge; lets a consumer probe this cursor-only view
                     }
 
                     @Override
@@ -153,7 +153,7 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
             @Override
             public boolean isEmpty() {
-                throw new UnsupportedOperationException();
+                return false; // never locally identity, so don't enumerate sources to decide
             }
 
             @Override
@@ -168,7 +168,8 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
             @Override
             public IntObjMapView<AbstractNextStateDescriptor> defaultValue() {
-                throw new UnsupportedOperationException();
+                // no default edge (the reversed relation is explicit)
+                return null;
             }
 
             @Override

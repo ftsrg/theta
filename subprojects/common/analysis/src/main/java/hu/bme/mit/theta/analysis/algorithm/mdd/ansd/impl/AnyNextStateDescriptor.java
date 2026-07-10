@@ -21,9 +21,17 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.Optional;
 
-public class AnyNextStateDescriptor implements AbstractNextStateDescriptor {
+/**
+ * Accepts any continuation: every value leads to {@code child}, with no source constraint (a {@link
+ * AbstractNextStateDescriptor.Postcondition} whose off-diagonal is the diagonal under every source).
+ * The self-looping {@link #ANY} singleton accepts everything below it — the bound's data-boundary cut
+ * and the identity of the {@link AndNextStateDescriptor} postcondition intersection.
+ */
+public class AnyNextStateDescriptor implements AbstractNextStateDescriptor.Postcondition {
     private static final UniqueTable<AnyNextStateDescriptor> uniqueTable =
             UniqueTable.newInstance();
+
+    public static final AbstractNextStateDescriptor.Postcondition ANY = new AnyNextStateDescriptor();
 
     public static AbstractNextStateDescriptor withChild(AbstractNextStateDescriptor child) {
         return uniqueTable.checkIn(new AnyNextStateDescriptor(child));
@@ -31,29 +39,26 @@ public class AnyNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final AbstractNextStateDescriptor child;
 
+    private AnyNextStateDescriptor() {
+        this.child = this;
+    }
+
     private AnyNextStateDescriptor(AbstractNextStateDescriptor child) {
         this.child = child;
     }
 
     @Override
-    public boolean isNextStateDefined() {
-        return false;
+    public boolean evaluate() {
+        return true;
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
         return IntObjMapView.empty(child);
     }
 
     @Override
-    public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
-            final StateSpaceInfo localStateSpace) {
-        return IntObjMapView.empty(IntObjMapView.empty(child));
-    }
-
-    @Override
     public Optional<Iterable<AbstractNextStateDescriptor>> split() {
-        // TODO: this might be a performance overhead
         return Optional.empty();
     }
 }
