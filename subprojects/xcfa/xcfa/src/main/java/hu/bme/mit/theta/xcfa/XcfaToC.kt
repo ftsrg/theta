@@ -364,7 +364,10 @@ fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =
       // Emulate SMT-LIB semantics, which rounds towards negative infinity
       val rat = this.op.toC(parseContext)
       val castRat = "((int) $rat)"
-      "($rat < 0.0 && $rat - $castRat < 0 ? $castRat - 1 : $castRat)"
+      (this.op as? RatLitExpr)?.run {
+        if (num.signum() != denom.signum() && num % denom != BigInteger.ZERO) "($castRat - 1)"
+        else castRat
+      } ?: "($rat < 0.0 && $rat - $castRat < 0 ? $castRat - 1 : $castRat)"
     }
     is BvToIntExpr -> "((int) ${this.op.toC(parseContext)})"
     is NotExpr -> "(! ${this.op.toC(parseContext)})"
@@ -428,7 +431,10 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
         // -5 mod -3 = 1
         val lhs = leftOp.toC(parseContext)
         val rhs = rightOp.toC(parseContext)
-        "( ($lhs % $rhs + ($rhs < 0 ? - $rhs : $rhs)) % $rhs )"
+        (rightOp as? IntLitExpr)?.run {
+          if (value < BigInteger.ZERO) "( ($lhs % $rhs - $rhs) % $rhs )"
+          else "( ($lhs % $rhs + $rhs) % $rhs )"
+        } ?: "( ($lhs % $rhs + ($rhs < 0 ? - $rhs : $rhs)) % $rhs )"
       }
     }
     this is RemExpr<*> -> {
@@ -439,7 +445,8 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
       // -5 rem -3 = -1
       val rhs = rightOp.toC(parseContext)
       val mod = ModExpr.create2(leftOp, rightOp).toC(parseContext)
-      "($rhs < 0 ? - $mod : $mod)"
+      (rightOp as? IntLitExpr)?.run { if (value < BigInteger.ZERO) "(- $mod)" else mod }
+        ?: "($rhs < 0 ? - $mod : $mod)"
     }
     this is DivExpr<*> -> "(${leftOp.toC(parseContext)} / ${rightOp.toC(parseContext)})"
     this is ImplyExpr -> "(! ${leftOp.toC(parseContext)} || ${rightOp.toC(parseContext)})"
