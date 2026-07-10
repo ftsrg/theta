@@ -818,46 +818,87 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(zero, "cType", signedInt);
                 return zero;
             }
-            case "__builtin_isnan" -> {
-                return callModeledLibraryFunction("isnan", args);
-            }
             case "__builtin_isinf", "__builtin_isinf_sign" -> {
-                return callModeledLibraryFunction("isinf", args);
-            }
-            case "__builtin_isfinite" -> {
-                return callModeledLibraryFunction("isfinite", args);
+                return callModeledLibraryFunction("isinf", args, false);
             }
             case "__builtin_isnormal" -> {
-                return callModeledLibraryFunction("isnormal", args);
-            }
-            case "__builtin_isgreater",
-                    "__builtin_isgreaterequal",
-                    "__builtin_isless",
-                    "__builtin_islessequal",
-                    "__builtin_islessgreater",
-                    "__builtin_isunordered" -> {
-                // FpFunctionsToExprsPass models the plain library names of these comparison macros.
-                return callModeledLibraryFunction(name.substring("__builtin_".length()), args);
+                return callModeledLibraryFunction("isnormal", args, false);
             }
             default -> {
+                // The remaining __builtin_ classification/comparison functions have no declaration
+                // but are exactly the int-returning library predicates FpFunctionsToExprsPass
+                // models; alias them to their plain names. Only allow-listed names are routed, so
+                // unmodeled builtins are left to fail loudly rather than being silently havoced.
+                // (The value-returning math builtins -- fabs, sqrt, ... -- are intentionally not
+                // routed here: without a declaration the synthetic call would default to an int
+                // return type and mismatch the fp result.)
+                if (name.startsWith("__builtin_")) {
+                    String plain = name.substring("__builtin_".length());
+                    if (MODELED_INT_LIBRARY_FUNCTIONS.contains(plain)) {
+                        return callModeledLibraryFunction(plain, args, false);
+                    }
+                    if (MODELED_FP_LIBRARY_FUNCTIONS.contains(plain)) {
+                        return callModeledLibraryFunction(plain, args, true);
+                    }
+                }
                 return null;
             }
         }
     }
 
     /**
+     * Int-returning library classification/comparison functions that {@code FpFunctionsToExprsPass}
+     * models exactly, so their {@code __builtin_}-prefixed (declaration-less) forms can be aliased
+     * to them. Only int-returning functions are listed, because a synthetic call to a name with no
+     * declaration defaults to an int return type.
+     */
+    private static final Set<String> MODELED_INT_LIBRARY_FUNCTIONS =
+            Set.of(
+                    "isnan",
+                    "isinf",
+                    "isfinite",
+                    "isgreater",
+                    "isgreaterequal",
+                    "isless",
+                    "islessequal",
+                    "islessgreater",
+                    "isunordered");
+
+    /**
+     * Value-returning library math functions that {@code FpFunctionsToExprsPass} models exactly.
+     * These return the (promoted) type of their first argument, which must be set explicitly on the
+     * synthetic call since the {@code __builtin_} form has no declaration to supply it.
+     */
+    private static final Set<String> MODELED_FP_LIBRARY_FUNCTIONS =
+            Set.of(
+                    "fabs", "fabsf", "fabsl", "sqrt", "sqrtf", "sqrtl", "floor", "floorf", "floorl",
+                    "ceil", "ceilf", "ceill", "trunc", "truncf", "truncl", "round", "roundf",
+                    "roundl", "fmin", "fminf", "fminl", "fmax", "fmaxf", "fmaxl", "fmod", "fmodf",
+                    "fmodl");
+
+    /**
      * Emits a call to a library function that a later pass ({@code FpFunctionsToExprsPass}) models,
-     * mirroring the ordinary call-lowering path. Returns {@code null} if calls cannot be built here
-     * (no function visitor), so the caller falls back to normal handling.
+     * mirroring the ordinary call-lowering path. When {@code returnsFirstArgType} is set, the
+     * call's return type is set to the first argument's type (value-returning math functions);
+     * otherwise it defaults to {@code int} (classification/comparison predicates). Returns {@code
+     * null} if calls cannot be built here (no function visitor), so the caller falls back to normal
+     * handling.
      */
     private Expr<?> callModeledLibraryFunction(
-            String functionName, List<AssignmentExpressionContext> args) {
-        if (functionVisitor == null) {
+            String functionName,
+            List<AssignmentExpressionContext> args,
+            boolean returnsFirstArgType) {
+        if (functionVisitor == null || (returnsFirstArgType && args.isEmpty())) {
             return null;
         }
         List<CStatement> arguments = new ArrayList<>();
         for (AssignmentExpressionContext arg : args) {
             arguments.add(arg.accept(functionVisitor));
+        }
+        if (returnsFirstArgType) {
+            CComplexType returnType =
+                    CComplexType.getType(arguments.get(0).getExpression(), parseContext);
+            parseContext.getMetadata().create(functionName, "cType", returnType);
         }
         CCall cCall = new CCall(functionName, arguments, parseContext);
         preStatements.add(cCall);

@@ -25,5 +25,9 @@ int main() {
     reach_error();
     abort();
   }
+  if (__builtin_fabs(-3.0) != 3.0 || __builtin_sqrt(4.0) != 2.0) {
+    reach_error();
+    abort();
+  }
   return 0;
 }
