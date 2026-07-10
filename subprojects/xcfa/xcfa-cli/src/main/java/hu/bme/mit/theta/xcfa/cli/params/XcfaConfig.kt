@@ -267,6 +267,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.TRACEGEN -> TracegenConfig() as T
         Backend.MDD -> MddConfig() as T
+        Backend.MDD_CEGAR -> MddCegarConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
       }
@@ -599,6 +600,59 @@ data class MddConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+data class MddCegarConfig(
+  @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
+  var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver", "--validate-mdd-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--iteration-strategy"],
+    description = "Iteration strategy for the MDD checker",
+  )
+  var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(
+    names = ["--look-ahead-strategy"],
+    description = "MDD to expression conversion strategy",
+  )
+  var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NONE,
+  @Parameter(
+    names = ["--proof-strategy"],
+    description = "MDD to expression conversion strategy for the proof invariant",
+  )
+  var proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
+  var traceTimeout: Long = 10,
+  @Parameter(
+    names = ["--reach-constraint"],
+    description = "Constrain each iteration's saturation to the previous iteration's reach set",
+    arity = 1,
+  )
+  var reachConstraint: Boolean = false,
+  @Parameter(
+    names = ["--on-the-fly-reachability"],
+    description = "Terminate saturation as soon as a violating state is reached",
+  )
+  var onTheFlyReachability: Boolean = false,
+  @Parameter(
+    names = ["--transition-seeding"],
+    description = "Seed each iteration's nodes from the previous iteration's witnesses",
+    arity = 1,
+  )
+  var transitionSeeding: Boolean = true,
+  @Parameter(
+    names = ["--transition-bound"],
+    description = "Prune each iteration's exploration by the previous relation's visited edges",
+    arity = 1,
+  )
+  var transitionBound: Boolean = true,
 ) : SpecBackendConfig
 
 data class Ic3Config(
