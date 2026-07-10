@@ -266,11 +266,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         if (childNode == null) {
             final Expr<BoolType> substituted =
                     cacheEdge
-                            ? ExprUtils.simplify(
+                            ? MddExpressionTemplate.simplify(
                                     expr,
                                     ImmutableValuation.builder()
                                             .put(decl, LitExprConverter.toLitExpr(key, decl.getType()))
-                                            .build())
+                                            .build(),
+                                    mddVariable.getMddGraph())
                             : expr;
             if (mddVariable.getLower().isPresent()) {
                 childNode =
@@ -359,7 +360,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         val.put(decl, litExpr);
         Expr<BoolType> simplifiedExpr;
         try {
-            simplifiedExpr = ExprUtils.simplify(expr, val);
+            simplifiedExpr = MddExpressionTemplate.simplify(expr, val, mddVariable.getMddGraph());
         } catch (ArithmeticException e) {
             // This is needed for division by zero cases
             simplifiedExpr = False();
@@ -375,8 +376,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                     simplifiedExpr, o -> (Decl) o, solverPool, transExpr);
             childNode = mddVariable.getLower().get().checkInNode(template);
         } else {
-            final Expr<BoolType> canonizedExpr =
-                    ExprUtils.canonize(ExprUtils.simplify(simplifiedExpr));
+            final Expr<BoolType> canonizedExpr = ExprUtils.canonize(simplifiedExpr);
             MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
 
             if (canonizedExpr instanceof FalseExpr) {
@@ -391,7 +391,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 try (var wpp = new WithPushPop(solver)) {
                     solver.add(canonizedExpr);
                     if (solver.check().isSat()) {
-                        // TODO replace this with canonizedExpr if remainder expression is needed
                         childNode = mddGraph.getNodeFor(True());
                     } else {
                         childNode = null;
