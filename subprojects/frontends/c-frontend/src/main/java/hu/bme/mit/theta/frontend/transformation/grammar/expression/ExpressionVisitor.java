@@ -911,6 +911,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
             }
+            case "__builtin_uadd_overflow", "__builtin_uaddl_overflow", "__builtin_uaddll_overflow" -> {
+                return unsignedOverflowBuiltin(args, true);
+            }
+            case "__builtin_umul_overflow", "__builtin_umull_overflow", "__builtin_umulll_overflow" -> {
+                return unsignedOverflowBuiltin(args, false);
+            }
             default -> {
                 // The remaining __builtin_ classification/comparison functions have no declaration
                 // but are exactly the int-returning library predicates FpFunctionsToExprsPass
@@ -984,6 +990,82 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     private static final String ALLOCA = "alloca";
+
+    /**
+     * Models {@code __builtin_uadd*_overflow(a, b, res)} and {@code __builtin_umul*_overflow}: the
+     * wrapped result is stored through {@code res} and the call returns whether the exact result was
+     * not representable. Only the unsigned forms are modelled -- they are the ones that occur, and
+     * unlike the signed forms their wraparound is defined, so both the result and the overflow
+     * condition can be stated in the operand type itself (no widening), which keeps this correct
+     * under both integer and bitvector arithmetic:
+     *
+     * <ul>
+     *   <li>addition wraps exactly when the wrapped sum came out below either operand;
+     *   <li>multiplication wraps exactly when dividing the wrapped product by one (nonzero) operand
+     *       does not give the other back.
+     * </ul>
+     *
+     * <p>The overflow flag is captured into a temporary <em>before</em> the result is stored, so
+     * that the model stays correct when {@code res} points at one of the operands.
+     */
+    private Expr<?> unsignedOverflowBuiltin(
+            List<AssignmentExpressionContext> args, boolean isAddition) {
+        if (functionVisitor == null || args.size() != 3) {
+            return null;
+        }
+        Expr<?> a = args.get(0).accept(functionVisitor).getExpression();
+        Expr<?> b = args.get(1).accept(functionVisitor).getExpression();
+        Expr<?> resultPointer = args.get(2).accept(functionVisitor).getExpression();
+        if (!(CComplexType.getType(resultPointer, parseContext) instanceof CPointer pointer)) {
+            return null;
+        }
+        CComplexType type = pointer.getEmbeddedType();
+
+        Expr<?> left = typed(type.castTo(a), type);
+        Expr<?> right = typed(type.castTo(b), type);
+        Expr<?> exact = typed(isAddition ? Add(left, right) : Mul(left, right), type);
+        Expr<?> wrapped = typed(type.castTo(exact), type);
+
+        Expr<BoolType> overflowed;
+        if (isAddition) {
+            overflowed = AbstractExprs.Lt(wrapped, left);
+        } else {
+            Expr<?> quotient =
+                    typed(
+                            wrapped.getType() instanceof IntType && left.getType() instanceof IntType
+                                    ? createIntDiv(wrapped, left)
+                                    : Div(wrapped, left),
+                            type);
+            overflowed =
+                    BoolExprs.And(
+                            BoolExprs.Not(AbstractExprs.Eq(left, type.getNullValue())),
+                            BoolExprs.Not(AbstractExprs.Eq(quotient, right)));
+        }
+
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> flag = functionVisitor.createTempVar(signedInt, "overflow");
+        Expr<?> flagValue =
+                typed(
+                        Ite(overflowed, signedInt.getUnitValue(), signedInt.getNullValue()),
+                        signedInt);
+        preStatements.add(
+                new CAssignment(
+                        flag.getRef(), new CExpr(flagValue, parseContext), "=", parseContext));
+
+        Expr<?> target =
+                dereference(
+                        resultPointer,
+                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
+                        type);
+        preStatements.add(
+                new CAssignment(target, new CExpr(wrapped, parseContext), "=", parseContext));
+        return flag.getRef();
+    }
+
+    private Expr<?> typed(Expr<?> expr, CComplexType type) {
+        parseContext.getMetadata().create(expr, "cType", type);
+        return expr;
+    }
 
     /**
      * Emits a call to a library function that a later pass ({@code FpFunctionsToExprsPass}) models,

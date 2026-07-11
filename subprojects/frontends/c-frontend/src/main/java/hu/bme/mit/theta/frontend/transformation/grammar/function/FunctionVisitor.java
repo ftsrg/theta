@@ -97,6 +97,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         createVars(name, declaration, declaration.getActualType());
     }
 
+    /**
+     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
+     * where a value has to be captured before a later statement can invalidate it.
+     */
+    public VarDecl<?> createTempVar(CComplexType type, String hint) {
+        VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
+        flatVariables.add(varDecl);
+        parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
+        return varDecl;
+    }
+
     private String getName(final String name) {
         final StringJoiner sj = new StringJoiner("::");
         for (Iterator<Tuple2<String, Map<String, VarDecl<?>>>> iterator =
