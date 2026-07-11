@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 
@@ -30,10 +31,17 @@ fun XcfaBuilder.getPtrSizeVar(): VarDecl<ArrayType<*, *>> =
     as VarDecl<ArrayType<*, *>>
 
 fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*>): StmtLabel {
-  val type = Fitsall(null, parseContext)
+  // `__theta_ptr_size` maps a pointer base to an object size, so it is *indexed* by the pointer
+  // type and *holds* Fitsall. The base must therefore be cast to the pointer type -- casting it to
+  // Fitsall (as the size is) makes the index too wide for the array. Under integer arithmetic both
+  // are the same unbounded Int and the casts are skipped, which is why this only ever showed up
+  // under bitvector arithmetic. Every read of the array (MemsafetyPass) already indexes with a
+  // pointer-typed expression.
+  val fitsall = Fitsall(null, parseContext)
+  val pointerType = CPointer(null, null, parseContext)
   val arr = getPtrSizeVar()
-  val baseCast = if (type.smtType is IntType) base else type.castTo(base)
-  val sizeCast = if (type.smtType is IntType) size else type.castTo(size)
+  val baseCast = if (pointerType.smtType is IntType) base else pointerType.castTo(base)
+  val sizeCast = if (fitsall.smtType is IntType) size else fitsall.castTo(size)
   val write = ArrayWriteExpr.create<Type, Type>(arr.ref, baseCast, sizeCast)
   return AssignStmtLabel(arr, write)
 }

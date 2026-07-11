@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -118,8 +119,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             val derefAssume =
               Or(
                 Lt(argument, pointerType.nullValue), // uninit ptr
-                // freed/not big enough ptr
-                Lt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), pointerType.nullValue),
+                // freed/not big enough ptr. The array holds sizes, which are Fitsall-typed, so the
+                // bound it is compared against must be too -- a pointer-typed zero is a different
+                // (narrower) type under bitvector arithmetic.
+                Lt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
               )
 
             builder.addEdge(
@@ -181,11 +184,14 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                     And(shortCircuitConds),
                     Or(
                       Leq(deref.array, pointerType.nullValue), // uninit ptr
+                      // Sizes are Fitsall-typed, offsets are pointer-typed: the offset has to be
+                      // widened to compare against a size (they are the same unbounded Int under
+                      // integer arithmetic, but different bitvector widths otherwise).
                       Leq(
                         ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
-                        deref.offset,
+                        deref.offset.toFitsall(),
                       ), // freed/not big enough ptr
-                      Lt(deref.offset, fitsall.nullValue), // negative index
+                      Lt(deref.offset.toFitsall(), fitsall.nullValue), // negative index
                     ),
                   )
                 }
@@ -220,6 +226,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       }
     }
   }
+
+  private fun Expr<*>.toFitsall(): Expr<*> =
+    if (fitsall.smtType is IntType) this else fitsall.castTo(this)
 
   fun annotateLost(builder: XcfaProcedureBuilder) {
     val errorLoc =

@@ -21,6 +21,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -140,18 +141,24 @@ public class StmtSimplifier {
             if (expr instanceof LitExpr<?> litExpr
                     && deref.getOffset() instanceof LitExpr<OffsetType> litOffset
                     && deref.getArray() instanceof RefExpr<PtrType> ref) {
-                if (litOffset instanceof IntLitExpr) {
-                    IntLitExpr intLitOffset = (IntLitExpr) litOffset;
-                    VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
-                    valuation.put(
-                            varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
-                } else if (litOffset instanceof BvLitExpr) {
-                    BvLitExpr bvLitExpr = (BvLitExpr) litOffset;
-                    VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
-                    valuation.put(
-                            varDecl.getConstDecl(
-                                    BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue()),
-                            litExpr);
+                // The constant stands for the pointer variable, so it carries the *pointer's* type,
+                // while the value written through it has the pointed-to *element's* type. Those
+                // coincide only when a pointer is as wide as what it points at -- true under ILP32,
+                // false under LP64 (a 64-bit pointer to a 32-bit int), where binding one to the
+                // other is a type error. Constant-propagating through memory is only an
+                // optimization, so where the two disagree it is simply skipped.
+                VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
+                Integer offset = null;
+                if (litOffset instanceof IntLitExpr intLitOffset) {
+                    offset = intLitOffset.getValue().intValue();
+                } else if (litOffset instanceof BvLitExpr bvLitOffset) {
+                    offset = BvUtils.neutralBvLitExprToBigInteger(bvLitOffset).intValue();
+                }
+                if (offset != null) {
+                    IndexedConstDecl<PtrType> constDecl = varDecl.getConstDecl(offset);
+                    if (constDecl.getType().equals(litExpr.getType())) {
+                        valuation.put(constDecl, litExpr);
+                    }
                 }
             }
 

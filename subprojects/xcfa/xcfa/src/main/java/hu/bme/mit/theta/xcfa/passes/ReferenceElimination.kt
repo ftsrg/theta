@@ -774,7 +774,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       } else {
         Dereference(
           cast(it.ref, it.type),
-          cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
+          // The offset is an offset into the pointed-to object, so it is pointer-wide -- like at
+          // every other pointer site here. `int` only happens to work under ILP32, where a pointer
+          // is 32 bits too; under LP64 it is 32 bits against a 64-bit pointer, and since `cast` is
+          // a checked cast rather than a conversion, every pointer dereference then fails.
+          cast(CComplexType.getSignedLong(parseContext).nullValue, it.type),
           this.type,
         )
           as Expr<T>

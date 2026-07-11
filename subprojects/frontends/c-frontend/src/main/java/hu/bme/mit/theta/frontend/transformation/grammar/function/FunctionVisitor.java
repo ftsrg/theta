@@ -52,6 +52,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.*;
@@ -157,6 +158,32 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         atomicVariables = new LinkedHashSet<>();
     }
 
+    /**
+     * `malloc` returns a pointer. Recording that up front, rather than relying on the program's own
+     * declaration, keeps its call type right in the two cases where no usable declaration reaches
+     * us:
+     *
+     * <ul>
+     *   <li>a fixed-size array declaration, which is lowered to a synthetic `malloc` call even
+     *       though the program never mentions `malloc`;
+     *   <li>the common glibc spelling `void *malloc(size_t);` -- an unnamed typedef'd parameter --
+     *       which the parser cannot tell from a declaration of a *variable* named `malloc` (an
+     *       identifier is also a candidate type name), and so never records a return type for.
+     * </ul>
+     *
+     * <p>Without it the call is typed `int`, which silently coincides with a pointer under ILP32
+     * and blows up under LP64. A real declaration parsed later simply overwrites this with the same
+     * (pointer) type.
+     */
+    private void declareMallocReturnsPointer() {
+        parseContext
+                .getMetadata()
+                .create(
+                        "malloc",
+                        "cType",
+                        new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext));
+    }
+
     @Override
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
@@ -164,6 +191,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         variables.push(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
+        declareMallocReturnsPointer();
 
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
         ctx.accept(typedefVisitor);
