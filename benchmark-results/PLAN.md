@@ -219,6 +219,35 @@ Result: forced-bitvector canary crashes **70 → 44**, and the remaining 44 are 
 
 **Validation**: forced-bitvector canary crashes **70 → 44 → 6** (the 6 are the `Neutral BvType` case plus known feature gaps — "Pointer arithmetic not supported", "Compound types are not directly supported"). On a 60-task sample of the no-overflow tasks that previously errored on the guard: **23 correct, 0 wrong** (was 22 correct / 1 wrong before the `abs` fix). Overflow fixtures pin all four overflow kinds *and* the near-miss (`INT_MAX - 647 + 1`, which must **not** be a false alarm) under both arithmetics; the integer path is unchanged. All 26 feature fixtures green; all module suites green.
 
+---
+
+## IMPLEMENTATION STATUS — batch 9 (neutral BvType, void-typed casts)
+
+Commit: `keep bitvector signedness through constant folding; handle void-typed casts`. Closes the last two forced-bitvector crash classes.
+
+### `Neutral BvType cannot be used here` — FIXED (a core bug, not a memsafety one)
+A `BvType` carries a **nullable** signedness, and `BvType.Lt/Leq/Gt/Geq` reject a "neutral" (signedness-less) one outright. The bug: **constant folding threw the signedness away.** `ExprSimplifier.simplifyBvAdd` (and its 13 siblings) seed their accumulator with `Bv(new boolean[size])` — a *neutral* zero — and every `BvLitExpr` arithmetic method returned `bigIntegerToNeutralBvLitExpr(...)`. So the expression *tree* carried proper types, but the moment a value was constant-folded the result became neutral, and any later comparison against it threw. `TypeUtils.getDefaultValue` did the same for every uninitialised bitvector variable.
+- Fix: `BvLitExpr` operations now keep the operand's signedness (`zext`/`sext` take the *requested* type's), the folding accumulators are seeded with `expr.getType().getSignedness()`, and `getDefaultValue` builds the literal in the type it was asked for. New `BvType.getSignedness()` exposes the nullable field — ⚠️ the existing `getSigned()` returns a **primitive** `boolean` and silently collapses `null` → `false`, which is why probing signedness through it is misleading (it cost me an hour).
+- Symptom was `&local` + memsafety + bitvector: `ReferenceElimination`'s stack-pointer base got constant-folded into a neutral literal. `memsafety-ext3/scopes2.c` now reports the correct **Unsafe**.
+
+### "Compound types are not directly supported!" — FIXED (two distinct bugs)
+1. **`(void)e` corrupted the operand's type.** `visitCastExpressionCast` did `castTo` — which for `CVoid` is the *identity* — and then stamped `cType = void` on the result. Since a variable's `RefExpr` is a single shared instance, `(void)x` made **x look void everywhere it was used**, breaking every later conversion of it. Now a void cast returns the operand untouched.
+2. **A void-typed *source* threw.** Reached through the standard assert expansion `cond ? (void)0 : fail()`, whose arms are both void so the frontend unifies them to a common type. A void expression has no value and C forbids reading one, so the bitvector `CastVisitor` now yields the target's zero. (Under integer arithmetic this never surfaced: there the conversion ignores the source type entirely.)
+
+**Validation**: forced-bitvector canary crashes **6 → 2** — and the last 2 are `loops/array-{1,2}.c` hitting *"Pointer arithmetic not supported"*, a genuinely unimplemented feature rather than a type bug. Canary suite (default arithmetic): **143/143 correct, 0 wrong, 0 errors**. All 28 fixtures green. Core/solver/xcfa suites green (`:theta-solver-smtlib:GenericSmtLibHornSolverTest` fails identically at HEAD — a missing solver binary in this environment, not a regression).
+
+---
+
+## NEXT UP (queue as of batch 9; the in-flight benchmark run will re-rank it)
+
+1. **N3 division overflow** (Phase 5.1) — **the top remaining no-overflow blocker**, and small. `OverflowDetectionPass.kt:240` throws `UnsupportedOperationException("We cannot soundly detect overflows with divisions.")` if the program contains **any** `DivExpr` *anywhere* — even though `DivExpr` is already in the pass's filter and `bvOverflowCondition` handles it. It was 15/60 (~25%) of the remaining errors in the no-overflow sample and matches the original triage's "division 831". Division overflows on exactly one input pair (`INT_MIN / -1`), so the integer path needs the same explicit condition the bitvector path already has — minding that C's `/` lowers to the `createIntDiv` Ite shape. Signed-shift overflow is still unchecked in **both** modes (also Phase 5).
+2. **Phase 4 / AD6 grammar — the typedef-name ambiguity.** Highest-value frontend item left (`ParseCancellationException` ≈ 4,108 tasks, and still what blocks most of aws-c-common). Batch 6 found the concrete shape: with no symbol table and `typedefName : Identifier`, **`void *malloc(size_t);` is not parsed as a function at all** — it becomes two *variables*, `malloc` and `size_t`. Any function declared with a bare typedef'd parameter is misparsed the same way; `malloc` is merely special-cased now. Needs the resolved AD6 approach (typedef feedback + semantic predicate) and the "handle with care" protocol.
+3. **"Pointer arithmetic not supported"** (`FrontendXcfaBuilder`) — now the *only* forced-bitvector crash class left, and it appears in the plain canary corpus (`loops/array-{1,2}.c`).
+4. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
+5. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
+6. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`, **C1** east-const.
+7. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
+
 **→ A full re-test is warranted now.** Expected: the largest frontend-error classes ("Only variable-backed functions" 1,543; asm NPE 882; unions 1,722 partially; alloca 421) should shrink; watch for new *wrong* results from fptr dispatch (candidate-set over-approximation), asm output havocing, and union offset-0 aliasing.
 
 ## 0. Result summary
