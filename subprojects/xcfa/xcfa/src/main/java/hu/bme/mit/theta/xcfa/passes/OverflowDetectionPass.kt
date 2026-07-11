@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import java.math.BigInteger
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -118,6 +120,19 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                 // A bitvector operation has already wrapped, so range-checking its result would
                 // always succeed; the overflow has to be reconstructed from the operands instead.
                 bvOverflowCondition(it)
+              } else if (it is DivExpr<*>) {
+                // Division must not be range-checked. C's `/` is lowered to the solver's `div`, which
+                // is unconstrained when the divisor is zero -- so the "result" could be any value at
+                // all, and a range check on it would report an overflow for a program that merely
+                // divides by zero (a different kind of undefined behaviour, and not this property's
+                // concern). State instead the one input pair that genuinely overflows: the most
+                // negative value divided by -1, whose true result is one past the maximum.
+                val cType =
+                  parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
+                And(
+                  Eq(it.leftOp, Int(BigInteger.TWO.pow(cType.width() - 1).negate())),
+                  Eq(it.rightOp, Int(BigInteger.ONE.negate())),
+                )
               } else {
                 val cType =
                   parseContext.metadata
@@ -235,9 +250,6 @@ private fun Expr<*>.getExpressions(
   f: (Expr<*>) -> Boolean,
   shortCircuitCondition: Expr<BoolType> = TrueExpr.getInstance(),
 ): Set<Expr<*>> {
-  if (this is DivExpr<*>) {
-    throw UnsupportedOperationException("We cannot soundly detect overflows with divisions.")
-  }
   var shortCircuitCondition: Expr<BoolType> = shortCircuitCondition
   val ret = mutableSetOf<Expr<*>>()
   for (expr in ops) {

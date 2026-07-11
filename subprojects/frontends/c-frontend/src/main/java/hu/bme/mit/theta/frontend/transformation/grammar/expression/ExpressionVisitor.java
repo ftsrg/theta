@@ -455,6 +455,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         if (leftExpr.getType() instanceof IntType
                                 && rightExpr.getType() instanceof IntType) {
                             expr = createIntDiv(leftExpr, rightExpr);
+                            // The division itself is buried inside the Ite that adjusts the solver's
+                            // rounding to C's; only that Ite is given a type below. Type the division
+                            // too, so that OverflowDetectionPass can find it -- it is the operation
+                            // that can overflow (INT_MIN / -1), not the Ite around it.
+                            parseContext
+                                    .getMetadata()
+                                    .create(innerDiv(expr), "cType", smallestCommonType);
                         } else {
                             expr = AbstractExprs.Div(leftExpr, rightExpr);
                         }
@@ -482,6 +489,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return expr;
         }
         return ctx.castExpression(0).accept(this);
+    }
+
+    /** The {@code Div} that {@link #createIntDiv} wrapped in its rounding-adjustment Ite. */
+    private static Expr<?> innerDiv(Expr<?> intDiv) {
+        if (intDiv instanceof DivExpr<?>) {
+            return intDiv;
+        }
+        for (Expr<?> op : intDiv.getOps()) {
+            Expr<?> found = innerDiv(op);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     /**
