@@ -240,7 +240,19 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     @Override
     public CSimpleType visitTypeSpecifierFunctionPointer(
             CParser.TypeSpecifierFunctionPointerContext ctx) {
-        throw new UnsupportedFrontendElementException("Function pointers not yet implemented");
+        // A function pointer holds a function id, so it is modeled as a pointer-sized value. The
+        // pointee is never dereferenced as data, so the return type (plus its own pointer stars)
+        // is used as the base type.
+        CSimpleType returnType =
+                ctx.typeSpecifier() == null
+                        ? NamedType("int", parseContext, uniqueWarningLogger)
+                        : ctx.typeSpecifier().accept(this);
+        if (returnType == null) {
+            return null;
+        }
+        CSimpleType functionPointer = returnType.copyOf();
+        functionPointer.incrementPointer(); // the (*) of the function pointer itself
+        return functionPointer;
     }
 
     @Override

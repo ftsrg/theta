@@ -158,6 +158,12 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(typeVisitor);
         CDeclaration declaration = ctx.declarator().accept(this);
         declaration.setType(cSimpleType);
+        if (declaration.isFunc()) {
+            // C adjusts a parameter of function type to a pointer to function: in
+            // `void f(void g(int))`, `g` is a function pointer, not a function.
+            declaration.setFunc(false);
+            declaration.setFuncPointer(true);
+        }
         return declaration;
     }
 
@@ -239,9 +245,17 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     public CDeclaration visitDirectDeclaratorFunctionDecl(
             CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
+        // `int (*fp)(int)` declares a function POINTER variable, while `int foo(int)` (and
+        // `int *foo(int)`, a function returning a pointer) declare functions. They are told apart
+        // structurally: only the function pointer parenthesizes a pointer declarator, i.e. the
+        // direct declarator is `( * fp )`.
+        boolean isFunctionPointer =
+                ctx.directDeclarator() instanceof CParser.DirectDeclaratorBracesContext braces
+                        && braces.declarator().pointer() != null;
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
             uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!\n");
-            decl.setFunc(true);
+            decl.setFunc(!isFunctionPointer);
+            decl.setFuncPointer(isFunctionPointer);
             return decl;
         }
         if (ctx.parameterTypeList() != null) {
@@ -250,7 +264,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 decl.addFunctionParam(parameterDeclarationContext.accept(this));
             }
         }
-        decl.setFunc(true);
+        decl.setFunc(!isFunctionPointer);
+        decl.setFuncPointer(isFunctionPointer);
         return decl;
     }
 

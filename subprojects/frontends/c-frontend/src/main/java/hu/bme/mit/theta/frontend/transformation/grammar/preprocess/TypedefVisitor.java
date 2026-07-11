@@ -54,6 +54,18 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                 .findFirst();
     }
 
+    /**
+     * `typedef int (*handler)(int)` -- carries the function-pointer-ness on the TYPE, so that
+     * variables later declared with the typedef name are recognized as callable function pointers.
+     */
+    private static void markFunctionPointerTypedefs(List<CDeclaration> declarations) {
+        for (CDeclaration declaration : declarations) {
+            if (declaration.isFuncPointer()) {
+                declaration.getType().setFunctionPointer(true);
+            }
+        }
+    }
+
     @Override
     public Set<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
         Set<CDeclaration> ret = new LinkedHashSet<>();
@@ -61,6 +73,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
             List<CDeclaration> declarations =
                     declarationVisitor.getDeclarations(
                             ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+            markFunctionPointerTypedefs(declarations);
             this.declarations.addAll(declarations);
             ret.addAll(declarations);
             return ret;
@@ -105,6 +118,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                     declarationVisitor.getDeclarations(
                             ctx.declaration().declarationSpecifiers(),
                             ctx.declaration().initDeclaratorList());
+            markFunctionPointerTypedefs(declarations);
             ret.addAll(declarations);
             this.declarations.addAll(declarations);
             return ret;

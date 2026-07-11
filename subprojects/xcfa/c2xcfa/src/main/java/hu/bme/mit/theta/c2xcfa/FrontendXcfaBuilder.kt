@@ -48,6 +48,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
+import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
@@ -153,6 +154,21 @@ class FrontendXcfaBuilder(
         globalDeclaration.get1().initExpr,
         globalDeclaration.get1().type.isAtomic,
       )
+    }
+    // A function whose address is taken gets a variable holding its id, so that assigning it to a
+    // function pointer (`fp = f`) stores the id that FunctionPointerCallsPass dispatches on. This is
+    // only needed when the program actually calls through a function pointer -- taking a function's
+    // address merely to pass it to pthread_create resolves it by name -- so programs without
+    // indirect calls are left completely unchanged.
+    for (function in if (FunctionIds.hasIndirectCall()) cProgram.functions else listOf()) {
+      val id = FunctionIds.getId(function.funcDecl.name) ?: continue
+      for (varDecl in function.funcDecl.varDecls) {
+        // The id is an integer. The variable's own C type is the function's RETURN type, which for a
+        // `void` function has no value representation at all, so the literal is built as an int.
+        val idLit = CComplexType.getSignedInt(parseContext).getValue(id.toString())
+        builder.addVar(XcfaGlobalVar(varDecl, idLit))
+        initStmtList.add(AssignStmtLabel(varDecl, cast(idLit, varDecl.type)))
+      }
     }
     for (function in cProgram.functions) {
       val toAdd: XcfaProcedureBuilder = handleFunction(function, initStmtList, builder)

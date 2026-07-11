@@ -47,12 +47,20 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(parseContext),
     ),
-    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
+    listOf(
+      ReferenceElimination(parseContext),
+      MallocFunctionPass(parseContext),
+    ),
     listOf(
       // optimizing
       SimplifyExprsPass(parseContext, property),
       LoopUnrollPass(),
       EmptyEdgeRemovalPass(),
+    ),
+    listOf(
+      // Expand calls through function pointers into a dispatch over their candidate set, so that
+      // the direct calls it produces can be inlined below. No-op without indirect calls.
+      FunctionPointerCallsPass(parseContext, uniqueWarningLogger)
     ),
     listOf(
       // trying to inline procedures
@@ -127,7 +135,10 @@ class NontermValidationPasses(
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(parseContext),
     ),
-    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
+    listOf(
+      ReferenceElimination(parseContext),
+      MallocFunctionPass(parseContext),
+    ),
     listOf(
       // optimizing
       UnusedLocRemovalPass()

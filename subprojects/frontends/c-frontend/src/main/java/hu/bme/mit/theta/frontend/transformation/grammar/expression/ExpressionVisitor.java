@@ -56,6 +56,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
@@ -691,12 +692,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":
+                // `&f` and `f` denote the same thing for a function: its address (id).
+                if (isCallableFunctionPointer(originalOperand)) {
+                    return originalOperand;
+                }
                 checkState(
                         originalOperand instanceof RefExpr<?>
                                 || originalOperand instanceof Dereference<?, ?, ?>,
                         "Referencing non-lvalue expressions is not allowed!");
                 return reference(originalOperand);
             case "*":
+                // `*f` on a function (pointer) is the function itself: (*fp)(x) == fp(x).
+                if (isCallableFunctionPointer(originalOperand)) {
+                    return originalOperand;
+                }
                 type = CComplexType.getType(originalOperand, parseContext);
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
                 else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
@@ -762,6 +771,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (builtin != null) {
             return builtin;
         }
+        registerIfFunctionUsedAsValue(ctx);
         Expr<?> primary = ctx.primaryExpression().accept(this);
         if (primary == null) {
             return null;
@@ -771,6 +781,80 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
         return primary;
     }
+
+    /**
+     * A function name that is NOT immediately called denotes the function's address (C decays a
+     * function designator to a pointer). Registering it here marks the function as address-taken, so
+     * that it becomes a candidate for indirect calls and its variable is initialized to its id (see
+     * {@code FrontendXcfaBuilder}). The expression itself stays the ordinary reference to the
+     * function's variable -- whose value IS the id -- so that consumers such as
+     * {@code CLibraryFunctionsPass} (pthread_create's start routine) keep working unchanged.
+     */
+    private void registerIfFunctionUsedAsValue(CParser.PostfixExpressionContext ctx) {
+        if (!(ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext idCtx)) {
+            return;
+        }
+        boolean isCalled =
+                !ctx.pfExprs.isEmpty() && ctx.pfExprs.get(0).postfixExpressionBraces() != null;
+        if (isCalled) {
+            return;
+        }
+        String name = idCtx.Identifier().getText();
+        VarDecl<?> variable = getVar(name);
+        if (variable != null && functions.containsKey(variable)) {
+            FunctionIds.idOf(name);
+            parseContext.getMetadata().create(variable.getRef(), "isFunctionPointer", true);
+        }
+    }
+
+    /**
+     * True if this expression denotes a callable function pointer: a variable declared as one, or a
+     * function's address taken directly (e.g. {@code (&f)(x)}).
+     */
+    private boolean isCallableFunctionPointer(Expr<?> expr) {
+        if (parseContext.getMetadata().getMetadataValue(expr, "isFunctionPointer").isPresent()) {
+            return true;
+        }
+        // Carried on the type, so that function pointers reached through a struct field, an array
+        // element or a typedef are recognized as well.
+        return CComplexType.getType(expr, parseContext) instanceof CPointer cPointer
+                && cPointer.isFunctionPointer();
+    }
+
+    /** Marker call emitted for an indirect call; {@link FunctionPointerCallsPass} expands it. */
+    public static final String INDIRECT_CALL = "__theta_indirect_call";
+
+    /**
+     * Emits a call through a function pointer as a marker call whose first argument is the pointer
+     * itself. A later pass replaces it with a nondeterministic dispatch over the candidate set (the
+     * functions whose address is taken).
+     */
+    private Expr<?> indirectCall(PostfixExpressionBracesContext ctx, Expr<?> functionPointer) {
+        FunctionIds.markIndirectCall();
+        List<CStatement> arguments = new ArrayList<>();
+        arguments.add(new CExpr(functionPointer, parseContext));
+        CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
+        if (exprList != null) {
+            if (functionVisitor == null) {
+                throw new RuntimeException("Cannot parse function calls without a function visitor.");
+            }
+            for (AssignmentExpressionContext arg : exprList.assignmentExpression()) {
+                arguments.add(arg.accept(functionVisitor));
+            }
+        }
+        // The call returns what the pointed-to function returns, i.e. the pointee of the pointer.
+        CComplexType pointerType = CComplexType.getType(functionPointer, parseContext);
+        CComplexType returnType =
+                pointerType instanceof CPointer cPointer
+                        ? cPointer.getEmbeddedType()
+                        : CComplexType.getSignedInt(parseContext);
+        parseContext.getMetadata().create(INDIRECT_CALL, "cType", returnType);
+        CCall cCall = new CCall(INDIRECT_CALL, arguments, parseContext);
+        preStatements.add(cCall);
+        if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cCall);
+        return cCall.getRet().getRef();
+    }
+
 
     /**
      * Handles the few GCC builtins that are pure value pass-throughs (or trivially constant) and
@@ -1140,10 +1224,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBraces(
                 PostfixExpressionBracesContext ctx) {
             return (expr) -> {
+                // A call is dispatched over the candidate set only when it goes through a
+                // function POINTER variable. A plain name is called directly -- both a function
+                // defined here and a library function (malloc, __VERIFIER_nondet_int, ...), which
+                // is not in `functions` because it is resolved by name much later.
+                boolean isDefinedFunction =
+                        expr instanceof RefExpr<?> refExpr
+                                && refExpr.getDecl() instanceof VarDecl<?> varDecl
+                                && functions.containsKey(varDecl);
+                if (!isDefinedFunction && isCallableFunctionPointer(expr)) {
+                    return indirectCall(ctx, expr);
+                }
                 checkState(
-                        expr instanceof RefExpr<?>
-                                && functions.containsKey(
-                                        (VarDecl<?>) ((RefExpr<?>) expr).getDecl()),
+                        expr instanceof RefExpr<?>,
                         "Only variable-backed functions are callable.");
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;

@@ -47,6 +47,17 @@ public abstract class CSimpleType {
         return pointerLevel;
     }
 
+    private boolean functionPointer = false;
+
+    /** True when this type is a pointer to a function (e.g. a `typedef int (*h)(int)`). */
+    public boolean isFunctionPointer() {
+        return functionPointer;
+    }
+
+    public void setFunctionPointer(boolean functionPointer) {
+        this.functionPointer = functionPointer;
+    }
+
     public void incrementPointer() {
         ++pointerLevel;
     }
@@ -201,5 +212,6 @@ public abstract class CSimpleType {
         for (int i = 0; i < this.getPointerLevel(); i++) {
             copy.incrementPointer();
         }
+        copy.setFunctionPointer(this.isFunctionPointer());
     }
 }

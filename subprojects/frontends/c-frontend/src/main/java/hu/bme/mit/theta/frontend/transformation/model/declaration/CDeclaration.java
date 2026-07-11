@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ public class CDeclaration {
     private final String name;
     private final List<VarDecl<?>> varDecls;
     private boolean isFunc;
+    private boolean isFuncPointer;
     private int derefCounter = 0;
     private final List<CStatement> arrayDimensions = new ArrayList<>();
     private final List<CDeclaration> functionParams = new ArrayList<>();
@@ -82,6 +85,23 @@ public class CDeclaration {
 
     public CComplexType getActualType() {
         CComplexType actualType = type.getActualType();
+        if (isFuncPointer || type.isFunctionPointer()) {
+            // In `int (*fp)(int)` the star sits inside the declarator, so (unlike `int *p`) it never
+            // reaches the type specifier: wrap it here. The pointer holds a function id, which
+            // FunctionPointerCallsPass dispatches on.
+            CSimpleType pointerType = type.copyOf();
+            pointerType.incrementPointer();
+            // The pointee of a function pointer is never dereferenced as data, so a `void`-returning
+            // one (`void (*f)(void*)`) uses a benign stand-in: CVoid has no value representation.
+            CComplexType pointeeType =
+                    actualType instanceof CVoid
+                            ? CComplexType.getSignedInt(actualType.getParseContext())
+                            : actualType;
+            CPointer functionPointer =
+                    new CPointer(pointerType, pointeeType, actualType.getParseContext());
+            functionPointer.setFunctionPointer(true);
+            actualType = functionPointer;
+        }
         for (CStatement arrayDimension : arrayDimensions) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
@@ -137,6 +157,16 @@ public class CDeclaration {
             stringBuilder.append(" = ").append(initExpr);
         }
         return stringBuilder.toString();
+    }
+
+    /** True for a function POINTER variable (e.g. `int (*fp)(int)`), which is a variable, not a
+     * function. Its value is a function id; calls through it are dispatched over a candidate set. */
+    public boolean isFuncPointer() {
+        return isFuncPointer;
+    }
+
+    public void setFuncPointer(boolean funcPointer) {
+        isFuncPointer = funcPointer;
     }
 
     public boolean isFunc() {

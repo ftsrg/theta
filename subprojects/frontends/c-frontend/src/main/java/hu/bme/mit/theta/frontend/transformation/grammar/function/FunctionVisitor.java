@@ -122,6 +122,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
         parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
         parseContext.getMetadata().create(varDecl.getName(), "cName", name);
+        if (declaration.isFuncPointer()) {
+            // Marks the variable as holding a function id, so that a call through it is dispatched
+            // over the candidate set instead of being treated as a data pointer.
+            parseContext.getMetadata().create(varDecl.getRef(), "isFunctionPointer", true);
+        }
         declaration.addVarDecl(varDecl);
     }
 
