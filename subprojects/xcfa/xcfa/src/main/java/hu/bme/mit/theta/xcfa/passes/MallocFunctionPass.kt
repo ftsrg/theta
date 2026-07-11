@@ -36,7 +36,11 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   companion object {
     private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
-    private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
+    /**
+     * The allocation counter. [AllocaFunctionPass] hands out addresses from the *same* counter, so
+     * that a heap block and a stack block can never be given the same base.
+     */
+    fun XcfaBuilder.mallocVar(parseContext: ParseContext): VarDecl<*> =
       mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
   }
 

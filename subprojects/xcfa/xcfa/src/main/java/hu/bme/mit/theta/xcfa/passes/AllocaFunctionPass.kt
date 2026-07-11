@@ -15,15 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.decl.Decls.Var
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.mallocVar
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -50,14 +48,6 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * Requires the ProcedureBuilder be `deterministic`.
  */
 class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
-
-  companion object {
-    private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
-
-    /** The same counter [MallocFunctionPass] uses, so the two allocators never hand out the same k. */
-    private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
-      mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
-  }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
