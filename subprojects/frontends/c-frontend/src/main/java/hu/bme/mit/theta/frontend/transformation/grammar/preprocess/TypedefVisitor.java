@@ -47,6 +47,14 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                 .findFirst();
     }
 
+    /** The names this translation unit typedefs, for the parser to recognize as type names. */
+    public Set<String> getTypedefNames() {
+        return declarations.stream()
+                .map(CDeclaration::getName)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+    }
+
     public Optional<CSimpleType> getSimpleType(String id) {
         return declarations.stream()
                 .filter(cDeclaration -> cDeclaration.getName().equals(id))

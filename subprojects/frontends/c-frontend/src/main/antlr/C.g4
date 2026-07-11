@@ -29,6 +29,68 @@
 /** C 2011 grammar built from the C11 Spec */
 grammar C;
 
+@parser::members {
+    /**
+     * The typedef names seen so far. An identifier is a type name only if it is in here: without
+     * this, *any* identifier can start a type, and the grammar cannot tell `(a) * b` (a cast of a
+     * dereference) from `(a) * b` (a multiplication), nor `void *malloc(size_t);` (a function) from
+     * a declaration of two variables named `malloc` and `size_t`.
+     */
+    public final java.util.Set<String> typedefNames = new java.util.LinkedHashSet<String>();
+
+    /**
+     * When set, every identifier is accepted as a type name -- the behaviour the grammar had before
+     * it knew about typedefs. The first, name-collecting parse runs in this mode, and it is also the
+     * fallback for anything the type-aware parse cannot handle.
+     */
+    public boolean permissiveTypeNames = true;
+
+    public boolean isTypeName(String name) {
+        return permissiveTypeNames || typedefNames.contains(name);
+    }
+
+    /** Everything a type can begin with, other than a typedef name. */
+    private static final java.util.Set<String> TYPE_STARTERS =
+            new java.util.HashSet<String>(java.util.Arrays.asList(
+                    "void", "char", "short", "int", "long", "float", "double", "signed", "unsigned",
+                    "_Bool", "_Complex", "__int128", "__m128", "__m128d", "__m128i", "__extension__",
+                    "struct", "union", "enum", "const", "volatile", "restrict", "_Atomic",
+                    "__const", "__restrict", "__restrict__", "__volatile__", "__thread",
+                    "typeof", "__typeof__", "static", "extern", "register", "auto", "inline",
+                    "_Alignas", "__inline__", "__attribute__"));
+
+    public boolean isTypeStart(org.antlr.v4.runtime.Token token) {
+        if (permissiveTypeNames) {
+            return true;
+        }
+        if (token.getType() == Identifier) {
+            return typedefNames.contains(token.getText());
+        }
+        return TYPE_STARTERS.contains(token.getText());
+    }
+
+    /**
+     * Whether a `(` here opens a cast rather than a parenthesized expression -- decided by what
+     * follows it.
+     *
+     * The predicate has to sit on the cast alternative itself, not merely inside `typedefName`:
+     * ANTLR only uses a predicate to *choose* an alternative if it can reach it without consuming a
+     * token, and the one in `typedefName` lies past the `(`. Left where it was, prediction would
+     * assume it true, commit to the cast, and only then find out -- turning `(a) * b` from a
+     * mis-parse into a parse error.
+     */
+    public boolean startsCast() {
+        int i = 1;
+        if ("__extension__".equals(_input.LT(i).getText())) {
+            i++;
+        }
+        if (!"(".equals(_input.LT(i).getText())) {
+            return false;
+        }
+        return isTypeStart(_input.LT(i + 1));
+    }
+}
+
 
 primaryExpression
     :   PRETTY_FUNC                                                         # gccPrettyFunc
@@ -133,7 +195,7 @@ unaryOperator
     ;
 
 castExpression
-    :   '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
+    :   {startsCast()}? '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
     |   unaryExpression                                     #castExpressionUnaryExpression
 //    |   DigitSequence                                       #castExpressionDigitSequence
     ;
@@ -456,7 +518,7 @@ directAbstractDeclarator
     ;
 
 typedefName
-    :   Identifier
+    :   {isTypeName(_input.LT(1).getText())}? Identifier
     ;
 
 initializer
