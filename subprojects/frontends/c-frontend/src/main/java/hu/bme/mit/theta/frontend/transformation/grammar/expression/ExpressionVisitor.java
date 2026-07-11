@@ -908,6 +908,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_isnormal" -> {
                 return callModeledLibraryFunction("isnormal", args, false);
             }
+            case "__builtin_alloca", "__builtin_alloca_with_align" -> {
+                return callAlloca(args);
+            }
             default -> {
                 // The remaining __builtin_ classification/comparison functions have no declaration
                 // but are exactly the int-returning library predicates FpFunctionsToExprsPass
@@ -959,6 +962,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "ceil", "ceilf", "ceill", "trunc", "truncf", "truncl", "round", "roundf",
                     "roundl", "fmin", "fminf", "fminl", "fmax", "fmaxf", "fmaxl", "fmod", "fmodf",
                     "fmodl");
+
+    /**
+     * Emits the `alloca(size)` call that {@code AllocaFunctionPass} lowers into a stack allocation.
+     * The {@code __builtin_} form has no declaration, so the pointer return type is supplied here
+     * (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
+     * alignment argument, which does not affect the modelled size, so it is dropped.
+     */
+    private Expr<?> callAlloca(List<AssignmentExpressionContext> args) {
+        if (functionVisitor == null || args.isEmpty()) {
+            return null;
+        }
+        List<CStatement> arguments = new ArrayList<>();
+        arguments.add(args.get(0).accept(functionVisitor));
+        CComplexType pointerType =
+                new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext);
+        parseContext.getMetadata().create(ALLOCA, "cType", pointerType);
+        CCall cCall = new CCall(ALLOCA, arguments, parseContext);
+        preStatements.add(cCall);
+        return cCall.getRet().getRef();
+    }
+
+    private static final String ALLOCA = "alloca";
 
     /**
      * Emits a call to a library function that a later pass ({@code FpFunctionsToExprsPass}) models,
