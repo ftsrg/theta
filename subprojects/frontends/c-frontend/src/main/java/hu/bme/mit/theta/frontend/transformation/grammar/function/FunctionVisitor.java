@@ -57,6 +57,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.*;
 import java.util.stream.Stream;
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * FunctionVisitor is responsible for the instantiation of high-level model elements, such as
@@ -529,9 +531,136 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     @Override
     public CStatement visitStatement(CParser.StatementContext ctx) {
         currentStatementContext.push(Tuple2.of(ctx, Optional.empty()));
-        final var ret = ctx.children.get(0).accept(this);
+        // Every other alternative of `statement` starts with a sub-rule; only the inline-assembly
+        // one starts with a keyword token, and its children would visit to null.
+        final var ret =
+                isInlineAssembly(ctx) ? inlineAssembly(ctx) : ctx.children.get(0).accept(this);
         currentStatementContext.pop();
         return ret;
+    }
+
+    private static final Set<String> ASM_KEYWORDS = Set.of("asm", "__asm", "__asm__");
+
+    private static boolean isInlineAssembly(CParser.StatementContext ctx) {
+        return ctx.children.get(0) instanceof TerminalNode keyword
+                && ASM_KEYWORDS.contains(keyword.getText());
+    }
+
+    /**
+     * Models an inline assembly statement, which the analysis cannot execute.
+     *
+     * <p>An empty assembly template is not machine code at all but a compiler barrier (e.g. {@code
+     * __asm__ __volatile__("" : "+r"(x))}, which only stops the value from being optimized away):
+     * it leaves its operands untouched, so it is modelled exactly, as a no-op.
+     *
+     * <p>A non-empty template really does execute, and typically writes to its output operands
+     * (e.g. {@code __asm__("movq %%gs:%P1,%0" : "=r"(v) : ...)}). Since we cannot say what it
+     * computes, each output operand is havoced -- an over-approximation, which keeps the analysis
+     * sound -- and any other effect it may have (on memory, on inputs marked read-write) is warned
+     * about, as it is silently dropped.
+     */
+    private CStatement inlineAssembly(CParser.StatementContext ctx) {
+        CCompound compound = new CCompound(parseContext);
+        if (isEmptyAssemblyTemplate(ctx)) {
+            recordMetadata(ctx, compound);
+            return compound;
+        }
+        uniqueWarningLogger.write(
+                Level.INFO,
+                "WARNING: inline assembly is not interpreted; its output operands are havoced and"
+                        + " its other side-effects are ignored.\n");
+        for (CParser.LogicalOrExpressionContext operand : outputOperands(ctx)) {
+            CStatement lValue = operandLValue(operand);
+            if (lValue == null) {
+                continue;
+            }
+            CComplexType type = CComplexType.getType(lValue.getExpression(), parseContext);
+            // A `__VERIFIER_nondet*` call is turned into a havoc of its return value by
+            // NondetFunctionPass; the name must not collide with a function the program defines.
+            parseContext.getMetadata().create(ASM_NONDET, "cType", type);
+            CCall nondet = new CCall(ASM_NONDET, List.of(), parseContext);
+            compound.addCStatement(nondet);
+            CAssignment assignment =
+                    new CAssignment(
+                            lValue.getExpression(),
+                            new CExpr(nondet.getRet().getRef(), parseContext),
+                            "=",
+                            parseContext);
+            recordMetadata(ctx, assignment);
+            compound.addCStatement(assignment);
+        }
+        if (compound.getcStatementList().isEmpty()) {
+            compound.addCStatement(new CNullStatement(parseContext));
+        }
+        recordMetadata(ctx, compound);
+        return compound;
+    }
+
+    private static final String ASM_NONDET = "__VERIFIER_nondet_theta_asm";
+
+    /**
+     * The assembly template: every token between the opening parenthesis and the first colon (an
+     * assembly template may be written as several adjacent string literals). Empty exactly when
+     * every one of them is the empty string.
+     */
+    private boolean isEmptyAssemblyTemplate(CParser.StatementContext ctx) {
+        for (ParseTree child : ctx.children) {
+            String text = child.getText();
+            if (text.equals(":") || text.equals(")")) {
+                break;
+            }
+            if (child instanceof CParser.LogicalOrExpressionContext
+                    && !text.replace("\"", "").isBlank()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** The operands of the first colon group, which are the outputs. */
+    private List<CParser.LogicalOrExpressionContext> outputOperands(
+            CParser.StatementContext ctx) {
+        List<CParser.LogicalOrExpressionContext> operands = new ArrayList<>();
+        int colons = 0;
+        for (ParseTree child : ctx.children) {
+            if (child.getText().equals(":")) {
+                colons++;
+                if (colons > 1) {
+                    break;
+                }
+            } else if (colons == 1 && child instanceof CParser.LogicalOrExpressionContext operand) {
+                operands.add(operand);
+            }
+        }
+        return operands;
+    }
+
+    /**
+     * The lvalue an output operand writes to: an operand is a constraint string applied to a
+     * parenthesized expression (`"=r" (x)`), which parses as if the string literal were called with
+     * the lvalue as its argument. Returns null if the operand does not have that shape.
+     */
+    private CStatement operandLValue(CParser.LogicalOrExpressionContext operand) {
+        CParser.ArgumentExpressionListContext arguments =
+                firstDescendant(operand, CParser.ArgumentExpressionListContext.class);
+        if (arguments == null || arguments.assignmentExpression().isEmpty()) {
+            return null;
+        }
+        return arguments.assignmentExpression(0).accept(this);
+    }
+
+    private static <T extends ParseTree> T firstDescendant(ParseTree node, Class<T> type) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+            ParseTree child = node.getChild(i);
+            if (type.isInstance(child)) {
+                return type.cast(child);
+            }
+            T found = firstDescendant(child, type);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     @Override
