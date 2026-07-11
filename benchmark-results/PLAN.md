@@ -238,7 +238,34 @@ A `BvType` carries a **nullable** signedness, and `BvType.Lt/Leq/Gt/Geq` reject 
 
 ---
 
-## NEXT UP (queue as of batch 9; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 10 (division overflow, typedef-aware parsing)
+
+### N3 division overflow — FIXED (Phase 5.1 complete)
+`OverflowDetectionPass` refused to check *any* program containing a division (`throw UnsupportedOperationException("We cannot soundly detect overflows with divisions.")`), which is why "division 831" was its own error cluster. The reason it could not simply range-check the result: C's `/` lowers to the solver's `div`, which is **unconstrained when the divisor is zero** — so the "result" could be any value, and a range check on it would report an overflow for a program that merely divides by zero (a different undefined behaviour, and not this property's concern). Division overflows on exactly one input pair, so that is now stated directly: `INT_MIN / -1`, whose true result is one past the maximum. The bitvector path already had this in `BvOverflow.kt`; the integer path needed the same condition plus a `cType` on the `Div` buried inside `createIntDiv`'s rounding-adjustment `Ite`. Commit: `detect division overflow (INT_MIN / -1) instead of refusing to check programs with divisions`.
+- Fixtures pin `INT_MIN / -1` (Unsafe), ordinary division (Safe), **division by zero (Safe — not an overflow, the false-alarm risk)** and negative-operand rounding (Safe), under both arithmetics.
+- On the 60-task no-overflow sample: errors **26 → 11**, correct 23 → 26, still **0 wrong**.
+- ⚠️ Still unchecked in both modes: **signed shift overflow** (`E1 << E2` past the type's range). Deliberately not added yet — it risks false alarms on code that shifts signed values, and wants its own measured pass.
+
+### Phase 4 / AD6 — typedef-aware parsing — IMPLEMENTED
+The grammar could not tell a type name from any other identifier (`typedefName : Identifier`), which is what made `(a) * b` ambiguous and what made **`void *malloc(size_t);` parse as two *variables*** rather than a function. C resolves this with a symbol table, so the parser is given one. Commit: `parse C with a typedef symbol table, so type names and identifiers are told apart`.
+- **Two passes**: a first, error-tolerant parse (behaving exactly as before — every identifier may be a type) harvests the file's typedef names straight off the parse tree; the real parse then accepts only those as types. If the type-aware parse fails, it **falls back to the old permissive one**, so nothing that parses today can start failing.
+- ⚠️ **The predicate has to sit on the cast alternative, not only inside `typedefName`.** ANTLR only uses a predicate to *choose* an alternative if it can reach it **without consuming a token**, and the one in `typedefName` lies past the `(`. Left there alone, prediction assumes it true, commits to the cast, and only then evaluates it — turning `(a) * b` from a mis-parse into a hard **parse error**. `castExpression` therefore carries `{startsCast()}?`, which looks at the token after the `(`. (`sizeof` needs nothing: it already decides *after* consuming its `(`, so the token it tests is the right one.)
+- The collection pass must **not** run the frontend's own visitors: they have side effects (registering struct tags, writing `cType` metadata into the shared `ParseContext`), and running them twice over a file corrupts the real parse. Names are read off the tree directly.
+- **Validation (the "handle with care" protocol)**: XCFA **byte-identical on 31/31** `c2xcfa` fixtures (no silent reinterpretation); canary parse sweep **143/143 OK** (zero new parse failures); canary verdicts **143/143 correct, 0 wrong, 0 errors**; a new **15-test ambiguity suite** in the parsing submodule (`CTypeNameAmbiguityTest`) asserting *parse-tree shape* — cast vs multiplication, `(f)(1)` as a call, comma expressions, `sizeof(type)` vs `sizeof(expr)`, the malloc declaration, and the permissive fallback.
+- **Effect**: on a 120-task sample of the tasks that failed the frontend in `results-0711`, **116 now parse** (it was 39/300 before). This collapses the `ParseCancellation` cluster *and* the whole downstream cascade of the malloc mis-parse at once.
+
+### ⚠️ NEW WRONG-RESULT BUG FOUND (top of the queue): `&&` / `||` do not short-circuit function calls
+The verdict sweep over the newly-parsing tasks surfaced **8 wrong results**, all one family (`CWE190_Integer_Overflow__int64_t_rand_square_*_good`, reported *false* on no-overflow when the answer is *true*). It is **not** the parse. The guard is
+
+```c
+if (data > (-0x7fffffffffffffff - 1) && imaxabs((intmax_t)data) <= sqrtl(...))
+```
+
+and C guarantees `imaxabs` is called **only when the left conjunct holds**. Theta evaluates the operands of `&&` by visiting each in turn and letting their side effects (here, the call) land in `preStatements`, which are emitted **before** the condition — so `imaxabs(INT64_MIN)` *is* executed, its negation genuinely overflows, and a program that is careful precisely because it guards against `INT64_MIN` gets reported as overflowing. Reduced to a fixture (`data > INT64_MIN && imaxabs(data) <= K` → Unsafe, must be Safe); no floating point involved.
+- Fix: in `visitLogicalAndExpression` / `visitLogicalOrExpression`, the statements an operand needs must be emitted **under a guard** (a `CIf` on the preceding operands), not unconditionally.
+- This is a general soundness bug, not specific to `abs`: *any* call, division, or dereference in the right-hand operand of `&&`/`||` is executed when C says it must not be — the classic `p && p->f` and `n != 0 && x / n` idioms.
+
+## NEXT UP (queue as of batch 10; the in-flight benchmark run will re-rank it)
 
 1. **N3 division overflow** (Phase 5.1) — **the top remaining no-overflow blocker**, and small. `OverflowDetectionPass.kt:240` throws `UnsupportedOperationException("We cannot soundly detect overflows with divisions.")` if the program contains **any** `DivExpr` *anywhere* — even though `DivExpr` is already in the pass's filter and `bvOverflowCondition` handles it. It was 15/60 (~25%) of the remaining errors in the no-overflow sample and matches the original triage's "division 831". Division overflows on exactly one input pair (`INT_MIN / -1`), so the integer path needs the same explicit condition the bitvector path already has — minding that C's `/` lowers to the `createIntDiv` Ite shape. Signed-shift overflow is still unchecked in **both** modes (also Phase 5).
 2. **Phase 4 / AD6 grammar — the typedef-name ambiguity.** Highest-value frontend item left (`ParseCancellationException` ≈ 4,108 tasks, and still what blocks most of aws-c-common). Batch 6 found the concrete shape: with no symbol table and `typedefName : Identifier`, **`void *malloc(size_t);` is not parsed as a function at all** — it becomes two *variables*, `malloc` and `size_t`. Any function declared with a bare typedef'd parameter is misparsed the same way; `malloc` is merely special-cased now. Needs the resolved AD6 approach (typedef feedback + semantic predicate) and the "handle with care" protocol.
