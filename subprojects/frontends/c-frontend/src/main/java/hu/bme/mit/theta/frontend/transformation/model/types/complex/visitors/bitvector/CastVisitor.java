@@ -67,6 +67,14 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
         }
+        if (that instanceof CVoid) {
+            // A void expression has no value, and C forbids reading one -- but one still reaches
+            // here through the standard assert expansion `cond ? (void)0 : fail()`, whose two arms
+            // are both void, so the frontend unifies them into a common type. Since the value can
+            // never be read, any value of the target type will do. (Under integer arithmetic this
+            // never surfaced: there the conversion ignores the source type entirely.)
+            return type.getNullValue();
+        }
         if (that instanceof CReal) {
             //noinspection unchecked
             return FpExprs.ToBv(
@@ -104,6 +112,14 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
+        }
+        if (that instanceof CVoid) {
+            // A void expression has no value, and C forbids reading one -- but one still reaches
+            // here through the standard assert expansion `cond ? (void)0 : fail()`, whose two arms
+            // are both void, so the frontend unifies them into a common type. Since the value can
+            // never be read, any value of the target type will do. (Under integer arithmetic this
+            // never surfaced: there the conversion ignores the source type entirely.)
+            return type.getNullValue();
         }
         if (that instanceof CReal) {
             //noinspection unchecked

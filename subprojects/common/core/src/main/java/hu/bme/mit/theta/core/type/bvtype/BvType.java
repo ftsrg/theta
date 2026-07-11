@@ -72,6 +72,15 @@ public class BvType
         return signed != null && signed;
     }
 
+    /**
+     * The signedness as declared, which may be {@code null}: a "neutral" bitvector carries no
+     * signedness at all and cannot be compared (see {@link #Lt}). Unlike {@link #getSigned()}, this
+     * does not collapse "neutral" into "unsigned".
+     */
+    public Boolean getSignedness() {
+        return signed;
+    }
+
     @Override
     public EqExpr<BvType> Eq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
         return BvEqExpr.of(leftOp, rightOp);

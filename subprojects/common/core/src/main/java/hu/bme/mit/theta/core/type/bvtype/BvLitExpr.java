@@ -78,6 +78,24 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         return this;
     }
 
+
+    /**
+     * A literal of the same width as this one, keeping its signedness.
+     *
+     * <p>Building the result "neutrally" instead -- as every one of these operations used to --
+     * throws the signedness away, and a bitvector without one cannot be compared at all ({@link
+     * BvType#Lt} and friends reject it). It only ever showed up once a value was *constant-folded*:
+     * the expression tree carries proper types, but as soon as an operation over two literals was
+     * evaluated, the result was neutral, and any later comparison against it failed.
+     */
+    private BvLitExpr sameSignedness(final boolean[] bits) {
+        return Bv(bits, getType().getSignedness());
+    }
+
+    private BvLitExpr sameSignedness(final BigInteger value) {
+        return sameSignedness(bigIntegerToNeutralBvLitExpr(value, getType().getSize()).getValue());
+    }
+
     public BvLitExpr concat(final BvLitExpr that) {
         boolean[] concated = new boolean[this.getType().getSize() + that.getType().getSize()];
         for (int i = 0; i < this.getType().getSize(); i++) {
@@ -86,7 +104,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         for (int i = 0; i < that.getType().getSize(); i++) {
             concated[this.getType().getSize() + i] = that.getValue()[i];
         }
-        return Bv(concated);
+        return sameSignedness(concated);
     }
 
     public BvLitExpr extract(final IntLitExpr from, final IntLitExpr until) {
@@ -101,7 +119,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
             extracted[extracted.length - i - 1] =
                     this.getValue()[this.getValue().length - (fromValue + i) - 1];
         }
-        return Bv(extracted);
+        return sameSignedness(extracted);
     }
 
     public BvLitExpr zext(final BvType extendType) {
@@ -114,7 +132,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         for (int i = 0; i < extendType.getSize() - this.getType().getSize(); i++) {
             extended[i] = false;
         }
-        return Bv(extended);
+        return Bv(extended, extendType.getSignedness());
     }
 
     public BvLitExpr sext(final BvType extendType) {
@@ -127,14 +145,14 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         for (int i = 0; i < extendType.getSize() - this.getType().getSize(); i++) {
             extended[i] = this.getValue()[0];
         }
-        return Bv(extended);
+        return Bv(extended, extendType.getSignedness());
     }
 
     public BvLitExpr add(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         BigInteger sum = neutralBvLitExprToBigInteger(this).add(neutralBvLitExprToBigInteger(that));
         sum = fitBigIntegerIntoNeutralDomain(sum, getType().getSize());
-        return bigIntegerToNeutralBvLitExpr(sum, getType().getSize());
+        return sameSignedness(sum);
     }
 
     public BvLitExpr sub(final BvLitExpr that) {
@@ -142,7 +160,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         BigInteger sub =
                 neutralBvLitExprToBigInteger(this).subtract(neutralBvLitExprToBigInteger(that));
         sub = fitBigIntegerIntoNeutralDomain(sub, getType().getSize());
-        return bigIntegerToNeutralBvLitExpr(sub, getType().getSize());
+        return sameSignedness(sub);
     }
 
     public BvLitExpr mul(final BvLitExpr that) {
@@ -150,7 +168,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         BigInteger prod =
                 neutralBvLitExprToBigInteger(this).multiply(neutralBvLitExprToBigInteger(that));
         prod = fitBigIntegerIntoNeutralDomain(prod, getType().getSize());
-        return bigIntegerToNeutralBvLitExpr(prod, getType().getSize());
+        return sameSignedness(prod);
     }
 
     public BvLitExpr pos() {
@@ -184,24 +202,24 @@ public final class BvLitExpr extends NullaryExpr<BvType>
     public BvLitExpr and(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         BigInteger and = neutralBvLitExprToBigInteger(this).and(neutralBvLitExprToBigInteger(that));
-        return bigIntegerToNeutralBvLitExpr(and, getType().getSize());
+        return sameSignedness(and);
     }
 
     public BvLitExpr or(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         BigInteger or = neutralBvLitExprToBigInteger(this).or(neutralBvLitExprToBigInteger(that));
-        return bigIntegerToNeutralBvLitExpr(or, getType().getSize());
+        return sameSignedness(or);
     }
 
     public BvLitExpr xor(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         BigInteger xor = neutralBvLitExprToBigInteger(this).xor(neutralBvLitExprToBigInteger(that));
-        return bigIntegerToNeutralBvLitExpr(xor, getType().getSize());
+        return sameSignedness(xor);
     }
 
     public BvLitExpr not() {
         BigInteger not = neutralBvLitExprToBigInteger(this).not();
-        return bigIntegerToNeutralBvLitExpr(not, getType().getSize());
+        return sameSignedness(not);
     }
 
     public BvLitExpr shiftLeft(final BvLitExpr that) {
@@ -216,7 +234,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
             }
             shifted[shifted.length - 1] = false;
         }
-        return Bv(shifted);
+        return sameSignedness(shifted);
     }
 
     public BvLitExpr arithShiftRight(final BvLitExpr that) {
@@ -232,7 +250,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
             }
             shifted[0] = insert;
         }
-        return Bv(shifted);
+        return sameSignedness(shifted);
     }
 
     public BvLitExpr logicShiftRight(final BvLitExpr that) {
@@ -248,7 +266,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
             }
             shifted[0] = insert;
         }
-        return Bv(shifted);
+        return sameSignedness(shifted);
     }
 
     public BvLitExpr rotateLeft(final BvLitExpr that) {
@@ -264,7 +282,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
             }
             shifted[shifted.length - 1] = rotated;
         }
-        return Bv(shifted);
+        return sameSignedness(shifted);
     }
 
     public BvLitExpr rotateRight(final BvLitExpr that) {
@@ -280,7 +298,7 @@ public final class BvLitExpr extends NullaryExpr<BvType>
             }
             shifted[0] = rotated;
         }
-        return Bv(shifted);
+        return sameSignedness(shifted);
     }
 
     public BvLitExpr smod(final BvLitExpr that) {

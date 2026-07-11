@@ -62,6 +62,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
@@ -541,7 +542,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     public Expr<?> visitCastExpressionCast(CParser.CastExpressionCastContext ctx) {
         CComplexType actualType =
                 ctx.castDeclarationSpecifierList().accept(typeVisitor).getActualType();
-        Expr<?> expr = actualType.castTo(ctx.castExpression().accept(this));
+        Expr<?> operand = ctx.castExpression().accept(this);
+        if (actualType instanceof CVoid) {
+            // `(void)e` only discards e's value; it yields no value of its own, so there is nothing
+            // to convert and casting to void is the identity on the expression. Recording `void` as
+            // that expression's type would therefore label the *operand* void -- and since a
+            // variable's RefExpr is a single shared instance, `(void)x` would make x look void
+            // everywhere it is used, breaking every later conversion of it.
+            return operand;
+        }
+        Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
