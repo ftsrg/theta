@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -40,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -164,12 +166,11 @@ class FrontendXcfaBuilder(
     for (function in if (FunctionIds.hasIndirectCall()) cProgram.functions else listOf()) {
       val id = FunctionIds.getId(function.funcDecl.name) ?: continue
       for (varDecl in function.funcDecl.varDecls) {
-        // The id is an integer. The variable's own C type is the function's RETURN type, which for
-        // a
-        // `void` function has no value representation at all, so the literal is built as an int.
-        val idLit = CComplexType.getSignedInt(parseContext).getValue(id.toString())
+        val idLit = functionIdLiteral(id, varDecl.type)
         builder.addVar(XcfaGlobalVar(varDecl, idLit))
-        initStmtList.add(AssignStmtLabel(varDecl, cast(idLit, varDecl.type)))
+        initStmtList.add(
+          AssignStmtLabel(cast(varDecl, varDecl.type), cast(idLit, varDecl.type), varDecl.type)
+        )
       }
     }
     for (function in cProgram.functions) {
@@ -177,6 +178,25 @@ class FrontendXcfaBuilder(
       if (toAdd.name.equals("main")) builder.addEntryPoint(toAdd, listOf())
     }
     return builder
+  }
+
+  /**
+   * The function's id, as a literal of the variable that holds it.
+   *
+   * It cannot be built from the variable's *C* type: that is the function's return type, and a
+   * `void` function's has no value representation at all. Nor can it just be built as an `int` --
+   * that only coincides with the variable's type under integer arithmetic and ILP32. A function
+   * returning a `long` gets a 64-bit variable, and a 32-bit literal is then a type error.
+   */
+  private fun functionIdLiteral(id: Int, type: Type): LitExpr<*> {
+    val value = BigInteger.valueOf(id.toLong())
+    return when (type) {
+      is IntType -> IntExprs.Int(value)
+      is BvType ->
+        if (type.signed == true) BvUtils.bigIntegerToSignedBvLitExpr(value, type.size)
+        else BvUtils.bigIntegerToUnsignedBvLitExpr(value, type.size)
+      else -> error("Cannot represent a function id in a variable of type $type")
+    }
   }
 
   private fun handleFunction(

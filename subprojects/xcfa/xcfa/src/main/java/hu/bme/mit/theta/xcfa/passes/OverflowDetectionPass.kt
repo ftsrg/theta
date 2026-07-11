@@ -81,10 +81,6 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
       return builder
     }
 
-    check(parseContext.arithmetic != ArchitectureConfig.ArithmeticType.bitvector) {
-      "Overflow checking does not yet support bitwise arithmetic"
-    }
-
     property.transformSpecification(ErrorDetection.ERROR_LOCATION)
 
     // remove all edges to the error location
@@ -117,13 +113,19 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                   .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
                   .orElse(false)
             }
-            .map {
-              val cType =
-                parseContext.metadata
-                  .getMetadataValue(it, "cType")
-                  .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
-                  .get() as CComplexType
-              Not(cType.accept(limitVisitor, it).cond)
+            .mapNotNull {
+              if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
+                // A bitvector operation has already wrapped, so range-checking its result would
+                // always succeed; the overflow has to be reconstructed from the operands instead.
+                bvOverflowCondition(it)
+              } else {
+                val cType =
+                  parseContext.metadata
+                    .getMetadataValue(it, "cType")
+                    .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
+                    .get() as CComplexType
+                Not(cType.accept(limitVisitor, it).cond)
+              }
             }
 
         if (conditions.isNotEmpty()) {

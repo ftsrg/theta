@@ -70,6 +70,11 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   init {
+    addHandler(arrayOf("abs", "labs", "llabs", "imaxabs")) {
+      builder: XcfaProcedureBuilder,
+      callStmt: InvokeLabel ->
+      handleAbs(builder, callStmt)
+    }
     addHandler(arrayOf("fabs", "fabsf", "fabsl")) {
       builder: XcfaProcedureBuilder,
       callStmt: InvokeLabel ->
@@ -447,6 +452,34 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
       parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
     }
+    return StmtLabel(assign, metadata = callStmt.metadata)
+  }
+
+  /**
+   * The integer `abs` family, which is `x < 0 ? -x : x` exactly.
+   *
+   * Leaving it unmodelled is not neutral: the call would be havoced, and a guard written in terms
+   * of it (`if (abs(x) < K)`) then constrains nothing -- which shows up as a *false* overflow
+   * report on code that is careful precisely because it uses `abs` to bound its input.
+   *
+   * `abs(INT_MIN)` has no representable result, and this model says so: the negation it expands to
+   * is exactly the case [bvOverflowCondition] and the integer limit check flag as an overflow.
+   */
+  private fun handleAbs(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val ret = callStmt.params[0]
+    Preconditions.checkState(ret is RefExpr<*>)
+    val type = CComplexType.getType(ret, parseContext)
+    val arg = type.castTo(callStmt.params[1])
+    val negated = AbstractExprs.Neg(arg)
+    parseContext.metadata.create(negated, "cType", type)
+    val abs = AbstractExprs.Ite<Type>(AbstractExprs.Lt(arg, type.nullValue), negated, arg)
+    parseContext.metadata.create(abs, "cType", type)
+    val assign =
+      Stmts.Assign(
+        TypeUtils.cast((ret as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+        TypeUtils.cast(abs, type.smtType),
+      )
     return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
