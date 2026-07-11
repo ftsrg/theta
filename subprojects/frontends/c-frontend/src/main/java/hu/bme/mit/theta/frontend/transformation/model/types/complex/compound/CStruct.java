@@ -30,13 +30,35 @@ import java.util.stream.Collectors;
 public class CStruct extends CInteger {
 
     private final List<Tuple2<String, CComplexType>> fields;
+    private final boolean union;
 
     public CStruct(
             CSimpleType origin,
             List<Tuple2<String, CComplexType>> fields,
             ParseContext parseContext) {
+        this(origin, fields, false, parseContext);
+    }
+
+    public CStruct(
+            CSimpleType origin,
+            List<Tuple2<String, CComplexType>> fields,
+            boolean union,
+            ParseContext parseContext) {
         super(origin, parseContext);
         this.fields = fields;
+        this.union = union;
+    }
+
+    /**
+     * A union's members all start at the same address, so they are all given member offset 0. Since
+     * a member access lowers to `__arrays_T[base][offset]` -- an array *per SMT type* -- two members
+     * of the same type then genuinely alias (writing one is read back by the other, which is the
+     * whole point of the construct), while members of different types land in different arrays and
+     * cannot alias at all. Bit-exact punning across differently-typed members needs the flat object
+     * layout of AD7 and is rejected rather than answered unsoundly.
+     */
+    public boolean isUnion() {
+        return union;
     }
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {

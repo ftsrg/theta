@@ -65,6 +65,14 @@ public class CSimpleTypeFactory {
         return new Struct(name, parseContext, uniqueWarningLogger);
     }
 
+    public static Struct Struct(
+            final String name,
+            final boolean union,
+            ParseContext parseContext,
+            Logger uniqueWarningLogger) {
+        return new Struct(name, union, parseContext, uniqueWarningLogger);
+    }
+
     public static ThreadLocal ThreadLocal() {
         return ThreadLocal.instance;
     }

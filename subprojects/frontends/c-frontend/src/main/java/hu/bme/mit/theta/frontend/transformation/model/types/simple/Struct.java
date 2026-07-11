@@ -37,6 +37,12 @@ public class Struct extends NamedType {
     private final Logger uniqueWarningLogger;
 
     /**
+     * A union: every member starts at the same address. Members are therefore all given offset 0,
+     * so that two members of the same type genuinely alias (see CStruct#isUnion).
+     */
+    private final boolean union;
+
+    /**
      * If this instance is a copy (see {@link #copyOf()}) of another {@link Struct}, this points to
      * the specific struct definition instance it was copied from, bound once at copy-creation time.
      * {@code null} means this instance IS a canonical struct definition (i.e. either a fresh,
@@ -60,28 +66,47 @@ public class Struct extends NamedType {
     private static final Map<String, Struct> definedTypes = new LinkedHashMap<>();
 
     public static Struct getByName(String name) {
-        return definedTypes.get(name);
+        return getByName(name, false);
+    }
+
+    /** `struct X` and `union X` are distinct types, so the tag alone does not identify one. */
+    public static Struct getByName(String name, boolean union) {
+        return definedTypes.get(tagOf(name, union));
+    }
+
+    private static String tagOf(String name, boolean union) {
+        return (union ? "union " : "struct ") + name;
     }
 
     Struct(String name, ParseContext parseContext, Logger uniqueWarningLogger) {
-        super(parseContext, "struct", uniqueWarningLogger);
+        this(name, false, parseContext, uniqueWarningLogger);
+    }
+
+    Struct(String name, boolean union, ParseContext parseContext, Logger uniqueWarningLogger) {
+        super(parseContext, union ? "union" : "struct", uniqueWarningLogger);
         this.uniqueWarningLogger = uniqueWarningLogger;
+        this.union = union;
         fields = new LinkedHashMap<>();
         this.name = name;
         this.canonicalRef = null;
         if (name != null) {
-            definedTypes.put(name, this);
+            definedTypes.put(tagOf(name, union), this);
         }
         currentlyBeingBuilt = false;
     }
 
     private Struct(Struct from) {
-        super(from.parseContext, "struct", from.uniqueWarningLogger);
+        super(from.parseContext, from.union ? "union" : "struct", from.uniqueWarningLogger);
         fields = new LinkedHashMap<>();
         this.name = from.name;
+        this.union = from.union;
         this.uniqueWarningLogger = from.uniqueWarningLogger;
         this.canonicalRef = from.canonical();
         currentlyBeingBuilt = false;
+    }
+
+    public boolean isUnion() {
+        return union;
     }
 
     /** The struct definition instance this instance's fields should be resolved from. */
@@ -120,7 +145,7 @@ public class Struct extends NamedType {
                                 actualFields.add(Tuple2.of(s, cDeclaration.getActualType())));
         currentlyBeingBuilt = false;
 
-        CComplexType type = new CStruct(this, actualFields, parseContext);
+        CComplexType type = new CStruct(this, actualFields, union, parseContext);
 
         for (int i = 0; i < getPointerLevel(); i++) {
             type = new CPointer(this, type, parseContext);

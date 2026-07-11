@@ -970,6 +970,58 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "fmodl");
 
     /**
+     * The member's offset within its compound object: its position among the fields for a struct,
+     * and 0 for every member of a union, whose members all start at the same address.
+     *
+     * <p>A member access lowers to {@code __arrays_T[base][offset]} -- an array *per SMT type* -- so
+     * giving a union's members offset 0 makes two members of the same type genuinely alias, and
+     * writing one is read back through the other. That is the case the benchmarks depend on for
+     * their verdicts (a union used as "two ways of naming the same data"). Members of *different*
+     * types land in different arrays and so cannot alias at all: modelling that faithfully means
+     * reinterpreting the object's bits, which needs the flat object layout of AD7. Rather than
+     * answer such a program unsoundly, an access to a member of a union whose members do not all
+     * share one representation is rejected -- the union may still be declared and passed around,
+     * which is all the opaque system-header unions (pthread_mutex_t, mbstate_t) ever need.
+     */
+    private int memberOffset(CStruct compound, String memberName) {
+        if (!compound.isUnion()) {
+            return compound.getFields().stream().map(Tuple2::get1).toList().indexOf(memberName);
+        }
+        CComplexType accessed = compound.getFieldsAsMap().get(memberName);
+        if (accessed != null) {
+            for (Tuple2<String, CComplexType> field : compound.getFields()) {
+                if (!sameRepresentation(accessed, field.get2())) {
+                    throw new UnsupportedFrontendElementException(
+                            ("Accessing member [%s] of a union whose members do not all share a"
+                                            + " representation ([%s] is a %s, [%s] is a %s) would"
+                                            + " require bit-level type punning, which is not"
+                                            + " supported.")
+                                    .formatted(
+                                            memberName,
+                                            memberName,
+                                            accessed.getTypeName(),
+                                            field.get1(),
+                                            field.get2().getTypeName()));
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Whether two union members occupy their shared storage identically, so that writing one and
+     * reading the other is exactly the identity.
+     *
+     * <p>The C type is what decides this, not the SMT type: under integer arithmetic every integer
+     * type is modelled by the same unbounded {@code Int}, so an {@code int} and a {@code char}
+     * member would compare equal there and silently alias without the truncation C mandates
+     * ({@code u.i = 300; u.c} must be 44, not 300).
+     */
+    private static boolean sameRepresentation(CComplexType a, CComplexType b) {
+        return a.getClass().equals(b.getClass()) && a.getSmtType().equals(b.getSmtType());
+    }
+
+    /**
      * Emits the `alloca(size)` call that {@code AllocaFunctionPass} lowers into a stack allocation.
      * The {@code __builtin_} form has no declaration, so the pointer return type is supplied here
      * (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
@@ -1377,14 +1429,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 checkState(type instanceof CStruct, "Only structs expected here");
                 final CStruct structType = (CStruct) type;
                 final String accName = ctx.Identifier().getText();
-                final int index =
-                        structType.getFields().stream().map(Tuple2::get1).toList().indexOf(accName);
-                final var idxExpr = type.getValue(String.valueOf(index));
                 final var embeddedType = structType.getFieldsAsMap().get(accName);
                 checkState(
                         embeddedType != null,
                         "Field [%s] not found, available fields are: %s"
                                 .formatted(accName, ((CStruct) type).getFieldsAsMap().keySet()));
+                final var idxExpr = type.getValue(String.valueOf(memberOffset(structType, accName)));
                 primary =
                         Exprs.Dereference(
                                 cast(primary, primary.getType()),
@@ -1410,9 +1460,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 checkState(structTypeErased instanceof CStruct, "Only structs expected here");
                 final CStruct structType = (CStruct) structTypeErased;
                 final String accName = ctx.Identifier().getText();
-                final int index =
-                        structType.getFields().stream().map(Tuple2::get1).toList().indexOf(accName);
-                final var idxExpr = structTypeErased.getValue(String.valueOf(index));
+                final var idxExpr =
+                        structTypeErased.getValue(String.valueOf(memberOffset(structType, accName)));
                 final var embeddedType = structType.getFieldsAsMap().get(accName);
                 checkState(
                         embeddedType != null,

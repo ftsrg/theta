@@ -257,12 +257,14 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitCompoundDefinition(CParser.CompoundDefinitionContext ctx) {
-        if (ctx.structOrUnion().Struct() != null) {
+        {
+            boolean union = ctx.structOrUnion().Struct() == null;
             String name = null;
             if (ctx.Identifier() != null) {
                 name = ctx.Identifier().getText();
             }
-            Struct struct = CSimpleTypeFactory.Struct(name, parseContext, uniqueWarningLogger);
+            Struct struct =
+                    CSimpleTypeFactory.Struct(name, union, parseContext, uniqueWarningLogger);
             for (CParser.StructDeclarationContext structDeclarationContext :
                     ctx.structDeclarationList().structDeclaration()) {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext =
@@ -284,22 +286,13 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 }
             }
             return struct;
-        } else {
-            uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: CompoundDefinitions are not yet implemented!\n");
-            return NamedType("int", parseContext, uniqueWarningLogger);
         }
     }
 
     @Override
     public CSimpleType visitCompoundUsage(CParser.CompoundUsageContext ctx) {
         String text = ctx.Identifier().getText();
-        if (ctx.structOrUnion().Struct() != null) {
-            return Struct.getByName(text);
-        } else {
-            return NamedType(
-                    ctx.structOrUnion().getText() + " " + text, parseContext, uniqueWarningLogger);
-        }
+        return Struct.getByName(text, ctx.structOrUnion().Struct() == null);
     }
 
     @Override
