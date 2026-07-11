@@ -722,6 +722,13 @@ final class Z3TermTransformer {
         } else if (sort instanceof com.microsoft.z3.BitVecSort) {
             final com.microsoft.z3.BitVecSort bvSort = (com.microsoft.z3.BitVecSort) sort;
             return BvType(bvSort.getSize());
+        } else if (sort instanceof com.microsoft.z3.ArraySort<?, ?> arraySort) {
+            // Arrays nest: the memory model is `__arrays_T[base][offset]`, an array of arrays, so
+            // the element sort handed back here is itself an array.
+            return ArrayType.of(
+                    transformSort(arraySort.getDomain()), transformSort(arraySort.getRange()));
+        } else if (sort instanceof com.microsoft.z3.FPSort fpSort) {
+            return FpType.of(fpSort.getEBits(), fpSort.getSBits());
         } else {
             throw new AssertionError("Unsupported sort: " + sort);
         }
