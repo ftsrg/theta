@@ -31,7 +31,8 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
- * Expands a call through a function pointer into a nondeterministic dispatch over its candidate set.
+ * Expands a call through a function pointer into a nondeterministic dispatch over its candidate
+ * set.
  *
  * The frontend emits such a call as a marker [InvokeLabel] named [INDIRECT_CALL] whose parameters
  * are `[returnValue, functionPointer, actualArgs...]`. This pass replaces it with a [NondetLabel]
@@ -39,12 +40,13 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * ```
  *   assume(fp == id(f));  ret := f(args...)
  * ```
+ *
  * plus a final branch `assume(fp != id(f) for every candidate f); havoc ret`, which keeps the model
  * total (a pointer that matches no candidate -- e.g. NULL -- would be undefined behavior in C).
  *
  * The candidate set is the set of functions whose address is taken anywhere in the program (see
- * [FunctionIds]), restricted to those actually defined in this XCFA with a matching arity. This must
- * run before [InlineProceduresPass] so that the direct calls it emits are inlined normally.
+ * [FunctionIds]), restricted to those actually defined in this XCFA with a matching arity. This
+ * must run before [InlineProceduresPass] so that the direct calls it emits are inlined normally.
  *
  * Programs that never call through a function pointer contain no marker call and are left
  * bit-for-bit unchanged.
@@ -59,8 +61,7 @@ class FunctionPointerCallsPass(
     const val INDIRECT_CALL = "__theta_indirect_call"
   }
 
-  private fun isIndirectCall(label: XcfaLabel) =
-    label is InvokeLabel && label.name == INDIRECT_CALL
+  private fun isIndirectCall(label: XcfaLabel) = label is InvokeLabel && label.name == INDIRECT_CALL
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     // Fast path: programs without indirect calls are not touched at all.
@@ -117,8 +118,8 @@ class FunctionPointerCallsPass(
     if (candidates.isEmpty()) {
       uniqueWarningLogger.write(
         Logger.Level.INFO,
-        "WARNING: call through a function pointer with no candidate function of matching arity;"
-          + " modeling it as a havoc of the return value.\n",
+        "WARNING: call through a function pointer with no candidate function of matching arity;" +
+          " modeling it as a havoc of the return value.\n",
       )
       return listOf(SequenceLabel(listOf(havocReturnValue(returnValue, invokeLabel))))
     }

@@ -784,11 +784,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * A function name that is NOT immediately called denotes the function's address (C decays a
-     * function designator to a pointer). Registering it here marks the function as address-taken, so
-     * that it becomes a candidate for indirect calls and its variable is initialized to its id (see
-     * {@code FrontendXcfaBuilder}). The expression itself stays the ordinary reference to the
-     * function's variable -- whose value IS the id -- so that consumers such as
-     * {@code CLibraryFunctionsPass} (pthread_create's start routine) keep working unchanged.
+     * function designator to a pointer). Registering it here marks the function as address-taken,
+     * so that it becomes a candidate for indirect calls and its variable is initialized to its id
+     * (see {@code FrontendXcfaBuilder}). The expression itself stays the ordinary reference to the
+     * function's variable -- whose value IS the id -- so that consumers such as {@code
+     * CLibraryFunctionsPass} (pthread_create's start routine) keep working unchanged.
      */
     private void registerIfFunctionUsedAsValue(CParser.PostfixExpressionContext ctx) {
         if (!(ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext idCtx)) {
@@ -836,7 +836,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
         if (exprList != null) {
             if (functionVisitor == null) {
-                throw new RuntimeException("Cannot parse function calls without a function visitor.");
+                throw new RuntimeException(
+                        "Cannot parse function calls without a function visitor.");
             }
             for (AssignmentExpressionContext arg : exprList.assignmentExpression()) {
                 arguments.add(arg.accept(functionVisitor));
@@ -854,7 +855,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cCall);
         return cCall.getRet().getRef();
     }
-
 
     /**
      * Handles the few GCC builtins that are pure value pass-throughs (or trivially constant) and
@@ -911,10 +911,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
             }
-            case "__builtin_uadd_overflow", "__builtin_uaddl_overflow", "__builtin_uaddll_overflow" -> {
+            case "__builtin_uadd_overflow",
+                    "__builtin_uaddl_overflow",
+                    "__builtin_uaddll_overflow" -> {
                 return unsignedOverflowBuiltin(args, true);
             }
-            case "__builtin_umul_overflow", "__builtin_umull_overflow", "__builtin_umulll_overflow" -> {
+            case "__builtin_umul_overflow",
+                    "__builtin_umull_overflow",
+                    "__builtin_umulll_overflow" -> {
                 return unsignedOverflowBuiltin(args, false);
             }
             default -> {
@@ -973,8 +977,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * The member's offset within its compound object: its position among the fields for a struct,
      * and 0 for every member of a union, whose members all start at the same address.
      *
-     * <p>A member access lowers to {@code __arrays_T[base][offset]} -- an array *per SMT type* -- so
-     * giving a union's members offset 0 makes two members of the same type genuinely alias, and
+     * <p>A member access lowers to {@code __arrays_T[base][offset]} -- an array *per SMT type* --
+     * so giving a union's members offset 0 makes two members of the same type genuinely alias, and
      * writing one is read back through the other. That is the case the benchmarks depend on for
      * their verdicts (a union used as "two ways of naming the same data"). Members of *different*
      * types land in different arrays and so cannot alias at all: modelling that faithfully means
@@ -1014,8 +1018,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      *
      * <p>The C type is what decides this, not the SMT type: under integer arithmetic every integer
      * type is modelled by the same unbounded {@code Int}, so an {@code int} and a {@code char}
-     * member would compare equal there and silently alias without the truncation C mandates
-     * ({@code u.i = 300; u.c} must be 44, not 300).
+     * member would compare equal there and silently alias without the truncation C mandates ({@code
+     * u.i = 300; u.c} must be 44, not 300).
      */
     private static boolean sameRepresentation(CComplexType a, CComplexType b) {
         return a.getClass().equals(b.getClass()) && a.getSmtType().equals(b.getSmtType());
@@ -1045,9 +1049,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * Models {@code __builtin_uadd*_overflow(a, b, res)} and {@code __builtin_umul*_overflow}: the
-     * wrapped result is stored through {@code res} and the call returns whether the exact result was
-     * not representable. Only the unsigned forms are modelled -- they are the ones that occur, and
-     * unlike the signed forms their wraparound is defined, so both the result and the overflow
+     * wrapped result is stored through {@code res} and the call returns whether the exact result
+     * was not representable. Only the unsigned forms are modelled -- they are the ones that occur,
+     * and unlike the signed forms their wraparound is defined, so both the result and the overflow
      * condition can be stated in the operand type itself (no widening), which keeps this correct
      * under both integer and bitvector arithmetic:
      *
@@ -1084,7 +1088,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         } else {
             Expr<?> quotient =
                     typed(
-                            wrapped.getType() instanceof IntType && left.getType() instanceof IntType
+                            wrapped.getType() instanceof IntType
+                                            && left.getType() instanceof IntType
                                     ? createIntDiv(wrapped, left)
                                     : Div(wrapped, left),
                             type);
@@ -1395,8 +1400,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return indirectCall(ctx, expr);
                 }
                 checkState(
-                        expr instanceof RefExpr<?>,
-                        "Only variable-backed functions are callable.");
+                        expr instanceof RefExpr<?>, "Only variable-backed functions are callable.");
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;
                 if (exprList == null) arguments = List.of();
@@ -1434,7 +1438,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         embeddedType != null,
                         "Field [%s] not found, available fields are: %s"
                                 .formatted(accName, ((CStruct) type).getFieldsAsMap().keySet()));
-                final var idxExpr = type.getValue(String.valueOf(memberOffset(structType, accName)));
+                final var idxExpr =
+                        type.getValue(String.valueOf(memberOffset(structType, accName)));
                 primary =
                         Exprs.Dereference(
                                 cast(primary, primary.getType()),
@@ -1461,7 +1466,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 final CStruct structType = (CStruct) structTypeErased;
                 final String accName = ctx.Identifier().getText();
                 final var idxExpr =
-                        structTypeErased.getValue(String.valueOf(memberOffset(structType, accName)));
+                        structTypeErased.getValue(
+                                String.valueOf(memberOffset(structType, accName)));
                 final var embeddedType = structType.getFieldsAsMap().get(accName);
                 checkState(
                         embeddedType != null,

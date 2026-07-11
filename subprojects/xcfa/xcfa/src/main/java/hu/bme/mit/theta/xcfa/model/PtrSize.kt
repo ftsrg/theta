@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,9 +46,19 @@ fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*
   return AssignStmtLabel(arr, write)
 }
 
+/**
+ * Marks the object as no longer live, by giving it size 0.
+ *
+ * A negative sentinel (-1) would only work if sizes were compared as signed. They are Fitsall-typed
+ * and Fitsall is *unsigned*, so under bitvector arithmetic -1 is the largest representable value: a
+ * freed object would then look bigger than any other, `free` would not register, and a program that
+ * frees everything would still be reported as leaking. Size 0 means "not live" under signed and
+ * unsigned semantics alike, and coincides with the array's default value -- so an object that was
+ * never allocated is treated the same as a freed one, which is what the checks want anyway.
+ */
 fun XcfaBuilder.deallocate(parseContext: ParseContext, base: Expr<*>): StmtLabel {
   val type = Fitsall(null, parseContext)
-  return allocate(parseContext, base, type.getValue("-1"))
+  return allocate(parseContext, base, type.nullValue)
 }
 
 fun XcfaBuilder.allocateUnit(parseContext: ParseContext, base: Expr<*>): StmtLabel {

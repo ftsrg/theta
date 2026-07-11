@@ -21,8 +21,8 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.mallocVar
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.mallocVar
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
@@ -31,12 +31,12 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * places the block in a different residue class of the pointer base space.
  *
  * Pointer bases are partitioned by residue mod 3: `3k+0` is malloc'd heap memory, `3k+2` is
- * address-taken locals ([ReferenceElimination]). The memcleanup check ([MemsafetyPass.annotateLost])
- * scans `3k+0` only, so a block that is *not* the program's responsibility to free must not live
- * there. Memory from `alloca` is released automatically when the enclosing function returns, so
- * reporting it as a leak would be wrong; it therefore gets the free residue class, `3k+1`. It still
- * records a real size in `__theta_ptr_size`, so out-of-bounds accesses to it are caught exactly as
- * they are for heap memory.
+ * address-taken locals ([ReferenceElimination]). The memcleanup check
+ * ([MemsafetyPass.annotateLost]) scans `3k+0` only, so a block that is *not* the program's
+ * responsibility to free must not live there. Memory from `alloca` is released automatically when
+ * the enclosing function returns, so reporting it as a leak would be wrong; it therefore gets the
+ * free residue class, `3k+1`. It still records a real size in `__theta_ptr_size`, so out-of-bounds
+ * accesses to it are caught exactly as they are for heap memory.
  *
  * The shared `__malloc` counter is bumped by 3 for every allocation of either kind, so each
  * allocation consumes its own `k` and no two blocks can alias.
@@ -95,7 +95,8 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 EmptyMetaData,
               )
             // 3k+1: the residue class the memcleanup scan does not enumerate.
-            val assignRet = AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type))
+            val assignRet =
+              AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type))
             val labels =
               if (MemsafetyPass.enabled) {
                 listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))

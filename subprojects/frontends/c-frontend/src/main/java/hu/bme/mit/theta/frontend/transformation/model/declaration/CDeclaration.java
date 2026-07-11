@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,12 +86,14 @@ public class CDeclaration {
     public CComplexType getActualType() {
         CComplexType actualType = type.getActualType();
         if (isFuncPointer || type.isFunctionPointer()) {
-            // In `int (*fp)(int)` the star sits inside the declarator, so (unlike `int *p`) it never
+            // In `int (*fp)(int)` the star sits inside the declarator, so (unlike `int *p`) it
+            // never
             // reaches the type specifier: wrap it here. The pointer holds a function id, which
             // FunctionPointerCallsPass dispatches on.
             CSimpleType pointerType = type.copyOf();
             pointerType.incrementPointer();
-            // The pointee of a function pointer is never dereferenced as data, so a `void`-returning
+            // The pointee of a function pointer is never dereferenced as data, so a
+            // `void`-returning
             // one (`void (*f)(void*)`) uses a benign stand-in: CVoid has no value representation.
             CComplexType pointeeType =
                     actualType instanceof CVoid
@@ -159,8 +161,10 @@ public class CDeclaration {
         return stringBuilder.toString();
     }
 
-    /** True for a function POINTER variable (e.g. `int (*fp)(int)`), which is a variable, not a
-     * function. Its value is a function id; calls through it are dispatched over a candidate set. */
+    /**
+     * True for a function POINTER variable (e.g. `int (*fp)(int)`), which is a variable, not a
+     * function. Its value is a function id; calls through it are dispatched over a candidate set.
+     */
     public boolean isFuncPointer() {
         return isFuncPointer;
     }

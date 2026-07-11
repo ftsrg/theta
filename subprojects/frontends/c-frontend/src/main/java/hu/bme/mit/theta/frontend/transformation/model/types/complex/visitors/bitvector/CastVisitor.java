@@ -173,7 +173,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(Fitsall type, Expr<?> param) {
-        return handleSignedConversion(type, param);
+        // Fitsall is unsigned -- that is what its SMT type and its literals are built from -- so a
+        // cast *to* it must produce an unsigned-typed expression. Sign-extending here instead left
+        // the result signed, contradicting the type it was cast to; comparing it against anything
+        // genuinely unsigned then unified a signed with an unsigned bitvector, which yields a
+        // signedness-less ("neutral") type that cannot be compared at all.
+        return handleUnsignedConversion(type, param);
     }
 
     @Override

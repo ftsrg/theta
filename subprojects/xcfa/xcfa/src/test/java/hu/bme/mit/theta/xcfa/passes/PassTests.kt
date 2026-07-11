@@ -339,8 +339,8 @@ class PassTests {
             "pid" type Int() init "0"
             "thr1" type Int() init "0"
           },
-          passes = listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass()),
-          siblingProcedures = listOf("thr1"),
+          passes =
+            listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass(parseContext)),
           input = {
             (init to "L1") { "pthread_create"("ret", "pid", "0", "thr1", "0") }
             (init to "L2") { "pthread_join"("ret", "pid") }

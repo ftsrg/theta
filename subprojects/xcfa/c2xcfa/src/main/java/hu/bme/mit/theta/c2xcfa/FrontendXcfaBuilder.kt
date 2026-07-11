@@ -156,14 +156,16 @@ class FrontendXcfaBuilder(
       )
     }
     // A function whose address is taken gets a variable holding its id, so that assigning it to a
-    // function pointer (`fp = f`) stores the id that FunctionPointerCallsPass dispatches on. This is
+    // function pointer (`fp = f`) stores the id that FunctionPointerCallsPass dispatches on. This
+    // is
     // only needed when the program actually calls through a function pointer -- taking a function's
     // address merely to pass it to pthread_create resolves it by name -- so programs without
     // indirect calls are left completely unchanged.
     for (function in if (FunctionIds.hasIndirectCall()) cProgram.functions else listOf()) {
       val id = FunctionIds.getId(function.funcDecl.name) ?: continue
       for (varDecl in function.funcDecl.varDecls) {
-        // The id is an integer. The variable's own C type is the function's RETURN type, which for a
+        // The id is an integer. The variable's own C type is the function's RETURN type, which for
+        // a
         // `void` function has no value representation at all, so the literal is built as an int.
         val idLit = CComplexType.getSignedInt(parseContext).getValue(id.toString())
         builder.addVar(XcfaGlobalVar(varDecl, idLit))

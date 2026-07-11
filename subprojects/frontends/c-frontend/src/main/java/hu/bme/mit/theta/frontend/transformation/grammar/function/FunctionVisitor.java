@@ -657,8 +657,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /** The operands of the first colon group, which are the outputs. */
-    private List<CParser.LogicalOrExpressionContext> outputOperands(
-            CParser.StatementContext ctx) {
+    private List<CParser.LogicalOrExpressionContext> outputOperands(CParser.StatementContext ctx) {
         List<CParser.LogicalOrExpressionContext> operands = new ArrayList<>();
         int colons = 0;
         for (ParseTree child : ctx.children) {

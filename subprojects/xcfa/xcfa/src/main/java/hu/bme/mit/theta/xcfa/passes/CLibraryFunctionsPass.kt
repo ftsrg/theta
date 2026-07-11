@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -44,7 +45,14 @@ import java.math.BigInteger
  * their valuations (e.g. `m == 0`) are not legal C expressions over the original program; consumers
  * that emit C-expression constraints (e.g. violation witnesses) use this flag to exclude them.
  */
-class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : ProcedurePass {
+class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+
+  /**
+   * The C zero of the variable's own type. The pthread functions return `int`, which is the SMT
+   * `Int` only under integer arithmetic -- under bitvector arithmetic it is a `Bv`, and a hardcoded
+   * `Int(0)` is then a type error.
+   */
+  private fun zeroOf(expr: Expr<*>): Expr<*> = CComplexType.getType(expr, parseContext).nullValue
 
   private val supportedFunctions =
     setOf(
@@ -136,7 +144,11 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   val handle = invokeLabel.getParam(1)
                   listOf(
                     JoinLabel(handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
                   )
                 }
 
@@ -151,7 +163,11 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   // int(0) to solve StartLabel not handling return params
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
                   )
                 }
 
