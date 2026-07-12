@@ -340,15 +340,63 @@ static void show(const S *p) { p->a; }        // fine
 
 It fails for `struct _S const` just as for the typedef'd `S const`, so it is the trailing qualifier, not the typedef. The suspect is `TypeVisitor.mergeCTypes`, which picks the **last** named element as the type — its own comment says *"if typedef, then last element is the associated name"* — an assumption east-const breaks. ⚠️ But a probe showed `mergeCTypes` is **not reached with the struct at all** for the failing declaration, so the type is being built somewhere else; find that path before changing `mergeCTypes`. (`const` itself maps to `null` in `visitTypeQualifier`, so it cannot be the stray element on its own.)
 
-## NEXT UP (queue as of batch 11; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 12 (the cost of the two-pass parse, and a bug it hid)
 
-1. **N3 division overflow** (Phase 5.1) — **the top remaining no-overflow blocker**, and small. `OverflowDetectionPass.kt:240` throws `UnsupportedOperationException("We cannot soundly detect overflows with divisions.")` if the program contains **any** `DivExpr` *anywhere* — even though `DivExpr` is already in the pass's filter and `bvOverflowCondition` handles it. It was 15/60 (~25%) of the remaining errors in the no-overflow sample and matches the original triage's "division 831". Division overflows on exactly one input pair (`INT_MIN / -1`), so the integer path needs the same explicit condition the bitvector path already has — minding that C's `/` lowers to the `createIntDiv` Ite shape. Signed-shift overflow is still unchecked in **both** modes (also Phase 5).
-2. **Phase 4 / AD6 grammar — the typedef-name ambiguity.** Highest-value frontend item left (`ParseCancellationException` ≈ 4,108 tasks, and still what blocks most of aws-c-common). Batch 6 found the concrete shape: with no symbol table and `typedefName : Identifier`, **`void *malloc(size_t);` is not parsed as a function at all** — it becomes two *variables*, `malloc` and `size_t`. Any function declared with a bare typedef'd parameter is misparsed the same way; `malloc` is merely special-cased now. Needs the resolved AD6 approach (typedef feedback + semantic predicate) and the "handle with care" protocol.
-3. **"Pointer arithmetic not supported"** (`FrontendXcfaBuilder`) — now the *only* forced-bitvector crash class left, and it appears in the plain canary corpus (`loops/array-{1,2}.c`).
-4. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
-5. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
-6. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`, **C1** east-const.
-7. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
+Prompted by the question *"does parsing twice cost us anything — do we re-parse the typedefs for every type?"*. Measured rather than guessed, by timing both passes across the 143 canaries.
+
+**No, and no.** `parseTypeAware` has exactly **one** production call site (`getXcfaFromC`), reached **once per program**; moving it from `c2xcfa` into the frontend was a pure relocation. Nothing is re-parsed per type — the typedef names are collected once into a set the parser then consults in O(1).
+
+The two passes are *not* symmetric, and in the useful direction:
+
+| pass | mean | why |
+|---|---|---|
+| collect (permissive) | **438 ms** | every identifier may be a type name, so the grammar is genuinely ambiguous and ALL(*) has to work for its answer |
+| strict (type-aware) | **57 ms** | knowing the type names removes the ambiguity — **~8× cheaper** |
+
+So the added cost is the *strict* pass, not a doubling: **6,915 ms → 7,984 ms** over 12 canaries, ≈ **+89 ms/file**, ~15% of frontend wall time *including JVM startup* — against a 900 s task budget, noise.
+
+⚠️ **The measurement found a real bug.** 27 of 143 canaries (**19%**) were paying for a **third** parse: the strict parse threw and silently fell back to the old permissive one. Cause: the collector's `lastIdentifier()` took the **attribute's** name for the type name in
+`typedef struct {...} __pthread_unwind_buf_t __attribute__ ((__aligned__));` → `__aligned__`. The real name was never collected, so every later use of it failed to parse. Fixed with `lastTypeName()` (searches for a `TypedefNameContext`); **fallback rate 27/143 → 0/143**. Those 19% of files had been quietly getting the old buggy tree — none of the typedef work reached them.
+
+An **SLL prediction fast path** was tried for the collect pass and **removed again**: measured 1,629 ms vs 1,585 ms for plain LL over the same files, i.e. no gain (the cost is not full-context resolution), and SLL can silently pick a different parse than LL on an ambiguity. Not worth the code.
+
+*Optional future optimization, not taken:* a single-pass parse that registers each typedef name as its declaration is reduced would drop the collect pass entirely and be **faster than the original one-pass parser ever was** (57 ms vs 438 ms), since it would never parse ambiguously. It is delicate — ANTLR runs actions only when not speculating, so a lookahead crossing a typedef declaration would predict against an incomplete symbol table — and at +89 ms/file the payoff does not justify the risk today.
+
+Commit: `collect a typedef's name, not its attribute's`.
+**Validation**: module suites green, canary verdicts **143/143 correct, 0 wrong, 0 errors**.
+
+## IMPLEMENTATION STATUS — batch 13 (`a[j]` silently retyped `j` to an array)
+
+"Pointer arithmetic not supported" (**65 tasks**) turned out not to be about pointer arithmetic at all. `loops/array-1.c` has none — it is `for (j = 0; j < SIZE; j++) a[j] = ...`, the most ordinary loop in C. Printing what the guard was actually looking at ended the guessing at once:
+
+```
+lval=main::j  lvalType=...compound.CArray   ← the loop counter, "an array"
+rexpr=(bvadd main::j #b0…01)
+```
+
+**A C type is recorded per expression, in a map keyed by the expression** (in fact by its *hash code*, `FrontendMetadata`). A cast between two types of equal width and signedness is a no-op, so `CastVisitor` **hands back the very expression it was given** — and `CComplexType.castTo` then records the target type on it. When the returned expression *is* a variable's `RefExpr`, that rewrites **that variable's type everywhere it occurs**.
+
+`ExpressionVisitor.dereference` cast the *index* to the **pointer's own C type** (`ptrType.castTo(offset)`). `CArray`/`CPointer` are `CInteger`s of pointer width, so for an `unsigned` index under ILP32 the cast is a no-op — and `a[j]` recorded **`j` itself as an array**. Every later `j++` then read as pointer arithmetic and the whole program was refused. Invisible under integer arithmetic (that conversion always builds a new expression, so it has nothing to alias), which is why it presented as a "forced-bitvector" crash class.
+
+**The fix**: an offset is an *index*, so it is cast to the index type — the same `unsigned long` the zero-offset default and the initializer-list dereferences already use, and pointer-wide in every data model. One line.
+
+Genuine pointer arithmetic (`int *p = a + 1;`) is **still** refused, and correctly: a pointer *value* is an object id, memory is `arrays[base][offset]`, so `p = q + 1` would give `p` an id of its own, naming a different object entirely. The message now says which assignment.
+
+Result: `loops/array-1.c` → **Safe** ✓ and `loops/array-2.c` → **Unsafe** ✓ (both previously errored out); every reduction of the loop shape builds under both arithmetics.
+
+⚠️ **The root hazard remains and is worth knowing about**: *any* no-op `castTo` aliases its operand and rewrites its recorded type. It is harmless between integer types of equal width and signedness (they behave identically), but it is **not** harmless for compound types, and `(char *)q` on an `int *q` still silently retypes `q`'s own elements. This is the third bug of this shape (after `(void)e` in batch 9). The real fix is for `castTo` to refuse to stamp a type onto an expression it did not create — deferred, because it changes every cast in the frontend and wants its own validation round.
+
+Commit: `an array index is an index, not a pointer`. New `ArrayIndexTypeTest` (4 cases × both arithmetics) pins that indexing leaves the index's type alone.
+
+## NEXT UP (queue as of batch 13; the in-flight benchmark run will re-rank it)
+
+1. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
+2. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
+3. **`castTo` must not stamp a type onto an expression it did not create** (the root of batch 13, and of the batch-9 `(void)e` bug) — its own change, its own validation round.
+4. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
+5. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
+
+*(Done since this queue was last written: **N3 division overflow** and signed-shift overflow → batch 10; **AD6 typedef-name ambiguity** → batch 10; **C1 east-const** → batch 11.)*
 
 **→ A full re-test is warranted now.** Expected: the largest frontend-error classes ("Only variable-backed functions" 1,543; asm NPE 882; unions 1,722 partially; alloca 421) should shrink; watch for new *wrong* results from fptr dispatch (candidate-set over-approximation), asm output havocing, and union offset-0 aliasing.
 
