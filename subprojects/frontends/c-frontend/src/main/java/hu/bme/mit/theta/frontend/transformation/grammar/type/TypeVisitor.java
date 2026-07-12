@@ -458,10 +458,18 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public CSimpleType visitTypeQualifier(CParser.TypeQualifierContext ctx) {
         switch (ctx.getText()) {
             case "const":
+            case "__const": // GCC spelling
                 return null;
             case "restrict":
-                throw new UnsupportedFrontendElementException("Not yet implemented 'restrict'!");
+            case "__restrict": // GCC spellings
+            case "__restrict__":
+                // `restrict` is a promise by the programmer that the object is not reached through
+                // any other pointer. It is a licence to optimize, and says nothing about the values
+                // a program computes -- so not exploiting it is sound, and refusing the program
+                // over it (as this did) is not.
+                return null;
             case "volatile":
+            case "__volatile__": // GCC spelling
                 return Volatile();
             case "_Atomic":
                 return Atomic();

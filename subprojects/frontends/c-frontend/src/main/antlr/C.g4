@@ -416,10 +416,12 @@ atomicTypeSpecifier
 
 typeQualifier
     :   'const'
-    |   '__const'       // GCC spelling
+    |   '__const'        // GCC spelling
     |   'restrict'
-    |   '__restrict__'  // GCC spelling
+    |   '__restrict'     // GCC spellings
+    |   '__restrict__'
     |   'volatile'
+    |   '__volatile__'   // GCC spelling
     |   '_Atomic'
     ;
 
