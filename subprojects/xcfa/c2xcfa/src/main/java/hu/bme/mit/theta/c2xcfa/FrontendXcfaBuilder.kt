@@ -446,7 +446,13 @@ class FrontendXcfaBuilder(
               CComplexType.getType(lValue, parseContext) is CArray ||
               CComplexType.getType(lValue, parseContext) is CStruct) && rExpression.hasArithmetic()
           ) {
-            throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
+            // A pointer *value* is an object id: memory is `arrays[base][offset]`, so the offset
+            // lives at the dereference, not in the pointer. `p = q + 1` would therefore give `p` an
+            // id of its own, naming a different object entirely -- so it is refused rather than
+            // answered wrongly. (`*(q + 1)` is fine: there the index stays where it belongs.)
+            throw UnsupportedFrontendElementException(
+              "Pointer arithmetic not supported: $lValue = $rExpression"
+            )
           }
           // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
           // pointer-based

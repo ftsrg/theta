@@ -873,9 +873,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @SuppressWarnings("unchecked")
     private <T extends Type> Expr<?> dereference(
             Expr<?> accept, Expr<?> offset, CComplexType type) {
-        CComplexType ptrType = CComplexType.getType(accept, parseContext);
-        Dereference<T, ?, Type> of =
-                Exprs.Dereference((Expr<T>) accept, ptrType.castTo(offset), type.getSmtType());
+        // An offset is an *index*, so it is cast to the index type -- the same unsigned long the
+        // zero offset above and the initializer-list dereferences use, and pointer-wide in every
+        // data model. It used to be cast to the *pointer's own* type, which is a `CInteger` of that
+        // same width: `castTo` then returned the index expression untouched (equal width, equal
+        // signedness) and stamped the pointer type onto it. That expression is the index
+        // *variable*,
+        // so `a[j]` quietly recorded `j` itself as an array, and every later `j++` was read as
+        // pointer arithmetic and refused. Nothing about `j` is a pointer.
+        Expr<?> index = CComplexType.getUnsignedLong(parseContext).castTo(offset);
+        Dereference<T, ?, Type> of = Exprs.Dereference((Expr<T>) accept, index, type.getSmtType());
         parseContext.getMetadata().create(of, "cType", type);
         return of;
     }
