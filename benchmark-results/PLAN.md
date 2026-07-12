@@ -265,7 +265,20 @@ and C guarantees `imaxabs` is called **only when the left conjunct holds**. Thet
 - **FIXED** (commit `evaluate the operands of && and || under their short-circuit`): `visitLogicalAndExpression` / `visitLogicalOrExpression` now lift the statements an operand added back out of `preStatements` and re-emit them inside a `CIf` on the operands already evaluated — all of them holding, for `&&`; none of them, for `||`. Fixtures pin all three directions: the call must *not* run (`x != 0 && f()` with `x == 0`), must *not* run (`x != 0 || f()` with `x != 0`), and *must* run (`x != 0 && f()` with `x != 0`). Canary suite 143/143, 0 wrong.
 - ⚠️ Two things worth knowing for the next person: the builder insists an `if`'s guard be a `CCompound` **with its pre/post-statement slots filled** (otherwise it takes a path that demands the compound's last statement be a compound too, and throws "Currently only CCompounds have pre- and post statements!"). And *expressions* never needed this: `OverflowDetectionPass.getExpressions` already threads a short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expression as `Ite(cond, expr, 0)`, and `MemsafetyPass` has `derefsWithShortCircuitCond`. It is only the statements a call is lifted into that escaped the guard.
 
-### ⚠️ STILL OPEN: an abs-style bound does not constrain a later multiplication (false alarm)
+### RESOLVED: the abs-style bound false alarm — havoced values were not values of their C type
+The 8 `int64_t_rand_square_*_good` false alarms are **fixed** (commit `constrain havoced values to the range their C type can hold`). The cause was not abs, not the short-circuit, and not the nonlinearity: **a havoc is unbounded, and under integer arithmetic that is not the same as a C value.** A nondet `long long` became an arbitrary *mathematical* integer, with nothing saying it is at most `LLONG_MAX`. Code that bounds such a value from one side only —
+
+```c
+if (a > -3037000500 && llabs(a) <= 3037000499) { r = a * a; }
+```
+
+— is then not bounded at all, and the analysis "finds" an overflow at a value no C program could ever have produced. (The linear form `a <= K && a >= -K` bounds both sides itself, which is exactly why it verified while the abs form did not.)
+- The `LimitVisitor` — the thing that says a value of type `T` is representable in `T` — existed but was used **only** by `OverflowDetectionPass`. Nothing applied it to havocs. `NondetFunctionPass` and `UnresolvedInvokeToHavocPass` now follow each havoc with that range assume (`TypeRange.kt`), and only when the C type is actually **known** — without the metadata, `getType` guesses from the SMT type, and a guess is no basis for constraining a value.
+- Under bitvector arithmetic the width already does this, so the limit visitor yields `true` there and the change costs nothing.
+- All 8 tasks now report the correct **Safe**, every `_bad` twin is **still caught**, and every overflow fixture (add/sub/mul/neg/div, the near-misses, division-by-zero) is unchanged. Canary suite 143/143, 0 wrong, 0 errors; module suites green.
+- ⚠️ Diagnosis note for the next person: I first "reproduced" this at ILP32 while the task's `data_model` is **LP64**, which made `int64_t` (via glibc's `typedef signed long int __int64_t`) a *32-bit* variable and produced a completely different, spurious explanation. **Always take the data model from the task's `.yml`.**
+
+### (historical) the investigation that led there
 The 8 `int64_t_rand_square_*_good` tasks are **still wrong** after the short-circuit fix, for an unrelated and **pre-existing** reason. Reduced, with no call and no floating point:
 
 ```c
