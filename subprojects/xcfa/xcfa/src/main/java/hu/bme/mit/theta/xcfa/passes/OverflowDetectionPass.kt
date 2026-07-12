@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr
 import java.math.BigInteger
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -109,7 +110,12 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
         val conditions =
           label
             .getExpressions {
-              (it is AddExpr || it is SubExpr || it is MulExpr || it is DivExpr || it is NegExpr) &&
+              (it is AddExpr ||
+                it is SubExpr ||
+                it is MulExpr ||
+                it is DivExpr ||
+                it is NegExpr ||
+                it is BvShiftLeftExpr) &&
                 parseContext.metadata
                   .getMetadataValue(it, "cType")
                   .map { cType -> (cType as? CInteger)?.isSsigned ?: false }

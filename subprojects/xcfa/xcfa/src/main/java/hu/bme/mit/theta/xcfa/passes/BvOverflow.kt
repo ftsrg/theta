@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.BvUtils
 import java.math.BigInteger
@@ -93,6 +94,18 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
 
     // -x overflows on exactly one value: the most negative one, which has no positive counterpart.
     is NegExpr<*> -> Eq(bv(expr.op), lit(BigInteger.TWO.pow(width - 1).negate()))
+
+    // `a << b` is `a * 2^b`, so it overflows when that product no longer fits -- redone in twice the
+    // width, the shifted value must still agree with the narrow one. (A *negative* `a` is undefined
+    // in C regardless, but flagging that would condemn the common `-1 << k` idiom, so only the value
+    // is checked.)
+    is BvShiftLeftExpr -> {
+      val a = bv(expr.leftOp)
+      val b = bv(expr.rightOp)
+      disagrees(BvExprs.ShiftLeft(a, b), width * 2) { w ->
+        BvExprs.ShiftLeft(widen(a, w), widen(b, w))
+      }
+    }
 
     // Likewise x / y: only MIN / -1 overflows (its true value is one past MAX).
     is DivExpr<*> ->

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.MetaData
@@ -44,7 +45,15 @@ fun withinTypeRange(
   val cType =
     parseContext.metadata.getMetadataValue(value, "cType").orElse(null) as? CComplexType
       ?: return listOf()
-  val assume = cType.accept(getLimitVisitor(parseContext), value)
+  // Only integer types have a range to speak of. The integer limit visitor has no catch-all and
+  // throws on anything else (a pointer, a struct), so a type it does not know simply goes
+  // unconstrained -- as it did before.
+  val assume =
+    try {
+      cType.accept(getLimitVisitor(parseContext), value)
+    } catch (e: UnsupportedFrontendElementException) {
+      return listOf()
+    }
   if (assume.cond is TrueExpr) {
     return listOf()
   }
