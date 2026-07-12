@@ -104,6 +104,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     } ?: emptyList(),
     listOf(DataRaceToReachabilityPass(property)),
     listOf(OverflowDetectionPass(property, parseContext)),
+    // Spell out the mem* copies before anything havocs them: a havoc would leave the destination
+    // holding whatever it held before, which is not what a copy does.
+    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     // Havoc remaining calls to unresolved external functions with integer-scalar signatures
     // (all passes that consume specific calls -- free, malloc, pthread_*, nondet -- have
     // already run), so they do not crash the analysis later with "No such method ...".
