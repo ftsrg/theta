@@ -141,6 +141,58 @@ class CTypeNameAmbiguityTest {
     assertFalse(tree.hasCast())
   }
 
+  // --- `T * p;` inside a block: declaration or multiplication? ------------------------------
+
+  private fun ParseTree.hasBlockDeclaration() =
+    find(CParser.BodyDeclarationContext::class.java) != null
+
+  @Test
+  fun `a pointer declaration of a typedef'd type is a declaration, not a multiplication`() {
+    // The bug this guards: `blockItem` lists `statement` before `declaration`, and ANTLR settles an
+    // ambiguity by alternative order -- so `S *p;` became a multiplication whose result is thrown
+    // away, the variable was never declared, and `S` reached the expression visitor as a *value*
+    // ("No such variable or macro: S"). C says the opposite: a block item that can be read as a
+    // declaration is one.
+    val tree = parse(body("S *p; p = 0;", "typedef int S;"), "S")
+    assertTrue(tree.hasBlockDeclaration(), "`S *p;` must declare p when S is a type")
+    assertFalse(tree.multiplicativeSigns().contains("*"), "it is not a multiplication")
+  }
+
+  @Test
+  fun `the same text is a multiplication when the name is a variable`() {
+    // Identical token shapes, opposite parses -- the whole point of knowing the type names.
+    val tree = parse(body("int s = 2; int p = 3; s * p;"))
+    assertTrue(
+      tree.multiplicativeSigns().contains("*"),
+      "`s * p;` is a multiplication when s is a variable",
+    )
+  }
+
+  @Test
+  fun `an ordinary call is not turned into a declaration`() {
+    // `f(x);` matches `declarationSpecifiers initDeclarator` too -- "declare x of type f" -- if any
+    // identifier may name a type. It must not, when f is merely a function.
+    val tree = parse(body("f(1);", "void f(int q) {}"))
+    assertFalse(tree.hasBlockDeclaration(), "`f(1);` is a call, not a declaration")
+  }
+
+  @Test
+  fun `a label keeps working even when its name is also a type`() {
+    // `L:` is a labelled statement, not a declaration, whatever else L may name.
+    val tree = parse(body("int i = 0; L: i++; if (i < 2) goto L;", "typedef int L;"), "L")
+    assertNotNull(
+      tree.find(CParser.LabeledStatementContext::class.java),
+      "`L:` must stay a label when L is also a typedef name",
+    )
+  }
+
+  @Test
+  fun `a declaration of a built-in pointer type still parses as a declaration`() {
+    // This one never broke -- a keyword cannot begin an expression -- but it must stay that way.
+    val tree = parse(body("int *q; q = 0;"))
+    assertTrue(tree.hasBlockDeclaration())
+  }
+
   // --- declarations ------------------------------------------------------------------------
 
   @Test

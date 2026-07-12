@@ -89,6 +89,33 @@ grammar C;
         }
         return isTypeStart(_input.LT(i + 1));
     }
+
+    /**
+     * Whether a block item is a declaration rather than a statement.
+     *
+     * Inside a block, `S * p;` is a declaration if `S` names a type and a multiplication if it names
+     * a variable -- the same ambiguity as `(a) * b`, and C settles it the same way: if a block item
+     * *can* be read as a declaration, it *is* one. ANTLR instead settles it by alternative order, so
+     * `statement` (listed first) used to win and every `S *p;` became a multiplication whose result
+     * is discarded; the declared variable then did not exist, and `S` reached the expression visitor
+     * as a value ("No such variable or macro: S"). Only *typedef* names were affected -- `int *p;`
+     * and `struct T *p;` are safe because a keyword cannot begin an expression, and at file scope
+     * there is no statement to compete with.
+     *
+     * This may only be asked when the type names are actually known. The name-collecting pass runs
+     * permissively, where *every* identifier is a "type name" -- there, `f(x);` would answer yes and
+     * be read as declaring an `x` of type `f`, turning ordinary calls into declarations.
+     */
+    public boolean startsDeclaration() {
+        if (permissiveTypeNames) {
+            return false;
+        }
+        if (!isTypeStart(_input.LT(1))) {
+            return false;
+        }
+        // `L: ...` is a labelled statement, even where L happens to also name a type.
+        return !":".equals(_input.LT(2).getText());
+    }
 }
 
 
@@ -587,8 +614,8 @@ blockItemList
     ;
 
 blockItem
-    :   statement       # bodyStatement
-    |   declaration     # bodyDeclaration
+    :   {!startsDeclaration()}? statement       # bodyStatement
+    |   declaration                             # bodyDeclaration
     ;
 
 expressionStatement
