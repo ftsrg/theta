@@ -17,8 +17,10 @@ package hu.bme.mit.theta.frontend.transformation.grammar
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
+import hu.bme.mit.theta.frontend.stdlib.headerContent
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTree
 
@@ -36,29 +38,22 @@ import org.antlr.v4.runtime.tree.ParseTree
  * parse then accepts only those as types.
  *
  * The first pass must tolerate errors, since the files this is meant to fix are precisely the ones
- * that fail to parse today. And if the type-aware parse fails, we fall back to the old permissive
- * one: a typedef name the first pass failed to spot would otherwise turn a file that parses today
- * into one that does not. Nothing that parses now can start failing.
+ * that fail to parse today. The **second one must not**: if the type-aware parse cannot read the
+ * file, that is the answer. There used to be a fallback here that re-parsed permissively, so that
+ * no file which parsed before could start failing -- but a fallback that quietly succeeds also
+ * hides every bug in the pass it is covering for. It masked a collector bug that sent *19% of
+ * files* down the old, wrong path, where none of the type-aware work reached them at all, and
+ * nothing said so. A parse that fails loudly is worth more than one that lies quietly.
  */
-fun parseTypeAware(input: CharStream): CParser.CompilationUnitContext {
-  val typedefNames = collectTypedefNames(input)
-  return try {
-    parseC(input, typedefNames)
-  } catch (e: Exception) {
-    parseC(input, typedefNames = null)
-  }
-}
+fun parseTypeAware(input: CharStream): CParser.CompilationUnitContext =
+  parseC(input, collectTypedefNames(input))
 
-/**
- * A parse with `typedefNames` as the type names, or the old any-identifier-is-a-type parse if null.
- */
-private fun parseC(input: CharStream, typedefNames: Set<String>?): CParser.CompilationUnitContext {
+/** The real parse: an identifier is a type name only if it was actually `typedef`'d. */
+private fun parseC(input: CharStream, typedefNames: Set<String>): CParser.CompilationUnitContext {
   input.seek(0)
   val parser = CParser(CommonTokenStream(CLexer(input)))
-  if (typedefNames != null) {
-    parser.typedefNames.addAll(typedefNames)
-    parser.permissiveTypeNames = false
-  }
+  parser.typedefNames.addAll(typedefNames)
+  parser.permissiveTypeNames = false
   parser.errorHandler = BailErrorStrategy()
   return parser.compilationUnit()
 }
@@ -71,22 +66,35 @@ private fun parseC(input: CharStream, typedefNames: Set<String>?): CParser.Compi
  * shared ParseContext), and running them twice over the same file corrupts the real parse.
  */
 fun collectTypedefNames(input: CharStream): Set<String> {
+  val names = LinkedHashSet<String>()
   input.seek(0)
+  collectTypedefNamesFrom(input, names)
+  return names
+}
+
+/** Harvests one translation unit's typedef names, following any `#include` it names. */
+private fun collectTypedefNamesFrom(input: CharStream, names: MutableSet<String>) {
   val parser = CParser(CommonTokenStream(CLexer(input)))
   parser.removeErrorListeners() // a file that does not parse still tells us its typedefs, and those
   // names are often exactly what lets the *real* parse of it succeed; complain about it later
-  val names = LinkedHashSet<String>()
   val tree =
     try {
       parser.compilationUnit()
     } catch (e: Exception) {
-      return names
+      return
     }
   tree.collectTypedefNamesInto(names)
-  return names
 }
 
 private fun ParseTree.collectTypedefNamesInto(names: MutableSet<String>) {
+  // A header's typedefs are the program's typedefs. The include is only *expanded* much later, when
+  // the visitors run, but the names have to be known now, while the file is being parsed: without
+  // `pthread_mutex_t` in hand, `pthread_mutex_t mutex;` reads as a multiplication and the file does
+  // not parse at all. (Headers include headers, so this recurses -- the name set is shared and
+  // terminates on the finite set of headers we carry.)
+  if (this is CParser.IncludeDirectiveContext) {
+    headerContent(text)?.let { collectTypedefNamesFrom(CharStreams.fromString(it), names) }
+  }
   if (this is CParser.DeclarationContext && isTypedef()) {
     val initDeclarators = initDeclaratorList()?.initDeclarator()
     if (initDeclarators.isNullOrEmpty()) {
