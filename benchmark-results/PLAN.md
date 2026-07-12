@@ -428,12 +428,43 @@ Two lines, both the equal-width/equal-signedness branch. This is not a new mecha
 
 Commit: `a no-op bitvector cast gets its own expression to be typed`.
 
-## NEXT UP (queue as of batch 15; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 16 (three function-pointer bugs, each hiding the next)
 
-1. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
-2. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
-3. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
-4. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
+Chasing the `ClassCastException` cluster in the no-overflow sample. Three of the eleven errors were `ClassCastException`, all in Juliet's `_44`/`_65` variants -- "data flow through a function pointer". Fixing the crash exposed a second bug; fixing *that* exposed a third, which was the worst of the three.
+
+### 1. The crash: an inlined call's result written at the callee's type
+`InlineProceduresPass` converts *arguments* properly (`castTo`), but the **out** direction -- writing the callee's result back -- built the assignment at `param.first.type`, the **callee's** type, though its destination is the **caller's** variable. Indistinguishable whenever the two agree, and they nearly always do. But a call through a function pointer has no signature to go by, so the frontend types its result an `int` while the callee may return anything: for a `void` callee this asked to cast a 32-bit variable to the 1-bit placeholder, and threw. The assignment is now built at `varDecl.type`, which is what it writes into.
+
+### 2. A function's address, truncated
+`FunctionIds` numbers functions from `0x10000000` -- **29 bits** -- but the id was stored in the function's designator variable, which was typed by the function's **return type**. Anything narrower silently truncated it to 0, so the dispatch guard `fp == id(f)` could never hold, the branch was infeasible, and **the callee was never explored**. Same program, changing only the return type:
+
+| `sink` returns | id variable | verdict on a program that *does* overflow |
+|---|---|---|
+| `long` / `int` | 64/32-bit | Unsafe ✓ |
+| `short` | 16-bit | **Safe** ✗ |
+| `char` | 8-bit | **Safe** ✗ |
+| `void` / `_Bool` | 1-bit | **Safe** ✗ |
+
+A program reported *safe* on the strength of a call that had been quietly dropped -- and callbacks are usually `void`. The designator is now typed as what it is: an address, pointer-wide.
+
+### 3. A function's address, never initialised  ⚠️ the worst one
+Fixing (2) produced a **false alarm** on `CWE191_..._65_good`, which is why (2) alone was not committed. A C file normally **prototypes** a function before defining it. The variable standing for its address belongs to *that* declaration, so at the definition `createVars` was skipped -- and the definition's `funcDecl.getVarDecls()` came back **empty**. That empty list is exactly what `FrontendXcfaBuilder` walks to create the id global. No global, no initial value: **the function pointer held an arbitrary value**, every candidate's guard became satisfiable, and a call could land in *any* function of the right arity. In the Juliet task, `goodB2G`'s random input was dispatched into `goodG2B`'s **unchecked** sink and reported as an underflow the program can never reach.
+
+It cuts both ways -- invented counterexamples through unreachable callees, and a pointer dispatching where it never points -- and it was only visible once (2) stopped suppressing dispatch entirely. The definition now adopts the prototype's variable.
+
+**Validation.** Reduced from the benchmark task to a 15-line repro before fixing anything. All three fixes have regression tests (`FunctionPointerReturnTypeTest`, 5 cases) verified to **fail on the old code and pass on the new**. No-overflow sample: **19 → 20 CORRECT, 11 → 8 ERROR (all 3 `ClassCastException`s gone), 0 WRONG**. Canaries 142/143 (the outlier being the known-slow `mod3.c.v+sep-reducer.c`). Module suites and `spotlessCheck` green.
+
+Commits: `write an inlined call's result at the caller's type`, `a function's address needs a variable wide enough to hold it`, `initialise the address of a function declared before it is defined`.
+
+⚠️ **Known limit, deliberately left**: dispatch still picks candidates by **arity alone**, so a pointer may still reach any same-arity address-taken function. That is an over-approximation (it can only *invent* errors, not miss them), but it is why the two `_44`/`_65` `_good` tasks now time out rather than verify -- the callees are genuinely explored for the first time. Narrowing the candidate set by parameter types is the obvious next step for that family.
+
+## NEXT UP (queue as of batch 16; the in-flight benchmark run will re-rank it)
+
+1. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
+2. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
+3. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
+4. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
+5. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
 
 *(Done since this queue was last written: **N3 division overflow** and signed-shift overflow → batch 10; **AD6 typedef-name ambiguity** → batch 10; **C1 east-const** → batch 11.)*
 
