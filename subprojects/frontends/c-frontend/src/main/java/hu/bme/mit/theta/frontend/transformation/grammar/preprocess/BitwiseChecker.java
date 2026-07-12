@@ -88,6 +88,21 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
         return super.visitPrimaryExpressionConstant(ctx);
     }
 
+    /**
+     * `__builtin_bswapN` reverses a value's bytes, which only means anything if the value *has*
+     * bytes -- so a program that calls it needs bitvectors, exactly as one that uses `&` or `<<`
+     * does. Without this the analysis could pick integer arithmetic and the builtin would have
+     * nothing to work on.
+     */
+    @Override
+    public Void visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
+        if (ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext id
+                && id.Identifier().getText().startsWith("__builtin_bswap")) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
+        }
+        return super.visitPostfixExpression(ctx);
+    }
+
     @Override
     public Void visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
         ctx.exclusiveOrExpression(0).accept(this);

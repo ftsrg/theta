@@ -68,6 +68,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
@@ -1056,6 +1057,26 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(unused, "cType", signedInt);
                 return unused;
             }
+            case "__builtin_unreachable" -> {
+                // The programmer promises control never gets here; reaching it is undefined. Ending
+                // the path is what the compiler's contract says and it invents no error of its own,
+                // which is exactly how `abort` is already modelled (FinalLocationPass turns a call
+                // to it into an edge to the final location).
+                return callModeledLibraryFunction("abort", List.of(), false);
+            }
+            case "__atomic_load_n", "__atomic_load" -> {
+                // An atomic load *is* a load. The memory order is only about what may be reordered
+                // around it, and the analysis is sequentially consistent anyway -- it never
+                // reorders
+                // -- so honouring the order would constrain nothing that is not already true.
+                return atomicLoad(args);
+            }
+            case "__atomic_store_n", "__atomic_store" -> {
+                return atomicStore(args);
+            }
+            case "__builtin_bswap16", "__builtin_bswap32", "__builtin_bswap64" -> {
+                return byteSwap(args, Integer.parseInt(name.substring("__builtin_bswap".length())));
+            }
             case "__builtin_uadd_overflow",
                     "__builtin_uaddl_overflow",
                     "__builtin_uaddll_overflow" -> {
@@ -1277,6 +1298,84 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * null} if calls cannot be built here (no function visitor), so the caller falls back to normal
      * handling.
      */
+    /** The type a pointer (or array) points at, or null if the expression is neither. */
+    private CComplexType pointeeOf(Expr<?> pointer) {
+        CComplexType type = CComplexType.getType(pointer, parseContext);
+        if (type instanceof CPointer cPointer) {
+            return cPointer.getEmbeddedType();
+        }
+        if (type instanceof CArray cArray) {
+            return cArray.getEmbeddedType();
+        }
+        return null;
+    }
+
+    /** `__atomic_load_n(p, order)` is `*p`. */
+    private Expr<?> atomicLoad(List<AssignmentExpressionContext> args) {
+        if (args.isEmpty()) {
+            return null;
+        }
+        Expr<?> pointer = args.get(0).accept(this);
+        CComplexType pointee = pointeeOf(pointer);
+        if (pointee == null) {
+            return null;
+        }
+        return dereference(
+                pointer, CComplexType.getUnsignedLong(parseContext).getNullValue(), pointee);
+    }
+
+    /** `__atomic_store_n(p, v, order)` is `*p = v`; it yields no value. */
+    private Expr<?> atomicStore(List<AssignmentExpressionContext> args) {
+        if (args.size() < 2 || functionVisitor == null) {
+            return null;
+        }
+        Expr<?> pointer = args.get(0).accept(this);
+        CComplexType pointee = pointeeOf(pointer);
+        if (pointee == null) {
+            return null;
+        }
+        Expr<?> target =
+                dereference(
+                        pointer,
+                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
+                        pointee);
+        preStatements.add(
+                new CAssignment(target, args.get(1).accept(functionVisitor), "=", parseContext));
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        LitExpr<?> unused = signedInt.getNullValue(); // void: no one may read this
+        parseContext.getMetadata().create(unused, "cType", signedInt);
+        return unused;
+    }
+
+    /**
+     * `__builtin_bswapN(x)` reverses the order of x's bytes -- so it is exactly x's bytes, taken
+     * apart and put back together the other way round. Stated on the bits directly rather than with
+     * the usual tower of shifts and masks: there is nothing to get wrong in a concatenation.
+     *
+     * <p>Bitvectors only, which is why `BitwiseChecker` marks a program that calls this as needing
+     * them: reversing bytes is meaningless for a mathematical integer.
+     */
+    private Expr<?> byteSwap(List<AssignmentExpressionContext> args, int width) {
+        if (args.isEmpty()) {
+            return null;
+        }
+        Expr<?> value = args.get(0).accept(this);
+        CComplexType type = CComplexType.getType(value, parseContext);
+        if (!(type instanceof CInteger) || type.width() != width) {
+            return null; // not the width the builtin names: leave it to fail loudly
+        }
+        Expr<BvType> bits = cast(value, BvType.of(width));
+        List<Expr<BvType>> bytes = new ArrayList<>();
+        // Concat puts its first operand in the *high* bits, so walking the bytes upwards from bit 0
+        // and concatenating in that order is precisely the reversal.
+        for (int low = 0; low < width; low += 8) {
+            bytes.add(BvExprs.Extract(bits, Int(low), Int(low + 8)));
+        }
+        Expr<?> swapped = BvExprs.Concat(bytes);
+        parseContext.getMetadata().create(swapped, "cType", type);
+        return swapped;
+    }
+
     private Expr<?> callModeledLibraryFunction(
             String functionName,
             List<AssignmentExpressionContext> args,
