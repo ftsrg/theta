@@ -406,13 +406,34 @@ Commit: `keep the solver binaries executable in the archive`.
 
 ⚠️ **The reason this hid for two full sweeps**: the sweep script bucketed *crashes* and *timeouts* together as one `UNKNOWN_OR_TO`. A broken harness then looks exactly like a verdict regression. Keep them apart (`verdict4.sh` now does).
 
-## NEXT UP (queue as of batch 13; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 15 (the root of the retyping bug: a no-op cast must not alias)
+
+Batch 13 fixed the *symptom* (`a[j]` retyping `j`); this fixes the cause, and the fix was suggested in one line: **"no-op casting usually wraps the operand in a `Pos()` — couldn't we just do that?"** It could, and the frontend was already half doing it.
+
+`CComplexType.castTo` records the target C type on whatever the cast visitor hands back, and types are keyed by the expression itself. So a cast visitor that returns its operand *unchanged* rewrites that operand's own type. The **integer** cast visitor never had this problem because it already returns `Pos(param)` for the identity case — a fresh wrapper with its own identity, which is exactly why the bug was invisible under integer arithmetic. The **bitvector** one returned the bare operand:
+
+```java
+} else { // widths equal, signedness equal
+    return Pos(param);   // was: return param;
+}
+```
+
+Two lines, both the equal-width/equal-signedness branch. This is not a new mechanism — it makes bitvectors do what integers have always done — and it retires the whole bug class, not just the array-index symptom (`(char *)q` on an `int *q` no longer retypes `q`'s elements either).
+
+**Verified as the root fix**: with the batch-13 `dereference()` change backed out, `ArrayIndexTypeTest` passes on the `Pos` change alone (all 4 cases). Both are kept — typing an index as an index is independently right.
+
+⚠️ **It exposed a latent bug in the C printer.** `XcfaToC` round-tripping (XCFA → `xcfa.c` → re-parse) broke on `03bitwise.c`: `IntPosExpr`'s operator label is `"+"`, but `BvPosExpr`'s is `"bvpos"`, so the printer emitted `(bvpos x)` — not C. The gap was always there; nothing had ever produced a `BvPos` before. `PosExpr` now maps to unary `+` whatever the type.
+
+**Validation.** A `Pos` is *invisible to the solver* (`transformBvPos` → `toTerm(op)`, so the SMT term is unchanged), but that had to be shown at runtime rather than argued: an A/B of the 60-task no-overflow sample against two dists differing only in this change puts **every single task in exactly the same bucket** (19 CORRECT / 11 ERROR / 30 UNKNOWN, both). Canaries 142/143 (the one outlier being the known-slow `mod3.c.v+sep-reducer.c`), all module suites green.
+
+Commit: `a no-op bitvector cast gets its own expression to be typed`.
+
+## NEXT UP (queue as of batch 15; the in-flight benchmark run will re-rank it)
 
 1. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
 2. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
-3. **`castTo` must not stamp a type onto an expression it did not create** (the root of batch 13, and of the batch-9 `(void)e` bug) — its own change, its own validation round.
-4. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
-5. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
+3. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
+4. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
 
 *(Done since this queue was last written: **N3 division overflow** and signed-shift overflow → batch 10; **AD6 typedef-name ambiguity** → batch 10; **C1 east-const** → batch 11.)*
 
