@@ -92,12 +92,20 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
                 if (param.second != ParamDirection.IN) {
                   val varDecl = (invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>
+                  // This writes the callee's result into the *caller's* variable, so it is the
+                  // caller's type that the assignment has to be built at -- and the right-hand side
+                  // already converts to it. Naming the callee's type here instead is indisting-
+                  // uishable whenever the two agree, and they nearly always do; but a call through
+                  // a
+                  // function pointer has no signature to go by, so the frontend types its result an
+                  // `int` while the function it dispatches to may return anything -- `void`, say,
+                  // whereupon this asked to cast a 32-bit variable to a 1-bit one and threw.
                   val stmt =
                     AssignStmt.of(
-                      cast(varDecl, param.first.type),
+                      cast(varDecl, varDecl.type),
                       cast(
                         CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
-                        param.first.type,
+                        varDecl.type,
                       ),
                     )
                   outStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
