@@ -21,7 +21,6 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTree
-import org.antlr.v4.runtime.tree.TerminalNode
 
 /**
  * Parses C, telling type names apart from ordinary identifiers.
@@ -74,7 +73,8 @@ private fun parseC(input: CharStream, typedefNames: Set<String>?): CParser.Compi
 fun collectTypedefNames(input: CharStream): Set<String> {
   input.seek(0)
   val parser = CParser(CommonTokenStream(CLexer(input)))
-  parser.removeErrorListeners() // a file that does not parse still tells us its typedefs
+  parser.removeErrorListeners() // a file that does not parse still tells us its typedefs, and those
+  // names are often exactly what lets the *real* parse of it succeed; complain about it later
   val names = LinkedHashSet<String>()
   val tree =
     try {
@@ -91,9 +91,13 @@ private fun ParseTree.collectTypedefNamesInto(names: MutableSet<String>) {
     val initDeclarators = initDeclaratorList()?.initDeclarator()
     if (initDeclarators.isNullOrEmpty()) {
       // With every identifier taken for a type name, the declared name is swallowed into the
-      // specifier list (`typedef unsigned long size_t;` looks like three type specifiers), so it is
-      // the last identifier there.
-      declarationSpecifiers()?.lastIdentifier()?.let(names::add)
+      // specifier list (`typedef unsigned long size_t;` looks like three type specifiers). It is
+      // the
+      // last *type name* there -- not the last identifier, which in
+      // `typedef struct {...} __pthread_unwind_buf_t __attribute__ ((__aligned__));`
+      // is the attribute's (`__aligned__`), leaving the type undeclared and every later use of it
+      // unparseable.
+      declarationSpecifiers()?.lastTypeName()?.let(names::add)
     } else {
       initDeclarators.forEach { it.declarator()?.declaredName()?.let(names::add) }
     }
@@ -117,10 +121,13 @@ private fun ParseTree.declaredName(): String? {
   return null
 }
 
-private fun ParseTree.lastIdentifier(): String? {
-  if (this is TerminalNode && symbol.type == CParser.Identifier) return text
+/**
+ * The last name used as a *type* here; a struct's own members come before it, an attribute after.
+ */
+private fun ParseTree.lastTypeName(): String? {
+  if (this is CParser.TypedefNameContext) return text
   for (i in childCount - 1 downTo 0) {
-    getChild(i).lastIdentifier()?.let {
+    getChild(i).lastTypeName()?.let {
       return it
     }
   }
