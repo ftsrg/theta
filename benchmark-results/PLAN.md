@@ -312,7 +312,25 @@ Commits: `parse the GCC extensions that blocked whole benchmark families`, `acce
 
 ⚠️ **Caught myself introducing a latent bug**: adding `__const`/`__restrict__` to the *grammar* without adding them to `visitTypeQualifier`'s switch, which throws on anything it does not recognise. The fixture only passed because the declaration using them was unused and got pruned. **A grammar keyword needs a visitor case, and the fixture must actually *use* the declaration.**
 
-### C1 east-const — LOCATED, not yet fixed (the biggest remaining downstream cluster)
+### C1 east-const — FIXED, by rewriting `mergeCTypes` (test-driven)
+Commit: `pick a declaration's type by what its specifiers are, not by their order`.
+
+**The bug.** A declaration's specifiers arrive as a *list*, in whatever order they were written, and C attaches no meaning to that order: `unsigned long int` = `long unsigned int`, and `const T` = `T const`. `mergeCTypes` picked the **last** named specifier as the type (its own comment: *"if typedef, then last element is the associated name"*). And `visitTypeSpecifierPointer` returns a **nameless** `NamedType("")` when it matches a bare `*` with no type before it. Put together:
+
+| declaration | specifiers | main type chosen |
+|---|---|---|
+| `const struct S *p` ✓ | `[]` | `Struct/ptr1` — `struct S *` is adjacent, so the pointer rule swallows the struct and returns *it* |
+| `struct S const *p` ✗ | `[Struct/ptr0]` | **`NamedType('')/ptr1`** — the `const` breaks that adjacency, the bare `*` yields the nameless type, and *it* is last |
+
+So the struct was demoted to a mere modifier and `p` came out a `void *` — whereupon `p->field` said **"Only structs expected here"**. It went unnoticed for the west-const spelling precisely because the pointer is absorbed there.
+
+**The fix.** The namer is now chosen by *what a specifier is*, never by where it sits: a specifier names a type unless it is nameless (a bare `*`, which carries only a pointer level) or a width word (`long`/`short`/`unsigned`/`_Bool`/`__int128`, which only say how wide an `int` is). With no namer at all, the type is the `int` that was never written down. This also retires the old "shorthand" special case — `int long x` and `long int x` now come out the same way for the same reason.
+
+**Test-driven, as it had to be.** A new **60-case suite** (`CTypeDeclarationTest`) parses real declarations and asserts the resulting `CComplexType`, *written before the fix*: the plain types, specifier-order permutations (`int unsigned long`), qualifiers in both positions, pointers, structs, and typedef'd structs and scalars. It caught exactly the 5 east-qualifier cases and nothing else, and all 60 pass after.
+- The harness initially parsed *permissively*, which made it take the variable's own name `x` for a type — a misleading picture. Fixing that meant moving the two-pass type-aware parse out of `c2xcfa` into the frontend (`CParseUtils.kt`), where the parser lives; the test and the pipeline now go through the same entry point. **A parser test that does not use the real parse path is worse than no test.**
+- Validation: XCFA **byte-identical 31/31**, canary parse 143/143, canary verdicts **143/143 correct, 0 wrong, 0 errors**, all module suites green. On the 298-task sample: PARSE_OK **96 → 103**, and the `IllegalStateException` cluster (which held "Only structs expected here") **78 → 59**.
+
+### (historical) C1 east-const — how it was located
 25 of 70 sampled downstream failures are `Only structs expected here`, and it is **not** unions. It is **east-const**:
 
 ```c
