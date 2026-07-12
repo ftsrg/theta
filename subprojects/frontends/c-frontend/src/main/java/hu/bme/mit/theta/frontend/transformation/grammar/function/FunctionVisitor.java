@@ -362,9 +362,20 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     .getMetadata()
                     .create(funcDecl.getName(), "cType", returnType.getActualType());
             createVars(funcDecl);
-            for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
-                functions.put(varDecl, funcDecl);
-            }
+        } else {
+            // The function was declared before it was defined -- a prototype, which is how a C file
+            // normally introduces one. The variable standing for its address belongs to *that*
+            // declaration, so the definition must adopt it rather than be left with none: the id of
+            // a function's address is initialised by walking the *definition's* variables, and an
+            // empty list there meant the address was never initialised at all. A function pointer
+            // then held an arbitrary value, every candidate's dispatch guard became satisfiable,
+            // and
+            // a call through it could land in any function of the right arity -- reporting a
+            // counterexample through a callee the program can never reach.
+            funcDecl.addVarDecl(variables.peek().get2().get(funcDecl.getName()));
+        }
+        for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
+            functions.put(varDecl, funcDecl);
         }
         variables.push(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
         flatVariables.clear();
