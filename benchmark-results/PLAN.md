@@ -458,13 +458,53 @@ Commits: `write an inlined call's result at the caller's type`, `a function's ad
 
 ⚠️ **Known limit, deliberately left**: dispatch still picks candidates by **arity alone**, so a pointer may still reach any same-arity address-taken function. That is an over-approximation (it can only *invent* errors, not miss them), but it is why the two `_44`/`_65` `_good` tasks now time out rather than verify -- the callees are genuinely explored for the first time. Narrowing the candidate set by parameter types is the obvious next step for that family.
 
-## NEXT UP (queue as of batch 16; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 17 (the safety net came off, and what it was hiding)
 
-1. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
-2. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
-3. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
-4. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
-5. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
+The full run at `df43da466` (batches 1–9) landed: **correct 5,917 → 7,959**, **error 30,574 → 28,280**, but **wrong 13 → 78**. Of the 73 newly-wrong, **71 had previously been crashes** — and the split (45 false alarms, 12 missed bugs) is exactly the signature of the two function-pointer soundness bugs. Re-running all 73 against HEAD: **48 correct, 21 wrong, 4 error** — batch 16 clears the function-pointer wrongs; what remains is a memsafety/valid-free cluster.
+
+Categorising the 11,589 error-status logs by first error showed ~7,000 already fixed post-run (`ParseCancellationException` 4,108; "Only structs expected here" 1,412; division overflow 1,075; pointer arithmetic 364; `ClassCastException` ~184). The largest **open** class was **"No such variable or macro" (1,375)**.
+
+### The fallback is gone
+`parseTypeAware` used to re-parse permissively when the strict parse failed, so that no file which parsed before could start failing. It also **hid every bug in the pass it was covering for** — it had already masked a collector bug that sent 19% of files down the old, wrong path with nothing said. Removed. If the strict parse cannot read a file, that is the answer.
+
+Taking it off immediately surfaced two things it had been carrying:
+- **Header typedefs were invisible to the parser.** `#include` is expanded at *visitor* time, long after parsing, so `pthread_mutex_t mutex;` could not be told from a multiplication and the file did not parse. The collector now follows an `#include` into the bundled header and harvests its typedefs — which is what a compiler's symbol table does anyway.
+- **`XcfaToC` emitted `longlong`**, which is not C. `typeName` is the type's *internal* canonical name (the key the width table uses); printing it verbatim produced a file that does not parse. The permissive fallback had been taking `longlong` for a typedef'd type name.
+
+### `T *p;` inside a block was a multiplication  (the 1,375)
+957 of the 1,375 were typedef'd *type* names (`twoIntsStruct` 265, `example_user_t` 150, `u8` 74, `node_t`, `int64_t`, `FILE`, …), and they reduce to three lines:
+
+```c
+typedef int S;
+int main(void){ S *p; p = 0; return 0; }   // "No such variable or macro: S"
+```
+
+`blockItem` listed `statement` before `declaration`, and ANTLR settles an ambiguity **by alternative order** — so `S * p;` became a multiplication whose result is discarded, `p` was never declared, and `S` reached the expression visitor as a *value*. C says the opposite: a block item that can be read as a declaration **is** one. Only *typedef* names were affected (`int *p;` and `struct T *p;` are safe — a keyword cannot begin an expression; and at file scope there is no statement to compete with), which is why the typedef work had not caught it.
+
+The predicate is gated on knowing the type names — under the permissive collect pass every identifier is a "type name", where `f(x);` would answer yes and become "declare `x` of type `f`". Five new ambiguity tests pin the tree *shape*, and fail on the old grammar.
+
+### The builtins (418 of the 1,375 were compiler builtins)
+- **`__builtin_unreachable`** → `abort`: the path ends, which is the compiler's contract, and invents no error.
+- **`__atomic_load_n` / `__atomic_store_n`** → the load and the store. The memory order constrains only reordering, and the analysis is sequentially consistent.
+- **`__builtin_bswap16/32/64`** → the bytes, taken apart and concatenated back the other way. `BitwiseChecker` now marks a caller as needing bitvectors — reversing bytes means nothing to a mathematical integer.
+- **`memcpy` / `memmove` / `memset`** (`MemoryFunctionsPass`) → the copy, spelled out. Nothing modelled them before: the havoc pass will not take a call with pointer arguments, so `memcpy` reached the analysis as a call to a function that does not exist and **brought it down**. The count is in *bytes* but memory is `arrays[base][index]` over *typed* elements, so it copies `n / sizeof(element)` elements. A symbolic count or a struct pointee is **not attempted** — it is left to fail loudly rather than move the wrong number of bytes.
+
+Every model is pinned by a test that asserts its *semantics* and a **negative control** asserting the wrong value, which must come back Unsafe — "it parsed" proves nothing.
+
+**Validation.** Canary parse sweep **143/143** with the fallback gone; canary verdicts **142/143** (the outlier is the known-slow `mod3.c.v+sep-reducer.c`); module suites and `spotlessCheck` green.
+
+⚠️ **Still open**: `memcpy` with a *symbolic* count needs a real loop in the pass (new locations), and a struct pointee needs the flat object layout (AD7).
+
+## NEXT UP (queue as of batch 17; the in-flight benchmark run will re-rank it)
+
+1. **The 21 still-wrong tasks** from the 73 re-run — a **memsafety / valid-free** cluster (`CWE401_Invalid_Free`, `ldv-memsafety/memleaks_*`, `memsafety/cmp-freed-ptr`, `weaver/*`), plus `memory-model/{2SB,4SB}`. These are the only wrong answers left and are worth more than any error class.
+2. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
+3. **`memcpy` with a symbolic count** — needs a loop (new locations) in `MemoryFunctionsPass`; today such a call is left to fail loudly.
+4. **The remaining error classes**: multi-dimensional array init (351), union punning (265, AD7), initializer-list expressions (220), Neutral BvType (178).
+5. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
+6. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
+7. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
+8. **Capability/performance** (the timeout mass) — deliberately last: the profiles are only meaningful once the crash noise is gone.
 
 *(Done since this queue was last written: **N3 division overflow** and signed-shift overflow → batch 10; **AD6 typedef-name ambiguity** → batch 10; **C1 east-const** → batch 11.)*
 
