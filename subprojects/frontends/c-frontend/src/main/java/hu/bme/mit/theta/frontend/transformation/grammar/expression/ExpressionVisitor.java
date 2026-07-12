@@ -59,6 +59,8 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -130,20 +132,73 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return preStatements;
     }
 
+    /**
+     * Puts the statements an operand of `&&` / `||` needs behind the short-circuit that guards it.
+     *
+     * An operand can only be evaluated by *running* something first -- a call is lifted out into a
+     * statement of its own -- and those statements land in {@link #preStatements}, which is emitted
+     * ahead of the condition. That runs them unconditionally, which C says must not happen: in
+     * `p && p->f`, `n != 0 && x / n`, or `x > INT_MIN && abs(x) < k`, the right-hand operand is
+     * evaluated only once the left one allows it, and each of those is undefined behaviour if it is
+     * not. (Dereferences do not need this -- they stay expressions, and the memsafety encoding
+     * already tracks the condition guarding them -- but calls do.)
+     *
+     * So the statements this operand added are lifted back out and re-emitted inside an `if` on the
+     * operands already evaluated: all of them holding, for `&&`; none of them, for `||`.
+     */
+    private void guardShortCircuited(
+            int from, List<Expr<BoolType>> alreadyEvaluated, boolean stopWhenTrue) {
+        if (alreadyEvaluated.isEmpty() || preStatements.size() == from) {
+            return; // the first operand always runs, and an operand with no statements needs no guard
+        }
+        List<CStatement> guarded =
+                new ArrayList<>(preStatements.subList(from, preStatements.size()));
+        preStatements.subList(from, preStatements.size()).clear();
+
+        CCompound body = compoundOf(guarded);
+
+        List<Expr<BoolType>> reached =
+                stopWhenTrue
+                        ? alreadyEvaluated.stream().map(BoolExprs::Not).collect(Collectors.toList())
+                        : new ArrayList<>(alreadyEvaluated);
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        Expr<?> guard =
+                Ite(
+                        BoolExprs.And(reached),
+                        signedInt.getUnitValue(),
+                        signedInt.getNullValue());
+        parseContext.getMetadata().create(guard, "cType", signedInt);
+        CCompound guardCompound = compoundOf(List.of(new CExpr(guard, parseContext)));
+        preStatements.add(new CIf(guardCompound, body, null, parseContext));
+    }
+
+    /**
+     * A compound the XCFA builder can lower: its pre- and post-statement slots have to be filled in,
+     * or the builder falls back to a path that insists the compound's last statement be a compound
+     * too.
+     */
+    private CCompound compoundOf(List<CStatement> statements) {
+        CCompound compound = new CCompound(parseContext);
+        statements.forEach(compound::addCStatement);
+        compound.setPreStatements(new CCompound(parseContext));
+        compound.setPostStatements(new CCompound(parseContext));
+        return compound;
+    }
+
     @Override
     public Expr<?> visitLogicalOrExpression(CParser.LogicalOrExpressionContext ctx) {
         if (ctx.logicalAndExpression().size() > 1) {
-            List<Expr<BoolType>> collect =
-                    ctx.logicalAndExpression().stream()
-                            .map(
-                                    logicalAndExpressionContext -> {
-                                        Expr<?> expr = logicalAndExpressionContext.accept(this);
-                                        return AbstractExprs.Neq(
-                                                CComplexType.getType(expr, parseContext)
-                                                        .getNullValue(),
-                                                expr);
-                                    })
-                            .collect(Collectors.toList());
+            List<Expr<BoolType>> collect = new ArrayList<>();
+            for (CParser.LogicalAndExpressionContext operand : ctx.logicalAndExpression()) {
+                // `||` stops at the first operand that holds, so anything a later one needs runs
+                // only if every earlier one came out false.
+                int before = preStatements.size();
+                Expr<?> expr = operand.accept(this);
+                guardShortCircuited(before, collect, true);
+                collect.add(
+                        AbstractExprs.Neq(
+                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+            }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
                     Ite(BoolExprs.Or(collect), signedInt.getUnitValue(), signedInt.getNullValue());
@@ -156,17 +211,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitLogicalAndExpression(CParser.LogicalAndExpressionContext ctx) {
         if (ctx.inclusiveOrExpression().size() > 1) {
-            List<Expr<BoolType>> collect =
-                    ctx.inclusiveOrExpression().stream()
-                            .map(
-                                    inclusiveOrExpression -> {
-                                        Expr<?> expr = inclusiveOrExpression.accept(this);
-                                        return AbstractExprs.Neq(
-                                                CComplexType.getType(expr, parseContext)
-                                                        .getNullValue(),
-                                                expr);
-                                    })
-                            .collect(Collectors.toList());
+            List<Expr<BoolType>> collect = new ArrayList<>();
+            for (CParser.InclusiveOrExpressionContext operand : ctx.inclusiveOrExpression()) {
+                // `&&` stops at the first operand that fails, so anything a later one needs runs
+                // only if every earlier one held.
+                int before = preStatements.size();
+                Expr<?> expr = operand.accept(this);
+                guardShortCircuited(before, collect, false);
+                collect.add(
+                        AbstractExprs.Neq(
+                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+            }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
                     Ite(BoolExprs.And(collect), signedInt.getUnitValue(), signedInt.getNullValue());
