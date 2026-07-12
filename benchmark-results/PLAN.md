@@ -388,6 +388,24 @@ Result: `loops/array-1.c` → **Safe** ✓ and `loops/array-2.c` → **Unsafe** 
 
 Commit: `an array index is an index, not a pointer`. New `ArrayIndexTypeTest` (4 cases × both arithmetics) pins that indexing leaves the index's type alone.
 
+## IMPLEMENTATION STATUS — batch 14 (the archive shipped non-executable solvers)
+
+Chasing a phantom: the canary suite came back **118/143** twice, the 25 losses all float/bitvector tasks, reproducibly, on an idle machine. Not a regression — **`Zip` does not carry a source file's mode across**, so the solver binaries installed at `-rwxr--r--` went into the archive as `-rw-r--r--`. cvc5 and mathsat could not be executed, the portfolio configurations that use them died on startup (`GenericSmtLibSolverBinary.<init>` → `IllegalStateException`), and exactly the tasks needing those configurations returned **no verdict at all**.
+
+This was never merely a local-harness annoyance: **the archives we ship to SV-COMP had unusable solvers**, in all four variants (`Theta-svcomp`, `EmergenTheta-svcomp`, `Thorn-svcomp`, `Theta-chccomp`). `theta-start.sh` and the smoketest already carried explicit `filePermissions { unix(0755) }` lines — evidence the same trap had been hit before and patched per-file rather than at its cause. The solvers copy spec had no such line.
+
+Fixed in the shared plugin (`buildSrc/.../archive-packaging.gradle.kts`) by *preserving* the source's bit rather than blanket-chmod'ing:
+
+```kotlin
+eachFile { if (file.canExecute()) permissions { unix(0b111101101) } } // 0755
+```
+
+Verified: `cvc5`, both `mathsat`s, and Thorn's `eld`/`golem`/`z3`/`yices` launchers are `rwxr-xr-x` in the zip, while `COPYING`, headers and eldarica's 0644 `convert.sh` are untouched. The dist now runs **straight out of `unzip`, with no `chmod`** — canaries **142/143**, the one outlier being `loop-industry-pattern/mod3.c.v+sep-reducer.c`, which needs more than the harness's 240 s and answers Safe correctly at the real 900 s budget (identical on HEAD).
+
+Commit: `keep the solver binaries executable in the archive`.
+
+⚠️ **The reason this hid for two full sweeps**: the sweep script bucketed *crashes* and *timeouts* together as one `UNKNOWN_OR_TO`. A broken harness then looks exactly like a verdict regression. Keep them apart (`verdict4.sh` now does).
+
 ## NEXT UP (queue as of batch 13; the in-flight benchmark run will re-rank it)
 
 1. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
