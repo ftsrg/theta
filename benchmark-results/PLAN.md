@@ -294,7 +294,35 @@ if (a <= 3037000499LL && a >= -3037000499LL)               { long long r = a * a
 
 Two *linear* bounds prove `a * a` in range; the same bound expressed through the abs idiom (`Ite(a < 0, -a, a) <= K`) does not, and the analysis reports an overflow. It is not the nonlinearity (the linear-bound version proves it), not the short-circuit, and not `imaxabs` (the ternary reproduces it without any call — and `abs` is modelled as exactly this `Ite`). Next step: dump the counterexample and see which `a` it claims, and whether the reported overflow is on `a * a` or on the `-a` inside the `Ite` (whose short-circuit wrapper may not be doing what it looks like it does).
 
-## NEXT UP (queue as of batch 10; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 11 (the GCC extensions that blocked whole families)
+
+With the typedef ambiguity gone, `ParseCancellationException` was *still* the top error (≈87 of 202 in a 298-task sample). Reading the offending tokens rather than guessing showed why: a handful of GCC extensions the grammar simply did not know, each sitting in a glibc header line that no task actually uses.
+
+- **`__builtin_va_list`** — **9,269 files**. Present only as `typedef __builtin_va_list __gnuc_va_list;`. A variadic argument list is opaque (a program may only hand it to `va_start`/`va_arg`/`va_end`), so a pointer-wide stand-in is enough for that line to go through.
+- **`__inline`** — **15,677 files**. The grammar knew `__inline__` but not `__inline`. Likewise `__const`, `__restrict__`, `__signed__`.
+- **`restrict`** was worse than unknown: it **threw** (`"Not yet implemented 'restrict'!"`). It is a *promise* that an object is not reached through another pointer — a licence to optimize, saying nothing about the values a program computes. Not exploiting it is sound; refusing the program over it is not. Now accepted and ignored, in every spelling (12,819 files use `__restrict`).
+- **`__attribute__` after `struct`/`union`** (`typedef union __attribute__((__transparent_union__)) {...}`) — 16 of 50 sampled parse failures. Attributes describe *layout*, which is not modelled, so they are matched and ignored as everywhere else.
+- **`__builtin_va_arg(ap, T)`** — takes a *type* as an argument, which the expression grammar could not parse (the rule was in `C.g4`, commented out). Enabled, and modelled as a fresh nondeterministic value of the requested type: the argument list is not built, so that is the only sound thing to say about what reading from it yields.
+- **`sizeof *p`** — `sizeof` without parentheses.
+- **Variadic functions dropped their *named* parameters.** `DeclarationVisitor` bailed out on seeing `...` and added none of them, so `n` in `int sum(int n, ...)` was undeclared inside the function's own body. Only the variadic *tail* is unmodelled.
+
+Commits: `parse the GCC extensions that blocked whole benchmark families`, `accept restrict and the GCC qualifier spellings instead of refusing the program`.
+
+**Validation** (the "handle with care" protocol): XCFA **byte-identical 31/31** on both commits, canary parse sweep **143/143 OK**, canary verdicts **143/143 correct, 0 wrong, 0 errors**, module suites green.
+
+⚠️ **Caught myself introducing a latent bug**: adding `__const`/`__restrict__` to the *grammar* without adding them to `visitTypeQualifier`'s switch, which throws on anything it does not recognise. The fixture only passed because the declaration using them was unused and got pruned. **A grammar keyword needs a visitor case, and the fixture must actually *use* the declaration.**
+
+### C1 east-const — LOCATED, not yet fixed (the biggest remaining downstream cluster)
+25 of 70 sampled downstream failures are `Only structs expected here`, and it is **not** unions. It is **east-const**:
+
+```c
+static void show(S const *p) { p->a; }        // "Only structs expected here"
+static void show(const S *p) { p->a; }        // fine
+```
+
+It fails for `struct _S const` just as for the typedef'd `S const`, so it is the trailing qualifier, not the typedef. The suspect is `TypeVisitor.mergeCTypes`, which picks the **last** named element as the type — its own comment says *"if typedef, then last element is the associated name"* — an assumption east-const breaks. ⚠️ But a probe showed `mergeCTypes` is **not reached with the struct at all** for the failing declaration, so the type is being built somewhere else; find that path before changing `mergeCTypes`. (`const` itself maps to `null` in `visitTypeQualifier`, so it cannot be the stray element on its own.)
+
+## NEXT UP (queue as of batch 11; the in-flight benchmark run will re-rank it)
 
 1. **N3 division overflow** (Phase 5.1) — **the top remaining no-overflow blocker**, and small. `OverflowDetectionPass.kt:240` throws `UnsupportedOperationException("We cannot soundly detect overflows with divisions.")` if the program contains **any** `DivExpr` *anywhere* — even though `DivExpr` is already in the pass's filter and `bvOverflowCondition` handles it. It was 15/60 (~25%) of the remaining errors in the no-overflow sample and matches the original triage's "division 831". Division overflows on exactly one input pair (`INT_MIN / -1`), so the integer path needs the same explicit condition the bitvector path already has — minding that C's `/` lowers to the `createIntDiv` Ite shape. Signed-shift overflow is still unchecked in **both** modes (also Phase 5).
 2. **Phase 4 / AD6 grammar — the typedef-name ambiguity.** Highest-value frontend item left (`ParseCancellationException` ≈ 4,108 tasks, and still what blocks most of aws-c-common). Batch 6 found the concrete shape: with no symbol table and `typedefName : Identifier`, **`void *malloc(size_t);` is not parsed as a function at all** — it becomes two *variables*, `malloc` and `size_t`. Any function declared with a bare typedef'd parameter is misparsed the same way; `malloc` is merely special-cased now. Needs the resolved AD6 approach (typedef feedback + semantic predicate) and the "handle with care" protocol.
