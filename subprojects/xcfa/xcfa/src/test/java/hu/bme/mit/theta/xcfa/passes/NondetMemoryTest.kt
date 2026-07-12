@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.xcfa.model.*
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-
 /**
  * Regression test: __VERIFIER_nondet_memory(ptr, size) used to be silently turned into a havoc of
  * the unused return-value slot, dropping the effect on the pointed-to memory entirely (vacuous
  * "safe" results). Nondet calls with real arguments must fail loudly instead.
  */
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.model.*
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class NondetMemoryTest {
 
@@ -70,9 +69,9 @@ class NondetMemoryTest {
         (init to "L1") { "__VERIFIER_nondet_step"("x") }
       }
     val result =
-      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(ctx.builder) {
-        acc,
-        pass ->
+      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
+        ctx.builder
+      ) { acc, pass ->
         pass.run(acc)
       }
     val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }

@@ -95,9 +95,11 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
     // -x overflows on exactly one value: the most negative one, which has no positive counterpart.
     is NegExpr<*> -> Eq(bv(expr.op), lit(BigInteger.TWO.pow(width - 1).negate()))
 
-    // `a << b` is `a * 2^b`, so it overflows when that product no longer fits -- redone in twice the
+    // `a << b` is `a * 2^b`, so it overflows when that product no longer fits -- redone in twice
+    // the
     // width, the shifted value must still agree with the narrow one. (A *negative* `a` is undefined
-    // in C regardless, but flagging that would condemn the common `-1 << k` idiom, so only the value
+    // in C regardless, but flagging that would condemn the common `-1 << k` idiom, so only the
+    // value
     // is checked.)
     is BvShiftLeftExpr -> {
       val a = bv(expr.leftOp)

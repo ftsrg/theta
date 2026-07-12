@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr
-import java.math.BigInteger
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -30,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr
@@ -43,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
@@ -74,6 +73,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import java.math.BigInteger
 
 class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseContext) :
   ProcedurePass {
@@ -127,14 +127,15 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                 // always succeed; the overflow has to be reconstructed from the operands instead.
                 bvOverflowCondition(it)
               } else if (it is DivExpr<*>) {
-                // Division must not be range-checked. C's `/` is lowered to the solver's `div`, which
-                // is unconstrained when the divisor is zero -- so the "result" could be any value at
+                // Division must not be range-checked. C's `/` is lowered to the solver's `div`,
+                // which
+                // is unconstrained when the divisor is zero -- so the "result" could be any value
+                // at
                 // all, and a range check on it would report an overflow for a program that merely
                 // divides by zero (a different kind of undefined behaviour, and not this property's
                 // concern). State instead the one input pair that genuinely overflows: the most
                 // negative value divided by -1, whose true result is one past the maximum.
-                val cType =
-                  parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
+                val cType = parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
                 And(
                   Eq(it.leftOp, Int(BigInteger.TWO.pow(cType.width() - 1).negate())),
                   Eq(it.rightOp, Int(BigInteger.ONE.negate())),

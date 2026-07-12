@@ -253,10 +253,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 ctx.directDeclarator() instanceof CParser.DirectDeclaratorBracesContext braces
                         && braces.declarator().pointer() != null;
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!\n");
-            decl.setFunc(!isFunctionPointer);
-            decl.setFuncPointer(isFunctionPointer);
-            return decl;
+            // Only the variadic *tail* is unmodelled (`__builtin_va_arg` yields a nondeterministic
+            // value for it). The parameters named before the `...` are ordinary ones, and dropping
+            // them left them undeclared inside the function's own body.
+            uniqueWarningLogger.write(
+                    Level.INFO,
+                    "WARNING: variadic arguments are not modeled; reading one yields a"
+                            + " nondeterministic value.\n");
         }
         if (ctx.parameterTypeList() != null) {
             for (CParser.ParameterDeclarationContext parameterDeclarationContext :

@@ -102,7 +102,7 @@ primaryExpression
     |   '(' castDeclarationSpecifierList ')' initializer                    # primaryExpressionTypeInitializer
     //|   genericSelection                                                    # primaryExpressionGenericSelection
     |   '__extension__'? '(' compoundStatement ')'                          # primaryExpressionGccExtension
-    //|   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
+    |   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
     //|   '__builtin_offsetof' '(' typeName ',' unaryExpression ')'           # primaryExpressionBuiltinOffsetof
     ;
 
@@ -185,6 +185,9 @@ unaryExpressionCast
     ;
 unaryExpressionSizeOrAlignOf
     :   ('sizeof' | '_Alignof' | '__alignof__') '(' (typeName | expression) ')'
+    // `sizeof` takes an expression without parentheses too -- `sizeof *p`, `sizeof x`. The
+    // parenthesized form is tried first, so `sizeof (int)` still reads as a type.
+    |   'sizeof' unaryExpression
     ;
 //unaryExpressionAddressof
 //    :   '&&' Identifier
@@ -327,7 +330,10 @@ typeSpecifier
     |   '__int128'
     |   '__m128'
     |   '__m128d'
+    |   '__signed'
+    |   '__signed__'
     |   '__m128i')                                                  # typeSpecifierSimple
+    |   '__builtin_va_list'                                         # typeSpecifierVaList
     |   '__thread'                                                  # typeSpecifierGccThread
     |   'float'                                                     # typeSpecifierFloat
     |   'double'                                                    # typeSpecifierDouble
@@ -346,8 +352,12 @@ typeSpecifierPointer
     ;
 
 structOrUnionSpecifier
-    :   structOrUnion Identifier? '{' structDeclarationList '}'     # compoundDefinition
-    |   structOrUnion Identifier                                    # compoundUsage
+    // GCC allows attributes right after the `struct` / `union` keyword, e.g.
+    // `typedef union __attribute__ ((__transparent_union__)) { ... } u;`. They say nothing about the
+    // *values* the type holds -- only about its layout, which is not modeled -- so they are matched
+    // and ignored, as attributes are everywhere else in this grammar.
+    :   structOrUnion gccAttributeSpecifier* Identifier? '{' structDeclarationList '}'  # compoundDefinition
+    |   structOrUnion gccAttributeSpecifier* Identifier                                 # compoundUsage
     ;
 
 structOrUnion
@@ -406,7 +416,9 @@ atomicTypeSpecifier
 
 typeQualifier
     :   'const'
+    |   '__const'       // GCC spelling
     |   'restrict'
+    |   '__restrict__'  // GCC spelling
     |   'volatile'
     |   '_Atomic'
     ;
@@ -414,6 +426,7 @@ typeQualifier
 functionSpecifier
     :   ('inline'
     |   '_Noreturn'
+    |   '__inline'   // GCC extension
     |   '__inline__' // GCC extension
     |   '__stdcall')
     |   gccAttributeSpecifier

@@ -28,13 +28,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * `(a) * b` is a multiplication if `a` names a variable and a cast if it names a type -- and nothing
- * in the token stream says which. C settles it with a symbol table; the parser is given one (its
- * `typedefNames`), and these tests pin what it does with it.
+ * `(a) * b` is a multiplication if `a` names a variable and a cast if it names a type -- and
+ * nothing in the token stream says which. C settles it with a symbol table; the parser is given one
+ * (its `typedefNames`), and these tests pin what it does with it.
  *
  * They assert the *shape of the parse tree*, not merely that parsing succeeded: the failure mode
- * this guards against is a construct silently parsing as something else, which no amount of
- * "it parsed" tells you about.
+ * this guards against is a construct silently parsing as something else, which no amount of "it
+ * parsed" tells you about.
  */
 class CTypeNameAmbiguityTest {
 
@@ -58,7 +58,10 @@ class CTypeNameAmbiguityTest {
 
   private fun ParseTree.hasCast() = find(CParser.CastExpressionCastContext::class.java) != null
 
-  /** Every multiplicative operator in the tree; `int a = 6;` also parses through that rule, with none. */
+  /**
+   * Every multiplicative operator in the tree; `int a = 6;` also parses through that rule, with
+   * none.
+   */
   private fun ParseTree.multiplicativeSigns(): List<String> {
     val signs = mutableListOf<String>()
     fun walk(node: ParseTree) {

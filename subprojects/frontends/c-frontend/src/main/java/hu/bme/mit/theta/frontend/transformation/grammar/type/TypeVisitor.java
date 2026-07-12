@@ -392,6 +392,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public CSimpleType visitTypeSpecifierSimple(CParser.TypeSpecifierSimpleContext ctx) {
         switch (ctx.getText()) {
             case "signed":
+            case "__signed":
+            case "__signed__": // GCC spellings
                 return Signed();
             case "unsigned":
                 return Unsigned();
@@ -400,6 +402,20 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             default:
                 return NamedType(ctx.getText(), parseContext, uniqueWarningLogger);
         }
+    }
+
+    @Override
+    public CSimpleType visitTypeSpecifierVaList(CParser.TypeSpecifierVaListContext ctx) {
+        // A variadic function's argument list is opaque: a program may only hand it to va_start /
+        // va_arg / va_end, never look at its representation. A pointer-wide integer stands in for
+        // it, which is all `typedef __builtin_va_list __gnuc_va_list;` needs -- that single line in
+        // glibc's headers is what made the type unparseable, and with it thousands of files that
+        // never take a variadic argument at all.
+        uniqueWarningLogger.write(
+                Level.INFO,
+                "WARNING: __builtin_va_list is modeled as an opaque value; reading variadic"
+                        + " arguments is not supported.\n");
+        return NamedType("long", parseContext, uniqueWarningLogger);
     }
 
     @Override

@@ -60,8 +60,8 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -135,21 +135,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * Puts the statements an operand of `&&` / `||` needs behind the short-circuit that guards it.
      *
-     * An operand can only be evaluated by *running* something first -- a call is lifted out into a
-     * statement of its own -- and those statements land in {@link #preStatements}, which is emitted
-     * ahead of the condition. That runs them unconditionally, which C says must not happen: in
-     * `p && p->f`, `n != 0 && x / n`, or `x > INT_MIN && abs(x) < k`, the right-hand operand is
+     * <p>An operand can only be evaluated by *running* something first -- a call is lifted out into
+     * a statement of its own -- and those statements land in {@link #preStatements}, which is
+     * emitted ahead of the condition. That runs them unconditionally, which C says must not happen:
+     * in `p && p->f`, `n != 0 && x / n`, or `x > INT_MIN && abs(x) < k`, the right-hand operand is
      * evaluated only once the left one allows it, and each of those is undefined behaviour if it is
      * not. (Dereferences do not need this -- they stay expressions, and the memsafety encoding
      * already tracks the condition guarding them -- but calls do.)
      *
-     * So the statements this operand added are lifted back out and re-emitted inside an `if` on the
-     * operands already evaluated: all of them holding, for `&&`; none of them, for `||`.
+     * <p>So the statements this operand added are lifted back out and re-emitted inside an `if` on
+     * the operands already evaluated: all of them holding, for `&&`; none of them, for `||`.
      */
     private void guardShortCircuited(
             int from, List<Expr<BoolType>> alreadyEvaluated, boolean stopWhenTrue) {
         if (alreadyEvaluated.isEmpty() || preStatements.size() == from) {
-            return; // the first operand always runs, and an operand with no statements needs no guard
+            return; // the first operand always runs, and an operand with no statements needs no
+            // guard
         }
         List<CStatement> guarded =
                 new ArrayList<>(preStatements.subList(from, preStatements.size()));
@@ -163,19 +164,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         : new ArrayList<>(alreadyEvaluated);
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         Expr<?> guard =
-                Ite(
-                        BoolExprs.And(reached),
-                        signedInt.getUnitValue(),
-                        signedInt.getNullValue());
+                Ite(BoolExprs.And(reached), signedInt.getUnitValue(), signedInt.getNullValue());
         parseContext.getMetadata().create(guard, "cType", signedInt);
         CCompound guardCompound = compoundOf(List.of(new CExpr(guard, parseContext)));
         preStatements.add(new CIf(guardCompound, body, null, parseContext));
     }
 
     /**
-     * A compound the XCFA builder can lower: its pre- and post-statement slots have to be filled in,
-     * or the builder falls back to a path that insists the compound's last statement be a compound
-     * too.
+     * A compound the XCFA builder can lower: its pre- and post-statement slots have to be filled
+     * in, or the builder falls back to a path that insists the compound's last statement be a
+     * compound too.
      */
     private CCompound compoundOf(List<CStatement> statements) {
         CCompound compound = new CCompound(parseContext);
@@ -510,8 +508,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         if (leftExpr.getType() instanceof IntType
                                 && rightExpr.getType() instanceof IntType) {
                             expr = createIntDiv(leftExpr, rightExpr);
-                            // The division itself is buried inside the Ite that adjusts the solver's
-                            // rounding to C's; only that Ite is given a type below. Type the division
+                            // The division itself is buried inside the Ite that adjusts the
+                            // solver's
+                            // rounding to C's; only that Ite is given a type below. Type the
+                            // division
                             // too, so that OverflowDetectionPass can find it -- it is the operation
                             // that can overflow (INT_MIN / -1), not the Ite around it.
                             parseContext
@@ -634,6 +634,41 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return expr;
     }
 
+    private static final String VA_ARG = "__VERIFIER_nondet_theta_va_arg";
+
+    /**
+     * Reads the next variadic argument.
+     *
+     * <p>The argument list itself is not modelled -- `__builtin_va_list` is an opaque stand-in --
+     * so there is nothing to read *from*. The only sound answer is that the value could be anything
+     * the requested type can hold: a fresh nondeterministic value of that type, which
+     * `NondetFunctionPass` turns into a havoc (and which the type-range assume then keeps inside
+     * the type). Over-approximate, and honest about what we do not know.
+     */
+    @Override
+    public Expr<?> visitPrimaryExpressionBuiltinVaArg(
+            CParser.PrimaryExpressionBuiltinVaArgContext ctx) {
+        ctx.unaryExpression().accept(this); // the va_list operand, for any side effects it has
+        String typeName = ctx.typeName().getText();
+        CComplexType type =
+                typedefVisitor
+                        .getType(typeName)
+                        .or(() -> Optional.ofNullable(CComplexType.getType(typeName, parseContext)))
+                        .orElseThrow(
+                                () ->
+                                        new UnsupportedFrontendElementException(
+                                                "Cannot resolve the type read by __builtin_va_arg: "
+                                                        + typeName));
+        uniqueWarningLogger.write(
+                Level.INFO,
+                "WARNING: __builtin_va_arg yields a nondeterministic value; the variadic argument"
+                        + " list is not modeled.\n");
+        parseContext.getMetadata().create(VA_ARG, "cType", type);
+        CCall cCall = new CCall(VA_ARG, List.of(), parseContext);
+        preStatements.add(cCall);
+        return cCall.getRet().getRef();
+    }
+
     @Override
     public Expr<?> visitUnaryExpressionSizeOrAlignOf(
             CParser.UnaryExpressionSizeOrAlignOfContext ctx) {
@@ -703,7 +738,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 return zero;
             }
         } else { // expr != null
-            final var expr = ctx.expression().accept(this);
+            // `sizeof *p` / `sizeof x`: the operand is an expression, with or without parentheses.
+            final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
+            final var expr = operand.accept(this);
             final var type = CComplexType.getType(expr, parseContext);
             LitExpr<?> value =
                     CComplexType.getSignedInt(parseContext).getValue("" + type.width() / 8);
@@ -996,6 +1033,21 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
             case "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
+            }
+            case "__builtin_va_start", "__builtin_va_end", "__builtin_va_copy" -> {
+                // The argument list is not modelled -- `__builtin_va_arg` yields a fresh
+                // nondeterministic value regardless -- so setting one up, copying it and tearing it
+                // down have nothing to do. They are void: no one may read the value returned here.
+                if (functionVisitor == null) {
+                    return null;
+                }
+                for (AssignmentExpressionContext arg : args) {
+                    arg.accept(functionVisitor); // for any side effects the operands have
+                }
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> unused = signedInt.getNullValue();
+                parseContext.getMetadata().create(unused, "cType", signedInt);
+                return unused;
             }
             case "__builtin_uadd_overflow",
                     "__builtin_uaddl_overflow",

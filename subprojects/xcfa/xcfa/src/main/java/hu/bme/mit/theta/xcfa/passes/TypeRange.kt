@@ -28,8 +28,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 /**
  * States that a havoced value is one its C type can actually hold.
  *
- * A havoc on its own is unbounded, and under integer arithmetic that is *not* the same as a C value:
- * a `long long` becomes an arbitrary mathematical integer, with nothing saying it is at most
+ * A havoc on its own is unbounded, and under integer arithmetic that is *not* the same as a C
+ * value: a `long long` becomes an arbitrary mathematical integer, with nothing saying it is at most
  * `LLONG_MAX`. Code that bounds such a value from one side only -- `if (a > -3037000500 && llabs(a)
  * <= 3037000499)` -- is then not bounded at all, and the analysis "finds" an overflow at a value no
  * C program could have produced. (Under bitvector arithmetic the width does this for us, so the

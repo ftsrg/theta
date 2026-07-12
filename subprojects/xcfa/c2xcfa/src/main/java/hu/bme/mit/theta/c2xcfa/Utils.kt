@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
-import org.antlr.v4.runtime.tree.TerminalNode
-import org.antlr.v4.runtime.tree.ParseTree
-import org.antlr.v4.runtime.CharStream
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
 import hu.bme.mit.theta.common.Tuple2
@@ -42,8 +39,11 @@ import java.io.InputStream
 import java.util.ArrayDeque
 import kotlin.jvm.optionals.getOrDefault
 import org.antlr.v4.runtime.BailErrorStrategy
+import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.tree.ParseTree
+import org.antlr.v4.runtime.tree.TerminalNode
 
 fun getXcfaFromC(
   stream: InputStream,
@@ -92,20 +92,20 @@ fun getXcfaFromC(
 /**
  * Parses C, telling type names apart from ordinary identifiers.
  *
- * The grammar cannot do that on its own: `typedefName` is just `Identifier`, so *any* name may start
- * a type. That is what makes `(a) * b` ambiguous (a cast of a dereference, or a multiplication?), and
- * what makes `void *malloc(size_t);` parse as a declaration of two *variables* -- `malloc` swallowed
- * into the specifiers as a type name, and `size_t` left over as a parenthesized declarator -- rather
- * than as a function.
+ * The grammar cannot do that on its own: `typedefName` is just `Identifier`, so *any* name may
+ * start a type. That is what makes `(a) * b` ambiguous (a cast of a dereference, or a
+ * multiplication?), and what makes `void *malloc(size_t);` parse as a declaration of two
+ * *variables* -- `malloc` swallowed into the specifiers as a type name, and `size_t` left over as a
+ * parenthesized declarator -- rather than as a function.
  *
- * C resolves this with a symbol table, so we make one: a first pass parses the file exactly as before
- * (every identifier may be a type name) purely to harvest its typedef names, and the real parse then
- * accepts only those as types.
+ * C resolves this with a symbol table, so we make one: a first pass parses the file exactly as
+ * before (every identifier may be a type name) purely to harvest its typedef names, and the real
+ * parse then accepts only those as types.
  *
  * The first pass must tolerate errors, since the files this is meant to fix are precisely the ones
- * that fail to parse today. And if the type-aware parse fails, we fall back to the old permissive one:
- * a typedef name the first pass failed to spot would otherwise turn a file that parses today into one
- * that does not. Nothing that parses now can start failing.
+ * that fail to parse today. And if the type-aware parse fails, we fall back to the old permissive
+ * one: a typedef name the first pass failed to spot would otherwise turn a file that parses today
+ * into one that does not. Nothing that parses now can start failing.
  */
 private fun parseTypeAware(input: CharStream): CParser.CompilationUnitContext {
   val typedefNames = collectTypedefNames(input)
@@ -116,7 +116,9 @@ private fun parseTypeAware(input: CharStream): CParser.CompilationUnitContext {
   }
 }
 
-/** A parse with `typedefNames` as the type names, or the old any-identifier-is-a-type parse if null. */
+/**
+ * A parse with `typedefNames` as the type names, or the old any-identifier-is-a-type parse if null.
+ */
 private fun parseC(input: CharStream, typedefNames: Set<String>?): CParser.CompilationUnitContext {
   input.seek(0)
   val parser = CParser(CommonTokenStream(CLexer(input)))
@@ -168,7 +170,9 @@ private fun ParseTree.collectTypedefNamesInto(names: MutableSet<String>) {
 private fun CParser.DeclarationContext.isTypedef() =
   declarationSpecifiers()?.declarationSpecifier()?.any { it.text == "typedef" } == true
 
-/** The name a declarator declares: its innermost identifier, e.g. `handler` in `(*handler)(int)`. */
+/**
+ * The name a declarator declares: its innermost identifier, e.g. `handler` in `(*handler)(int)`.
+ */
 private fun ParseTree.declaredName(): String? {
   if (this is CParser.DirectDeclaratorIdContext) return text
   for (i in 0 until childCount) {

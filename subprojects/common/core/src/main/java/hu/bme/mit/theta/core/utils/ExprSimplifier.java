@@ -1197,7 +1197,8 @@ public final class ExprSimplifier {
             }
         }
 
-        if (!value.eq(Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness())).getValue()) {
+        if (!value.eq(Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness()))
+                .getValue()) {
             ops.add(value);
         }
 
@@ -1220,7 +1221,8 @@ public final class ExprSimplifier {
             return leftLit.sub(rightLit);
         }
 
-        final BvLitExpr ZEROS = Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
+        final BvLitExpr ZEROS =
+                Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
 
         if (rightOp instanceof BvLitExpr rightLit && rightLit.equals(ZEROS)) {
             return leftOp;
@@ -1284,8 +1286,10 @@ public final class ExprSimplifier {
             }
         }
 
-        final BvLitExpr ZERO = Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
-        final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
+        final BvLitExpr ZERO =
+                Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
+        final BvLitExpr ONE =
+                Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
         ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
 
         BvLitExpr value = ONE;
@@ -1326,7 +1330,8 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (leftOp.equals(rightOp)) {
-                final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
+                final BvLitExpr ONE =
+                        Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
                 ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
                 return ONE;
             }
@@ -1347,7 +1352,8 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (leftOp.equals(rightOp)) {
-                final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
+                final BvLitExpr ONE =
+                        Bv(new boolean[expr.getType().getSize()], expr.getType().getSignedness());
                 ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
                 return ONE;
             }
