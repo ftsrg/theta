@@ -95,7 +95,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     private void createVars(CDeclaration declaration) {
         String name = declaration.getName();
-        createVars(name, declaration, declaration.getActualType());
+        createVars(name, declaration, designatorType(declaration));
+    }
+
+    /**
+     * The type of the variable that stands for a declaration where its name is *used*.
+     *
+     * <p>For an ordinary declaration that is simply its type. For a *function* it is not: the value
+     * of a function designator is the function's address, and the variable has to be able to hold
+     * one -- `FunctionIds` numbers them from `0x10000000`, so it needs 29 bits. Typing it by the
+     * function's return type instead made `void f(int)` a **one-bit** variable, which silently
+     * truncated the id to 0; the dispatch guard `fp == id(f)` then could not hold, the branch was
+     * infeasible, and the callee was never explored -- reporting a program *safe* on the strength
+     * of a call it had quietly dropped. Anything narrower than 29 bits did it: `char`, `short`,
+     * `_Bool`, `void`.
+     */
+    private CComplexType designatorType(CDeclaration declaration) {
+        CComplexType actualType = declaration.getActualType();
+        return declaration.isFunc() ? new CPointer(null, actualType, parseContext) : actualType;
     }
 
     /**
