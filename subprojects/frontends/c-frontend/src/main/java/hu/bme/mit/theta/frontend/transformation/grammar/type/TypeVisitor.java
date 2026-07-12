@@ -80,6 +80,23 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         return createCType(ctx.spec1, ctx.spec2);
     }
 
+    /**
+     * Builds the one type a declaration's specifiers name.
+     *
+     * <p>The specifiers arrive as a list, in whatever order they were written, and C attaches no
+     * meaning to that order: `unsigned long int`, `long unsigned int` and `int unsigned long` are
+     * the same type, and `const T` and `T const` are the same type. Exactly one specifier *names* a
+     * type; every other one only modifies it -- `unsigned`, `long`, `const`, `typedef`, or a bare
+     * `*`, which carries a pointer level and no type at all. So the namer is picked by what it is,
+     * never by where it sits.
+     *
+     * <p>(It used to be picked as the *last* named specifier. A bare `*` yields a nameless type --
+     * see {@link #visitTypeSpecifierPointer} -- and a trailing qualifier stops the pointer from
+     * being absorbed into the type before it, so `struct S const *p` left that nameless type last:
+     * the struct was demoted to a modifier and `p` came out a `void *`. It only ever went unnoticed
+     * because `const struct S *p` puts `struct S *` next to each other, where the pointer *is*
+     * absorbed.)
+     */
     private CSimpleType mergeCTypes(List<CSimpleType> cSimpleTypes) {
         List<CSimpleType> enums =
                 cSimpleTypes.stream()
@@ -91,36 +108,27 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             cSimpleTypes.add(NamedType("int", parseContext, uniqueWarningLogger));
             cSimpleTypes.removeAll(enums);
         }
-        List<CSimpleType> namedElements =
-                cSimpleTypes.stream()
-                        .map(
-                                o ->
-                                        o instanceof DeclaredName declaredName
-                                                ? typedefVisitor
-                                                        .getSimpleType(
-                                                                declaredName.getDeclaredName())
-                                                        .orElse(o)
-                                                : o)
-                        .filter(o -> o instanceof NamedType)
-                        .collect(Collectors.toList());
-        if (namedElements.isEmpty()) {
-            namedElements.add(NamedType("int", parseContext, uniqueWarningLogger));
-        }
-        CSimpleType mainType =
-                namedElements.get(
-                        namedElements.size()
-                                - 1); // if typedef, then last element is the associated name
-        if (mainType instanceof DeclaredName declaredName) {
-            mainType =
-                    typedefVisitor.getSimpleType(declaredName.getDeclaredName()).orElse(mainType);
-        }
 
-        if (mainType instanceof NamedType namedType
-                && shorthandTypes.contains(namedType.getNamedType())) {
-            mainType = NamedType("int", parseContext, uniqueWarningLogger);
-        } else {
-            cSimpleTypes.remove(mainType);
-        }
+        List<CSimpleType> namers =
+                cSimpleTypes.stream()
+                        .map(this::resolveTypedefName)
+                        .filter(this::namesAType)
+                        .collect(Collectors.toList());
+
+        // `unsigned x`, `long x` and `_Bool x` name no type of their own: they modify an `int` that
+        // was never written down. Two namers can only be `long int`-style spellings, where the
+        // width
+        // words are modifiers and the last real name is the type.
+        CSimpleType mainType =
+                namers.isEmpty()
+                        ? NamedType("int", parseContext, uniqueWarningLogger)
+                        : namers.get(namers.size() - 1);
+
+        // Everything else modifies it. A namer that came from resolving a typedef name is not in
+        // the
+        // list to begin with (the unresolved name is), and that name must stay: patching it is what
+        // records the type's associated name.
+        cSimpleTypes.remove(mainType);
 
         CSimpleType type = mainType.copyOf().apply(cSimpleTypes);
         // we didn't get explicit signedness
@@ -134,6 +142,25 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             type.setSigned(true);
         }
         return type;
+    }
+
+    /** A typedef name stands for the type it was declared with, once that type is known. */
+    private CSimpleType resolveTypedefName(CSimpleType cSimpleType) {
+        if (cSimpleType instanceof DeclaredName declaredName) {
+            return typedefVisitor.getSimpleType(declaredName.getDeclaredName()).orElse(cSimpleType);
+        }
+        return cSimpleType;
+    }
+
+    /** Whether this specifier names a type, rather than only modifying one. */
+    private boolean namesAType(CSimpleType cSimpleType) {
+        if (!(cSimpleType instanceof NamedType namedType)) {
+            return false; // `unsigned`, `const`, `typedef`, `volatile`, an unresolved typedef name
+        }
+        String name = namedType.getNamedType();
+        // A bare `*` in specifier position carries a pointer level and nothing else.
+        // `long` / `short` / `unsigned` / `_Bool` / `__int128` only say how wide an `int` is.
+        return !name.isEmpty() && !shorthandTypes.contains(name);
     }
 
     @Override
