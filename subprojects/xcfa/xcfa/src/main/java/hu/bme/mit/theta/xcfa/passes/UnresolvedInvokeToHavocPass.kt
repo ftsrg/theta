@@ -90,13 +90,16 @@ class UnresolvedInvokeToHavocPass(
                 " any side effects (e.g. writes to globals) are swallowed.\n",
               invokeLabel.name,
             )
-            val returnSlot = invokeLabel.params[0]
-            val havoc = HavocStmt.of((returnSlot as RefExpr<*>).decl as VarDecl<*>)
+            val returnSlot = invokeLabel.params[0] as RefExpr<*>
+            val havoc = HavocStmt.of(returnSlot.decl as VarDecl<*>)
             builder.addEdge(
               XcfaEdge(
                 it.source,
                 it.target,
-                SequenceLabel(listOf(StmtLabel(havoc, metadata = invokeLabel.metadata))),
+                SequenceLabel(
+                  listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)) +
+                    withinTypeRange(returnSlot, parseContext, invokeLabel.metadata)
+                ),
                 it.metadata,
               )
             )

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -29,7 +30,7 @@ import hu.bme.mit.theta.xcfa.model.*
  * memory-model benchmarks do), and havocing such a call would silently discard its body -- an
  * under-approximation that can prove an unsafe program safe.
  */
-class NondetFunctionPass : ProcedurePass {
+class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   private var definedProcedures: Set<String> = emptySet()
 
@@ -50,12 +51,16 @@ class NondetFunctionPass : ProcedurePass {
               "Nondet function ${invokeLabel.name} with arguments is not supported: " +
                 "havocing the return value would silently drop the effect on the arguments."
             }
-            val havoc = HavocStmt.of((invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
+            val slot = invokeLabel.params[0] as RefExpr<*>
+            val havoc = HavocStmt.of(slot.decl as VarDecl<*>)
             builder.addEdge(
               XcfaEdge(
                 it.source,
                 it.target,
-                SequenceLabel(listOf(StmtLabel(havoc, metadata = invokeLabel.metadata))),
+                SequenceLabel(
+                  listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)) +
+                    withinTypeRange(slot, parseContext, invokeLabel.metadata)
+                ),
                 it.metadata,
               )
             )

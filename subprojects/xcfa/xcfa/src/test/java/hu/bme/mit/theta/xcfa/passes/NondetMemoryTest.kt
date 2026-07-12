@@ -27,12 +27,16 @@ import org.junit.jupiter.api.Test
  * the unused return-value slot, dropping the effect on the pointed-to memory entirely (vacuous
  * "safe" results). Nondet calls with real arguments must fail loudly instead.
  */
+import hu.bme.mit.theta.frontend.ParseContext
+
 class NondetMemoryTest {
+
+  private val parseContext = ParseContext()
 
   private fun runPasses(input: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilder {
     val builder = XcfaBuilder("")
     val procedureBuilder = builder.procedure("", input).builder
-    return listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass()).fold(
+    return listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
       procedureBuilder
     ) { acc, pass ->
       pass.run(acc)
@@ -66,7 +70,7 @@ class NondetMemoryTest {
         (init to "L1") { "__VERIFIER_nondet_step"("x") }
       }
     val result =
-      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass()).fold(ctx.builder) {
+      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(ctx.builder) {
         acc,
         pass ->
         pass.run(acc)

@@ -540,7 +540,7 @@ class PassTests {
             "x" type Int() init "0"
             "thr1" type Int() init "0"
           },
-          passes = listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass()),
+          passes = listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)),
           input = { (init to "L1") { "__VERIFIER_nondet_int"("x") } },
           output = { (init to "L1") { havoc("x") } },
         ),

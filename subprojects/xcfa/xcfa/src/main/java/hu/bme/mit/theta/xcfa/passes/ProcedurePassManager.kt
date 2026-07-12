@@ -66,7 +66,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
-      NondetFunctionPass(),
+      NondetFunctionPass(parseContext),
     ),
     listOf(
       // Clean up procedures after inlining
@@ -154,7 +154,7 @@ class NontermValidationPasses(
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      NondetFunctionPass(),
+      NondetFunctionPass(parseContext),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),
