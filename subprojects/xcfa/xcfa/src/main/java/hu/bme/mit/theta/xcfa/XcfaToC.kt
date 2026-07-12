@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -386,6 +387,10 @@ fun Expr<*>.cOperator() =
     is NotExpr -> "!"
     // is ModExpr<*> -> "%" // handled above
     is DivExpr<*> -> "/"
+    // Unary plus, whatever the type. Only the integer one happens to label itself "+"; the
+    // bitvector one says "bvpos", which is not C -- and falling through to `operatorLabel` below
+    // would emit it verbatim and produce a file that does not parse.
+    is PosExpr<*> -> "+"
 
     is UnaryExpr<*, *> -> operatorLabel
     is BinaryExpr<*, *> -> operatorLabel

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -99,7 +100,13 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), true));
                 } else {
-                    return param;
+                    // Nothing to convert -- but the *caller* records the target C type on whatever
+                    // comes back, and types are keyed by the expression itself. Handing back
+                    // `param`
+                    // therefore rewrites the operand's own type: `a[j]` used to make `j` an array.
+                    // So the no-op gets a wrapper of its own to carry the new type, exactly as the
+                    // integer cast visitor already does.
+                    return Pos(param);
                 }
             }
         } else {
@@ -145,7 +152,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
-                    return param;
+                    return Pos(param); // see above: the no-op needs its own expression to be typed
                 }
             }
         } else {
