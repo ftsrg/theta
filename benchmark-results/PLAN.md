@@ -511,7 +511,31 @@ A struct's `width()` is pointer-wide -- it is the *handle* a struct is passed by
 Commits: `only the heap may be freed, and freeing nothing is fine`, `a struct is as big as what is in it`.
 **Validation**: canaries **142/143** (the known-slow `mod3.c.v+sep-reducer.c`), a **70-task sample of previously-correct valid-memsafety tasks 70/70**, module suites and `spotlessCheck` green. Both directions pinned: `free(malloc)`/`free(NULL)`/`free(realloc)` stay Safe; `free(alloca)`/`free(&local)`/double-free are Unsafe.
 
-### ⚠️ Diagnosed but NOT fixed — the `weaver` data races (3 false alarms)
+### The `weaver` data races — FIXED (3 false alarms), but they now time out
+Commit: `an access to atomic memory is not a race`.
+
+An access to an `_Atomic` object is not a data race with anything. The race is **not** found by `DataRaceToReachabilityPass` at all -- it is found by an *analysis-level* state predicate, `XcfaDataRaceCheck.getDataRaceDetector`, which inspects concurrent edges directly. That is why filtering dereferences in the pass changed nothing even with the filter demonstrably firing: it was filtering something the verdict never depended on. The detector has two branches, and only one of them looked:
+
+```kotlin
+// two global VARIABLES -- checks atomicity:
+v1.globalVar == v2.globalVar && !v1.globalVar.atomic && ...
+// two MEMORY LOCATIONS -- checked nothing:
+(m1.access.isWritten || m2.access.isWritten) && canExecuteConcurrently(..) && mayBeSameMemoryLocation(..)
+```
+
+So a global `_Atomic int` was excluded, while `A[i]` through an `_Atomic int *A` was reported as **racing with itself**. The memory branch now reads the same flag the variable branch already did -- four lines, no new plumbing.
+
+⚠️ **Two traps on the way, both worth remembering.**
+- I first tried to read the atomicity off the *dereference's* recorded type. It is not dependable: `FrontendXcfaBuilder` types the deref on the **left** of an assignment as a *pointer to* the element while the one on the right is typed as the element, and types being keyed by the expression, **the two collide in the metadata**. The pointer's own declaration states it once, unambiguously.
+- That insight also retired an earlier attempt (threading `ParseContext` through ~15 call sites, plus marking the pointee atomic in `NamedType`): the flag was already in the XCFA, sitting unused in the branch directly below the one that reads it.
+
+**The honest result**: the three tasks go from **wrong (Unsafe, −16 each)** to **unknown (0)** -- they no longer invent a race, but they now *time out* rather than prove safety, even at the full 900 s budget. Removing a false alarm is not automatically a correct answer.
+
+**Validation.** The dangerous direction here is a *missed* race, so the sample was chosen for it: **all 73** previously-correct `no-data-race` tasks that *expect* a race, plus 30 that expect none -- **103/103 correct**, no race missed. Canaries 142/143, module suites (including the data-race tests) and `spotlessCheck` green.
+
+⚠️ Theta has one atomic flag per declaration, so `_Atomic int *p` (atomic pointee) and `int *_Atomic p` (atomic pointer) cannot be told apart. The former is what programs write, and that is how it is read.
+
+### (superseded) the earlier diagnosis
 An access to an `_Atomic` object cannot be a data race. A **global** `_Atomic int` is already excluded (`getPotentialRacingVars` filters on the *declaration's* flag), but `_Atomic int *A; A[i]` is reported as racing with itself. Root cause: **`CComplexType.setAtomic()` is never called anywhere** -- atomicity lives only on `CSimpleType`, so a dereferenced element has no atomic flag to read. Marking the *pointee* atomic in `NamedType.getActualType` (before the pointers are wrapped) does work -- verified `embedded=CSignedInt embAtomic=true` -- but filtering atomic dereferences in `DataRaceToReachabilityPass` **did not fix the task**, and instrumenting the pass showed why the fix is in the wrong place: in the concurrency portfolio the pass runs *post-hoc* through `optimizeFurther`, where `racingVars` is empty and **there are no `Dereference` exprs left at all**, yet a race is still reported. So the violation comes from somewhere else in that pipeline. Reverted rather than committed unproven; the diagnosis is the deliverable.
 
 ### Not attempted
@@ -521,7 +545,7 @@ An access to an `_Atomic` object cannot be a data race. A **global** `_Atomic in
 
 ## NEXT UP (queue as of batch 18; the in-flight benchmark run will re-rank it)
 
-1. **The wrong results still open** (batch 18 cleared 8 of 21): the **`weaver` data races** (diagnosed above — find where the race is actually reported in the `optimizeFurther` pipeline), **`aws-c-common` ×3** and **`memsafety/lockfree-3.0`** (false alarms, uninvestigated), **`memory-model/{2SB,4SB}`** (missed bugs), and the two Juliet `CWE121_..._66_good` false alarms. Wrong answers are worth more than any error class.
+1. **The wrong results still open** (batch 18 cleared 11 of 21): **`aws-c-common` ×3** and **`memsafety/lockfree-3.0`** (false alarms, uninvestigated), **`memory-model/{2SB,4SB}`** (missed bugs), and the two Juliet `CWE121_..._66_good` false alarms. Wrong answers are worth more than any error class.
 2. **`realloc` is not modelled** and *crashes* the analysis (`IllegalArgumentException`) — found while checking free.
 3. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
 4. **`memcpy` with a symbolic count** — needs a loop (new locations) in `MemoryFunctionsPass`; today such a call is left to fail loudly.
