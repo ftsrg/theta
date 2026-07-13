@@ -726,8 +726,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
             if (type.isPresent()) {
                 LitExpr<?> value =
-                        CComplexType.getSignedInt(parseContext)
-                                .getValue("" + Math.max(type.get().width() / 8, 1));
+                        CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type.get()));
                 return value;
             } else {
                 uniqueWarningLogger.write(
@@ -743,10 +742,38 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
             final var type = CComplexType.getType(expr, parseContext);
-            LitExpr<?> value =
-                    CComplexType.getSignedInt(parseContext).getValue("" + type.width() / 8);
+            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
             return value;
         }
+    }
+
+    /**
+     * How many bytes a value of this type occupies.
+     *
+     * <p>A struct's {@code width()} is not its size -- it is pointer-wide, like the handle a struct
+     * is passed around by -- so `sizeof(struct node)` came out **4**, whatever the struct held.
+     * Memory sizes are recorded from `malloc(sizeof(struct node))`, and a struct's members are
+     * addressed by their *index*, so the fifth member of a five-member struct sat at offset 4 and
+     * the bound check `offset < size` read `4 < 4` and called a perfectly good access an invalid
+     * dereference. A struct of four members or fewer never tripped it, which is why it survived so
+     * long.
+     *
+     * <p>The size of a struct is the size of what is in it (a union's, the largest member's).
+     * Padding is not modelled -- nothing here reasons about a struct's bit-level layout, and a size
+     * that is a little small would bring the bound check back down onto real accesses.
+     */
+    private int sizeOf(CComplexType type) {
+        if (type instanceof CStruct cStruct) {
+            final List<Integer> fieldSizes =
+                    cStruct.getFields().stream().map(f -> sizeOf(f.get2())).toList();
+            if (fieldSizes.isEmpty()) {
+                return 1;
+            }
+            return cStruct.isUnion()
+                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
+                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
+        }
+        return Math.max(type.width() / 8, 1);
     }
 
     @Override
