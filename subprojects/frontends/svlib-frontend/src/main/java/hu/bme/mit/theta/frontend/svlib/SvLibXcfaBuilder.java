@@ -199,6 +199,9 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
             .visit(
                 ctx.statement(), start);
 
+    applyTaggedCheckTrueProperties(procedure);
+    checkTrueByTag.clear();
+
     addExitEdges(procedure, exit);
     this.entryProcedure = procedure;
 
@@ -230,9 +233,6 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
       XcfaLocation source,
       List<SvLibParser.RelationalTermContext> checkTrueTerms) {
     List<XcfaEdge> originalOutgoingEdges = new ArrayList<>(source.getOutgoingEdges());
-    if (originalOutgoingEdges.isEmpty()) {
-      return;
-    }
 
     XcfaLocation checkedSource = source;
     for (SvLibParser.RelationalTermContext checkTrueTerm : checkTrueTerms) {
@@ -296,15 +296,7 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     return null;
   }
 
-  @Override
-  public Void visitAnnotateTag(SvLibParser.AnnotateTagContext ctx) {
-    if (entryProcedure != null) {
-      applyTaggedCheckTrueProperties(entryProcedure);
-      checkTrueByTag.clear();
-    }
 
-    return null;
-  }
 
   private XcfaLocation addLabels(
       XcfaProcedureBuilder builder, XcfaLocation from, List<XcfaLabel> labels) {

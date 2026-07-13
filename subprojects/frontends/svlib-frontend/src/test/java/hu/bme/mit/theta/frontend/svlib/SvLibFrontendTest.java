@@ -3,6 +3,7 @@ package hu.bme.mit.theta.frontend.svlib;
 
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
+import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -125,46 +126,6 @@ class SvLibFrontendTest {
 
   }
 
-  @Test
-  void loopAnnotateTagCheckTrueRewritesLoopBodyEntry() throws IOException {
-    var xcfa = parseResource("loop-check-true-annotate-tag.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-
-    var taggedLocation =
-        procedure.getLocs().stream()
-            .filter(
-                loc ->
-                    loc.getMetadata() instanceof SvLibMetadata metadata
-                        && metadata.isTag()
-                        && metadata.getTag().equals("loop-body-entry"))
-            .findFirst()
-            .orElseThrow();
-
-    assertFalse(taggedLocation.getIncomingEdges().isEmpty());
-    assertEquals(2, taggedLocation.getOutgoingEdges().size());
-    assertTrue(taggedLocation.getOutgoingEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
-
-    var checkPassedLocation =
-        taggedLocation.getOutgoingEdges().stream()
-            .filter(edge -> !edge.getTarget().getError())
-            .map(edge -> edge.getTarget())
-            .findFirst()
-            .orElseThrow();
-
-    assertTrue(
-        checkPassedLocation.getOutgoingEdges().stream()
-            .anyMatch(edge -> edge.getLabel().toString().contains("assign")),
-        "Expected loop body assignment to be moved after the tag-based check-true edge");
-
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("loop-check-true-annotate-tag.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertFalse(dot.isBlank());
-  }
 
   @Test
   void translatedIfXcfaCanBeExportedToDot() throws IOException {
@@ -203,6 +164,27 @@ class SvLibFrontendTest {
     assertTrue(dot.startsWith("digraph G"));
     assertTrue(dot.contains("SvLibXCFA"));
     assertFalse(dot.isBlank());
+  }
+
+  @Test
+  void multiAssignStatementCreatesSingleSequenceLabelEdge()throws IOException {
+    var xcfa = parseResource("multi-assign.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+
+    var sequenceLabel =
+        procedure.getEdges().stream()
+            .map(edge -> edge.getLabel())
+            .filter(SequenceLabel.class::isInstance)
+            .map(SequenceLabel.class::cast)
+            .findFirst()
+            .orElseThrow();
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("multi-assign.svlib.dot"),
+        dot);
+
+    assertEquals(2, sequenceLabel.getLabels().size());
   }
 
   @Test

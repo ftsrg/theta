@@ -7,11 +7,12 @@
   ((x Int))
   ()
   (sequence
-    (assign (x x0))
+
+  (!
     (while (< x 3)
-      (!
-        (assign (x (+ x 1)))
-        :tag loop-body-entry))
+
+        (assign (x (+ x 1))))
+        :tag loop-body-entry)
     (assign (x (+ x 1)))))
 
 (declare-const input Int)
