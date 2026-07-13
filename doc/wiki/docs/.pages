@@ -1,6 +1,4 @@
 nav:
     - index.md
-    - Formalisms
-    - Frontends
-    - Algorithms
     - Modules
+    - Guides

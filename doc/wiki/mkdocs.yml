@@ -28,12 +28,54 @@ plugins:
     - awesome-pages:
         collapse_single_pages: true
 
+# Pulls README.md / USING.md / CLAUDE.md from the modules and doc/ onto the wiki.
 hooks:
     - hooks.py
 
-theme: 
+# Live-reload `mkdocs serve` when a mirrored doc changes.
+watch:
+    - ../../subprojects
+    - ../../doc
+    - ../../CLAUDE.md
+
+# Mirrored pages link to source files on GitHub; mkdocs can't resolve those itself.
+validation:
+    links:
+        not_found: ignore
+
+repo_url: https://github.com/ftsrg/theta
+repo_name: ftsrg/theta
+
+theme:
     name: material
     logo: assets/icon.png
+    favicon: assets/icon.png
+    features:
+        - navigation.top          # back-to-top button
+        - navigation.tracking     # URL follows the active anchor
+        - navigation.indexes      # a section's index.md becomes the section landing page
+        - toc.follow
+        - search.suggest
+        - search.highlight
+        - content.code.copy
+    palette:
+        - media: "(prefers-color-scheme: light)"
+          scheme: default
+          primary: custom
+          accent: custom
+          toggle:
+              icon: material/weather-night
+              name: Switch to dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          primary: custom
+          accent: custom
+          toggle:
+              icon: material/weather-sunny
+              name: Switch to light mode
+
+extra_css:
+    - assets/theme.css
 
 extra_javascript:
     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML
