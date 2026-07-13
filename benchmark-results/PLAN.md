@@ -576,7 +576,31 @@ Test-driven: `CAtomicTypeTest` (25 placements, asserting the type with an `_` on
 
 Regression: canaries **142/143**, the data-race sample **103/103** (all **73** tasks that *expect* a race still catch it — a missed race is the dangerous direction here), memsafety **70/70**, all module suites and `spotlessCheck` green.
 
-⚠️ Still not modelled: `<stdatomic.h>` (`atomic_int`, `atomic_load`, `atomic_fetch_add`, …). The `__atomic_*` GCC builtins are (batch 17), and `_Atomic` types now are, so the C11 library layer is the remaining piece.
+### C11 `<stdatomic.h>` — also done
+Commit: `model C11 stdatomic, and keep an address-taken atomic atomic`.
+
+The header is bundled (`atomic_int` &c. are ordinary `_Atomic` typedefs, `memory_order` an int whose constants come from `MacroExprs`). The *operations* are type-generic, which C expresses with macros and this grammar cannot express at all, so they are recognised by name and built directly: `atomic_load`/`store`/`init`, `atomic_fetch_add`/`sub`, `atomic_exchange`, and the `_explicit` variants -- alongside the `__atomic_*` builtins they compile down to. A read-modify-write yields the value that was there **before**, which every test pins with a *negative control* asserting the new one (it must come back Unsafe).
+
+### ⚠️ The reason this fought back: C types are keyed by object *identity*
+`FrontendMetadata` keys them with `System.identityHashCode`. **Any pass that rebuilds an expression loses its C type**, and `CComplexType.getType` then quietly falls back to inferring one from the SMT sort -- where an `_Atomic int` is indistinguishable from an `int`. That one fact explains three dead ends at once:
+- reading atomicity off a **dereference** cannot work (passes rebuild them);
+- reading it off a **`RefExpr`** can (a `VarDecl`'s `ref` is a cached instance);
+- and `atomic_int x` touched through `&x` failed *both* ways, because `ReferenceElimination` folds `&x` to a bare **literal** -- the object's id -- which carries nothing at all.
+
+So the fact is now *recorded where it is known* rather than recovered later: `XcfaGlobalVar` gained **`pointsToAtomic`**, set by `ReferenceElimination` on the pointer it invents for an address-taken variable, and the race check resolves a pointer either as a variable or as that folded id. (This identity-keying is worth remembering -- it is a trap for anything else that tries to read a C type after the passes have run.)
+
+**The matrix, all 8 correct** -- and the last three are the ones that prove the filter is not simply skipping everything:
+
+| program | verdict |
+|---|---|
+| `atomic_int x` + `atomic_fetch_add(&x,1)` | no race ✓ |
+| `atomic_int x`, plain `x = x+1` | no race ✓ |
+| `_Atomic int *A`, `A[0]` | no race ✓ |
+| plain `int x` via `&x` | **races** ✓ |
+| `int * _Atomic A`, `A[0]` | **races** ✓ |
+| plain `int *A`, `A[0]` | **races** ✓ |
+
+Regression: canaries **142/143**, data-race sample **103/103** (all **73** race-expecting tasks still caught), memsafety **70/70**, all module suites and `spotlessCheck` green.
 
 ## NEXT UP (queue as of batch 19; the in-flight benchmark run will re-rank it)
 
