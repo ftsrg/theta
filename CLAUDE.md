@@ -57,13 +57,15 @@ Spotless (google-java-format AOSP + ktfmt) is required but not run automatically
 
 ## On-demand deep docs
 
-Documented modules follow a two-file convention:
-- `CLAUDE.md` — how to **edit/extend** that module (invariants, change recipes). Auto-loads when you touch files there; never read it eagerly.
+Documented modules follow a two-file convention (stated once here — the module files don't repeat it):
+- `CLAUDE.md` — how to **edit/extend** that module (invariants, change recipes). Auto-loads when you touch files there; never read it eagerly. Conceptual overviews stay in the module's `README.md`.
 - `USING.md` — how to **consume** that module's API from elsewhere (cookbook). Never auto-loads — read it explicitly when the task matches, via the pointers below.
 
 Current pointers:
 - Building/manipulating core exprs, stmts, valuations, or talking to solvers from **any** module: `subprojects/common/core/USING.md`.
 - Binding a formalism to a checking algorithm (CEGAR, BMC/k-ind/IMC, IC3, MDD, CHC, LTL): `subprojects/common/analysis/USING.md`.
+- Shared utilities (logging, DispatchTable, tuples, visualization, DSL scopes, deterministic collections): `subprojects/common/common/USING.md`.
+- Getting/driving SMT solvers (factories, managers, unsat cores, interpolation, Horn, pooling, backend choice): `subprojects/solver/solver/USING.md`.
 
 ## Running one module's tests
 

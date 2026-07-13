@@ -40,7 +40,13 @@ SafetyResult<ARG<S, A>, Trace<S, A>> result = checker.check(initPrec);
 
 Knobs: trace checkers (`ExprTraceSeqItpChecker`/`FwBinItp`/`BwBinItp`/`Newton`/`UCB`/`UnsatCoreChecker` — the last produces `VarsRefutation` + `VarsRefToExplPrec` instead of interpolants), `PruneStrategy.LAZY` (prune one node at the refutation index) vs `FULL` (restart the ARG), `MultiExprTraceRefiner` for multi-cex refinement, a custom `NodePruner` for POR-style pruning (see xcfa's `AtomicNodePruner`).
 
-The same chain scales to the most complex consumer: `xcfa-cli/checkers/ConfigToCegarChecker.kt` follows it exactly, substituting subclasses at the extension points — a custom abstractor (subclassing `BasicArgAbstractor` to override the covering policy), `XcfaSingleExprTraceRefiner`, and `AtomicNodePruner` — before the same final `ArgCegarChecker.create(abstractor, refiner, logger)`.
+The same chain scales to the most complex consumer, `xcfa-cli/checkers/ConfigToCegarChecker.kt`: same five steps, same final `ArgCegarChecker.create(abstractor, refiner, logger)`, with the pieces swapped at the extension points rather than the shape changed. What it adds, in order of usefulness as a template:
+
+- **Factories on the `Domain` enum** instead of a `switch`: `domain.abstractor(...)`, `domain.itpPrecRefiner(...)`, `domain.nodePruner` each return the domain-appropriate piece, so the assembly code is domain-agnostic.
+- **A custom abstractor** (subclasses `BasicArgAbstractor`, overriding the covering policy for multithreaded stack-covering) and **`XcfaSingleExprTraceRefiner`** in place of `SingleExprTraceRefiner`.
+- **Refiner decoration**: with `POR.AASPOR`, the finished refiner is wrapped — `AasporRefiner.create(refiner, pruneStrategy, ignoredVarRegistry)` — which re-expands ARG nodes whose partial-order-reduction assumptions the new precision invalidated. Orthogonal to the `NodePruner` (`AtomicNodePruner`) it also passes.
+- **Result post-processing**: the `ArgCegarChecker` is wrapped in an outer `SafetyChecker` that converts the `ARG` proof into `LocationInvariants` for witness output — a clean way to present a formalism-level proof without touching the CEGAR loop.
+- **Monitor registration** right after the checker is built (`MonitorCheckpoint.register(CexMonitor(...), "CegarChecker.unsafeARG")`), gated by config — see [CLAUDE.md](CLAUDE.md) on the checkpoint mechanism.
 
 ## Path B — BMC / k-induction / IMC / IC3 / MDD (reference: `sts-analysis/StsToMonolithicAdapter`)
 

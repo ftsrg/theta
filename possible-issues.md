@@ -87,6 +87,23 @@
 - [ ] Naming collision: `algorithm/oc/OcTypes.kt` defines `Relation<E>` unrelated to core's
   CHC `Relation` — grep hazard.
 
+## Cross-module observations
+
+- [ ] **Three parallel text-parsing stacks for core exprs/stmts** exist: `core/dsl` (CoreDslManager,
+  ANTLR CoreDsl.g4), `core/parser` (legacy Lisp reader, no production consumers), and
+  `common/grammar` (own Type/Expr/Stmt/Declarations .g4 grammars + Kotlin parsers + Gson adapters,
+  consumed by xcfa/xcfa-cli/c-frontend/btor2-frontend). Nothing documents which is canonical for
+  what; candidates for consolidation or at least a comment in each.
+
+## common/common (inline audit 2026-07-13)
+
+- [ ] **`CollectionUtil.setCollectionFactory` has zero callers** — the `FastUtilCollectionFactory`
+  added in commit 737ed3046 ("add FastUtilColletionFactory as default") is never activated; the
+  actual default is `LinkedHashCollectionFactory`. Either the wiring was forgotten or the commit
+  message overstates — decide and either wire it (mind iteration-order determinism!) or drop it.
+- [ ] **`datalog/` package** — no consumers outside its own package/tests (grep-verified).
+  Dead-code candidate.
+
 # `common/core` (2026-07-08)
 
 Found during code-derived doc generation (six-agent audit of all core packages; each claim

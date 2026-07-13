@@ -1,13 +1,10 @@
 # common/core — notes for editing this module
 
-(Not a conceptual overview — that's the README/wiki. This file holds what you need when *changing* code here: invariants, conventions, change recipes.)
-
 Gradle module: `:theta-core` — all modules are named `theta-<dirname>` (see [settings.gradle.kts](../../../settings.gradle.kts)); `:core:...` does **not** resolve.
 
 - Build/tests: `./gradlew :theta-core:build` · `./gradlew :theta-core:test`
 - Formatting (Spotless: google-java-format AOSP, ktfmt google style) is required but **not** run automatically: run `./gradlew spotlessApply` locally, or trigger via `\format` comment on the GitHub PR. Every file needs the copyright header ([doc/copyright-header.txt](../../../doc/copyright-header.txt)).
 - Conceptual overview: [README.md](README.md) here; formalism-level docs in [doc/wiki/](../../../doc/wiki/).
-- **Consuming core from another module?** Read [USING.md](USING.md) instead — this file is about editing/extending core itself.
 
 Paths below are relative to [src/main/java/hu/bme/mit/theta/core/](src/main/java/hu/bme/mit/theta/core/).
 

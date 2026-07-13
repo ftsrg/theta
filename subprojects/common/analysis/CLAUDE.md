@@ -1,12 +1,8 @@
 # common/analysis — notes for editing this module
 
-(Not a conceptual overview — that's the README/wiki. This file holds what you need when *changing* code here: invariants, conventions, change recipes.)
-
 Gradle module: `:theta-analysis`. Build/tests: `./gradlew :theta-analysis:build` / `:theta-analysis:test` (native solvers in tests need `LD_LIBRARY_PATH=$PROJECT_DIR/lib/`). Formatting/copyright: see root [CLAUDE.md](../../../CLAUDE.md).
 
 Conceptual background: [README.md](README.md) (thin) and [doc/CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md) (user-level CEGAR config concepts — read before changing CEGAR behavior).
-
-**Consuming this module from a formalism?** Read [USING.md](USING.md) instead — this file is about editing analysis itself.
 
 Paths below relative to [src/main/java/hu/bme/mit/theta/analysis/](src/main/java/hu/bme/mit/theta/analysis/).
 
@@ -29,7 +25,7 @@ Everything is generic over `<S extends State, A extends Action, P extends Prec>`
 
 ## Invariants — violating these breaks distant code
 
-1. **The `Proof` is mutable shared state.** [CegarChecker](src/main/java/hu/bme/mit/theta/analysis/algorithm/cegar/CegarChecker.java) creates it once (`abstractor.createProof()`) and hands the *same instance* to abstractor and refiner every iteration — the refiner prunes it in place. A new `Abstractor`/`Refiner` pair must agree on incremental semantics (re-expansion after prune, covering invalidation).
+1. **The `Proof` is mutable shared state.** [CegarChecker](src/main/java/hu/bme/mit/theta/analysis/algorithm/cegar/CegarChecker.java) creates it once (`abstractor.createProof()`) and hands the *same instance* to abstractor and refiner every iteration — the refiner prunes it in place. So the abstractor never starts from a blank proof after the first round: it resumes on a graph the refiner has cut into, and must re-explore exactly what the pruning invalidated (see the abstractor/refiner recipe in [algorithm/CLAUDE.md](src/main/java/hu/bme/mit/theta/analysis/algorithm/CLAUDE.md)).
 2. **`Trace` shape**: #states = #actions + 1, at least one state — checked in the ctor, relied on by every trace checker.
 3. **New checker algorithms implement `SafetyChecker`** (or `Checker` for non-safety) and return `SafetyResult` via the static factories — don't subclass `SafetyResult`.
 4. **[ExprAction](src/main/java/hu/bme/mit/theta/analysis/expr/ExprAction.java) is the SMT bridge**: `toExpr()` + `nextIndexing()` (core `VarIndexing`); trace checkers unfold these via core `PathUtils`. An action whose `toExpr`/`nextIndexing` disagree (e.g. primes not covered by the indexing) fails deep inside refinement, not at the call site.
