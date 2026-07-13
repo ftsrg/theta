@@ -38,11 +38,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 GITHUB_BLOB = "https://github.com/ftsrg/theta/blob/master/"
 GITHUB_RAW = "https://raw.githubusercontent.com/ftsrg/theta/master/"
 
-# Pages are named after the file they mirror, so that the nav says plainly where each
-# page comes from: a page called "USING.md" is that module's USING.md, nothing else.
+# A module's README becomes the landing page of its nav section, titled after the module
+# (a nav full of entries called "README.md" says nothing about which module they belong to).
+# The code-facing docs keep their filename as the title, so they stand out from ordinary docs.
 # source filename -> destination basename
 MODULE_DOCS = {
-    "README.md": "readme.md",
+    "README.md": "index.md",
     "USING.md": "using.md",
     "CLAUDE.md": "claude.md",
 }
@@ -66,6 +67,17 @@ _BANNERS = {
         '!!! info "`README.md` — what this module is"\n'
         "    Mirrored from [`{path}`]({url}) — edit it there, not here.\n"
     ),
+    "plain": (
+        '!!! info "Mirrored page"\n'
+        "    Mirrored from [`{path}`]({url}) — edit it there, not here.\n"
+    ),
+    "root-claude": (
+        '!!! info "`CLAUDE.md` — repository-wide orientation"\n'
+        "    The counterpart of the per-module `CLAUDE.md` files: how the repository is laid out,\n"
+        "    how to build, test and format it. Written for contributors — and for AI coding\n"
+        "    assistants, which load it automatically.\n\n"
+        "    Mirrored from [`{path}`]({url}) — edit it there, not here.\n"
+    ),
 }
 
 _THETA_PACKAGE = ("hu", "bme", "mit", "theta")
@@ -77,7 +89,9 @@ _IMG_RE = re.compile(r'(<img[^>]*?\ssrc=")([^"]+)(")')
 
 
 def _title_for(rel: Path) -> str:
-    """Nav/page title: the source filename, so provenance is obvious from the nav."""
+    """Nav/page title: the module (or package) name for a README, the filename otherwise."""
+    if rel.name == "README.md":
+        return rel.parent.name
     return rel.name
 
 
@@ -133,20 +147,32 @@ def _discover(config):
                 (path, posixpath.join("Guides", path.relative_to(REPO_ROOT / "doc").as_posix()))
             )
 
+    # The repository-wide README and CLAUDE.md are top-level pages: the first is the project's
+    # front page, the second is a CLAUDE.md like any other — neither is a "guide".
+    found.append((REPO_ROOT / "README.md", "about.md"))
     root_claude = REPO_ROOT / "CLAUDE.md"
     if root_claude.is_file():
-        found.append((root_claude, "Guides/repository-guide.md"))
+        found.append((root_claude, "claude.md"))
 
     return found
 
 
 def _page_source(path: Path, dest_uri: str) -> str:
     rel = path.relative_to(REPO_ROOT).as_posix()
-    banner = _BANNERS.get(path.name, _BANNERS["README.md"])
+    if dest_uri == "claude.md":
+        banner = _BANNERS["root-claude"]
+    elif dest_uri.startswith("Modules/"):
+        banner = _BANNERS.get(path.name, _BANNERS["README.md"])
+    else:
+        banner = _BANNERS["plain"]
     banner = banner.format(path=rel, url=GITHUB_BLOB + rel)
 
     front_matter = [f'source_dir: "{posixpath.dirname(rel)}"']
-    if path.name in MODULE_DOCS and dest_uri.startswith("Modules/"):
+    if dest_uri == "about.md":
+        front_matter.append('title: "About Theta"')
+    elif dest_uri == "claude.md":
+        front_matter.append('title: "CLAUDE.md"')
+    elif path.name in MODULE_DOCS and dest_uri.startswith("Modules/"):
         front_matter.append(f'title: "{_title_for(path.relative_to(REPO_ROOT))}"')
 
     return "---\n{}\n---\n\n{}\n{}".format(
@@ -157,10 +183,36 @@ def _page_source(path: Path, dest_uri: str) -> str:
 def on_files(files, config):
     """Inject the out-of-tree docs as ordinary wiki pages."""
     for path, dest_uri in _discover(config):
-        files.append(
-            File.generated(config, dest_uri, content=_page_source(path, dest_uri))
-        )
+        files.append(File.generated(config, dest_uri, content=_page_source(path, dest_uri)))
     return files
+
+
+def _descendant_dirs(item):
+    """Directories of every page below a nav item."""
+    for child in getattr(item, "children", None) or []:
+        if child.is_page:
+            yield posixpath.dirname(child.file.src_uri)
+        else:
+            yield from _descendant_dirs(child)
+
+
+def on_nav(nav, config, files):
+    """Title each Modules section with its real directory name.
+
+    MkDocs otherwise prettifies directory names ("solver-z3-legacy" -> "Solver z3 legacy"),
+    but these are directory and Gradle module names — show them verbatim.
+    """
+
+    def visit(items):
+        for child in items:
+            if child.is_section:
+                dirs = list(_descendant_dirs(child))
+                if dirs and all(d.startswith("Modules/") for d in dirs):
+                    child.title = posixpath.basename(posixpath.commonpath(dirs))
+                visit(child.children)
+
+    visit(nav.items)  # Navigation exposes `items`, not `children`
+    return nav
 
 
 def on_page_content(html, page, config, files):

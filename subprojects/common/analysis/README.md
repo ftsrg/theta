@@ -2,51 +2,36 @@ This project contains the analysis algorithms and their components, e.g., abstra
 reachability graphs, refinement strategies, precisions, etc. The formalism specific components (
 e.g., the interpreter) are implemented in separate projects for the given formalism.
 
-## Building blocks
+## Further reading
 
-Theta separates *what* is verified from *how*. A formalism (CFA, XCFA, XSTS, ...) provides:
+The full publication list is at [theta.mit.bme.hu/publications](https://theta.mit.bme.hu/publications/).
 
-* **States** and **actions**: abstract states of the system, and the transitions leaving them (the
-  `LTS` interface answers "which actions are enabled in this state").
-* An **analysis**: an abstract domain binding for the formalism, consisting of an initial-state
-  function, a transfer function (successor computation), and a partial order over abstract states
-  (used for coverage checks).
-* A **precision** describing how fine the abstraction currently is (e.g., which variables or
-  predicates are tracked).
+**CEGAR**
 
-The generic abstract domains live here: **explicit-value** (`expl`), **predicate** (`pred`, with
-Cartesian/Boolean/split abstraction variants), their **products** (`prod2`), and **zones** (for
-timed systems). Actions bridge to the SMT world by exposing their semantics as a first-order
-formula (`ExprAction`).
+* [A Configurable CEGAR Framework with Interpolation-based Refinements](https://doi.org/10.1007/978-3-319-39570-8_11) (FORTE 2016) — the configurable CEGAR framework this project implements.
+* [Efficient Strategies for CEGAR-based Model Checking](https://doi.org/10.1007/s10817-019-09535-x) (JAR 2020) — the reference paper for the configuration options; see also [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
+* [A Survey on CEGAR-based Model Checking](https://theta.mit.bme.hu/publications/hajduaMsc2015.pdf) (MSc, 2015).
+* [Exploratory Analysis of the Performance of a Configurable CEGAR Framework](https://doi.org/10.5281/zenodo.291895) (Minisy 2017) and [A Preliminary Analysis on the Effect of Randomness in a CEGAR Framework](https://theta.mit.bme.hu/publications/minisy2018.pdf) (Minisy 2018) — how configuration and randomness affect performance.
 
-## CEGAR
+**Abstract domains** (`expl/`, `pred/`, `prod2/`)
 
-The main safety-checking algorithm is counterexample-guided abstraction refinement, implemented as
-a loop of two generic components:
+* [Software Model Checking with a Combination of Explicit Values and Predicates](https://doi.org/10.5281/zenodo.2597969) (Minisy 2019).
+* [Combining Abstract Domains for Software Model Checking](https://theta.mit.bme.hu/publications/bajkaidBsc2018.pdf) (BSc, 2018) and [Efficient combinations of predicate abstraction and explicit-value analysis](https://theta.mit.bme.hu/publications/bajkaidMsc2020.pdf) (MSc, 2020).
 
-* The **abstractor** builds a *proof* of safety at the current precision. The default proof
-  structure is an **abstract reachability graph (ARG)**: nodes are abstract states, edges are
-  actions, and already-covered states are not re-expanded. The search order (BFS/DFS/error-distance)
-  and the stopping criterion are configurable.
-* If the proof contains an abstract counterexample, the **refiner** checks whether it is feasible in
-  the concrete system, by unfolding the trace into an SMT formula and checking satisfiability. A
-  feasible counterexample means the system is unsafe. An infeasible one yields a *refutation* (from
-  sequence/binary interpolation, unsat cores, or Newton-style reasoning), which is mapped back into
-  a refined precision; the affected part of the proof is then pruned and re-explored.
+**Beyond CEGAR** (`algorithm/ic3`, `algorithm/mdd`, `algorithm/bounded`)
 
-The loop terminates with either a proof of safety or a concrete counterexample trace. The CEGAR loop
-is parametrized over the proof structure rather than hard-wired to ARGs, so the same loop also drives
-other proof representations (e.g., abstract state graphs for liveness checking).
+* [Applying Incremental, Inductive Model Checking to Software](https://theta.mit.bme.hu/publications/tegzestBsc2018.pdf) (BSc, 2018) — IC3 on software, via a transformation to a symbolic transition system.
+* [EmergenTheta: Variations on Symbolic Transition Systems](https://theta.mit.bme.hu/publications/tacas2025emergentheta.pdf) (SV-COMP 2025) — the monolithic-expression encodings shared by BMC/k-induction/IMC, IC3 and MDD.
+* [EmergenTheta: Experimental Analyses within the Theta Framework](https://doi.org/10.1007/978-3-032-22749-2_25) (SV-COMP 2026) — combined predicate-explicit domain, on-the-fly reachability and counterexample generation for generalized saturation, and an IC3 backend.
 
-The user-facing configuration options of the CEGAR algorithms (domains, refinement strategies, search
-orders, and best practices) are documented in [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
+**Liveness / LTL** (`algorithm/loopchecker`, `multi/`)
 
-## Beyond CEGAR
+* [Abstraction-Based Model Checking of Linear Temporal Properties](https://theta.mit.bme.hu/publications/minisy2020mm.pdf) (Minisy 2020) — CEGAR combined with automata-theoretic LTL checking, and the interpolation-based refinement of lasso-shaped counterexamples.
 
-This project also implements other checking algorithms, selectable in the tools where applicable:
+**Runtime monitoring** (`runtimemonitor/`)
 
-* **Bounded model checking** variants (BMC, k-induction, IMC) in `algorithm/bounded`.
-* **Symbolic (decision-diagram) model checking** in `algorithm/mdd`.
-* **IC3/PDR** in `algorithm/ic3`.
-* **Liveness/LTL checking** in `algorithm/loopchecker` (abstract state graphs).
-* **Memory-model-aware analyses** (`algorithm/mcm`, `algorithm/oc`) for weak-memory concurrency.
+* [Extending the Capabilities of the CEGAR Model Checking Algorithm](https://theta.mit.bme.hu/publications/adamzsMsc2023.pdf) (MSc, 2023) — detecting and mitigating non-progressing refinement loops.
+
+**Pointers** (`ptr/`)
+
+* [Giving Some Pointers for Abstraction-Based Model Checking](https://doi.org/10.3311/MINISY2025-002) (Minisy 2025) — tracking predicates over abstract memory locations.

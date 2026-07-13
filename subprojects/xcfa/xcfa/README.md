@@ -68,3 +68,31 @@ The following labels are used:
 * [`xcfa-analysis`](../xcfa-analysis/README.md): The analyses that work on XCFAs.
 * [`cat`](../cat/README.md): The memory modeling language that is used by the analyses above.
 * [`c-frontend`](../../frontends/c-frontend/README.md): The c-frontend
+
+## Further reading
+
+Papers behind the XCFA-based analyses. The full list is at
+[theta.mit.bme.hu/publications](https://theta.mit.bme.hu/publications/).
+
+**Concurrency**
+
+* [Theta: Abstraction Based Techniques for Verifying Concurrency](https://doi.org/10.1007/978-3-031-57256-2_30) (SV-COMP 2024) — abstraction-aware partial order reduction, dynamic statement reduction, and call-stack support for recursive programs.
+* [Theta: Various Approaches for Concurrent Program Verification](https://doi.org/10.1007/978-3-031-90660-2_22) (SV-COMP 2025) — partial order reduction complemented by a happens-before propagator-based BMC check.
+* [Theta: portfolio of CEGAR-based analyses with dynamic algorithm selection](https://doi.org/10.1007/978-3-030-99527-0_34) (SV-COMP 2022) — introduces support for concurrent programs with interleaving semantics.
+
+**Partial order reduction** (`xcfa-analysis/por/`)
+
+* [Partial Order Reduction for Abstraction-Based Verification of Concurrent Software in the Theta Framework](https://theta.mit.bme.hu/publications/telbiszcsBsc2022.pdf) (BSc, 2022) — abstraction-aware POR combined with lazy state-space computation; also its use for data race detection.
+* [Efficient automatic verification of concurrent programs](https://theta.mit.bme.hu/publications/telbiszcsMsc2024.pdf) (MSc, 2024) — strengthening the SMT encoding by detecting scheduling inconsistencies.
+
+**Cone-of-influence reduction** (`xcfa-analysis/coi/`)
+
+* [On-the-fly Cone-of-Influence Reduction for Model Checking Concurrent Software](https://doi.org/10.1007/978-3-032-06847-7_9) (SPIN 2025) — simplifying statements during state-space exploration based on the current state of each process.
+
+**Interprocedural verification**
+
+* [Abstraction-Based Interprocedural Software Verification](https://theta.mit.bme.hu/publications/somorjaimMsc2024.pdf) (MSc, 2024) — synthesizing context-aware procedure contracts from the abstract state space.
+
+**Memory models**
+
+* See [`cat`](../cat/README.md).

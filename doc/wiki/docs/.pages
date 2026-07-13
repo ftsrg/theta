@@ -1,4 +1,7 @@
 nav:
     - index.md
+    - about.md
     - Modules
     - Guides
+    - claude.md
+    - contributing.md

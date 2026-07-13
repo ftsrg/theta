@@ -26,7 +26,9 @@ markdown_extensions:
 plugins:
     - search
     - awesome-pages:
-        collapse_single_pages: true
+        # Leave single-page sections alone: collapsing them hides the module name in the nav,
+        # leaving a row of indistinguishable "README.md" entries.
+        collapse_single_pages: false
 
 # Pulls README.md / USING.md / CLAUDE.md from the modules and doc/ onto the wiki.
 hooks:
