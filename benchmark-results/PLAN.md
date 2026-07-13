@@ -602,11 +602,90 @@ So the fact is now *recorded where it is known* rather than recovered later: `Xc
 
 Regression: canaries **142/143**, data-race sample **103/103** (all **73** race-expecting tasks still caught), memsafety **70/70**, all module suites and `spotlessCheck` green.
 
-## NEXT UP (queue as of batch 19; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 20 (the sweep was measuring the wrong backend)
+
+Nothing here is a code change. It is the third fake result this harness has produced, and the worst,
+because it was the *green* numbers that were fake.
+
+**The real SV-COMP invocation** — read it off the `options=` attribute of any BenchExec result XML in
+this directory:
+
+```
+options="--svcomp --portfolio STABLE --loglevel RESULT"
+```
+
+**Every verdict script written before today passed neither flag.** The CLI's default backend is plain
+`CEGAR` (`XcfaConfig.kt`, `var backend: Backend = Backend.CEGAR`), *not* the portfolio — so the canary,
+memsafety and data-race sweeps have all been scoring a configuration the competition never runs.
+
+This does not merely lose coverage; it **invents failures**. The smallest struct program in C —
+
+```c
+struct S { int a; int b; };  s.a = 5;  if (s.a != 5) reach_error();
+```
+
+— cannot be verified under the default backend: the EXPL domain cannot track the memory arrays, the
+same counterexample recurs, and `CexMonitor` throws `NotSolvableException`. Under `--portfolio STABLE`
+it is **Safe in seconds**, because the portfolio falls through EXPL to PRED_CART. Master does exactly
+the same, so it is not a regression — it is the harness lying. (This is also what the "known-slow"
+`mod3.c.v+sep-reducer.c` canary was: not slow, just given the wrong backend.)
+
+A second, smaller harness bug fell out of the same re-run: the memsafety sweep compared Theta's
+`Safe`/`Unsafe` against an expectation of `false(valid-free)`, i.e. it never checked the **subproperty**
+— and SV-COMP scores `false(valid-deref)` where `false(valid-free)` was expected as a *wrong* answer.
+Theta does print it (`(Property valid-free)`); the script now reads it (`verdict_pf_ms.sh`).
+
+**Re-validated under `--svcomp --portfolio STABLE`** (scripts: `verdict_pf.sh`, `verdict_pf_yml.sh`,
+`verdict_pf_ms.sh`):
+
+| suite | result | note |
+|---|---|---|
+| canaries | **143/143** | up from the 142/143 the wrong backend reported |
+| memsafety | **70/70** | now subproperty-aware — a *stricter* check than before |
+| data-race sample | **103/103** | all **73** race-expecting tasks still caught |
+
+So the branch is green on the configuration that actually gets scored, and the earlier green numbers,
+though measured wrongly, were not hiding a regression.
+
+**The rule going forward:** before believing any local verdict number, diff the harness against the
+real `options=` string. A green sweep from the wrong configuration is worse than no sweep, because it
+gets trusted.
+
+### The two "over-approximations" the batch-19 note warned about — both were mis-flagged
+
+Probed directly (`scratchpad/probe/`), and neither can produce a wrong answer:
+
+| Probe | Expect | Got |
+|---|---|---|
+| two same-arity address-taken fns, `fp = f`, assert `f`'s effect | Safe | Safe ✓ |
+| ditto, assert the call did *not* happen | Unsafe | Unsafe ✓ |
+| fp reached through a struct member | Safe | Safe ✓ |
+| `union {int a; int b;}`, `u.a=5`, assert `u.b==5` | Safe | Safe ✓ |
+| ditto, assert `u.b!=5` (they *must* alias) | Unsafe | Unsafe ✓ |
+| `union {int a; char c;}` — mixed representation | rejected | Frontend failed ✓ |
+
+- **Function pointers are not over-approximated.** Every dispatch branch carries
+  `assume(fp == id(f))` — an *exact* equality on the pointer value — so a candidate that is not the
+  real target is an **infeasible branch, not a spurious behaviour**. The broad candidate set costs
+  *state space* (each candidate inlines a full copy of the function at every indirect call site,
+  which is what makes the Juliet `_44`/`_65` families time out), never soundness.
+- **Unions are not over-approximated either.** Same-representation members genuinely alias — which is
+  what C says — and mixed-representation members are *rejected loudly*, not answered. The 265 punning
+  errors **are** that refusal.
+
+**Consequence for the queue — item 3 was pointing the wrong way.** Narrowing the function-pointer
+candidate set by parameter types is the *dangerous* change, not the safe one. Extra candidates are
+free, because the guard refutes them; narrowing can only ever **remove the true target** (a program
+casting through `void *`, or `int` vs `long`), and the no-match branch is
+`assume(fp != every id); havoc ret` — so the call, *and all of its side effects*, silently vanishes.
+That is a missed bug. It trades a timeout problem for a soundness problem, and must not be done blind.
+If it is done at all, the no-match branch has to stop being a silent havoc first.
+
+## NEXT UP (queue as of batch 20; the in-flight benchmark run will re-rank it)
 
 1. **The wrong results still open** (batch 18 cleared 11 of 21): **`aws-c-common` ×3** and **`memsafety/lockfree-3.0`** (false alarms, uninvestigated), **`memory-model/{2SB,4SB}`** (missed bugs), and the two Juliet `CWE121_..._66_good` false alarms. Wrong answers are worth more than any error class.
 2. **`realloc` is not modelled** and *crashes* the analysis (`IllegalArgumentException`) — found while checking free.
-3. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
+3. ~~**Narrow the function-pointer candidate set by parameter types**~~ — **do not do this** (batch 20): the dispatch guard is exact, so extra candidates cost only state space, while narrowing risks *dropping the true target* and silently deleting the call's side effects. The Juliet `_44`/`_65` timeouts are real, but the fix is to make the no-match branch stop being a silent havoc, not to prune the set.
 4. **`memcpy` with a symbolic count** — needs a loop (new locations) in `MemoryFunctionsPass`; today such a call is left to fail loudly.
 5. **The remaining error classes**: multi-dimensional array init (351), union punning (265, AD7), initializer-list expressions (220), Neutral BvType (178).
 5. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
@@ -616,7 +695,15 @@ Regression: canaries **142/143**, data-race sample **103/103** (all **73** race-
 
 *(Done since this queue was last written: **N3 division overflow** and signed-shift overflow → batch 10; **AD6 typedef-name ambiguity** → batch 10; **C1 east-const** → batch 11.)*
 
-**→ A full re-test is warranted now.** Expected: the largest frontend-error classes ("Only variable-backed functions" 1,543; asm NPE 882; unions 1,722 partially; alloca 421) should shrink; watch for new *wrong* results from fptr dispatch (candidate-set over-approximation), asm output havocing, and union offset-0 aliasing.
+**→ A full re-test is warranted now**, and the local suites have been re-run under the real
+`--svcomp --portfolio STABLE` (batch 20) so the green numbers can be trusted this time. Expected: the
+largest frontend-error classes ("Only variable-backed functions" 1,543; asm NPE 882; unions 1,722
+partially; alloca 421) should shrink. Watch for: new *wrong* results from **asm output havocing** and
+from the **function-pointer no-match branch** (`havoc ret` silently skips a call whose target was not
+in the candidate set — the one place the fptr model can lose a bug); and confirm the three weaver
+data-race tasks moved from **wrong** to **unknown** — they no longer invent a race, but they time out
+rather than prove safety, which is not a win. *(Not* fptr candidate-set breadth or union offset-0
+aliasing — batch 20 probed both and neither is unsound.)
 
 ## 0. Result summary
 
