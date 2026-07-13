@@ -495,12 +495,37 @@ Every model is pinned by a test that asserts its *semantics* and a **negative co
 
 ⚠️ **Still open**: `memcpy` with a *symbolic* count needs a real loop in the pass (new locations), and a struct pointee needs the flat object layout (AD7).
 
-## NEXT UP (queue as of batch 17; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 18 (the wrong results: memsafety)
 
-1. **The 21 still-wrong tasks** from the 73 re-run — a **memsafety / valid-free** cluster (`CWE401_Invalid_Free`, `ldv-memsafety/memleaks_*`, `memsafety/cmp-freed-ptr`, `weaver/*`), plus `memory-model/{2SB,4SB}`. These are the only wrong answers left and are worth more than any error class.
-2. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
-3. **`memcpy` with a symbolic count** — needs a loop (new locations) in `MemoryFunctionsPass`; today such a call is left to fail loudly.
-4. **The remaining error classes**: multi-dimensional array init (351), union punning (265, AD7), initializer-list expressions (220), Neutral BvType (178).
+Going after the 21 wrong answers that survived batch 16. They split into **8 missed bugs** (we said Safe; there is a violation) and **13 false alarms** (we said Unsafe; there is none). Missed bugs first — they are the ones that cost.
+
+### `free()` of non-heap memory was never detected  (5 missed bugs)
+The check refused a null/negative pointer and one whose recorded size is 0. But `AllocaFunctionPass` *deliberately records a real size* -- it has to, or reads through an alloca'd block would look out of bounds -- so **`free(alloca(n))` sailed through as a perfectly good free**. The pointer model already partitions bases by residue mod 3 (`3k+0` malloc, `3k+1` alloca, `3k+2` an address-taken local), so `free` now also demands a heap base. `CWE401_Invalid_Free` ×4 and `memsafety-ext3/freeAlloca` all report Unsafe; so does `free(&local)`.
+
+### `free(NULL)` was reported as an invalid free  (3 false alarms)
+"If ptr is a null pointer, no action occurs" (C17 7.22.3.3) -- it is the idiom every cleanup path is written around. A null pointer has no recorded size, so the size bound took it for one that was never allocated. **Pre-existing** (confirmed by rebuilding without the change). Fixing it turned three `ldv-memsafety/memleaks_*` tasks Safe.
+
+### `sizeof(struct)` returned 4, whatever the struct held
+A struct's `width()` is pointer-wide -- it is the *handle* a struct is passed by, not its size. Allocation sizes come from `malloc(sizeof(struct node))`, and struct members are addressed by their **index**, so the fifth member of a five-member struct sat at offset 4 and the bound check read `4 < 4` and called a perfectly good access an invalid dereference. **A struct of four members or fewer never tripped it**, which is why it survived. `sizeof` now sums the members (a union takes its largest).
+
+Commits: `only the heap may be freed, and freeing nothing is fine`, `a struct is as big as what is in it`.
+**Validation**: canaries **142/143** (the known-slow `mod3.c.v+sep-reducer.c`), a **70-task sample of previously-correct valid-memsafety tasks 70/70**, module suites and `spotlessCheck` green. Both directions pinned: `free(malloc)`/`free(NULL)`/`free(realloc)` stay Safe; `free(alloca)`/`free(&local)`/double-free are Unsafe.
+
+### ⚠️ Diagnosed but NOT fixed — the `weaver` data races (3 false alarms)
+An access to an `_Atomic` object cannot be a data race. A **global** `_Atomic int` is already excluded (`getPotentialRacingVars` filters on the *declaration's* flag), but `_Atomic int *A; A[i]` is reported as racing with itself. Root cause: **`CComplexType.setAtomic()` is never called anywhere** -- atomicity lives only on `CSimpleType`, so a dereferenced element has no atomic flag to read. Marking the *pointee* atomic in `NamedType.getActualType` (before the pointers are wrapped) does work -- verified `embedded=CSignedInt embAtomic=true` -- but filtering atomic dereferences in `DataRaceToReachabilityPass` **did not fix the task**, and instrumenting the pass showed why the fix is in the wrong place: in the concurrency portfolio the pass runs *post-hoc* through `optimizeFurther`, where `racingVars` is empty and **there are no `Dereference` exprs left at all**, yet a race is still reported. So the violation comes from somewhere else in that pipeline. Reverted rather than committed unproven; the diagnosis is the deliverable.
+
+### Not attempted
+`memsafety/cmp-freed-ptr` (1 missed bug) needs `malloc` to be *able* to return a previously freed address; Theta's allocator is a monotone counter that never reuses, so the double free is unreachable in the model. That is an allocator change with a wide blast radius, for one task.
+
+`free(realloc(p, n))` **crashes** (`IllegalArgumentException`) -- pre-existing, `realloc` is not modelled at all.
+
+## NEXT UP (queue as of batch 18; the in-flight benchmark run will re-rank it)
+
+1. **The wrong results still open** (batch 18 cleared 8 of 21): the **`weaver` data races** (diagnosed above — find where the race is actually reported in the `optimizeFurther` pipeline), **`aws-c-common` ×3** and **`memsafety/lockfree-3.0`** (false alarms, uninvestigated), **`memory-model/{2SB,4SB}`** (missed bugs), and the two Juliet `CWE121_..._66_good` false alarms. Wrong answers are worth more than any error class.
+2. **`realloc` is not modelled** and *crashes* the analysis (`IllegalArgumentException`) — found while checking free.
+3. **Narrow the function-pointer candidate set by parameter types** (batch 16's known limit) — dispatch is arity-only, so a pointer can reach any same-arity function; this is what makes the Juliet `_44`/`_65` `_good` family time out.
+4. **`memcpy` with a symbolic count** — needs a loop (new locations) in `MemoryFunctionsPass`; today such a call is left to fail loudly.
+5. **The remaining error classes**: multi-dimensional array init (351), union punning (265, AD7), initializer-list expressions (220), Neutral BvType (178).
 5. **N5 termination + recursion → graceful unknown**, and **D7 portfolio continues after a clean unknown** — both small, both mostly convert noise into unknowns.
 6. **AD7 unions, bit-exact punning** across differently-typed members (currently rejected loudly rather than answered unsoundly) — architectural, needs the flat object layout.
 7. **W5** `PRED_CART-BW_BIN_ITP-Z3` false `valid-deref` cluster (needs live debugging), **N7** Newton `MemoryAssignStmt`, **N6** `pthread_detach`.
