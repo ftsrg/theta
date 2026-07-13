@@ -117,12 +117,28 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             val argument = invokeLabel.params[1]
             val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
-              Or(
-                Lt(argument, pointerType.nullValue), // uninit ptr
-                // Already freed, or never allocated: both leave size 0 (see deallocate). The bound
-                // is Fitsall-typed like the sizes the array holds -- a pointer-typed zero would be
-                // a different, narrower type under bitvector arithmetic.
-                Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
+              And(
+                // "If ptr is a null pointer, no action occurs" -- C17 7.22.3.3. `free(NULL)` is not
+                // merely tolerated, it is the idiom every cleanup path is written around, and it
+                // was
+                // being reported as an invalid free: a null pointer has no recorded size, so the
+                // bound below took it for one that was never allocated.
+                Neq(argument, pointerType.nullValue),
+                Or(
+                  Lt(argument, pointerType.nullValue), // uninit ptr
+                  // Already freed, or never allocated: both leave size 0 (see deallocate). The
+                  // bound
+                  // is Fitsall-typed like the sizes the array holds -- a pointer-typed zero would
+                  // be
+                  // a different, narrower type under bitvector arithmetic.
+                  Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
+                  // Only the heap may be freed. Pointer bases are partitioned by residue mod 3 --
+                  // `3k+0` malloc, `3k+1` alloca, `3k+2` an address-taken local -- and only the
+                  // first came from an allocator. The size check above cannot catch the others: an
+                  // alloca'd block records a *real* size (it has to, or reads through it would look
+                  // out of bounds), so `free(alloca(n))` sailed through as a perfectly good free.
+                  Neq(Mod(argument, pointerType.getValue("3")), pointerType.nullValue),
+                ),
               )
 
             builder.addEdge(
