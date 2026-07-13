@@ -154,7 +154,10 @@ class FrontendXcfaBuilder(
         globalDeclaration.get2().ref,
         initStmtList,
         globalDeclaration.get1().initExpr,
-        globalDeclaration.get1().type.isAtomic,
+        // The *variable* is atomic when its own type is -- its outermost level. `int * _Atomic p`
+        // is an atomic variable; `_Atomic int *p` is a plain variable that happens to point at
+        // atomic memory, and it is the memory, not `p`, that then cannot be raced on.
+        globalDeclaration.get1().actualType.isAtomic,
       )
     }
     // A function whose address is taken gets a variable holding its id, so that assigning it to a

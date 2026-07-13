@@ -116,9 +116,19 @@ public class NamedType extends CSimpleType {
         if (isThreadLocal()) {
             type.setThreadLocal();
         }
+        // Atomicity belongs to a *level* of the type, so it is put on the level it was written at:
+        // the base for `_Atomic int`, a particular pointer for `int * _Atomic`. Until now
+        // `CComplexType.setAtomic` was never called at all, and a dereference had no atomicity to
+        // read -- which is what made every access through an `_Atomic int *` look like a race.
+        if (isAtomic()) {
+            type.setAtomic();
+        }
 
         for (int i = 0; i < getPointerLevel(); i++) {
             type = new CPointer(this, type, parseContext);
+            if (isAtomicPointer(i)) {
+                type.setAtomic();
+            }
         }
         return type;
     }

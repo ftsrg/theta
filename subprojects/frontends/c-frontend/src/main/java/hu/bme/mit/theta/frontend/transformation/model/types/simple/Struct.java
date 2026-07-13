@@ -146,9 +146,15 @@ public class Struct extends NamedType {
         currentlyBeingBuilt = false;
 
         CComplexType type = new CStruct(this, actualFields, union, parseContext);
+        if (isAtomic()) {
+            type.setAtomic();
+        }
 
         for (int i = 0; i < getPointerLevel(); i++) {
             type = new CPointer(this, type, parseContext);
+            if (isAtomicPointer(i)) {
+                type.setAtomic();
+            }
         }
 
         return type;

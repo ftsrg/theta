@@ -30,7 +30,7 @@ public class Atomic extends CSimpleType {
 
     @Override
     protected CSimpleType patch(CSimpleType cSimpleType) {
-        cSimpleType.setAtomic(true);
+        cSimpleType.applyAtomicQualifier();
         return cSimpleType;
     }
 }

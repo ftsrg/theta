@@ -55,6 +55,8 @@ import org.junit.jupiter.params.provider.MethodSource
 
 class XcfaDataRaceTest {
 
+  private val parseContext = ParseContext()
+
   companion object {
 
     @JvmStatic
@@ -108,7 +110,7 @@ class XcfaDataRaceTest {
 
     val lts = XcfaSporLts(xcfa)
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,

@@ -148,7 +148,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
         peek.get2().put(name, varDecl);
         flatVariables.add(varDecl);
-        if (declaration.getType().isAtomic()) {
+        // The variable is atomic when its own type is -- `int * _Atomic p`, not `_Atomic int *p`,
+        // where it is what p points at that is atomic and p itself an ordinary variable.
+        if (type.isAtomic()) {
             atomicVariables.add(varDecl);
         }
         parseContext.getMetadata().create(varDecl.getRef(), "cType", type);

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.*;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -40,6 +41,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -147,7 +149,20 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     /** A typedef name stands for the type it was declared with, once that type is known. */
     private CSimpleType resolveTypedefName(CSimpleType cSimpleType) {
         if (cSimpleType instanceof DeclaredName declaredName) {
-            return typedefVisitor.getSimpleType(declaredName.getDeclaredName()).orElse(cSimpleType);
+            return typedefVisitor
+                    .getSimpleType(declaredName.getDeclaredName())
+                    .map(
+                            typedefed -> {
+                                // A copy, because the typedef's own type must not be edited by
+                                // whoever uses its name. Its pointers arrived *with* it, so an
+                                // `_Atomic` in this declaration qualifies the outermost of them --
+                                // `int_ptr _Atomic p` is an atomic pointer -- rather than reaching
+                                // past them to the int underneath.
+                                CSimpleType resolved = typedefed.copyOf();
+                                resolved.markPointersInherited();
+                                return resolved;
+                            })
+                    .orElse(cSimpleType);
         }
         return cSimpleType;
     }
@@ -252,11 +267,6 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         }
         throw new UnsupportedFrontendElementException(
                 "Storage class specifier not expected: " + ctx.getText());
-    }
-
-    @Override
-    public CSimpleType visitTypeSpecifierAtomic(CParser.TypeSpecifierAtomicContext ctx) {
-        throw new UnsupportedFrontendElementException("Not yet implemented");
     }
 
     @Override
@@ -408,11 +418,52 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         if (subtype == null) {
             return null;
         }
-        for (Token star : ctx.pointer().stars) {
+        final List<Token> stars = ctx.pointer().stars;
+        for (int i = 0; i < stars.size(); i++) {
             subtype = subtype.copyOf();
             subtype.incrementPointer();
+            // A qualifier written *after* a star qualifies that star's pointer, not the type it
+            // points at: `int * _Atomic p` is an atomic pointer to a plain int. Each star's
+            // qualifiers are the ones written between it and the next.
+            if (qualifiersAfter(ctx, stars, i).contains("_Atomic")) {
+                subtype.markLastPointerAtomic();
+            }
         }
         return subtype;
+    }
+
+    /** The type qualifiers written after the i-th star, i.e. before the star that follows it. */
+    private String qualifiersAfter(
+            CParser.TypeSpecifierPointerContext ctx, List<Token> stars, int i) {
+        final int from = stars.get(i).getTokenIndex();
+        final int to = i + 1 < stars.size() ? stars.get(i + 1).getTokenIndex() : Integer.MAX_VALUE;
+        return ctx.pointer().typeQualifierList().stream()
+                .filter(
+                        list -> {
+                            int at = list.getStart().getTokenIndex();
+                            return at > from && at < to;
+                        })
+                .map(RuleContext::getText)
+                .collect(Collectors.joining());
+    }
+
+    @Override
+    public CSimpleType visitTypeSpecifierAtomic(CParser.TypeSpecifierAtomicContext ctx) {
+        // `_Atomic(T)`: the whole of T is atomic -- so `_Atomic(int *)` is an *atomic pointer* to a
+        // plain int, where `_Atomic int *` is a plain pointer to an atomic int. Saying it this way
+        // round is the only way to write an atomic pointer without a declarator, and it is what
+        // `<stdatomic.h>` uses.
+        final CParser.TypeNameContext typeName = ctx.atomicTypeSpecifier().typeName();
+        checkState(
+                typeName.abstractDeclarator() == null,
+                "_Atomic() of a declared type (array or function) is not supported");
+        final CSimpleType inner = typeName.specifierQualifierList().accept(this);
+        if (inner == null) {
+            return null;
+        }
+        final CSimpleType atomicType = inner.copyOf();
+        atomicType.markOutermostAtomic();
+        return atomicType;
     }
 
     @Override
@@ -466,6 +517,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         if (type.isPresent()) {
             CSimpleType origin = type.get().getOrigin().copyOf();
             origin.setTypedef(false);
+            // Whatever pointers the typedef's type has arrived *with* it -- they are not stars of
+            // the declaration now being read. `_Atomic` there therefore qualifies the outermost of
+            // them (`int_ptr _Atomic p` is an atomic pointer) instead of reaching past them to the
+            // thing underneath.
+            origin.markPointersInherited();
             return origin;
         } else {
             if (standardTypes.contains(ctx.getText())) {

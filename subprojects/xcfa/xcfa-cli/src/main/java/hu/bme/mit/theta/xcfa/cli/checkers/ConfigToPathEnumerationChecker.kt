@@ -99,7 +99,7 @@ fun getPathEnumerationChecker(
       StopCriterions.fullExploration(),
       logger,
       lts.second,
-      getXcfaErrorDetector(config.inputConfig.property.verifiedProperty),
+      getXcfaErrorDetector(config.inputConfig.property.verifiedProperty, parseContext),
       corePartialOrd,
       pathEnumerationConfig.havocMemory,
       lts.first,
