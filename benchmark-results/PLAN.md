@@ -543,7 +543,42 @@ An access to an `_Atomic` object cannot be a data race. A **global** `_Atomic in
 
 `free(realloc(p, n))` **crashes** (`IllegalArgumentException`) -- pre-existing, `realloc` is not modelled at all.
 
-## NEXT UP (queue as of batch 18; the in-flight benchmark run will re-rank it)
+## IMPLEMENTATION STATUS — batch 19 (`_Atomic` is a property of a *level* of a type)
+
+Commit: `_Atomic attaches to a level of a type, not to a declaration`.
+
+The weaver fix (batch 18) leaned on a quirk: `_Atomic int *A` happened to set the *variable's* atomic flag, and the memory check read that. It worked, but it could not tell the two apart —
+
+```c
+_Atomic int *p;   // p is an ordinary variable; p[i] is atomic and cannot be raced on
+int * _Atomic p;  // p itself is atomic; p[i] is not, and can be
+```
+
+— and getting that backwards either invents a race or hides one. `_Atomic` is not one flag on a declaration; it attaches to a **level** of a type, and C gives four ways to say where. Theta could represent none of them: `CSimpleType` had a single `atomic` boolean, `CComplexType.setAtomic` was **never called anywhere**, `visitTypeSpecifierAtomic` **threw "Not yet implemented"** (so `_Atomic(T)` did not work at all), and any qualifier after a `*` threw *"pointers should not have type qualifiers!"*.
+
+### What the model now says
+`CSimpleType` records atomicity **per pointer level** plus the base, and distinguishes pointers written as `*` in *this* declaration from pointers inherited with the type (a typedef of a pointer). That distinction is what makes `_Atomic int *p` (the `*` is this declaration's, so the qualifier reached only the `int`) different from `int_ptr _Atomic p` (the pointer came with the typedef, so the qualifier applies to *it*). `NamedType`/`Struct` then set `CComplexType.setAtomic` on the level it was written at.
+
+- `_Atomic int x` / `int _Atomic x` / `_Atomic(int) x` — an atomic int
+- `_Atomic int *p` / `_Atomic(int) *p` — a plain pointer to an atomic int
+- `int * _Atomic p` / `_Atomic(int *) p` — an **atomic pointer** to a plain int
+- `_Atomic int * _Atomic p` — both; `int * _Atomic * p` — only the inner one
+- `typedef _Atomic int atomic_int;` and `int_ptr _Atomic p` — through typedefs
+- mixed with `const`/`volatile`, in any order
+
+### What reads it
+Two *different* questions, and they now get different answers:
+- a race between two **variables** is excluded when the *variable's own* type is atomic — so `XcfaGlobalVar.atomic` is now `actualType.isAtomic` (the outermost level), not the declaration's base flag;
+- a race between two **memory locations** is excluded when the **pointee** is — read off the pointer's type, which needed `ParseContext` threading into `getXcfaErrorDetector`. A caller without one only makes the check *more* conservative (report the race), never less: nothing recorded means nothing skipped.
+
+### Validation
+Test-driven: `CAtomicTypeTest` (25 placements, asserting the type with an `_` on every atomic level) went **3/25 → 25/25**; `AtomicRaceTest` pins the same six at the XCFA, where the checks actually read them. End to end, all six race programs answer correctly — including the discriminating pair, where `_Atomic int *A` makes `A[0]` race-free while `int * _Atomic A` still reports the race on it.
+
+Regression: canaries **142/143**, the data-race sample **103/103** (all **73** tasks that *expect* a race still catch it — a missed race is the dangerous direction here), memsafety **70/70**, all module suites and `spotlessCheck` green.
+
+⚠️ Still not modelled: `<stdatomic.h>` (`atomic_int`, `atomic_load`, `atomic_fetch_add`, …). The `__atomic_*` GCC builtins are (batch 17), and `_Atomic` types now are, so the C11 library layer is the remaining piece.
+
+## NEXT UP (queue as of batch 19; the in-flight benchmark run will re-rank it)
 
 1. **The wrong results still open** (batch 18 cleared 11 of 21): **`aws-c-common` ×3** and **`memsafety/lockfree-3.0`** (false alarms, uninvestigated), **`memory-model/{2SB,4SB}`** (missed bugs), and the two Juliet `CWE121_..._66_good` false alarms. Wrong answers are worth more than any error class.
 2. **`realloc` is not modelled** and *crashes* the analysis (`IllegalArgumentException`) — found while checking free.
