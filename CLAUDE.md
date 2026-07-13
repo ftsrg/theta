@@ -55,6 +55,10 @@ If a task has a trivial, direct need for a specific paper, the publication list 
 
 Spotless (google-java-format AOSP + ktfmt) is required but not run automatically: `./gradlew spotlessApply` locally, or comment `\format` on the GitHub PR. Every source file needs the copyright header (`doc/copyright-header.txt`).
 
+## Committing
+
+Only commit when explicitly asked. Commit messages: **short**, following the project's convention — and do **not** mention Claude/AI or add Claude co-author trailers.
+
 ## On-demand deep docs
 
 Documented modules follow a two-file convention (stated once here — the module files don't repeat it):
@@ -66,15 +70,22 @@ Current pointers:
 - Binding a formalism to a checking algorithm (CEGAR, BMC/k-ind/IMC, IC3, MDD, CHC, LTL): `subprojects/common/analysis/USING.md`.
 - Shared utilities (logging, DispatchTable, tuples, visualization, DSL scopes, deterministic collections): `subprojects/common/common/USING.md`.
 - Getting/driving SMT solvers (factories, managers, unsat cores, interpolation, Horn, pooling, backend choice): `subprojects/solver/solver/USING.md`.
+- Round-tripping core exprs/stmts through text (parse `toString()` back) or JSON-serializing ARG/Trace: `subprojects/common/grammar/USING.md`.
 
 ## Running one module's tests
 
 `./gradlew :theta-<module>:test` (e.g. `:theta-xcfa-analysis:test`). Full suite: `./gradlew test`. Native solvers need `LD_LIBRARY_PATH=$PROJECT_DIR/lib/` (see Run).
 
-## When to propose a local CLAUDE.md
+## Doc creation and upkeep
 
-If you edit files under `subprojects/<family>/<module>/` and that module has no `CLAUDE.md`, before finishing the task ask the developer:
+**No local CLAUDE.md yet?** If you edit files under `subprojects/<family>/<module>/` and that module has no `CLAUDE.md`, before finishing the task ask the developer:
 
 > *"This is my first time editing `<module>` — want me to draft a `CLAUDE.md` here capturing build target, tests, invariants, and integration points I learned? (y/N)"*
 
 Only draft on yes. Never do it silently. This project has multiple contributors — don't assume; ask.
+
+**Module already documented?** Then upkeep is part of your edit, not a separate favor:
+- If your change makes a statement in the module's `CLAUDE.md`/`USING.md` wrong (renamed class, changed signature/invariant, extra step in a recipe), update that doc **in the same change** — no need to ask. State what you updated in your summary.
+- If you *learned* something the docs lack (a non-obvious invariant, a gotcha that cost you time), propose a one-liner addition at the end of the task — ask, don't add silently.
+- Never add suspected bugs/smells to these docs — those go to `possible-issues.md` at the repo root (and when you fix one, delete its entry there).
+- Same applies to the root file you're reading: if the subproject map or a pointer here went stale, fix it.

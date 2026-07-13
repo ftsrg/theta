@@ -89,6 +89,13 @@
 
 ## Cross-module observations
 
+- [ ] **Vestigial `theta-grammar` dependencies**: `frontends/c-frontend` and `frontends/btor2-frontend`
+  declare `implementation(project(":theta-grammar"))` but import nothing from it (grep of src/main
+  and src/test, 2026-07-13). Likely removable.
+- [ ] **`solver/graph-solver` appears dormant**: 0 commits in the last year; its only consumers are
+  `common/analysis`'s `mcm/` (itself a WiP stub, see above) and its own tests. 39 files of
+  possibly dead weight — decide whether the mcm/graph-solver line of work is alive.
+
 - [ ] **Three parallel text-parsing stacks for core exprs/stmts** exist: `core/dsl` (CoreDslManager,
   ANTLR CoreDsl.g4), `core/parser` (legacy Lisp reader, no production consumers), and
   `common/grammar` (own Type/Expr/Stmt/Declarations .g4 grammars + Kotlin parsers + Gson adapters,
@@ -103,6 +110,38 @@
   message overstates — decide and either wire it (mind iteration-order determinism!) or drop it.
 - [ ] **`datalog/` package** — no consumers outside its own package/tests (grep-verified).
   Dead-code candidate.
+
+## solver/ modules (audit 2026-07-13; smtlib via 2-agent fan-out, claims spot-verified)
+
+### Likely genuine bugs
+
+- [ ] **`solver-smtlib` `GenericSmtLibTermTransformer` parse-back table is wrong** (verified,
+  lines 224/228/229): `"bvmul"` maps to `BvAddExpr::create` (multiplication parsed as addition!)
+  and `"bvsrem"`/`"bvurem"` are swapped (`bvsrem`→`BvURemExpr`, `bvurem`→`BvSRemExpr`). Only hit
+  when parsing terms back from solver output (e.g. function bodies in models), which is why it
+  survives — but any consumer of those parsed exprs computes wrong results.
+- [ ] **`solver-smtlib` `GenericSmtLibSolverBinary.readResponse()` has no timeout** — a solver
+  process that hangs after accepting a command deadlocks the calling thread forever (only
+  `close()` force-kills; no SIGTERM grace path).
+- [ ] **`solver-smtlib` `SpecificResponse`** conflates empty `get-model` and empty
+  `get-unsat-core` responses (both are `()`-shaped) — a genuinely empty model can be
+  reinterpreted as an unsat core.
+
+### Fragile / decide-intent
+
+- [ ] `solver-smtlib impl/eldarica`: the required Yices helper binary is downloaded from
+  **web.archive.org** — fragile external dependency.
+- [ ] `solver-smtlib impl/mathsat`: interpolation-support check defaults to *supported* when the
+  version string doesn't parse (custom `solverPath` builds) — permissive fallback can mis-signal.
+- [ ] `solver-smtlib impl/golem`: default `-portfolio` argument commented out in place — disabled
+  known-broken feature or leftover?
+- [ ] `solver-smtlib`: `bitwuzla`, `boolector`, `cvc4` impls are `@Deprecated` but still
+  registered; decide removal timeline.
+- [ ] **`solver-eldarica` (the in-JVM module) has no production consumers** — `EldaricaHornSolver`
+  is instantiated only by its own test; production Eldarica goes through `solver-smtlib`'s
+  installed-binary route. Keep (finish wiring a factory) or drop?
+- [ ] `solver-z3` depends on `solver-smtlib` with comment *"necessary for interpolation right
+  now"* — intended as temporary; track.
 
 # `common/core` (2026-07-08)
 
