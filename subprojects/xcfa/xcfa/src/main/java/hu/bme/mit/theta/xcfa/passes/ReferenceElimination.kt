@@ -102,7 +102,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
             val varDecl = Var(it.name + "*", ptrType.smtType)
             val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
-            builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
+            // Taking the address of an `_Atomic` variable does not make it any less atomic: every
+            // access to it now goes through this pointer, so the pointer has to carry the fact.
+            builder.parent.addVar(
+              XcfaGlobalVar(varDecl, lit, pointsToAtomic = ptrType.embeddedType.isAtomic)
+            )
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =

@@ -1091,15 +1091,36 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // to it into an edge to the final location).
                 return callModeledLibraryFunction("abort", List.of(), false);
             }
-            case "__atomic_load_n", "__atomic_load" -> {
+            case "__atomic_load_n",
+                    "__atomic_load",
+                    // C11 `<stdatomic.h>` spells the same operations type-generically, with macros,
+                    // which this grammar cannot express -- so they are recognised by name and built
+                    // here, exactly like the builtins they compile down to.
+                    "atomic_load",
+                    "atomic_load_explicit" -> {
                 // An atomic load *is* a load. The memory order is only about what may be reordered
                 // around it, and the analysis is sequentially consistent anyway -- it never
                 // reorders
                 // -- so honouring the order would constrain nothing that is not already true.
                 return atomicLoad(args);
             }
-            case "__atomic_store_n", "__atomic_store" -> {
+            case "__atomic_store_n",
+                    "__atomic_store",
+                    "atomic_store",
+                    "atomic_store_explicit",
+                    "atomic_init" -> {
                 return atomicStore(args);
+            }
+            case "__atomic_exchange_n", "atomic_exchange", "atomic_exchange_explicit" -> {
+                // Read the old value, write the new one, yield the old: a read-modify-write with no
+                // arithmetic in the middle.
+                return atomicReadModifyWrite(args, null);
+            }
+            case "__atomic_fetch_add", "atomic_fetch_add", "atomic_fetch_add_explicit" -> {
+                return atomicReadModifyWrite(args, AbstractExprs::Add);
+            }
+            case "__atomic_fetch_sub", "atomic_fetch_sub", "atomic_fetch_sub_explicit" -> {
+                return atomicReadModifyWrite(args, AbstractExprs::Sub);
             }
             case "__builtin_bswap16", "__builtin_bswap32", "__builtin_bswap64" -> {
                 return byteSwap(args, Integer.parseInt(name.substring("__builtin_bswap".length())));
@@ -1372,6 +1393,50 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         LitExpr<?> unused = signedInt.getNullValue(); // void: no one may read this
         parseContext.getMetadata().create(unused, "cType", signedInt);
         return unused;
+    }
+
+    /**
+     * `atomic_fetch_add(p, v)` and friends: read what `p` points at, write something back, and
+     * yield the value that was there *before*. `atomic_exchange(p, v)` is the same shape with no
+     * arithmetic in the middle -- pass a null [combine] for it.
+     *
+     * <p>The old value is captured into a temporary before the write, because that is what the call
+     * evaluates to and the location no longer holds it afterwards. The read and the write are
+     * emitted as one statement each, on the same edge, so nothing may be interleaved between them
+     * -- which is the whole point of the operation being atomic.
+     */
+    private Expr<?> atomicReadModifyWrite(
+            List<AssignmentExpressionContext> args,
+            java.util.function.BinaryOperator<Expr<?>> combine) {
+        if (args.size() < 2 || functionVisitor == null) {
+            return null;
+        }
+        Expr<?> pointer = args.get(0).accept(this);
+        CComplexType pointee = pointeeOf(pointer);
+        if (pointee == null) {
+            return null;
+        }
+        Expr<?> zero = CComplexType.getUnsignedLong(parseContext).getNullValue();
+        Expr<?> target = dereference(pointer, zero, pointee);
+
+        // The value that was there before -- what the call yields. It has to be kept, because the
+        // write below is about to overwrite it.
+        VarDecl<?> old = functionVisitor.createTempVar(pointee, "atomic_old");
+        preStatements.add(
+                new CAssignment(old.getRef(), new CExpr(target, parseContext), "=", parseContext));
+
+        Expr<?> operand = args.get(1).accept(this);
+        Expr<?> written =
+                combine == null
+                        ? pointee.castTo(operand)
+                        : pointee.castTo(combine.apply(old.getRef(), pointee.castTo(operand)));
+        preStatements.add(
+                new CAssignment(
+                        dereference(pointer, zero, pointee),
+                        new CExpr(written, parseContext),
+                        "=",
+                        parseContext));
+        return old.getRef();
     }
 
     /**

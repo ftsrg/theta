@@ -28,6 +28,17 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   NULL("NULL", { CComplexType.getSignedInt(it).nullValue }),
   NULLPTR("nullptr", { CComplexType.getSignedInt(it).nullValue }),
 
+  // <stdatomic.h> memory orders. They constrain what may be *reordered* around an access; the
+  // analysis is sequentially consistent, so their values are never inspected -- only their names
+  // have to resolve. The numbering is the one every compiler uses.
+  MEMORY_ORDER_RELAXED("memory_order_relaxed", { CComplexType.getSignedInt(it).getValue("0") }),
+  MEMORY_ORDER_CONSUME("memory_order_consume", { CComplexType.getSignedInt(it).getValue("1") }),
+  MEMORY_ORDER_ACQUIRE("memory_order_acquire", { CComplexType.getSignedInt(it).getValue("2") }),
+  MEMORY_ORDER_RELEASE("memory_order_release", { CComplexType.getSignedInt(it).getValue("3") }),
+  MEMORY_ORDER_ACQ_REL("memory_order_acq_rel", { CComplexType.getSignedInt(it).getValue("4") }),
+  MEMORY_ORDER_SEQ_CST("memory_order_seq_cst", { CComplexType.getSignedInt(it).getValue("5") }),
+  ATOMIC_FLAG_INIT("ATOMIC_FLAG_INIT", { CComplexType.getSignedInt(it).nullValue }),
+
   // Integer characteristics
   CHAR_BIT("CHAR_BIT", { CComplexType.getSignedInt(it).getValue("8") }),
   CHAR_MAX("CHAR_MAX", { CComplexType.getSignedInt(it).getValue("127") }),

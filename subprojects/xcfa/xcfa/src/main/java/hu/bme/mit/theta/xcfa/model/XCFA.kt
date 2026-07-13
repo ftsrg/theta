@@ -188,7 +188,19 @@ constructor(
   val wrappedVar: VarDecl<*>,
   val initValue: LitExpr<*>? = null,
   val threadLocal: Boolean = false,
+  /** The variable itself is `_Atomic`: `int * _Atomic p`. */
   val atomic: Boolean = false,
+  /**
+   * The *object this points at* is `_Atomic`: `_Atomic int *p`, or the pointer that
+   * [ReferenceElimination] makes for an address-taken `_Atomic int`.
+   *
+   * A different question from [atomic], and the one a *memory* access has to ask. It is recorded
+   * here rather than looked up when needed because the C types are keyed by object identity, so a
+   * pass that rebuilds an expression loses them -- and by the time the analysis runs, an
+   * address-taken object's pointer has been folded to a bare literal (its id) with nothing left to
+   * read.
+   */
+  val pointsToAtomic: Boolean = false,
 )
 
 enum class ParamDirection {
