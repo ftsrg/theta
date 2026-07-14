@@ -25,6 +25,13 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -69,11 +76,39 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
      */
     private Expr<?> widthPreserving(CInteger type, Expr<?> param) {
         CComplexType source = CComplexType.getType(param, parseContext);
-        if ((source instanceof Unsigned || source instanceof CPointer)
-                && source.width() <= type.width()) {
-            return Pos(param);
+        if (!(source instanceof Unsigned || source instanceof CPointer)) {
+            return null;
         }
-        return null;
+        if (source.width() > type.width()) {
+            return null; // narrowing: the modulo is a real truncation
+        }
+        if (!cannotLeaveItsRange(param)) {
+            return null;
+        }
+        return Pos(param);
+    }
+
+    /**
+     * Whether this operand's value is already inside its own type's range, so that a modulo against
+     * that range would do nothing.
+     *
+     * <p>The modulo is not merely a truncation: for an *arithmetic result* it is what performs the
+     * unsigned wraparound. `(unsigned)(UINT_MAX + 1)` must come out 0, and in the unbounded
+     * integers the sum stands at 2^32 until the modulo brings it back. So only an operand that
+     * cannot leave its type's range in the first place -- a variable, a literal, a pointer id;
+     * anything that is not an arithmetic result -- may skip it.
+     */
+    private boolean cannotLeaveItsRange(Expr<?> param) {
+        Expr<?> expr = param;
+        while (expr instanceof PosExpr<?> pos) {
+            expr = pos.getOp();
+        }
+        return !(expr instanceof AddExpr
+                || expr instanceof SubExpr
+                || expr instanceof MulExpr
+                || expr instanceof DivExpr
+                || expr instanceof ModExpr
+                || expr instanceof NegExpr);
     }
 
     private IteExpr<?> handleUnsignedSameSize(CInteger type, Expr<?> param) {
