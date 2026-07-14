@@ -390,7 +390,7 @@ typeSpecifier
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
     |   ('__typeof__' | 'typeof') '(' constantExpression ')'        # typeSpecifierTypeof
-    |   typeSpecifier '*'? '(' '*' ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
+    |   typeSpecifier '*'? '(' pointer ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;
 

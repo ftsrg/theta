@@ -21,6 +21,7 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTree
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -279,6 +280,36 @@ class CTypeNameAmbiguityTest {
       "`for (i = 0; ...)` assigns to i; it declares nothing",
     )
     assertFalse(forInitDeclares("void f(void) { for (;;) { } }"), "`for (;;)` declares nothing")
+  }
+
+  // --- parenthesized pointer declarators in a cast type ------------------------------------
+
+  /** The number of stars in a `TYPE (*...)(args)` cast type, or null if there is no such cast. */
+  private fun ParseTree.functionPointerStars(): Int? =
+    find(CParser.TypeSpecifierFunctionPointerContext::class.java)?.pointer()?.stars?.size
+
+  @Test
+  fun `a cast to a single function pointer is one pointer level`() {
+    // The case that always worked: it must keep parsing to exactly one level.
+    val tree = parse(body("int c = (int (*)(int)) p;"))
+    assertTrue(tree.hasCast(), "(int (*)(int))p is a cast")
+    assertEquals(1, tree.functionPointerStars(), "(int (*)(int)) has one star")
+  }
+
+  @Test
+  fun `a cast to a pointer-to-function-pointer carries two levels`() {
+    // CIL writes `*((int (**)(args))p) = &f` to store a function's address through a
+    // pointer-to-function-pointer; the `(**)` must parse and carry two pointer levels, not one.
+    val tree = parse(body("int c = *((int (**)(int)) p);"))
+    assertTrue(tree.hasCast(), "(int (**)(int))p is a cast")
+    assertEquals(2, tree.functionPointerStars(), "(int (**)(int)) has two stars")
+  }
+
+  @Test
+  fun `a three-star function pointer cast carries three levels`() {
+    val tree = parse(body("int c = ((int (***)(void)) 0) != 0;"))
+    assertTrue(tree.hasCast())
+    assertEquals(3, tree.functionPointerStars())
   }
 
   // --- the permissive fallback -------------------------------------------------------------

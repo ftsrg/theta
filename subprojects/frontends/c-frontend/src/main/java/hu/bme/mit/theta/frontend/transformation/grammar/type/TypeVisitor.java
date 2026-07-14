@@ -288,7 +288,13 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             return null;
         }
         CSimpleType functionPointer = returnType.copyOf();
-        functionPointer.incrementPointer(); // the (*) of the function pointer itself
+        // `(*)` is one pointer, `(**)` two, and so on: CIL emits `*((int (**)(args))p) = &f` to store
+        // a function's address through a pointer-to-function-pointer. Each star is a level; the
+        // parameter list, like the pointee of any function pointer, is not modeled.
+        int levels = ctx.pointer().stars.size();
+        for (int i = 0; i < levels; i++) {
+            functionPointer.incrementPointer();
+        }
         return functionPointer;
     }
 
