@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker;
-import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -27,6 +26,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.util.ChcUtilsKt;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
@@ -36,8 +36,10 @@ import java.io.SequenceInputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -526,29 +528,17 @@ public class XstsHornTest {
                 });
     }
 
-    public void installSolver() {
-        if (solverString.contains("Z3") || solverString.contains("JavaSMT")) {
-            return;
-        }
-        Assumptions.assumeTrue(
-                OsHelper.getOs()
-                        == OsHelper.OperatingSystem
-                                .LINUX); // chc solvers are only properly on linux
-        try (final var solverManager =
-                SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
-            String solverVersion = SmtLibSolverManager.getSolverVersion(solverString);
-            String solverName = SmtLibSolverManager.getSolverName(solverString);
-            if (solverManager.managesSolver(solverString)
-                    && !solverManager
-                            .getInstalledVersions(solverName)
-                            .contains(
-                                    solverManager.getVersionString(
-                                            solverName, solverVersion, false))) {
-                solverManager.install(solverName, solverVersion, solverVersion, null, false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    /**
+     * Every solver used by {@link #data()}. Installing them up front — rather than from the test
+     * itself — keeps the download out of the {@link Timeout} the test methods carry: a test that
+     * had to fetch its solver first used to blow that budget and fail.
+     */
+    private static final Collection<String> SOLVERS =
+            List.of("z3:4.13.0", "eldarica:2.1", "golem:0.5.0");
+
+    @BeforeAll
+    public static void installSolvers() {
+        SOLVERS.forEach(SolverInstallations::installOrSkip);
     }
 
     @MethodSource("data")
@@ -601,6 +591,5 @@ public class XstsHornTest {
         this.propPath = propPath;
         this.safe = safe;
         this.solverString = solverString;
-        this.installSolver();
     }
 }

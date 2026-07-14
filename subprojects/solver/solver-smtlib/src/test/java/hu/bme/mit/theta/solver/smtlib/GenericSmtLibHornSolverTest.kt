@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.smtlib
 
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
@@ -33,7 +32,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.*
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.params.ParameterizedTest
@@ -43,7 +42,6 @@ import org.junit.jupiter.params.provider.MethodSource
 class GenericSmtLibHornSolverTest {
   companion object {
 
-    private var solverManager: SmtLibSolverManager? = null
     private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 
     private val SOLVERS: List<Pair<String, String>> =
@@ -65,35 +63,8 @@ class GenericSmtLibHornSolverTest {
     @BeforeAll
     @JvmStatic
     fun init() {
-      if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
-        val home = SmtLibSolverManager.HOME
-
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
-        for ((solver, version) in SOLVERS) {
-
-          try {
-            solverManager!!.install(solver, version, version, null, false)
-          } catch (e: SmtLibSolverInstallerException) {
-            e.printStackTrace()
-          }
-
-          solverFactories.put(
-            Pair(solver, version),
-            solverManager!!.getSolverFactory(solver, version),
-          )
-        }
-      }
-    }
-
-    @AfterAll
-    @JvmStatic
-    fun destroy() {
       for ((solver, version) in SOLVERS) {
-        try {
-          solverManager?.uninstall(solver, version)
-        } catch (e: SmtLibSolverInstallerException) {
-          e.printStackTrace()
-        }
+        solverFactories[Pair(solver, version)] = SolverInstallations.installOrSkip(solver, version)
       }
     }
   }

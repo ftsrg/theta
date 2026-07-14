@@ -47,9 +47,15 @@ class PassTests {
     input: XcfaProcedureBuilderContext.() -> Unit,
     output: (XcfaProcedureBuilderContext.() -> Unit)?,
     val passes: List<ProcedurePass>,
+    /** Names of empty procedures to register alongside the tested one, e.g. thread entry points. */
+    siblingProcedures: List<String> = emptyList(),
   ) : Arguments {
 
-    private val builder = XcfaBuilder("").also { it.global(global) }
+    private val builder =
+      XcfaBuilder("").also {
+        it.global(global)
+        siblingProcedures.forEach { name -> it.procedure(name) {} }
+      }
     private val inputBuilder = builder.procedure("", input).builder
     private val outputBuilder = output?.let { builder.procedure("", it).builder }
 
@@ -334,6 +340,7 @@ class PassTests {
             "thr1" type Int() init "0"
           },
           passes = listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass()),
+          siblingProcedures = listOf("thr1"),
           input = {
             (init to "L1") { "pthread_create"("ret", "pid", "0", "thr1", "0") }
             (init to "L2") { "pthread_join"("ret", "pid") }
