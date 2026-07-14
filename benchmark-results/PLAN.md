@@ -978,6 +978,26 @@ short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `
 the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
 how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
 
+## Batch 30 — realloc modeled; an initializer-sized global array; Neutral BvType already gone
+
+- **`realloc` no longer crashes the analysis** (`7a748f8ee`, new `ReallocFunctionPass` after
+  `MallocFunctionPass`). It was reaching the LTS as a live `InvokeLabel` -> `error("No such method
+  realloc")`. Modeled as an **in-place resize**: `p = realloc(q, n)` keeps `q`'s base and sets the
+  object's size to `n`. A program must use realloc's *return value* whether or not the block moved, so
+  same-base preserves the observable contents and the new bound -- no havoc (which would false-alarm on
+  the copied data), no crash. It does not model invalidation of the *old* pointer (use-after-realloc of
+  `q` looks valid), the same imprecision the analysis already has around frees; `realloc(NULL,n)` and
+  `realloc(q,0)` are left as the resize too. Verified: contents preserved, grow-then-read Safe.
+- **An initializer-sized global array no longer NPEs** (`812d8517d`). `struct command commands[] = {…}`
+  has a *null* `arrayDimension`; the memsafety branch of `initializeGlobalVariable` read
+  `arrayDimension.expression` directly. Now sized from the initializer via `getArraySize`, exactly as
+  the non-global path already did -- `int xs[] = {1,2,3,4,5}` is Safe again. A *nested* aggregate
+  initializer (`struct C cs[] = {{…},…}`) still fails, but now as a clean `UnsupportedFrontendElement`
+  rather than a raw NPE -- that is the initializer-list item (queue §5), left for its own change.
+- **Neutral BvType is already resolved.** `memsafety-ext3/scopes2.c` -- the standing repro for "Neutral
+  BvType cannot be used here" -- now returns `Unsafe`; the rebase (or the `castTo` fix, which changed how
+  a bitvector literal keeps its signedness through a cast) fixed it. Struck from the queue.
+
 ## Batch 29 — the rebase silently disabled unsigned wraparound (root cause of the "canary regression")
 
 The post-rebase canary looked like it had lost ~13 tasks. Most of that was **my harness** (`canary_full.sh`
