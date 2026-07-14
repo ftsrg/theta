@@ -38,6 +38,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.*
@@ -88,94 +90,148 @@ private fun Expr<*>.addressesAtomicData(xcfa: XCFA, parseContext: ParseContext):
   return xcfa.globalVars.any { it.pointsToAtomic && it.initValue == this }
 }
 
-/** Returns a predicate that checks whether data race is possible after the given state. */
-fun getDataRaceDetector(parseContext: ParseContext) =
-  object : XcfaErrorDetector {
+/** One of the two conflicting accesses of a data race. */
+data class DataRaceAccess(val pid: Int, val edge: XcfaEdge, val label: XcfaLabel)
 
-    override fun test(s: XcfaState<out PtrState<out ExprState>>): Boolean =
-      getDataRaceCondition(s) != null
+/**
+ * A pair of conflicting accesses constituting a data race. [condition] is the extra path condition
+ * under which the two accesses actually alias -- the aliasing condition for memory accesses, [True]
+ * for a plain global-variable race.
+ */
+data class DataRace(
+  val access1: DataRaceAccess,
+  val access2: DataRaceAccess,
+  val condition: Expr<BoolType>,
+)
 
-    private fun getDataRaceCondition(s: XcfaState<out PtrState<out ExprState>>): Expr<BoolType>? {
-      val xcfa = s.xcfa!!
-      val processes = s.processes.entries.toList()
-      for (i in processes.indices) {
-        val process1 = processes[i]
-        for (j in i + 1 until processes.size) {
-          val process2 = processes[j]
-          check(process1.key != process2.key)
-          for (edge1 in process1.value.locs.peek().outgoingEdges) {
-            for (edge2 in process2.value.locs.peek().outgoingEdges) {
-              val label1 = edge1.label.changeVars(process1.value.varLookup.peek())
-              val label2 = edge2.label.changeVars(process2.value.varLookup.peek())
-              val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
-              val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
+/**
+ * Finds a pair of conflicting accesses (same location, different processes, at least one write, not
+ * both atomic, not mutually excluded) enabled after [s], or null if no data race is possible.
+ *
+ * The returned [DataRace] carries the racing edges and labels the concurrent-witness writer needs;
+ * [getDataRaceDetector] and the trace-checker wrapper only look at [DataRace.condition]. `_Atomic`
+ * accesses are excluded here (via [parseContext]), so both consumers stay atomic-aware.
+ */
+fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseContext): DataRace? {
+  val xcfa = s.xcfa!!
+  val processes = s.processes.entries.toList()
+  for (i in processes.indices) {
+    val process1 = processes[i]
+    for (j in i + 1 until processes.size) {
+      val process2 = processes[j]
+      check(process1.key != process2.key)
+      for (edge1 in process1.value.locs.peek().outgoingEdges) {
+        for (edge2 in process2.value.locs.peek().outgoingEdges) {
+          val label1 = edge1.label.changeVars(process1.value.varLookup.peek())
+          val label2 = edge2.label.changeVars(process2.value.varLookup.peek())
+          val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
+          val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
 
-              val globals1 = label1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-              val globals2 = label2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-              for (v1 in globals1) {
-                for (v2 in globals2) {
-                  if (
-                    v1.globalVar == v2.globalVar &&
-                      !v1.globalVar.atomic &&
-                      (v1.access.isWritten || v2.access.isWritten) &&
-                      canExecuteConcurrently(v1, v2)
-                  )
-                    return True()
-                }
-              }
+          val globals1 = label1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+          val globals2 = label2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+          for (v1 in globals1) {
+            for (v2 in globals2) {
+              if (
+                v1.globalVar == v2.globalVar &&
+                  !v1.globalVar.atomic &&
+                  (v1.access.isWritten || v2.access.isWritten) &&
+                  canExecuteConcurrently(v1, v2)
+              )
+                return DataRace(
+                  DataRaceAccess(process1.key, edge1, v1.label),
+                  DataRaceAccess(process2.key, edge2, v2.label),
+                  True(),
+                )
+            }
+          }
 
-              val mems1 = label1.getMemoryAccessesWithMutexes(mutexes1, xcfa, parseContext)
-              val mems2 = label2.getMemoryAccessesWithMutexes(mutexes2, xcfa, parseContext)
-              for (m1 in mems1) {
-                for (m2 in mems2) {
-                  if (
-                    (m1.access.isWritten || m2.access.isWritten) &&
-                      !m1.atomic &&
-                      !m2.atomic &&
-                      canExecuteConcurrently(m1, m2) &&
-                      mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
-                  ) {
-                    return And(Eq(m1.array, m2.array), Eq(m1.offset, m2.offset))
-                  }
-                }
+          val mems1 = label1.getMemoryAccessesWithMutexes(mutexes1, xcfa, parseContext)
+          val mems2 = label2.getMemoryAccessesWithMutexes(mutexes2, xcfa, parseContext)
+          for (m1 in mems1) {
+            for (m2 in mems2) {
+              if (
+                (m1.access.isWritten || m2.access.isWritten) &&
+                  !m1.atomic &&
+                  !m2.atomic &&
+                  canExecuteConcurrently(m1, m2) &&
+                  mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+              ) {
+                return DataRace(
+                  DataRaceAccess(process1.key, edge1, m1.label),
+                  DataRaceAccess(process2.key, edge2, m2.label),
+                  And(Eq(m1.array, m2.array), Eq(m1.offset, m2.offset)),
+                )
               }
             }
           }
         }
       }
-      return null
     }
+  }
+  return null
+}
 
-    override fun exprTraceCheckerWrapper(
-      exprTraceChecker: ExprTraceChecker<Refutation>
-    ): ExprTraceChecker<Refutation> = ExprTraceChecker { trace ->
-      val t =
-        if (
-          trace.states.isEmpty() ||
-            trace.actions.isEmpty() ||
-            trace.states.last() !is XcfaState<*> ||
-            trace.actions.last() !is XcfaAction
-        ) {
-          trace
-        } else {
-          val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
-          getDataRaceCondition(lastState)?.let { extraAssumption ->
-            Trace.of(
-              trace.states,
-              trace.actions.subList(0, trace.actions.size - 1) +
-                trace.actions.last().let {
-                  (it as XcfaAction).withLabel(
-                    SequenceLabel(listOf(it.label, StmtLabel(AssumeStmt.of(extraAssumption))))
-                  )
-                },
-            )
-          } ?: trace
-        }
-      exprTraceChecker.check(t)
+/** Returns a predicate that checks whether data race is possible after the given state. */
+fun getDataRaceDetector(parseContext: ParseContext) =
+  object : XcfaErrorDetector {
+
+    override fun test(s: XcfaState<out PtrState<out ExprState>>): Boolean =
+      findDataRace(s, parseContext) != null
+
+    override fun <T : Refutation> exprTraceCheckerWrapper(
+      exprTraceChecker: ExprTraceChecker<T>
+    ): ExprTraceChecker<T> =
+      wrapExprTraceCheckerWithDataRaceCondition(exprTraceChecker, parseContext)
+  }
+
+/**
+ * Wraps [exprTraceChecker] so that, before it checks a trace, the aliasing condition of the data
+ * race enabled in the trace's last state is asserted on the last action -- turning a "the accesses
+ * *may* alias" abstraction into the concrete race the refinement must respect.
+ */
+fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
+  exprTraceChecker: ExprTraceChecker<T>,
+  parseContext: ParseContext,
+): ExprTraceChecker<T> = ExprTraceChecker { trace ->
+  val t =
+    if (
+      trace.states.isEmpty() ||
+        trace.actions.isEmpty() ||
+        trace.states.last() !is XcfaState<*> ||
+        trace.actions.last() !is XcfaAction
+    ) {
+      trace
+    } else {
+      val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
+      findDataRace(lastState, parseContext)?.condition?.let { extraAssumption ->
+        Trace.of(
+          trace.states,
+          trace.actions.subList(0, trace.actions.size - 1) +
+            trace.actions.last().let {
+              (it as XcfaAction).withLabel(
+                SequenceLabel(listOf(it.label, StmtLabel(AssumeStmt.of(extraAssumption))))
+              )
+            },
+        )
+      } ?: trace
     }
+  exprTraceChecker.check(t)
+}
+
+/** Applies [wrapExprTraceCheckerWithDataRaceCondition] only when the property is a data race. */
+fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
+  property: XcfaProperty?,
+  parseContext: ParseContext,
+): (ExprTraceChecker<T>) -> ExprTraceChecker<T> =
+  if (property?.verifiedProperty == ErrorDetection.DATA_RACE) {
+    { wrapExprTraceCheckerWithDataRaceCondition(it, parseContext) }
+  } else {
+    { it }
   }
 
 private sealed class GlobalAccessWithMutexes(
+  /** The (flat) label the access was found in -- the concurrent-witness writer reports it. */
+  val label: XcfaLabel,
   val access: AccessType,
   val acquiredMutexes: Set<String>,
   val blockingMutexes: Set<String>,
@@ -187,16 +243,18 @@ private sealed class GlobalAccessWithMutexes(
  */
 private class GlobalVarAccessWithMutexes(
   val globalVar: XcfaGlobalVar,
+  label: XcfaLabel,
   access: AccessType,
   acquiredMutexes: Set<String>,
   blockingMutexes: Set<String>,
-) : GlobalAccessWithMutexes(access, acquiredMutexes, blockingMutexes)
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes)
 
 /**
  * Represents a memory access: stores the array expression, the offset expression, the access type
  * (read/write) and the set of acquired/blocking mutexes for performing the variable access.
  */
 private class MemoryAccessWithMutexes(
+  label: XcfaLabel,
   val array: Expr<*>,
   val offset: Expr<*>,
   /** The cell is `_Atomic`, so nothing that touches it races with anything. */
@@ -204,7 +262,7 @@ private class MemoryAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<String>,
   blockingMutexes: Set<String>,
-) : GlobalAccessWithMutexes(access, acquiredMutexes, blockingMutexes)
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes)
 
 /**
  * Returns the global variable accesses of the label.
@@ -229,7 +287,13 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
       label.collectGlobalVars(globalVars).forEach { (v, access) ->
         if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
           accesses.add(
-            GlobalVarAccessWithMutexes(v, access, acquiredMutexes.toSet(), blockingMutexes.toSet())
+            GlobalVarAccessWithMutexes(
+              v,
+              label,
+              access,
+              acquiredMutexes.toSet(),
+              blockingMutexes.toSet(),
+            )
           )
         }
       }
@@ -272,6 +336,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
         ) {
           accesses.add(
             MemoryAccessWithMutexes(
+              label,
               deref.array,
               deref.offset,
               deref.array.addressesAtomicData(xcfa, parseContext),

@@ -444,6 +444,6 @@ internal fun concretizeTrace(
         config.outputConfig.witnessConfig.validateConcretizerSolver,
       ),
       parseContext,
-      wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property),
+      wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property, parseContext),
     )
   }

@@ -222,7 +222,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
             safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
             cexSolverFactory,
             parseContext,
-            wrapExprTraceCheckerWithDataRaceCondition(property),
+            wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
           )
 
         val witnessTrace =
