@@ -747,7 +747,74 @@ goblint 09-regions (missed race), termination-nla/dijkstra6-both-nt (missed over
 memsafety-cve/admeshFixed (false valid-deref). The two OC tasks (pthread/singleton, goblint
 04-mutex) persist and are **out of scope** (separate PR).
 
-## NEXT UP (queue as of batch 21; benchmark 2026-07-13 re-ranked it)
+## IMPLEMENTATION STATUS — batch 22 (the unreach-call regression was a *doubled* range assume)
+
+Commit: `stop annotating a nondet havoc's range twice`.
+
+The −950 unreach-call regression (batch 21) isolated cleanly. Building HEAD with the range-constraint
+toggled off (`withinTypeRange` → empty) in a worktree and re-timing the fast regressors under
+`--portfolio STABLE` (scratchpad harness) showed:
+
+| profile | task | HEAD | range **off** |
+|---|---|---|---|
+| NONLIN_INT | `mod3.c.v+sep-reducer` | timeout | **Safe 4 s** |
+| NONLIN_INT | `hardness_codemodifications_normal_file-56` | timeout | **Safe 77 s** |
+| FLOAT | `hardness_operatoramount_..._file-83` | timeout | timeout |
+| BITWISE | `hardness_floats_no_floats_file-114` | timeout | timeout |
+
+So the integer-arithmetic profiles (LIN_INT + NONLIN_INT ≈ **578** of the 1,119 regressors) were the
+range constraint; FLOAT/BITWISE are a *separate*, still-open cause (the Pos/bvcast wrap partly
+recovers one BITWISE task but not another — inconclusive, needs a git-bisect). **The FLOAT/BITWISE
+regression is NOT fixed.**
+
+**But the root cause was subtler than "the constraint is expensive": it was applied *twice*.**
+`NondetFunctionPass` annotated each nondet havoc with `withinTypeRange`, and `HavocPromotionAndRange`,
+which runs after it and bounds *every* havoc, annotated it again — two identical
+`assume(±2^31 ≤ x ≤ ±2^31)` per nondet. A *single* copy is fine (`mod3` solves in 4 s with the range
+still on, just once); the duplicate is what wrecked interpolation. The fix is one edit — drop the
+redundant annotation from `NondetFunctionPass`, leave `HavocPromotionAndRange` as the sole, unconditional
+emitter — so **no property gating, no soundness change**: the range is still there once, for every
+property, exactly as intended.
+
+*(A first attempt gated the constraint off for reachability entirely; it recovered `file-56` but broke
+`mod3`, which needs the single copy. The de-dup is strictly better and was reverted to.)*
+
+Validation: module suites (`PassTests`, `UnresolvedInvokeToHavocTest`, `NondetMemoryTest`) green;
+the two NONLIN regressors recover to correct **Safe** (3 s, 81 s); **canary 143/143** under
+`--svcomp --portfolio STABLE` (no verdict flips — expected, since the change only removes a redundant
+identical assume).
+
+## INVESTIGATION — the "alloca" false alarms are not about alloca (batch 21 wrong-result cluster)
+
+The five `termination-memory-alloca` false-`valid-deref` results reduce to a **general pointer bug,
+independent of alloca**. Minimal reproductions (`scratchpad/probe/`), all deterministic in the
+`--backend NONE` XCFA:
+
+| program | verdict | note |
+|---|---|---|
+| `int *p=alloca(4); *p=5; assert(*p==5)` | Safe ✓ | pointee not looped |
+| three allocas, no loop | Safe ✓ | multiple allocas fine |
+| pointee **read** in a loop | Safe ✓ | |
+| pointee written **outside** a loop (`(*i)++;(*i)++`) | Safe ✓ | |
+| **pointee written *inside* a loop** (`for(*i=0;*i<10;(*i)++)`) | **Unsafe(valid-deref)** ✗ | the bug |
+| same, with `&local` instead of alloca | **Unsafe** ✗ | not alloca-specific |
+| same, with the pointer `i` also read after the loop | **Unsafe** ✗ | not an unused-var drop |
+
+The symptom is exact: a pointer `i` (`= &store`, or an `alloca` result) whose pointee is written in a
+loop has its `*i` **dereference base collapse to literal `0`** — the XCFA shows `0[0]` where it should
+show the pointer's value (the address-taken `store` itself still correctly reads as `5[0]` on the
+same edge). Base 0 is the null/unallocated class, so the deref check fires: a **false** valid-deref
+violation on a safe program.
+
+Ruled out: not alloca (repro with `&local`); not `UnusedVarPass` dropping an unused pointer (the bug
+persists when `i` is read after the loop). The base is wrongly **constant-folded to 0 specifically in
+the loop + pointee-write case** — leading suspect is `SimplifyExprsPass` constant propagation across
+the loop back-edge, or the self-loop construction substituting the `Dereference` base. **Not yet
+fixed**: the fix touches pointer/deref value-analysis where a wrong change risks unsoundness, so it
+wants a focused pass-level investigation rather than a guess. This is a real missed-alarm-direction
+concern only in that it *invents* violations (false positives), never hides them.
+
+## NEXT UP (queue as of batch 22)
 
 0. **[NEW, top priority] unreach-call analysis-time regression (−950).** hardness/eca correct →
    timeout, all profiles. Isolate by neutralising `withinTypeRange` (and separately the `Pos` bvcast
