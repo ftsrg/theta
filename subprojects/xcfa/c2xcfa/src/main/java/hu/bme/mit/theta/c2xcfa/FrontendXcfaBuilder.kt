@@ -313,7 +313,14 @@ class FrontendXcfaBuilder(
     if (type is CArray) {
       initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
       if (MemsafetyPass.enabled) {
-        val bounds = type.arrayDimension.expression
+        // A global array may have no written dimension -- `struct command commands[] = { ... }` --
+        // and be sized by its initializer instead; `getArraySize` already reads the count from
+        // there. Reading `arrayDimension.expression` directly (it is null then) crashed the parse.
+        val bounds =
+          if (type.arrayDimension != null) type.arrayDimension.expression
+          else
+            CComplexType.getUnsignedLong(parseContext)
+              .getValue(getArraySize(type, initExpr).toString())
         checkState(
           bounds is IntLitExpr || bounds is BvLitExpr,
           "Only IntLit and BvLit expression expected here.",
