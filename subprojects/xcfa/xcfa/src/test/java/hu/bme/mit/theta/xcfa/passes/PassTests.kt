@@ -371,7 +371,8 @@ class PassTests {
               havoc("y")
             }
           },
-          // `pthread_create`'s start routine must resolve to a real procedure: CLibraryFunctionsPass
+          // `pthread_create`'s start routine must resolve to a real procedure:
+          // CLibraryFunctionsPass
           // rejects a thread entry that names no procedure. `thr1` is registered as an (empty) one.
           siblingProcedures = listOf("thr1"),
         ),
