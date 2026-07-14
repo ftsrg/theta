@@ -34,7 +34,6 @@ import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -48,10 +47,7 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
-import java.io.IOException;
-import java.nio.file.Path;
-import org.junit.jupiter.api.AfterAll;
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,34 +56,13 @@ import org.junit.jupiter.api.Test;
 
 public final class SmtLibItpSolverTest {
 
-    private static boolean solverInstalled = false;
-    private static SmtLibSolverManager solverManager;
     private static SolverFactory solverFactory;
     private static final String SOLVER = "z3";
     private static final String VERSION = "4.5.0";
 
     @BeforeAll
-    public static void init() throws SmtLibSolverInstallerException, IOException {
-        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-            Path home = SmtLibSolverManager.HOME;
-
-            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-            try {
-                solverManager.install(SOLVER, VERSION, VERSION, null, false);
-                solverInstalled = true;
-            } catch (SmtLibSolverInstallerException e) {
-                e.printStackTrace();
-            }
-
-            solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
-        }
-    }
-
-    @AfterAll
-    public static void destroy() throws SmtLibSolverInstallerException {
-        if (solverInstalled) {
-            solverManager.uninstall(SOLVER, VERSION);
-        }
+    public static void init() {
+        solverFactory = SolverInstallations.installOrSkip(SOLVER, VERSION);
     }
 
     ItpSolver solver;
