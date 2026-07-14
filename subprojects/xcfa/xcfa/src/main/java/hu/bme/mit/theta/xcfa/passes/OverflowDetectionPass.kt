@@ -197,7 +197,19 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
             XcfaEdge(
               source,
               errorLoc,
-              StmtLabel(AssumeStmt.of(breakpoints[j].second), metadata = oldLabels[i].metadata),
+              // Every other edge this pass builds is a SequenceLabel, and the passes that run after
+              // it require one -- `splitIf` checks for it outright. A bare StmtLabel here made any
+              // overflow check that had to break an edge crash the later passes ("Check failed"
+              // from
+              // `splitIf`), so the branch to the error location is wrapped like the rest.
+              SequenceLabel(
+                listOf(
+                  AssumeStmt.of(breakpoints[j].second).let {
+                    StmtLabel(it, metadata = oldLabels[i].metadata)
+                  }
+                ),
+                metadata = oldLabels[i].metadata,
+              ),
               metadata = oldLabels[i].metadata,
             )
           )
