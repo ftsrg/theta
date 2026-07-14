@@ -849,7 +849,77 @@ branch, a parenthesised *call* must still be guarded — and **fails on the unfi
 reverting). Canary **143/143**; `theta-c-frontend`, `theta-c2xcfa`, `theta-xcfa` suites and
 `spotlessApply` green.
 
-## INVESTIGATION — the "alloca" false alarms are not about alloca (batch 21 wrong-result cluster)
+## IMPLEMENTATION STATUS — batch 24 (`for (*p = 0; ...)` was parsed as a declaration)
+
+Commit: `a for-init that assigns through a pointer declares nothing`. **GRAMMAR CHANGE — handled per
+the protocol below.**
+
+The five `termination-memory-alloca` false-`valid-deref` results (batch 21) were never about alloca.
+Reduced to a minimal program, then found by instrumenting `SimplifyExprsPass` to print its constant
+valuation — which showed **two** variables named `i`:
+
+```
+localVars      = [..., main::i, ..., main::for0::i, ...]
+constValuation = ... main::i=5, main::for0::i=0, ...
+```
+
+`main::i` is the real pointer (correctly 5). `main::for0::i` is a *second*, for-scoped `i` — value
+**0**. So `for (*p = 0; ...)` was being parsed as an **implicit-int declaration** `int *p = 0;`,
+declaring a fresh NULL pointer that shadows the real one for the whole loop. Every `*p` in the body
+then dereferenced base 0 (the unallocated class) and the deref check fired: **a safe program reported
+Unsafe.**
+
+### The bug
+
+```
+typeSpecifierPointer :  typeSpecifier? pointer ;    // the type specifier is OPTIONAL
+forInit              :  forDeclaration | expression? ;   // declaration tried FIRST
+```
+
+The optionality is needed — it is what lets the `*` in `unsigned *p` follow a specifier that is
+already there — but it also makes a **bare `*` a declaration specifier all on its own**. Nothing in C
+begins a declaration with `*`; `for (*p = 0; ...)` begins an expression with one. `blockItem` was
+given a `startsDeclaration()` guard in batch 17, which is exactly why the same assignment *as a plain
+statement* always worked; `forInit` never got one. Hence the oddly specific trigger: a loop **and** a
+write to the pointee **through the for-init**.
+
+### The fix
+
+A `startsForDeclaration()` predicate on the `forDeclaration` alternative: a leading `*`/`^` is never a
+declaration; otherwise defer to `isTypeStart`. `for (int i = 0; …)`, `for (int *p = q; …)`,
+`for (myptr p = q; …)` (typedef), `for (i = 0; …)` and `for (;;)` all keep their old parse.
+
+### Validation (grammar HANDLE WITH CARE protocol)
+
+- **One construct, one commit.** ✓
+- **Parse-tree shape, not "it parsed":** 3 new cases in `CTypeNameAmbiguityTest` assert whether a
+  `ForDeclarationContext` is present — **23/23** (was 20).
+- **Byte-identical XCFA for programs not exercising the construct:** built a jar with and without the
+  grammar change and diffed `xcfa.json` over all 143 canaries (`scratchpad/xcfa_equiv.sh`):
+  **103 IDENTICAL, 0 newly-broken, 0 unexpected diffs.** (4 first showed as "newly builds"; re-run
+  serially they are IDENTICAL too — parallel-load flakiness, *again*.)
+- Canary verdicts **143/143**; `theta-c-frontend`, `theta-c2xcfa`, `theta-xcfa`, `spotlessApply` green.
+
+### Result on the five wrong results
+
+| task | property | was | now |
+|---|---|---|---|
+| `genady-alloca` | no-overflow | **wrong** | **Safe ✓ correct** |
+| `easySum-alloca` | valid-memsafety | **wrong** | timeout |
+| `genady-alloca` | valid-memsafety | **wrong** | timeout |
+| `java_Nested-alloca` | valid-memsafety | **wrong** | timeout |
+| `java_Sequence-alloca` | valid-memsafety | **wrong** | timeout |
+
+All five false alarms are gone; one is now correct. The four timeouts are at a 200 s local cap, not
+SV-COMP's 900 s — they may well solve there, but **I have not shown that**, so they are recorded as
+timeouts. Wrong scores negative and a timeout scores zero, so this is a strict improvement either way.
+
+**Newly exposed (not a regression, previously masked by the false alarm):** the same loop written with
+an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0; ...)`) now reaches
+the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
+uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
+
+## RESOLVED — the "alloca" false alarms were not about alloca (superseded by batch 24)
 
 The five `termination-memory-alloca` false-`valid-deref` results reduce to a **general pointer bug,
 independent of alloca**. Minimal reproductions (`scratchpad/probe/`), all deterministic in the
@@ -884,9 +954,11 @@ concern only in that it *invents* violations (false positives), never hides them
 0. ~~**unreach-call analysis-time regression (−950)**~~ — **DONE** (batches 22 + 23): the doubled
    range assume and the short-circuit guard on pure operands. All six sampled regressors now solve
    *faster than the batch-8 baseline*. The next full run should confirm the −950 is recovered.
-0b. **[TOP] the pointer-in-loop false `valid-deref`** (see the investigation below) — a safe program
-   is reported Unsafe whenever a pointer's pointee is written inside a loop. Wrong answers outrank
-   everything else in this queue.
+0b. ~~**the pointer-in-loop false `valid-deref`**~~ — **DONE** (batch 24): `for (*p = 0; ...)` parsed
+   as an implicit-int declaration. All five false alarms gone, one now correct.
+0c. **[NEW] `Incomplete dereferences (missing uniquenessIdx)`** — exposed by batch 24: the same loop
+   over an *address-taken local* (rather than `alloca`) now reaches the analysis and crashes there.
+   An error, not a wrong answer, but it is the immediate next step in this area.
 
 *(stale, kept for the record:)*
 0c. hardness/eca correct →
