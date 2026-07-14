@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
@@ -53,6 +54,26 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     public CastVisitor(ParseContext parseContext) {
         this.parseContext = parseContext;
+    }
+
+    /**
+     * A cast whose value cannot change needs no modulo. A source that is never negative -- an
+     * unsigned type, or a pointer, whose value is a non-negative object id -- and no wider than the
+     * target already lies in the target's range, so the wraparound is a no-op. Skipping it keeps a
+     * width-preserving cast transparent: a pointer cast to `unsigned long` and back stays the very
+     * same expression, so a pointer routed through an integer is still recognisable as one.
+     *
+     * <p>A distinct {@code Pos} wrapper is returned rather than the bare operand, so that recording
+     * the target type on the result (see {@code CComplexType.castTo}) does not overwrite the
+     * operand's own recorded type.
+     */
+    private Expr<?> widthPreserving(CInteger type, Expr<?> param) {
+        CComplexType source = CComplexType.getType(param, parseContext);
+        if ((source instanceof Unsigned || source instanceof CPointer)
+                && source.width() <= type.width()) {
+            return Pos(param);
+        }
+        return null;
     }
 
     private IteExpr<?> handleUnsignedSameSize(CInteger type, Expr<?> param) {
@@ -95,6 +116,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CUnsignedShort type, Expr<?> param) {
+        Expr<?> preserved = widthPreserving(type, param);
+        if (preserved != null) {
+            return preserved;
+        }
         int width = parseContext.getArchitecture().getBitWidth("short");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
@@ -111,6 +136,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CUnsigned128 type, Expr<?> param) {
+        Expr<?> preserved = widthPreserving(type, param);
+        if (preserved != null) {
+            return preserved;
+        }
         int width = parseContext.getArchitecture().getBitWidth("__int128");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
@@ -127,6 +156,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CUnsignedLongLong type, Expr<?> param) {
+        Expr<?> preserved = widthPreserving(type, param);
+        if (preserved != null) {
+            return preserved;
+        }
         int width = parseContext.getArchitecture().getBitWidth("longlong");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
@@ -134,6 +167,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CUnsignedLong type, Expr<?> param) {
+        Expr<?> preserved = widthPreserving(type, param);
+        if (preserved != null) {
+            return preserved;
+        }
         int width = parseContext.getArchitecture().getBitWidth("long");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
@@ -159,6 +196,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CUnsignedInt type, Expr<?> param) {
+        Expr<?> preserved = widthPreserving(type, param);
+        if (preserved != null) {
+            return preserved;
+        }
         int width = parseContext.getArchitecture().getBitWidth("int");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
@@ -175,6 +216,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CUnsignedChar type, Expr<?> param) {
+        Expr<?> preserved = widthPreserving(type, param);
+        if (preserved != null) {
+            return preserved;
+        }
         int width = parseContext.getArchitecture().getBitWidth("char");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
