@@ -978,6 +978,39 @@ short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `
 the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
 how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
 
+## Batch 26 — three grammar blockers cleared (highest-count parse-exception classes)
+
+Picked from the 2026-07-14 run's exception scan (excluding the out-of-scope `Referencing non-variable
+expressions`, 2614). Each is a HANDLE-WITH-CARE grammar change: one construct per commit, a parse-tree
+**shape** test in `CTypeNameAmbiguityTest` (now 29, was 26), and a **byte-identical XCFA** sweep over all
+143 canaries (110 IDENTICAL / 33 BOTH_NO_XCFA, zero NEWLY_BROKEN/DIFF_UNEXPECTED — the recurring
+"NEWLY_BUILDS" flakes re-checked IDENTICAL serially). `:theta-c-frontend:test` + `:theta-c2xcfa:test` green.
+
+1. **`parse a function-pointer cast with more than one star`** (`ecb1f6dd2`) — `(int (**)(args))`, the
+   CIL idiom `*((int (**)(args))p) = &f`. `typeSpecifierFunctionPointer` accepted a single `*`; now it
+   takes `pointer` (any number of stars) and `visitTypeSpecifierFunctionPointer` increments the pointer
+   level once per star. ~1400 tasks had this as their first parse error.
+2. **`accept an attribute inside a parenthesized declarator`** (`a505e0597`) — `void ( __attribute__((…))
+   f)(args)`; `directDeclaratorBraces` now allows leading `gccAttributeSpecifier*` (ignored, as
+   everywhere). ~360 tasks. Same ldv driver files as #1 hit this *first*, so the two together clear two
+   layers of that stack.
+3. **`parse __float128 and the __alignof that measures it`** (`620840979`) — GCC's 128-bit float, which
+   appears only as the unused `max_align_t` padding `__float128 f __attribute__((__aligned__(__alignof(
+   __float128))))`. `__float128` added to `typeSpecifierSimple` + `TYPE_STARTERS`, mapped to **`double`**
+   (not `long double`: `CLongDouble` is unimplemented under integer arithmetic and `double` is the
+   fully-supported path; precision is never observed on an unused field), and `BitwiseChecker` flags it
+   FLOAT so a program that *did* compute with it stays on the float path. `__alignof` (the suffixless
+   spelling) added to the sizeof/alignof operator. ~192 tasks; `ldv-regression/test_malloc-1.i` fully
+   unlocks.
+
+**Honest yield.** These remove the parse-exception *class* for the three constructs. Files whose only
+blocker was one of them fully clear. But the heavily-preprocessed **ldv-linux CIL** files stack blockers:
+a 12-file sample using `(int (**)…)` now parses past #1/#2 and lands on the *next* frontier —
+**`UnsupportedFrontendElementException: Pointer arithmetic not supported`** (FrontendXcfaBuilder) and
+`Cannot create expression of initializer list`. Those are pre-existing transformation limits, not
+introduced here. So the immediate fully-solved gain is modest for the CIL family; the real measure is the
+next full run, and **"Pointer arithmetic not supported"** is now the dominant downstream blocker to target.
+
 ## RESOLVED — the "alloca" false alarms were not about alloca (superseded by batch 24)
 
 The five `termination-memory-alloca` false-`valid-deref` results reduce to a **general pointer bug,
@@ -1007,6 +1040,14 @@ the loop back-edge, or the self-loop construction substituting the `Dereference`
 fixed**: the fix touches pointer/deref value-analysis where a wrong change risks unsoundness, so it
 wants a focused pass-level investigation rather than a guess. This is a real missed-alarm-direction
 concern only in that it *invents* violations (false positives), never hides them.
+
+## NEXT UP (queue as of batch 25)
+
+**DEFERRED (user decision, batch 25): the `psyco_math_1` soundness regression stays open for now.**
+One wrong result (no-overflow, correct→wrong) from `35dde5041`; net branch state is +2989 correct so
+it is accepted for the moment. Full root cause + the two failed fix attempts are in **batch 25** above.
+Fix, when picked up, is at the expression level (`OverflowDetectionPass` short-circuit threading), not a
+`mustNotRunUnconditionally` predicate tweak, and must not revert `35dde5041` or `89020cef2`.
 
 ## NEXT UP (queue as of batch 23)
 
