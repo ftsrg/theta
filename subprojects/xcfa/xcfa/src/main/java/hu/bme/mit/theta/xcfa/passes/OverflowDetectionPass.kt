@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr
@@ -74,6 +75,33 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
+
+/**
+ * The range checks one (possibly n-ary) operation needs: one per evaluation step.
+ *
+ * The frontend builds a whole additive expression as a single n-ary node -- `a + b - c` is `Add(a,
+ * b, Neg(c))` -- but C evaluates it as `(a + b) - c`, and each step can overflow on its own.
+ * Checking only the node's *result* therefore misses an intermediate overflow that a later operand
+ * cancels out: `(INT_MAX + 1) - 23` ends up at `INT_MAX - 22`, which is in range, though the first
+ * step already went one past the maximum. So the operands are folded left to right and every
+ * partial result is range-checked. (Under bitvectors this is already handled, by `foldChecks` in
+ * [bvOverflowCondition].)
+ */
+private fun Expr<*>.stepwiseRangeChecks(
+  inRange: (Expr<*>) -> Expr<BoolType>
+): List<Expr<BoolType>> {
+  val ops =
+    when (this) {
+      is AddExpr<*> -> ops
+      is MulExpr<*> -> ops
+      else -> return listOf(Not(inRange(this)))
+    }
+  if (ops.size <= 2) return listOf(Not(inRange(this)))
+  val rebuild: (List<Expr<*>>) -> Expr<*> =
+    if (this is AddExpr<*>) { prefix -> AbstractExprs.Add(prefix) }
+    else { prefix -> AbstractExprs.Mul(prefix) }
+  return (2..ops.size).map { k -> Not(inRange(rebuild(ops.take(k)))) }
+}
 
 class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseContext) :
   ProcedurePass {
@@ -146,7 +174,14 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                     .getMetadataValue(it, "cType")
                     .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
                     .get() as CComplexType
-                Not(cType.accept(limitVisitor, it).cond)
+                // C evaluates `a + b + c` as `(a + b) + c`, and an *intermediate* result can
+                // overflow
+                // even when the final one is back in range: `(INT_MAX + 1) - 23` lands at
+                // INT_MAX - 22, but the first step already went one past the maximum. The frontend
+                // builds a whole additive expression as one n-ary operation, so range-checking only
+                // its result missed exactly that. Fold it left to right and check every step -- the
+                // bitvector encoding already does this (see `bvOverflowCondition`'s `foldChecks`).
+                Or(it.stepwiseRangeChecks { e -> cType.accept(limitVisitor, e).cond })
               }
             }
 
