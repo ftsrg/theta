@@ -201,7 +201,7 @@ private fun parseC(
     }
 
   input =
-    if (frontendConfig.useCir) {
+    if (frontendConfig.useCir2c) {
       val temp = createTempDirectory()
       val copied = temp.resolve("input.${input.extension}").toFile()
       var curlyBraceCount = 0
@@ -216,16 +216,13 @@ private fun parseC(
         copied.appendText(newLine)
         copied.appendText(System.lineSeparator())
       }
-      val mlir = temp.resolve("input.cir").toFile()
-      val mlirFlat = temp.resolve("flat.cir").toFile()
-
-      "./clang ${copied.absolutePath} -Xclang -emit-cir -fsyntax-only -o ${mlir.absolutePath}"
-        .runCommand(frontendConfig.cirDir, logger)
-      "./cir-opt ${mlir.absolutePath} -cir-flatten-cfg -o ${mlirFlat.absolutePath}"
-        .runCommand(frontendConfig.cirDir, logger)
       val transformed = temp.resolve("input-transformed.c").toFile()
-      "./xcfa-mapper ${mlirFlat.absolutePath} ${transformed.absolutePath}"
-        .runCommand(frontendConfig.cirDir, logger)
+
+      // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess ->
+      // cir2c) and finds its own toolchain relative to the script, so we only pass the
+      // source and the desired C output path.
+      "./run-cir2c.sh ${copied.absolutePath} ${transformed.absolutePath}"
+        .runCommand(frontendConfig.cir2cDir, logger)
       transformed
     } else {
       input
