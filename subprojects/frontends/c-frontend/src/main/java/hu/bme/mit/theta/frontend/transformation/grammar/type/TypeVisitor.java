@@ -288,7 +288,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             return null;
         }
         CSimpleType functionPointer = returnType.copyOf();
-        // `(*)` is one pointer, `(**)` two, and so on: CIL emits `*((int (**)(args))p) = &f` to store
+        // `(*)` is one pointer, `(**)` two, and so on: CIL emits `*((int (**)(args))p) = &f` to
+        // store
         // a function's address through a pointer-to-function-pointer. Each star is a level; the
         // parameter list, like the pointee of any function pointer, is not modeled.
         int levels = ctx.pointer().stars.size();
@@ -485,7 +486,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 return NamedType("_Bool", parseContext, uniqueWarningLogger);
             case "__float128":
                 // GCC's 128-bit float. In this benchmark set it only ever appears as the unused
-                // padding field of `max_align_t`, so its precision is never observed -- and modeling
+                // padding field of `max_align_t`, so its precision is never observed -- and
+                // modeling
                 // it as a `double` (rather than the wider `long double` it more resembles) keeps it
                 // on the fully-supported path: `CLongDouble` is not yet handled under integer
                 // arithmetic, so a program that did compute with it would crash instead.
