@@ -50,6 +50,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(
       ReferenceElimination(parseContext),
       MallocFunctionPass(parseContext),
+      ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
     ),
     listOf(
@@ -142,6 +143,7 @@ class NontermValidationPasses(
     listOf(
       ReferenceElimination(parseContext),
       MallocFunctionPass(parseContext),
+      ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
     ),
     listOf(
