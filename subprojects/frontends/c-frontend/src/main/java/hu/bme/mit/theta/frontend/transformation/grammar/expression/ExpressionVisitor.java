@@ -146,12 +146,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      *
      * <p>So the statements this operand added are lifted back out and re-emitted inside an `if` on
      * the operands already evaluated: all of them holding, for `&&`; none of them, for `||`.
+     *
+     * <p>Only statements that actually *do* something are worth this. An operand lands in {@link
+     * #preStatements} for reasons that have nothing to do with side effects -- every parenthesised
+     * sub-expression does, because {@code visitPrimaryExpressionBraceExpression} lifts one -- and
+     * guarding those buys nothing while costing a branch. `(a && b) || (c && d)` is the whole of
+     * SV-COMP's `assume_abort_if_not`, so taking "the list grew" as the signal split every such
+     * condition into two paths whose arms were *identical*, and the resulting explosion timed out a
+     * mass of tasks that had solved in seconds.
      */
     private void guardShortCircuited(
             int from, List<Expr<BoolType>> alreadyEvaluated, boolean stopWhenTrue) {
         if (alreadyEvaluated.isEmpty() || preStatements.size() == from) {
             return; // the first operand always runs, and an operand with no statements needs no
             // guard
+        }
+        if (!mustNotRunUnconditionally(preStatements.subList(from, preStatements.size()))) {
+            return; // pure statements may run whether the short-circuit is taken or not
         }
         List<CStatement> guarded =
                 new ArrayList<>(preStatements.subList(from, preStatements.size()));
@@ -169,6 +180,36 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         parseContext.getMetadata().create(guard, "cType", signedInt);
         CCompound guardCompound = compoundOf(List.of(new CExpr(guard, parseContext)));
         preStatements.add(new CIf(guardCompound, body, null, parseContext));
+    }
+
+    /**
+     * Whether these statements are ones C forbids from running when the short-circuit skips their
+     * operand -- i.e. whether any of them has an effect. A call does (it may not even be safe to
+     * make: `x > INT_MIN && abs(x) < k`), and so does an assignment or an increment. A bare
+     * expression does not: it is only here because it was parenthesised, and evaluating it either
+     * way is unobservable.
+     *
+     * <p>Anything else is guarded, on the principle that a statement whose effect we cannot account
+     * for is one we must not run early.
+     */
+    private boolean mustNotRunUnconditionally(List<CStatement> statements) {
+        return statements.stream().anyMatch(this::mustNotRunUnconditionally);
+    }
+
+    private boolean mustNotRunUnconditionally(CStatement statement) {
+        if (statement == null) {
+            return false;
+        }
+        // Every statement carries its own lifted work in these slots, and that is where a
+        // parenthesised call keeps its call -- so they decide as much as the statement itself.
+        if (mustNotRunUnconditionally(statement.getPreStatements())
+                || mustNotRunUnconditionally(statement.getPostStatements())) {
+            return true;
+        }
+        if (statement instanceof CCompound) {
+            return mustNotRunUnconditionally(((CCompound) statement).getcStatementList());
+        }
+        return !(statement instanceof CExpr); // a call, an assignment, or something unrecognised
     }
 
     /**
