@@ -919,6 +919,65 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 25 — full re-run (`2026-07-14_13-10`, HEAD `8c58af94e`) analyzed; one soundness regression found
+
+The re-run the previous batches asked for. Limits `300s / 7GB` (vs the batch-8 baseline's `900s / 8GB`),
+so vs baseline the time budget is **3× tighter** — every gain below is *despite* that.
+
+| bucket | BASE (07-06, 900s) | PREV (07-13, 300s) | NEW (07-14, 300s) | N−BASE | N−PREV |
+|---|--:|--:|--:|--:|--:|
+| correct | 5917 | 8356 | **8906** | **+2989** | **+550** |
+| wrong | 13 | 28 | 28 | +15 | +0 |
+| fe_before | 14539 | 7649 | 7647 | −6892 | −2 |
+| fe_after | 2960 | 1324 | 1324 | −1636 | +0 |
+| timeout | 10607 | 16827 | 15782 | +5175 | **−1045** |
+| oom | 2437 | 1944 | 2433 | −4 | +489 |
+
+PREV and NEW share limits, so **N−PREV isolates the last four commits** (range de-dup `37710db08`,
+short-circuit `35dde5041`, for-init grammar `915fb73fa`, plan). They recovered **+550 correct /
+−1045 timeout** — the −950 regression is confirmed recovered. (The +489 oom is timeout→oom churn:
+643 tasks that used to time out now get far enough to exhaust memory instead; scoring-neutral.)
+
+Correct-by-property vs baseline: no-overflow **+2788** (1200→3988), valid-memsafety **+574**, termination
++23, memcleanup +25, no-data-race +12; unreach-call **−433** (the 900s→300s budget cut costs 987
+correct→timeout, only partly offset).
+
+**Wrong count held at 28 but the set churned.** Fixed by the grammar change: the whole
+`termination-memory-alloca` cluster left "wrong" (`genady-alloca` no-overflow now **correctly Safe**;
+the four valid-memsafety allocas now timeout, not wrong). Newly wrong: the known `aws-c-common` /
+harness false-alarm cluster now *completes* (was timeout) instead of newly breaking.
+
+### ⚠️ SOUNDNESS REGRESSION: `psyco/psyco_math_1` (no-overflow), correct → wrong, caused by `35dde5041`
+
+The one genuine `correct → wrong` from the last four commits. Expected verdict **false** (a real signed
+overflow at trace length 13). PREV: config `KIND-mathsat` returned `Unsafe Trace length: 13` in 37s.
+NEW: the *same config* returns `Safe` in 4s. Reproduced locally, then isolated by reverting each suspect
+in a worktree: reverting `37710db08` (range) → still Safe (not it); reverting **`35dde5041` (short-circuit)
+→ `Unsafe Trace length: 13`** (correct). **`35dde5041` is the culprit.**
+
+Mechanism (from the `--backend NONE` XCFA, buggy vs `35dde5041`-reverted): the reverted model has **11
+overflow-check "error" edges** on `P1 - 1` (`bvadd P1 #b…1`, the `(P1 & (P1-1))` idiom repeated ~10×);
+the buggy model has **1**. `35dde5041` lets a *pure* `&&`/`||` operand run unguarded, which leaves its
+statements bare; the arithmetic then **folds into the surrounding condition**, where the overflow
+instrumentation no longer emits a check — a real overflow silently becomes unreachable ⇒ unsound `Safe`.
+
+**`35dde5041` must not simply be reverted, and neither must `89020cef2`.** `89020cef2` is a genuine
+soundness fix (it made `&&`/`||` short-circuit *function calls* — `x!=0 && f()` must not call `f()`
+when `x==0`; pinned by fixtures). Reverting `35dde5041` alone re-introduces the −950 timeout mass it
+was written to fix (which costs *more* SV-COMP points than the single wrong result saves), so it is a
+real trade, not a free win.
+
+**Two fix attempts that did NOT work** (both built and tested against psyco + the file-114/mod3
+regressors): (a) re-emitting a pure operand's statements as an unguarded `compoundOf` — the arithmetic
+still folds, psyco stays Safe; (b) extending `mustNotRunUnconditionally` to guard operands whose value
+`carriesUbCheck` (Add/Sub/Mul/Neg/Div/Mod/ShiftLeft) — file-114 got *more* guarded (8s→42s) but psyco's
+operands were **not** caught: their `P1-1` is folded into the operand *value* (always folded into the
+`Ite(And(collect),…)`), so guarding the operand's *statements* cannot un-fold it. The real fix lives at
+the expression level — PLAN.md l.266 notes `OverflowDetectionPass.getExpressions` already threads a
+short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `Ite(cond, expr, 0)`;
+the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
+how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
+
 ## RESOLVED — the "alloca" false alarms were not about alloca (superseded by batch 24)
 
 The five `termination-memory-alloca` false-`valid-deref` results reduce to a **general pointer bug,
