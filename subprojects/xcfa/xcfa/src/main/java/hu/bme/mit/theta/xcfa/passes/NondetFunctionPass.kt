@@ -53,14 +53,13 @@ class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             }
             val slot = invokeLabel.params[0] as RefExpr<*>
             val havoc = HavocStmt.of(slot.decl as VarDecl<*>)
+            // No range annotation here: HavocPromotionAndRange, which runs after this, bounds every
+            // havoc that needs it. Adding it here as well only emitted the same assume twice.
             builder.addEdge(
               XcfaEdge(
                 it.source,
                 it.target,
-                SequenceLabel(
-                  listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)) +
-                    withinTypeRange(slot, parseContext, invokeLabel.metadata)
-                ),
+                SequenceLabel(listOf(StmtLabel(havoc, metadata = invokeLabel.metadata))),
                 it.metadata,
               )
             )
