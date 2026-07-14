@@ -73,6 +73,27 @@ class PointerArithmeticTest {
   }
 
   @Test
+  fun `a pointer routed through an integer and back builds`() {
+    // A cast to a same-or-wider integer cannot change a pointer's value, so it is a `Pos` no-op (no
+    // modulo) and the pointer survives the round trip -- including its offset, when it is one of
+    // the
+    // base/offset split variables.
+    buildBoth(
+      main("int a[10]; int *p = a; unsigned long q = (unsigned long)p; int *r = (int *)q; *r = 5;")
+    )
+  }
+
+  @Test
+  fun `a split pointer routed through an integer and back keeps its offset`() {
+    buildBoth(
+      main(
+        "int a[10]; int *p = &a[3]; unsigned long q = (unsigned long)p; int *r = (int *)q;" +
+          " *r = 5; if (a[3] != 5) reach_error();"
+      )
+    )
+  }
+
+  @Test
   fun `chained pointer arithmetic through a reused intermediate builds`() {
     // The base of the second step is itself a split pointer, so this exercises the composing branch
     // (`p_base = q_base`, `p_offset = q_offset + i`) rather than re-addressing a bare split

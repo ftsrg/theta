@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -261,6 +262,14 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     OFFSET,
   }
 
+  /**
+   * A pointer cast to a same-or-wider integer and back is a `Pos` no-op (the cast visitor's
+   * width-preserving path emits no modulo), so a split pointer routed through an integer -- as CIL
+   * does, `q = (unsigned long)p; ... (T *)q` -- arrives wrapped in `Pos`. Look through it to find
+   * the split variable the base/offset machinery tracks.
+   */
+  private fun Expr<*>.stripPos(): Expr<*> = if (this is PosExpr<*>) op.stripPos() else this
+
   private fun runComplexReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
     val hasRefToDeref =
       builder.getEdges().any { edge ->
@@ -314,8 +323,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                   ensureSplitVar(builder, splitVars, lhs, deref.array.type, deref.offset.type) ||
                     changed
               }
-              rhs is RefExpr<*> && rhs.decl in splitVars.keys -> {
-                val src = splitVars[rhs.decl]!!
+              rhs.stripPos().let { it is RefExpr<*> && it.decl in splitVars.keys } -> {
+                val src = splitVars[(rhs.stripPos() as RefExpr<*>).decl]!!
                 changed =
                   ensureSplitVar(builder, splitVars, lhs, src.base.type, src.offset.type) || changed
               }
@@ -590,8 +599,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         AssignStmt.of(cast(split.offset, split.offset.type), cast(offsetExpr, split.offset.type)),
       )
     }
-    if (rhs is RefExpr<*> && rhs.decl in splitVars.keys) {
-      val src = splitVars[rhs.decl]!!
+    val strippedRhs = rhs.stripPos()
+    if (strippedRhs is RefExpr<*> && strippedRhs.decl in splitVars.keys) {
+      // A plain copy, or the same pointer routed through a width-preserving integer cast (which the
+      // cast visitor leaves as a `Pos` no-op): the base and the offset travel together.
+      val src = splitVars[strippedRhs.decl]!!
       val dst = splitVars[lhs] ?: error("Split vars not found for ${lhs.name}")
       return listOf(
         AssignStmt.of(cast(dst.base, dst.base.type), cast(src.base.ref, dst.base.type)),
@@ -613,7 +625,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       error("Unsupported pointer arithmetic: bare use of split variable ${this.decl.name}")
     }
     if (this is Dereference<*, *, *>) {
-      val arr = this.array
+      // The address may have come back through a width-preserving integer cast (`*(T *)q` after
+      // `q = (unsigned long)p`), which the cast visitor leaves as a `Pos` no-op.
+      val arr = this.array.stripPos()
       val rewrittenOffset = this.offset.changeComplexReferredVars(splitVars)
       if (arr is Reference<*, *> && arr.expr is Dereference<*, *, *>) {
         val innerDeref = arr.expr as Dereference<*, *, *>
