@@ -221,6 +221,24 @@ class CTypeNameAmbiguityTest {
     assertThrowsAnything { parse("void *f(notatype);") }
   }
 
+  @Test
+  fun `an attribute inside a parenthesized declarator is ignored, keeping the name`() {
+    // GCC (and CIL's output) writes `void ( __attribute__((nonnull)) f)(args)`; the attribute sits
+    // before the name inside the parentheses. It must be matched and dropped, not swallow the name.
+    val tree = parse("void ( __attribute__((__nonnull__(1))) myfree)(void *p);")
+    val braces = tree.find(CParser.DirectDeclaratorBracesContext::class.java)
+    assertNotNull(braces, "the parenthesized declarator must parse")
+    assertNotNull(
+      braces!!.find(CParser.GccAttributeSpecifierContext::class.java),
+      "the attribute is matched",
+    )
+    assertEquals(
+      "myfree",
+      braces.find(CParser.DirectDeclaratorIdContext::class.java)?.text,
+      "the declared name is kept, not the attribute",
+    )
+  }
+
   // --- sizeof ------------------------------------------------------------------------------
 
   @Test

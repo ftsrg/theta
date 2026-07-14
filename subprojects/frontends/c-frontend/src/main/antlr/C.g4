@@ -492,7 +492,7 @@ declarator
 
 directDeclarator
     :   Identifier                                                                  # directDeclaratorId
-    |   '(' declarator ')'                                                          # directDeclaratorBraces
+    |   '(' gccAttributeSpecifier* declarator ')'                                   # directDeclaratorBraces
     |   directDeclarator '[' typeQualifierList? assignmentExpression? ']'           # directDeclaratorArray1
     |   directDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'   # directDeclaratorArray2
     |   directDeclarator '[' typeQualifierList 'static' assignmentExpression ']'    # directDeclaratorArray3
