@@ -483,6 +483,13 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 return Unsigned();
             case "_Bool":
                 return NamedType("_Bool", parseContext, uniqueWarningLogger);
+            case "__float128":
+                // GCC's 128-bit float. In this benchmark set it only ever appears as the unused
+                // padding field of `max_align_t`, so its precision is never observed -- and modeling
+                // it as a `double` (rather than the wider `long double` it more resembles) keeps it
+                // on the fully-supported path: `CLongDouble` is not yet handled under integer
+                // arithmetic, so a program that did compute with it would crash instead.
+                return NamedType("double", parseContext, uniqueWarningLogger);
             default:
                 return NamedType(ctx.getText(), parseContext, uniqueWarningLogger);
         }

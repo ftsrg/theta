@@ -53,7 +53,7 @@ grammar C;
     private static final java.util.Set<String> TYPE_STARTERS =
             new java.util.HashSet<String>(java.util.Arrays.asList(
                     "void", "char", "short", "int", "long", "float", "double", "signed", "unsigned",
-                    "_Bool", "_Complex", "__int128", "__m128", "__m128d", "__m128i", "__extension__",
+                    "_Bool", "_Complex", "__int128", "__float128", "__m128", "__m128d", "__m128i", "__extension__",
                     "struct", "union", "enum", "const", "volatile", "restrict", "_Atomic",
                     "__const", "__restrict", "__restrict__", "__volatile__", "__thread",
                     "typeof", "__typeof__", "static", "extern", "register", "auto", "inline",
@@ -231,7 +231,7 @@ unaryExpressionCast
     :   unaryOperator castExpression
     ;
 unaryExpressionSizeOrAlignOf
-    :   ('sizeof' | '_Alignof' | '__alignof__') '(' (typeName | expression) ')'
+    :   ('sizeof' | '_Alignof' | '__alignof__' | '__alignof') '(' (typeName | expression) ')'
     // `sizeof` takes an expression without parentheses too -- `sizeof *p`, `sizeof x`. The
     // parenthesized form is tried first, so `sizeof (int)` still reads as a type.
     |   'sizeof' unaryExpression
@@ -379,6 +379,7 @@ typeSpecifier
     |   '__m128d'
     |   '__signed'
     |   '__signed__'
+    |   '__float128'
     |   '__m128i')                                                  # typeSpecifierSimple
     |   '__builtin_va_list'                                         # typeSpecifierVaList
     |   '__thread'                                                  # typeSpecifierGccThread

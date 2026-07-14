@@ -330,6 +330,31 @@ class CTypeNameAmbiguityTest {
     assertEquals(3, tree.functionPointerStars())
   }
 
+  // --- GCC's __float128 / __alignof (the max_align_t boilerplate) --------------------------
+
+  @Test
+  fun `__float128 names a type`() {
+    val tree = parse("__float128 g;")
+    assertEquals(
+      "__float128",
+      tree.find(CParser.TypeSpecifierSimpleContext::class.java)?.text,
+      "__float128 is a type specifier, so `__float128 g;` declares g",
+    )
+  }
+
+  @Test
+  fun `__alignof of __float128 parses as alignof of a type`() {
+    // The exact shape `max_align_t` uses: `__attribute__((__aligned__(__alignof(__float128))))`.
+    // The suffixless `__alignof` and the type keyword `__float128` have to be understood together.
+    val tree = parse(body("unsigned long a = __alignof(__float128);"))
+    val alignOf = tree.find(CParser.UnaryExpressionSizeOrAlignOfContext::class.java)
+    assertNotNull(alignOf, "__alignof(...) is an alignof operator")
+    assertNotNull(
+      alignOf!!.find(CParser.TypeNameContext::class.java),
+      "__alignof(__float128) takes a type",
+    )
+  }
+
   // --- the permissive fallback -------------------------------------------------------------
 
   @Test

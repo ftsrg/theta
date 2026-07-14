@@ -55,6 +55,17 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
     }
 
     @Override
+    public Void visitTypeSpecifierSimple(CParser.TypeSpecifierSimpleContext ctx) {
+        // `__float128` is modeled as a floating-point type, so it forces float arithmetic exactly as
+        // `double` and `float` do; without this a program whose only real type is `__float128` would
+        // be analysed with integer arithmetic and hit the unimplemented float path.
+        if ("__float128".equals(ctx.getText())) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT);
+        }
+        return super.visitTypeSpecifierSimple(ctx);
+    }
+
+    @Override
     public Void visitDirectDeclaratorArray1(DirectDeclaratorArray1Context ctx) {
         parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
         return null;
