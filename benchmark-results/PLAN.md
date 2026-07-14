@@ -978,6 +978,43 @@ short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `
 the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
 how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
 
+## Batch 27 — rebased onto `origin/cir-frontend`; pointer `+`/`-` now modeled
+
+The branch was rebased onto `origin/cir-frontend` (which brings address-of-interim values and cir2c).
+**Version bumped 7.2.5 → 7.3.0** — the built jar is now `theta-xcfa-cli-7.3.0-all.jar`; a stale `7.2.5`
+jar lingers in `build/libs` and silently runs pre-rebase code, so always reference the 7.3.0 one.
+
+**Rebase reconciliation (committed `fb6c957bd`).** The rebase left the data-race code split across two
+APIs: the branch's atomic-aware `XcfaDataRaceCheck` (new `getDataRaceDetector`/`getDataRaceCondition`)
+against cir-frontend's witness-format-2.2 writers (old `findDataRace`/`DataRace`/`DataRaceAccess`/
+`wrapExprTraceCheckerWithDataRaceCondition`) — it did not compile. Resolved (user chose "keep both") by
+re-exposing the old surface as **adapters over the branch's detection**, threading `parseContext` so the
+witness writers stay atomic-aware. Verified: dekker → race found, GraphML witness populated with
+thread_ids. **Still failing, pre-existing, NOT from this work:** `PassTests[13]` — cir-frontend tightened
+`pthread_create` to require a real procedure as the thread entry, but the branch's fixture passes `thr1`
+as an `Int` var. Left for the pthread owner.
+
+**Pointer arithmetic (`p = q ± i`) — implemented, committed `92b84d25c` + `52fa58520`.** The base/offset
+split (`v_base`/`v_offset`) already existed in `ReferenceElimination` for `ref(deref(B,O))`; two fixes
+made it usable:
+1. `*p = 5` through a split `p` wrote to **both** `p_base[0]` and `deref(p_offset,0)` (a bogus `3[0]=5`);
+   now channel-splits only when the stored *value* is a pointer, so it is one cell `deref(p_base,p_offset)`.
+   This alone fixed `&a[3]` (was a spurious `Unsafe`).
+2. `FrontendXcfaBuilder` now lowers `p = q ± i` to `&q[i]` = `ref(deref(q,i))` (robust to CIL's bitvector
+   `extract` wrapping: the pointer is the one pointer-typed leaf, the offset is the whole expr with that
+   leaf zeroed, cast **signed** so subtraction and chained offsets compose), and `changeComplexAssign`
+   composes when the base is itself split (`p_base=q_base; p_offset=q_offset+i`).
+
+Validated: a 12-case matrix (correct aliasing, sound violations) + `PointerArithmeticTest` + a **canary
+baseline diff** — all 13 crash/wrong canaries are identical with and without this work (the crashes are
+pre-existing: `Could not determine subproperty`, `splitIf`; `AdditionIntMax` is the overflow class).
+**Zero regressions.**
+
+**CIL caveat.** The ldv driver files get *past* "Pointer arithmetic not supported" but then hit the
+`container_of` / flat-addressing idiom — `(unsigned long)ptr + fieldoffset` then cast back and deref —
+which **flattens a pointer to an integer**, unrepresentable in the object-id model. That is pointer↔integer
+casting, a separate architectural problem, not pointer add/sub.
+
 ## Batch 26 — three grammar blockers cleared (highest-count parse-exception classes)
 
 Picked from the 2026-07-14 run's exception scan (excluding the out-of-scope `Referencing non-variable
