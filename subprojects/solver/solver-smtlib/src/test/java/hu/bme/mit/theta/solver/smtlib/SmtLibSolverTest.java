@@ -23,7 +23,6 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -45,47 +44,25 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
-import java.io.IOException;
-import java.nio.file.Path;
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public final class SmtLibSolverTest {
-    private static boolean solverInstalled = false;
-    private static SmtLibSolverManager solverManager;
     private static SolverFactory solverFactory;
 
     private static final String SOLVER = "cvc5";
     private static final String VERSION = "1.0.2";
 
     @BeforeAll
-    public static void init() throws SmtLibSolverInstallerException, IOException {
-        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-            Path home = SmtLibSolverManager.HOME;
-
-            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-            try {
-                solverManager.install(SOLVER, VERSION, VERSION, null, false);
-                solverInstalled = true;
-            } catch (SmtLibSolverInstallerException e) {
-                e.printStackTrace();
-            }
-
-            solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
-        }
-    }
-
-    @AfterAll
-    public static void destroy() throws SmtLibSolverInstallerException {
-        if (solverInstalled) solverManager.uninstall(SOLVER, VERSION);
+    public static void init() {
+        solverFactory = SolverInstallations.installOrSkip(SOLVER, VERSION);
     }
 
     @BeforeEach

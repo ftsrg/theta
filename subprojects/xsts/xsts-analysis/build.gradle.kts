@@ -32,6 +32,7 @@ dependencies {
     testImplementation(project(":theta-solver-z3-legacy"))
     implementation(kotlin("stdlib-jdk8"))
     testImplementation(project(":theta-solver-smtlib"))
+    testImplementation(testFixtures(project(":theta-solver-smtlib")))
     testImplementation(project(":theta-solver-javasmt"))
 }
 repositories {

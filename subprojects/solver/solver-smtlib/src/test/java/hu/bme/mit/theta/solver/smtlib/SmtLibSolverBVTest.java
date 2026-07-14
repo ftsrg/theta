@@ -18,19 +18,16 @@ package hu.bme.mit.theta.solver.smtlib;
 import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
-import java.io.IOException;
-import java.nio.file.Path;
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,8 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class SmtLibSolverBVTest {
 
-    private static boolean solverInstalled = false;
-    private static SmtLibSolverManager solverManager;
+    private static SolverFactory solverFactory;
     private static final String SOLVER = "z3";
     private static final String VERSION = "4.11.2";
     public Class<?> exprType;
@@ -47,24 +43,8 @@ public class SmtLibSolverBVTest {
     public Expr<?> actual;
 
     @BeforeAll
-    public static void init() throws SmtLibSolverInstallerException, IOException {
-        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-            Path home = SmtLibSolverManager.HOME;
-
-            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-            try {
-                solverManager.install(SOLVER, VERSION, VERSION, null, false);
-                solverInstalled = true;
-            } catch (SmtLibSolverInstallerException e) {
-            }
-        }
-    }
-
-    @AfterAll
-    public static void destroy() throws SmtLibSolverInstallerException {
-        if (solverInstalled) {
-            solverManager.uninstall(SOLVER, VERSION);
-        }
+    public static void init() {
+        solverFactory = SolverInstallations.installOrSkip(SOLVER, VERSION);
     }
 
     public static Collection<?> operations() {
@@ -105,7 +85,7 @@ public class SmtLibSolverBVTest {
                         + ")");
 
         // Equality check
-        try (final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
+        try (final Solver solver = solverFactory.createSolver()) {
             solver.push();
 
             solver.add(EqExpr.create2(expected, actual));

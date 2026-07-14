@@ -32,6 +32,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.mathsat.MathSATSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.z3.Z3SmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallLock;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import java.io.IOException;
@@ -195,10 +196,48 @@ public final class SmtLibSolverManager extends SolverManager {
                     "Installing unsupported solvers is not enabled");
         }
 
+        SmtLibSolverInstallLock.withLock(
+                home,
+                solver,
+                getVersionString(solver, name, false),
+                () -> {
+                    installLocked(solver, version, name, solverPath);
+                    return null;
+                });
+    }
+
+    /**
+     * Installs {@code version} of {@code solver} unless it is already installed, and does so under
+     * the install lock, so that concurrent callers (threads or processes) neither race nor see a
+     * half-written installation. An already present solver is a no-op rather than an error.
+     */
+    public void installIfMissing(final String solver, final String version)
+            throws SmtLibSolverInstallerException {
+        if (!installers.containsKey(solver)) {
+            throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
+        }
+
+        final var versionString = getVersionString(solver, version, false);
+        SmtLibSolverInstallLock.withLock(
+                home,
+                solver,
+                versionString,
+                () -> {
+                    if (!isInstalledLocked(solver, versionString)) {
+                        installLocked(solver, versionString, versionString, null);
+                    }
+                    return null;
+                });
+    }
+
+    /** Must only be called while holding the install lock of {@code solver}/{@code name}. */
+    private void installLocked(
+            final String solver, final String version, final String name, final Path solverPath)
+            throws SmtLibSolverInstallerException {
         final var installDir = home.resolve(solver);
         try {
             if (!Files.exists(installDir)) {
-                Files.createDirectory(installDir);
+                Files.createDirectories(installDir);
             }
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
@@ -222,6 +261,18 @@ public final class SmtLibSolverManager extends SolverManager {
         }
     }
 
+    /**
+     * A solver counts as installed only once its args file is on disk — the directory alone is also
+     * present midway through an install, and is what used to make concurrent readers fail.
+     */
+    private boolean isInstalledLocked(final String solver, final String versionString)
+            throws SmtLibSolverInstallerException {
+        if (!getInstalledVersions(solver).contains(versionString)) {
+            return false;
+        }
+        return Files.exists(getArgsFile(solver, versionString));
+    }
+
     public void installGeneric(final String version, final Path solverPath, final String[] args)
             throws SmtLibSolverInstallerException {
         final var installDir = home.resolve(genericInstaller.get1());
@@ -241,9 +292,15 @@ public final class SmtLibSolverManager extends SolverManager {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
-        installers
-                .get(solver)
-                .uninstall(home.resolve(solver), getVersionString(solver, version, true));
+        final var versionString = getVersionString(solver, version, true);
+        SmtLibSolverInstallLock.withLock(
+                home,
+                solver,
+                versionString,
+                () -> {
+                    installers.get(solver).uninstall(home.resolve(solver), versionString);
+                    return null;
+                });
     }
 
     public void rename(final String solver, final String version, final String name)
