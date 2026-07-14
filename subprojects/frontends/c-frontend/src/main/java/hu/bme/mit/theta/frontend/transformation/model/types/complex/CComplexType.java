@@ -21,6 +21,13 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
@@ -102,12 +109,39 @@ public abstract class CComplexType {
     }
 
     public Expr<?> castTo(Expr<?> expr) {
-        if (CComplexType.getType(expr, parseContext).equals(this)) {
+        // The cast may be skipped only when it truly cannot change the value: the expression is
+        // already recorded as this type *and* it is not an arithmetic result.
+        //
+        // Matching types alone is not enough. A cast is what holds a value inside its type's range:
+        // `unsigned + unsigned` is *typed* unsigned, but in the unbounded integers its value stands
+        // one past the maximum until the cast's modulo wraps it -- and the additive visitor stamps
+        // the sum with its result type *before* casting it. Short-circuiting on the recorded type
+        // alone therefore skipped the very modulo that performs the wraparound, and `UINT_MAX + 1`
+        // quietly stopped coming back to 0.
+        if (CComplexType.getType(expr, parseContext).equals(this) && !isArithmetic(expr)) {
             return expr;
         }
         Expr<?> accept = this.accept(getCastVisitor(parseContext), expr);
         parseContext.getMetadata().create(accept, "cType", this);
         return accept;
+    }
+
+    /**
+     * Whether evaluating this expression can carry its value out of its own type's range -- i.e.
+     * whether a cast to that type still has work to do. An arithmetic result can (that is what the
+     * cast's wraparound is for); a variable, a literal or an already-cast value cannot.
+     */
+    private static boolean isArithmetic(Expr<?> expr) {
+        Expr<?> e = expr;
+        while (e instanceof PosExpr<?> pos) {
+            e = pos.getOp();
+        }
+        return e instanceof AddExpr
+                || e instanceof SubExpr
+                || e instanceof MulExpr
+                || e instanceof DivExpr
+                || e instanceof ModExpr
+                || e instanceof NegExpr;
     }
 
     public Type getSmtType() {
