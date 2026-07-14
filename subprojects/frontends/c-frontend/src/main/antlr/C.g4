@@ -70,6 +70,26 @@ grammar C;
     }
 
     /**
+     * Whether a `for`'s first clause declares something, rather than being an expression.
+     *
+     * `typeSpecifierPointer` leaves its type specifier optional -- it has to, so that the `*` in
+     * `unsigned *p` can follow a specifier that is already there -- and that makes a *bare* `*` a
+     * declaration specifier all on its own. Nothing in C begins a declaration with `*`, but
+     * `for (*p = 0; ...)` begins an *expression* with one, and `forDeclaration` is the first
+     * alternative: without this, an assignment through a pointer is read as a declaration of a
+     * fresh, null `p` that shadows the real one for the whole loop -- every `*p` in the body then
+     * dereferences NULL. (`blockItem` is already guarded this way, which is why the same assignment
+     * as a plain statement was always fine.)
+     */
+    public boolean startsForDeclaration() {
+        String first = _input.LT(1).getText();
+        if ("*".equals(first) || "^".equals(first)) {
+            return false;
+        }
+        return isTypeStart(_input.LT(1));
+    }
+
+    /**
      * Whether a `(` here opens a cast rather than a parenthesized expression -- decided by what
      * follows it.
      *
@@ -641,7 +661,7 @@ forCondition
 	;
 
 forInit
-    :  forDeclaration
+    :  {startsForDeclaration()}? forDeclaration
     |  expression?
     ;
 

@@ -237,6 +237,50 @@ class CTypeNameAmbiguityTest {
     )
   }
 
+  // --- a `for`'s first clause: declaration or expression? ------------------------------------
+
+  /** Whether the `for`'s first clause was taken as a declaration. */
+  private fun forInitDeclares(source: String, vararg typedefNames: String) =
+    parse(source, *typedefNames).find(CParser.ForDeclarationContext::class.java) != null
+
+  @Test
+  fun `a for-init that assigns through a pointer is an expression, not a declaration`() {
+    // `typeSpecifierPointer` makes its type specifier optional, so a bare `*` matches a declaration
+    // specifier on its own -- and `forDeclaration` is the first alternative. Unguarded, this
+    // declared a fresh, null `p` scoped to the loop, shadowing the real one: every `*p` in the body
+    // then dereferenced NULL, and a safe program was reported as an invalid dereference.
+    assertFalse(
+      forInitDeclares("void f(int *p) { for (*p = 0; *p < 10; (*p)++) { } }"),
+      "`for (*p = 0; ...)` assigns through p; it declares nothing",
+    )
+  }
+
+  @Test
+  fun `a for-init that really declares still declares`() {
+    assertTrue(
+      forInitDeclares("void f(void) { for (int i = 0; i < 10; i++) { } }"),
+      "`for (int i = 0; ...)` declares i",
+    )
+    // The case the optional type specifier exists for: a pointer declaration must still be one.
+    assertTrue(
+      forInitDeclares("void f(int *q) { for (int *p = q; p; p++) { } }"),
+      "`for (int *p = q; ...)` declares p",
+    )
+    assertTrue(
+      forInitDeclares("void f(myptr q) { for (myptr p = q; p; p++) { } }", "myptr"),
+      "`for (myptr p = q; ...)` declares p when myptr is a typedef",
+    )
+  }
+
+  @Test
+  fun `a for-init that is a plain assignment or empty declares nothing`() {
+    assertFalse(
+      forInitDeclares("void f(void) { int i; for (i = 0; i < 10; i++) { } }"),
+      "`for (i = 0; ...)` assigns to i; it declares nothing",
+    )
+    assertFalse(forInitDeclares("void f(void) { for (;;) { } }"), "`for (;;)` declares nothing")
+  }
+
   // --- the permissive fallback -------------------------------------------------------------
 
   @Test
