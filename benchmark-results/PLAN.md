@@ -681,7 +681,82 @@ casting through `void *`, or `int` vs `long`), and the no-match branch is
 That is a missed bug. It trades a timeout problem for a soundness problem, and must not be done blind.
 If it is done at all, the no-match branch has to stop being a silent havoc first.
 
-## NEXT UP (queue as of batch 20; the in-flight benchmark run will re-rank it)
+## BENCHMARK — the full re-test (2026-07-13_19:02, HEAD ≈ batch 19, portfolio STABLE)
+
+Downloaded to `benchmark-results/results-2026-07-13_19-02/` (`runs_new.tsv`, `compare.py`). Same task
+set as the batch-8 baseline (36,602 runs each), same `--svcomp --portfolio STABLE --loglevel RESULT`,
+same 900 s / 8 GB — so the diff is code-only. **The portfolio config is unchanged since the baseline**
+(no post-baseline commit touched `cli/portfolio/` or `cli/params/`), which matters for the regression
+below.
+
+| bucket | OLD (batch 8) | NEW (batch 19) | Δ |
+|---|---|---|---|
+| correct | 5,917 | **8,356** | **+2,439** |
+| wrong | 13 | **28** | +15 |
+| unknown | 27 | 358 | +331 |
+| error: frontend, before parse | 14,539 | 7,649 | **−6,890** |
+| error: frontend, after parse | 2,960 | 1,324 | −1,636 |
+| error: solver | 31 | 45 | +14 |
+| TIMEOUT | 10,607 | 16,827 | +6,220 |
+| OUT OF MEMORY | 2,437 | 1,944 | −493 |
+
+**The frontend win is real and large**: crashes nearly halved (17,499 → 8,973, −8,526). Biggest error
+drops by family: Juliet −6,693, hardness −315, termination-memory-alloca −186, nla-digbench-scaling
+−138 (→0), weaver −110, bitvector −52 (→0). Juliet alone accounts for **+3,362 correct**.
+
+### The regression the headline hides: unreach-call correct −950
+
+Per property, correct moved: no-overflow **+2,769**, valid-memsafety +563, valid-memcleanup +24
+(new), termination +21, no-data-race +12, and **unreach-call −950** (3,113 → 2,163). That last is a
+genuine loss, not displacement: **1,119 tasks went correct → TIMEOUT**, concentrated in the
+boolean/input-heavy families — hardness (470) and eca-rers2012 (360). 165 of them solved in **under
+90 s** in the baseline (one in 11 s) and now exhaust 900 s: a 10–60× analysis-time blow-up, not
+near-limit noise. Reproduced locally (the 11 s task runs past 200 s on HEAD).
+
+**Isolation so far:**
+- *Not the parse.* 813/815 sampled regressors have the Portfolio column set — the frontend finished;
+  they time out in the **analysis**.
+- *Not the short-circuit `&&`/`||` change.* It only inserts an `Ite` for operands that carry
+  statements; ECA conditions are pure comparisons, and the generated XCFA keeps them as one flat
+  boolean. Ruled out.
+- *Not profile selection.* 1,114/1,119 kept the same arithmetic profile (FLOAT 374, LIN_INT 290,
+  NONLIN_INT 288, BITWISE 128, …). The portfolio routes them exactly as before.
+- **Multi-cause, spanning every profile.** The prime suspect for the integer profiles is the
+  **range-constraint on havoc** (`7201af3fa`, `TypeRange.kt`): it stamps a `[−2³¹, 2³¹]`-magnitude
+  bound on every nondet input, which is exactly the large-constant material that makes interpolation
+  wander — and the generated XCFA shows it emitted **twice** per nondet (a duplication bug worth
+  fixing regardless). But it is documented as a no-op under bitvector arithmetic, so it **cannot**
+  explain the 128 BITWISE regressors; those point at the other broad post-baseline change, the
+  `Pos()`/`bvpos` wrapping of no-op bitvector casts (`de357dedb`). Confirming this needs a
+  build-and-time experiment (neutralise `withinTypeRange`, and separately the `Pos` wrap, re-time the
+  fast hardness/eca tasks) — **not yet done**.
+
+### Wrong results: 13 → 28 (8 of the old 13 fixed, 5 persisted, 23 newly wrong)
+
+Fixed by this branch: the two `signextension2` bitvector tasks (the U-suffix fix, now **correct**),
+`memleaks_test3-1` (correct), `nondet_struct` (no longer wrong — now an error), and four of the W5
+`valid-deref` cluster moved wrong → **timeout** (hostid, hyperkit_1Fixed, getNumbers1-2, Stockholm-2)
+— unknown scores 0, wrong scores negative, so that is progress.
+
+The 28 split **6 missed bugs / 22 false alarms**. Newly wrong by family: aws-c-common 9 (false
+alarms; PLAN had catalogued 3 — the rest were crashing before), **termination-memory-alloca 5** (a
+**new** false-`valid-deref`/`no-overflow` cluster from the alloca model: easySum-alloca, genady-alloca
+×2 props, java_Nested-alloca, java_Sequence-alloca), memory-model 2SB/4SB (known missed bugs),
+Juliet CWE121 `_66_good` ×2 (known), memsafety/lockfree-3.0 (known), and three genuinely new ones:
+goblint 09-regions (missed race), termination-nla/dijkstra6-both-nt (missed overflow),
+memsafety-cve/admeshFixed (false valid-deref). The two OC tasks (pthread/singleton, goblint
+04-mutex) persist and are **out of scope** (separate PR).
+
+## NEXT UP (queue as of batch 21; benchmark 2026-07-13 re-ranked it)
+
+0. **[NEW, top priority] unreach-call analysis-time regression (−950).** hardness/eca correct →
+   timeout, all profiles. Isolate by neutralising `withinTypeRange` (and separately the `Pos` bvcast
+   wrap) and re-timing the fast regressors; fix the confirmed double-emission of the range assume
+   either way. This is the single largest movement against us and it is a *capability* loss, not a
+   soundness one — but it dwarfs every error class below.
+1. **[NEW] termination-memory-alloca false-alarm cluster (5 wrong).** The alloca model reports a
+   `valid-deref`/`no-overflow` violation on safe programs — a false alarm introduced since the
+   baseline. Worth more than the error classes; investigate before the timeout mass.
 
 1. **The wrong results still open** (batch 18 cleared 11 of 21): **`aws-c-common` ×3** and **`memsafety/lockfree-3.0`** (false alarms, uninvestigated), **`memory-model/{2SB,4SB}`** (missed bugs), and the two Juliet `CWE121_..._66_good` false alarms. Wrong answers are worth more than any error class.
 2. **`realloc` is not modelled** and *crashes* the analysis (`IllegalArgumentException`) — found while checking free.
