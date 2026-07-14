@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
@@ -444,26 +445,40 @@ class FrontendXcfaBuilder(
         }
 
         is RefExpr<*> -> {
+          val lhsType = CComplexType.getType(lValue, parseContext)
           if (
-            (CComplexType.getType(lValue, parseContext) is CPointer ||
-              CComplexType.getType(lValue, parseContext) is CArray ||
-              CComplexType.getType(lValue, parseContext) is CStruct) && rExpression.hasArithmetic()
+            (lhsType is CPointer || lhsType is CArray || lhsType is CStruct) &&
+              rExpression.hasArithmetic()
           ) {
             // A pointer *value* is an object id: memory is `arrays[base][offset]`, so the offset
-            // lives at the dereference, not in the pointer. `p = q + 1` would therefore give `p` an
-            // id of its own, naming a different object entirely -- so it is refused rather than
-            // answered wrongly. (`*(q + 1)` is fine: there the index stays where it belongs.)
-            throw UnsupportedFrontendElementException(
-              "Pointer arithmetic not supported: $lValue = $rExpression"
+            // has nowhere to live in the pointer itself. `p = q + i` is therefore rewritten to
+            // `p = &q[i]` (`ref(deref(q, i))`): ReferenceElimination splits `p` into `p_base` /
+            // `p_offset` and gives the offset a home, exactly as `*(q + i)` keeps the index at the
+            // dereference. This is how CIL spells array and field access (`tmp = base + idx;
+            // *tmp`).
+            // Only a `pointer + integer(s)` shape is handled; anything else -- a pointer
+            // difference,
+            // or a pointer buried under a multiply -- is still refused rather than answered
+            // wrongly.
+            val asReference =
+              rExpression.asPointerArithReference(lhsType, parseContext)
+                ?: throw UnsupportedFrontendElementException(
+                  "Pointer arithmetic not supported: $lValue = $rExpression"
+                )
+            AssignStmtLabel(
+              lValue,
+              cast(asReference, lValue.type),
+              metadata = getMetadata(statement),
+            )
+          } else {
+            // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
+            // pointer-based
+            AssignStmtLabel(
+              lValue,
+              cast(lhsType.castTo(rExpression), lValue.type),
+              metadata = getMetadata(statement),
             )
           }
-          // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
-          // pointer-based
-          AssignStmtLabel(
-            lValue,
-            cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
-            metadata = getMetadata(statement),
-          )
         }
 
         else -> {
@@ -1203,3 +1218,61 @@ private fun Expr<*>.hasArithmetic(): Boolean =
     is MulExpr -> true
     else -> ops.any { it.hasArithmetic() }
   }
+
+/** Every pointer/array-typed leaf reachable in this expression (a pointer *value*, i.e. a base). */
+private fun Expr<*>.pointerLeaves(parseContext: ParseContext): List<Expr<*>> {
+  if (this is RefExpr<*>) {
+    when (CComplexType.getType(this, parseContext)) {
+      is CPointer,
+      is CArray -> return listOf(this)
+      else -> {}
+    }
+  }
+  return ops.flatMap { it.pointerLeaves(parseContext) }
+}
+
+/** This expression with every occurrence of [target] replaced by [replacement]. */
+@Suppress("UNCHECKED_CAST")
+private fun <T : Type> Expr<T>.replaceExpr(target: Expr<*>, replacement: Expr<*>): Expr<T> =
+  if (this == target) replacement as Expr<T>
+  else this.withOps(this.ops.map { (it as Expr<Type>).replaceExpr(target, replacement) }) as Expr<T>
+
+/**
+ * Reads a `pointer + integer(s)` expression as the address of an element -- `q + i` as `&q[i]`,
+ * i.e. `ref(deref(q, i))` -- so it can be assigned to a pointer variable through
+ * [hu.bme.mit.theta.xcfa.passes.ReferenceElimination]'s base/offset split. Subtraction arrives here
+ * as `q + (-i)` (the frontend lowers `-` to `+ neg`), so it is covered too, and the arithmetic may
+ * be wrapped in the bitvector casts CIL emits (`bvadd (extract q 0 32) i`).
+ *
+ * The pointer is the one pointer-typed leaf; the offset is the whole expression with that leaf set
+ * to zero (so any surrounding casts and constants are preserved). Returns null when the shape is
+ * not a single pointer plus an index -- a pointer difference, or no pointer at all -- so the caller
+ * refuses it rather than answering wrongly.
+ */
+@Suppress("UNCHECKED_CAST")
+private fun Expr<*>.asPointerArithReference(
+  ptrType: CComplexType,
+  parseContext: ParseContext,
+): Expr<*>? {
+  val leaves = pointerLeaves(parseContext)
+  if (leaves.size != 1) return null
+  val base = leaves[0]
+  val elemType =
+    when (val baseType = CComplexType.getType(base, parseContext)) {
+      is CPointer -> baseType.embeddedType
+      is CArray -> baseType.embeddedType
+      else -> return null
+    }
+  // The net index: the arithmetic with the pointer contribution removed. Cast to a *signed* long so
+  // subtraction (which arrives as `+ (-i)`) and the accumulated offset of chained arithmetic
+  // compose
+  // to the right value rather than to `2^w - i` under unbounded-integer arithmetic.
+  val zeroedBase = CComplexType.getType(base, parseContext).nullValue
+  val offset = (this as Expr<Type>).replaceExpr(base, zeroedBase)
+  val index = CComplexType.getSignedLong(parseContext).castTo(offset)
+  val deref = Dereference(base as Expr<Type>, index as Expr<Type>, elemType.smtType)
+  parseContext.metadata.create(deref, "cType", CPointer(null, elemType, parseContext))
+  val ref = Reference(deref, ptrType.smtType)
+  parseContext.metadata.create(ref, "cType", ptrType)
+  return ref
+}
