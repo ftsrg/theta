@@ -978,6 +978,38 @@ short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `
 the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
 how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
 
+## Batch 28 — width-preserving casts drop the modulo; a pointer survives a round trip through an integer
+
+**`PassTests[13]` fixed** (`122b74775`). The rebase's one failing test: cir-frontend tightened
+`pthread_create` to require a real procedure as the thread entry, and the DSL already had a
+`siblingProcedures` hook for exactly that — the case just wasn't using it. `thr1` is now registered as
+an (empty) procedure. 28/28.
+
+**A width-preserving cast needs no modulo** (`f87c1976e`, integer `CastVisitor`). A source that can
+never be negative -- an `Unsigned` type, or a `CPointer`, whose value is a non-negative object id --
+and no wider than the target already lies in the target's range, so `Mod(x, 2^w)` is a no-op. It now
+returns `Pos(x)` instead. (A *distinct* `Pos`, not the bare operand: `castTo` records the target type
+on whatever it gets back, and stamping it on the operand itself would overwrite that operand's own
+recorded type -- the aliasing trap `ArrayIndexTypeTest` guards.) Both directions are covered by the
+same six unsigned visits, because `visit(CPointer)` delegates to `getUnsignedLong`.
+
+**A pointer routed through an integer keeps its base and offset** (`d992c8fc4`). With the modulo gone,
+`(unsigned long)p` is a `Pos` no-op, so `ReferenceElimination` now looks through `Pos` when it
+recognises split-variable copies and dereferences. `int *p = &a[3]; unsigned long q = (unsigned long)p;
+int *r = (int *)q; *r = 5;` correctly writes `a[3]` -- the split pointer's *offset* survives the round
+trip. Validated: 6/6 `PointerArithmeticTest`, the 12-case pointer matrix unchanged, sound on the unsafe
+controls, and a **canary diff with byte-identical WRONG/CRASH sets** before and after -- zero regressions.
+
+**Where the CIL files now stop, and what byte offsets would take.** They are past the frontend and now
+fail in `ReferenceElimination` on *"bare use of split variable"*: `(unsigned long)__cil_tmp9 + 8` --
+integer arithmetic on the carried pointer. The blocker is a **units mismatch**, confirmed empirically:
+the model addresses by **element/field index, not bytes**. `&s.c` (third field) yields offset `2`, not
+`8`; `arr[i].c` is `(deref arr i)[2]`. So CIL's `+ 8` (a struct field's *byte* offset) cannot be composed
+with an element offset. Making it work means carrying the offset in **bytes** and converting at every
+dereference -- array index × `sizeof(elem)`, struct field → its byte offset (needing a per-struct layout
+table with padding/alignment), then resolving back to the `__arrays_T[base][index]` form. That is a
+change to offset semantics across the frontend, the passes and the memory model, not a local fix.
+
 ## Batch 27 — rebased onto `origin/cir-frontend`; pointer `+`/`-` now modeled
 
 The branch was rebased onto `origin/cir-frontend` (which brings address-of-interim values and cir2c).
