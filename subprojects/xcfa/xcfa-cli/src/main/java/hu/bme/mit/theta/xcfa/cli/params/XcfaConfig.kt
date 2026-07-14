@@ -177,13 +177,13 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
-  @Parameter(names = ["--use-cir"], description = "Use ClangIR to preprocess files")
-  var useCir: Boolean = false,
+  @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
+  var useCir2c: Boolean = false,
   @Parameter(
-    names = ["--cir-dir", "--cir-directory"],
-    description = "Folder with clang and mapper binaries",
+    names = ["--cir2c-dir", "--cir2c-directory"],
+    description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
   )
-  var cirDir: File = File("./clang/bin"),
+  var cir2cDir: File = File("./cir2c"),
 ) : SpecFrontendConfig
 
 /** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
