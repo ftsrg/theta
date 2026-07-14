@@ -493,7 +493,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     when (this) {
       is AssignStmt<*> -> changeComplexAssign(splitVars)
       is MemoryAssignStmt<*, *, *> -> {
-        val hasSplitRefs = deref.containsSplitRefs(splitVars) || expr.containsSplitRefs(splitVars)
+        // A split variable in the stored *value* is a pointer being written to memory, whose base
+        // and offset go to two separate memory channels. A split variable in the *address* is only
+        // the pointer we write through: `deref.changeComplexReferredVars` (below) already folds it
+        // to `deref(base, offset)`, so it must not be channel-split -- otherwise `*p = 5` would
+        // write to both `p_base[0]` and `deref(p_offset, 0)` (i.e. to whatever object id the offset
+        // happens to equal) instead of the single cell `deref(p_base, p_offset)`.
+        val hasSplitRefs = expr.containsSplitRefs(splitVars)
 
         if (hasSplitRefs) {
           val baseDeref =
@@ -560,8 +566,25 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     if (rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *>) {
       val split = splitVars[lhs] ?: error("Split vars not found for ${lhs.name}")
       val deref = rhs.expr as Dereference<*, *, *>
-      val baseExpr = deref.array.changeComplexReferredVars(splitVars)
+      val array = deref.array
       val offsetExpr = deref.offset.changeComplexReferredVars(splitVars)
+      if (array is RefExpr<*> && array.decl in splitVars.keys) {
+        // Chained pointer arithmetic: the base is itself a split pointer, as in `p = q + i` after
+        // `q = r + j`. Compose rather than re-address -- `p_base = q_base`, `p_offset = q_offset +
+        // i` -- so the offset accumulates instead of the bare split `q` being used as an address.
+        val src = splitVars[array.decl]!!
+        return listOf(
+          AssignStmt.of(cast(split.base, split.base.type), cast(src.base.ref, split.base.type)),
+          AssignStmt.of(
+            cast(split.offset, split.offset.type),
+            cast(
+              Add(cast(src.offset.ref, split.offset.type), cast(offsetExpr, split.offset.type)),
+              split.offset.type,
+            ),
+          ),
+        )
+      }
+      val baseExpr = array.changeComplexReferredVars(splitVars)
       return listOf(
         AssignStmt.of(cast(split.base, split.base.type), cast(baseExpr, split.base.type)),
         AssignStmt.of(cast(split.offset, split.offset.type), cast(offsetExpr, split.offset.type)),
