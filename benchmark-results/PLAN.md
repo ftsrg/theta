@@ -978,6 +978,40 @@ short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `
 the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
 how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
 
+## Batch 29 — the rebase silently disabled unsigned wraparound (root cause of the "canary regression")
+
+The post-rebase canary looked like it had lost ~13 tasks. Most of that was **my harness** (`canary_full.sh`
+flagged a CRASH on any exception text, but a portfolio catching a config's failure and recovering is
+normal -- fixed to classify on the final verdict). Under it were four real, rebase-introduced bugs, now
+fixed, plus one perf regression left open:
+
+1. **`CComplexType.castTo` short-circuit (the root cause), `1769bd2ff`.** cir-frontend added
+   `if (getType(expr).equals(this)) return expr;` to `castTo`. But a cast is not a no-op merely because
+   the recorded type matches: it is what holds a value in range. `unsigned + unsigned` is *typed*
+   unsigned, yet its value stands one past the maximum until the cast's modulo wraps it -- and the
+   additive visitor stamps the sum with its result type *before* casting. So the short-circuit skipped
+   the wraparound modulo and **`UINT_MAX + 1` stopped coming back to 0** -- every unsigned wraparound
+   silently broke (e.g. `cancel_var_through_overflow`). Fixed: skip only when `!isArithmetic(expr)`.
+   `CastVisitor.widthPreserving` was likewise tightened to skip the modulo only for a value that cannot
+   leave its range (`049b71020`) -- an *arithmetic result* still needs it.
+2. **`deepCopy` empty-identifier suffix, `09922ef11`.** `it.copy(name = "${it.name}_$identifier")` with an
+   empty identifier made `__THETA_bad_deref` into `__THETA_bad_deref_`, so every memsafety violation found
+   by a monolithic backend threw "Could not determine subproperty". Also matched by prefix now in
+   `LtlPropertyFromTrace` (`6cfbe4bd6`), since a per-thread copy legitimately yields `__THETA_bad_deref_0`.
+3. **`OverflowDetectionPass` bare `StmtLabel`, `48566dabf`.** Its overflow->error edge was a bare
+   `StmtLabel` while everything downstream wants a `SequenceLabel` (`splitIf` asserts it); cir-frontend's
+   frontend started producing programs that hit that branch, crashing bresenham/nla tasks with no verdict.
+
+Two things I tried and **reverted**, because the root-cause fix subsumed them: stepwise n-ary overflow
+checks (`AdditionIntMax` is caught anyway once the arithmetic is no longer folded away, and they cost
+performance), and a `SimplifyExprsPass` `inputProperty` guard (it disabled essential loop-constant folding
+and timed out `flag_loopdep`; the pre-rebase `verifiedProperty` behavior is right).
+
+**Canary: 142/143.** The remaining task, `recursified_nla-digbench/recursified_geo1-u.c` (no-overflow), is
+a **performance regression from cir-frontend's frontend**: 22s pre-rebase, >240s now. Not from these
+fixes (they do *fewer* casts than pre-rebase). Left for the full-benchmark data to size -- an
+arithmetic-heavy recursive task whose rebased model is materially harder.
+
 ## Batch 28 — width-preserving casts drop the modulo; a pointer survives a round trip through an integer
 
 **`PassTests[13]` fixed** (`122b74775`). The rebase's one failing test: cir-frontend tightened
