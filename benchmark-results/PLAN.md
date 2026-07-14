@@ -716,9 +716,10 @@ near-limit noise. Reproduced locally (the 11 s task runs past 200 s on HEAD).
 **Isolation so far:**
 - *Not the parse.* 813/815 sampled regressors have the Portfolio column set — the frontend finished;
   they time out in the **analysis**.
-- *Not the short-circuit `&&`/`||` change.* It only inserts an `Ite` for operands that carry
-  statements; ECA conditions are pure comparisons, and the generated XCFA keeps them as one flat
-  boolean. Ruled out.
+- ~~*Not the short-circuit `&&`/`||` change.*~~ **This was wrong** (see batch 23): `git bisect` found
+  `89020cef2` — the short-circuit commit — to be the *first bad commit*, for every profile. I had
+  ruled it out from a hand-made example whose operands were unparenthesised, which is precisely the
+  case that does not trigger it. **A negative result from a synthetic test is not evidence.**
 - *Not profile selection.* 1,114/1,119 kept the same arithmetic profile (FLOAT 374, LIN_INT 290,
   NONLIN_INT 288, BITWISE 128, …). The portfolio routes them exactly as before.
 - **Multi-cause, spanning every profile.** The prime suspect for the integer profiles is the
@@ -784,6 +785,70 @@ the two NONLIN regressors recover to correct **Safe** (3 s, 81 s); **canary 143/
 `--svcomp --portfolio STABLE` (no verdict flips — expected, since the change only removes a redundant
 identical assume).
 
+## IMPLEMENTATION STATUS — batch 23 (the rest of the regression: a guard on operands that do nothing)
+
+Commit: `only short-circuit an operand that does something`.
+
+Batch 22 left FLOAT (~374) and BITWISE (~128) unexplained. **`git bisect` settled it** (harness:
+`scratchpad/bisect_test.sh`, builds each candidate and times `file-83`/`file-114` under
+`--portfolio STABLE`; log in `scratchpad/bisect.log`):
+
+```
+de357dedb  FLOAT=CAP    BITWISE=CAP
+a1a25d0eb  FLOAT=CAP    BITWISE=CAP
+5ec80d8d0  FLOAT=Safe/4s  BITWISE=Safe/8s   <- good
+7201af3fa  FLOAT=CAP    BITWISE=CAP
+8ef2e2975  FLOAT=CAP    BITWISE=CAP
+89020cef2  FLOAT=CAP    BITWISE=CAP        <- first bad
+```
+
+**`89020cef2` "evaluate the operands of && and || under their short-circuit" is the first bad commit**,
+for *both* profiles. (I had "ruled it out" in batch 21 from a synthetic test that was too simple —
+a reminder that a negative result from a hand-made example is not evidence.)
+
+### The bug
+
+`guardShortCircuited` took *"did `preStatements` grow?"* as its signal for "this operand has side
+effects, so it must go behind the short-circuit". But a statement lands in `preStatements` for
+reasons that have nothing to do with side effects: **`visitPrimaryExpressionBraceExpression` lifts one
+for every parenthesised sub-expression.** So `(a >= 1) && (a <= 2)` — pure — got a guard, and the
+guard is a *branch*: the XCFA went from one straight-line edge to a two-armed split **whose arms were
+identical**. `(a && b) || (c && d)` is exactly how SV-COMP writes `assume_abort_if_not`, and file-83
+has four of them: 2⁴ paths, 11 s → timeout.
+
+Confirmed minimally: `a >= -100 && a <= -1` does **not** grow the model; `(a >= -100) && (a <= -1)`
+does (2 nodes/1 edge → 3/3).
+
+### The fix
+
+Guard an operand only when its lifted statements *do* something — a call, an assignment — which is
+what the commit's own doc says it is for ("calls do"). A bare expression is only there because it was
+parenthesised, and running it either way is unobservable. The predicate must look in each statement's
+`getPreStatements()`/`getPostStatements()` slots too: **that is where a parenthesised call keeps its
+call**, and a first version that missed them silently un-guarded `(a != 0) && (bump())` — reintroducing
+the very wrong result `89020cef2` had fixed. The negative control caught it.
+
+### Result — every regressor recovers, and beats the baseline
+
+| profile | task | baseline | HEAD (broken) | fixed |
+|---|---|---|---|---|
+| FLOAT | `..._operatoramount_..._file-83` | 11 s | timeout | **6 s** |
+| FLOAT | `..._operatoramount_..._file-42` | 14 s | timeout | **5 s** |
+| BITWISE | `..._floats_no_floats_file-114` | 30 s | timeout | **8 s** |
+| BITWISE | `..._floats_no_floats_file-68` | 36 s | timeout | **16 s** |
+| NONLIN_INT | `..._codemodifications_..._file-56` | 21 s | timeout | **7 s** |
+| NONLIN_INT | `mod3.c.v+sep-reducer` | 13 s | timeout | **3 s** |
+
+All **Safe** (correct). So the short-circuit bug was the dominant cause across *every* profile — the
+batch-22 range de-dup is still right and still needed (it is what took `file-56` from timeout to 81 s
+on its own), but this is what takes them all below the baseline. **The −950 unreach-call regression
+should be gone, and then some.**
+
+Validation: new **`ShortCircuitTest`** pins both directions — a parenthesised *comparison* must add no
+branch, a parenthesised *call* must still be guarded — and **fails on the unfixed code** (verified by
+reverting). Canary **143/143**; `theta-c-frontend`, `theta-c2xcfa`, `theta-xcfa` suites and
+`spotlessApply` green.
+
 ## INVESTIGATION — the "alloca" false alarms are not about alloca (batch 21 wrong-result cluster)
 
 The five `termination-memory-alloca` false-`valid-deref` results reduce to a **general pointer bug,
@@ -814,9 +879,17 @@ fixed**: the fix touches pointer/deref value-analysis where a wrong change risks
 wants a focused pass-level investigation rather than a guess. This is a real missed-alarm-direction
 concern only in that it *invents* violations (false positives), never hides them.
 
-## NEXT UP (queue as of batch 22)
+## NEXT UP (queue as of batch 23)
 
-0. **[NEW, top priority] unreach-call analysis-time regression (−950).** hardness/eca correct →
+0. ~~**unreach-call analysis-time regression (−950)**~~ — **DONE** (batches 22 + 23): the doubled
+   range assume and the short-circuit guard on pure operands. All six sampled regressors now solve
+   *faster than the batch-8 baseline*. The next full run should confirm the −950 is recovered.
+0b. **[TOP] the pointer-in-loop false `valid-deref`** (see the investigation below) — a safe program
+   is reported Unsafe whenever a pointer's pointee is written inside a loop. Wrong answers outrank
+   everything else in this queue.
+
+*(stale, kept for the record:)*
+0c. hardness/eca correct →
    timeout, all profiles. Isolate by neutralising `withinTypeRange` (and separately the `Pos` bvcast
    wrap) and re-timing the fast regressors; fix the confirmed double-emission of the range assume
    either way. This is the single largest movement against us and it is a *capability* loss, not a
