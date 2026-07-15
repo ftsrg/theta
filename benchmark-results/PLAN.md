@@ -1029,8 +1029,10 @@ and timed out `flag_loopdep`; the pre-rebase `verifiedProperty` behavior is righ
 
 **Canary: 142/143.** The remaining task, `recursified_nla-digbench/recursified_geo1-u.c` (no-overflow), is
 a **performance regression from cir-frontend's frontend**: 22s pre-rebase, >240s now. Not from these
-fixes (they do *fewer* casts than pre-rebase). Left for the full-benchmark data to size -- an
-arithmetic-heavy recursive task whose rebased model is materially harder.
+fixes (they do *fewer* casts than pre-rebase), and **property-independent** -- it also times out as
+`unreach-call`, so it is the *base model* cir-frontend now builds for this recursive nonlinear-arithmetic
+task, not overflow instrumentation. Likely affects the `recursified_nla-digbench` family broadly; left for
+the full-benchmark data to size (a `git bisect` across cir-frontend's history would pin the exact commit).
 
 ## Batch 28 — width-preserving casts drop the modulo; a pointer survives a round trip through an integer
 
