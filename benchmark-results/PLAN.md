@@ -950,8 +950,11 @@ when a 64-bit local exceeds 2^32 was reported **Safe**; now correctly Unsafe), a
 arithmetic the other arm asserts about (the aws false alarm). Fixed by giving each arm its own scope
 (`inOwnScope("then"/"else", …)`); `if` is the only construct with two sibling arms (`while`/`for`/
 `switch` bodies are a single block, so their one scope is right). Pinned by `BranchScopeTest` (fails
-with the fix removed). **Suspect this was also behind some of the batch-32 unsound missed bugs** — check
-`memsafety-ext3/{scopes1,getNumbers1-1}` on the next run.
+with the fix removed). **Checked, and it is NOT the cause of the batch-32 missed bugs** (I suspected it
+would be, from the name `scopes1`): after the fix `memsafety-ext3/scopes1` and `memsafety/cmp-freed-ptr`
+and `ldv-regression/test22-2` are still `got=true want=false`, and `memsafety-ext3/getNumbers1-1` now
+errors. Those four are a separate, still-unexplained soundness hole — do not re-attribute them to
+branch scoping.
 
 A first attempt — disambiguating colliding flat names in `createVars` — was **reverted**: it never
 fired, because the two arms share the scope *map*, so the second declaration takes the `containsKey`
