@@ -492,15 +492,36 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
         parseContext.getCStmtCounter().incrementBranches();
         variables.push(Tuple2.of("if" + anonCnt++, new LinkedHashMap<>()));
-        CIf cIf =
-                new CIf(
-                        ctx.expression().accept(this),
-                        ctx.statement(0).accept(this),
-                        ctx.statement().size() > 1 ? ctx.statement(1).accept(this) : null,
-                        parseContext);
+        CStatement condition = ctx.expression().accept(this);
+        // Each arm is a scope of its own. A brace-enclosed arm does not open one itself --
+        // `visitBlockItemList` only does that for a block nested directly in another block -- so
+        // without this both arms share the `if` scope, and a name declared in both is one variable
+        // wearing two C types: the second declaration finds the first in the scope map, reuses its
+        // VarDecl, and then overwrites the recorded `cType`. Every use, in *either* arm, is then
+        // typed by whichever arm was visited last. `if (c) { uint64_t a; } else { uint32_t a; }` --
+        // how aws-c-common writes its 64/32-bit harness pairs -- so narrows the 64-bit arm to 32
+        // bits: its values silently stop being able to exceed 2^32, which both hides real bugs and
+        // breaks the arithmetic the other arm asserts.
+        CStatement thenArm = inOwnScope("then", ctx.statement(0));
+        CStatement elseArm =
+                ctx.statement().size() > 1 ? inOwnScope("else", ctx.statement(1)) : null;
+        CIf cIf = new CIf(condition, thenArm, elseArm, parseContext);
         recordMetadata(ctx, cIf);
         variables.pop();
         return cIf;
+    }
+
+    /**
+     * Visits a statement with a scope of its own, so its declarations cannot collide with a
+     * sibling's.
+     */
+    private CStatement inOwnScope(String kind, CParser.StatementContext statement) {
+        variables.push(Tuple2.of(kind + anonCnt++, new LinkedHashMap<>()));
+        try {
+            return statement.accept(this);
+        } finally {
+            variables.pop();
+        }
     }
 
     @Override

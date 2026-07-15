@@ -33,9 +33,9 @@ import org.junit.jupiter.api.Test
  * A pointer parameter that is incremented (`s++`) gets split by
  * [hu.bme.mit.theta.xcfa.passes.ReferenceElimination] into a `base`/`offset` pair. That pass runs
  * per-procedure, *before* inlining, so it never sees the call binding `s = arg`. If it splits the
- * parameter without seeding the halves, `s_base`/`s_offset` enter the procedure unconstrained -- the
- * solver then picks an out-of-range offset and walks off the object, a false `valid-deref` on every
- * `str*`-style callee (the whole array-memsafety/termination `alloca` string cluster).
+ * parameter without seeding the halves, `s_base`/`s_offset` enter the procedure unconstrained --
+ * the solver then picks an out-of-range offset and walks off the object, a false `valid-deref` on
+ * every `str*`-style callee (the whole array-memsafety/termination `alloca` string cluster).
  *
  * The fix seeds the halves at the entry from the still-bound parameter (`s_base = s`, `s_offset =
  * 0`). Since the offset is only ever otherwise assigned `offset + 1` (the increment), an assignment

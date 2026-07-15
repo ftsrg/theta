@@ -919,6 +919,47 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 33 — the aws saturating cluster: two independent bugs, one of them an unsoundness that hid real bugs
+
+Chasing the batch-32 `aws-c-common` false alarms turned up **two unrelated bugs**, both fixed; the
+`aws_add_size_saturating_harness` needed *both* and is now **OK** (was wrong).
+
+**1. `__builtin_uadd*_overflow` took its width from `res`, not from its own name**
+(`ExpressionVisitor.unsignedOverflowBuiltin`). The typed builtins fix their width by name — `uadd` is
+`unsigned int`, `uaddl` `unsigned long`, `ll` `unsigned long long` — but the model read it from
+`pointer.getEmbeddedType()`, i.e. from `res`. aws-c-common's `aws_add_u32_saturating` writes a 32-bit
+`__builtin_uadd_overflow` through an `unsigned long c`, so the addition was carried out in **64 bits,
+where two 32-bit operands can never overflow**: the call always answered "no overflow", the saturating
+result disagreed with the caller's own `a > UINT32_MAX - b`, and the assertion false-alarmed. Fixed by
+passing the builtin's own `CComplexType` per case; the wrapped result is truncated to that width and
+then cast to `res`'s type for the store. Pinned by `OverflowBuiltinWidthTest` (the flag is
+`overflow := wrapped_sum < a`, so the modulus the sum wraps at *is* the width — asserted 2^32 for
+`uadd`, with `uaddl`/2^64 as the control; fails with the fix removed).
+
+**2. ⚠️ Both arms of an `if` shared one scope — an UNSOUNDNESS, not just a false alarm**
+(`FunctionVisitor.visitIfStatement`). `visitIfStatement` pushed a single `if<N>` scope and visited
+*both* arms inside it, and a brace-enclosed arm does not open a scope of its own (`visitBlockItemList`
+only does that for a block nested directly in another block). So a name declared in both arms was **one
+variable wearing two C types**: the second declaration found the first in the scope map, reused its
+`VarDecl`, and overwrote the recorded `cType`. Every use — in *either* arm — was then typed by whichever
+arm was visited last. For `if (c) { uint64_t a; } else { uint32_t a; }` (exactly how aws-c-common writes
+its 64/32-bit harness pairs) the 64-bit arm was **narrowed to 32 bits**: `main::if0::a` was assigned
+`(mod nondet_ulong 4294967296)`. That is unsound in both directions — a 64-bit value silently stops
+being able to exceed 2^32, **hiding real bugs** (minimal repro: a program that reaches an error only
+when a 64-bit local exceeds 2^32 was reported **Safe**; now correctly Unsafe), and it corrupts the
+arithmetic the other arm asserts about (the aws false alarm). Fixed by giving each arm its own scope
+(`inOwnScope("then"/"else", …)`); `if` is the only construct with two sibling arms (`while`/`for`/
+`switch` bodies are a single block, so their one scope is right). Pinned by `BranchScopeTest` (fails
+with the fix removed). **Suspect this was also behind some of the batch-32 unsound missed bugs** — check
+`memsafety-ext3/{scopes1,getNumbers1-1}` on the next run.
+
+A first attempt — disambiguating colliding flat names in `createVars` — was **reverted**: it never
+fired, because the two arms share the scope *map*, so the second declaration takes the `containsKey`
+reuse path rather than creating a fresh (collidable) name. The scope, not the name, was the bug.
+
+**Still open in the aws cluster:** the ~10 `aws_byte_buf_*` / `aws_byte_cursor_*` harnesses remain
+wrong — a distinct, unexplored cause (buffer/pointer harnesses, not saturating arithmetic).
+
 ## Batch 32 — full post-rebase re-run (`2026-07-15_00-23`, base `6cfbe4bd6`) analyzed; the wrong-count tripled and one root cause explains most of it
 
 Retrieved from `benchcloud:results/Theta-svcomp/theta27-short.xml/2026-07-15_00:23:24` (55 result

@@ -31,11 +31,11 @@ import org.junit.jupiter.api.Test
  * into a single condition and the pass threads each operand's short-circuit guard through as
  * `Ite(reached, arith, 0)` -- the operand overflows only when it is actually evaluated. The integer
  * encoding range-checks the whole `Ite` (0 is in range), but the *bitvector* encoding has to
- * reconstruct the overflow from the operands, which sit inside the `then` branch, and it used to see
- * only the `Ite` and give up -- silently dropping the check. `P1 & (P1 - 1)` (a power-of-two test
- * folded into a bitwise expression, so the whole program is analysed with bitvectors) then overflows
- * unreported at `P1 == INT_MIN`, and a real bug was proved Safe. This pins that the folded operand
- * still gets an overflow check.
+ * reconstruct the overflow from the operands, which sit inside the `then` branch, and it used to
+ * see only the `Ite` and give up -- silently dropping the check. `P1 & (P1 - 1)` (a power-of-two
+ * test folded into a bitwise expression, so the whole program is analysed with bitvectors) then
+ * overflows unreported at `P1 == INT_MIN`, and a real bug was proved Safe. This pins that the
+ * folded operand still gets an overflow check.
  */
 class OverflowShortCircuitTest {
 
@@ -67,7 +67,8 @@ class OverflowShortCircuitTest {
   @DisplayName("a signed subtraction folded into a bitwise condition is still overflow-checked")
   fun foldedBitwiseSubtractionIsChecked() {
     // `a - 1` sits inside `a & (a - 1)`, whose `&` makes the whole program bitvector-analysed, and
-    // the `1 && (... || 0)` wrapping folds it behind a short-circuit guard. It overflows at INT_MIN,
+    // the `1 && (... || 0)` wrapping folds it behind a short-circuit guard. It overflows at
+    // INT_MIN,
     // so the error location must be reachable.
     assertTrue(
       overflowChecks("if ( 1 && ((((a & (a - 1)) == 0)) || 0) ) { return 1; }") > 0,

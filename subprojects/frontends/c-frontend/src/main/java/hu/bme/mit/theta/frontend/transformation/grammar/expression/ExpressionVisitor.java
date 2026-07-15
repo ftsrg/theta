@@ -1166,15 +1166,29 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_bswap16", "__builtin_bswap32", "__builtin_bswap64" -> {
                 return byteSwap(args, Integer.parseInt(name.substring("__builtin_bswap".length())));
             }
-            case "__builtin_uadd_overflow",
-                    "__builtin_uaddl_overflow",
-                    "__builtin_uaddll_overflow" -> {
-                return unsignedOverflowBuiltin(args, true);
+            case "__builtin_uadd_overflow" -> {
+                return unsignedOverflowBuiltin(
+                        args, true, CComplexType.getUnsignedInt(parseContext));
             }
-            case "__builtin_umul_overflow",
-                    "__builtin_umull_overflow",
-                    "__builtin_umulll_overflow" -> {
-                return unsignedOverflowBuiltin(args, false);
+            case "__builtin_uaddl_overflow" -> {
+                return unsignedOverflowBuiltin(
+                        args, true, CComplexType.getUnsignedLong(parseContext));
+            }
+            case "__builtin_uaddll_overflow" -> {
+                return unsignedOverflowBuiltin(
+                        args, true, CComplexType.getUnsignedLongLong(parseContext));
+            }
+            case "__builtin_umul_overflow" -> {
+                return unsignedOverflowBuiltin(
+                        args, false, CComplexType.getUnsignedInt(parseContext));
+            }
+            case "__builtin_umull_overflow" -> {
+                return unsignedOverflowBuiltin(
+                        args, false, CComplexType.getUnsignedLong(parseContext));
+            }
+            case "__builtin_umulll_overflow" -> {
+                return unsignedOverflowBuiltin(
+                        args, false, CComplexType.getUnsignedLongLong(parseContext));
             }
             default -> {
                 // The remaining __builtin_ classification/comparison functions have no declaration
@@ -1318,9 +1332,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      *
      * <p>The overflow flag is captured into a temporary <em>before</em> the result is stored, so
      * that the model stays correct when {@code res} points at one of the operands.
+     *
+     * <p>The width the overflow is computed at is fixed by the builtin's name -- {@code
+     * uadd}/{@code umul} are {@code unsigned int}, {@code uaddl}/{@code umull} are {@code unsigned
+     * long}, the {@code ll} forms are {@code unsigned long long} -- and is <em>not</em> read from
+     * {@code res}. A caller may legitimately pass a wider {@code res} (aws-c-common writes a 32-bit
+     * {@code __builtin_uadd_overflow} through an {@code unsigned long}); taking the width from
+     * {@code res} then computes the addition in 64 bits, where two 32-bit operands can never
+     * overflow, and the call wrongly reports "no overflow" -- a false {@code unreach-call} across
+     * the whole aws saturating-arithmetic suite. The wrapped result is truncated to the builtin's
+     * width, then cast to {@code res}'s type for the store.
      */
     private Expr<?> unsignedOverflowBuiltin(
-            List<AssignmentExpressionContext> args, boolean isAddition) {
+            List<AssignmentExpressionContext> args, boolean isAddition, CComplexType type) {
         if (functionVisitor == null || args.size() != 3) {
             return null;
         }
@@ -1330,7 +1354,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (!(CComplexType.getType(resultPointer, parseContext) instanceof CPointer pointer)) {
             return null;
         }
-        CComplexType type = pointer.getEmbeddedType();
+        CComplexType storeType = pointer.getEmbeddedType();
 
         Expr<?> left = typed(type.castTo(a), type);
         Expr<?> right = typed(type.castTo(b), type);
@@ -1364,13 +1388,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 new CAssignment(
                         flag.getRef(), new CExpr(flagValue, parseContext), "=", parseContext));
 
+        Expr<?> stored = typed(storeType.castTo(wrapped), storeType);
         Expr<?> target =
                 dereference(
                         resultPointer,
                         CComplexType.getUnsignedLong(parseContext).getNullValue(),
-                        type);
+                        storeType);
         preStatements.add(
-                new CAssignment(target, new CExpr(wrapped, parseContext), "=", parseContext));
+                new CAssignment(target, new CExpr(stored, parseContext), "=", parseContext));
         return flag.getRef();
     }
 
