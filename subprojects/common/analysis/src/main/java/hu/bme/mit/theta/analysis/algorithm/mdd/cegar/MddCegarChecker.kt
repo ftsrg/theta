@@ -63,6 +63,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
@@ -83,7 +84,7 @@ constructor(
     PredPrec.of(listOf(model.propExpr, model.initExpr))
   },
   private val precRefiner: PrecRefiner<PredState, ExprAction, PredPrec, ItpRefutation> =
-    JoiningPrecRefiner.create(ItpRefToPredPrec(ExprSplitters.whole())),
+    JoiningPrecRefiner.create(ItpRefToPredPrec(ExprSplitters.atoms())),
   private val useReachConstraint: Boolean = true,
   private val useOnTheFlyReachability: Boolean = false,
   private val traceTimeout: Long = 10,
@@ -208,6 +209,7 @@ constructor(
 
       val refutation = res.asInfeasible().refutation
       currentPrec = precRefiner.refine(currentPrec, predTrace, refutation)
+      currentPrec = PredPrec.of(currentPrec.preds.filter { ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any() })
 
       prevStateSpace = iter.stateSpace
     }
