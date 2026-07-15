@@ -919,6 +919,73 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 35 — the struct model gives every object its own storage: nested fields get a base, assignment copies
+
+Two bugs, both from the same root: **a struct's identity is its base id, and only *declared* struct
+variables were ever given one.** Both are fixed; both are pre-existing, neither is OC or `&expr`.
+
+### 35a — a struct-typed *field* had no storage (`FrontendXcfaBuilder.giveStructObjectStorage`)
+
+`s.f` reads `__arrays_T[s][i]`, so a field that is itself a struct holds a base id in turn (`o.in.x`
+is `__arrays[__arrays[o][0]][0]`). `ptrCnt` (whose getter self-increments, `3k+1`) seeded only the
+top-level variables, leaving every *inner* struct's base **unconstrained** — free for the solver to
+pick, including a value already in use:
+
+```c
+struct Out o, p;  o.in.x = 1;  p.in.x = 2;   /* distinct objects */
+__VERIFIER_assert(o.in.x == 1);              /* -> was Unsafe: o.in and p.in aliased */
+```
+
+Unsound in *both* directions: a write through one object surfaces in an unrelated one (false alarm),
+and two objects the program keeps apart can be conflated (hides real bugs). The flat control
+(`o.y`/`p.y`) was Safe throughout, which is what localised it to the *nested* level. Fix: recurse
+through struct-typed fields at init, seeding a fresh base (and, under memsafety, a size) for each.
+C has no struct containing itself by value, so the recursion terminates. Unions are left alone —
+their members all start at offset 0, so an index-wise walk does not describe their layout.
+Pinned by `NestedStructStorageTest` (two objects ⇒ two *distinct* seeds).
+
+### 35b — struct assignment aliased instead of copying (`FrontendXcfaBuilder.structCopy`)
+
+With identity == base id, `b = a` assigned *a's base* to `b`: the two names then denoted one object.
+
+```c
+struct T a, b;  a.len = 1;  b = a;  a.len = 2;
+__VERIFIER_assert(b.len == 1);   /* -> was Unsafe */
+```
+
+Fix: emit a write per field (`arrays[b][i] := arrays[a][i]`) instead of the base assignment, in
+`visit(CAssignment)`'s `RefExpr` branch — the one place both the statement form and the copy-init
+form (batch 34's `emitInitAssignment`) go through. The copy is **deep**: a struct field is a
+subobject, so its contents are copied and the destination keeps the base 35a gave it; copying the
+base instead would reintroduce 35a one level down. Dispatch requires the RHS to be *the same*
+`CStruct`, so an expression whose `cType` was lost falls back to the old assignment rather than
+being walked as if it had fields. Pinned by `StructCopyTest` (both forms; asserts a write per field,
+target base ≠ source base).
+
+**Effect.** `salias.c`/`salias2.c` (both forms) Unsafe → **Safe**. The aws cluster that started this:
+`aws_byte_cursor_from_array_harness` now verifies **Safe** (correct) — it needs ~5 min, well inside
+SV-COMP's 900 s but past a 120 s probe, which is why a short probe reads as "no verdict". Canary
+255/255 for 35a (the 6 reported ERRORs were load flakes — all OK re-run sequentially).
+
+Negative controls all hold, i.e. the fixes are not vacuously making things Safe: a real post-copy bug
+is still Unsafe (`copy_neg`), a real nested bug is still Unsafe (`nested_neg`), genuine pointer
+aliasing still aliases (`copy_ptr`, `struct T *p = &a`), writing the copy leaves the source alone
+(`copy_back`), all fields of mixed width come across (`copy_multi`), and the deep copy holds
+(`copy_nested`, 3-level `nested_deep`, sibling `nested_sibling`).
+
+### Known gaps in the same area (documented, not fixed)
+
+1. **An array field is copied as its base** — `struct S { int a[4]; }; b = a;` shares the elements
+   rather than duplicating them. Same shape as 35a one type over: nothing gives an array *field*
+   storage of its own to copy into (a local array gets its base from the malloc `FunctionVisitor`
+   rewrites it to; a field gets nothing). Strictly better than the pre-fix whole-struct alias, but
+   still wrong.
+2. **A struct *parameter* is passed by reference, not by value** — struct params are excluded from
+   seeding (they take the caller's base), so a callee's writes to a by-value struct parameter leak
+   back to the caller's object. Same fix shape as 35b (copy at the call), and the natural next step.
+3. **A struct field inside malloc'd memory** has the 35a problem with no declaration to hang the
+   seed on (`p = malloc(sizeof(struct Out)); p->in.x = 1;`). Needs the object model, not a seed.
+
 ## Batch 34 — `struct S s = <expr>;` never copied anything
 
 Chasing the remaining `aws-c-common` `byte_buf`/`byte_cursor` false alarms. Minimal repro is five
