@@ -975,8 +975,43 @@ operands were **not** caught: their `P1-1` is folded into the operand *value* (a
 `Ite(And(collect),…)`), so guarding the operand's *statements* cannot un-fold it. The real fix lives at
 the expression level — PLAN.md l.266 notes `OverflowDetectionPass.getExpressions` already threads a
 short-circuit condition through `AndExpr`/`OrExpr` and wraps a guarded expr as `Ite(cond, expr, 0)`;
-the folding introduced by `35dde5041` is defeating that threading. **Open — needs a focused look at
-how the unguarded-operand folding interacts with `OverflowDetectionPass`, not another predicate tweak.**
+the folding introduced by `35dde5041` is defeating that threading. ~~Open~~ **RESOLVED in batch 31 —
+the guess above was right about *where* (the `Ite(cond, expr, 0)` threading) but wrong about *why*:
+the threading works, it was the *bitvector* overflow encoding that could not read through the `Ite`.**
+
+## Batch 31 — the psyco soundness regression, fixed at the real cause: `bvOverflowCondition` couldn't see through the short-circuit `Ite`
+
+The `correct → wrong` from batch 25 (`psyco/psyco_math_1` no-overflow, a real signed overflow on
+`P1 - 1` proved `Safe`). Root-caused end to end and fixed in **`BvOverflow.kt`**; `35dde5041` was the
+*trigger*, not the bug, and the batch-29 `castTo` fix is **innocent** (the earlier hypothesis that it
+stripped the operand's `cType` was wrong — instrumented the debug and the `bvadd` still carries
+`cType=CSignedInt`).
+
+**The actual mechanism.** `OverflowDetectionPass.getExpressions` threads each `&&`/`||` operand's
+short-circuit guard through and, when it finds a signed arithmetic expr under a non-trivial guard,
+adds `Ite(reached, arith, 0)` to the set instead of the bare `arith` (the operand — and its overflow
+— is reached only when `reached` holds). The **integer** branch handles this: it range-checks the
+whole `Ite` with the limit visitor (the `else` 0 is trivially in range). The **bitvector** branch
+(`bvOverflowCondition`) reconstructs the overflow from the *operands* by redoing the op one bit wider
+— but the operands sit inside the `Ite`'s `then`, and the function's `when` had no `IteExpr` case, so
+it hit `else -> null` and the check was **silently dropped**. `P1 & (P1 - 1)` makes the whole program
+bitvector-analysed (the `&`), and the `1 && (… || 0)` psyco wrapping folds `P1 - 1` behind a guard —
+so exactly this path, and the overflow at `P1 == INT_MIN` went unreported ⇒ unsound `Safe`. Before
+`35dde5041` the pure operand was *guarded into its own statement*, where the arithmetic sat under a
+`True` guard and was added bare — hence the pass saw it and it worked; `35dde5041` folds it inline
+under a real guard, exposing the latent `Ite` hole.
+
+**The fix (`BvOverflow.kt`):** give `bvOverflowCondition` an `IteExpr` case up front — recurse into
+`then` and guard the inner overflow with the condition: `And(cond, bvOverflowCondition(then))`. Sound
+(the overflow is asserted only when the operand is reached), minimal, and **touches nothing else** —
+`35dde5041` stays (perf preserved), `castTo` untouched, no revert. Verified: `psyco_math_1` now
+**`OK` (Unsafe)** through the SV-COMP dist; a minimal `1 && (((a & (a-1)) == 0) || 0)` goes from 0 to
+1 overflow-error edge; the integer and plain-bitvector-statement paths are unchanged. Pinned by
+`OverflowShortCircuitTest` (c2xcfa) — asserted to **fail** with the `Ite` case removed. **Diagnostic
+trap avoided:** `grep __overflow__` on the serialized XCFA is a false metric — the intermediate loc
+is only named `__overflow__` when the check is *not* the edge's last label; otherwise it is `__loc_N`.
+Count edges to `*_error` instead. This cost one wrong turn (thought overflow detection was broadly
+dead) before switching metrics.
 
 ## Batch 30 — realloc modeled; an initializer-sized global array; Neutral BvType already gone
 
@@ -1168,11 +1203,12 @@ concern only in that it *invents* violations (false positives), never hides them
 
 ## NEXT UP (queue as of batch 25)
 
-**DEFERRED (user decision, batch 25): the `psyco_math_1` soundness regression stays open for now.**
-One wrong result (no-overflow, correct→wrong) from `35dde5041`; net branch state is +2989 correct so
-it is accepted for the moment. Full root cause + the two failed fix attempts are in **batch 25** above.
-Fix, when picked up, is at the expression level (`OverflowDetectionPass` short-circuit threading), not a
-`mustNotRunUnconditionally` predicate tweak, and must not revert `35dde5041` or `89020cef2`.
+**~~DEFERRED (user decision, batch 25): the `psyco_math_1` soundness regression stays open.~~ FIXED
+in batch 31.** It was neither a `mustNotRunUnconditionally` predicate tweak nor a `35dde5041`/
+`89020cef2` revert (both stay) — the bug was in `bvOverflowCondition`, which could not read the
+overflow operands through the short-circuit `Ite(cond, arith, 0)` wrapper. Added an `IteExpr` case
+that recurses into `then` and guards with `cond`. `psyco_math_1` now `OK` (Unsafe); pinned by
+`OverflowShortCircuitTest`. Full write-up in **batch 31** above.
 
 ## NEXT UP (queue as of batch 23)
 

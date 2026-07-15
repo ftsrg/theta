@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
@@ -52,6 +53,17 @@ import java.math.BigInteger
  * exactly as the program computes it.
  */
 fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
+  // `OverflowDetectionPass.getExpressions` threads the short-circuit condition of `&&`/`||` through
+  // the operands and wraps a guarded arithmetic expression as `Ite(cond, arith, 0)`: the operand --
+  // and so its overflow -- is reached only when `cond` holds. The integer path range-checks the
+  // whole `Ite` (0 is trivially in range), but a bitvector check has to reconstruct the overflow
+  // from the *operands*, which are hidden inside the `then` branch. Look through the wrapper and
+  // guard the inner overflow with the condition; without this the check was silently dropped and a
+  // real overflow under bitwise arithmetic (e.g. `P1 & (P1 - 1)` at `INT_MIN`) went unreported.
+  if (expr is IteExpr<*>) {
+    val inner = bvOverflowCondition(expr.then) ?: return null
+    return And(expr.cond, inner)
+  }
   val type = expr.type as? BvType ?: return null
   val width = type.size
 
