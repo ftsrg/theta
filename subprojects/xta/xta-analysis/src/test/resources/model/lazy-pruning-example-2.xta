@@ -1,0 +1,17 @@
+process P() {
+
+    int x, y;
+
+	state I, A, B, error;
+
+	init I;
+
+	trans
+	    I -> A { assign x = 0, y = 0; },
+	    A -> A { guard x < 1; assign x = x + 1; },
+	    // A -> error { guard x > 1; },
+	    A -> B { assign y = x + 1; },
+	    B -> error { guard y < x; };
+}
+
+system P;

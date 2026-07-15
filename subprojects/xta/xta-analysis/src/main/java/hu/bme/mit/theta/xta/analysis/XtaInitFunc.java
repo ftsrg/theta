@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.List;
 
 final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<XtaState<S>, P> {
-
     private final XtaSystem system;
     private final InitFunc<S, ? super P> initFunc;
 
@@ -45,6 +44,6 @@ final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<Xta
         checkNotNull(prec);
         final List<Loc> initLocs = system.getInitLocs();
         final Collection<? extends S> initStates = initFunc.getInitStates(prec);
-        return XtaState.collectionOf(initLocs, initStates);
+        return XtaState.collectionOf(initLocs, initStates, system.getInitVal());
     }
 }

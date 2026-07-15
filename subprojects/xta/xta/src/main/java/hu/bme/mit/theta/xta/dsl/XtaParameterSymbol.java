@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ParameterIdContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
-import hu.bme.mit.theta.xta.utils.RangeType;
 import java.util.LinkedHashSet;
 import java.util.Set;
 

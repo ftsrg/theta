@@ -1,0 +1,3 @@
+prop{
+    A[] not (P_1_cs && P_2_cs)
+}

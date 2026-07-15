@@ -1,0 +1,16 @@
+process P() {
+
+    int x;
+    clock c1, c2;
+
+	state A, B, error;
+
+	init A;
+
+	trans
+	    A -> B { assign x = 0, c1 = 0, c2 = 0; },
+	    B -> error { guard x == 1; },
+	    B -> error { guard c1 <= 1 && c2 > 1; };
+}
+
+system P;

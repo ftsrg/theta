@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,12 +41,12 @@ public final class XtaAnalysisTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {"/critical-2-25-50.xta"},
-                    {"/csma-2.xta"},
-                    {"/fddi-2.xta"},
-                    {"/fischer-2-32-64.xta"},
-                    {"/lynch-2-16.xta"},
-                    {"/broadcast.xta"},
+                    {"/model/critical-2-25-50.xta"},
+                    {"/model/csma-2.xta"},
+                    {"/model/fddi-2.xta"},
+                    {"/model/fischer-2-32-64.xta"},
+                    {"/model/lynch-2-16.xta"},
+                    {"/model/broadcast.xta"},
                 });
     }
 

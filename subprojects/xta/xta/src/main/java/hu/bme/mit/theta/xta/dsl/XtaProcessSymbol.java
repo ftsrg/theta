@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,9 +24,12 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaProcess;
@@ -40,6 +43,8 @@ import java.util.Optional;
 import java.util.Set;
 
 final class XtaProcessSymbol implements Symbol, Scope {
+
+    private SymbolTable system_symbolTable;
 
     private final XtaSpecification scope;
     private final SymbolTable symbolTable;
@@ -56,7 +61,6 @@ final class XtaProcessSymbol implements Symbol, Scope {
 
         this.scope = checkNotNull(scope);
         symbolTable = new SymbolTable();
-
         name = context.fId.getText();
         initState = context.fProcessBody.fInit.fId.getText();
         parameters = new ArrayList<>();
@@ -67,7 +71,9 @@ final class XtaProcessSymbol implements Symbol, Scope {
                         .map(t -> new XtaTransition(this, t))
                         .collect(toList());
 
-        declareAllParameters(context.fParameterList.fParameterDecls);
+        if (context.fParameterList != null) {
+            declareAllParameters(context.fParameterList.fParameterDecls);
+        }
         declareAllTypes(context.fProcessBody.fTypeDecls);
         declareAllVariables(context.fProcessBody.fVariableDecls);
         declareAllFunctions(context.fProcessBody.fFunctionDecls);
@@ -95,14 +101,16 @@ final class XtaProcessSymbol implements Symbol, Scope {
             final XtaSystem system,
             final String name,
             final List<? extends Expr<?>> arguments,
-            final Env env) {
+            final Env env,
+            final SymbolTable _system_symboltable) {
         checkArgument(arguments.size() == parameters.size());
         checkArgument(argumentTypesMatch(arguments));
-
         env.push();
+        system_symbolTable = _system_symboltable;
         defineAllParameters(arguments, env);
 
         final XtaProcess process = system.createProcess(name);
+        // Local variables are handled like global variables signed with Process symbol
         createAllLocalVariables(process, env);
         createAllStates(process, env);
         createAllTransitions(process, env);
@@ -125,35 +133,56 @@ final class XtaProcessSymbol implements Symbol, Scope {
             if (variable.isConstant()) {
                 // do nothing; will be defined lazily on first occurrence
             } else {
-                final InstantiateResult instantiateResult =
-                        variable.instantiate(process.getName() + "_", env);
+                final String prefix = process.getName() + "_";
+                final XtaVariableSymbol globalCopyOfVariable = variable.copy(prefix);
+
+                final InstantiateResult instantiateResult = variable.instantiate(prefix, env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
+                    env.defineInParent(globalCopyOfVariable, label);
                 } else if (instantiateResult.isClockVariable()) {
                     final VarDecl<RatType> varDecl =
                             instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
+                    env.defineInParent(globalCopyOfVariable, varDecl);
                     process.getSystem().addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
                     final VarDecl<?> varDecl = instantiateResult.asDataVariable().getVarDecl();
                     final LitExpr<?> initValue = instantiateResult.asDataVariable().getInitValue();
                     env.define(variable, varDecl);
+                    env.defineInParent(globalCopyOfVariable, varDecl);
                     process.getSystem().addDataVar(varDecl, initValue);
                 } else {
                     throw new AssertionError();
                 }
+                system_symbolTable.add(globalCopyOfVariable);
             }
         }
     }
 
     private void createAllStates(final XtaProcess process, final Env env) {
         for (final XtaStateSymbol state : states) {
+            boolean initloc = false;
             final Loc loc = state.instantiate(process, env);
             if (state.getName().equals(initState)) {
                 process.setInitLoc(loc);
+                initloc = true;
             }
+            XtaStateSymbol temp = state.copyAndChangeName(loc.getName());
             env.define(state, loc);
+            if (!system_symbolTable.get(temp.getName()).isPresent()) {
+                env.defineInParent(temp, loc);
+                system_symbolTable.add(temp);
+                String varname = loc.getVarName();
+                XtaVariableSymbol variableSymbol = XtaVariableSymbol.forcedCreate(varname);
+                system_symbolTable.add(variableSymbol);
+
+                VarDecl varDecl = Decls.Var(varname, BoolType.getInstance());
+                env.defineInParent(variableSymbol, varDecl);
+                final LitExpr<BoolType> initValue = BoolLitExpr.of(initloc);
+                process.getSystem().addDataVar(varDecl, initValue);
+            }
         }
     }
 

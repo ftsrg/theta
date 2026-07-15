@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -24,30 +25,32 @@ import hu.bme.mit.theta.analysis.Lattice;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExprLattice implements Lattice<BasicExprState> {
 
-    @FunctionalInterface
-    public interface MeetStrategy {
-        BasicExprState meet(final BasicExprState state1, final BasicExprState state2);
+    public enum MeetImpl {
+        BASIC,
+        SYNTACTIC_CHECK,
+        SEMANTIC_CHECK
     }
 
     private final PartialOrd<ExprState> partialOrd;
-    private final MeetStrategy meetStrategy;
+    private final MeetImpl meetImpl;
 
-    private ExprLattice(final Solver solver, final MeetStrategy meetStrategy) {
+    private ExprLattice(final Solver solver, final MeetImpl meetImpl) {
         checkNotNull(solver);
         partialOrd = ExprOrd.create(solver);
-        this.meetStrategy = checkNotNull(meetStrategy);
+        this.meetImpl = meetImpl;
     }
 
     public static ExprLattice create(final Solver solver) {
-        return new ExprLattice(solver, BasicExprMeetStrategy.getInstance());
+        return new ExprLattice(solver, MeetImpl.BASIC);
     }
 
-    public static ExprLattice create(final Solver solver, final MeetStrategy meetStrategy) {
-        return new ExprLattice(solver, meetStrategy);
+    public static ExprLattice create(final Solver solver, final MeetImpl meetImpl) {
+        return new ExprLattice(solver, meetImpl);
     }
 
     @Override
@@ -61,8 +64,8 @@ public final class ExprLattice implements Lattice<BasicExprState> {
     }
 
     @Override
-    public BasicExprState meet(BasicExprState state1, BasicExprState state2) {
-        return meetStrategy.meet(state1, state2);
+    public boolean isLeq(BasicExprState state1, BasicExprState state2) {
+        return partialOrd.isLeq(state1, state2);
     }
 
     @Override
@@ -72,7 +75,24 @@ public final class ExprLattice implements Lattice<BasicExprState> {
     }
 
     @Override
-    public boolean isLeq(BasicExprState state1, BasicExprState state2) {
-        return partialOrd.isLeq(state1, state2);
+    public BasicExprState meet(BasicExprState state1, BasicExprState state2) {
+        if (meetImpl == MeetImpl.SEMANTIC_CHECK) {
+            if (partialOrd.isLeq(state1, state2)) {
+                return state1;
+            }
+            if (partialOrd.isLeq(state2, state1)) {
+                return state2;
+            }
+        } else if (meetImpl == MeetImpl.SYNTACTIC_CHECK) {
+            final Expr<BoolType> expr1 = state1.toExpr();
+            final Expr<BoolType> expr2 = state2.toExpr();
+            if (ExprUtils.getConjuncts(expr1).contains(expr2)) {
+                return BasicExprState.of(expr1);
+            }
+            if (ExprUtils.getConjuncts(expr2).contains(expr1)) {
+                return BasicExprState.of(expr2);
+            }
+        }
+        return BasicExprState.of(And(state1.toExpr(), state2.toExpr()));
     }
 }
