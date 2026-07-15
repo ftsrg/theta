@@ -33,7 +33,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -168,17 +168,7 @@ public class CfaCli {
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
                     getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
-                return (monolithicExpr ->
-                        new Ic3Checker(
-                                monolithicExpr,
-                                solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                logger));
+                return (monolithicExpr -> new Ic3Checker(monolithicExpr, solverFactory, logger));
             }
         };
 
