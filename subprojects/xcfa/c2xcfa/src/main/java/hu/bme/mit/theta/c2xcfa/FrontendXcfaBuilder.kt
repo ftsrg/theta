@@ -339,6 +339,62 @@ class FrontendXcfaBuilder(
     }
   }
 
+  /**
+   * Whether assigning [rExpression] to a variable of this type is a struct copy.
+   *
+   * The right-hand side has to be a struct of the same type: an expression whose recorded C type was
+   * lost reads back as the plain integer its base id is stored as, and is left to the ordinary
+   * assignment below rather than walked as if it had fields.
+   *
+   * Unions are excluded, and go on assigning the base as before. Their members all start at offset 0
+   * rather than at successive indices, so copying them member by member does not describe their
+   * layout -- the same reason [giveStructObjectStorage] does not walk into them.
+   */
+  private fun CComplexType.isCopiedStruct(rExpression: Expr<*>): Boolean =
+    this is CStruct && !this.isUnion && this == CComplexType.getType(rExpression, parseContext)
+
+  /**
+   * Copies a struct object's contents into another, field by field.
+   *
+   * A struct variable's value is a base id, so `b = a` assigned *a's base* to `b` -- after which the
+   * two names denoted one object, and a later write to `a` was read back through `b`. C copies here,
+   * so `b` has to keep its own storage and receive a's values:
+   * ```c
+   * struct T a, b; a.len = 1; b = a; a.len = 2;   /* b.len is still 1 */
+   * ```
+   * The copy is deep. A field that is itself a struct is a subobject, not a reference to one, so its
+   * *contents* are copied and the destination keeps the base [giveStructObjectStorage] gave it;
+   * copying the base instead would alias the inner structs and reintroduce the same bug one level
+   * down.
+   *
+   * An array field is still copied as its base -- the array's elements are shared rather than
+   * duplicated -- because nothing gives an array field storage of its own to copy into. That is the
+   * pre-existing gap the nested-struct case had, one type over.
+   */
+  private fun structCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
+    type.fields.flatMapIndexed { index, field ->
+      val fieldType = field.get2()
+      val offset = type.getValue("$index")
+      val to =
+        Dereference(cast(target, target.type), cast(offset, target.type), fieldType.smtType).also {
+          parseContext.metadata.create(it, "cType", fieldType)
+        }
+      val from =
+        Dereference(cast(source, source.type), cast(offset, source.type), fieldType.smtType).also {
+          parseContext.metadata.create(it, "cType", fieldType)
+        }
+      if (fieldType is CStruct && !fieldType.isUnion) {
+        structCopy(to, from, fieldType, metadata)
+      } else {
+        listOf(StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata))
+      }
+    }
+
   private fun initializeGlobalVariable(
     builder: XcfaBuilder,
     globalDeclaration: Expr<*>,
@@ -474,7 +530,7 @@ class FrontendXcfaBuilder(
     builder.addLoc(location)
     initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
     val rExpression = statement.getrExpression()
-    val label: StmtLabel =
+    val label: XcfaLabel =
       when (lValue) {
         is Dereference<*, *, *> -> {
           val op = cast(lValue.array, lValue.array.type)
@@ -516,9 +572,13 @@ class FrontendXcfaBuilder(
               cast(asReference, lValue.type),
               metadata = getMetadata(statement),
             )
+          } else if (lhsType.isCopiedStruct(rExpression)) {
+            SequenceLabel(
+              structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+              metadata = getMetadata(statement),
+            )
           } else {
-            // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
-            // pointer-based
+            // TODO: check if assignment to arrays (stack AND heap) are value- or pointer-based
             AssignStmtLabel(
               lValue,
               cast(lhsType.castTo(rExpression), lValue.type),
