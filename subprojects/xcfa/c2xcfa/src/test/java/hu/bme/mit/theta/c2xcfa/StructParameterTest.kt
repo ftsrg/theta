@@ -17,7 +17,6 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
@@ -38,9 +37,13 @@ import org.junit.jupiter.api.Test
  * and the callee gets that object's base.
  *
  * The fingerprint is that copy: a write that reads a field of one object and writes the same field of
- * *another* (`arrays[fresh][i] := arrays[a][i]`), one per field. Without the fix the argument is
+ * *another* (`arrays[argtmp][i] := arrays[a][i]`), one per field. Without the fix the argument is
  * passed by reference and no such cross-object copy exists at all. (The fixture has no other struct
  * assignment, so the copies counted here are the argument's.)
+ *
+ * The object copied into is a stack allocation like any other local, so it is held by a temporary
+ * whose base is drawn at run time -- two threads calling the function at once must not copy into one
+ * shared object. That is why the two sides are compared as expressions rather than as constants.
  */
 class StructParameterTest {
 
@@ -76,8 +79,8 @@ class StructParameterTest {
       .map { it.stmt }
       .filterIsInstance<MemoryAssignStmt<*, *, *>>()
       .filter { stmt ->
-        val toBase = (stmt.deref as? Dereference<*, *, *>)?.array as? LitExpr<*>
-        val fromBase = (stmt.expr as? Dereference<*, *, *>)?.array as? LitExpr<*>
+        val toBase = (stmt.deref as? Dereference<*, *, *>)?.array
+        val fromBase = (stmt.expr as? Dereference<*, *, *>)?.array
         toBase != null && fromBase != null && toBase != fromBase
       }
   }

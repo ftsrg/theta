@@ -75,8 +75,10 @@ class FrontendXcfaBuilder(
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
-  private var ptrCnt = 1 // counts up, uses 3k+1
+  private var ptrCnt = 1 // counts up, uses 3k+1 -- compile-time bases, for single-instance globals
     get() = field.also { field += 3 }
+
+  private var structArgCnt = 0 // names the per-call temporaries a by-value struct argument copies into
 
   /**
    * If a compound statement has pre-statements, the metadata has to appear before the pre-list, but
@@ -251,15 +253,7 @@ class FrontendXcfaBuilder(
       }
       val type = CComplexType.getType(flatVariable.ref, parseContext)
       if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
-        initStmtList.add(
-          StmtLabel(
-            Stmts.Assign(
-              cast(flatVariable, flatVariable.type),
-              cast(type.getValue("$ptrCnt"), flatVariable.type),
-            )
-          )
-        )
-        giveStructObjectStorage(builder.parent, flatVariable.ref, type, initStmtList)
+        allocateStackStruct(flatVariable.ref, type, initStmtList)
       }
     }
     builder.createInitLoc(getMetadata(function))
@@ -289,7 +283,10 @@ class FrontendXcfaBuilder(
   }
 
   /**
-   * Records a struct object's size and gives every struct-typed *field* of it storage of its own.
+   * Records a *global* struct object's size and gives every struct-typed field of it storage of its
+   * own, at a compile-time base. A global is a single object -- there is only ever one activation of
+   * it -- so a constant base cannot alias anything, and it stays cheaper than an allocation.
+   * Stack objects need a base per activation and go through [allocateStackStruct] instead.
    *
    * A struct variable's value IS its base id, and `s.f` reads `__arrays_T[s][i]`. A field that is
    * itself a struct holds a base id in turn -- `o.in.x` is `__arrays[__arrays[o][0]][0]` -- but only
@@ -340,6 +337,56 @@ class FrontendXcfaBuilder(
   }
 
   /**
+   * Emits the `alloca(target, size)` marker [AllocaFunctionPass] lowers into a fresh runtime base.
+   *
+   * The size is the object's field/element count, recorded (under memsafety) so out-of-bounds
+   * accesses are caught; without memsafety it is ignored and only the fresh base is assigned. The
+   * target may be a variable or a memory cell -- the pass dispatches on which.
+   */
+  private fun alloca(target: Expr<*>, size: Int): XcfaLabel =
+    InvokeLabel(
+      "alloca",
+      listOf(target, Fitsall(null, parseContext).getValue("$size")),
+      metadata = EmptyMetaData,
+    )
+
+  /**
+   * Gives a *stack-allocated* struct a fresh runtime base -- for the object and, recursively, for
+   * every struct-typed field -- from the allocation counter, instead of a compile-time constant.
+   *
+   * A struct's value is its base id. When that base was a constant baked into the procedure's init,
+   * every activation of the procedure reused it: two recursive frames, or two threads running the
+   * function, shared one `arrays[base]`, so a write in one was seen by the other and a race-free
+   * program came back a false alarm (`mt_struct`: a thread-local struct, reported Unsafe). A base
+   * drawn from the runtime counter ([alloca]) is distinct per activation, which is what C guarantees.
+   *
+   * A struct-typed field is a subobject whose base lives in the cell `arrays[parent][i]`, so it is
+   * allocated in turn into that cell (the pass writes the fresh base there). C has no by-value
+   * self-containing struct, so this terminates. Unions keep the single object their offset-0 model
+   * needs, exactly as [giveStructObjectStorage] leaves them for globals.
+   *
+   * Globals stay on the compile-time path ([giveStructObjectStorage]): a global is a single object,
+   * so a constant base cannot alias anything.
+   */
+  private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
+    labels.add(alloca(target, type.fields.size))
+    if (type.isUnion) return
+    type.fields.forEachIndexed { index, field ->
+      val fieldType = field.get2()
+      if (fieldType is CStruct) {
+        val cell =
+          Dereference(
+            cast(target, target.type),
+            cast(type.getValue("$index"), target.type),
+            fieldType.smtType,
+          )
+        parseContext.metadata.create(cell, "cType", fieldType)
+        allocateStackStruct(cell, fieldType, labels)
+      }
+    }
+  }
+
+  /**
    * Whether assigning [rExpression] to a variable of this type is a struct copy.
    *
    * The right-hand side has to be a struct of the same type: an expression whose recorded C type was
@@ -363,9 +410,9 @@ class FrontendXcfaBuilder(
    * struct T a, b; a.len = 1; b = a; a.len = 2;   /* b.len is still 1 */
    * ```
    * The copy is deep. A field that is itself a struct is a subobject, not a reference to one, so its
-   * *contents* are copied and the destination keeps the base [giveStructObjectStorage] gave it;
-   * copying the base instead would alias the inner structs and reintroduce the same bug one level
-   * down.
+   * *contents* are copied and the destination keeps the base it was allocated ([allocateStackStruct],
+   * or [giveStructObjectStorage] for a global); copying the base instead would alias the inner
+   * structs and reintroduce the same bug one level down.
    *
    * An array field is still copied as its base -- the array's elements are shared rather than
    * duplicated -- because nothing gives an array field storage of its own to copy into. That is the
@@ -403,12 +450,14 @@ class FrontendXcfaBuilder(
    * caller (`void f(struct T t){ t.len = 9; }` mutated the argument). C copies at the call, so the
    * argument is copied into a new object here and the callee is given that object's base instead.
    *
-   * No variable holds the base: the object is the base id, and its contents live in the global
-   * `__arrays_*`, so a literal base is all the callee's `param := base` binding needs. The parameter
-   * is pure IN -- a by-value struct is never copied back out -- so nothing reads the base as an
-   * lvalue. The copy is deep, exactly as [structCopy] and [giveStructObjectStorage] are for a local.
+   * The object is a stack allocation like any other local ([allocateStackStruct]), held by a
+   * per-call temporary: its base comes from the runtime counter, so two threads calling the function
+   * at once copy into distinct objects rather than a shared constant one. The copy is deep. The
+   * parameter is pure IN -- a by-value struct is never copied back out -- so the temporary is only
+   * ever written here and read by the callee's binding.
    *
-   * Returns the fresh base to pass and the labels that build the copy, to run before the call.
+   * Returns the temporary's ref to pass and the labels that allocate and fill it, to run before the
+   * call.
    */
   private fun copyStructArgument(
     builder: XcfaProcedureBuilder,
@@ -416,11 +465,13 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): Pair<Expr<*>, List<XcfaLabel>> {
-    val base = type.getValue("$ptrCnt")
+    val tmp = Var("__theta_structarg" + structArgCnt++, type.smtType)
+    parseContext.metadata.create(tmp.ref, "cType", type)
+    builder.addVar(tmp)
     val labels: MutableList<XcfaLabel> = ArrayList()
-    giveStructObjectStorage(builder.parent, base, type, labels)
-    labels.addAll(structCopy(base, argExpr, type, metadata))
-    return base to labels
+    allocateStackStruct(tmp.ref, type, labels)
+    labels.addAll(structCopy(tmp.ref, argExpr, type, metadata))
+    return tmp.ref to labels
   }
 
   private fun initializeGlobalVariable(

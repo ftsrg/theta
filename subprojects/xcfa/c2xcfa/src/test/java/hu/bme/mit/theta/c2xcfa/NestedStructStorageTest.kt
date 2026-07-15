@@ -17,7 +17,7 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -29,21 +29,26 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
- * A struct-typed *field* is an object of its own, so it needs storage of its own.
+ * A struct-typed *field* is an object of its own, so it is allocated storage of its own -- from the
+ * allocation counter, at run time.
  *
  * A struct variable's value IS its base id and `s.f` reads `__arrays_T[s][i]`, so a field that is
- * itself a struct holds a base id in turn (`o.in.x` is `__arrays[__arrays[o][0]][0]`). Only declared
- * variables were ever given a base, which left every *inner* struct's base unconstrained -- free for
- * the solver to pick, including a value already in use. `struct Out o, p; o.in.x = 1; p.in.x = 2;`
- * then read `o.in.x` back as 2, conflating two objects the program keeps apart.
+ * itself a struct holds a base id in turn (`o.in.x` is `__arrays[__arrays[o][0]][0]`). Two things
+ * went wrong here, and the assertion below covers both:
+ * - only *declared* variables were given a base at all, leaving every inner struct's unconstrained,
+ *   so the solver could pick one already in use and `struct Out o, p; o.in.x = 1; p.in.x = 2;` read
+ *   `o.in.x` back as 2;
+ * - the base was a compile-time constant, so every activation of the procedure reused it and two
+ *   recursive frames -- or two threads running the function -- aliased.
  *
- * Each inner struct is seeded with a distinct literal base in the procedure's init, which is what is
- * asserted here: the fixture keeps every other value nondeterministic, so a memory write of a
- * *literal* is a base seed and nothing else.
+ * Both are answered by allocating each inner struct from the runtime counter, which is what is
+ * checked: one counter-derived write per object into its field cell. A constant would fail the
+ * counter check; no allocation at all would fail the count.
  */
 class NestedStructStorageTest {
 
-  private fun literalBaseSeeds(body: String): List<LitExpr<*>> {
+  /** Field-cell writes whose value comes from the allocation counter -- i.e. the inner allocations. */
+  private fun allocatedInnerStructs(body: String): List<MemoryAssignStmt<*, *, *>> {
     val parseContext = ParseContext()
     parseContext.architecture = ArchitectureType.LP64
     val (xcfa, _, _) =
@@ -70,25 +75,24 @@ class NestedStructStorageTest {
       .filterIsInstance<StmtLabel>()
       .map { it.stmt }
       .filterIsInstance<MemoryAssignStmt<*, *, *>>()
-      .mapNotNull { it.expr as? LitExpr<*> }
+      .filter { stmt -> ExprUtils.getVars(stmt.expr).any { it.name == "__malloc" } }
   }
 
   @Test
-  @DisplayName("the inner struct of each object gets a base of its own")
-  fun innerStructsDoNotShareABase() {
-    // Two objects, so two inner structs, so two seeds -- and they have to differ, or the two
-    // `in`s are the same object and writing one is read back through the other.
-    val seeds =
-      literalBaseSeeds(
+  @DisplayName("each object's inner struct is allocated a base of its own, at run time")
+  fun innerStructsAreAllocatedSeparately() {
+    // Two objects, so two inner structs, so two allocations -- and each takes its base from the
+    // counter, which is what keeps two activations of the enclosing procedure apart.
+    val allocations =
+      allocatedInnerStructs(
         "struct Out o; struct Out p;" +
           " o.in.x = n; p.in.x = n + 1;" +
           " return (int) (o.in.x + p.in.x);"
       )
-    assertEquals(2, seeds.size, "each inner struct needs its own base to be seeded (got $seeds)")
     assertEquals(
       2,
-      seeds.distinct().size,
-      "the two inner structs must not be given the same base (got $seeds)",
+      allocations.size,
+      "each inner struct needs its own base, allocated from the counter (got $allocations)",
     )
   }
 }

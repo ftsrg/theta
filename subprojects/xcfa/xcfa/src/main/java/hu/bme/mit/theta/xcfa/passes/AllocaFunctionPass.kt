@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -29,6 +28,14 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 /**
  * Turns `alloca(size)` into an address assignment, like [MallocFunctionPass] does for `malloc`, but
  * places the block in a different residue class of the pointer base space.
+ *
+ * The target `alloca(target, size)` writes the fresh base into may be a variable (a plain `alloca`,
+ * or a stack-allocated struct/array whose value is its base) or a memory cell (a struct's
+ * struct/array-typed *field*, whose base lives at `arrays[parent][i]`). The assignment dispatches on
+ * which -- an ordinary assign for the variable, a memory-write for the cell -- so that every stack
+ * object gets a *fresh runtime* base per allocation. A compile-time constant base would be the same
+ * for every activation of the procedure, so two recursive frames or two threads running it would
+ * alias; a runtime base from the shared counter cannot.
  *
  * Pointer bases are partitioned by residue mod 3: `3k+0` is malloc'd heap memory, `3k+2` is
  * address-taken locals ([ReferenceElimination]). The memcleanup check
@@ -62,7 +69,9 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         edges.forEach { e ->
           if (predicate((e.label as SequenceLabel).labels[0])) {
             val invokeLabel = e.label.labels[0] as InvokeLabel
-            val ret = invokeLabel.params[0] as RefExpr<*>
+            // The target may be a variable (a bare `alloca`, or a stack struct/array) or a memory
+            // cell (a struct/array-typed field). AssignStmtLabel below dispatches on which.
+            val ret = invokeLabel.params[0]
             val arg = invokeLabel.params[1]
             val retType = CComplexType.getType(ret, parseContext)
             if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
