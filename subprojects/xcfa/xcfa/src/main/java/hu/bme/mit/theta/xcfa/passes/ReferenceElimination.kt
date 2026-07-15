@@ -286,7 +286,49 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(edge.label.changeComplexReferredVars(splitVars)))
     }
+    seedSplitParams(builder, splitVars)
     return true
+  }
+
+  /**
+   * A pointer parameter that gets split still enters the procedure as the single value the caller
+   * bound to it. This pass runs per-procedure, *before* inlining, so it never sees that binding: it
+   * splits the parameter `p` into `p_base`/`p_offset` and rewrites the body onto them, but nothing
+   * ever gives them a value. Inlining then binds the (now unused) original `p`, leaving `p_base` and
+   * `p_offset` unconstrained -- so the solver is free to pick an out-of-range offset and walk off the
+   * object, a false `valid-deref` on every `str*`-style callee that increments its argument.
+   *
+   * Seed the halves at the procedure entry from the still-bound parameter: `p_base = p`, `p_offset =
+   * 0`. The offset is zero because a pointer argument is a base id at offset 0 -- the model cannot
+   * carry a mid-object pointer across a call (passing a bare split variable is rejected outright),
+   * so whatever the caller binds to `p` is exactly the base.
+   */
+  private fun seedSplitParams(
+    builder: XcfaProcedureBuilder,
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+  ) {
+    val splitParams =
+      builder.getParams().filter { it.second != ParamDirection.OUT && it.first in splitVars.keys }
+    if (splitParams.isEmpty()) return
+    val seeds =
+      splitParams.flatMap { (param, _) ->
+        val split = splitVars[param]!!
+        listOf(
+          AssignStmtLabel(split.base, param.ref, split.base.type),
+          AssignStmtLabel(
+            split.offset,
+            CComplexType.getSignedLong(parseContext).nullValue,
+            split.offset.type,
+          ),
+        )
+      }
+    val initEdges = builder.initLoc.outgoingEdges.toList()
+    val newEdges =
+      initEdges.map {
+        it.withLabel(SequenceLabel(seeds + it.label.getFlatLabels(), it.label.metadata))
+      }
+    initEdges.forEach(builder::removeEdge)
+    newEdges.forEach(builder::addEdge)
   }
 
   private fun normalizeNestedReferenceAssignments(builder: XcfaProcedureBuilder): Boolean {

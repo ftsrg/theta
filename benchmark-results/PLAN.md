@@ -919,6 +919,56 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 32 — full post-rebase re-run (`2026-07-15_00-23`, base `6cfbe4bd6`) analyzed; the wrong-count tripled and one root cause explains most of it
+
+Retrieved from `benchcloud:results/Theta-svcomp/theta27-short.xml/2026-07-15_00:23:24` (55 result
+XMLs). This run's jar is **`6cfbe4bd6`** — post-rebase but **before** `castTo`/`bvOverflow`/realloc/
+initializer-array (all committed 00:39–10:50). Totals: **9659 correct / 116 wrong / 26448 error / 379
+unknown**. Correct up, but **wrong jumped 28 → 116** (the wrong count is budget-independent, so this is
+real, not the longer timeout). Spot-checking on current HEAD (`349649d4c`) showed only `psyco` is
+fixed by the later commits; the rest are genuinely open.
+
+**Wrong split: 66 concurrency/OC (OUT OF SCOPE) + 50 sequential (in scope).** The 58 `pthread-wmm`
+`valid-memsafety false(valid-deref)` all come from the **OC backend** (config trace: `backend=OC`
+under the `MULTITHREAD` portfolio) — OC is the separate-PR territory we do not touch; flag for its
+owner, do not fix here. Plus 2 `no-data-race` and a few other concurrency = 66.
+
+**The #1 in-scope regression, root-caused: a split pointer *parameter* is never bound to its argument
+at the call.** ~24 of the 50 sequential wrongs are `valid-memsafety false(valid-deref)` on the
+`str*`/`alloca` family (array-memsafety, termination-{memory-alloca,15,dietlibc,recursive-malloc},
+ldv-memsafety, busybox, Juliet). All memory-safe; all false alarms; all were **timeout** pre-rebase
+(batch 25) → now **wrong**. Minimal 7-line repro (`scratchpad/ms_K.c`):
+`char g[4]; int f(const char*s){ while(*s){s++;} return *s; } int main(){ g[0]=0; return f(g); }` →
+false `Unsafe valid-deref`. Mechanism, from the serialized memsafety XCFA: because `s++` makes
+`ReferenceElimination` split the parameter `s` into `f::s_base`/`f::s_offset`, but the call-site
+binding (`f::s = g`, produced by inlining) is **dropped to `skip skip`** instead of being split into
+`f::s_base = <g base>; f::s_offset = 0`. The parameter enters `f` **unconstrained**, so the solver
+picks an out-of-range `f::s_offset`, walks off the end, and the bound check `size[s_base] > s_offset`
+fails. Confirmed against the non-split case: `ms_G` (a `char*` param used only as `*s`, never
+incremented, so never split) IS bound (`assign f::s main::a`) and is correctly Safe. So the drop is
+specific to the *split* parameter. Fix lives in `ReferenceElimination.changeComplexAssign` /
+whatever elides the inlined param binding before the split — the binding must be split, not dropped.
+**FIXED (`seedSplitParams` in `ReferenceElimination`).** Pinned with a debug build: there is no
+binding to drop — `ReferenceElimination` is at ProcedurePassManager **line 51, before**
+`InlineProceduresPass` (line 69), so it processes the callee `f` standalone and splits its *parameter*
+`f::s`; inlining then binds the original (now-split-away) `f::s`, and the halves `f::s_base`/
+`f::s_offset` are never seeded (the base/offset split is a rebase-era feature — params weren't split
+before). Fix: when a split var is an IN parameter, seed `param_base = param; param_offset = 0` at the
+procedure entry (offset 0 because the model cannot carry a mid-object pointer across a call — a bare
+split variable as an argument is rejected outright, so whatever the caller binds is exactly the base).
+`ms_K`/`ms_E`/`ms_M` go Unsafe→**Safe**; the hard two-string `cstr*` tasks go wrong→timeout (both
+strict scoring wins over a false alarm). Pinned by `PointerParameterTest` (asserted to fail with the
+seed removed). **255-canary: 251/255**, the 4 deltas all `expected=false` bug-finders that pass **OK
+run alone** — load-induced flakes under the 75 s + `-j6` budget (my fix makes pointer-param tasks a
+touch heavier), not correctness regressions; the real 900 s budget is far more forgiving. No pass-
+level crash on any of them (`--backend NONE` builds clean).
+
+**Other in-scope clusters (not yet root-caused):** 11 `aws-c-common` + ~7 other `unreach-call`
+false alarms (ldv-regression test07/09/10/16, list-properties, hardness — may share the pointer-param
+bug or be their own); and **~5 genuinely unsound missed bugs** (got true/safe on expected-false):
+`memsafety/cmp-freed-ptr` (use-after-free), `memsafety-ext3/{getNumbers1-1,scopes1}` (valid-deref),
+`ldv-regression/test22-2` (no-overflow). `psyco_math_1` (got-true) is already fixed by `349649d4c`.
+
 ## Batch 25 — full re-run (`2026-07-14_13-10`, HEAD `8c58af94e`) analyzed; one soundness regression found
 
 The re-run the previous batches asked for. Limits `300s / 7GB` (vs the batch-8 baseline's `900s / 8GB`),
