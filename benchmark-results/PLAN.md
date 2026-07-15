@@ -964,8 +964,15 @@ target base ≠ source base).
 
 **Effect.** `salias.c`/`salias2.c` (both forms) Unsafe → **Safe**. The aws cluster that started this:
 `aws_byte_cursor_from_array_harness` now verifies **Safe** (correct) — it needs ~5 min, well inside
-SV-COMP's 900 s but past a 120 s probe, which is why a short probe reads as "no verdict". Canary
-255/255 for 35a (the 6 reported ERRORs were load flakes — all OK re-run sequentially).
+SV-COMP's 900 s but past a 120 s probe, which is why a short probe reads as "no verdict"; the other two
+(`aws_byte_buf_from_array`, `..._empty_array`) went wrong → *timeout*, a strict improvement (wrong scores
+negative, timeout zero). Canary 255/255 for both 35a and 35b (the reported ERRORs were load flakes — all
+OK re-run sequentially).
+
+**A missed bug recovered.** `ldv-regression/test22-2` (valid-memsafety, expected false) — one of the four
+unsound *missed* bugs from batch 32 — is now found (wrong → OK), and it is **35a** that does it (verified
+on the nested-only jar): the aliasing hole was hiding the bug, the "hides real bugs" direction. The other
+three are unrelated to structs (`scopes1` and `getNumbers1-1` contain no struct at all) and stay open.
 
 Negative controls all hold, i.e. the fixes are not vacuously making things Safe: a real post-copy bug
 is still Unsafe (`copy_neg`), a real nested bug is still Unsafe (`nested_neg`), genuine pointer
