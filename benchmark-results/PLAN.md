@@ -919,10 +919,12 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
-## Batch 35 — the struct model gives every object its own storage: nested fields get a base, assignment copies
+## Batch 35 — the struct model gives every object its own storage: nested fields get a base, assignment and argument-passing copy
 
-Two bugs, both from the same root: **a struct's identity is its base id, and only *declared* struct
-variables were ever given one.** Both are fixed; both are pre-existing, neither is OC or `&expr`.
+Three bugs, all from the same root: **a struct's identity is its base id, and only *declared* struct
+variables were ever given one** — so nested fields aliased (35a), assignment re-pointed instead of
+copying (35b), and a struct argument was passed by reference (35c). All fixed; all pre-existing,
+none OC or `&expr`.
 
 ### 35a — a struct-typed *field* had no storage (`FrontendXcfaBuilder.giveStructObjectStorage`)
 
@@ -980,6 +982,35 @@ aliasing still aliases (`copy_ptr`, `struct T *p = &a`), writing the copy leaves
 (`copy_back`), all fields of mixed width come across (`copy_multi`), and the deep copy holds
 (`copy_nested`, 3-level `nested_deep`, sibling `nested_sibling`).
 
+### 35c — a struct argument was passed by reference (`FrontendXcfaBuilder.copyStructArgument`)
+
+The third instance of the same root cause. Passing a struct handed the callee *the caller's base*
+(`InlineProceduresPass` binds `param := invokeLabel.params[i]`, and for a struct that value is the
+base id), so a write to a by-value parameter mutated the caller's object:
+
+```c
+void f(struct T t){ t.len = 9; }
+struct T a; a.len = 1; f(a);  __VERIFIER_assert(a.len == 1);   /* -> was Unsafe */
+```
+
+Fix, in `visit(CCall)`: for each struct-typed argument, allocate a **fresh base literal**, give it
+storage (35a) and deep-copy the argument into it (35b), then pass *that* base. No variable is needed
+— the object is a base id and its contents live in the global `__arrays_*`, and a by-value struct
+parameter is pure `IN` (never copied back out), so nothing reads the base as an lvalue. The prep
+labels are prepended to the call edge; `splitIf` in the inline/malloc passes already isolates the
+`InvokeLabel`, so the copy simply becomes the edge before it. Unions keep passing the base (their
+model has no per-field layout to walk — same exclusion as 35a/35b). Emitted shape for `f(a)` with
+`a` at base 1: `arrays[4][i] := arrays[1][i]` then the call binds `t := 4`, and the callee's
+`t.len = 9` writes base 4, leaving base 1 (which `main` reads) untouched. Pinned by
+`StructParameterTest` (a cross-object field copy per field; zero without the fix).
+
+**Effect.** `param_val` (mutation isolation), `param_deep` (deep, nested field mutation isolated),
+and `param_ret` (`f(mk(n))`, passing a returned struct) all **Safe**. Negative `param_neg`
+(`g` returns the field, asserted wrong) still **Unsafe**, and `param_in` confirms the value crosses
+*in* (`g(a)` sees a's field). Canary **255/255** (the one ERROR was the recurring
+`ArraysOfVariableLength2_-read` load flake, OK alone). Struct-return call sites (batch 34's OUT-param
+path) are unaffected — verified `ret_struct`/`salias`/`nested`/`copy_*` unchanged.
+
 ### Known gaps in the same area (documented, not fixed)
 
 1. **An array field is copied as its base** — `struct S { int a[4]; }; b = a;` shares the elements
@@ -987,9 +1018,7 @@ aliasing still aliases (`copy_ptr`, `struct T *p = &a`), writing the copy leaves
    storage of its own to copy into (a local array gets its base from the malloc `FunctionVisitor`
    rewrites it to; a field gets nothing). Strictly better than the pre-fix whole-struct alias, but
    still wrong.
-2. **A struct *parameter* is passed by reference, not by value** — struct params are excluded from
-   seeding (they take the caller's base), so a callee's writes to a by-value struct parameter leak
-   back to the caller's object. Same fix shape as 35b (copy at the call), and the natural next step.
+2. ~~A struct *parameter* is passed by reference~~ — **fixed in 35c below.**
 3. **A struct field inside malloc'd memory** has the 35a problem with no declaration to hang the
    seed on (`p = malloc(sizeof(struct Out)); p->in.x = 1;`). Needs the object model, not a seed.
 
