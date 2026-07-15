@@ -944,11 +944,37 @@ struct. Pinned by `StructInitTest`. Note the `struct T b = a;` form reaches the 
 no test that can fail (the source's own write is there either way and the copy *aliases* rather than
 adding one), so the call form is what the test uses.
 
-**It is not the whole `byte_buf` story:** `aws_add_size_saturating_harness` is OK (batch 33), and the
-minimal repros are all Safe now, but `aws_byte_buf_from_array_harness` is **still wrong** and
-`aws_byte_buf_from_c_str_harness` now reaches no verdict. Something further is going on in those
-harnesses (`bounded_malloc`, `aws_byte_buf_is_valid(&buf)` taking a struct's address,
-`assert_bytes_match`) — still open.
+**It is not the whole `byte_buf` story — and the next layer is bigger.** Sweeping the 11 wrong aws
+harnesses on this HEAD: **1 OK** (`aws_add_size_saturating`), **3 still wrong**
+(`byte_buf_from_array`, `byte_buf_from_empty_array`, `byte_cursor_from_array`), **7 now reach no
+verdict** (wrong→error is scoring-neutral-to-better, but not a fix).
+
+### ⚠️ NEXT, AND PRE-EXISTING: struct assignment *aliases* instead of *copying*
+
+Narrowed from the still-wrong harnesses. `struct T b = mk(); rd(&b);` is Unsafe while
+`struct T b = mk(); b.len` (direct read) is Safe and `struct T b; b.len=7; rd(&b)` is Safe — i.e. the
+copy-init makes `b` **alias** the callee's object rather than copy it. The direct minimal proof:
+
+```c
+struct T a, b;  a.len = 1;
+b = a;          /* C copies here */
+a.len = 2;      /* must not affect b */
+__VERIFIER_assert(b.len == 1);   /* -> Theta reports Unsafe */
+```
+
+Both `b = a;` and `struct T b = a;` are Unsafe, so this is **not** from batch 34 — the statement form
+predates it (that is exactly why `b = a;` "worked" for direct reads and looked like a good path to
+reuse). A struct variable holds a base id, and assigning one to another just re-points the base, so
+the two names share storage: reads see the source's *later* writes, and `&b` does not see the copy at
+all. Wrong C semantics for any program that copies a struct and then touches the source.
+
+Batch 34 is still a strict improvement (uninitialised → aliased, and aliasing is right whenever the
+source is not modified afterwards, which is the common case and is why the direct-read repros pass),
+but the real fix is to **emit a field-by-field copy** — the initializer-list path already writes
+fields as `Dereference(v.ref, i, fieldType)`, and `CStruct` carries the fields, so the shape exists.
+It is a genuine change to the struct model's semantics (each struct variable needs its own storage),
+so it wants its own careful pass + full canary, not a tail-end patch. **Highest-value next target:
+it is a correctness bug in its own right, well beyond aws.**
 
 ## Batch 33 — the aws saturating cluster: two independent bugs, one of them an unsoundness that hid real bugs
 
