@@ -752,6 +752,35 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return null;
     }
 
+    /**
+     * Emits `v = <initializer>` for a declaration that has one, and lifts whatever the initializer
+     * itself has to run: a call arrives as a compound whose pre-statements hold the call, and those
+     * have to be hoisted ahead of the assignment or the call never happens.
+     */
+    private void emitInitAssignment(
+            CParser.BodyDeclarationContext ctx,
+            CDeclaration declaration,
+            CCompound compound,
+            CCompound preCompound,
+            CCompound postCompound) {
+        CAssignment cAssignment =
+                new CAssignment(
+                        declaration.getVarDecls().get(0).getRef(),
+                        declaration.getInitExpr(),
+                        "=",
+                        parseContext);
+        recordMetadata(ctx, cAssignment);
+        compound.addCStatement(cAssignment);
+        if (declaration.getInitExpr() instanceof CCompound compoundInitExpr) {
+            final var preStatements = collectPreStatements(compoundInitExpr);
+            preStatements.forEach(preCompound::addCStatement);
+            final var postStatements = collectPostStatements(compoundInitExpr);
+            postStatements.forEach(postCompound::addCStatement);
+            resetPreStatements(compoundInitExpr);
+            resetPostStatements(compoundInitExpr);
+        }
+    }
+
     @Override
     public CStatement visitBodyDeclaration(CParser.BodyDeclarationContext ctx) {
         List<CDeclaration> declarations =
@@ -833,6 +862,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                         + type
                                         + " vs. "
                                         + declaration.getActualType());
+                        // Checking the types is not initialising the variable: this branch used to
+                        // stop here, so `struct S s = other;` declared `s` and then quietly never
+                        // copied anything into it, leaving every field of `s` unconstrained. The
+                        // solver could then read whatever it liked out of `s`. The shape is not
+                        // exotic -- it is what a struct-returning function looks like at the call
+                        // site (`struct aws_byte_buf buf = aws_byte_buf_from_array(a, len);`), so
+                        // the aws-c-common byte_buf/byte_cursor harnesses all asserted on an
+                        // uninitialised struct and false-alarmed. The plain statement form (`s =
+                        // other;`) always worked, so emit exactly that, as the non-struct branch
+                        // below does.
+                        emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
                     }
                 } else {
                     checkState(
@@ -862,22 +902,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                     Add(currentValue, unitValue).eval(ImmutableValuation.empty());
                         }
                     } else {
-                        CAssignment cAssignment =
-                                new CAssignment(
-                                        declaration.getVarDecls().get(0).getRef(),
-                                        declaration.getInitExpr(),
-                                        "=",
-                                        parseContext);
-                        recordMetadata(ctx, cAssignment);
-                        compound.addCStatement(cAssignment);
-                        if (declaration.getInitExpr() instanceof CCompound compoundInitExpr) {
-                            final var preStatements = collectPreStatements(compoundInitExpr);
-                            preStatements.forEach(preCompound::addCStatement);
-                            final var postStatements = collectPostStatements(compoundInitExpr);
-                            postStatements.forEach(postCompound::addCStatement);
-                            resetPreStatements(compoundInitExpr);
-                            resetPostStatements(compoundInitExpr);
-                        }
+                        emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
                     }
                 }
             } else {

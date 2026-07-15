@@ -919,6 +919,37 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 34 — `struct S s = <expr>;` never copied anything
+
+Chasing the remaining `aws-c-common` `byte_buf`/`byte_cursor` false alarms. Minimal repro is five
+lines: `struct T mk(unsigned long n){ struct T t; t.len = n; return t; }` +
+`struct T b = mk(n); assert(b.len == n);` → false **Unsafe**. Isolated by controls: asserting *inside*
+`mk` is Safe (the write happens), a scalar return is Safe, filling through an out-param is Safe, and
+`struct T b; b = a;` (declare **then** assign) is Safe — but `struct T b = a;` (**copy-init at the
+declaration**) is Unsafe.
+
+**Cause** (`FunctionVisitor.visitBodyDeclaration`): the struct branch, for a non-initializer-list
+initializer, `checkState`d that the expression is a `RefExpr`, that its type is a `CStruct`, and that
+the types match — **and then emitted nothing**. Type-checking is not initialising: the variable was
+declared and never written, so every field stayed unconstrained and the solver could read whatever it
+liked out of it. From the model, pre-fix: `assign c = (ite (= (deref 4 0 Int) main::n) 1 0)` with **no
+write to `deref 4 0` anywhere**; post-fix: `(memassign (deref 1 0 Int) mk::n)` is there and the read
+sees it. (With the initializer dropped, nothing aliases the callee's struct, so the callee's own write
+becomes dead and is removed too — hence *no* write at all.) The statement form always worked, so the
+fix emits exactly that, via an `emitInitAssignment` helper now shared with the non-struct branch.
+
+This is the shape every struct-returning function has at its call site — `struct aws_byte_buf buf =
+aws_byte_buf_from_array(a, len);` — so the aws harnesses were all asserting on an uninitialised
+struct. Pinned by `StructInitTest`. Note the `struct T b = a;` form reaches the same branch but makes
+no test that can fail (the source's own write is there either way and the copy *aliases* rather than
+adding one), so the call form is what the test uses.
+
+**It is not the whole `byte_buf` story:** `aws_add_size_saturating_harness` is OK (batch 33), and the
+minimal repros are all Safe now, but `aws_byte_buf_from_array_harness` is **still wrong** and
+`aws_byte_buf_from_c_str_harness` now reaches no verdict. Something further is going on in those
+harnesses (`bounded_malloc`, `aws_byte_buf_is_valid(&buf)` taking a struct's address,
+`assert_bytes_match`) — still open.
+
 ## Batch 33 — the aws saturating cluster: two independent bugs, one of them an unsoundness that hid real bugs
 
 Chasing the batch-32 `aws-c-common` false alarms turned up **two unrelated bugs**, both fixed; the
