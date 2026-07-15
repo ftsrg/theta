@@ -259,13 +259,7 @@ class FrontendXcfaBuilder(
             )
           )
         )
-        if (MemsafetyPass.enabled) {
-          val fitsall = Fitsall(null, parseContext)
-          val size = type.fields.size
-          initStmtList.add(
-            builder.parent.allocate(parseContext, flatVariable.ref, fitsall.getValue("$size"))
-          )
-        }
+        giveStructObjectStorage(builder.parent, flatVariable.ref, type, initStmtList)
       }
     }
     builder.createInitLoc(getMetadata(function))
@@ -292,6 +286,57 @@ class FrontendXcfaBuilder(
     val edge = XcfaEdge(end, ret, metadata = getMetadata(function))
     builder.addEdge(edge)
     return builder
+  }
+
+  /**
+   * Records a struct object's size and gives every struct-typed *field* of it storage of its own.
+   *
+   * A struct variable's value IS its base id, and `s.f` reads `__arrays_T[s][i]`. A field that is
+   * itself a struct holds a base id in turn -- `o.in.x` is `__arrays[__arrays[o][0]][0]` -- but only
+   * *declared* variables were ever given one, so `o.in`'s base stayed unconstrained and the solver
+   * could pick any value it liked for it, including one already in use. `struct Out o, p; o.in.x =
+   * 1; p.in.x = 2;` then read `o.in.x` back as 2: the inner structs of two distinct objects aliased.
+   * That is unsound in both directions -- a write through one object shows up in an unrelated one (a
+   * false alarm), and two objects the program keeps apart can be conflated (hiding a real bug).
+   *
+   * C has no struct that contains itself by value -- a recursive type has to go through a pointer,
+   * which is a scalar field here -- so the recursion terminates.
+   *
+   * Unions are left as they are: their members all start at offset 0, so walking them by member
+   * index does not describe their layout, and [CStruct.isUnion] accesses that would need a faithful
+   * one are already refused.
+   */
+  private fun giveStructObjectStorage(
+    builder: XcfaBuilder,
+    objectExpr: Expr<*>,
+    type: CStruct,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    if (MemsafetyPass.enabled) {
+      val fitsall = Fitsall(null, parseContext)
+      initStmtList.add(
+        builder.allocate(parseContext, objectExpr, fitsall.getValue("${type.fields.size}"))
+      )
+    }
+    if (type.isUnion) return
+    type.fields.forEachIndexed { index, field ->
+      val fieldType = field.get2()
+      if (fieldType is CStruct) {
+        val deref =
+          Dereference(
+            cast(objectExpr, objectExpr.type),
+            cast(type.getValue("$index"), objectExpr.type),
+            fieldType.smtType,
+          )
+        parseContext.metadata.create(deref, "cType", fieldType)
+        initStmtList.add(
+          StmtLabel(
+            MemoryAssignStmt.create(deref, cast(fieldType.getValue("$ptrCnt"), deref.type))
+          )
+        )
+        giveStructObjectStorage(builder, deref, fieldType, initStmtList)
+      }
+    }
   }
 
   private fun initializeGlobalVariable(
@@ -337,13 +382,7 @@ class FrontendXcfaBuilder(
       )
     } else if (type is CStruct) {
       initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
-      if (MemsafetyPass.enabled) {
-        val fitsall = Fitsall(null, parseContext)
-        val size = type.fields.size
-        initStmtList.add(
-          builder.allocate(parseContext, globalDeclaration, fitsall.getValue("$size"))
-        )
-      }
+      giveStructObjectStorage(builder, globalDeclaration, type, initStmtList)
       if (initExpr != null && initExpr.expression !is UnsupportedInitializer) {
         error("Unsupported initializer for global struct variable $globalDeclaration.")
       }
