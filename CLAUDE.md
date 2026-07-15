@@ -1,20 +1,28 @@
 # Theta — how to use
 
 ## Build
-- `./gradlew :theta-xcfa-cli:build` — build xcfa-cli
-- `./gradlew :theta-xcfa-cli:shadowJar` — fat jar
 - `./gradlew build` — full build
+- `./gradlew :theta-<x>-cli:build` — build one CLI tool
+- `./gradlew :theta-<x>-cli:shadowJar` — fat jar for that tool
 
 Gradle module names are `theta-<dirname>` (`settings.gradle.kts` prefixes them) — `:xcfa-cli:build` does **not** resolve, use `:theta-xcfa-cli:build`.
 
+Each CLI targets its own formalism / use case; see the module's own `README.md` for how to run it and its input formats:
+- `xcfa-cli` — C / software programs (sequential and concurrent), Btor2 circuits
+- `xsts-cli` — XSTS: statecharts (Gamma backend), Petri nets (PNML, experimental)
+- `cfa-cli` — CFA (e.g. as a PLCverif verification backend)
+- `sts-cli` — STS: AIGER (hardware model checking)
+- `xta-cli` — Uppaal timed automata
+- `ltl-cli` — LTL properties
+- `solver-smtlib-cli` — install/manage SMT-LIB solvers
+
 ## Run
-IntelliJ run configs live in `.idea/workspace.xml` (e.g. `cir-example (1)`, `bmc-tracegen-example`, `btor2-horn`). Claude can't trigger them directly — replicate via:
-- `./gradlew :xcfa-cli:run --args="..."`, or
-- `java -cp ... hu.bme.mit.theta.xcfa.cli.XcfaCli ...`
+- `./gradlew :theta-<x>-cli:run --args="..."`, or
+- `java -cp ... hu.bme.mit.theta.<x>.cli.<X>Cli ...` (main class per tool, e.g. `hu.bme.mit.theta.xcfa.cli.XcfaCli`)
 
-Required env: `LD_LIBRARY_PATH=$PROJECT_DIR/lib/` (for native solvers). Some configs use JDK 21 (`/usr/lib/jvm/java-21-openjdk`).
+Required env: `LD_LIBRARY_PATH=$PROJECT_DIR/lib/` (for native solvers). Some setups use JDK 21 (`/usr/lib/jvm/java-21-openjdk`).
 
-To mirror a specific config: read its entry in `.idea/workspace.xml` for main class + program args + JVM args.
+If your local `.idea/workspace.xml` has IntelliJ run configurations (it's gitignored and per-developer — not in a fresh clone), they're a useful source of example invocations: read a config's main class + program args + JVM args and replicate on the command line.
 
 ## Subproject map
 
