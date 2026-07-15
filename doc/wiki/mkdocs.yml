@@ -49,7 +49,7 @@ repo_name: ftsrg/theta
 theme:
     name: material
     logo: assets/icon.png
-    favicon: assets/icon.png
+    favicon: assets/icon-letter.png
     features:
         - navigation.top          # back-to-top button
         - navigation.tracking     # URL follows the active anchor
