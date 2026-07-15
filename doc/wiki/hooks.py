@@ -125,10 +125,14 @@ def _discover(config):
     """Return (absolute path, destination uri) for every doc the wiki should mirror."""
     wiki_dir = Path(config["config_file_path"]).parent
 
+    # `build/` is generated; `resources/` is data packaged into the tools (the
+    # archive-packaging READMEs are templates with placeholders, not documentation).
     module_docs = [
         path
         for path in sorted((REPO_ROOT / "subprojects").rglob("*.md"))
-        if path.name in MODULE_DOCS and "build" not in path.parts
+        if path.name in MODULE_DOCS
+        and "build" not in path.parts
+        and "resources" not in path.parts
     ]
     # Two docs can shorten to the same nav path (e.g. a module's own README and one in
     # its resources). Keep the short path where it is unambiguous, spell it out otherwise.

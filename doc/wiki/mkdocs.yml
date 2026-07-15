@@ -2,8 +2,6 @@ site_name: 'Theta Wiki'
 docs_dir: 'docs'
 
 markdown_extensions:
-    - mdx_math:
-        enable_dollar_delimiter: True
     - admonition
     - pymdownx.superfences:
         custom_fences:
@@ -78,6 +76,3 @@ theme:
 
 extra_css:
     - assets/theme.css
-
-extra_javascript:
-    - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML

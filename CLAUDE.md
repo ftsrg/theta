@@ -51,10 +51,17 @@ Two doc systems exist. **Prefer per-subproject `README.md` / `CLAUDE.md` for edi
 - `CEGAR-algorithms.md` — CEGAR configuration options + best practices. Read before touching `common/analysis`.
 - `Portfolio.md` — portfolio mechanism: automatic algorithm/config selection.
 - `LBE.md` — Large Block Encoding design note (+ `LBE-images/`), Dec 2021.
+- `Tools.md` — the competition tool variants (Theta / EmergenTheta / Thorn / ThetaCHC).
 - `copyright-header.txt` — header prepended to every source file.
 
-### `doc/wiki/` — MkDocs-Material site, live but nearly content-empty
-Sources under `doc/wiki/docs/`; built by the `buildDocs` Gradle task (`buildSrc/docs-builder.gradle.kts`) and **deployed by CI on every release** to the `gh-pages` branch under `wiki/` (the same branch hosts `javadoc/` and the publications page). Infrastructure dates to 2022; content was never written — the per-formalism and Frontends pages are "no content" stubs. Has real content only in: `index.md`, `Formalisms/index.md` (short intros), `Algorithms/index.md` (architecture overview, 2026-07). Don't cite stub pages as a source; conceptual truth lives in per-subproject READMEs.
+### `doc/wiki/` — MkDocs-Material site (published wiki)
+Built by the `buildDocs` Gradle task (`buildSrc/docs-builder.gradle.kts`) and **deployed by CI on every release** to the `gh-pages` branch under `wiki/` (the same branch hosts `javadoc/` and the publications page).
+
+The wiki **mirrors markdown that lives elsewhere in the repo** — it holds almost no content of its own. `doc/wiki/hooks.py` discovers, and rewrites the relative links of:
+- every `README.md` / `USING.md` / `CLAUDE.md` under `subprojects/` (→ *Modules*; other filenames are ignored, as is anything under `build/` or `resources/`),
+- every `*.md` under `doc/` (→ *Guides*), and the root `README.md` / `CLAUDE.md`.
+
+**Consequence: a file with one of those names is published the moment you add it — write accordingly.** Only `doc/wiki/docs/` (front page, contributing page) is wiki-owned.
 
 ### Publications
 If a task has a trivial, direct need for a specific paper, the publication list is linked from `README.md`: <https://ftsrg.github.io/theta/publications/> (hosted from this repo's GitHub Pages branch). By default this is not needed — don't reach for it unless the task clearly calls for it.

@@ -3,4 +3,3 @@
 mkdocs>=1.6,<2
 mkdocs-material>=9.5,<10
 mkdocs-awesome-pages-plugin>=2.9,<3
-python-markdown-math>=0.8

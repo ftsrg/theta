@@ -18,7 +18,7 @@ Currently the following LTL operators are supported in Theta:
 | Strong release | M      |
 
 On top of regular LTL, one can also use complex expressions over the simple variable types. See [Preprocessing](#preprocessing). For complex
-examples, look at the [LtlCheckTestWithXstsPred test file](../src/test/kotlin/hu/bme/mit/theta/common/ltl/LtlCheckTestWithXstsPred.kt).
+examples, look at the [LtlCheckTestWithXstsPred test file](src/test/kotlin/hu/bme/mit/theta/common/ltl/LtlCheckTestWithXstsPred.kt).
 
 
 ## Converting LTL to Buchi automaton
@@ -30,7 +30,7 @@ produces a Buchi automaton in Theta representation. The current implementation `
 2. Call a `Ltl2Hoaf` converter that produces the Buchi automaton in the [Hanoi Omega-Automata Format](https://adl.github.io/hoaf/)
 3. Use the `BuchiBuilder` object to read the HOAF string and generate a CFA
 
-![](ltl_conversion_pipeline.jpg)
+![](doc/ltl_conversion_pipeline.jpg)
 
 ### Preprocessing
 
@@ -94,7 +94,7 @@ filename.hoa in the directory.
 
 The above interfaces and objects form the following architecture:
 
-![](ltl2buchi.jpg)
+![](doc/ltl2buchi.jpg)
 
 ## LTL checking
 

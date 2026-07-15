@@ -24,6 +24,12 @@ dest/
 !.idea/codeStyles/codeStyleConfig.xml
 !.idea/codeStyles/Project.xml
 
+# Python (doc/wiki build hooks and local preview environments)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
 # Other
 wdl-output.json
 witness.graphml
