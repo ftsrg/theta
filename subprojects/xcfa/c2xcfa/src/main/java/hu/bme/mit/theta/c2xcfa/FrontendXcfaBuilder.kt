@@ -395,6 +395,34 @@ class FrontendXcfaBuilder(
       }
     }
 
+  /**
+   * Passes a struct argument *by value*: copies it into a fresh object and hands the callee that.
+   *
+   * A struct's value is its base id, so passing the variable passed *the caller's object* -- the
+   * callee's parameter took the same base, and a write to a by-value parameter was read back by the
+   * caller (`void f(struct T t){ t.len = 9; }` mutated the argument). C copies at the call, so the
+   * argument is copied into a new object here and the callee is given that object's base instead.
+   *
+   * No variable holds the base: the object is the base id, and its contents live in the global
+   * `__arrays_*`, so a literal base is all the callee's `param := base` binding needs. The parameter
+   * is pure IN -- a by-value struct is never copied back out -- so nothing reads the base as an
+   * lvalue. The copy is deep, exactly as [structCopy] and [giveStructObjectStorage] are for a local.
+   *
+   * Returns the fresh base to pass and the labels that build the copy, to run before the call.
+   */
+  private fun copyStructArgument(
+    builder: XcfaProcedureBuilder,
+    argExpr: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): Pair<Expr<*>, List<XcfaLabel>> {
+    val base = type.getValue("$ptrCnt")
+    val labels: MutableList<XcfaLabel> = ArrayList()
+    giveStructObjectStorage(builder.parent, base, type, labels)
+    labels.addAll(structCopy(base, argExpr, type, metadata))
+    return base to labels
+  }
+
   private fun initializeGlobalVariable(
     builder: XcfaBuilder,
     globalDeclaration: Expr<*>,
@@ -664,11 +692,24 @@ class FrontendXcfaBuilder(
       initLoc =
         cStatement.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
     }
-    params.addAll(
-      myParams.stream().map { obj: CStatement -> obj.expression }.collect(Collectors.toList())
-    )
+    val prepLabels: MutableList<XcfaLabel> = ArrayList()
+    for (cStatement in myParams) {
+      val argExpr = cStatement.expression
+      val argType = CComplexType.getType(argExpr, parseContext)
+      if (argType is CStruct && !argType.isUnion) {
+        val (byValue, prep) =
+          copyStructArgument(builder, argExpr, argType, getMetadata(statement))
+        prepLabels.addAll(prep)
+        params.add(byValue)
+      } else {
+        params.add(argExpr)
+      }
+    }
     val call = InvokeLabel(statement.functionId, params, metadata = getMetadata(statement))
-    xcfaEdge = XcfaEdge(initLoc, location, call, metadata = getMetadata(statement))
+    val label =
+      if (prepLabels.isEmpty()) call
+      else SequenceLabel(prepLabels + call, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     return location
   }
