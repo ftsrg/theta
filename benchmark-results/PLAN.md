@@ -948,23 +948,29 @@ unbounded-length proof is beyond BMC, so they time out — score 0, not negative
 repro `cp_fix1` (l==1) verifies **Safe**. Pointer stores (`*pp=q`, array-of-pointers) still correct.
 
 **Two of the seven remain wrong, distinct causes (not fixed):**
-- `strcpy_small` / `rec_strcopy_malloc` — `while((*s1++ = *s2++))`. The loop **condition** re-reads
-  `arrays[s1_base][s1_offset]` with `s1_offset` *already post-incremented* (reads `out[1]`,
-  uninitialised) instead of the assignment's value (`in[0]`), so it wrongly continues and reads `s2`
-  OOB. Narrowed empirically (2026-07-16): `while(*s++)` (pure read + post-increment) is **Safe** and
-  `char c = (*p++ = 0)` assigned to a variable (`piv`) is **Safe** — so a normal statement and a plain
-  read-guard both defer the post-increment past the value correctly; **only an assignment used as the
-  loop guard** mis-orders it (the increments run inside `buildWithoutPostStatement`, before the guard
-  test, and `guard.expression` is `CAssignment.getExpression()` = the *lValue* `*s1`, re-read at the
-  moved offset). The trace (`hnote` blocks in the BOUNDED witness) shows one LBE edge doing store + both
-  increments, then a separate edge testing `*s1`. **Attempted, then deferred:** the reading of
-  `visitAssignmentExpressionAssignmentExpression` + `buildWithoutPostStatement` + `visit(CAssignment)`
-  says the guard's post-increments *should* be deferred (they are the guard compound's `postStatements`,
-  and `visit(CAssignment)` stores without running them) — yet the trace proves they run before the test,
-  so the real structure differs from that reading and needs a direct dump of the guard `CStatement` tree
-  to pin down. This is a **frontend loop-guard evaluation-ordering** change that touches every loop, so
-  it wants its own careful effort + full canary, not a quick patch — deferred in favour of the OC
-  cluster (~60 wrong). Two results (`strcpy_small`, `rec_strcopy_malloc`); it may also help `cstrncmp`.
+**37d — an assignment expression's value was a re-read of the moved destination (FIXED,
+`FunctionVisitor.visitAssignmentExpressionAssignmentExpression`).** `while ((*s1++ = *s2++))` tests the
+value of the assignment. In C that is the copied `char`; the post-increments run as side effects before
+the next sequence point. But `CAssignment.getExpression()` returns the *lValue* `*s1`, and the guard
+re-read it **after** `s1++` had moved the pointer — reading uninitialised memory one past the copy — so
+the loop ran on and the next iteration read `*s2` out of bounds. Dumping the guard `CStatement` tree
+resolved the earlier code-vs-trace confusion: the value node is a `CExpr(*s1)` and the store + both
+increments sit in a nested `postStatements` compound, so the value really is a re-read taken after the
+increments. Fix: when the assignment has deferred side effects (`postStatements` non-empty), snapshot
+its value into a `__theta_assignedvalue*` temp appended to the body — after the store, before the
+post-increments — and let that be the compound's value. Plain `a = b` (no side effects) is untouched.
+Narrowing that guided it: `while(*s++)` (no parens, plain read guard) and `char c = (*p++ = 0)` (normal
+statement) were both already **Safe** — only an assignment *used as a value* re-read. Pinned by
+`AssignmentValuePostIncrementTest` (no loop-branch condition dereferences memory). **Canary 255/255,
+zero flakes — the assignment-value change does not go deep.** `pi_fix`/`piv` Safe; **`strcpy_small`
+wrong → timeout** (spurious cex gone, unbounded proof beyond BMC).
+
+**Still wrong, and NOT this bug (distinct causes, open):** `rec_strcopy_malloc` copies by **recursion**
+(`*dest=*source; if(*source) rec(source+1,dest+1)`) with no post-increment — handled by `backend=CEGAR`
+(flagged "recursive"), a recursion + memsafety-precision case, unrelated to 37d. `cstrncmp` is
+**precision**: the decidable `cmp_real` (fixed lengths) verifies **Safe** on the fixed jar; the real one
+with nondeterministic length + count is beyond BMC/k-induction here. Both want their own effort
+(recursion support; invariant strength), not a frontend fix.
 - `cstrncmp` (`openbsd_cstrncmp-alloca-1`) — a **precision** timeout dressed as Unsafe at scale; the
   decidable version (`cmp_real`, fixed lengths) verifies **Safe**. Needs invariant/k-induction strength,
   not a model fix. (Also uses `*s1++`/`*s2++`, so the post-increment fix above may help it too.)
