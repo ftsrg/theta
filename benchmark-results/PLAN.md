@@ -919,6 +919,45 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 37 — the alloca/strcpy `valid-deref` false-alarm cluster: a scalar copied through split pointers was mis-lowered
+
+The 2026-07-16 run's `alloca`/`strcpy` cluster (`array-memsafety/openbsd_c{st,str}{p,}cpy-alloca`,
+`termination-memory-alloca/*`, `termination-dietlibc/strcpy_small`,
+`termination-recursive-malloc/rec_strcopy_malloc`) — all **`false(valid-deref)`** false alarms. The
+user's guess was "we don't model strcpy, so throw"; the reality is these all **define** their own copy
+loops (`cstpcpy`, `cstrcpy`, `cstrncmp`) and use modeled `__builtin_alloca` on the `.i`, so they are
+fully modeled and BMC finds a **spurious** counterexample. (The `.c` files fail the frontend on bare
+`alloca` — the run uses the `.i`, where it is `__builtin_alloca`.)
+
+**Root cause (fixed, `ReferenceElimination.containsSplitRefs`).** A pointer used with arithmetic
+(`++from`) is split into `<v>_base`/`<v>_offset`. Storing a *pointer value* to memory must write both
+halves to two channels; but `*to = *from` where the value is a `char` stores a *scalar*. It was
+misclassified: the split var `from` occurs inside the value `*from` — only as the *address* read
+through — and `containsSplitRefs` counted it as a stored pointer. The store was channel-split into two,
+one being `arrays[to_offset][…] := arrays[from_offset][…]` — a dereference **through the offset half as
+if it were a base**. `MemsafetyPass` then bounds-checked `__theta_ptr_size[from_offset]` = `ptr_size[0]`
+= 0 (unallocated) and reported an invalid deref. Fix: a `Dereference` contributes `false` to
+`containsSplitRefs` — a split var in a deref's address is the pointer read through (the deref rewriting
+folds it to `deref(base, offset)`), never a stored pointer value; the value read is a single cell. The
+`*p = q` pointer-store path (value is a bare split-var ref, not a deref) is unchanged. Pinned by
+`SplitPointerScalarCopyTest` (no memory write may address the `_offset` half); canary **255/255**.
+
+**Effect (checked on the fixed jar).** The 4 pure-copy tasks (`cstpcpy`/`cstrcpy`, shape
+`for(;(*to=*from);++to,++from)`) go wrong → **timeout** (the spurious cex is gone; the general
+unbounded-length proof is beyond BMC, so they time out — score 0, not negative). The decidable minimal
+repro `cp_fix1` (l==1) verifies **Safe**. Pointer stores (`*pp=q`, array-of-pointers) still correct.
+
+**Two of the seven remain wrong, distinct causes (not fixed):**
+- `strcpy_small` / `rec_strcopy_malloc` — `while((*s1++ = *s2++))`. The loop **condition** re-reads
+  `arrays[s1_base][s1_offset]` with `s1_offset` *already post-incremented* (reads `out[1]`,
+  uninitialised) instead of the assignment's value (`in[0]`), so it wrongly continues and reads `s2`
+  OOB. A frontend lowering bug in the *value of an assignment-with-post-increment used as a loop
+  condition* on split pointers — `char c = (*p++ = 0)` assigned to a variable (`piv`) is correctly Safe,
+  so it is specific to the condition position. Its own fix, in the C frontend expression lowering.
+- `cstrncmp` (`openbsd_cstrncmp-alloca-1`) — a **precision** timeout dressed as Unsafe at scale; the
+  decidable version (`cmp_real`, fixed lengths) verifies **Safe**. Needs invariant/k-induction strength,
+  not a model fix. (Also uses `*s1++`/`*s2++`, so the post-increment fix above may help it too.)
+
 ## Batch 36 — stack objects are allocated at run time (structs + arrays), and array fields deep-copy
 
 The static base for a stack object is **unsound under recursion and concurrency**: a struct's value is
