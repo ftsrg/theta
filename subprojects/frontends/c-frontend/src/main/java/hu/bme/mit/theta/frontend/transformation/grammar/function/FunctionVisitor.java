@@ -794,34 +794,31 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         compound.setPostStatements(postCompound);
         for (CDeclaration declaration : declarations) {
             createVars(declaration);
-            if (declaration.getActualType()
-                    instanceof CArray cArray) { // we transform it into a malloc
-                final var malloc =
-                        new CCall("malloc", List.of(cArray.getArrayDimension()), parseContext);
-                preCompound.addCStatement(malloc);
-                final var free =
-                        new CCall(
-                                "free",
-                                List.of(new CExpr(malloc.getRet().getRef(), parseContext)),
-                                parseContext);
-                preCompound.addCStatement(malloc);
+            if (declaration.getActualType() instanceof CArray cArray) {
+                // A stack array is an `alloca`, not a `malloc`+`free`. Both give it a fresh runtime
+                // base -- so, unlike the old compile-time base, two activations of the function
+                // (recursion, threads) cannot alias -- but `alloca` is the honest model: its memory
+                // is released when the function returns, not by the program, so it lands in the
+                // free residue class and is neither a leak the program must clean up nor freeable.
+                // The old free at scope exit modelled it as heap, which reported a bogus double-free
+                // for a returned-and-reused block and a bogus leak when the scope was a loop body.
+                parseContext
+                        .getMetadata()
+                        .create(
+                                "alloca",
+                                "cType",
+                                new CPointer(null, cArray.getEmbeddedType(), parseContext));
+                final var alloca =
+                        new CCall("alloca", List.of(cArray.getArrayDimension()), parseContext);
+                preCompound.addCStatement(alloca);
                 CAssignment cAssignment =
                         new CAssignment(
                                 declaration.getVarDecls().get(0).getRef(),
-                                new CExpr(malloc.getRet().getRef(), parseContext),
+                                new CExpr(alloca.getRet().getRef(), parseContext),
                                 "=",
                                 parseContext);
                 recordMetadata(ctx, cAssignment);
                 compound.addCStatement(cAssignment);
-                if (!currentStatementContext.isEmpty()) {
-                    final var scope = currentStatementContext.peek().get2();
-                    if (scope.isPresent() && scope.get().getPostStatements() instanceof CCompound) {
-                        if (scope.get().getPostStatements() == null) {
-                            scope.get().setPostStatements(new CNullStatement(parseContext));
-                        }
-                        ((CCompound) scope.get().getPostStatements()).addCStatement(free);
-                    }
-                }
             }
             if (declaration.getInitExpr() != null) {
                 if (declaration.getActualType() instanceof CStruct) {
