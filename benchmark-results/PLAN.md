@@ -124,7 +124,7 @@ Additional committed C3 builtin wins (all via `handleBuiltinCall` intercepting t
 
 Still open in C3: `__builtin_alloca` (421, property-dependent — alloca→malloc is unsound for valid-memcleanup), `__builtin_va_*` (variadic, hard). And the `twoIntsStruct`/`example_user_t`/`node_t`/`u8` "No such variable" identifiers (~450) are entangled with function-pointer failures (C5) in the same files — not a standalone fix.
 
-Not yet started (batch 2): C3 builtins, C1 east-const + GlobalDeclUsageVisitor hardening, N7 Newton MemoryAssignStmt, N6 pthread_detach, Phase 1.5 memsafety scope lifetimes, Phase 4 grammar, Phase 6 architectural. (OC / `&expr` remain out of scope — separate PRs.)
+Not yet started (batch 2): C3 builtins, C1 east-const + GlobalDeclUsageVisitor hardening, N7 Newton MemoryAssignStmt, N6 pthread_detach, Phase 1.5 memsafety scope lifetimes, Phase 4 grammar, Phase 6 architectural. (**OC is now IN SCOPE as of 2026-07-16** — the external PR was merged into this branch; `&expr` remains a separate PR.)
 
 ### Batch 4 (post-re-test-3): function pointers, alloca, inline asm — IMPLEMENTED, awaiting full re-test
 
@@ -746,7 +746,7 @@ alarms; PLAN had catalogued 3 — the rest were crashing before), **termination-
 Juliet CWE121 `_66_good` ×2 (known), memsafety/lockfree-3.0 (known), and three genuinely new ones:
 goblint 09-regions (missed race), termination-nla/dijkstra6-both-nt (missed overflow),
 memsafety-cve/admeshFixed (false valid-deref). The two OC tasks (pthread/singleton, goblint
-04-mutex) persist and are **out of scope** (separate PR).
+04-mutex) persist and are now **in scope** (OC PR merged 2026-07-16).
 
 ## IMPLEMENTATION STATUS — batch 22 (the unreach-call regression was a *doubled* range assume)
 
@@ -1615,10 +1615,18 @@ Analysis artifacts (parsed TSV of all runs, log-diagnostic JSONs, scripts) are i
 - All produced by the same portfolio config; `cexMonitor=CHECK` is on, yet a concretizable-looking counterexample was reported. Static exploration could not pin the bug (candidates: Cartesian-abstraction + `Fitsall` array bound reasoning, interpolant validity, or a `MemsafetyPass` encoding edge case, e.g. string literals / `alloca` sizes).
 - Plan: reproduce one task (`getNumbers1-2.c` is small and fails in ~57s) with `--backend CEGAR --domain PRED_CART --refinement BW_BIN_ITP` + `--debug --stacktrace`, dump the abstract ARG + refined trace, and check whether the reported trace is actually concretizable. This is an **investigation task, not yet a fix task**.
 
-### W6. OC (ordering-consistency) multithreaded checker false positives (2 tasks) — OUT OF SCOPE: separate PR
-`pthread/singleton.yml` (memsafety, expected true → got false(unreach-call), **"Unsafe, Trace length: 0"**), `goblint-regression/04-mutex_17-ps_add1_nr.yml` (no-overflow, expected true → got false, trace length 20).
-- Findings for reference only (OC issues are being resolved in a separate PR — **do not fix here to avoid double-fixing**): `XcfaOcChecker.kt:131-146` swallows trace-extraction exceptions and still reports `SafetyResult.unsafe(EmptyCex, ...)`; forced 2-iteration loop unroll (`XcfaOcChecker.kt:60-70`) has a Safe-only reliability downgrade (`ExecuteConfig.kt:300-315`), never Unsafe; MULTITHREAD portfolio dispatches OC on memsafety/overflow-lowered `ERROR_LOCATION` properties (`MemsafetyPass.kt:82`, `multithread.kt:210-285`).
-- **This plan's only action**: keep these 2 tasks in the wrong-result guard set (Phase 0) so the external OC PR's effect is verified by the rerun; no OC code is touched by this plan.
+### W6. OC (ordering-consistency) multithreaded checker false positives — NOW IN SCOPE (2026-07-16)
+The external OC PR has been merged into this branch, so OC is no longer separate — the concurrency/OC
+wrong results are ours to fix. `pthread/singleton.yml` (memsafety, expected true → got
+false(unreach-call), **"Unsafe, Trace length: 0"**), `goblint-regression/04-mutex_17-ps_add1_nr.yml`
+(no-overflow, expected true → got false, trace length 20).
+- Starting points to re-verify against the merged code (were from before the merge, confirm they still
+  apply): `XcfaOcChecker.kt:131-146` swallows trace-extraction exceptions and still reports
+  `SafetyResult.unsafe(EmptyCex, ...)`; forced 2-iteration loop unroll (`XcfaOcChecker.kt:60-70`) has a
+  Safe-only reliability downgrade (`ExecuteConfig.kt:300-315`), never Unsafe; MULTITHREAD portfolio
+  dispatches OC on memsafety/overflow-lowered `ERROR_LOCATION` properties (`MemsafetyPass.kt:82`,
+  `multithread.kt:210-285`). The 2026-07-16 run has ~60 `pthread-wmm` `false(valid-deref)` false alarms
+  — the dominant OC cluster to root-cause.
 
 ---
 
@@ -1697,7 +1705,8 @@ Ordering rationale: (1) SV-COMP scoring punishes wrong results (−16/−32) far
 | 1.4 | W5 investigation: live-debug `getNumbers1-2.c` under PRED_CART-BW_BIN_ITP; outcome = pinned bug + fix or a gating decision (e.g. disable that config for MEMSAFETY until fixed) | investigation | the 6-task cluster → true or unknown |
 | 1.5 | W4 memsafety scope-lifetime (decision resolved): emit `deallocate()` at scope exit for address-taken locals in **`FrontendXcfaBuilder`**, gated on the property demanding it (MEMSAFETY/memcleanup); cover gotos/early returns crossing scopes | moderate | scopes1, memleaks_test3-1 → false or unknown; memsafety canaries stay correct; fixture with goto-out-of-block dangling pointer |
 
-(W6 / OC items intentionally absent — separate PR.)
+(W6 / OC items are now in scope — the OC PR was merged into this branch on 2026-07-16. The ~60
+`pthread-wmm` `false(valid-deref)` false alarms in the 2026-07-16 run are the dominant OC cluster.)
 
 ### Phase 2 — Trivial/small crash fixes, large unlock (~5,000 tasks)
 | Step | Fix | Unlocks | Test |
@@ -1762,15 +1771,15 @@ Order: B2+B5 (attribute slots — needed by Phase 6 packed/aligned work too) →
 2. **Canary suite** (Phase 0.2): correctly-solved sub-60s tasks sampled from this run, stratified per sv-benchmarks subfolder, added to the integration tests with expected verdicts — run on every phase completion; any canary regression is a hard stop. (The existing `integration-tests/software/` suite is a smoke test only; the canaries are the real regression net.)
 3. **Parse-only sweeps with `--backend NONE`** (Phase 0.3): cheap frontend-crash regression check over all canaries + per-category crash samples; mandatory after every grammar commit.
 4. **Category spot-checks** (Phase 0.4 script): ≤15 sampled tasks per fixed category through the real archive; assert the crash signature is gone and no new wrong verdicts. Per-task expected verdicts are in the task `.yml`s.
-5. **Wrong-result guard set** after every phase (13 wrong + neighbors): zero wrong verdicts tolerated (the 2 OC tasks tracked for the external PR's effect).
-6. **Final**: one full benchmark re-run (same infra as this run) after Phases 1-5; success criteria: wrong ≤ 4 (W5-class if unresolved + OC pending external PR), frontend-failure errors < 5,000 (from 17,570), no new wrong results, correct > 7,500 (from 5,917; conservative — Juliet/no-overflow/memcleanup alone should add ~1,000).
+5. **Wrong-result guard set** after every phase (13 wrong + neighbors): zero wrong verdicts tolerated (OC tasks now included — OC is in scope as of 2026-07-16).
+6. **Final**: one full benchmark re-run (same infra as this run) after Phases 1-5; success criteria: wrong ≤ 4 (W5-class if unresolved), frontend-failure errors < 5,000 (from 17,570), no new wrong results, correct > 7,500 (from 5,917; conservative — Juliet/no-overflow/memcleanup alone should add ~1,000).
 
 ## 5. Architectural-decision register
 Resolved (per review, 2026-07-09):
 | ID | Decision | Resolution |
 |---|---|---|
 | AD1 (W2/1.3) | Signed-cast wraparound under integer arithmetic | **Resolved**: new `FrontendConfig` option `--enable-signed-wraparound` enabling modular wraparound; default off (signed wraparound is UB pre-C23) |
-| AD3, AD4 (OC) | OC Unsafe guarding / OC on lowered properties | **Removed from plan** — OC issues handled in a separate PR; only guard-set tracking here |
+| AD3, AD4 (OC) | OC Unsafe guarding / OC on lowered properties | **BACK IN SCOPE (2026-07-16)** — the OC PR was merged into this branch; the concurrency/OC wrong results (see W6, ~60 `pthread-wmm` in the 2026-07-16 run) are now ours to fix here |
 | AD5 (N1/Phase 3) | Unknown-extern semantics | **Resolved**: havoc all unresolved `InvokeLabel`s' return values + warning that side-effects may be swallowed |
 | AD7 (C8/Phase 6) | Unions / composite objects | **Resolved**: model fixed-size arrays, structs, unions as large bitvectors with extraction-based access; honor `packed`/`aligned` in grammar and layout logic; forces bitvector encoding; default when unions present, otherwise opt-in via `--enable-bitvectors-for-objects` |
 | — (C5/Phase 6) | Function-pointer lowering | **Resolved**: candidate-set dispatch |
