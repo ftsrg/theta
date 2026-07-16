@@ -919,6 +919,69 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 36 — stack objects are allocated at run time (structs + arrays), and array fields deep-copy
+
+The static base for a stack object is **unsound under recursion and concurrency**: a struct's value is
+its base id, and that base was a compile-time constant baked into the procedure init, so every
+activation of the function reused it. Two threads running the same function, or two recursive frames,
+then shared one `arrays[base]` and a write in one was read by the other. Confirmed minimal repro
+`mt_struct` (a thread-local `struct T s; s.x = v; assert(s.x == v)`) was **Unsafe** (a false alarm);
+`rec_struct` (recursive frames) likewise, and `rec_nested` (nested + recursion) **crashed** (Z3 sort
+mismatch). Local *arrays* were already dynamic (compiled to `malloc`), so `mt_array` was already Safe —
+the static-base bug was structs (and struct fields) only.
+
+**36a — stack structs allocated from the runtime counter** (`FrontendXcfaBuilder.allocateStackStruct`,
+`AllocaFunctionPass`). Replaced the frontend's static `s := ptrCnt-literal` seed with an
+`alloca(target, size)` marker, recursively for struct-typed fields; `AllocaFunctionPass` lowers it to
+`__malloc += 3; target := __malloc + 1` (residue 3k+1, the same class the old `ptrCnt` used — no
+memcleanup-scan change). The pass was **generalized to write into a memory cell** (a nested field's
+base lives at `arrays[parent][i]`, a `Dereference`, not a variable) — a one-liner, since
+`AssignStmtLabel(Expr, …)` already dispatches Ref-vs-Deref. By-value struct arguments
+(`copyStructArgument`) now allocate their per-call temp the same way, so two concurrent calls don't
+share the arg object. Globals stay on the compile-time path (`giveStructObjectStorage`): a global is a
+single object, a constant base can't alias. Result: `mt_struct`, `mt_two`, `rec_struct` Unsafe→**Safe**,
+`rec_nested` crash→**Safe**, negatives (`rec_nested_neg`) still Unsafe. `mt_nested` (nested struct under
+threads) stays Unsafe — but that is the **OC** weak-memory backend's double-deref handling (all three go
+through `backend=OC`, and the flat cases flip through it), not the allocation, which recursion proves
+correct. Test `NestedStructStorageTest` (rewritten: each inner struct is allocated from the counter),
+`StructParameterTest` (arg base is a temp var, not a literal).
+
+**36b — stack arrays use `alloca`, not `malloc`+`free`** (`FunctionVisitor.visitBodyDeclaration`). A
+local array was a `malloc` (heap, `3k+0`, program must free) plus a scope-exit `free` — the wrong model:
+its memory is released at return, not by the program, and the free made a returned block look
+double-freed and a loop-body block look leaked. Now it is an `alloca` (`3k+1`, auto-freed, never
+freeable). Aliasing was already sound (both are runtime bases), OOB is still caught (size recorded:
+`arr_oob` Unsafe, `arr_ok`/`arr_memclean` Safe, `arr_leak` still Unsafe). Test `StackArrayAllocaTest`
+(the array's base takes the `+1` alloca residue, not `malloc`'s bare base).
+
+**36c — a struct's array field gets its own storage and is deep-copied**
+(`allocateStackArray`/`arrayCopy`). `allocateStackStruct` now allocates array-typed fields too (and, for
+an array of structs/arrays, each element), and `structCopy` copies an array field **element by element**
+(`arrays[dst_a][k] := arrays[src_a][k]`) instead of assigning the array base — which had aliased the
+two structs' arrays. Closes the last gap the batch-35 write-up flagged. Repros: `sarr_copy`/`sarr_alias`
+(deep copy, source untouched) Safe, `sarr_neg` (real bug) Unsafe, `sarr_of_struct` (array of structs)
+and `sarr_param` (struct-with-array by value) Safe. Test `StructArrayCopyTest`. A flexible array member
+(no bound) falls back to a base assignment — the pre-existing limit for a member whose size is omitted.
+
+Each part is its own commit, verified to fail without the fix, canary **255/255** (36c the cleanest run
+yet, zero flakes). Remaining same-area gaps: a *local* array of structs still leaves its elements
+unallocated (the `FunctionVisitor` alloca sizes the array but does not walk elements — one layer the
+struct path reaches but the top-level-array path does not); and a struct field inside malloc'd memory
+still needs the object model.
+
+### Benchmark run `2026-07-16_00:35` (base `38705c97a`, = through 36a) — 96 wrong, down from 116
+
+9,083 correct / **96 wrong** / 25,942 error / 380 unknown. The **aws-c-common cluster (11 wrong in the
+batch-32 run) is gone** — cleared by the batch-34/35 struct fixes. Of the 96: ~60 are
+`pthread-wmm`/concurrency/**OC** (out of scope) plus `memory-model/{2SB,4SB}`; the rest are sequential.
+Notable in-scope cluster still open: **~7 `alloca`/`strcpy` `valid-deref` false alarms**
+(`array-memsafety/openbsd_cstpcpy-alloca`, `cstrcpy-alloca`, `cstrncmp-alloca`,
+`termination-dietlibc/strcpy_small`, `termination-recursive-malloc/rec_strcopy_malloc`) — checked on the
+current jar, **not** fixed by the batch-36 alloca work: they are a *memsafety-precision* problem
+(proving an unbounded string-copy loop stays within an `alloca(nondet_size)` buffer whose interior
+bytes are uninitialised), not an allocation bug. Still-open missed bugs `memsafety-ext3/{scopes1,
+getNumbers1-1}`, `memsafety/cmp-freed-ptr` remain (unrelated to structs — no struct in them).
+
 ## Batch 35 — the struct model gives every object its own storage: nested fields get a base, assignment and argument-passing copy
 
 Three bugs, all from the same root: **a struct's identity is its base id, and only *declared* struct
