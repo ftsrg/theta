@@ -991,6 +991,27 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         recordMetadata(ctx, compound);
         expressionVisitor.getPostStatements().forEach(postStatements::addCStatement);
         compound.setPostStatements(postStatements);
+        // The value of an assignment expression is the value assigned, taken at the assignment -- not
+        // a later re-read of the destination. When the expression has deferred side effects -- a
+        // post-increment, as in `*s1++ = *s2++` -- the destination lvalue `*s1` moves before the value
+        // is consumed, so re-reading it (which is what `getExpression()` does) reads the wrong cell.
+        // `while ((*s1++ = *s2++))` then tested `*s1` at the advanced pointer, i.e. uninitialised
+        // memory, instead of the assigned char, ran on and walked off the buffer (the openbsd/strcpy
+        // alloca `valid-deref` false alarms). Snapshot the value here, after the store and before the
+        // post-statements, and make it the compound's value. Assignments without side effects are
+        // untouched (a plain `a = b` re-read is harmless), so the common case is unchanged.
+        if (!postStatements.getcStatementList().isEmpty()) {
+            Expr<?> assignedValue = cAssignment.getExpression();
+            VarDecl<?> snapshot =
+                    createTempVar(
+                            CComplexType.getType(assignedValue, parseContext), "assignedvalue");
+            compound.addCStatement(
+                    new CAssignment(
+                            snapshot.getRef(),
+                            new CExpr(assignedValue, parseContext),
+                            "=",
+                            parseContext));
+        }
         recordMetadata(ctx, compound);
         return compound;
     }
