@@ -372,19 +372,60 @@ class FrontendXcfaBuilder(
     labels.add(alloca(target, type.fields.size))
     if (type.isUnion) return
     type.fields.forEachIndexed { index, field ->
-      val fieldType = field.get2()
-      if (fieldType is CStruct) {
-        val cell =
-          Dereference(
-            cast(target, target.type),
-            cast(type.getValue("$index"), target.type),
-            fieldType.smtType,
-          )
-        parseContext.metadata.create(cell, "cType", fieldType)
-        allocateStackStruct(cell, fieldType, labels)
+      allocateStackSubobject(subobjectCell(target, type, index, field.get2()), field.get2(), labels)
+    }
+  }
+
+  /**
+   * Gives a *stack-allocated* array a fresh runtime base, and -- if its elements are themselves
+   * aggregates -- allocates each of them in turn.
+   *
+   * An array of scalars is one block: the elements live directly in it (`arrays[a][k]`), so nothing
+   * more is allocated. An array of structs (or of arrays) holds a base per element in those cells,
+   * exactly like a struct holds one per field, so each element is allocated into its cell. A member
+   * array has a constant bound, so the element count is known; a flexible array member (no bound) is
+   * left unallocated, the pre-existing limitation for a member whose size the declaration omits.
+   */
+  private fun allocateStackArray(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
+    val size = fixedArraySize(type) ?: return
+    labels.add(alloca(target, size))
+    val elementType = type.embeddedType
+    if (elementType is CStruct || elementType is CArray) {
+      for (index in 0 until size) {
+        allocateStackSubobject(subobjectCell(target, type, index, elementType), elementType, labels)
       }
     }
   }
+
+  private fun allocateStackSubobject(
+    cell: Expr<*>,
+    type: CComplexType,
+    labels: MutableList<XcfaLabel>,
+  ) {
+    when (type) {
+      is CStruct -> allocateStackStruct(cell, type, labels)
+      is CArray -> allocateStackArray(cell, type, labels)
+      else -> {} // a scalar field lives in its parent's cell; it needs no object of its own
+    }
+  }
+
+  /** The cell `arrays[parent][index]` a subobject (struct field, array element) lives at. */
+  private fun subobjectCell(
+    parent: Expr<*>,
+    parentType: CComplexType,
+    index: Int,
+    subobjectType: CComplexType,
+  ): Dereference<*, *, *> =
+    Dereference(
+        cast(parent, parent.type),
+        cast(parentType.getValue("$index"), parent.type),
+        subobjectType.smtType,
+      )
+      .also { parseContext.metadata.create(it, "cType", subobjectType) }
+
+  /** A member array's constant element count, or null for a flexible array member (no bound). */
+  private fun fixedArraySize(type: CArray): Int? =
+    if (type.arrayDimension == null) null else getArraySize(type, null)
 
   /**
    * Whether assigning [rExpression] to a variable of this type is a struct copy.
@@ -409,14 +450,14 @@ class FrontendXcfaBuilder(
    * ```c
    * struct T a, b; a.len = 1; b = a; a.len = 2;   /* b.len is still 1 */
    * ```
-   * The copy is deep. A field that is itself a struct is a subobject, not a reference to one, so its
-   * *contents* are copied and the destination keeps the base it was allocated ([allocateStackStruct],
-   * or [giveStructObjectStorage] for a global); copying the base instead would alias the inner
-   * structs and reintroduce the same bug one level down.
+   * The copy is deep. A field that is itself a struct or an array is a subobject, not a reference to
+   * one, so its *contents* are copied and the destination keeps the base it was allocated
+   * ([allocateStackStruct], or [giveStructObjectStorage] for a global); copying the base instead
+   * would alias the two objects and reintroduce the same bug one level down. An array is copied
+   * element by element for the same reason.
    *
-   * An array field is still copied as its base -- the array's elements are shared rather than
-   * duplicated -- because nothing gives an array field storage of its own to copy into. That is the
-   * pre-existing gap the nested-struct case had, one type over.
+   * A flexible array member (no bound) has no element count to copy over, so it falls back to a base
+   * assignment -- the pre-existing limitation for a member whose size the declaration omits.
    */
   private fun structCopy(
     target: Expr<*>,
@@ -426,21 +467,52 @@ class FrontendXcfaBuilder(
   ): List<XcfaLabel> =
     type.fields.flatMapIndexed { index, field ->
       val fieldType = field.get2()
-      val offset = type.getValue("$index")
-      val to =
-        Dereference(cast(target, target.type), cast(offset, target.type), fieldType.smtType).also {
-          parseContext.metadata.create(it, "cType", fieldType)
-        }
-      val from =
-        Dereference(cast(source, source.type), cast(offset, source.type), fieldType.smtType).also {
-          parseContext.metadata.create(it, "cType", fieldType)
-        }
-      if (fieldType is CStruct && !fieldType.isUnion) {
-        structCopy(to, from, fieldType, metadata)
-      } else {
-        listOf(StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata))
-      }
+      copySubobject(
+        subobjectCell(target, type, index, fieldType),
+        subobjectCell(source, type, index, fieldType),
+        fieldType,
+        metadata,
+      )
     }
+
+  /** Copies an array object's elements into another, element by element. */
+  private fun arrayCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CArray,
+    metadata: MetaData,
+  ): List<XcfaLabel> {
+    val size = fixedArraySize(type) ?: return copyScalar(target, source, metadata)
+    val elementType = type.embeddedType
+    return (0 until size).flatMap { index ->
+      copySubobject(
+        subobjectCell(target, type, index, elementType),
+        subobjectCell(source, type, index, elementType),
+        elementType,
+        metadata,
+      )
+    }
+  }
+
+  private fun copySubobject(
+    to: Expr<*>,
+    from: Expr<*>,
+    type: CComplexType,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
+    when {
+      type is CStruct && !type.isUnion -> structCopy(to, from, type, metadata)
+      type is CArray -> arrayCopy(to, from, type, metadata)
+      else -> copyScalar(to, from, metadata)
+    }
+
+  private fun copyScalar(to: Expr<*>, from: Expr<*>, metadata: MetaData): List<XcfaLabel> =
+    listOf(
+      StmtLabel(
+        MemoryAssignStmt.create(to as Dereference<*, *, *>, cast(from, to.type)),
+        metadata = metadata,
+      )
+    )
 
   /**
    * Passes a struct argument *by value*: copies it into a fresh object and hands the callee that.
