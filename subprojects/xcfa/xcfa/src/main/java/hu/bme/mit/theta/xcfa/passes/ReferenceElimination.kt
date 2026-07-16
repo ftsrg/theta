@@ -590,8 +590,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
 
   private fun Expr<*>.containsSplitRefs(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean =
-    (this is RefExpr<*> && this.decl in splitVars.keys) ||
-      this.ops.any { (it as Expr<Type>).containsSplitRefs(splitVars) }
+    when {
+      this is RefExpr<*> -> this.decl in splitVars.keys
+      // A dereference reads a value *through* a pointer. A split var in its address is the pointer we
+      // read through -- the deref rewriting folds it to `deref(base, offset)` -- not a pointer *value*
+      // being stored, and the value it reads is a single memory cell (a scalar, for `*to = *from`; a
+      // single base id for a pointer in memory), never a split var. Recursing into it counted the
+      // address as if it were a stored pointer, so `*to = *from` (a char copy through two split
+      // pointers) was wrongly channel-split into `arrays[to_offset][…] := arrays[from_offset][…]`,
+      // whose bounds check then read `ptr_size[offset]` -- unallocated -- and false-alarmed.
+      this is Dereference<*, *, *> -> false
+      else -> this.ops.any { (it as Expr<Type>).containsSplitRefs(splitVars) }
+    }
 
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.replaceSplitRefs(
