@@ -951,9 +951,20 @@ repro `cp_fix1` (l==1) verifies **Safe**. Pointer stores (`*pp=q`, array-of-poin
 - `strcpy_small` / `rec_strcopy_malloc` — `while((*s1++ = *s2++))`. The loop **condition** re-reads
   `arrays[s1_base][s1_offset]` with `s1_offset` *already post-incremented* (reads `out[1]`,
   uninitialised) instead of the assignment's value (`in[0]`), so it wrongly continues and reads `s2`
-  OOB. A frontend lowering bug in the *value of an assignment-with-post-increment used as a loop
-  condition* on split pointers — `char c = (*p++ = 0)` assigned to a variable (`piv`) is correctly Safe,
-  so it is specific to the condition position. Its own fix, in the C frontend expression lowering.
+  OOB. Narrowed empirically (2026-07-16): `while(*s++)` (pure read + post-increment) is **Safe** and
+  `char c = (*p++ = 0)` assigned to a variable (`piv`) is **Safe** — so a normal statement and a plain
+  read-guard both defer the post-increment past the value correctly; **only an assignment used as the
+  loop guard** mis-orders it (the increments run inside `buildWithoutPostStatement`, before the guard
+  test, and `guard.expression` is `CAssignment.getExpression()` = the *lValue* `*s1`, re-read at the
+  moved offset). The trace (`hnote` blocks in the BOUNDED witness) shows one LBE edge doing store + both
+  increments, then a separate edge testing `*s1`. **Attempted, then deferred:** the reading of
+  `visitAssignmentExpressionAssignmentExpression` + `buildWithoutPostStatement` + `visit(CAssignment)`
+  says the guard's post-increments *should* be deferred (they are the guard compound's `postStatements`,
+  and `visit(CAssignment)` stores without running them) — yet the trace proves they run before the test,
+  so the real structure differs from that reading and needs a direct dump of the guard `CStatement` tree
+  to pin down. This is a **frontend loop-guard evaluation-ordering** change that touches every loop, so
+  it wants its own careful effort + full canary, not a quick patch — deferred in favour of the OC
+  cluster (~60 wrong). Two results (`strcpy_small`, `rec_strcopy_malloc`); it may also help `cstrncmp`.
 - `cstrncmp` (`openbsd_cstrncmp-alloca-1`) — a **precision** timeout dressed as Unsafe at scale; the
   decidable version (`cmp_real`, fixed lengths) verifies **Safe**. Needs invariant/k-induction strength,
   not a model fix. (Also uses `*s1++`/`*s2++`, so the post-increment fix above may help it too.)
