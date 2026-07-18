@@ -919,6 +919,78 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 38 — the 2026-07-16 run's 84 newly-wrong results: four root causes, all fixed
+
+Analyzed `results-2026-07-16_00-35` (base `38705c97a`): 9,743 correct / **98 wrong** / 26,381 error.
+Vs the Jul-14 run: +837 correct, but wrong 28 → 98. Log scan attributed every wrong to its producing
+config: 60 = `MULTITHREAD_EXPL_COI_SEQ_ITP` *after an OC crash*, 24 = KIND, 9 = `PRED_CART-BW_BIN_ITP`,
+2 = `MULTITHREAD_PRED` (missed races), 1 = OC, 2 misc. Four root causes found and fixed:
+
+### 38a — `ReferenceElimination` skipped `main`, so a thread-referenced global's `y*` was never seeded (~60 wrong)
+
+The dominant cluster (58 `pthread-wmm` + goblint/pthread-ext memsafety false `valid-deref`). The pass
+early-outs when *this* procedure has no `Reference` labels — but `main`'s only `&` was the
+`pthread_create(&t, ...)` handle, already consumed by `CLibraryFunctionsPass`, while the thread
+bodies' `&y` obligates **main** (the init procedure) to seed `y* := <base>` + its allocation size,
+and main's own `y` accesses to go through the same dereference. Unseeded `y*` made every thread-side
+deref check `y* <= 0 || size[y*] <= 0` trivially satisfiable → false alarm from the CEGAR fallback;
+main writing plain `y` while threads wrote `__arrays[y*][0]` also split the storage (unsound both
+ways). Fix: the early-out now also checks the parent-wide global referred set
+(`globalReferredVars`, hoisted into a shared helper). Pinned by `GlobalReferenceSeedingTest`
+(no plain `y` writes survive + main and thread write through the same base; fails pre-fix).
+`safe000_power.oepc` valid-memsafety: false-Unsafe → **Safe** in 4 s.
+
+### 38b — OC crashed on every memsafety task: `MemsafetyPass` piled parallel label-less `bad → error` edges
+
+`annotateDeref`/`annotateFree` added the `__THETA_bad_deref → errorLoc` (`NopLabel`) edge once **per
+annotated dereference**, so the shared bad-deref location had N parallel empty edges — a "branching
+location without assumes" that `XcfaToEventGraph` (line 327 `.first()`) died on with
+`NoSuchElementException`. Fixed: one shared exit edge per location (added after the loop), and the
+OC-side check uses `firstOrNull` so any future shape degrades to the clean `exit("branching with
+non-assume labels")`. OC now proves `safe000_power.oepc` memsafety **Safe**; negative control
+`mix000.oepc` unreach-call still **Unsafe** (trace 156).
+
+### 38c — the monolithic memory array was split by a syntactic `isGlobal` guess: BMC invented counterexamples (~20 wrong)
+
+`DereferenceToArrayPass` (BOUNDED/monolithic backends only) keyed the `__arrays_*` global on
+`(arrayType, offsetType, elemType, isGlobal)` where `isGlobal` was "base is a global var ref, or some
+init-edge global assign's RHS == the base expr". A read through global `p1` (RefExpr → `_true` array)
+and the write through its constant-folded base literal `2` (`_false` array, the `p1 := (+ 2)` Pos
+wrapper defeats the syntactic match) then used **different arrays for the same cell** — reads
+unconstrained → KIND/BMC "found" 2-3-step counterexamples on provably safe programs
+(`ldv-regression/test07/09/10/16`, `list-properties`, …; also the correct→wrong `test09` no-overflow
+regression). Fix: **one array per type triple**, always havoc-initialized — stack/heap garbage
+semantics (commit 788eb58c6's intent) are preserved, and global zero-init is already materialized as
+explicit writes in the init procedure. All four ldv unreach-call tasks → **Safe** under KIND;
+PassTests fixtures updated (`__arrays_Int_Int_Int`, no default-value init).
+
+### 38d — `p[0].f` emitted the p->field double deref through the subscript path (admesh cluster)
+
+`stl->numbers_start[0].number` lowered to `deref(deref(deref(stl,1),0), f)`: the Brackets visitor
+read cell `(base,0)` and MemberAccess used that *content* as the object base — W5's `p->field` bug
+one production over. Under the struct-value-is-its-base-id model, `p[0]` on a pointer-to-struct IS
+the pointee, so the Brackets visitor now returns the pointer itself (wrapped in `Pos` so the struct
+`cType` lands on a fresh node, never on the shared `RefExpr` — the known type-corruption trap) for a
+**literal-0 index on a CPointer-to-CStruct**; other indices keep the old path (array-of-struct
+stride is a separate, documented gap). Pinned in `PtrMemberAccessTest`
+(`subscriptZeroMemberAccessEmitsNoNestedDereference`). `admeshFixed`: false-Unsafe → no-verdict at
+150 s (the analysis now gets past `initializeStl` and stops at the unmodeled `calloc` — an error,
+strictly better than wrong; calloc semantics remain an N1 item).
+
+### Spot-check of all 43 wrong tasks (150 s local budget vs the run's 300 s)
+
+After 38a-c: 14 correct (was 0 among these), 8 no-verdict, 21 still wrong. The still-wrong set is
+almost entirely **pre-existing** (wrong or error in the Jul-14 run too) and already documented:
+- missed bugs `memsafety-ext3/{scopes1,getNumbers1-1}`, `memsafety/cmp-freed-ptr` (W4 scope
+  lifetimes, AD2 architectural), `memory-model/{2SB,4SB}` (KIND false-negative),
+  `dijkstra6-both-nt`, `test22-2`, `09-regions_03-list2_rc` (missed race, MULTITHREAD_PRED);
+- false alarms `lockfree-3.0`, `test22-1`, `memleaks_test11`, Juliet CWE121 ×2 (undiagnosed,
+  pre-existing PRED_CART/KIND memsafety cluster), `scopes4-1` (**diagnosed**: `return arr + 1`
+  carries a mid-object pointer across a call — the documented base/offset-across-calls model gap,
+  same family as the alloca/strcpy precision cluster), `04-mutex_17` (OC wrong-false, W6),
+  `hardness_wrappers_wrapper_ap_file-62`, `dirname-1`, `sll_nondet_insert-2` (all three were
+  frontend-error in Jul-14 — unlocked-into-wrong, not regressions).
+
 ## Batch 37 — the alloca/strcpy `valid-deref` false-alarm cluster: a scalar copied through split pointers was mis-lowered
 
 The 2026-07-16 run's `alloca`/`strcpy` cluster (`array-memsafety/openbsd_c{st,str}{p,}cpy-alloca`,
