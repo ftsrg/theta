@@ -151,10 +151,14 @@ primaryExpression
     |   '__extension__'? '(' compoundStatement ')'                          # primaryExpressionGccExtension
     |   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
     |   '__builtin_offsetof' '(' typeName ',' offsetofMemberDesignator ')'  # primaryExpressionBuiltinOffsetof
+    // The arguments are types (typically `typeof(expr)`), so this cannot be left to the
+    // function-call production, whose arguments are expressions.
+    |   '__builtin_types_compatible_p' '(' typeName ',' typeName ')'        # primaryExpressionBuiltinTypesCompatible
     ;
 
 bracedPrimaryExpression
-    :   '{' initializerList ','? '}'
+    // The list may be empty: `struct t arr[] = { };` is a GNU extension (and legal C23).
+    :   '{' initializerList? ','? '}'
     ;
 
 // The member argument of __builtin_offsetof: a field, possibly nested (`a.b`) and possibly
@@ -298,7 +302,8 @@ logicalOrExpression
     ;
 
 conditionalExpression
-    :   logicalOrExpression ('?' ifTrue=expression ':' ifFalse=expression)?
+    // GNU `a ?: b` omits the middle operand: the guard itself is the true-branch value.
+    :   logicalOrExpression ('?' ifTrue=expression? ':' ifFalse=expression)?
     ;
 
 assignmentExpression
@@ -401,7 +406,10 @@ typeSpecifier
     |   structOrUnionSpecifier                                      # typeSpecifierCompound
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
-    |   ('__typeof__' | '__typeof' | 'typeof') '(' constantExpression ')'        # typeSpecifierTypeof
+    // Like sizeof: the type-name form is tried first, so `__typeof__(unsigned long)` reads as a
+    // type; a bare identifier only matches typeName via the predicate-guarded typedefName, so
+    // `typeof(expr)` still falls through to the expression form.
+    |   ('__typeof__' | '__typeof' | 'typeof') '(' (typeName | constantExpression) ')'        # typeSpecifierTypeof
     |   typeSpecifier '*'? '(' pointer ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;
@@ -432,7 +440,12 @@ structDeclaration
     // GCC allows attributes at the start of a member declaration, e.g.
     // `__attribute__ ((aligned(4))) uint32_t num_tdcx;`. Like everywhere else in this grammar they
     // describe layout, which is not modeled, so they are matched and ignored.
-    :   gccAttributeSpecifier* specifierQualifierList structDeclaratorList? ';'
+    // The attribute may also sit between the specifier and the declarator:
+    // `struct kern_ipc_perm __attribute__((aligned(64))) sem_perm;` or
+    // `struct { ... } __attribute__((packed)) isa;`.
+    // CIL also emits bare `;` members (empty declarations) inside struct bodies.
+    :   gccAttributeSpecifier* specifierQualifierList gccAttributeSpecifier* structDeclaratorList? ';'
+    |   ';'
 //    |   staticAssertDeclaration                             #structDeclarationStatic
     ;
 
@@ -502,7 +515,9 @@ alignmentSpecifier
     ;
 
 declarator
-    :   pointer? directDeclarator gccDeclaratorExtension*
+    // The attribute may follow the stars and appertain to the pointer:
+    // `void (*__attribute__((section(...))) interrupt[224])(void);`
+    :   pointer? gccAttributeSpecifier* directDeclarator gccDeclaratorExtension*
     ;
 
 directDeclarator
@@ -528,7 +543,8 @@ inlineAssembly
     ;
 
 gccAttributeSpecifier
-    :   '__attribute__' '(' '(' gccAttributeList ')' ')'
+    // GCC accepts `__attribute` as an alternate spelling of `__attribute__` (CIL emits it).
+    :   ('__attribute__' | '__attribute') '(' '(' gccAttributeList ')' ')'
     ;
 
 gccAttributeList

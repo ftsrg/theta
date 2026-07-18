@@ -1120,11 +1120,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
         Expr<?> iteExpr;
         if (!ctx.expression().isEmpty()) {
-            CStatement ifTrue = ctx.ifTrue.accept(this);
+            // GNU `a ?: b`: the middle operand is omitted, its value is the guard itself.
+            CStatement ifTrue = ctx.ifTrue == null ? null : ctx.ifTrue.accept(this);
             CStatement ifFalse = ctx.ifFalse.accept(this);
 
             Expr<?> expr = ctx.logicalOrExpression().accept(expressionVisitor);
-            Expr<?> lhs = ifTrue.getExpression();
+            Expr<?> lhs = ifTrue == null ? expr : ifTrue.getExpression();
             Expr<?> rhs = ifFalse.getExpression();
 
             CCompound guardCompound = new CCompound(parseContext);
@@ -1133,7 +1134,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             guardCompound.setPreStatements(new CNullStatement(parseContext));
 
             CCompound ifTruePre = new CCompound(parseContext);
-            List<CStatement> ifTruePreList = collectPreStatements(ifTrue);
+            List<CStatement> ifTruePreList =
+                    ifTrue == null ? List.of() : collectPreStatements(ifTrue);
             ifTruePreList.forEach(ifTruePre::addCStatement);
             ifTruePre.setPostStatements(new CNullStatement(parseContext));
             ifTruePre.setPreStatements(new CNullStatement(parseContext));
@@ -1144,7 +1146,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             ifFalsePre.setPreStatements(new CNullStatement(parseContext));
 
             CCompound ifTruePost = new CCompound(parseContext);
-            List<CStatement> ifTruePostList = collectPostStatements(ifTrue);
+            List<CStatement> ifTruePostList =
+                    ifTrue == null ? List.of() : collectPostStatements(ifTrue);
             ifTruePostList.forEach(ifTruePost::addCStatement);
             ifTruePost.setPostStatements(new CNullStatement(parseContext));
             ifTruePost.setPreStatements(new CNullStatement(parseContext));

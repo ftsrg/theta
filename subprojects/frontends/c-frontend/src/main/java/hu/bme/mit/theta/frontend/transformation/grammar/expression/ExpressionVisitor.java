@@ -713,6 +713,46 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return ret;
     }
 
+    /**
+     * `__builtin_types_compatible_p(t1, t2)` is a compile-time 0/1. Where both types resolve
+     * (plain type names), they are compared structurally. The dominant benchmark use is the
+     * kernel's `__must_be_array` assert, whose arguments are `typeof(expr)` over local variables --
+     * unresolvable here -- and whose value in any program that compiles is 0 (the negative-width
+     * bitfield the macro wraps it in would otherwise have been a compile error), so 0 is the
+     * fallback, with a warning.
+     */
+    @Override
+    public Expr<?> visitPrimaryExpressionBuiltinTypesCompatible(
+            CParser.PrimaryExpressionBuiltinTypesCompatibleContext ctx) {
+        String value = "0";
+        try {
+            final CComplexType left =
+                    ctx.typeName(0).specifierQualifierList().accept(typeVisitor).getActualType();
+            final CComplexType right =
+                    ctx.typeName(1).specifierQualifierList().accept(typeVisitor).getActualType();
+            if (ctx.typeName(0).abstractDeclarator() == null
+                    && ctx.typeName(1).abstractDeclarator() == null) {
+                value = left.getClass().equals(right.getClass()) ? "1" : "0";
+            } else {
+                uniqueWarningLogger.write(
+                        Level.INFO,
+                        "WARNING: __builtin_types_compatible_p with declarators approximated as 0: "
+                                + ctx.getText()
+                                + "\n");
+            }
+        } catch (RuntimeException e) {
+            uniqueWarningLogger.write(
+                    Level.INFO,
+                    "WARNING: __builtin_types_compatible_p approximated as 0: "
+                            + ctx.getText()
+                            + "\n");
+        }
+        final CComplexType resultType = CComplexType.getSignedInt(parseContext);
+        final Expr<?> ret = resultType.getValue(value);
+        parseContext.getMetadata().create(ret, "cType", resultType);
+        return ret;
+    }
+
     private static final String VA_ARG = "__VERIFIER_nondet_theta_va_arg";
 
     /**

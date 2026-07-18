@@ -348,6 +348,9 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                     ctx.structDeclarationList().structDeclaration()) {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext =
                         structDeclarationContext.specifierQualifierList();
+                if (specifierQualifierListContext == null) {
+                    continue; // bare `;` member (empty declaration)
+                }
                 CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
                 if (structDeclarationContext.structDeclaratorList() == null) {
                     final var decl = new CDeclaration(cSimpleType);
@@ -591,6 +594,24 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
      */
     @Override
     public CSimpleType visitTypeSpecifierTypeof(CParser.TypeSpecifierTypeofContext ctx) {
+        if (ctx.typeName() != null) {
+            // typeof(type-name), e.g. __typeof__(unsigned long): resolve the named type directly.
+            // A bare identifier only reaches this branch when it is a known typedef name (the
+            // typedefName predicate), so expressions never end up here.
+            final CSimpleType type = ctx.typeName().specifierQualifierList().accept(this);
+            if (type != null) {
+                final CSimpleType copy = type.copyOf();
+                if (ctx.typeName().abstractDeclarator() != null) {
+                    final int levels = pointerLevels(ctx.typeName().abstractDeclarator());
+                    for (int i = 0; i < levels; i++) {
+                        copy.incrementPointer();
+                    }
+                }
+                return copy;
+            }
+            throw new UnsupportedFrontendElementException(
+                    "typeof over an unresolvable type: " + ctx.getText());
+        }
         try {
             ExpressionVisitor expressionVisitor =
                     new ExpressionVisitor(

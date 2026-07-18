@@ -919,6 +919,48 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 39 — ANTLR parse-death elimination: 4,108 task-runs → 3 files
+
+The Jul-16 run had 4,108 task-runs (3,173 unique inputs) die in the parser with
+`ParseCancellationException`. Directive: all parse errors must become timeouts/OOMs/results.
+Re-measured every input with `--backend NONE` after each wave (sweep tooling: scratchpad
+`parse_sweep.sh`, resumable driver; 60s/file, P3).
+
+### 39a — first wave (committed 0eb09a457)
+
+Member/bitfield `__attribute__` positions (~830 tasks), abstract-declarator casts
+`(int (*)[8])` (~700), `__typeof` spelling + `typeof(expr)` resolution, `__builtin_offsetof`,
+gcc statement expressions. Sweep after: **777 PARSE-OK, 2,316 FRONTEND (past ANTLR, die
+later), 34 still-parse-error, 29 OOM (`Struct.getActualType` recursion, 2GB heap), 17
+parse-timeout (product-lines simulators + big LDV, just slow)**.
+
+### 39b — second wave (this commit): the 34 → 3
+
+- **Empty initializer `{ }`** (25 files, `rc_map_table lirc[] = { };`): `initializerList?` in
+  `bracedPrimaryExpression`; `DeclarationVisitor` emits an empty `CInitializerList`.
+- **`typeof(type-name)`** (6 percpu files, `__typeof__(unsigned long)`): typeName alternative
+  tried before constantExpression, mirroring sizeof; `TypeVisitor` resolves it directly.
+- **The LDV-3.4 chain** (6 files, each fix unmasking the next): attributes between specifier
+  and member declarator (`struct kern_ipc_perm __attribute__((aligned(64))) sem_perm;`), bare
+  `;` struct members, the `__attribute` spelling (no trailing underscores), attributes after
+  the star in a declarator (`void (*__attribute__((section(...))) interrupt[224])(void);`),
+  GNU `a ?: b` (elvis; guard reused as the true branch in `FunctionVisitor`), and
+  `__builtin_types_compatible_p(typeName, typeName)` (kernel `__must_be_array`; resolved
+  structurally where possible, approximated as 0 with a warning where `typeof(local)` cannot
+  resolve — 0 is the only value that compiles in the wrapping negative-width-bitfield assert).
+
+**Remaining 3 (deliberately deferred):** `strlcpy.i`/`strlcat.i` (K&R old-style definitions —
+`declarationList` is commented out in the grammar, needs visitor merge work) and one lustre
+libcfs file (`typedef void cfs_timer_func_t(ulong_ptr_t);` — function-type typedefs are not
+registered by `TypedefVisitor`, so the name fails `isTypeName` at use sites).
+
+**Verification:** parse canaries 255/255 after each wave; c-frontend/c2xcfa/xcfa unit tests
+green. Next frontier is the FRONTEND cluster ranking (partial, of first ~520): member access
+on unresolved types 171 — typedef'd unions of anonymous bitfield structs (TDX idiom), bitfield
+members silently dropped from field lists (`visitStructDeclaratorConstant` throws, swallowed
+upstream) — designated initializers 154 (aws-c-common), ptr-member access 72,
+`CComplexType.getType` 38, `visitPrimaryExpressionId` 30, va_arg 30, ReferenceElimination 29.
+
 ## Batch 38 — the 2026-07-16 run's 84 newly-wrong results: four root causes, all fixed
 
 Analyzed `results-2026-07-16_00-35` (base `38705c97a`): 9,743 correct / **98 wrong** / 26,381 error.

@@ -93,21 +93,20 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
                     if (context.initializer().bracedPrimaryExpression() != null) {
+                        // `= { }` (GNU / C23 empty initializer) has no initializerList at all.
+                        final CParser.InitializerListContext initializerList =
+                                context.initializer().bracedPrimaryExpression().initializerList();
                         checkState(
-                                context.initializer()
-                                        .bracedPrimaryExpression()
-                                        .initializerList()
-                                        .designation()
-                                        .isEmpty(),
+                                initializerList == null
+                                        || initializerList.designation().isEmpty(),
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList =
                                 new CInitializerList(cSimpleType.getActualType(), parseContext);
                         try {
                             for (CParser.InitializerContext initializer :
-                                    context.initializer()
-                                            .bracedPrimaryExpression()
-                                            .initializerList()
-                                            .initializers) {
+                                    initializerList == null
+                                            ? List.<CParser.InitializerContext>of()
+                                            : initializerList.initializers) {
                                 Expr<?> expr =
                                         cSimpleType
                                                 .getActualType()
