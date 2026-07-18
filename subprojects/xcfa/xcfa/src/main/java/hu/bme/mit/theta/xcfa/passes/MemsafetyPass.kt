@@ -164,14 +164,16 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.metadata,
               )
             )
-            builder.addEdge(
-              XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), it.metadata)
-            )
           } else {
             builder.addEdge(it)
           }
         }
       }
+    }
+    // A single shared exit edge: one per check would pile up parallel label-less edges on
+    // `invalidFree`, which the OC backend rejects as a branching location without assumes.
+    if (invalidFree.incomingEdges.isNotEmpty()) {
+      builder.addEdge(XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
     }
   }
 
@@ -232,14 +234,16 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.metadata,
               )
             )
-            builder.addEdge(
-              XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), it.metadata)
-            )
           } else {
             builder.addEdge(it)
           }
         }
       }
+    }
+    // A single shared exit edge: one per check would pile up parallel label-less edges on
+    // `badDeref`, which the OC backend rejects as a branching location without assumes.
+    if (badDeref.incomingEdges.isNotEmpty()) {
+      builder.addEdge(XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
     }
   }
 

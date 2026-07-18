@@ -324,7 +324,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
 
         if (current.loc.outgoingEdges.size > 1) {
           for (e in current.loc.outgoingEdges) {
-            val first = e.getFlatLabels().first()
+            val first = e.getFlatLabels().firstOrNull()
             if (first !is StmtLabel || first.stmt !is AssumeStmt) {
               exit("branching with non-assume labels")
             }
