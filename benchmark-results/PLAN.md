@@ -919,6 +919,42 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 40 — the frontend-crash frontier: struct members that vanished, designated initializers
+
+Follow-up to batch 39's sweep: of the 2,316 files that now get past ANTLR but die in the
+frontend, the top signatures were member access on broken structs (171+72 in the partial
+count) and "Initializer list designators not yet implemented" (154, all of aws-c-common).
+
+- **One bitfield or anonymous member used to kill the whole struct**: the builder threw
+  (`visitStructDeclaratorConstant`: "Not yet supported!"), a caller swallowed it, and the
+  struct kept only the fields added before the throw — so *every* later member lookup on it
+  failed or mis-resolved, not just the bitfield's. Bitfields are now regular fields of their
+  declared base type (member layout is by field index, so this is exact for access; only
+  wrap-at-width write semantics is over-approximated). Unnamed bitfields (`int : 3;`,
+  BUILD_BUG_ON's `int : -!!(e)`) are padding: no field slot.
+- **C11 anonymous struct/union members** get a synthetic `__theta_anon_N` field; member
+  lookup flattens through them (`s.a` in `struct S { union { int a; }; }` is two accesses:
+  the anonymous member's base, then `a` — the same shape as a named nested struct).
+  Union-side punning (`union { u64 raw; struct {bits}; }`, the TDX idiom) still rejects
+  cleanly in `memberOffset` — bit-accurate overlay needs AD7-style flat layout.
+- **Function-type typedefs** (`typedef void cfs_timer_func_t(ulong_ptr_t);`): the permissive
+  name-collecting parse swallows the declared name into the specifiers (the `void
+  *malloc(size_t);` shape), so the collector registered the *parameter* name. It now also
+  takes the specifiers' last type name when the leftover declarator is a bare `(Identifier)`.
+- **Designated initializers** (`{ .field = v, [i] = v }`): the frontend resolves every
+  designator to its element position (field index / folded constant; single-level only) and
+  stores it in the until-now-unused `CInitializerList` index slot; all four consumers
+  (global compound init, unsized-array sizing, local struct + local array lowering) place
+  elements by stored position, C-style (a designator sets the slot, each element advances it).
+- **Global struct initializer lists** turned out to be unsupported entirely — the global
+  CStruct branch asked the list for a single `.expression` (which throws) before dispatching;
+  it now routes lists to `initializeCompound`.
+
+Verification: c-frontend/c2xcfa/xcfa tests green incl. new `BitfieldAndAnonymousMemberTest`
+(3) and `DesignatedInitializerTest` (4); parse canaries 255/255;
+`aws_array_list_back_harness.i` (the designated-init cluster representative) now parses
+fully. Full 2,316-file frontend re-sweep pending.
+
 ## Batch 39 — ANTLR parse-death elimination: 4,108 task-runs → 3 files
 
 The Jul-16 run had 4,108 task-runs (3,173 unique inputs) die in the parser with

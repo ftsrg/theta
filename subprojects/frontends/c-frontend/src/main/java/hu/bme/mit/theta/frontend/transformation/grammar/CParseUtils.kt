@@ -108,9 +108,24 @@ private fun ParseTree.collectTypedefNamesInto(names: MutableSet<String>) {
       declarationSpecifiers()?.lastTypeName()?.let(names::add)
     } else {
       initDeclarators.forEach { it.declarator()?.declaredName()?.let(names::add) }
+      // `typedef void f_t(param_t);` reads here the way `void *malloc(size_t);` famously does:
+      // `f_t` is swallowed into the specifiers as a type name and the *parameter* is left over
+      // as a parenthesized declarator -- so the loop above just registered `param_t`, not `f_t`.
+      // In that shape the declared name is the specifiers' last type name.
+      if (initDeclarators.size == 1 && initDeclarators[0].declarator().isParenthesizedBareName()) {
+        declarationSpecifiers()?.lastTypeName()?.let(names::add)
+      }
     }
   }
   for (i in 0 until childCount) getChild(i).collectTypedefNamesInto(names)
+}
+
+/** A declarator that is nothing but `( Identifier )` -- the leftover parameter of the mis-parse. */
+private fun CParser.DeclaratorContext?.isParenthesizedBareName(): Boolean {
+  if (this?.pointer() != null) return false
+  val braces = this?.directDeclarator() as? CParser.DirectDeclaratorBracesContext ?: return false
+  val inner = braces.declarator() ?: return false
+  return inner.pointer() == null && inner.directDeclarator() is CParser.DirectDeclaratorIdContext
 }
 
 private fun CParser.DeclarationContext.isTypedef() =

@@ -1344,6 +1344,56 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * share one representation is rejected -- the union may still be declared and passed around,
      * which is all the opaque system-header unions (pthread_mutex_t, mbstate_t) ever need.
      */
+    /**
+     * `<base>.<member>`, flattening through C11 anonymous struct/union members: `s.a` finds `a`
+     * inside `struct S { union { int a; ... }; }` by first accessing the synthetic
+     * {@link CStruct#ANONYMOUS_FIELD_PREFIX} field, then `a` within it. Each step is one
+     * Dereference at the member's field index.
+     */
+    private Expr<?> structMemberAccess(Expr<?> base, CStruct structType, String memberName) {
+        if (structType.getFieldsAsMap().get(memberName) != null) {
+            return directMemberAccess(base, structType, memberName);
+        }
+        for (Tuple2<String, CComplexType> field : structType.getFields()) {
+            if (field.get1().startsWith(CStruct.ANONYMOUS_FIELD_PREFIX)
+                    && field.get2() instanceof CStruct anonymous
+                    && hasMemberDeep(anonymous, memberName)) {
+                return structMemberAccess(
+                        directMemberAccess(base, structType, field.get1()), anonymous, memberName);
+            }
+        }
+        throw new UnsupportedFrontendElementException(
+                "Field [%s] not found, available fields are: %s"
+                        .formatted(memberName, structType.getFieldsAsMap().keySet()));
+    }
+
+    private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
+        final CComplexType embeddedType = structType.getFieldsAsMap().get(memberName);
+        final Expr<?> idxExpr =
+                structType.getValue(String.valueOf(memberOffset(structType, memberName)));
+        final Expr<?> access =
+                Exprs.Dereference(
+                        cast(base, base.getType()),
+                        cast(idxExpr, base.getType()),
+                        embeddedType.getSmtType());
+        parseContext.getMetadata().create(access, "cType", embeddedType);
+        return access;
+    }
+
+    private static boolean hasMemberDeep(CStruct structType, String memberName) {
+        if (structType.getFieldsAsMap().containsKey(memberName)) {
+            return true;
+        }
+        for (Tuple2<String, CComplexType> field : structType.getFields()) {
+            if (field.get1().startsWith(CStruct.ANONYMOUS_FIELD_PREFIX)
+                    && field.get2() instanceof CStruct anonymous
+                    && hasMemberDeep(anonymous, memberName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private int memberOffset(CStruct compound, String memberName) {
         if (!compound.isUnion()) {
             return compound.getFields().stream().map(Tuple2::get1).toList().indexOf(memberName);
@@ -1958,22 +2008,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return (primary) -> {
                 final CComplexType type = CComplexType.getType(primary, parseContext);
                 checkState(type instanceof CStruct, "Only structs expected here");
-                final CStruct structType = (CStruct) type;
-                final String accName = ctx.Identifier().getText();
-                final var embeddedType = structType.getFieldsAsMap().get(accName);
-                checkState(
-                        embeddedType != null,
-                        "Field [%s] not found, available fields are: %s"
-                                .formatted(accName, ((CStruct) type).getFieldsAsMap().keySet()));
-                final var idxExpr =
-                        type.getValue(String.valueOf(memberOffset(structType, accName)));
-                primary =
-                        Exprs.Dereference(
-                                cast(primary, primary.getType()),
-                                cast(idxExpr, primary.getType()),
-                                embeddedType.getSmtType());
-                parseContext.getMetadata().create(primary, "cType", embeddedType);
-                return primary;
+                return structMemberAccess(primary, (CStruct) type, ctx.Identifier().getText());
             };
         }
 
@@ -1990,25 +2025,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 ? ((CPointer) type).getEmbeddedType()
                                 : ((CArray) type).getEmbeddedType();
                 checkState(structTypeErased instanceof CStruct, "Only structs expected here");
-                final CStruct structType = (CStruct) structTypeErased;
-                final String accName = ctx.Identifier().getText();
-                final var idxExpr =
-                        structTypeErased.getValue(
-                                String.valueOf(memberOffset(structType, accName)));
-                final var embeddedType = structType.getFieldsAsMap().get(accName);
-                checkState(
-                        embeddedType != null,
-                        "Field [%s] not found, available fields are: %s"
-                                .formatted(
-                                        accName,
-                                        ((CStruct) structTypeErased).getFieldsAsMap().keySet()));
-                primary =
-                        Exprs.Dereference(
-                                cast(primary, primary.getType()),
-                                cast(idxExpr, primary.getType()),
-                                embeddedType.getSmtType());
-                parseContext.getMetadata().create(primary, "cType", embeddedType);
-                return primary;
+                return structMemberAccess(
+                        primary, (CStruct) structTypeErased, ctx.Identifier().getText());
             };
         }
 

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
@@ -96,17 +97,25 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         // `= { }` (GNU / C23 empty initializer) has no initializerList at all.
                         final CParser.InitializerListContext initializerList =
                                 context.initializer().bracedPrimaryExpression().initializerList();
-                        checkState(
-                                initializerList == null
-                                        || initializerList.designation().isEmpty(),
-                                "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList =
                                 new CInitializerList(cSimpleType.getActualType(), parseContext);
                         try {
-                            for (CParser.InitializerContext initializer :
+                            // Elements are placed C-style: a designator sets the position, each
+                            // element advances it by one. A designation precedes its initializer
+                            // among the children, so walk them in order.
+                            int nextPosition = 0;
+                            for (org.antlr.v4.runtime.tree.ParseTree child :
                                     initializerList == null
-                                            ? List.<CParser.InitializerContext>of()
-                                            : initializerList.initializers) {
+                                            ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
+                                            : initializerList.children) {
+                                if (child instanceof CParser.DesignationContext designation) {
+                                    nextPosition =
+                                            designatedPosition(designation, cSimpleType);
+                                    continue;
+                                }
+                                if (!(child instanceof CParser.InitializerContext initializer)) {
+                                    continue; // comma
+                                }
                                 Expr<?> expr =
                                         cSimpleType
                                                 .getActualType()
@@ -117,7 +126,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                                                                 .getExpression());
                                 parseContext.getMetadata().create(expr, "cType", cSimpleType);
                                 cInitializerList.addStatement(
-                                        null /* TODO: add designator */,
+                                        new CExpr(
+                                                IntLitExpr.of(
+                                                        java.math.BigInteger.valueOf(
+                                                                nextPosition++)),
+                                                parseContext),
                                         new CExpr(expr, parseContext));
                             }
                             initializerExpression = cInitializerList;
@@ -166,6 +179,58 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         return declaration;
     }
 
+    /**
+     * The element position a designator selects: the field's index for `.name`, the folded
+     * constant for `[expr]`. Only single-level designators are supported; member layout is by
+     * field index, so both forms land in the same position space.
+     */
+    private int designatedPosition(
+            CParser.DesignationContext designation, CSimpleType cSimpleType) {
+        final List<CParser.DesignatorContext> designators =
+                designation.designatorList().designator();
+        if (designators.size() != 1) {
+            throw new UnsupportedFrontendElementException(
+                    "Nested initializer designators are not supported: " + designation.getText());
+        }
+        final CParser.DesignatorContext designator = designators.get(0);
+        if (designator.Identifier() != null) {
+            if (!(cSimpleType.getActualType()
+                    instanceof
+                    hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+                                    struct)) {
+                throw new UnsupportedFrontendElementException(
+                        "Field designator on a non-struct type: " + designation.getText());
+            }
+            final String fieldName = designator.Identifier().getText();
+            final var fields = struct.getFields();
+            for (int i = 0; i < fields.size(); i++) {
+                if (fields.get(i).get1().equals(fieldName)) {
+                    return i;
+                }
+            }
+            throw new UnsupportedFrontendElementException(
+                    "Field [%s] not found, available fields are: %s"
+                            .formatted(fieldName, struct.getFieldsAsMap().keySet()));
+        }
+        if (functionVisitor == null) {
+            throw new UnsupportedFrontendElementException(
+                    "Cannot fold an array designator without a function visitor: "
+                            + designation.getText());
+        }
+        final Expr<?> folded =
+                hu.bme.mit.theta.core.utils.ExprUtils.simplify(
+                        designator.constantExpression().accept(functionVisitor).getExpression());
+        if (folded instanceof IntLitExpr intLit) {
+            return intLit.getValue().intValueExact();
+        }
+        if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+            return hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
+                    .intValueExact();
+        }
+        throw new UnsupportedFrontendElementException(
+                "Array designator is not a constant: " + designation.getText());
+    }
+
     @Override
     public CDeclaration visitStructDeclaratorSimple(CParser.StructDeclaratorSimpleContext ctx) {
         return ctx.declarator().accept(this);
@@ -173,7 +238,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
 
     @Override
     public CDeclaration visitStructDeclaratorConstant(CParser.StructDeclaratorConstantContext ctx) {
-        throw new UnsupportedFrontendElementException("Not yet supported!");
+        // A bitfield. Member layout is by field index, not bytes, so a bitfield is a regular
+        // field of its declared base type; only the wrap-at-width semantics of narrower-than-base
+        // widths is over-approximated (a stored value may exceed what the real field can hold).
+        // An unnamed bitfield (`int : 3;`, `int : 0;`) is padding: no field at all.
+        return ctx.declarator() == null ? null : ctx.declarator().accept(this);
     }
 
     @Override

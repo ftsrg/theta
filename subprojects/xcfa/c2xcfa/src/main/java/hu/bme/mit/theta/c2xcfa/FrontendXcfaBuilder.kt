@@ -590,7 +590,13 @@ class FrontendXcfaBuilder(
     } else if (type is CStruct) {
       initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList)
-      if (initExpr != null && initExpr.expression !is UnsupportedInitializer) {
+      // An initializer list is what initializeCompound is for; asking it for a single
+      // `.expression` throws. Anything else that has one is genuinely unsupported here.
+      if (
+        initExpr != null &&
+          initExpr !is CInitializerList &&
+          initExpr.expression !is UnsupportedInitializer
+      ) {
         error("Unsupported initializer for global struct variable $globalDeclaration.")
       }
       initializeCompound(
@@ -621,7 +627,7 @@ class FrontendXcfaBuilder(
     val initExprs: Map<Int, CStatement> =
       (initExpr as? CInitializerList)
         ?.statements
-        ?.mapIndexed { i, it -> Pair(i, it.get2()) }
+        ?.mapIndexed { i, it -> Pair(designatedIndex(it.get1()) ?: i, it.get2()) }
         ?.toMap() ?: emptyMap()
     val literalToExpr = { x: Long ->
       if (CComplexType.getUnsignedLong(parseContext).smtType is IntType)
@@ -641,10 +647,18 @@ class FrontendXcfaBuilder(
     }
   }
 
+  /** The position a designated element writes, or null for take-the-next-slot. */
+  private fun designatedIndex(designator: java.util.Optional<CStatement>): Int? =
+    designator.map { (it.expression as IntLitExpr).value.toInt() }.orElse(null)
+
   private fun getArraySize(type: CArray, initExpr: CStatement?): Int {
     if (type.arrayDimension == null) {
       if (initExpr is CInitializerList) {
-        return initExpr.statements.size
+        // `[9] = x` extends the array: the size is the highest written position + 1.
+        return initExpr.statements
+          .mapIndexed { i, it -> designatedIndex(it.get1()) ?: i }
+          .maxOrNull()
+          ?.plus(1) ?: 0
       } else {
         throw UnsupportedFrontendElementException(
           "Array with unspecified size must have initializer list."

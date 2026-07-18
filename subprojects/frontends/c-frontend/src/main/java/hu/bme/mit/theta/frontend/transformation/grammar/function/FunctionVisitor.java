@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -757,6 +758,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * itself has to run: a call arrives as a compound whose pre-statements hold the call, and those
      * have to be hoisted ahead of the assignment or the call never happens.
      */
+    /**
+     * The cell an initializer-list element writes: its stored designated position when present
+     * (the frontend resolves designators to positions), otherwise the running position.
+     */
+    private LitExpr<?> initPosition(
+            Optional<CStatement> designator, CComplexType ptrType, LitExpr<?> runningPosition) {
+        if (designator.isEmpty()) {
+            return runningPosition;
+        }
+        final IntLitExpr position = (IntLitExpr) designator.get().getExpression();
+        return (LitExpr<?>) ptrType.getValue(position.getValue().toString());
+    }
+
     private void emitInitAssignment(
             CParser.BodyDeclarationContext ctx,
             CDeclaration declaration,
@@ -832,6 +846,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         for (Tuple2<Optional<CStatement>, CStatement> statement :
                                 initializerList.getStatements()) {
                             final var expr = statement.get2().getExpression();
+                            currentValue = initPosition(statement.get1(), ptrType, currentValue);
                             final var deref =
                                     Exprs.Dereference(
                                             cast(varDecl.getRef(), currentValue.getType()),
@@ -884,6 +899,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             //                            checkState(false, "Code here seems to be
                             // buggy");
                             final var expr = statement.get2().getExpression();
+                            currentValue = initPosition(statement.get1(), ptrType, currentValue);
                             final var deref =
                                     Exprs.Dereference(
                                             cast(

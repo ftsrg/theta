@@ -37,6 +37,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVis
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import java.util.*;
@@ -344,6 +345,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             }
             Struct struct =
                     CSimpleTypeFactory.Struct(name, union, parseContext, uniqueWarningLogger);
+            int anonymousFields = 0;
             for (CParser.StructDeclarationContext structDeclarationContext :
                     ctx.structDeclarationList().structDeclaration()) {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext =
@@ -354,12 +356,25 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
                 if (structDeclarationContext.structDeclaratorList() == null) {
                     final var decl = new CDeclaration(cSimpleType);
-                    struct.addField(decl);
+                    if (decl.getName() == null) {
+                        // A C11 anonymous struct/union member. It needs a slot in the field list
+                        // (member lookup flattens through it), and `addField` needs a name.
+                        final var anon =
+                                new CDeclaration(CStruct.ANONYMOUS_FIELD_PREFIX + anonymousFields++);
+                        anon.setType(cSimpleType);
+                        struct.addField(anon);
+                    } else {
+                        struct.addField(decl);
+                    }
                 } else {
                     for (CParser.StructDeclaratorContext structDeclaratorContext :
                             structDeclarationContext.structDeclaratorList().structDeclarator()) {
                         CDeclaration declaration =
                                 structDeclaratorContext.accept(declarationVisitor);
+                        if (declaration == null) {
+                            // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not a field.
+                            continue;
+                        }
                         if (declaration.getType() == null) {
                             declaration.setType(cSimpleType);
                         }

@@ -29,6 +29,12 @@ import java.util.stream.Collectors;
 
 public class CStruct extends CInteger {
 
+    /**
+     * Field-list name given to a C11 anonymous struct/union member. Member lookup flattens
+     * through fields with this prefix, so `s.a` finds `a` inside `struct S { union { int a; }; }`.
+     */
+    public static final String ANONYMOUS_FIELD_PREFIX = "__theta_anon_";
+
     private final List<Tuple2<String, CComplexType>> fields;
     private final boolean union;
 
