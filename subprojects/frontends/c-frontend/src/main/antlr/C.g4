@@ -56,7 +56,7 @@ grammar C;
                     "_Bool", "_Complex", "__int128", "__float128", "__m128", "__m128d", "__m128i", "__extension__",
                     "struct", "union", "enum", "const", "volatile", "restrict", "_Atomic",
                     "__const", "__restrict", "__restrict__", "__volatile__", "__thread",
-                    "typeof", "__typeof__", "static", "extern", "register", "auto", "inline",
+                    "typeof", "__typeof", "__typeof__", "static", "extern", "register", "auto", "inline",
                     "_Alignas", "__inline__", "__attribute__"));
 
     public boolean isTypeStart(org.antlr.v4.runtime.Token token) {
@@ -150,11 +150,18 @@ primaryExpression
     //|   genericSelection                                                    # primaryExpressionGenericSelection
     |   '__extension__'? '(' compoundStatement ')'                          # primaryExpressionGccExtension
     |   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
-    //|   '__builtin_offsetof' '(' typeName ',' unaryExpression ')'           # primaryExpressionBuiltinOffsetof
+    |   '__builtin_offsetof' '(' typeName ',' offsetofMemberDesignator ')'  # primaryExpressionBuiltinOffsetof
     ;
 
 bracedPrimaryExpression
     :   '{' initializerList ','? '}'
+    ;
+
+// The member argument of __builtin_offsetof: a field, possibly nested (`a.b`) and possibly
+// indexed (`a[3].b`). Kept as its own rule so the visitor sees the designator structurally
+// instead of re-parsing an expression that would otherwise be read as a value.
+offsetofMemberDesignator
+    :   Identifier ('.' Identifier | '[' constantExpression ']')*
     ;
 
 //genericSelection
@@ -326,8 +333,12 @@ declarationSpecifiers2
     ;
 
 // otherwise, (y*y)-2 is considered a cast
+// The trailing abstractDeclarator admits casts to pointer-to-array and (nested) function-pointer
+// types -- `(float(*)[4])e`, `(int(**)(void))e`, `(void*const(*)(int))e` -- which the two
+// specifier slots alone cannot spell. Semantically every pointer level it contains is folded onto
+// the base type (see TypeVisitor.visitCastDeclarationSpecifierList).
 castDeclarationSpecifierList
-    : spec1+=castDeclarationSpecifier* spec2=typeSpecifierPointer?
+    : spec1+=castDeclarationSpecifier* spec2=typeSpecifierPointer? dec=abstractDeclarator?
     ;
 
 castDeclarationSpecifier
@@ -390,7 +401,7 @@ typeSpecifier
     |   structOrUnionSpecifier                                      # typeSpecifierCompound
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
-    |   ('__typeof__' | 'typeof') '(' constantExpression ')'        # typeSpecifierTypeof
+    |   ('__typeof__' | '__typeof' | 'typeof') '(' constantExpression ')'        # typeSpecifierTypeof
     |   typeSpecifier '*'? '(' pointer ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;
@@ -418,7 +429,10 @@ structDeclarationList
     ;
 
 structDeclaration
-    :   specifierQualifierList structDeclaratorList? ';'
+    // GCC allows attributes at the start of a member declaration, e.g.
+    // `__attribute__ ((aligned(4))) uint32_t num_tdcx;`. Like everywhere else in this grammar they
+    // describe layout, which is not modeled, so they are matched and ignored.
+    :   gccAttributeSpecifier* specifierQualifierList structDeclaratorList? ';'
 //    |   staticAssertDeclaration                             #structDeclarationStatic
     ;
 
@@ -437,8 +451,8 @@ structDeclaratorList
     ;
 
 structDeclarator
-    :   declarator                          #structDeclaratorSimple
-    |   declarator? ':' constantExpression  #structDeclaratorConstant
+    :   declarator                                                  #structDeclaratorSimple
+    |   declarator? ':' constantExpression gccAttributeSpecifier*   #structDeclaratorConstant
     ;
 
 enumSpecifier

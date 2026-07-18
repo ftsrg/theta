@@ -79,7 +79,42 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitCastDeclarationSpecifierList(CastDeclarationSpecifierListContext ctx) {
-        return createCType(ctx.spec1, ctx.spec2);
+        CSimpleType type = createCType(ctx.spec1, ctx.spec2);
+        if (ctx.dec != null && type != null) {
+            // A cast to a pointer-to-array or (nested) function-pointer type: every pointer level
+            // in the abstract declarator wraps the base type. The suffixes add nothing on top --
+            // a pointer to an array is the array's base address in this element-indexed model, and
+            // a function's parameter list, like the pointee of any function pointer, is not
+            // modeled (same treatment as typeSpecifierFunctionPointer).
+            int levels = pointerLevels(ctx.dec);
+            if (levels > 0) {
+                type = type.copyOf();
+                for (int i = 0; i < levels; i++) {
+                    type.incrementPointer();
+                }
+            }
+        }
+        return type;
+    }
+
+    /** Pointer levels of an abstract declarator, not counting any inside a parameter list. */
+    private int pointerLevels(CParser.AbstractDeclaratorContext ctx) {
+        int levels = ctx.pointer() != null ? ctx.pointer().stars.size() : 0;
+        if (ctx.directAbstractDeclarator() != null) {
+            levels += pointerLevels(ctx.directAbstractDeclarator());
+        }
+        return levels;
+    }
+
+    private int pointerLevels(CParser.DirectAbstractDeclaratorContext ctx) {
+        int levels = 0;
+        if (ctx.abstractDeclarator() != null) {
+            levels += pointerLevels(ctx.abstractDeclarator());
+        }
+        if (ctx.directAbstractDeclarator() != null) {
+            levels += pointerLevels(ctx.directAbstractDeclarator());
+        }
+        return levels;
     }
 
     /**
@@ -547,9 +582,37 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         }
     }
 
+    /**
+     * `typeof(expr)` for expressions that need no variable context -- which covers the macro
+     * idiom it exists for: `container_of` expands to `typeof(((struct T*)0)->field)`, a member
+     * access on a null literal. The expression is built only to ask its type; it is never emitted.
+     * An expression that references variables (a plain `typeof(x)`) is out of reach here -- the
+     * type visitor has no scope -- and is reported as unsupported rather than mistyped.
+     */
     @Override
     public CSimpleType visitTypeSpecifierTypeof(CParser.TypeSpecifierTypeofContext ctx) {
-        throw new UnsupportedFrontendElementException("Not yet implemented typeSpecifierTypeof");
+        try {
+            ExpressionVisitor expressionVisitor =
+                    new ExpressionVisitor(
+                            Set.of(),
+                            parseContext,
+                            null,
+                            new ArrayDeque<>(List.of(Tuple2.of("", Map.of()))),
+                            Map.of(),
+                            typedefVisitor,
+                            this,
+                            uniqueWarningLogger);
+            Expr<?> expr = ctx.constantExpression().accept(expressionVisitor);
+            CSimpleType origin = CComplexType.getType(expr, parseContext).getOrigin();
+            if (origin != null) {
+                return origin.copyOf();
+            }
+        } catch (RuntimeException e) {
+            // fall through to the unsupported report below
+        }
+        throw new UnsupportedFrontendElementException(
+                "typeof over an expression that references variables is not supported: "
+                        + ctx.getText());
     }
 
     @Override

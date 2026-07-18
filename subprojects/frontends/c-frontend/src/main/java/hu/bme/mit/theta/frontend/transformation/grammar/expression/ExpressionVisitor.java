@@ -677,6 +677,42 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return expr;
     }
 
+    /**
+     * `__builtin_offsetof(struct S, f)` evaluates to f's *element index* in S -- the same unit
+     * every member dereference uses as its offset -- so the `container_of` idiom
+     * `(struct S*)((char*)p - offsetof(struct S, f))` round-trips exactly: `&obj->f` is
+     * (base, index(f)), and subtracting index(f) lands back on (base, 0), the object itself.
+     * Nested (`a.b`) and indexed (`a[3]`) designators are rejected: a struct-typed field holds a
+     * base id of its own in this model, so no single linear offset describes them.
+     */
+    @Override
+    public Expr<?> visitPrimaryExpressionBuiltinOffsetof(
+            CParser.PrimaryExpressionBuiltinOffsetofContext ctx) {
+        CComplexType type =
+                ctx.typeName().specifierQualifierList().accept(typeVisitor).getActualType();
+        checkState(
+                type instanceof CStruct,
+                "__builtin_offsetof needs a struct or union type, got: %s",
+                type);
+        var designator = ctx.offsetofMemberDesignator();
+        if (designator.Identifier().size() != 1 || !designator.constantExpression().isEmpty()) {
+            throw new UnsupportedFrontendElementException(
+                    "Nested or indexed __builtin_offsetof designators are not supported: "
+                            + designator.getText());
+        }
+        String memberName = designator.Identifier(0).getText();
+        checkState(
+                ((CStruct) type).getFieldsAsMap().containsKey(memberName),
+                "Field [%s] not found, available fields are: %s",
+                memberName,
+                ((CStruct) type).getFieldsAsMap().keySet());
+        CComplexType resultType = CComplexType.getUnsignedLong(parseContext);
+        Expr<?> ret =
+                resultType.getValue(String.valueOf(memberOffset((CStruct) type, memberName)));
+        parseContext.getMetadata().create(ret, "cType", resultType);
+        return ret;
+    }
+
     private static final String VA_ARG = "__VERIFIER_nondet_theta_va_arg";
 
     /**
@@ -1734,8 +1770,35 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionCompoundStatement(
             PrimaryExpressionCompoundStatementContext ctx) {
-        uniqueWarningLogger.info("Primary expression compound statement");
-        return null;
+        return statementExpression(ctx.compoundStatement());
+    }
+
+    /**
+     * A GNU statement expression `({ stmt; ...; last; })`: the statements run for their effects
+     * (they are queued like any other side effect of the surrounding expression) and the last
+     * statement's value is the expression's value. This is what `container_of` expands to. When
+     * there is no value to yield -- no function visitor, or the block does not end in an
+     * expression -- fall back to the old null result: in statement position the value is
+     * discarded anyway, and a value position fails downstream exactly as it always did.
+     */
+    private Expr<?> statementExpression(CParser.CompoundStatementContext ctx) {
+        if (functionVisitor == null) {
+            return null;
+        }
+        CStatement statement = ctx.accept(functionVisitor);
+        Expr<?> value;
+        try {
+            value = statement.getExpression();
+        } catch (RuntimeException e) {
+            value = null;
+        }
+        if (value == null) {
+            uniqueWarningLogger.write(
+                    Level.INFO, "WARNING: statement expression yields no value\n");
+            return null;
+        }
+        preStatements.add(statement);
+        return value;
     }
 
     @Override
@@ -1758,7 +1821,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionGccExtension(
             CParser.PrimaryExpressionGccExtensionContext ctx) {
-        return null;
+        return statementExpression(ctx.compoundStatement());
     }
 
     @Override
