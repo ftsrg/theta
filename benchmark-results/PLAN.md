@@ -919,6 +919,28 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 41 — struct copies out of cells, and the exponential type expansion
+
+Batch 40's full re-sweep (all 3,173 former parse-death inputs): **888 PARSE-OK (was 777),
+2,155 FRONTEND (was 2,316), 110 OOM (was 29), 18 parse-timeout, 2 parse errors (the K&R
+pair)**. The OOM growth was batch 40's own doing — structs now keep all their fields, so the
+already-exponential `Struct.getActualType` expansion got bigger. Signature ranking of the
+2,155: `memberOffset` union-punning rejection ~830 (the kernel `union { u64 raw; struct
+bits; }` idiom — sound support needs AD7 flat layout), split-variable pointer arithmetic
+(ReferenceElimination, the batch-37/AD2 limit), library-function addresses
+(`&malloc`, 38), va_arg locals (30), pointer-to-array indexing (30, Phase-6).
+
+This batch takes the two quick wins:
+
+- **`struct S s = *p;` / `= o.field`** was rejected ("Initializer type not handled for
+  structs") — batch 36 allowed only a plain variable (RefExpr) source. A struct value is its
+  base id wherever it is read from, so a Dereference source copies identically (aws-c-common's
+  `struct aws_array_list tmp = *list_a;`). `StructInitFromDereferenceTest` pins both shapes.
+- **`Struct.getActualType` memoization**: the canonical definition's expanded field list is
+  now cached (invalidated on `addField`), collapsing the exponential re-expansion. The 317KB
+  ums-alauda file that ran 2GB out of heap now finishes in 3.5s; all sampled former-OOM
+  files complete (mix of PARSE-OK and ordinary frontend errors).
+
 ## Batch 40 — the frontend-crash frontier: struct members that vanished, designated initializers
 
 Follow-up to batch 39's sweep: of the 2,316 files that now get past ANTLR but die in the

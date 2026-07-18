@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -861,8 +862,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         }
                     } else {
                         Expr<?> expression = declaration.getInitExpr().getExpression();
+                        // A struct value is its base id, whether read from a variable or out of
+                        // another object's cell: `struct S s = *p;` and `= o.field` copy the same
+                        // way `= other;` does.
                         checkState(
-                                expression instanceof RefExpr<?>,
+                                expression instanceof RefExpr<?>
+                                        || expression instanceof Dereference<?, ?, ?>,
                                 "Initializer type not handled for structs: " + expression);
                         final var type = CComplexType.getType(expression, parseContext);
                         checkState(

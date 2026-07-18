@@ -63,6 +63,16 @@ public class Struct extends NamedType {
     private final Struct canonicalRef;
 
     private boolean currentlyBeingBuilt;
+
+    /**
+     * The expanded field list of the *canonical* definition, shared by every copy. A nested
+     * struct type re-expands its whole subtree on each use; without this cache the expansion is
+     * exponential in nesting depth (large LDV kernel headers ran out of heap inside it).
+     * Invalidated on {@link #addField}, so a still-growing definition never serves a stale
+     * snapshot.
+     */
+    private List<Tuple2<String, CComplexType>> cachedActualFields;
+
     private static final Map<String, Struct> definedTypes = new LinkedHashMap<>();
 
     public static Struct getByName(String name) {
@@ -124,6 +134,8 @@ public class Struct extends NamedType {
 
     public void addField(CDeclaration decl) {
         fields.put(checkNotNull(decl.getName()), checkNotNull(decl));
+        cachedActualFields = null;
+        canonical().cachedActualFields = null;
     }
 
     @Override
@@ -138,11 +150,17 @@ public class Struct extends NamedType {
             return placeholder;
         }
         currentlyBeingBuilt = true;
-        List<Tuple2<String, CComplexType>> actualFields = new ArrayList<>();
-        resolvedFields()
-                .forEach(
-                        (s, cDeclaration) ->
-                                actualFields.add(Tuple2.of(s, cDeclaration.getActualType())));
+        final Struct canonical = canonical();
+        List<Tuple2<String, CComplexType>> actualFields = canonical.cachedActualFields;
+        if (actualFields == null) {
+            final List<Tuple2<String, CComplexType>> expanded = new ArrayList<>();
+            resolvedFields()
+                    .forEach(
+                            (s, cDeclaration) ->
+                                    expanded.add(Tuple2.of(s, cDeclaration.getActualType())));
+            canonical.cachedActualFields = expanded;
+            actualFields = expanded;
+        }
         currentlyBeingBuilt = false;
 
         CComplexType type = new CStruct(this, actualFields, union, parseContext);
