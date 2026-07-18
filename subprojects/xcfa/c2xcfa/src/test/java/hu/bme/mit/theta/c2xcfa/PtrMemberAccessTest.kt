@@ -95,6 +95,34 @@ class PtrMemberAccessTest {
   }
 
   @Test
+  fun subscriptZeroMemberAccessEmitsNoNestedDereference() {
+    // p[0].f is p->f: the element at index 0 IS the pointee object, whose identity is the
+    // pointer value. Reading a cell for `p[0]` and using that *content* as the member access
+    // base is the same double-deref as the p->field bug, one production over
+    // (admeshFixed's `stl->numbers_start[0].number` false valid-deref cluster).
+    val derefs =
+      derefsOf(
+        """
+        extern void *malloc(unsigned long);
+        struct S { int a; int b; };
+        int main() {
+          struct S *p = malloc(sizeof(struct S));
+          if (!p) return 0;
+          p[0].a = 1;
+          if (p[0].a != 1) { return 1; }
+          return 0;
+        }
+        """
+          .trimIndent()
+      )
+    assertTrue(derefs.isNotEmpty(), "the program must produce dereferences")
+    assertFalse(
+      derefs.any { it.array is Dereference<*, *, *> },
+      "p[0].field must not dereference the result of another dereference",
+    )
+  }
+
+  @Test
   fun pointerArithmeticBecomesDereferenceOffset() {
     // C defines *(p + i) as p[i]. Folding the index into the base makes the
     // pointer-validity model look up an unallocated object -> spurious valid-deref.

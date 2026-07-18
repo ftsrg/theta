@@ -45,6 +45,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
@@ -939,6 +940,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return expr;
     }
 
+    private static boolean isLiteralZero(Expr<?> expr) {
+        Expr<?> stripped = stripPos(expr);
+        if (stripped instanceof IntLitExpr intLit) {
+            return intLit.getValue().signum() == 0;
+        }
+        if (stripped instanceof BvLitExpr bvLit) {
+            return BvUtils.neutralBvLitExprToBigInteger(bvLit).signum() == 0;
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     private <T extends Type> Expr<?> dereference(
             Expr<?> accept, Expr<?> offset, CComplexType type) {
@@ -1777,6 +1789,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
                     Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
+                    if (elemType instanceof CStruct && isLiteralZero(index)) {
+                        // p[0] on a pointer-to-struct IS the pointee object, and a struct's value
+                        // is its base id -- so the element's value is the pointer itself. A cell
+                        // read here would treat field 0's *content* as the object's base (the
+                        // p->field double-deref bug, one production over). Wrap in Pos so the
+                        // struct cType lands on a fresh node, not on p's shared RefExpr.
+                        Expr<?> element = Pos(primary);
+                        parseContext.getMetadata().create(element, "cType", elemType);
+                        return element;
+                    }
                     primary = dereference(primary, index, elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
