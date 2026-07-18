@@ -63,8 +63,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val references =
       builder.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } }
 
-    // Case 1: there are no references in the XCFA, so this pass must be a no-op.
-    if (references.isEmpty()) return builder
+    // Case 1: no reference concerns this procedure, so this pass must be a no-op.
+    // A global referred in *another* procedure concerns us even without a local reference:
+    // every access to it must go through the shared dereference, and the init procedure
+    // must seed the pointer variables (e.g. `main` calling pthread_create on a thread whose
+    // body takes `&y` — the `&t` handle was already consumed by CLibraryFunctionsPass).
+    if (references.isEmpty() && globalReferredVars(builder).isEmpty()) return builder
 
     // Case 2: simple elimination first.
     // Summary: for references to VarDecls (`(ref x)`), keep the old behavior:
@@ -87,8 +91,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
-  private fun runSimpleReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
-    val ptrVar = builder.parent.ptrVar(parseContext)
+  @Suppress("UNCHECKED_CAST")
+  private fun globalReferredVars(
+    builder: XcfaProcedureBuilder
+  ): Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>> {
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
         builder.parent
@@ -133,7 +139,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           }
       }
     checkState(globalReferredVars is Map<*, *>, "ReferenceElimination needs info on references")
-    globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+    return globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+  }
+
+  private fun runSimpleReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
+    val ptrVar = builder.parent.ptrVar(parseContext)
+    val globalReferredVars = globalReferredVars(builder)
 
     val referredVars =
       builder
