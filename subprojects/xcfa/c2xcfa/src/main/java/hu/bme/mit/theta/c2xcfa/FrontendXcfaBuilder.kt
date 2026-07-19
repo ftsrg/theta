@@ -1253,6 +1253,24 @@ class FrontendXcfaBuilder(
     return endLoc
   }
 
+  /**
+   * `switch (v) case k:` compares the controlling value against each label. C converts the labels
+   * to the (promoted) type of the controlling expression, so the two operands may differ in width
+   * (`switch` on a `size_t` with `int` labels); comparing them directly asks the core to unify
+   * `(Bv 64)` with `(Bv 32)` and throws. Compare in their smallest common type instead.
+   */
+  private fun switchTestEq(testValue: Expr<*>, caseValue: Expr<*>): Expr<BoolType> {
+    val common =
+      CComplexType.getSmallestCommonType(
+        listOf(
+          CComplexType.getType(testValue, parseContext),
+          CComplexType.getType(caseValue, parseContext),
+        ),
+        parseContext,
+      )
+    return AbstractExprs.Eq(common.castTo(testValue), common.castTo(caseValue))
+  }
+
   override fun visit(statement: CSwitch, param: ParamPack): XcfaLocation {
     val builder: XcfaProcedureBuilder = param.builder
     val lastLoc = param.lastLoc
@@ -1279,7 +1297,7 @@ class FrontendXcfaBuilder(
         defaultExpr =
           BoolExprs.And(
             defaultExpr,
-            AbstractExprs.Neq(testValue.expression, cStatement.expr.expression),
+            BoolExprs.Not(switchTestEq(testValue.expression, cStatement.expr.expression)),
           )
       }
     }
@@ -1300,7 +1318,7 @@ class FrontendXcfaBuilder(
           )
         val assume =
           StmtLabel(
-            Stmts.Assume(AbstractExprs.Eq(testValue.expression, cStatement.expr.expression)),
+            Stmts.Assume(switchTestEq(testValue.expression, cStatement.expr.expression)),
             choiceType = ChoiceType.MAIN_PATH,
             metadata = getMetadata(cStatement),
           )

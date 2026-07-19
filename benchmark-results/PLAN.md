@@ -919,6 +919,17 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 44 — switch on a wide value with narrow case labels
+
+The union-punning-unlocked aws-c-common files (and others) then died in `CSwitch` lowering with
+"(Bv 64) and (Bv 32) can not be unified": `switch (v)` on a `size_t`/pointer-wide value with
+`int` case labels compared the controlling expression against each label directly, asking the
+core to unify mismatched widths. C converts labels to the controlling expression's promoted
+type, so both the case-guard `Eq` and the default-branch `Neq` now compare in the operands'
+smallest common type (`switchTestEq`). A `switch` on an `unsigned long` with `int` labels
+verifies **Safe**; `SwitchWidthTest` pins the build. Gated: module tests green, 255 canaries +
+13 fixtures green. The aws files advance to the next barrier (AD2 split-variable arithmetic).
+
 ## Batch 43 — union punning (same-storage members) + `__builtin_object_size`
 
 Two verified wins from the frontend-error frontier.
