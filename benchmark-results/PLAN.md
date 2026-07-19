@@ -919,6 +919,30 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Run 2026-07-19_15-36 (sosy, 5750G, batches 38-41) — the verification run
+
+`results-2026-07-19_15-36/`, full 36,602 runs on the LMU vcloud (`--vcloudCPUModel 5750G`,
+different hardware than the BME runs; the 2026-07-18 BME run died with the host at ~96%).
+
+**Correct 9,743 → 10,118 (+375). Wrong 98 → 29 (−69). Error 26,381 → 26,090.**
+
+- The 29 wrongs = ~20 documented pre-existing opens (W4 scopes, 2SB/4SB KIND, dijkstra6,
+  test22*, 09-regions, CWE121 ×2, lockfree-3.0, memleaks_test11, alloca/strcpy cluster, ...)
+  plus 9 error→wrong unlocks, all falling into known gaps: 3 aws `_negated` byte_buf harnesses
+  (missed bugs in newly-modeled struct code), `test-bitfields-1-1`/`-2-2` (batch 40's
+  bitfield write-width over-approximation misfiring — predicted risk, now measurable),
+  scopes3/scopes5/derefInLoop1 (join the W4 lifetime cluster), one hardness sibling.
+  **Zero regressions on previously-correct tasks.**
+- **ANTLR parse deaths at scale: 4,108 → 2** (`strlcpy.i`/`strlcat.i`, the K&R pair). The
+  directive "all parse errors become timeouts/ooms/results" holds to within those two.
+- Error mix: pre-parse frontend 4,905 → 4,346 (former ANTLR deaths largely re-land here as
+  *clean* rejections — union punning etc. — the rest converted to results/timeouts),
+  post-parse 2,536 → 2,603, OOM 2,341 → 2,287, timeouts ~flat, solver 52 → 74.
+
+Next levers, in impact order: AD7 flat layout (union punning, ~830 files), bitfield write
+truncation (fixes test-bitfields wrongs), W4 scope lifetimes, split-variable arithmetic (AD2),
+K&R definitions (the last 2 parse deaths).
+
 ## Batch 41 — struct copies out of cells, and the exponential type expansion
 
 Batch 40's full re-sweep (all 3,173 former parse-death inputs): **888 PARSE-OK (was 777),
