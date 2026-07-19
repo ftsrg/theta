@@ -919,6 +919,107 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 43 — union punning (same-storage members) + `__builtin_object_size`
+
+Two verified wins from the frontend-error frontier.
+
+**Union punning relaxation (the 1,467-run `memberOffset` cluster's dominant idiom).** The
+`sameRepresentation` check required identical C *classes*, rejecting `union { void *ptr;
+size_t i; }` — the pervasive aws-c-common hash-table idiom — even though a pointer and a
+pointer-wide unsigned integer occupy their shared cell identically. Relaxed to: same SMT sort
+**and** same width **and** same effective signedness (pointer = unsigned). Width is checked
+explicitly because under integer arithmetic every integer is the unbounded `Int` (so `int`/`char`
+share a sort but must not alias); signedness likewise keeps `int`/`unsigned` apart, where the
+sign reinterpretation would be lost. All 20 sampled cluster files clear the barrier; the
+`union { void*; unsigned long }` mini verifies **Safe**; `int`/`unsigned` and `int`/`char`
+minis still reject. `UnionPunningTest` pins all three. Sound in **both** encodings — this was
+verified against the exact integer-encoding trap the original comment warned about.
+
+**`__builtin_object_size(ptr, type)`** (153-run unresolved-identifier sub-cluster): a
+_FORTIFY_SOURCE size query. Grammar rule + visitor returning gcc's size-unknown fallback
+(`(size_t)-1` for types 0/1 so the wrapped `__*_chk` never spuriously aborts, `0` for 2/3);
+the pointer argument is parsed but not evaluated (no side effects, like sizeof). goblint-coreutils
+files clear this barrier (advancing to the next, separate cause — undeclared `malloc`).
+
+Both gated: module tests green, parse canaries 255/255.
+
+### Deferred to a focused pass: bitfield storage units + bit-slice access
+
+The test-bitfields memsafety **wrongs** (`Unsafe(valid-deref)`, confirmed by running
+test-bitfields-1-1.i) are NOT a quick fix. Root cause: `sizeof` sums member cells (4 for
+`struct A{char a; char b:2; char c:2; char d:4;}`) but the program hard-codes `malloc(2)` for
+the packed byte layout, so member `d` at cell-index 3 exceeds the 2-cell object → false
+valid-deref. The only sound fix is to *pack* consecutive bitfields into storage units (so the
+cell count matches the byte count) **and** *slice* the shared unit on access (so distinct
+bitfields don't unsoundly alias). That is a core-model change touching every one-cell-per-field
+assumption: `memberOffset`, `structMemberAccess`, and every `type.fields.forEachIndexed` site in
+FrontendXcfaBuilder (allocation size 315, stack/heap object storage 319/372/374, 468,
+initializeCompound 599/600). Groundwork landed: `CDeclaration.bitfieldWidth` +
+`DeclarationVisitor.visitStructDeclaratorConstant` now fold and retain the width. Full design
+(storage-unit layout, bv Extract / int div-mod slicing with read-modify-write assignment,
+union punning of a bitfield-struct member sharing cell 0) is written below. Held back from an
+autonomous commit because a subtle offset error would silently mis-verify *every* struct program
+— exactly the bw/int encoding-correctness hazard to avoid landing blind.
+
+## Batch 43-design (bitfield storage units + slicing — full plan for the focused pass)
+
+1. **Layout** (`TypeVisitor.visitCompoundDefinition`, after fields collected): walk members in
+   order assigning a `unitIndex`. Non-bitfield → its own new unit. Consecutive bitfields pack
+   into one unit while `bitsUsed + width ≤ unitBaseBits`; else start a new unit. A named 0-width
+   field forces a new unit. Store per-member `(unitIndex, bitOffset, width)` on CStruct (new
+   parallel map; keep the flat fields list for name lookup). **For structs with no bitfields,
+   unitIndex == field position — byte-identical to today, zero blast radius.**
+2. **`memberOffset`** returns `unitIndex` (bitfield members in one unit share it). Unit count ≤
+   byte size, so the memsafety valid-deref false alarm dies.
+3. **Cell iteration**: every `type.fields.forEachIndexed` site in FrontendXcfaBuilder must
+   iterate **units** (distinct unitIndex), not members — allocation size = unit count, one
+   init/storage cell per unit.
+4. **Access** (`structMemberAccess`): a bitfield member becomes an extract of its unit cell —
+   bitvector: `Extract(cell, off, off+width)`; integer arithmetic: `(cell / 2^off) mod 2^width`
+   — carrying the member cType, plus `bitfieldSlice` metadata `(unitDeref, off, width, signed)`.
+5. **Assignment** (`FrontendXcfaBuilder.visit(CAssignment)`): if lValue carries `bitfieldSlice`,
+   expand a read-modify-write of the unit cell: `cell := (cell & ~(mask<<off)) | ((v & mask)<<off)`
+   (integer analogue with div/mod). Unsigned exact; signed reads sign-extend from `width`.
+6. **Union punning of bitfields**: a union member that is a struct-of-bitfields shares the unit
+   cell at offset 0 with same-representation siblings — its members become bit slices of cell 0,
+   so `raw`/bitfield-view writes alias (the `union { u64 raw; struct { bits }; }` kernel idiom).
+7. **Tests**: extend `BitfieldAndAnonymousMemberTest` — read-back after write per field, packed
+   `malloc(bytes)` memsafety task verifies Safe, both encodings; a union raw/bitfield punning case.
+
+User-directed immediate sequence before the next full benchmark: (1) test-bitfields memsafety
+false alarms, (2) union punning (the 1,467-run AD7 cluster's dominant idiom), (3) nested-brace
+initializers. (1) and (2) share one design:
+
+**Diagnosis of the test-bitfields wrongs**: `malloc(2)` records a *byte* size; member offsets
+are *field indices*; a packed struct with N>2 bitfield members indexes past 2 → false
+`valid-deref`. Packed bitfields are the only case where field index can exceed byte size.
+
+**Design — storage units + bit slices**:
+- `DeclarationVisitor.visitStructDeclaratorConstant` folds and retains the width on the
+  CDeclaration (unresolvable width → plain field as today).
+- CStruct layout groups consecutive bitfield members into *storage units* (one cell per unit,
+  unit type = widest base in the run); `memberOffset` returns the unit's index for bitfield
+  members. Unit index ≤ byte offset always → the memsafety false-alarm class dies.
+- `structMemberAccess` on a bitfield member emits an extract of the unit cell (bv: Extract /
+  shift+mask; integer arithmetic: div/mod by powers of two) with the member's cType, and
+  attaches `bitfieldSlice` metadata (unit deref, bit offset, width) to the expression.
+- `FrontendXcfaBuilder.visit(CAssignment)` checks lValue for `bitfieldSlice` metadata before
+  the Dereference branch and expands a read-modify-write of the unit cell:
+  `cell := (cell & ~(mask<<off)) | ((v & mask) << off)` (integer arithmetic analogue with
+  div/mod). Unsigned bitfields exact; signed reads approximated as unsigned initially.
+- **Union punning**: in a union, every member's storage starts at cell 0. A union member that
+  is a struct-of-bitfields shares the *unit cell at offset 0* with the other members whose
+  representation is that unit (the kernel `union { u64 raw; struct { bits }; }` idiom): its
+  members become bit slices of cell 0, so writes through `raw` and reads through the bitfield
+  view genuinely alias. The `sameRepresentation` rejection stays for mixed-type unions
+  (int/float etc.).
+
+Then (3): nested-brace initializer lists (254 runs) — recurse into braced elements in
+`DeclarationVisitor.getDeclarations` instead of the NPE→UnsupportedInitializer fallback,
+producing nested CInitializerLists consumed by `initializeCompound`'s recursion.
+
+Status: design written, implementation starting with width retention + storage-unit layout.
+
 ## Batch 42 — the TypeUtils.cast cluster: early-typed literals leaking into the decided arithmetic
 
 The 587-run cluster diagnosed (`ldv-linux-3.4-simple`, 217 files). One theme, two expressions:

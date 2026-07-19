@@ -238,11 +238,37 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
 
     @Override
     public CDeclaration visitStructDeclaratorConstant(CParser.StructDeclaratorConstantContext ctx) {
-        // A bitfield. Member layout is by field index, not bytes, so a bitfield is a regular
-        // field of its declared base type; only the wrap-at-width semantics of narrower-than-base
-        // widths is over-approximated (a stored value may exceed what the real field can hold).
-        // An unnamed bitfield (`int : 3;`, `int : 0;`) is padding: no field at all.
-        return ctx.declarator() == null ? null : ctx.declarator().accept(this);
+        // A bitfield. An unnamed one (`int : 3;`, `int : 0;`) is padding: no field at all.
+        // A named one is a field carrying its width, so the struct layout can pack consecutive
+        // bitfields into one storage unit and member access can slice that unit.
+        if (ctx.declarator() == null) {
+            return null;
+        }
+        final CDeclaration declaration = ctx.declarator().accept(this);
+        declaration.setBitfieldWidth(foldBitfieldWidth(ctx.constantExpression()));
+        return declaration;
+    }
+
+    /** The folded bitfield width, or -1 when it cannot be resolved (falls back to a plain field). */
+    private int foldBitfieldWidth(CParser.ConstantExpressionContext ctx) {
+        if (functionVisitor == null) {
+            return -1;
+        }
+        try {
+            final Expr<?> folded =
+                    hu.bme.mit.theta.core.utils.ExprUtils.simplify(
+                            ctx.accept(functionVisitor).getExpression());
+            if (folded instanceof IntLitExpr intLit) {
+                return intLit.getValue().intValueExact();
+            }
+            if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+                return hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
+                        .intValueExact();
+            }
+        } catch (RuntimeException e) {
+            // fall through
+        }
+        return -1;
     }
 
     @Override

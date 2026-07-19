@@ -39,6 +39,17 @@ public class CDeclaration {
     private final List<CDeclaration> functionParams = new ArrayList<>();
     private CStatement initExpr;
 
+    /** Bit width for bitfield struct members (`unsigned lo : 4;`); -1 for ordinary members. */
+    private int bitfieldWidth = -1;
+
+    public int getBitfieldWidth() {
+        return bitfieldWidth;
+    }
+
+    public void setBitfieldWidth(int bitfieldWidth) {
+        this.bitfieldWidth = bitfieldWidth;
+    }
+
     public CDeclaration(CSimpleType cSimpleType) {
         this.name = checkNotNull(cSimpleType).getAssociatedName();
         this.type = cSimpleType;

@@ -154,6 +154,10 @@ primaryExpression
     // The arguments are types (typically `typeof(expr)`), so this cannot be left to the
     // function-call production, whose arguments are expressions.
     |   '__builtin_types_compatible_p' '(' typeName ',' typeName ')'        # primaryExpressionBuiltinTypesCompatible
+    // The pointee object size is not modelled; a compile-time-unknown size is the conservative
+    // answer (gcc's own fallback), so the first argument is parsed but never evaluated -- like
+    // sizeof, it has no side effects.
+    |   '__builtin_object_size' '(' assignmentExpression ',' constantExpression ')'  # primaryExpressionBuiltinObjectSize
     ;
 
 bracedPrimaryExpression

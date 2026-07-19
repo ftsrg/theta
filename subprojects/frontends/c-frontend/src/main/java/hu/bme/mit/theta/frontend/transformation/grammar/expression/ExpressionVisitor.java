@@ -753,6 +753,44 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return ret;
     }
 
+    /**
+     * `__builtin_object_size(ptr, type)` is a compile-time size query used by _FORTIFY_SOURCE
+     * wrappers. The pointee object's size is not modelled, so this returns gcc's own
+     * size-unknown fallback: `(size_t)-1` for types 0/1 (no upper bound, so the wrapped
+     * `__*_chk` never spuriously aborts) and `0` for types 2/3. The pointer argument is not
+     * evaluated -- like sizeof it has no side effects.
+     */
+    @Override
+    public Expr<?> visitPrimaryExpressionBuiltinObjectSize(
+            CParser.PrimaryExpressionBuiltinObjectSizeContext ctx) {
+        final CComplexType sizeType = CComplexType.getUnsignedLong(parseContext);
+        int type = 0;
+        try {
+            final Expr<?> folded =
+                    hu.bme.mit.theta.core.utils.ExprUtils.simplify(
+                            ctx.constantExpression().accept(this));
+            if (folded instanceof IntLitExpr intLit) {
+                type = intLit.getValue().intValueExact();
+            } else if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+                type =
+                        hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
+                                .intValueExact();
+            }
+        } catch (RuntimeException e) {
+            type = 0;
+        }
+        final String value =
+                (type & 2) != 0
+                        ? "0"
+                        : java.math.BigInteger.ONE
+                                .shiftLeft(sizeType.width())
+                                .subtract(java.math.BigInteger.ONE)
+                                .toString();
+        final Expr<?> ret = sizeType.getValue(value);
+        parseContext.getMetadata().create(ret, "cType", sizeType);
+        return ret;
+    }
+
     private static final String VA_ARG = "__VERIFIER_nondet_theta_va_arg";
 
     /**
@@ -1423,13 +1461,33 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * Whether two union members occupy their shared storage identically, so that writing one and
      * reading the other is exactly the identity.
      *
-     * <p>The C type is what decides this, not the SMT type: under integer arithmetic every integer
-     * type is modelled by the same unbounded {@code Int}, so an {@code int} and a {@code char}
-     * member would compare equal there and silently alias without the truncation C mandates ({@code
-     * u.i = 300; u.c} must be 44, not 300).
+     * <p>Not the C class, but the storage the model gives the value: same SMT sort, same width,
+     * same signedness. Requiring identical classes was too strict -- the pervasive
+     * {@code union { void *ptr; size_t i; }} idiom pairs a pointer with a pointer-wide unsigned
+     * integer, which occupy their shared cell identically, yet their classes differ. Width must be
+     * checked explicitly because under integer arithmetic every integer type is the same unbounded
+     * {@code Int}, so an {@code int} and a {@code char} share an SMT sort though {@code u.i = 300;
+     * u.c} must be 44, not 300; signedness likewise, so {@code int}/{@code unsigned} do not alias
+     * where the sign reinterpretation would be lost.
      */
     private static boolean sameRepresentation(CComplexType a, CComplexType b) {
-        return a.getClass().equals(b.getClass()) && a.getSmtType().equals(b.getSmtType());
+        return a.getSmtType().equals(b.getSmtType())
+                && a.width() == b.width()
+                && effectivelyUnsigned(a) == effectivelyUnsigned(b);
+    }
+
+    /** A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false. */
+    private static boolean effectivelyUnsigned(CComplexType t) {
+        if (t instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                        .CPointer) {
+            return true;
+        }
+        if (t
+                instanceof
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger ci) {
+            return !ci.isSsigned();
+        }
+        return false;
     }
 
     /**
