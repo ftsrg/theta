@@ -939,9 +939,20 @@ different hardware than the BME runs; the 2026-07-18 BME run died with the host 
   *clean* rejections — union punning etc. — the rest converted to results/timeouts),
   post-parse 2,536 → 2,603, OOM 2,341 → 2,287, timeouts ~flat, solver 52 → 74.
 
-Next levers, in impact order: AD7 flat layout (union punning, ~830 files), bitfield write
-truncation (fixes test-bitfields wrongs), W4 scope lifetimes, split-variable arithmetic (AD2),
-K&R definitions (the last 2 parse deaths).
+**Error anatomy of this run**: 19,067 of 26,090 errors (73%) are resource limits — 16,780
+timeouts + 2,287 OOM. The 7,023 tool errors (6,949 frontend + 74 solver) cluster by run count:
+memberOffset/union-punning 1,467 (AD7); unresolved identifiers 807 (= `__builtin_object_size`
+153, library-function *values* `malloc`/`memcpy`/... ~130, forward function references,
+atomic builtins, plus casualties of earlier failed declarations); postfix member/bracket/call
+visitors ~1,310; `TypeUtils.cast` 587; ReferenceElimination split-variable 719 (AD2);
+`FrontendXcfaBuilder` 544; initializer residue (nested braces) 254; CLibraryFunctionsPass 214;
+variable-referencing `typeof` 154.
+
+Next levers, in impact order: AD7 flat layout (union punning, 1,467 runs), split-variable
+arithmetic (AD2, 719), `TypeUtils.cast` + postfix-visitor diagnosis (~1,900, undiagnosed),
+`__builtin_object_size` (153) + library-function values (~130) + nested-brace initializers
+(254) as quick wins, bitfield write truncation (fixes the test-bitfields wrongs), W4 scope
+lifetimes, K&R definitions (the last 2 parse deaths).
 
 ## Batch 41 — struct copies out of cells, and the exponential type expansion
 
