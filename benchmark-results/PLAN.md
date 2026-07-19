@@ -919,6 +919,24 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch 42 — the TypeUtils.cast cluster: early-typed literals leaking into the decided arithmetic
+
+The 587-run cluster diagnosed (`ldv-linux-3.4-simple`, 217 files). One theme, two expressions:
+
+- **Array dimensions**: struct types registered by the early typedef pass carry dimension
+  literals typed for the *default* arithmetic; once the program is decided to be bitvector,
+  `getArraySize`'s `castTo` handed an IntType literal to the bitvector CastVisitor →
+  ClassCastException. Fixed by extracting the literal's value without any cast and
+  re-materializing the memsafety allocation bound via `getValue` (typed for the decided
+  arithmetic) — which also de-duplicated the sized/unsized bounds branches.
+- **Unknown enums**: `enum kobject_action` with no visible definition fell back to CVoid,
+  giving variables a unit-sized SMT sort; any assignment then cast a full-width value into
+  `(Bv 1)`. Enum-tagged unknowns now fall back to CSignedInt (a C enum is an int); CVoid
+  stays for genuinely opaque types.
+
+After both: sampled cluster files either parse fully or fall through to the catalogued AD2
+split-variable rejection. Tests green, parse canaries 255/255.
+
 ## Run 2026-07-19_15-36 (sosy, 5750G, batches 38-41) — the verification run
 
 `results-2026-07-19_15-36/`, full 36,602 runs on the LMU vcloud (`--vcloudCPUModel 5750G`,

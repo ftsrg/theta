@@ -109,7 +109,14 @@ public class NamedType extends CSimpleType {
                     uniqueWarningLogger.write(
                             Level.INFO,
                             "WARNING: Unknown simple type " + namedType.replace("%", "%%") + "\n");
-                    type = new CVoid(this, parseContext);
+                    if (namedType.startsWith("enum ")) {
+                        // An enum whose definition was never seen is still an int in C. The CVoid
+                        // fallback gave such variables a unit-sized SMT sort, so any assignment
+                        // to them died casting a full-width value into it.
+                        type = new CSignedInt(this, parseContext);
+                    } else {
+                        type = new CVoid(this, parseContext);
+                    }
                     break;
                 }
         }

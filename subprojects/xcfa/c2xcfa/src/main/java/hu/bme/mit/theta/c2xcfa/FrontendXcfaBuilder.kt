@@ -565,18 +565,13 @@ class FrontendXcfaBuilder(
     if (type is CArray) {
       initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
       if (MemsafetyPass.enabled) {
-        // A global array may have no written dimension -- `struct command commands[] = { ... }` --
-        // and be sized by its initializer instead; `getArraySize` already reads the count from
-        // there. Reading `arrayDimension.expression` directly (it is null then) crashed the parse.
+        // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
+        // literal through getValue types it for the *current* arithmetic. The stored dimension
+        // expression cannot be used directly: types registered by the early typedef pass carry
+        // dimension literals typed for the default arithmetic, not the decided one.
         val bounds =
-          if (type.arrayDimension != null) type.arrayDimension.expression
-          else
-            CComplexType.getUnsignedLong(parseContext)
-              .getValue(getArraySize(type, initExpr).toString())
-        checkState(
-          bounds is IntLitExpr || bounds is BvLitExpr,
-          "Only IntLit and BvLit expression expected here.",
-        )
+          CComplexType.getUnsignedLong(parseContext)
+            .getValue(getArraySize(type, initExpr).toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
       }
       initializeCompound(
@@ -665,10 +660,10 @@ class FrontendXcfaBuilder(
         )
       }
     }
-    val bounds =
-      ExprUtils.simplify(
-        CComplexType.getUnsignedLong(parseContext).castTo(type.arrayDimension.expression)
-      )
+    // No castTo here: only the literal's value is needed, and the dimension expression may be
+    // typed for the wrong arithmetic (types registered by the early typedef pass carry
+    // default-arithmetic literals; casting one with the bitvector visitor throws).
+    val bounds = ExprUtils.simplify(type.arrayDimension.expression)
     checkState(
       bounds is IntLitExpr || bounds is BvLitExpr,
       "Only IntLit and BvLit expression expected here.",
