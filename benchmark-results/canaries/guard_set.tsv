@@ -1,0 +1,38 @@
+kind	wrong_task_yml_relpath	task_yml_relpath	input_file_relpath	property	property_file_relpath	expected_verdict	data_model	cputime	subfolder
+wrong		c/bitvector-regression/signextension2-1.yml	c/bitvector-regression/signextension2-1.c	unreach-call	c/properties/unreach-call.prp	true	ILP32	6.329	bitvector-regression
+neighbor	c/bitvector-regression/signextension2-1.yml	c/bitvector-regression/implicitfloatconversion.yml	c/bitvector-regression/implicitfloatconversion.c	termination	c/properties/termination.prp	true	ILP32	5.255	bitvector-regression
+neighbor	c/bitvector-regression/signextension2-1.yml	c/bitvector-regression/implicitfloatconversion.yml	c/bitvector-regression/implicitfloatconversion.c	unreach-call	c/properties/unreach-call.prp	false	ILP32	5.965	bitvector-regression
+wrong		c/bitvector-regression/signextension2-2.yml	c/bitvector-regression/signextension2-2.c	unreach-call	c/properties/unreach-call.prp	false	ILP32	6.976	bitvector-regression
+neighbor	c/bitvector-regression/signextension2-2.yml	c/bitvector-regression/implicitfloatconversion.yml	c/bitvector-regression/implicitfloatconversion.c	termination	c/properties/termination.prp	true	ILP32	5.255	bitvector-regression
+neighbor	c/bitvector-regression/signextension2-2.yml	c/bitvector-regression/implicitfloatconversion.yml	c/bitvector-regression/implicitfloatconversion.c	unreach-call	c/properties/unreach-call.prp	false	ILP32	5.965	bitvector-regression
+wrong		c/busybox-1.22.0/hostid.yml	c/busybox-1.22.0/hostid.i	valid-memsafety	c/properties/valid-memsafety.prp	true	LP64	32.062	busybox-1.22.0
+wrong		c/goblint-regression/04-mutex_17-ps_add1_nr.yml	c/goblint-regression/04-mutex_17-ps_add1_nr.c	no-overflow	c/properties/no-overflow.prp	true	ILP32	14.952	goblint-regression
+neighbor	c/goblint-regression/04-mutex_17-ps_add1_nr.yml	c/goblint-regression/04-mutex_02-simple_nr.yml	c/goblint-regression/04-mutex_02-simple_nr.c	no-data-race	c/properties/no-data-race.prp	true	ILP32	10.481	goblint-regression
+neighbor	c/goblint-regression/04-mutex_17-ps_add1_nr.yml	c/goblint-regression/00-sanity_09-include.yml	c/goblint-regression/00-sanity_09-include.c	no-data-race	c/properties/no-data-race.prp	false	ILP32	13.238	goblint-regression
+wrong		c/ldv-memsafety/memleaks_test3-1.yml	c/ldv-memsafety/memleaks_test3-1.i	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	11.596	ldv-memsafety
+neighbor	c/ldv-memsafety/memleaks_test3-1.yml	c/ldv-memsafety/ArraysOfVariableLength4.yml	c/ldv-memsafety/ArraysOfVariableLength4.c	termination	c/properties/termination.prp	true	ILP32	9.108	ldv-memsafety
+neighbor	c/ldv-memsafety/memleaks_test3-1.yml	c/ldv-memsafety/ArraysOfVariableLength2_-read.yml	c/ldv-memsafety/ArraysOfVariableLength2_-read.c	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	40.377	ldv-memsafety
+wrong		c/memsafety-cve/hyperkit_1Fixed.yml	c/memsafety-cve/hyperkit_1Fixed.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	316.320	memsafety-cve
+neighbor	c/memsafety-cve/hyperkit_1Fixed.yml	c/memsafety-cve/gpac_15.yml	c/memsafety-cve/gpac_15.i	no-overflow	c/properties/no-overflow.prp	false	ILP32	13.930	memsafety-cve
+neighbor	c/memsafety-cve/hyperkit_1Fixed.yml	c/memsafety-cve/gpac_5.yml	c/memsafety-cve/gpac_5.i	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	14.142	memsafety-cve
+wrong		c/memsafety-ext3/getNumbers1-2.yml	c/memsafety-ext3/getNumbers1-2.c	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	64.376	memsafety-ext3
+neighbor	c/memsafety-ext3/getNumbers1-2.yml	c/memsafety-ext3/getNumbers3.yml	c/memsafety-ext3/getNumbers3.c	no-overflow	c/properties/no-overflow.prp	true	ILP32	8.314	memsafety-ext3
+neighbor	c/memsafety-ext3/getNumbers1-2.yml	c/memsafety-ext3/scopes2.yml	c/memsafety-ext3/scopes2.c	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	9.600	memsafety-ext3
+wrong		c/memsafety-ext3/scopes1.yml	c/memsafety-ext3/scopes1.c	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	7.700	memsafety-ext3
+neighbor	c/memsafety-ext3/scopes1.yml	c/memsafety-ext3/getNumbers1-2.yml	c/memsafety-ext3/getNumbers1-2.c	no-overflow	c/properties/no-overflow.prp	true	ILP32	5.541	memsafety-ext3
+neighbor	c/memsafety-ext3/scopes1.yml	c/memsafety-ext3/scopes2.yml	c/memsafety-ext3/scopes2.c	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	9.600	memsafety-ext3
+wrong		c/memsafety-ext3/scopes4-1.yml	c/memsafety-ext3/scopes4-1.c	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	8.240	memsafety-ext3
+neighbor	c/memsafety-ext3/scopes4-1.yml	c/memsafety-ext3/getNumbers1-2.yml	c/memsafety-ext3/getNumbers1-2.c	no-overflow	c/properties/no-overflow.prp	true	ILP32	5.541	memsafety-ext3
+neighbor	c/memsafety-ext3/scopes4-1.yml	c/memsafety-ext3/scopes2.yml	c/memsafety-ext3/scopes2.c	valid-memsafety	c/properties/valid-memsafety.prp	false	ILP32	9.600	memsafety-ext3
+wrong		c/nondet-memory-examples/nondet_struct.yml	c/nondet-memory-examples/nondet_struct.c	unreach-call	c/properties/unreach-call.prp	false	LP64	6.132	nondet-memory-examples
+wrong		c/pthread/singleton.yml	c/pthread/singleton.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	13.746	pthread
+neighbor	c/pthread/singleton.yml	c/pthread/butterfly.yml	c/pthread/butterfly.i	no-data-race	c/properties/no-data-race.prp	true	ILP32	13.008	pthread
+neighbor	c/pthread/singleton.yml	c/pthread/fib_safe-10-racy.yml	c/pthread/fib_safe-10-racy.i	no-data-race	c/properties/no-data-race.prp	false	ILP32	15.824	pthread
+wrong		c/termination-crafted/Stockholm-2.yml	c/termination-crafted/Stockholm-2.c	no-overflow	c/properties/no-overflow.prp	false	LP64	311.272	termination-crafted
+neighbor	c/termination-crafted/Stockholm-2.yml	c/termination-crafted/Ackermann-2.yml	c/termination-crafted/Ackermann-2.c	valid-memsafety	c/properties/valid-memsafety.prp	true	LP64	5.403	termination-crafted
+neighbor	c/termination-crafted/Stockholm-2.yml	c/termination-crafted/2Nested-2.yml	c/termination-crafted/2Nested-2.c	no-overflow	c/properties/no-overflow.prp	false	LP64	5.463	termination-crafted
+wrong		c/termination-recursive-malloc/rec_strcopy_malloc.yml	c/termination-recursive-malloc/rec_strcopy_malloc.i	valid-memsafety	c/properties/valid-memsafety.prp	true	LP64	11.868	termination-recursive-malloc
+neighbor	c/termination-recursive-malloc/rec_strcopy_malloc.yml	c/termination-recursive-malloc/chunk1-2.yml	c/termination-recursive-malloc/chunk1-2.i	no-overflow	c/properties/no-overflow.prp	true	LP64	7.113	termination-recursive-malloc
+neighbor	c/termination-recursive-malloc/rec_strcopy_malloc.yml	c/termination-recursive-malloc/chunk3.yml	c/termination-recursive-malloc/chunk3.i	no-overflow	c/properties/no-overflow.prp	false	LP64	9.348	termination-recursive-malloc
+wrong		c/ldv-memsafety-bitfields/test-bitfields-1-1.yml	c/ldv-memsafety-bitfields/test-bitfields-1-1.i	valid-memsafety	c/properties/valid-memsafety.prp	true	LP64	10.0	ldv-memsafety-bitfields
+wrong		c/ldv-memsafety-bitfields/test-bitfields-2-2.yml	c/ldv-memsafety-bitfields/test-bitfields-2-2.i	valid-memsafety	c/properties/valid-memsafety.prp	true	LP64	10.0	ldv-memsafety-bitfields

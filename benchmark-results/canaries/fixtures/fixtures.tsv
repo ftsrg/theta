@@ -1,0 +1,14 @@
+fixture	arithmetic	architecture	expect	batch	feature
+union_punning.c	efficient	LP64	PARSE-OK	43	union punning: pointer + pointer-wide unsigned alias
+builtin_object_size.c	efficient	LP64	PARSE-OK	43	__builtin_object_size grammar + fallback
+typeof_type.c	efficient	LP64	PARSE-OK	39	__typeof__(type-name)
+builtin_offsetof.c	efficient	LP64	PARSE-OK	39	__builtin_offsetof
+statement_expr.c	efficient	LP64	PARSE-OK	39	gcc statement expression value
+elvis.c	efficient	LP64	PARSE-OK	39	GNU a ?: b
+types_compatible.c	efficient	LP64	PARSE-OK	39	__builtin_types_compatible_p
+anon_member.c	efficient	LP64	PARSE-OK	40	anonymous union member flattening
+designated_init.c	efficient	LP64	PARSE-OK	40	designated initializers
+empty_init.c	efficient	LP64	PARSE-OK	39	empty initializer list
+member_attr.c	efficient	LP64	PARSE-OK	39	member/bitfield __attribute__ positions
+struct_from_deref.c	efficient	LP64	PARSE-OK	41	struct s = *p
+enum_cast_bitvector.c	bitvector	LP64	PARSE-OK	42	undeclared enum is int (bitvector cast)
