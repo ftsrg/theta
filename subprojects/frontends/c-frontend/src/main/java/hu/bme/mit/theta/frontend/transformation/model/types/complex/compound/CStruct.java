@@ -104,6 +104,25 @@ public class CStruct extends CInteger {
         return union ? 1 : unitCount;
     }
 
+    /**
+     * Whether the whole struct is one packed integer: a single storage unit made up entirely of
+     * bitfields. Such a struct has no substructure to address -- its content *is* the unit's value
+     * -- so as a union member it can share the union's cell with a sibling integer of the same
+     * width, which is exactly the {@code union { uint64_t raw; struct { uint64_t a:16; ... }; }}
+     * register-overlay idiom. Its members are then slices of that shared cell.
+     */
+    public boolean isPackedScalar() {
+        return !union
+                && unitCount == 1
+                && !slots.isEmpty()
+                && slots.stream().allMatch(BitfieldLayout.Slot::bitfield);
+    }
+
+    /** For a {@link #isPackedScalar()} struct, the integer type its single unit is stored as. */
+    public CComplexType packedScalarType() {
+        return fields.get(0).get2();
+    }
+
     /** The storage cell index for [memberName], or -1 if it has no field. */
     public int unitOffsetOf(String memberName) {
         final int i = fieldIndexOf(memberName);

@@ -91,4 +91,43 @@ class UnionPunningTest {
       )
     }
   }
+
+  @Test
+  fun packedBitfieldViewSharesTheUnionsCellWithItsIntegerSibling() {
+    // The kernel/TDX register-overlay idiom: a struct that is one packed unit of bitfields holds
+    // nothing but that unit's integer, so it aliases a sibling integer member exactly.
+    assertDoesNotThrow {
+      build(
+        """
+        typedef union {
+          struct { unsigned long leaf:16; unsigned long version:8; unsigned long rest:40; };
+          unsigned long raw;
+        } u_t;
+        int main() {
+          u_t u;
+          u.raw = 0;
+          u.leaf = 7;
+          if (u.raw == 0) { return 1; }
+          return 0;
+        }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun multiFieldStructOverAnIntegerStillRejects() {
+    // Two plain 32-bit members overlaying a 64-bit integer needs sub-word flat layout, not the
+    // bitfield machinery -- it must keep failing loudly rather than aliasing unsoundly.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        typedef union { struct { unsigned int lo; unsigned int hi; }; unsigned long raw; } u_t;
+        int main() { u_t u; u.raw = 0; return u.lo; }
+        """
+          .trimIndent()
+      )
+    }
+  }
 }

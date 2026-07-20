@@ -56,6 +56,14 @@ public final class BitfieldSlice {
     /** Metadata: the field's width in bits. */
     public static final String WIDTH = "bitfieldWidth";
 
+    /**
+     * Metadata marking an expression as the *cell* of a union member that is one packed unit of
+     * bitfields (see {@code CStruct#isPackedScalar}). Reading a member of such a struct slices this
+     * cell instead of dereferencing it again, which is what makes the bitfield view and a sibling
+     * integer member (`raw`) name the same storage.
+     */
+    public static final String PACKED_CELL = "packedScalarCell";
+
     private BitfieldSlice() {}
 
     /**

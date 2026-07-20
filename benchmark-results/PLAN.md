@@ -1001,6 +1001,37 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 46 — union overlay: a packed-bitfield view aliases its integer sibling
+
+Follow-on to batch 45, using the same slicing machinery. `union { struct { uint64_t leaf:16;
+version:8; ... }; uint64_t raw; }` — the kernel/TDX register-overlay idiom — was rejected as
+"bit-level type punning" because the anonymous struct was stored as a pointer-wide base id while
+`raw` is a 64-bit integer.
+
+A struct that is **one packed unit made entirely of bitfields** (`CStruct.isPackedScalar()`)
+holds nothing but that unit's integer, so as a union member it is stored *as* that integer:
+`sameRepresentation` compares it that way, the member access dereferences the union's cell at the
+integer width, and its bitfields become slices of that shared cell. Writing through the bitfield
+view is therefore visible through `raw` and vice versa. The batch-45 read-modify-write path is
+reused unchanged, so assignments splice only their own bits.
+
+Verified in **both** encodings: `u.raw = 0; u.leaf = 7; u.version = 3` reads back
+`leaf == 7`, `version == 3` and `raw == 7 + (3<<16)` — exact aliasing (Safe). `UnionPunningTest`
+now pins the overlay case *and* that the unsound shapes still reject. Module tests, 255 canaries
+and 14 fixtures green.
+
+**Scope — this does not unlock the TDX cluster on its own.** Those files carry three overlay
+shapes; this fixes one. On a 12-file TDX sample, 6 cleared the punning barrier (and then hit the
+next one), 6 still reject. The two remaining shapes both need genuine sub-word flat layout (AD7),
+and are deliberately left failing loudly rather than aliased unsoundly:
+- **multi-field struct over an integer** — `struct { uint32_t lo; uint32_t hi; }` over `uint64_t
+  raw` (two plain members packed into one word);
+- **array views** — `union { uint64_t qwords[2]; uint32_t dwords[4]; uint8_t bytes[16]; }`,
+  which is what the 6 cleared files hit next ("Non-array expression used as array").
+
+So the 865-run `memberOffset` cluster will not drop much from this alone; AD7 remains its
+gating item.
+
 ## Batch 45 — packed bitfields: storage units + bit slicing (fixes a memsafety WRONG)
 
 The deferred core-model work, greenlit and landed. Root cause recap: `sizeof` counted one cell

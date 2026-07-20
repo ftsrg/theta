@@ -1407,58 +1407,102 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
         final CComplexType embeddedType = structType.getFieldsAsMap().get(memberName);
+
+        // Reading a member of a union's packed-bitfield view: its storage is the union's own cell,
+        // which `base` already is, so slice that cell rather than dereferencing into a new object.
+        // Slicing the same cell the sibling integer member reads is what makes the overlay alias.
+        if (structType.isPackedScalar()
+                && parseContext
+                        .getMetadata()
+                        .getMetadataValue(
+                                base,
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
+                                        .compound.BitfieldSlice.PACKED_CELL)
+                        .isPresent()) {
+            return bitfieldSliceOf(base, structType, memberName, embeddedType);
+        }
+
+        final CComplexType cellType =
+                structType.isUnion()
+                                && embeddedType instanceof CStruct packed
+                                && packed.isPackedScalar()
+                        ? packed.packedScalarType()
+                        : embeddedType;
         final Expr<?> idxExpr =
                 structType.getValue(String.valueOf(memberOffset(structType, memberName)));
         final Expr<?> access =
                 Exprs.Dereference(
                         cast(base, base.getType()),
                         cast(idxExpr, base.getType()),
-                        embeddedType.getSmtType());
+                        cellType.getSmtType());
         parseContext.getMetadata().create(access, "cType", embeddedType);
+        if (cellType != embeddedType) {
+            // The union's cell, read at the packed view's integer width: mark it so member
+            // accesses on it slice instead of dereferencing.
+            parseContext
+                    .getMetadata()
+                    .create(
+                            access,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.PACKED_CELL,
+                            true);
+            return access;
+        }
 
         // A bitfield narrower than its base type shares its cell with the rest of its run, so its
-        // *value* is a slice of that cell rather than the whole of it. The cell is carried along as
-        // metadata so an assignment to this member read-modify-writes instead of clobbering its
-        // neighbours.
+        // *value* is a slice of that cell rather than the whole of it.
         final hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout
                         .Slot
                 slot = structType.isUnion() ? null : structType.slotOf(memberName);
         if (slot != null && slot.bitfield() && slot.width() < embeddedType.width()) {
-            final boolean signed =
-                    embeddedType
-                                    instanceof
-                                    hu.bme.mit.theta.frontend.transformation.model.types.complex
-                                                    .integer.CInteger
-                                            integer
-                            && integer.isSsigned();
-            final Expr<?> value =
-                    hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                            .BitfieldSlice.read(access, slot.bitOffset(), slot.width(), signed);
-            parseContext.getMetadata().create(value, "cType", embeddedType);
-            parseContext
-                    .getMetadata()
-                    .create(
-                            value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.CELL,
-                            access);
-            parseContext
-                    .getMetadata()
-                    .create(
-                            value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.OFFSET,
-                            slot.bitOffset());
-            parseContext
-                    .getMetadata()
-                    .create(
-                            value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.WIDTH,
-                            slot.width());
-            return value;
+            return bitfieldSliceOf(access, structType, memberName, embeddedType);
         }
         return access;
+    }
+
+    /**
+     * The value of bitfield [memberName] read out of [cell], with the cell carried along as
+     * metadata so an assignment to this member read-modify-writes just its bits instead of
+     * clobbering the neighbours sharing the cell.
+     */
+    private Expr<?> bitfieldSliceOf(
+            Expr<?> cell, CStruct structType, String memberName, CComplexType memberType) {
+        final hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout
+                        .Slot
+                slot = structType.slotOf(memberName);
+        final boolean signed =
+                memberType
+                                instanceof
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                                .CInteger
+                                        integer
+                        && integer.isSsigned();
+        final Expr<?> value =
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
+                        .read(cell, slot.bitOffset(), slot.width(), signed);
+        parseContext.getMetadata().create(value, "cType", memberType);
+        parseContext
+                .getMetadata()
+                .create(
+                        value,
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.CELL,
+                        cell);
+        parseContext
+                .getMetadata()
+                .create(
+                        value,
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.OFFSET,
+                        slot.bitOffset());
+        parseContext
+                .getMetadata()
+                .create(
+                        value,
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.WIDTH,
+                        slot.width());
+        return value;
     }
 
     private static boolean hasMemberDeep(CStruct structType, String memberName) {
@@ -1517,9 +1561,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * where the sign reinterpretation would be lost.
      */
     private static boolean sameRepresentation(CComplexType a, CComplexType b) {
-        return a.getSmtType().equals(b.getSmtType())
-                && a.width() == b.width()
-                && effectivelyUnsigned(a) == effectivelyUnsigned(b);
+        final CComplexType left = storedAs(a);
+        final CComplexType right = storedAs(b);
+        return left.getSmtType().equals(right.getSmtType())
+                && left.width() == right.width()
+                && effectivelyUnsigned(left) == effectivelyUnsigned(right);
+    }
+
+    /**
+     * The type a union member is actually stored as. A struct that is one packed unit of bitfields
+     * holds nothing but that unit's integer, so it shares a cell with a sibling of that integer
+     * type -- the `union { uint64_t raw; struct { uint64_t a:16; ... }; }` overlay.
+     */
+    private static CComplexType storedAs(CComplexType type) {
+        return type instanceof CStruct struct && struct.isPackedScalar()
+                ? struct.packedScalarType()
+                : type;
     }
 
     /** A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false. */
