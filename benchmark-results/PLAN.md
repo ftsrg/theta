@@ -1051,6 +1051,47 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 53 (AD7 step 2) — `packed`/`aligned` and unnamed bitfields reach the layout
+
+Batch 52 left two documented gaps, both prerequisites for wiring. Both are closed.
+
+**Layout attributes.** The grammar had always *matched* GCC attributes and thrown them away
+("they describe layout, which is not modeled"). `LayoutAttributes` now reads the only two that
+change offsets — `packed` and `aligned(n)` — and they reach `ObjectLayout` through `CStruct`.
+Everything else stays ignored, as before. Three spellings had to be handled, because they land in
+three different places in the grammar:
+
+| form | where it attaches |
+|---|---|
+| `struct __attribute__((packed)) S { … };` | the struct specifier — the only one `visitCompoundDefinition` sees |
+| `struct S { … } __attribute__((packed));` | a **sibling declaration specifier**, after the body |
+| `int b __attribute__((aligned(8)));` | a **declarator extension**, after the declarator |
+
+The middle one is what real code overwhelmingly writes, and it was the reason four of the eight
+end-to-end tests initially returned the plain unattributed layout. It is applied only when the
+specifier list actually *defines* a compound: an attribute on a variable of an existing type
+(`struct S x __attribute__((aligned(16)));`) describes the variable, and must not change the layout
+every other user of `struct S` sees. `aligned(n)` on a member outranks its struct's `packed`, as in
+GCC. A non-literal argument (a `sizeof`, an unexpanded macro) is skipped rather than guessed —
+a wrong alignment misplaces every later member, so the natural layout is the safer fallback.
+
+**Unnamed bitfields.** `int : 3;` and `int : 0;` used to be dropped at `visitStructDeclaratorConstant`
+and never reached a field list. They still get **no field** — nothing can name them, and giving one a
+storage cell would shift every following member in the wired cell model — but they now come back as
+nameless declarations and are recorded as `CStruct.Padding`, which `ObjectLayout` replays in
+declaration order. `int : 0;` closing the current storage unit is the whole point of the idiom.
+
+gcc caught a rule I would have got wrong: an **unnamed** bitfield contributes no alignment.
+`struct {char a; int :3; char b;}` is align **1**, size 3 — not align 4 — whereas a *named* `int`
+bitfield does make its struct 4-aligned. Isolating that needed a struct whose named members are all
+`char`, which is exactly the kind of case hand-derivation misses.
+
+Gate: 8 new end-to-end tests parsing real C (`ObjectLayoutFromSourceTest`, both data models, all
+gcc-generated, including an unattributed control so the plumbing cannot pass by applying `packed`
+everywhere), 356 module tests, 255 canaries, 17 fixtures (1 new). This batch touches **wired**
+frontend code — the specifier walk and the declarator visitor — unlike batch 52, so the canary run
+is load-bearing here rather than a formality.
+
 ## Batch 52 (AD7 step 1) — the byte-exact object layout, pure and unwired
 
 `ObjectLayout` computes where every member of a struct/union/array actually sits: bit offsets,

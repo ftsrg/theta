@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,15 +239,34 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
 
     @Override
     public CDeclaration visitStructDeclaratorConstant(CParser.StructDeclaratorConstantContext ctx) {
-        // A bitfield. An unnamed one (`int : 3;`, `int : 0;`) is padding: no field at all.
+        // A bitfield. An unnamed one (`int : 3;`, `int : 0;`) is padding: it gets no field, but it
+        // still moves the next member, so it comes back as a nameless declaration carrying its
+        // width for the caller to record as padding (see TypeVisitor#visitCompoundDefinition).
         // A named one is a field carrying its width, so the struct layout can pack consecutive
         // bitfields into one storage unit and member access can slice that unit.
         if (ctx.declarator() == null) {
-            return null;
+            final CDeclaration padding = new CDeclaration((String) null);
+            padding.setBitfieldWidth(foldBitfieldWidth(ctx.constantExpression()));
+            return padding;
         }
         final CDeclaration declaration = ctx.declarator().accept(this);
         declaration.setBitfieldWidth(foldBitfieldWidth(ctx.constantExpression()));
+        declaration.setLayoutAttributes(LayoutAttributes.of(ctx.gccAttributeSpecifier()));
         return declaration;
+    }
+
+    /** The layout attributes among a declarator's GCC extensions (the rest stay ignored). */
+    private ObjectLayout.Attributes declaratorLayoutAttributes(CParser.DeclaratorContext ctx) {
+        final List<CParser.GccAttributeSpecifierContext> specifiers = new ArrayList<>();
+        for (CParser.GccDeclaratorExtensionContext extension : ctx.gccDeclaratorExtension()) {
+            if (extension.gccAttributeSpecifier() != null) {
+                specifiers.add(extension.gccAttributeSpecifier());
+            }
+        }
+        if (ctx.gccAttributeSpecifier() != null) {
+            specifiers.addAll(ctx.gccAttributeSpecifier());
+        }
+        return LayoutAttributes.of(specifiers);
     }
 
     /** The folded bitfield width, or -1 when it cannot be resolved (falls back to a plain field). */
@@ -294,6 +314,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             // Record where this star binds relative to any array dimensions seen so far, so
             // `T (*p)[N]` (pointer to array) and `T *p[N]` (array of pointers) stay distinct.
             decl.addDeclaratorPointer(size);
+        }
+        // `int b __attribute__((aligned(8)));` -- an attribute written after the declarator is a
+        // declarator extension, not a declaration specifier, so it arrives here rather than with
+        // the type. It raises this member's alignment (and, through it, its struct's).
+        final ObjectLayout.Attributes layout = declaratorLayoutAttributes(ctx);
+        if (layout != ObjectLayout.Attributes.NONE) {
+            decl.setLayoutAttributes(layout);
         }
         return decl;
     }

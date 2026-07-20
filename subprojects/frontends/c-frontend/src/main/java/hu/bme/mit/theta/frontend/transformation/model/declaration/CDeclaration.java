@@ -23,6 +23,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,17 @@ public class CDeclaration {
 
     public void setBitfieldWidth(int bitfieldWidth) {
         this.bitfieldWidth = bitfieldWidth;
+    }
+
+    /** `packed` / `aligned(n)` on this member; `aligned` on a member wins over a packed struct. */
+    private ObjectLayout.Attributes layoutAttributes = ObjectLayout.Attributes.NONE;
+
+    public ObjectLayout.Attributes getLayoutAttributes() {
+        return layoutAttributes;
+    }
+
+    public void setLayoutAttributes(ObjectLayout.Attributes layoutAttributes) {
+        this.layoutAttributes = layoutAttributes;
     }
 
     public CDeclaration(CSimpleType cSimpleType) {

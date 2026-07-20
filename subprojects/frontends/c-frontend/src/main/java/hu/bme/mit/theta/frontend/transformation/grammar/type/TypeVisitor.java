@@ -38,6 +38,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import java.util.*;
@@ -262,7 +263,73 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             }
         }
 
-        return mergeCTypes(cSimpleTypes);
+        final CSimpleType merged = mergeCTypes(cSimpleTypes);
+        applyTrailingLayoutAttributes(declarationSpecifierContexts, merged);
+        return merged;
+    }
+
+    /**
+     * `struct S { ... } __attribute__((packed));` -- by far the commonest spelling, and the one the
+     * struct specifier never sees: the attribute sits *after* the body, so the grammar makes it a
+     * sibling declaration specifier rather than part of `structOrUnionSpecifier`, and
+     * {@link #visitCompoundDefinition} is only handed the attributes written before the body.
+     *
+     * <p>Applied only when this specifier list actually *defines* the struct. An attribute on a
+     * variable of an already-defined type (`struct S x __attribute__((aligned(16)));`) describes
+     * that variable, not the type, and must not change the layout every other user of `struct S`
+     * sees.
+     */
+    private void applyTrailingLayoutAttributes(
+            List<CParser.DeclarationSpecifierContext> specifiers, CSimpleType merged) {
+        if (!(merged instanceof Struct struct) || !definesACompound(specifiers)) {
+            return;
+        }
+        final List<CParser.GccAttributeSpecifierContext> attributes = new ArrayList<>();
+        for (CParser.DeclarationSpecifierContext specifier : specifiers) {
+            collectAttributeSpecifiers(specifier, attributes);
+        }
+        final ObjectLayout.Attributes layout = LayoutAttributes.of(attributes);
+        if (layout != ObjectLayout.Attributes.NONE) {
+            struct.setLayoutAttributes(layout);
+        }
+    }
+
+    /** Whether these specifiers contain a struct/union *definition* rather than a mere usage. */
+    private boolean definesACompound(List<CParser.DeclarationSpecifierContext> specifiers) {
+        for (CParser.DeclarationSpecifierContext specifier : specifiers) {
+            if (findsCompoundDefinition(specifier)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean findsCompoundDefinition(ParseTree tree) {
+        if (tree instanceof CParser.CompoundDefinitionContext) {
+            return true;
+        }
+        for (int i = 0; i < tree.getChildCount(); i++) {
+            if (findsCompoundDefinition(tree.getChild(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void collectAttributeSpecifiers(
+            ParseTree tree, List<CParser.GccAttributeSpecifierContext> into) {
+        if (tree instanceof CParser.GccAttributeSpecifierContext attribute) {
+            into.add(attribute);
+            return;
+        }
+        // Do not descend into a nested compound definition: attributes inside a member's own
+        // struct body belong to that struct, not to this one.
+        if (tree instanceof CParser.CompoundDefinitionContext) {
+            return;
+        }
+        for (int i = 0; i < tree.getChildCount(); i++) {
+            collectAttributeSpecifiers(tree.getChild(i), into);
+        }
     }
 
     private CSimpleType createCType(
@@ -345,6 +412,10 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             }
             Struct struct =
                     CSimpleTypeFactory.Struct(name, union, parseContext, uniqueWarningLogger);
+            // `struct __attribute__((packed)) { ... }` / `((aligned(64)))`: layout attributes are
+            // the only ones this frontend acts on, and ObjectLayout cannot place members without
+            // them (a packed struct laid out unpacked misplaces everything after the first member).
+            struct.setLayoutAttributes(LayoutAttributes.of(ctx.gccAttributeSpecifier()));
             int anonymousFields = 0;
             for (CParser.StructDeclarationContext structDeclarationContext :
                     ctx.structDeclarationList().structDeclaration()) {
@@ -372,11 +443,27 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                         CDeclaration declaration =
                                 structDeclaratorContext.accept(declarationVisitor);
                         if (declaration == null) {
-                            // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not a field.
                             continue;
                         }
                         if (declaration.getType() == null) {
                             declaration.setType(cSimpleType);
+                        }
+                        if (declaration.getName() == null) {
+                            // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not a field.
+                            // It has no name to be looked up by and no value to hold, but it does
+                            // move the next member -- `int : 0;` exists precisely to close the
+                            // current storage unit -- so its width is kept for the layout.
+                            struct.addPadding(
+                                    Math.max(declaration.getBitfieldWidth(), 0),
+                                    cSimpleType.getActualType().width());
+                            continue;
+                        }
+                        // `int a __attribute__((aligned(8)));` -- a member's own alignment, which
+                        // outranks its struct's `packed`.
+                        if (declaration.getLayoutAttributes() == ObjectLayout.Attributes.NONE) {
+                            declaration.setLayoutAttributes(
+                                    LayoutAttributes.of(
+                                            structDeclarationContext.gccAttributeSpecifier()));
                         }
                         struct.addField(declaration);
                     }

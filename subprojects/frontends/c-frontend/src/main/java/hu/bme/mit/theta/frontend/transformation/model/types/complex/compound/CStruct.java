@@ -52,6 +52,27 @@ public class CStruct extends CInteger {
     /** Declared bitfield width per field (-1 for an ordinary member); see {@link #overlayWidth}. */
     private final List<Integer> bitfieldWidths;
 
+    /**
+     * An unnamed bitfield: {@code int : 3;} reserves bits, {@code int : 0;} closes the current
+     * storage unit. It is padding, so it gets no entry in {@link #fields} -- nothing can name it,
+     * and giving it a cell would shift every following member's offset in the wired cell model.
+     * {@link ObjectLayout} still has to see it, because it moves where the *next* member sits.
+     *
+     * @param afterFieldIndex how many named fields precede it, which is what puts it back in
+     *     declaration order relative to {@link #fields}
+     * @param bitWidth the declared width; 0 means "close the unit"
+     * @param baseBits the width of the type it was declared with, i.e. the unit it closes
+     */
+    public record Padding(int afterFieldIndex, int bitWidth, int baseBits) {}
+
+    private final List<Padding> paddings;
+
+    /** Layout attributes on the struct itself ({@code packed}, {@code aligned(n)}). */
+    private final ObjectLayout.Attributes attributes;
+
+    /** Per-field layout attributes, parallel to {@link #fields}. */
+    private final List<ObjectLayout.Attributes> fieldAttributes;
+
     public CStruct(
             CSimpleType origin,
             List<Tuple2<String, CComplexType>> fields,
@@ -67,21 +88,48 @@ public class CStruct extends CInteger {
         this(origin, fields, union, parseContext, allOrdinary(fields.size()));
     }
 
-    /**
-     * @param bitfieldWidths bitfield width per field (-1 for an ordinary, non-bitfield member),
-     *     parallel to {@code fields}. Only meaningful for structs; a union's members all share
-     *     offset 0 regardless (see {@link #isUnion()}), so its layout is not consulted.
-     */
     public CStruct(
             CSimpleType origin,
             List<Tuple2<String, CComplexType>> fields,
             boolean union,
             ParseContext parseContext,
             List<Integer> bitfieldWidths) {
+        this(
+                origin,
+                fields,
+                union,
+                parseContext,
+                bitfieldWidths,
+                List.of(),
+                ObjectLayout.Attributes.NONE,
+                List.of());
+    }
+
+    /**
+     * @param bitfieldWidths bitfield width per field (-1 for an ordinary, non-bitfield member),
+     *     parallel to {@code fields}. Only meaningful for structs; a union's members all share
+     *     offset 0 regardless (see {@link #isUnion()}), so its layout is not consulted.
+     * @param paddings unnamed bitfields, in declaration order (see {@link Padding})
+     * @param attributes layout attributes on the struct itself
+     * @param fieldAttributes layout attributes per field, parallel to {@code fields}; an empty list
+     *     means none anywhere
+     */
+    public CStruct(
+            CSimpleType origin,
+            List<Tuple2<String, CComplexType>> fields,
+            boolean union,
+            ParseContext parseContext,
+            List<Integer> bitfieldWidths,
+            List<Padding> paddings,
+            ObjectLayout.Attributes attributes,
+            List<ObjectLayout.Attributes> fieldAttributes) {
         super(origin, parseContext);
         this.fields = fields;
         this.union = union;
         this.bitfieldWidths = List.copyOf(bitfieldWidths);
+        this.paddings = List.copyOf(paddings);
+        this.attributes = attributes;
+        this.fieldAttributes = List.copyOf(fieldAttributes);
         final List<BitfieldLayout.Member> members = new java.util.ArrayList<>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             final int bitfieldWidth = i < bitfieldWidths.size() ? bitfieldWidths.get(i) : -1;
@@ -179,6 +227,23 @@ public class CStruct extends CInteger {
 
     /** Widest packed word an overlay may occupy; beyond this there is no integer to hold it. */
     private static final int MAX_OVERLAY_BITS = 64;
+
+    /** The unnamed bitfields between this struct's members, in declaration order. */
+    public List<Padding> getPaddings() {
+        return paddings;
+    }
+
+    /** Layout attributes on the struct itself. */
+    public ObjectLayout.Attributes getAttributes() {
+        return attributes;
+    }
+
+    /** Layout attributes on field [index], never null. */
+    public ObjectLayout.Attributes fieldAttributes(int index) {
+        return index >= 0 && index < fieldAttributes.size()
+                ? fieldAttributes.get(index)
+                : ObjectLayout.Attributes.NONE;
+    }
 
     /**
      * The width a member was declared with as a bitfield, or -1 if it is an ordinary member. This

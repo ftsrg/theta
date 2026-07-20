@@ -46,22 +46,22 @@ import java.util.List;
  * zero. Bitfields pack into storage units of their declared base type and a zero-width bitfield
  * closes the current unit.
  *
- * <h2>What it does not, yet</h2>
+ * <h2>Layout attributes</h2>
  *
- * {@code __attribute__((packed))} and {@code ((aligned(n)))} change layout, and this class takes
- * them as {@link Attributes} -- but nothing populates them: the grammar matches GCC attributes and
- * throws them away (see {@code C.g4}, "they describe layout, which is not modeled"). Retaining them
- * through {@code TypeVisitor} is a prerequisite for AD7's full spec, and until it lands every type
- * here is laid out as if unattributed. That is the *common* case, not the universal one: a packed
- * struct laid out unpacked has wrong offsets, so the wiring step must not be enabled for a
- * translation unit whose structs carry layout attributes until the plumbing exists.
+ * {@code __attribute__((packed))} and {@code ((aligned(n)))} change layout, and both are honored:
+ * packed drops every member to byte alignment and removes tail padding, {@code aligned(n)} raises
+ * an object's or a member's alignment. A member's own {@code aligned(n)} wins over its struct's
+ * {@code packed}, which is what GCC does. They reach here through {@link CStruct}, which the
+ * {@code TypeVisitor} now populates from the attribute lists the grammar was already parsing (and
+ * previously discarded).
  *
- * <p>A second, narrower gap: an <b>unnamed</b> bitfield ({@code int : 3;}, {@code int : 0;}) is
- * dropped before it ever reaches a {@link CStruct} field list -- it is padding, so it gets no field
- * slot (see {@code BitfieldAndAnonymousMemberTest}). The zero-width handling below is therefore
- * currently unreachable, and a struct using {@code int : 0;} to force the next member into a fresh
- * storage unit lays out one unit too early here. Retaining unnamed bitfields as anonymous padding
- * fields is the fix, and belongs with the attribute plumbing.
+ * <h2>Unnamed bitfields</h2>
+ *
+ * An unnamed bitfield ({@code int : 3;}, {@code int : 0;}) holds no value, so it gets no field --
+ * nothing can name it, and giving it a storage cell would shift every following member in the wired
+ * cell model. It does move where the next member sits, though, so {@link CStruct.Padding} records
+ * it separately and the walk below replays it in declaration order. {@code int : 0;} closes the
+ * current storage unit, which is the whole reason the idiom exists.
  */
 public final class ObjectLayout {
 
@@ -95,9 +95,9 @@ public final class ObjectLayout {
 
     private ObjectLayout() {}
 
-    /** The layout of [type] under [arch], with no layout attributes anywhere. */
+    /** The layout of [type] under [arch], using whatever attributes the type itself carries. */
     public static Layout of(CComplexType type, ArchitectureType arch) {
-        return of(type, arch, Attributes.NONE);
+        return of(type, arch, type instanceof CStruct s ? s.getAttributes() : Attributes.NONE);
     }
 
     public static Layout of(CComplexType type, ArchitectureType arch, Attributes attributes) {
@@ -166,13 +166,37 @@ public final class ObjectLayout {
         final List<Tuple2<String, CComplexType>> members = struct.getFields();
         int offset = 0;
         int alignment = 8; // a struct is at least byte-aligned
-        for (int i = 0; i < members.size(); i++) {
+        for (int i = 0; i <= members.size(); i++) {
+            // Unnamed bitfields hold no value but do move the next member, so they are replayed
+            // here in declaration order even though they have no field of their own.
+            for (CStruct.Padding padding : struct.getPaddings()) {
+                if (padding.afterFieldIndex() != i) {
+                    continue;
+                }
+                final int unitBits = padding.baseBits();
+                if (padding.bitWidth() == 0) {
+                    // `int : 0;` closes the current storage unit: the next member starts fresh.
+                    offset = roundUp(offset, attributes.packed() ? 8 : unitBits);
+                } else {
+                    if (!attributes.packed() && offset % unitBits + padding.bitWidth() > unitBits) {
+                        offset = roundUp(offset, unitBits);
+                    }
+                    offset += padding.bitWidth();
+                    // No alignment contribution: gcc gives `struct {char a; int :3; char b;}`
+                    // alignment 1, not 4. An unnamed bitfield reserves bits without making the
+                    // struct as strict as the type it borrowed them from. (A *named* bitfield does
+                    // contribute -- `struct {unsigned a:4;}` is 4-aligned.)
+                }
+            }
+            if (i == members.size()) {
+                break; // the extra pass exists only to replay trailing padding
+            }
             final CComplexType memberType = members.get(i).get2();
+            final Attributes memberAttributes = struct.fieldAttributes(i);
             final int bitfieldWidth = struct.declaredBitfieldWidth(i);
             if (bitfieldWidth >= 0) {
                 final int unitBits = memberType.width();
                 if (bitfieldWidth == 0) {
-                    // `int : 0;` closes the current storage unit: the next member starts fresh.
                     offset = roundUp(offset, attributes.packed() ? 8 : unitBits);
                     continue;
                 }
@@ -191,8 +215,14 @@ public final class ObjectLayout {
                 alignment = Math.max(alignment, attributes.packed() ? 8 : unitBits);
                 continue;
             }
+            // A member's own `aligned(n)` raises its alignment even inside a packed struct; a
+            // packed struct otherwise drops every member to byte alignment.
             final int memberAlign =
-                    attributes.packed() ? 8 : alignBits(memberType, arch, Attributes.NONE);
+                    memberAttributes.alignedToBits() > 0
+                            ? memberAttributes.alignedToBits()
+                            : (attributes.packed() || memberAttributes.packed()
+                                    ? 8
+                                    : alignBits(memberType, arch, Attributes.NONE));
             offset = roundUp(offset, memberAlign);
             final int size = sizeBits(memberType, arch);
             fields.add(new Field(members.get(i).get1(), memberType, offset, size, -1));
