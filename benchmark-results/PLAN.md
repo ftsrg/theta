@@ -919,6 +919,41 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Run 2026-07-19_21-29-bw (sosy, 5750G, batch-42, forced `--arithmetic bitvector`)
+
+Full 36,602-run bitvector run, to compare against the integer/`efficient` verification run
+2026-07-19_15-36 (batch-38..41). Builds differ by batch-42 (a bitvector-only cast fix) — the
+frontend parse fixes in 42–44 don't touch the already-parsing tasks these findings concern, so
+the encoding comparison is valid for them.
+
+**Totals: 8,650 correct / 37 wrong / 27,340 error / 575 unknown** vs int's 10,118 / 29 / 26,090
+/ 365. Bitvector is more precise but much slower: the dominant shift is **1,984 correct→error**
+(timeouts — bit-blasting is expensive) against **681 error→correct** (precision wins). Net it
+loses ~1,470 correct.
+
+### bw-vs-int verdict disagreements (the encoding-correctness audit — NOT yet fixed)
+
+Wrongs are the concern. **29 tasks are wrong under bitvector but not under integer**
+(encoding-induced), and **21 are wrong under integer but not bitvector** (encoding fixes):
+
+- **no-overflow is bitvector's weak spot: 18 encoding-induced wrongs.** 16 are a single cluster
+  — `chl-*.wvr` (Huawei concurrency challenges): expected `true`, bitvector reports
+  `false(no-overflow)`, i.e. a **spurious overflow** the integer encoding does not see
+  (`chl-collitem/exp-term/file-item/simpl-str/time-{subst,symm,trans}`, + `linear_interpolation_2`).
+  The other 2 are the reverse — `stroeder{1,2}-alloca-1` (expected false), bitvector says
+  `true`, a **missed** overflow. So bitvector no-overflow both over- and under-alarms on
+  specific shapes; the `chl-*` spurious-overflow cluster is the clear actionable bug.
+- **valid-memsafety: bitvector nets positive** — introduces 10 new wrongs but fixes 14.
+- **unreach-call: 4 fixed, 1 new. no-data-race: 1 fixed.**
+- Plus symmetric 17 wrong→error / 17 error→wrong flips (each encoding finds a spurious cex
+  where the other times out).
+
+**Actionable (deferred, do not fix yet):** the `chl-*.wvr` no-overflow spurious-overflow cluster
+is the largest single bitvector-encoding wrong — likely a signed/unsigned or width issue in the
+bitvector overflow predicate for these concurrency tasks. Worth a focused diagnosis before any
+decision to ship bitvector for no-overflow. Integer remains the better default overall
+(more correct, fewer wrong, far fewer timeouts).
+
 ## Batch 44 — switch on a wide value with narrow case labels
 
 The union-punning-unlocked aws-c-common files (and others) then died in `CSwitch` lowering with
