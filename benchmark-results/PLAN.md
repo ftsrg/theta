@@ -919,6 +919,34 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Batch-44 parse re-measure — accurate current cluster ranking + strategic state
+
+Clean sweep of all 3,173 former parse-death inputs on the batch-44 jar: **988 PARSE-OK** (777 @
+b39 → 888 @ b41 → 988 @ b44), **2,132 FRONTEND**, 51 parse-timeout, **2 parse-error** (the K&R
+pair). The OOM cluster is gone (Struct.getActualType memoization). Frontend-crash ranking:
+
+| runs | signature | nature |
+|---|---|---|
+| 865 | `memberOffset` (union punning) | **deferred bitfield**: TDX `union { u16 raw; struct {bits} }` — a narrow raw overlapping a bitfield-struct member the model stores as a pointer-wide base id. Needs storage-unit + slicing (batch 43-design). Also fixes the test-bitfields **wrongs**. |
+| 734 | `ReferenceElimination.*` | **architectural (AD2)**: bare use of a split address-taken variable in pointer arithmetic. |
+| 472 | `visitPostfixExpressionBrackets` | 441 = **neural-networks** `float (*A)[4]` pointer-to-array 2-D indexing ("Non-array expression used as array": the frontend flattens pointer-to-array to a plain pointer, losing the inner dimension). Low verdict-ROI — these nets time out even when parsed. |
+| 127 | `visitPrimaryExpressionId` | undeclared library functions (malloc/memcpy in stripped goblint-coreutils). Low ROI (huge files, other barriers), return-type-guess risk. |
+| 84 | `visitPostfixExpressionPtrMemberAccess` | same TDX bitfield family. |
+| 42 | `CComplexType.getType` | small, mixed. |
+| 30 | `visitPrimaryExpressionBuiltinVaArg` | va_arg on a local. |
+| 26 | `FunctionVisitor.visitBodyDeclaration` | struct fed an `UnsupportedInitializer` (nested-init). |
+
+**Strategic read:** the easy, high-verdict-ROI frontend/parse wins are exhausted (b38–44 took
+parse deaths 4,108 → 2 and cleared union punning, cast, switch, initializers, builtins). What
+remains is (a) the **deferred bitfield storage-unit + slicing** — the *only* remaining lever on
+actual WRONGS (test-bitfields) and simultaneously the largest cluster (865 + 84 TDX), but a
+high-blast-radius core-model change; (b) **AD2 split-variable arithmetic** (734, architectural);
+(c) **neural-networks pointer-to-array** (441, low-ROI timeouts); or (d) small mixed clusters.
+No further low-risk high-ROI single fix is visible. The next big step is a deliberate
+investment decision: greenlight the bitfield work (with its regression risk, mitigated by the
+scoping in batch 43-design + the fixtures/guard-set net) vs consolidate. Batch-43's benchmark
+(in flight) will confirm the b42–44 wrong-count before that call.
+
 ## Run 2026-07-19_21-29-bw (sosy, 5750G, batch-42, forced `--arithmetic bitvector`)
 
 Full 36,602-run bitvector run, to compare against the integer/`efficient` verification run
