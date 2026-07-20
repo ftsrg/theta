@@ -142,7 +142,11 @@ public class CDeclaration {
             simpleType.incrementPointer();
             actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
         }
-        for (CStatement arrayDimension : arrayDimensions) {
+        // The declarator is walked outwards from the identifier, so `int a[3][4]` records [3, 4] --
+        // but it means an array of 3 arrays of 4, so the *last* dimension is the innermost one and
+        // they have to be applied back to front. (A single dimension is unaffected, and
+        // multi-dimensional arrays were rejected outright before, so nothing working changes.)
+        for (int i = arrayDimensions.size() - 1; i >= 0; i--) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
             actualType =
@@ -150,8 +154,8 @@ public class CDeclaration {
                             simpleType,
                             actualType,
                             actualType.getParseContext(),
-                            arrayDimension); // some day change this back to arrays, when simple &
-            // complex types are better synchronized...
+                            arrayDimensions.get(i)); // some day change this back to arrays, when
+            // simple & complex types are better synchronized...
         }
         // `T (*p)[N]`: the star was written inside the parentheses, so it wraps the whole array --
         // p is a pointer *to* an array. Without this the pointer level was dropped and `(*p)[i]`

@@ -260,13 +260,8 @@ class FrontendXcfaBuilder(
     builder.createInitLoc(getMetadata(function))
     var init = builder.initLoc
 
-    for (flatVariable in flatVariables) {
-      val type = CComplexType.getType(flatVariable.ref, parseContext)
-      if (type is CArray && type.embeddedType is CArray) {
-        // some day this is where initialization will occur. But this is not today.
-        error("Not handling init expression of high dimsension array $flatVariable")
-      }
-    }
+    // (A multi-dimensional array used to be rejected here. Its rows are now allocated above, the
+    // same way a struct's aggregate fields are, so `a[i][j]` reads `arrays[arrays[a][i]][j]`.)
 
     val endinit = getAnonymousLoc(builder, getMetadata(function))
     builder.addLoc(endinit)
@@ -394,11 +389,43 @@ class FrontendXcfaBuilder(
   private fun allocateStackArray(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
     val size = fixedArraySize(type) ?: return
     labels.add(alloca(target, size))
+    allocateArrayElements(target, type, labels)
+  }
+
+  /**
+   * Gives each element of [target] an object of its own, when the elements are themselves
+   * aggregates -- a row of `int a[3][4]`, or an element of `struct S a[3]`. Such an array holds a
+   * base per element in its cells, exactly as a struct holds one per field; leaving those bases
+   * unconstrained lets the solver conflate two elements, so `a[1][2] = 7` could be read back
+   * through `a[0][0]`. An array of scalars keeps its elements directly in its own cells and needs
+   * nothing here.
+   *
+   * Split out from [allocateStackArray] because a *declared* local array already gets its own base
+   * from the `alloca` the frontend emits at the declaration; only its elements are missing, and
+   * they have to be allocated after that base is assigned, not before.
+   */
+  /** How many array elements are worth giving an object of their own; see below. */
+  private val MAX_ELEMENT_ALLOCATIONS = 1024
+
+  private fun allocateArrayElements(
+    target: Expr<*>,
+    type: CArray,
+    labels: MutableList<XcfaLabel>,
+  ) {
+    val size = fixedArraySize(type) ?: return
     val elementType = type.embeddedType
-    if (elementType is CStruct || elementType is CArray) {
-      for (index in 0 until size) {
-        allocateStackSubobject(subobjectCell(target, type, index, elementType), elementType, labels)
-      }
+    if (elementType !is CStruct && elementType !is CArray) return
+    if (size > MAX_ELEMENT_ALLOCATIONS) {
+      // One allocation per element does not scale: the benchmarks contain `S a[1000000]`, and
+      // emitting a million of them makes the frontend run out of time long before the analysis
+      // starts. Above the cap the elements keep sharing an unconstrained base, as they did before
+      // any of them were allocated -- imprecise for such an array, but bounded. Giving every
+      // element a base without naming it one statement at a time needs the derived-base memory
+      // model (AD7), which is the real fix.
+      return
+    }
+    for (index in 0 until size) {
+      allocateStackSubobject(subobjectCell(target, type, index, elementType), elementType, labels)
     }
   }
 
@@ -428,9 +455,20 @@ class FrontendXcfaBuilder(
       )
       .also { parseContext.metadata.create(it, "cType", subobjectType) }
 
-  /** A member array's constant element count, or null for a flexible array member (no bound). */
-  private fun fixedArraySize(type: CArray): Int? =
-    if (type.arrayDimension == null) null else getArraySize(type, null)
+  /**
+   * An array's constant element count, or null when there isn't one: a flexible array member (no
+   * bound at all) or a variable-length array, whose length is only known at run time. Callers use
+   * it to decide how many subobjects to allocate, so "no constant count" has to be an answer
+   * rather than an error -- a VLA simply gets no per-element allocation.
+   */
+  private fun fixedArraySize(type: CArray): Int? {
+    val dimension = type.arrayDimension ?: return null
+    return when (val bounds = ExprUtils.simplify(dimension.expression)) {
+      is IntLitExpr -> bounds.value.toInt()
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bounds).toInt()
+      else -> null
+    }
+  }
 
   /**
    * Whether assigning [rExpression] to a variable of this type is a struct copy.
@@ -801,7 +839,20 @@ class FrontendXcfaBuilder(
         }
       }
 
-    xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
+    // Giving a local array its base is the moment its elements can be allocated: a declared array
+    // gets that base from the `alloca` the frontend emits at its declaration, and an array is not
+    // otherwise assignable in C, so this fires exactly once per array. Elements that are
+    // aggregates need objects of their own -- see [allocateArrayElements].
+    val lhsType = CComplexType.getType(lValue, parseContext)
+    val elementLabels = mutableListOf<XcfaLabel>()
+    if (lValue is RefExpr<*> && lhsType is CArray) {
+      allocateArrayElements(lValue, lhsType, elementLabels)
+    }
+    val edgeLabel =
+      if (elementLabels.isEmpty()) label
+      else SequenceLabel(listOf(label) + elementLabels, metadata = getMetadata(statement))
+
+    xcfaEdge = XcfaEdge(initLoc, location, edgeLabel, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     return location
   }

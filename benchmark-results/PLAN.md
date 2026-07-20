@@ -1001,6 +1001,49 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 48 — array elements that are aggregates get objects of their own
+
+Chasing the neural-networks gap turned up something broader: an array whose **elements are
+aggregates** holds a base per element, exactly as a struct holds one per field, but those bases
+were never allocated. Two consequences, both pre-existing:
+
+- **Multi-dimensional arrays were rejected outright** ("Not handling init expression of high
+  dimsension array").
+- **Arrays of structs were silently unsound** — `struct S a[3]; a[0].x = 1; a[1].x = 7;` read
+  `a[0].x` back as 7, because the element bases were unconstrained and the solver could conflate
+  them. A wrong answer, not an error.
+
+**Fix.** `allocateArrayElements` gives each aggregate element an object, reusing the same
+subobject machinery structs already use, so `a[i][j]` is `arrays[arrays[a][i]][j]`. The timing
+matters: a declared local array gets its own base from the `alloca` the frontend emits *at its
+declaration*, so the elements are allocated right after that assignment — allocating them in the
+function's init block (the first attempt) wrote the element bases into the array's *old* base and
+they were lost when the real one was assigned. An array is not otherwise assignable in C, so this
+fires exactly once per array.
+
+Also fixed while here: **dimension order**. `int a[3][4]` was built as 4 arrays of 3 — the
+declarator records `[3, 4]` outwards from the identifier, so the *last* dimension is the innermost
+and they must be applied back to front. Only multi-dimensional arrays were affected, and they did
+not work at all before.
+
+**Scale cap.** One allocation per element does not scale: the benchmarks contain `S a[100000]` and
+`S a[1000000]`, and emitting that many statements made three canaries time out in the frontend.
+Above 1024 elements the elements keep sharing an unconstrained base — the pre-existing imprecision,
+now bounded rather than unbounded. Giving every element a base without naming it one statement at
+a time needs the derived-base memory model (AD7); that remains the real fix.
+
+Also made `fixedArraySize` honest: a variable-length array has no constant element count, so it
+answers "none" instead of throwing (it is now consulted for every array, not just nested ones).
+
+**Verified in both encodings:** 2-D arrays round-trip and rows stay distinct; array-of-structs
+elements stay distinct (the previously wrong case); a pointer to a 2-D array writes through to the
+underlying array; VLAs and above-cap arrays still build. `AggregateArrayElementTest` (4) and
+`PointerToArrayTest` (4), module tests, 255 canaries and 14 fixtures green.
+
+Neural-networks are still not unlocked: `A[i][j]` on a `float (*A)[4]` parameter needs the *row*
+at index i of a pointed-to array, which is pointer arithmetic over aggregate elements rather than
+a declared array's own storage.
+
 ## Batch 47 — pointer to array: `T (*p)[N]` vs `T *p[N]`
 
 Started as TDX work and found a bigger gap. The TDX "Non-array expression used as array" failures
