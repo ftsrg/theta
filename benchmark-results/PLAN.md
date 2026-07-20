@@ -919,6 +919,56 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Run 2026-07-20_15-44-batch46 (sosy, 5750G, batches 45–46) — bitfield packing confirmed, **and a 36-task regression found**
+
+Full 36,602-run integer run on the batch-46 archive (bitfield storage units + slicing, union
+overlay). Compared against `results-2026-07-19_22-01-batch43`:
+
+**Correct 10,288 → 10,277 (−11). Wrong 29 → 28 (−1). Error 25,916 → 25,929 (+13). Unknown 369 → 368.**
+
+**The wrong-set check passes cleanly: 0 newly wrong, 1 fixed** — and the one fixed is exactly
+`ldv-memsafety-bitfields/test-bitfields-1-1` (valid-memsafety), the false alarm the whole
+storage-unit + slicing design was built to kill. The core struct-model rewrite introduced **zero**
+new wrong answers, which was the risk that mattered most. Soundness held.
+
+But the correct count went *down*, and that is not noise. Decomposing the 108 category transitions:
+
+| transition | count | nature |
+|---|---|---|
+| correct → error (timeout/OOM) | 32 | resource boundary |
+| error → correct (timeout/OOM) | 45 | resource boundary |
+| **correct → ERROR (frontend failed)** | **25** | **deterministic regression** |
+| frontend-failed → correct | **0** | — |
+| wrong → correct | 1 | `test-bitfields-1-1` ✓ |
+| unknown ↔ other | 4 | mixed |
+
+Resource flips are symmetric noise and actually net **+13 in batch-46's favour**. The real signal is
+one-directional: **36 tasks newly frontend-fail, 0 newly recover** (total frontend-failed 6,625 →
+**6,661**). Root cause is a **single** guard, identical across all 36 logs:
+
+```
+UnsupportedFrontendElementException: Brace initializer for a struct with packed bitfields
+is not supported: <name>   (FrontendXcfaBuilder.kt:672, thrown from initializeGlobalVariable:615)
+```
+
+Distribution: **30 `ldv-linux-3.4-simple`** (CIL-generated drivers, struct-heavy), **5
+`ldv-memsafety-bitfields`** (`test-bitfields-3-1`, `-3-2`, `-3.1-1` across termination +
+valid-memsafety), **1 `ldv-challenges`**.
+
+This is self-inflicted and was a deliberate batch-45 choice: once bitfields pack, a brace
+initializer's elements no longer map one-to-one onto storage cells (member index ≠ unit index), so
+rather than silently mis-initialize I threw. Failing loudly was the right call over answering
+wrongly — the zero-new-wrongs result above is partly *because* of it — but it traded 36 previously
+correct//progressing tasks for errors, so it must not stand as the end state.
+
+**Fix (next):** splice each initializer element into its unit's cell via `BitfieldSlice.write`
+at its slot's bit offset, accumulating per unit — the same read-modify-write machinery already used
+for the bitfield *assignment* path in `CAssignment`. Then the guard can go. Requires the usual
+gate: both encodings, 255 canaries, 14 fixtures, module tests.
+
+**Net honest read:** batches 45–46 delivered the wrong-result fix they promised with no soundness
+cost, but are **net −11 correct** until the initializer regression is repaired. Not shippable as-is.
+
 ## Run 2026-07-19_22-01-batch43 (sosy, 5750G, batches 38–44) — the batch-42–44 confirmation
 
 Full 36,602-run integer run on the batch-43 archive (= all of batches 38–44; the tool dir is
