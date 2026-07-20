@@ -19,6 +19,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -137,6 +138,82 @@ class BitfieldAndAnonymousMemberTest {
         NullLogger.getInstance(),
       )
     assertTrue(xcfa.procedures.isNotEmpty(), "the program must build an XCFA")
+  }
+
+  /** The values a program's memory assignments store, simplified to literals where possible. */
+  private fun storedValues(src: String): List<String> {
+    val parseContext = ParseContext()
+    val (xcfa, _, _) =
+      getXcfaFromC(
+        src.byteInputStream(),
+        parseContext,
+        false,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        NullLogger.getInstance(),
+      )
+    val found = mutableListOf<String>()
+    fun visit(label: XcfaLabel) {
+      when (label) {
+        is SequenceLabel -> label.labels.forEach { visit(it) }
+        is StmtLabel -> {
+          val stmt = label.stmt
+          if (stmt is MemoryAssignStmt<*, *, *>) found.add(ExprUtils.simplify(stmt.expr).toString())
+        }
+        else -> {}
+      }
+    }
+    xcfa.procedures.forEach { proc -> proc.edges.forEach { visit(it.label) } }
+    return found
+  }
+
+  @Test
+  fun braceInitializerFoldsPackedBitfieldsIntoOneCell() {
+    // The batch-46 regression: once bitfields pack, an initializer element is a *member* index,
+    // not a cell index, so `{1, 2}` is one cell holding 1 | (2 shl 4) == 0x21 == 33. The old code
+    // refused outright ("Brace initializer for a struct with packed bitfields is not supported"),
+    // which cost 36 benchmark tasks; writing 1 and 2 into two separate cells would be worse still.
+    val values =
+      storedValues(
+        """
+        struct F { unsigned a : 4; unsigned b : 4; };
+        struct F g = {1, 2};
+        int main() { return g.a != 1 || g.b != 2; }
+        """
+          .trimIndent()
+      )
+    assertTrue("33" in values, "a=1 and b=2 must fold into a single cell 0x21, got $values")
+  }
+
+  @Test
+  fun designatedInitializerLandsInItsOwnBits() {
+    // `.b = 2` names the second 4-bit field, so the cell is 2 shl 4 == 32 and `a` keeps its zero.
+    val values =
+      storedValues(
+        """
+        struct F { unsigned a : 4; unsigned b : 4; };
+        struct F g = {.b = 2};
+        int main() { return g.b != 2; }
+        """
+          .trimIndent()
+      )
+    assertTrue("32" in values, "designated .b=2 must occupy the high nibble, got $values")
+  }
+
+  @Test
+  fun initializerSpanningAPackedUnitAndAPlainMember() {
+    // Mixed layout: a and b share cell 0, count is cell 1. The element-to-cell mapping shifts,
+    // which is exactly what made the naive field-indexed iteration wrong.
+    val values =
+      storedValues(
+        """
+        struct F { unsigned a : 4; unsigned b : 4; int count; };
+        struct F g = {1, 2, 7};
+        int main() { return g.count != 7; }
+        """
+          .trimIndent()
+      )
+    assertTrue("33" in values, "the two bitfields fold into cell 0 as 0x21, got $values")
+    assertTrue("7" in values, "count keeps its own cell and its own value, got $values")
   }
 
   @Test

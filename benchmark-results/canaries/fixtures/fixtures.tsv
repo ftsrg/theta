@@ -13,3 +13,5 @@ member_attr.c	efficient	LP64	PARSE-OK	39	member/bitfield __attribute__ positions
 struct_from_deref.c	efficient	LP64	PARSE-OK	41	struct s = *p
 enum_cast_bitvector.c	bitvector	LP64	PARSE-OK	42	undeclared enum is int (bitvector cast)
 packed_bitfields.c	efficient	LP64	PARSE-OK	45	packed bitfield storage units + slicing
+packed_bitfield_init.c	efficient	LP64	PARSE-OK	51	brace initializer over packed bitfield units
+packed_bitfield_init_bv.c	bitvector	LP64	PARSE-OK	51	packed bitfield initializer, bitvector fold

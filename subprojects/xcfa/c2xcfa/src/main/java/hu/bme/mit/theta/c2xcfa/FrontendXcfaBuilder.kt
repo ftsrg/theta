@@ -665,21 +665,25 @@ class FrontendXcfaBuilder(
           type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
         }
       if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
-        // A brace initializer names members, which no longer map one-to-one onto cells; splicing
-        // each element into its field's bits is not implemented, and guessing would silently
-        // mis-initialize. Fail loudly instead.
-        throw UnsupportedFrontendElementException(
-          "Brace initializer for a struct with packed bitfields is not supported: $globalDeclaration"
+        // A brace initializer names members, which no longer map one-to-one onto cells.
+        initializePackedStruct(
+          builder,
+          type,
+          { unitTypes[it] },
+          initExpr,
+          initStmtList,
+          globalDeclaration,
+        )
+      } else {
+        initializeCompound(
+          builder,
+          type.unitCount,
+          { unitTypes[it] },
+          initExpr,
+          initStmtList,
+          globalDeclaration,
         )
       }
-      initializeCompound(
-        builder,
-        type.unitCount,
-        { unitTypes[it] },
-        initExpr,
-        initStmtList,
-        globalDeclaration,
-      )
     } else {
       if (initExpr != null && initExpr.expression !is UnsupportedInitializer) {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(initExpr.expression)))
@@ -697,26 +701,84 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
   ) {
-    val initExprs: Map<Int, CStatement> =
-      (initExpr as? CInitializerList)
-        ?.statements
-        ?.mapIndexed { i, it -> Pair(designatedIndex(it.get1()) ?: i, it.get2()) }
-        ?.toMap() ?: emptyMap()
-    val literalToExpr = { x: Long ->
-      if (CComplexType.getUnsignedLong(parseContext).smtType is IntType)
-        IntLitExpr.of(BigInteger.valueOf(x))
-      else
-        BvUtils.bigIntegerToNeutralBvLitExpr(
-          BigInteger.valueOf(x),
-          (CComplexType.getUnsignedLong(parseContext).smtType as BvType).size,
-        )
-    }
+    val initExprs = elementPositions(initExpr)
     for (i in 0 until dimension) {
       val et = embeddedType(i)
       val embeddedDeclaration =
-        Dereference(globalDeclaration, literalToExpr(i.toLong()), et.smtType)
+        Dereference(globalDeclaration, offsetLiteral(i.toLong()), et.smtType)
       parseContext.metadata.create(embeddedDeclaration, "cType", et)
       initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
+    }
+  }
+
+  /**
+   * The initializer elements by the position they write: a designator sets the position, anything
+   * else takes the next one. For a struct the position is a *field* index (see
+   * `DeclarationVisitor#designatedPosition`), which stops being the storage cell once bitfields
+   * pack.
+   */
+  private fun elementPositions(initExpr: CStatement?): Map<Int, CStatement> =
+    (initExpr as? CInitializerList)
+      ?.statements
+      ?.mapIndexed { i, it -> Pair(designatedIndex(it.get1()) ?: i, it.get2()) }
+      ?.toMap() ?: emptyMap()
+
+  /** A member offset as a literal of the current arithmetic's pointer-sized type. */
+  private fun offsetLiteral(x: Long): Expr<*> =
+    if (CComplexType.getUnsignedLong(parseContext).smtType is IntType)
+      IntLitExpr.of(BigInteger.valueOf(x))
+    else
+      BvUtils.bigIntegerToNeutralBvLitExpr(
+        BigInteger.valueOf(x),
+        (CComplexType.getUnsignedLong(parseContext).smtType as BvType).size,
+      )
+
+  /**
+   * Initialize a struct whose bitfields pack into shared storage units.
+   *
+   * A brace initializer names members, but storage is per unit, so several elements can land in one
+   * cell: `struct { unsigned a:4, b:4; } s = {1, 2}` is one cell holding `0x21`, not two cells. Each
+   * unit's value is folded from its members' initializers at their bit offsets -- the same splice as
+   * an assignment to a bitfield ([BitfieldSlice.write]) -- and the cell is assigned once. Members
+   * the initializer omits keep the zero they fold onto, which is what C guarantees them.
+   *
+   * A unit holding a single ordinary member keeps the recursive path, so a nested struct or array
+   * member still initializes element-wise rather than being squeezed into an integer.
+   */
+  private fun initializePackedStruct(
+    builder: XcfaBuilder,
+    type: CStruct,
+    unitType: (Int) -> CComplexType,
+    initExpr: CInitializerList,
+    initStmtList: MutableList<XcfaLabel>,
+    globalDeclaration: Expr<*>,
+  ) {
+    val initExprs = elementPositions(initExpr)
+    val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
+    for (unit in 0 until type.unitCount) {
+      val cellType = unitType(unit)
+      val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), cellType.smtType)
+      parseContext.metadata.create(cell, "cType", cellType)
+      val members = type.fields.indices.filter { slotOf(it).unitIndex() == unit }
+      if (members.size == 1 && !slotOf(members[0]).bitfield()) {
+        initializeGlobalVariable(builder, cell, initStmtList, initExprs[members[0]])
+        continue
+      }
+      // Fold onto zero rather than onto a read of the cell: the object was just created, and none
+      // of its cells is assigned before this point.
+      var value: Expr<*> = cellType.nullValue
+      for (field in members) {
+        val element = initExprs[field] ?: continue
+        val slot = slotOf(field)
+        value =
+          BitfieldSlice.write(
+            value,
+            cellType.castTo(element.expression),
+            slot.bitOffset(),
+            slot.width(),
+          )
+      }
+      initStmtList.add(AssignStmtLabel(cell, cellType.castTo(value)))
     }
   }
 
