@@ -919,6 +919,25 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Run 2026-07-19_22-01-batch43 (sosy, 5750G, batches 38–44) — the batch-42–44 confirmation
+
+Full 36,602-run integer run on the batch-43 archive (= all of batches 38–44; the tool dir is
+named Theta-svcomp-43 but predates the switch fix's commit by minutes — it contains 38–44's
+frontend work). Compared against the 2026-07-19_15-36 run (batches 38–41):
+
+**Correct 10,118 → 10,288 (+170). Wrong 29 → 29. Error 26,090 → 25,916 (−174).**
+
+The wrong set is **identical** — 0 fixed, 0 new. This is the clean signature of batches 42–44:
+they are parse/frontend unlocks (arithmetic-cast fix, union punning, `__builtin_object_size`,
+switch-width, initializers), which turn ERRORs into results without touching verdict logic, so
++170 error→correct and **zero** effect on wrongs. Confirms no regressions from any of the six
+commits since 15-36, and that the batch-42–44 care (soundness checks, canary fixtures) held.
+
+**Implication for the bitfield decision:** the 29 wrongs are unchanged and still include the
+test-bitfields memsafety false alarms — the parse/frontend batches cannot move them. The only
+remaining lever on the wrong count is the deferred bitfield storage-unit + slicing work (which
+also unlocks the 865+84 TDX `memberOffset` cluster). That decision now has its confirming data.
+
 ## Batch-44 parse re-measure — accurate current cluster ranking + strategic state
 
 Clean sweep of all 3,173 former parse-death inputs on the batch-44 jar: **988 PARSE-OK** (777 @
