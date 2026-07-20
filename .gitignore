@@ -39,3 +39,7 @@ xcfa-*.smt2
 witness.yml
 invariants.txt
 *.salive
+
+# Python bytecode from the canary helper scripts
+__pycache__/
+*.pyc
