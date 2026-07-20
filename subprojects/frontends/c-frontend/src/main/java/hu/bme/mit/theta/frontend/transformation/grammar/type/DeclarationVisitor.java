@@ -291,6 +291,9 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (ctx.pointer() != null) {
             int size = ctx.pointer().stars.size();
             decl.incDerefCounter(size);
+            // Record where this star binds relative to any array dimensions seen so far, so
+            // `T (*p)[N]` (pointer to array) and `T *p[N]` (array of pointers) stay distinct.
+            decl.addDeclaratorPointer(size);
         }
         return decl;
     }

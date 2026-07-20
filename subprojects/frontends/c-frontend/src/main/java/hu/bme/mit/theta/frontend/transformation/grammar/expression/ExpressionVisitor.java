@@ -1014,6 +1014,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return originalOperand;
                 }
                 type = CComplexType.getType(originalOperand, parseContext);
+                // `*p` where p points at an *array* denotes that array object, whose identity is
+                // the pointer value itself -- there is no cell to read (the same rule `p[0]` uses
+                // for a pointer to a struct). Reading a cell here would hand back the array's
+                // first element as if it were the array's base, so `(*p)[i]` addressed the wrong
+                // object. Wrap in Pos so the array cType lands on a fresh node, not on p's shared
+                // RefExpr.
+                if (type instanceof CPointer pointerToArray
+                        && pointerToArray.getEmbeddedType() instanceof CArray pointeeArray) {
+                    Expr<?> arrayObject = Pos(originalOperand);
+                    parseContext.getMetadata().create(arrayObject, "cType", pointeeArray);
+                    return arrayObject;
+                }
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
                 else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
                 // C defines *(p + i) as p[i]. Object sizes are keyed on the base expression, so

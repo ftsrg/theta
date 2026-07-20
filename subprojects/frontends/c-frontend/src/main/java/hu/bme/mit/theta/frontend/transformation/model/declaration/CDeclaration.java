@@ -74,8 +74,29 @@ public class CDeclaration {
         derefCounter += amount;
     }
 
+    /**
+     * Stars written in the declarator itself, split by where they bind relative to the array
+     * dimensions. The declarator is walked outwards from the identifier, so a star seen while no
+     * dimension has been recorded yet sits *inside* the parentheses and binds outside the array
+     * (`T (*p)[N]`, a pointer to an array); a star seen after a dimension binds to the element
+     * (`T *p[N]`, an array of pointers). Both end up with the same star and dimension counts, so
+     * the order they arrived in is the only thing that tells them apart.
+     */
+    private int pointerAroundArray = 0;
+
+    private int pointerInsideArray = 0;
+
     public void addArrayDimension(CStatement expr) {
         arrayDimensions.add(expr);
+    }
+
+    /** Records [count] stars written in the declarator (not in the declaration specifiers). */
+    public void addDeclaratorPointer(int count) {
+        if (arrayDimensions.isEmpty()) {
+            pointerAroundArray += count;
+        } else {
+            pointerInsideArray += count;
+        }
     }
 
     public List<CStatement> getArrayDimensions() {
@@ -115,6 +136,12 @@ public class CDeclaration {
             functionPointer.setFunctionPointer(true);
             actualType = functionPointer;
         }
+        // `T *p[N]`: the star belongs to the element type, so it goes on before the dimensions.
+        for (int i = 0; i < pointerInsideArray; i++) {
+            CSimpleType simpleType = type.copyOf();
+            simpleType.incrementPointer();
+            actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
+        }
         for (CStatement arrayDimension : arrayDimensions) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
@@ -126,12 +153,15 @@ public class CDeclaration {
                             arrayDimension); // some day change this back to arrays, when simple &
             // complex types are better synchronized...
         }
-        //        for (int i = 0; i < derefCounter; i++) {
-        //            CSimpleType simpleType = type.copyOf();
-        //            simpleType.incrementPointer();
-        //            actualType = new CPointer(simpleType, actualType,
-        // actualType.getParseContext());
-        //        }
+        // `T (*p)[N]`: the star was written inside the parentheses, so it wraps the whole array --
+        // p is a pointer *to* an array. Without this the pointer level was dropped and `(*p)[i]`
+        // had no array to subscript ("Non-array expression used as array"). A declaration with no
+        // dimensions has no declarator star to place here either, so this leaves it untouched.
+        for (int i = 0; i < pointerAroundArray && !arrayDimensions.isEmpty(); i++) {
+            CSimpleType simpleType = type.copyOf();
+            simpleType.incrementPointer();
+            actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
+        }
 
         return actualType;
     }

@@ -1001,6 +1001,44 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 47 — pointer to array: `T (*p)[N]` vs `T *p[N]`
+
+Started as TDX work and found a bigger gap. The TDX "Non-array expression used as array" failures
+are **not** union array views — they are `unsigned long long (*dest)[]` subscripted as
+`(*dest)[i]`, the same pointer-to-array gap that blocks the 441 neural-networks files
+(`float (*A)[4]`).
+
+**Root cause.** The declarator is walked outwards from the identifier, and both forms arrive with
+the *same* star and dimension counts — `T *p[N]` and `T (*p)[N]` were indistinguishable, so the
+declarator's star was simply dropped (the pointer-wrapping loop in `CDeclaration.getActualType`
+was commented out). `p` was then typed as the array itself, `*p` yielded an element, and
+subscripting it failed.
+
+**Fix.** What tells the two apart is *when* the star arrives relative to the dimensions: a star
+seen while no dimension has been recorded sits inside the parentheses and binds around the array
+(`T (*p)[N]` → pointer to array); a star seen after a dimension belongs to the element
+(`T *p[N]` → array of pointers). `CDeclaration` now records the two separately and wraps in that
+order. A declaration with no dimensions is untouched, so nothing else moves.
+Plus: `*p` where p points at an array denotes **the array object**, whose identity is the pointer
+value — not a cell read (the rule `p[0]` already used for a pointer to a struct). Without it the
+array's first element was handed back as if it were the array's base.
+
+**A regression I caught before committing.** The first attempt applied the declarator star
+whenever dimensions were present, without the ordering distinction. It builds, all canaries pass
+— and it silently turns every `T *p[N]` into a pointer-to-array: `int *q[2]` went from correct to
+**wrong**. Only the hand-written both-forms test caught it. `PointerToArrayTest` now pins both
+bindings so it cannot come back.
+
+**Verified in both encodings:** `(*p)[2] = 7` is visible as `a[2]` (aliasing), the pointer-to-array
+is self-consistent, and array-of-pointers still resolves correctly. Module tests, 255 canaries and
+14 fixtures green.
+
+**TDX effect:** on the 12-file sample the "Non-array" barrier is gone (6 → 0); those files now
+join the rest at the *one* remaining shape, a multi-field struct over an integer
+(`struct { uint32_t lo; uint32_t hi; }` over `uint64_t raw`). TDX now gates solely on that.
+Neural-networks are **not** unlocked by this: they need `A[i]` for i ≠ 0, i.e. striding to the
+i-th row, which is 2-D array-object work beyond the `*p` (row 0) case fixed here.
+
 ## Batch 46 — union overlay: a packed-bitfield view aliases its integer sibling
 
 Follow-on to batch 45, using the same slicing machinery. `union { struct { uint64_t leaf:16;
