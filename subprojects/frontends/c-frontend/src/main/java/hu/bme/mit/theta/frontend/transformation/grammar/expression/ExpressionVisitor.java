@@ -1415,6 +1415,49 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         cast(idxExpr, base.getType()),
                         embeddedType.getSmtType());
         parseContext.getMetadata().create(access, "cType", embeddedType);
+
+        // A bitfield narrower than its base type shares its cell with the rest of its run, so its
+        // *value* is a slice of that cell rather than the whole of it. The cell is carried along as
+        // metadata so an assignment to this member read-modify-writes instead of clobbering its
+        // neighbours.
+        final hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout
+                        .Slot
+                slot = structType.isUnion() ? null : structType.slotOf(memberName);
+        if (slot != null && slot.bitfield() && slot.width() < embeddedType.width()) {
+            final boolean signed =
+                    embeddedType
+                                    instanceof
+                                    hu.bme.mit.theta.frontend.transformation.model.types.complex
+                                                    .integer.CInteger
+                                            integer
+                            && integer.isSsigned();
+            final Expr<?> value =
+                    hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                            .BitfieldSlice.read(access, slot.bitOffset(), slot.width(), signed);
+            parseContext.getMetadata().create(value, "cType", embeddedType);
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.CELL,
+                            access);
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.OFFSET,
+                            slot.bitOffset());
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.WIDTH,
+                            slot.width());
+            return value;
+        }
         return access;
     }
 
@@ -1434,7 +1477,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     private int memberOffset(CStruct compound, String memberName) {
         if (!compound.isUnion()) {
-            return compound.getFields().stream().map(Tuple2::get1).toList().indexOf(memberName);
+            // The member's storage cell: its own for an ordinary member, the shared unit for a
+            // packed bitfield. Bitfield-free structs give unitOffsetOf == field position, so this
+            // is byte-for-byte the historical index.
+            return compound.unitOffsetOf(memberName);
         }
         CComplexType accessed = compound.getFieldsAsMap().get(memberName);
         if (accessed != null) {

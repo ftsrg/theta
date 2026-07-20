@@ -90,7 +90,13 @@ public final class BitfieldLayout {
                 bitsUsed = 0;
                 continue;
             }
-            if (unitIsBitfield && bitsUsed + width <= unitBaseBits) {
+            // Pack into the current unit only if the widths still fit AND the base type matches:
+            // the shared cell is dereferenced at one SMT sort, so bitfields of different base
+            // widths (`int a:4; char b:4;`) must not share a unit or they would land in different
+            // per-type arrays and fail to alias.
+            if (unitIsBitfield
+                    && m.baseBits() == unitBaseBits
+                    && bitsUsed + width <= unitBaseBits) {
                 slots.add(new Slot(unit, bitsUsed, width, true));
                 bitsUsed += width;
             } else {

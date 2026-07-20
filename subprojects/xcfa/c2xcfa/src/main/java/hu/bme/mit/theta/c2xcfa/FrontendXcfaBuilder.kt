@@ -55,6 +55,7 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -312,17 +313,17 @@ class FrontendXcfaBuilder(
     if (MemsafetyPass.enabled) {
       val fitsall = Fitsall(null, parseContext)
       initStmtList.add(
-        builder.allocate(parseContext, objectExpr, fitsall.getValue("${type.fields.size}"))
+        builder.allocate(parseContext, objectExpr, fitsall.getValue("${type.unitCount}"))
       )
     }
     if (type.isUnion) return
-    type.fields.forEachIndexed { index, field ->
+    type.fields.forEach { field ->
       val fieldType = field.get2()
       if (fieldType is CStruct) {
         val deref =
           Dereference(
             cast(objectExpr, objectExpr.type),
-            cast(type.getValue("$index"), objectExpr.type),
+            cast(type.getValue("${type.unitOffsetOf(field.get1())}"), objectExpr.type),
             fieldType.smtType,
           )
         parseContext.metadata.create(deref, "cType", fieldType)
@@ -369,10 +370,14 @@ class FrontendXcfaBuilder(
    * so a constant base cannot alias anything.
    */
   private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
-    labels.add(alloca(target, type.fields.size))
+    labels.add(alloca(target, type.unitCount))
     if (type.isUnion) return
-    type.fields.forEachIndexed { index, field ->
-      allocateStackSubobject(subobjectCell(target, type, index, field.get2()), field.get2(), labels)
+    type.fields.forEach { field ->
+      allocateStackSubobject(
+        subobjectCell(target, type, type.unitOffsetOf(field.get1()), field.get2()),
+        field.get2(),
+        labels,
+      )
     }
   }
 
@@ -465,11 +470,14 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel> =
-    type.fields.flatMapIndexed { index, field ->
+    // Bitfields sharing a storage unit map to the same cell, so the copy of that cell is simply
+    // repeated -- idempotent, and it carries all the packed fields at once.
+    type.fields.flatMap { field ->
       val fieldType = field.get2()
+      val unit = type.unitOffsetOf(field.get1())
       copySubobject(
-        subobjectCell(target, type, index, fieldType),
-        subobjectCell(source, type, index, fieldType),
+        subobjectCell(target, type, unit, fieldType),
+        subobjectCell(source, type, unit, fieldType),
         fieldType,
         metadata,
       )
@@ -594,10 +602,24 @@ class FrontendXcfaBuilder(
       ) {
         error("Unsupported initializer for global struct variable $globalDeclaration.")
       }
+      // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
+      // struct every member is its own unit, so this is the historical field-indexed iteration.
+      val unitTypes =
+        (0 until type.unitCount).map { unit ->
+          type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
+        }
+      if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
+        // A brace initializer names members, which no longer map one-to-one onto cells; splicing
+        // each element into its field's bits is not implemented, and guessing would silently
+        // mis-initialize. Fail loudly instead.
+        throw UnsupportedFrontendElementException(
+          "Brace initializer for a struct with packed bitfields is not supported: $globalDeclaration"
+        )
+      }
       initializeCompound(
         builder,
-        type.fields.size,
-        { type.fields[it].get2() },
+        type.unitCount,
+        { unitTypes[it] },
         initExpr,
         initStmtList,
         globalDeclaration,
@@ -690,7 +712,34 @@ class FrontendXcfaBuilder(
     builder.addLoc(location)
     initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
     val rExpression = statement.getrExpression()
+    // Assigning to a packed bitfield writes only its own bits: read the shared cell, splice the
+    // new value in, and store the cell back. Without this the neighbouring fields in the same
+    // storage unit would be clobbered.
+    val bitfieldCell =
+      parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
+        as? Dereference<*, *, *>
     val label: XcfaLabel =
+      if (bitfieldCell != null) {
+        val bitOffset =
+          (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.OFFSET).orElseThrow()
+            as Number)
+            .toInt()
+        val fieldWidth =
+          (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.WIDTH).orElseThrow()
+            as Number)
+            .toInt()
+        val cellType = CComplexType.getType(bitfieldCell, parseContext)
+        val newCell =
+          BitfieldSlice.write(bitfieldCell, cellType.castTo(rExpression), bitOffset, fieldWidth)
+        val op = cast(bitfieldCell.array, bitfieldCell.array.type)
+        val offset = cast(bitfieldCell.offset, op.type)
+        val deref = Dereference(op, offset, cellType.smtType)
+        parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+        StmtLabel(
+          MemoryAssignStmt.create(deref, cast(newCell, deref.type)),
+          metadata = getMetadata(statement),
+        )
+      } else
       when (lValue) {
         is Dereference<*, *, *> -> {
           val op = cast(lValue.array, lValue.array.type)

@@ -1001,6 +1001,42 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 45 — packed bitfields: storage units + bit slicing (fixes a memsafety WRONG)
+
+The deferred core-model work, greenlit and landed. Root cause recap: `sizeof` counted one cell
+per member (4 for `struct A { char a; char b:2; char c:2; char d:4; }`) while the program
+allocates the packed byte size (`malloc(2)`), so member `d` at cell 3 looked out of bounds —
+a false `valid-deref`.
+
+- **Layout** (batch 43-design step 1, already landed): `BitfieldLayout` packs a run of bitfields
+  into one unit while they fit the base width. Refined here to also require the *same base
+  width* per unit — the shared cell is dereferenced at one SMT sort, so `int a:4; char b:4;`
+  must not share a unit or the two would land in different per-type arrays and fail to alias.
+- **Slicing** (`BitfieldSlice`): a bitfield's value is a slice of its cell. One helper serves
+  both encodings — bitvector via `Extract`/`Concat` (inherently logical), integer via
+  `/2^o mod 2^w` and place-and-recombine. Signed fields sign-extend from the field width.
+- **Wiring**: `CStruct` carries the per-member `Slot`s and `unitCount` (fed the bitfield widths
+  by `Struct.getActualType`); `memberOffset` returns the unit index; `directMemberAccess`
+  returns the sliced *read* and stamps the cell on it; `FrontendXcfaBuilder` detects that stamp
+  on an assignment's left-hand side and **read-modify-writes** just the field's bits. Object
+  storage, stack allocation and struct copy now size and index by unit.
+- **Containment**: a struct with no bitfields yields `unitIndex == field position` and
+  `unitCount == field count`, i.e. byte-for-byte the historical model. Only bitfield-containing
+  structs change.
+- **Not supported (fails loudly rather than guessing)**: a brace initializer for a struct with
+  packed bitfields — elements name members, which no longer map one-to-one onto cells.
+
+**Verification** (both encodings, integer and bitvector): `test-bitfields-1-1` **wrong → correct
+(Safe)**; writes to neighbouring bitfields do not clobber each other (Safe); a genuinely
+reachable error through a bitfield is still found (Unsafe — not vacuously safe); C truncation
+holds (`x.b = 5` into 2 bits reads back 1, leaving `c` intact). Plus `BitfieldSliceTest` (6),
+`BitfieldLayoutTest` (6), updated `BitfieldAndAnonymousMemberTest`, module tests, 255 canaries
+and 14 fixtures all green. `test-bitfields-1-1` removed from the guard set.
+
+**Still wrong, independent cause:** `test-bitfields-2-2` does `memcpy(p, &d, 4)` — copying a
+struct's bytes into a heap buffer, which the cell-based model does not reproduce. That is an
+aggregate-`memcpy` gap, not a bitfield one; it stays in the guard set.
+
 ## Batch 44 — switch on a wide value with narrow case labels
 
 The union-punning-unlocked aws-c-common files (and others) then died in `CSwitch` lowering with

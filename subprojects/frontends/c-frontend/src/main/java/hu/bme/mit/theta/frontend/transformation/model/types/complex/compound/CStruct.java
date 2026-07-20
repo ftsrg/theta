@@ -38,6 +38,17 @@ public class CStruct extends CInteger {
     private final List<Tuple2<String, CComplexType>> fields;
     private final boolean union;
 
+    /**
+     * Per-field storage-unit layout, parallel to {@link #fields}. For a struct with no bitfields
+     * every field is its own unit and {@code slots.get(i).unitIndex() == i} -- byte-for-byte the
+     * historical one-cell-per-field model. Consecutive bitfields pack into a shared unit (see
+     * {@link BitfieldLayout}), so a member access lowers to that unit's cell and, for a bitfield,
+     * a slice of it.
+     */
+    private final List<BitfieldLayout.Slot> slots;
+
+    private final int unitCount;
+
     public CStruct(
             CSimpleType origin,
             List<Tuple2<String, CComplexType>> fields,
@@ -50,9 +61,68 @@ public class CStruct extends CInteger {
             List<Tuple2<String, CComplexType>> fields,
             boolean union,
             ParseContext parseContext) {
+        this(origin, fields, union, parseContext, allOrdinary(fields.size()));
+    }
+
+    /**
+     * @param bitfieldWidths bitfield width per field (-1 for an ordinary, non-bitfield member),
+     *     parallel to {@code fields}. Only meaningful for structs; a union's members all share
+     *     offset 0 regardless (see {@link #isUnion()}), so its layout is not consulted.
+     */
+    public CStruct(
+            CSimpleType origin,
+            List<Tuple2<String, CComplexType>> fields,
+            boolean union,
+            ParseContext parseContext,
+            List<Integer> bitfieldWidths) {
         super(origin, parseContext);
         this.fields = fields;
         this.union = union;
+        final List<BitfieldLayout.Member> members = new java.util.ArrayList<>(fields.size());
+        for (int i = 0; i < fields.size(); i++) {
+            final int bitfieldWidth = i < bitfieldWidths.size() ? bitfieldWidths.get(i) : -1;
+            // The base-type width only matters for a bitfield (its unit's packing capacity); for an
+            // ordinary member it is unused, so avoid width() -- which throws for aggregate members.
+            final int baseBits = bitfieldWidth >= 0 ? fields.get(i).get2().width() : 0;
+            members.add(new BitfieldLayout.Member(baseBits, bitfieldWidth));
+        }
+        final BitfieldLayout.Layout layout = BitfieldLayout.compute(members);
+        this.slots = layout.slots();
+        this.unitCount = layout.unitCount();
+    }
+
+    private static List<Integer> allOrdinary(int n) {
+        final List<Integer> widths = new java.util.ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            widths.add(-1);
+        }
+        return widths;
+    }
+
+    /** The number of storage cells the struct occupies (units, not members). */
+    public int getUnitCount() {
+        return union ? 1 : unitCount;
+    }
+
+    /** The storage cell index for [memberName], or -1 if it has no field. */
+    public int unitOffsetOf(String memberName) {
+        final int i = fieldIndexOf(memberName);
+        return i < 0 ? -1 : slots.get(i).unitIndex();
+    }
+
+    /** The full slice descriptor for [memberName] (unit, bit offset, width, bitfield?), or null. */
+    public BitfieldLayout.Slot slotOf(String memberName) {
+        final int i = fieldIndexOf(memberName);
+        return i < 0 ? null : slots.get(i);
+    }
+
+    private int fieldIndexOf(String memberName) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).get1().equals(memberName)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**

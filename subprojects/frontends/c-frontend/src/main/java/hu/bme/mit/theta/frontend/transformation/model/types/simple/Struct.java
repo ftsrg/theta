@@ -163,7 +163,13 @@ public class Struct extends NamedType {
         }
         currentlyBeingBuilt = false;
 
-        CComplexType type = new CStruct(this, actualFields, union, parseContext);
+        // Carry each field's bitfield width (parallel to actualFields) so CStruct can pack
+        // consecutive bitfields into shared storage units. resolvedFields() is insertion-ordered,
+        // the same order actualFields was built in.
+        final List<Integer> bitfieldWidths = new ArrayList<>();
+        resolvedFields().forEach((s, cDeclaration) -> bitfieldWidths.add(cDeclaration.getBitfieldWidth()));
+
+        CComplexType type = new CStruct(this, actualFields, union, parseContext, bitfieldWidths);
         if (isAtomic()) {
             type.setAtomic();
         }

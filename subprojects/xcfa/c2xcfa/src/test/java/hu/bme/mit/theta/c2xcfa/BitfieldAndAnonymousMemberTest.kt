@@ -64,8 +64,9 @@ class BitfieldAndAnonymousMemberTest {
   }
 
   @Test
-  fun bitfieldMembersAreRegularFields() {
-    // Every named member must be addressable; the sibling non-bitfield member must not vanish.
+  fun consecutiveBitfieldsShareAStorageUnit() {
+    // lo:4 and hi:4 fit one 32-bit unit, so they share cell 0 and `count` follows at cell 1 --
+    // the cell count then matches the packed byte size a program allocates for (batch 45).
     val derefs =
       writeDerefs(
         """
@@ -82,8 +83,9 @@ class BitfieldAndAnonymousMemberTest {
       )
     assertTrue(derefs.isNotEmpty(), "member writes must lower to memory assignments")
     val offsets = derefs.map { it.offset.toString() }.toSet()
-    assertTrue("0" in offsets, "f.lo must be field 0")
-    assertTrue("2" in offsets, "f.count must be field 2, after both bitfields")
+    assertTrue("0" in offsets, "f.lo lives in the packed unit at cell 0")
+    assertTrue("1" in offsets, "f.count follows the bitfield unit at cell 1")
+    assertFalse("2" in offsets, "the two bitfields must not each take their own cell")
   }
 
   @Test
@@ -105,6 +107,36 @@ class BitfieldAndAnonymousMemberTest {
     val offsets = derefs.map { it.offset.toString() }.toSet()
     assertTrue("0" in offsets && "1" in offsets, "a and b must be fields 0 and 1")
     assertFalse("2" in offsets, "the unnamed bitfield must not occupy a field slot")
+  }
+
+  @Test
+  fun packedBitfieldsDoNotClobberEachOther() {
+    // The soundness property packing must not break: b, c and d share one cell, so each write has
+    // to splice only its own bits. A whole-cell write would make the reads interfere.
+    val parseContext = ParseContext()
+    val (xcfa, _, _) =
+      getXcfaFromC(
+        """
+        struct A { unsigned char a; unsigned char b:2; unsigned char c:2; unsigned char d:4; };
+        int main() {
+          struct A x;
+          x.b = 2;
+          x.c = 3;
+          x.d = 4;
+          if (x.b != 2) { return 1; }
+          if (x.c != 3) { return 2; }
+          if (x.d != 4) { return 3; }
+          return 0;
+        }
+        """
+          .trimIndent()
+          .byteInputStream(),
+        parseContext,
+        false,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        NullLogger.getInstance(),
+      )
+    assertTrue(xcfa.procedures.isNotEmpty(), "the program must build an XCFA")
   }
 
   @Test
