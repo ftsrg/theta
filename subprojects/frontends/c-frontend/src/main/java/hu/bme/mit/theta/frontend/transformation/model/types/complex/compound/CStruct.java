@@ -180,6 +180,14 @@ public class CStruct extends CInteger {
     /** Widest packed word an overlay may occupy; beyond this there is no integer to hold it. */
     private static final int MAX_OVERLAY_BITS = 64;
 
+    /**
+     * The width a member was declared with as a bitfield, or -1 if it is an ordinary member. This
+     * is the *declared* width, unlike {@link #slotOf}'s, which reports the cell-packing model.
+     */
+    public int declaredBitfieldWidth(int index) {
+        return index >= 0 && index < bitfieldWidths.size() ? bitfieldWidths.get(index) : -1;
+    }
+
     /** The storage cell index for [memberName], or -1 if it has no field. */
     public int unitOffsetOf(String memberName) {
         final int i = fieldIndexOf(memberName);
