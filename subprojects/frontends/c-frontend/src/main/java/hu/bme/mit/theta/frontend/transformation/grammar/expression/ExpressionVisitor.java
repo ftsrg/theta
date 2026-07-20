@@ -1516,7 +1516,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // Reading a member of a union's packed-bitfield view: its storage is the union's own cell,
         // which `base` already is, so slice that cell rather than dereferencing into a new object.
         // Slicing the same cell the sibling integer member reads is what makes the overlay alias.
-        if (structType.isPackedScalar()
+        if (structType.overlayWidth() != null
                 && parseContext
                         .getMetadata()
                         .getMetadataValue(
@@ -1524,14 +1524,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 hu.bme.mit.theta.frontend.transformation.model.types.complex
                                         .compound.BitfieldSlice.PACKED_CELL)
                         .isPresent()) {
-            return bitfieldSliceOf(base, structType, memberName, embeddedType);
+            return sliceOf(base, structType.overlaySlotOf(memberName), embeddedType);
         }
 
         final CComplexType cellType =
                 structType.isUnion()
                                 && embeddedType instanceof CStruct packed
-                                && packed.isPackedScalar()
-                        ? packed.packedScalarType()
+                                && packed.overlayWidth() != null
+                        ? unsignedIntegerOfWidth(packed.overlayWidth())
                         : embeddedType;
         final Expr<?> idxExpr =
                 structType.getValue(String.valueOf(memberOffset(structType, memberName)));
@@ -1570,11 +1570,31 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * metadata so an assignment to this member read-modify-writes just its bits instead of
      * clobbering the neighbours sharing the cell.
      */
+    /** The unsigned integer type holding [bits], for reading a union's cell as one packed word. */
+    private CComplexType unsignedIntegerOfWidth(int bits) {
+        return switch (bits) {
+            case 8 ->
+                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar
+                            .CUnsignedChar(null, parseContext);
+            case 16 ->
+                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort
+                            .CUnsignedShort(null, parseContext);
+            case 32 -> CComplexType.getUnsignedInt(parseContext);
+            default -> CComplexType.getUnsignedLong(parseContext);
+        };
+    }
+
     private Expr<?> bitfieldSliceOf(
             Expr<?> cell, CStruct structType, String memberName, CComplexType memberType) {
-        final hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout
-                        .Slot
-                slot = structType.slotOf(memberName);
+        return sliceOf(cell, structType.slotOf(memberName), memberType);
+    }
+
+    private Expr<?> sliceOf(
+            Expr<?> cell,
+            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout
+                            .Slot
+                    slot,
+            CComplexType memberType) {
         final boolean signed =
                 memberType
                                 instanceof
@@ -1582,9 +1602,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
+        // The slice comes back in the *cell's* width; a member narrower than the cell it shares --
+        // `lo` in a 64-bit word, say -- has to be brought down to its own type, or every later use
+        // of it compares a 64-bit value against a 32-bit one.
         final Expr<?> value =
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
-                        .read(cell, slot.bitOffset(), slot.width(), signed);
+                memberType.castTo(
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.read(
+                                cell, slot.bitOffset(), slot.width(), signed));
         parseContext.getMetadata().create(value, "cType", memberType);
         parseContext
                 .getMetadata()
@@ -1666,22 +1691,33 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * where the sign reinterpretation would be lost.
      */
     private static boolean sameRepresentation(CComplexType a, CComplexType b) {
-        final CComplexType left = storedAs(a);
-        final CComplexType right = storedAs(b);
-        return left.getSmtType().equals(right.getSmtType())
-                && left.width() == right.width()
-                && effectivelyUnsigned(left) == effectivelyUnsigned(right);
+        // A struct of integers laid end to end is stored as the single word those bits make up, so
+        // it shares a union's cell with a sibling integer of that width -- both the all-bitfield
+        // overlay and `struct { uint32_t lo; uint32_t hi; }` over a `uint64_t raw`.
+        final Integer leftOverlay = a instanceof CStruct left ? left.overlayWidth() : null;
+        final Integer rightOverlay = b instanceof CStruct right ? right.overlayWidth() : null;
+        if (leftOverlay != null || rightOverlay != null) {
+            final int leftWidth = leftOverlay != null ? leftOverlay : a.width();
+            final int rightWidth = rightOverlay != null ? rightOverlay : b.width();
+            // A packed word is just bits; the side that is a real value still has to be a plain
+            // integer of the same width for the two to name the same storage.
+            final boolean leftOk = leftOverlay != null || isPlainInteger(a);
+            final boolean rightOk = rightOverlay != null || isPlainInteger(b);
+            return leftWidth == rightWidth && leftOk && rightOk;
+        }
+        return a.getSmtType().equals(b.getSmtType())
+                && a.width() == b.width()
+                && effectivelyUnsigned(a) == effectivelyUnsigned(b);
     }
 
-    /**
-     * The type a union member is actually stored as. A struct that is one packed unit of bitfields
-     * holds nothing but that unit's integer, so it shares a cell with a sibling of that integer
-     * type -- the `union { uint64_t raw; struct { uint64_t a:16; ... }; }` overlay.
-     */
-    private static CComplexType storedAs(CComplexType type) {
-        return type instanceof CStruct struct && struct.isPackedScalar()
-                ? struct.packedScalarType()
-                : type;
+    private static boolean isPlainInteger(CComplexType type) {
+        return type
+                        instanceof
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                        .CInteger
+                && !(type instanceof CStruct)
+                && !(type instanceof CArray)
+                && !(type instanceof CPointer);
     }
 
     /** A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false. */

@@ -49,6 +49,9 @@ public class CStruct extends CInteger {
 
     private final int unitCount;
 
+    /** Declared bitfield width per field (-1 for an ordinary member); see {@link #overlayWidth}. */
+    private final List<Integer> bitfieldWidths;
+
     public CStruct(
             CSimpleType origin,
             List<Tuple2<String, CComplexType>> fields,
@@ -78,6 +81,7 @@ public class CStruct extends CInteger {
         super(origin, parseContext);
         this.fields = fields;
         this.union = union;
+        this.bitfieldWidths = List.copyOf(bitfieldWidths);
         final List<BitfieldLayout.Member> members = new java.util.ArrayList<>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             final int bitfieldWidth = i < bitfieldWidths.size() ? bitfieldWidths.get(i) : -1;
@@ -105,23 +109,76 @@ public class CStruct extends CInteger {
     }
 
     /**
-     * Whether the whole struct is one packed integer: a single storage unit made up entirely of
-     * bitfields. Such a struct has no substructure to address -- its content *is* the unit's value
-     * -- so as a union member it can share the union's cell with a sibling integer of the same
-     * width, which is exactly the {@code union { uint64_t raw; struct { uint64_t a:16; ... }; }}
-     * register-overlay idiom. Its members are then slices of that shared cell.
+     * The total bit width of this struct viewed as one packed word, or null if it cannot be.
+     *
+     * <p>A struct of integers laid end to end -- whether they are bitfields or whole members -- has
+     * no substructure to address: its content is just those bits. As a union member it can then
+     * share the union's cell with a sibling integer of the same width, which is the register-overlay
+     * idiom, in both the forms the kernel and TDX headers use:
+     *
+     * <pre>
+     *   union { uint64_t raw; struct { uint64_t leaf:16; uint64_t version:8; ... }; };
+     *   union { uint64_t raw; struct { uint32_t lo; uint32_t hi; }; };
+     * </pre>
+     *
+     * Members must all be plain integers: a pointer or a nested aggregate is stored as a base id
+     * rather than as its own bits, so it cannot take part in an overlay.
      */
-    public boolean isPackedScalar() {
-        return !union
-                && unitCount == 1
-                && !slots.isEmpty()
-                && slots.stream().allMatch(BitfieldLayout.Slot::bitfield);
+    public Integer overlayWidth() {
+        if (union || fields.isEmpty()) {
+            return null;
+        }
+        int total = 0;
+        for (int i = 0; i < fields.size(); i++) {
+            final int width = memberBitWidth(i);
+            if (width <= 0) {
+                return null;
+            }
+            total += width;
+        }
+        return total <= MAX_OVERLAY_BITS ? total : null;
     }
 
-    /** For a {@link #isPackedScalar()} struct, the integer type its single unit is stored as. */
-    public CComplexType packedScalarType() {
-        return fields.get(0).get2();
+    /** The bits [offset, offset+width) that [memberName] occupies in the packed word, or null. */
+    public BitfieldLayout.Slot overlaySlotOf(String memberName) {
+        int offset = 0;
+        for (int i = 0; i < fields.size(); i++) {
+            final int width = memberBitWidth(i);
+            if (width <= 0) {
+                return null;
+            }
+            if (fields.get(i).get1().equals(memberName)) {
+                return new BitfieldLayout.Slot(0, offset, width, true);
+            }
+            offset += width;
+        }
+        return null;
     }
+
+    /** A member's width in the packed word: its bitfield width, or its type's full width. */
+    private int memberBitWidth(int index) {
+        final CComplexType fieldType = fields.get(index).get2();
+        if (fieldType instanceof CStruct nested) {
+            // A nested struct contributes its own bits when it is itself one packed word -- the
+            // headers nest anonymous bitfield groups inside the overlay. Otherwise it is stored as
+            // a base id and cannot take part.
+            final Integer nestedWidth = nested.overlayWidth();
+            return nestedWidth == null ? -1 : nestedWidth;
+        }
+        if (fieldType instanceof CArray || fieldType instanceof CPointer) {
+            return -1; // stored as a base id, not as its own bits
+        }
+        if (!(fieldType
+                instanceof
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger)) {
+            return -1;
+        }
+        final int declared = index < bitfieldWidths.size() ? bitfieldWidths.get(index) : -1;
+        return declared >= 0 ? declared : fieldType.width();
+    }
+
+    /** Widest packed word an overlay may occupy; beyond this there is no integer to hold it. */
+    private static final int MAX_OVERLAY_BITS = 64;
 
     /** The storage cell index for [memberName], or -1 if it has no field. */
     public int unitOffsetOf(String memberName) {

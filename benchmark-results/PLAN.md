@@ -1001,6 +1001,42 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 50 — sub-word overlay: any integer members packed into one word
+
+Generalises batch 46 from "a struct of bitfields" to **any struct of integers that fits a machine
+word**, which covers the second TDX overlay shape:
+
+```c
+union { uint64_t raw; struct { uint32_t lo; uint32_t hi; }; };   // now supported
+union { uint64_t raw; struct { uint64_t leaf:16; ...; }; };      // batch 46
+```
+
+`CStruct.overlayWidth()` adds up its members' widths -- a bitfield contributes its declared width,
+a whole member its type's -- and `overlaySlotOf` gives each its bit range. A nested struct
+contributes its own overlay width when it is itself one packed word, since the headers nest
+anonymous bitfield groups. Members that are stored as a base id (pointer, array, non-overlayable
+struct) disqualify it, as does a total over 64 bits. `sameRepresentation` then compares that width
+against the sibling integer, and the access path reads the union's cell at the word's width and
+slices it, reusing the batch-45 read-modify-write for assignment.
+
+One thing the wider case needed: the slice comes back in the *cell's* width, so a member narrower
+than the word (`lo` in a 64-bit cell) is cast down to its own type -- otherwise every later use
+compares a 64-bit value against a 32-bit one, which the bitvector encoding rejects outright.
+
+**Verified in both encodings:** `u.raw = 0; u.lo = 7; u.hi = 3` reads back `lo == 7`, `hi == 3`,
+`raw == 7 + (3<<32)`, and a write through `raw` is visible in `lo`. The batch-46 bitfield overlay
+still passes; `int`/`unsigned`, `int`/`char` and an over-wide struct still reject.
+`UnionPunningTest` (6), module tests, 255 canaries and 14 fixtures green.
+
+**TDX is still not unlocked, and sub-word packing is not what stands in the way.** Instrumenting
+the rejection showed the remaining unions are ones no machine word can hold:
+`union { uint8_t apic[0x400]; ... uint8_t raw[0x1000]; }` (4 KB buffer views) and a 16×64-bit
+register file (`total=1024`) over a `raw` array. Those need byte-level flat layout -- a memory
+model where an object is a byte array and every view is a strided reinterpretation -- which is a
+different and much larger change than packing members into a word. Both remaining TDX shapes, and
+the pre-existing imprecision where a `union` of two arrays lets its views share a base while
+reading different per-type arrays, land there.
+
 ## Batch 49 — multi-dimensional arrays are one contiguous object (unlocks neural-networks)
 
 Batch 48 gave every aggregate array element an object of its own, which fixed array-of-structs but

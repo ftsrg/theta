@@ -117,14 +117,36 @@ class UnionPunningTest {
   }
 
   @Test
-  fun multiFieldStructOverAnIntegerStillRejects() {
-    // Two plain 32-bit members overlaying a 64-bit integer needs sub-word flat layout, not the
-    // bitfield machinery -- it must keep failing loudly rather than aliasing unsoundly.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun multiFieldStructOverAnIntegerSharesTheCell() {
+    // Two plain 32-bit members packed into a 64-bit word: the same overlay, without a bitfield in
+    // sight. `lo` is the low half and `hi` the high half of `raw`.
+    assertDoesNotThrow {
       build(
         """
         typedef union { struct { unsigned int lo; unsigned int hi; }; unsigned long raw; } u_t;
-        int main() { u_t u; u.raw = 0; return u.lo; }
+        int main() {
+          u_t u;
+          u.raw = 0;
+          u.lo = 7;
+          u.hi = 3;
+          if (u.lo != 7) { return 1; }
+          if (u.raw == 0) { return 2; }
+          return 0;
+        }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aStructTooWideForAWordStillRejects() {
+    // Sixteen 64-bit registers are not a word; there is no integer to hold the overlay.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        typedef union { struct { unsigned long a; unsigned long b; unsigned long c; }; unsigned long raw; } u_t;
+        int main() { u_t u; u.raw = 0; return (int) u.a; }
         """
           .trimIndent()
       )
