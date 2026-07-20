@@ -48,6 +48,7 @@ import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
@@ -1078,8 +1079,100 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * Splits pointer arithmetic out of a dereference base: {@code arrays[p + i][j]} has to become
+     * {@code arrays[p][i + j]}, because object sizes are keyed on the base expression and {@code p
+     * + i} names no object. The unary {@code *} did this for {@code *(p + i)}; a subscript needs it
+     * too, since a row of a multi-dimensional array is reached as {@code a + i*len} and then
+     * indexed.
+     */
+    private Expr<?> foldPointerArithmetic(Expr<?> base, Expr<?> offset) {
+        if (!(stripPos(base) instanceof AddExpr<?> addExpr)) {
+            return null;
+        }
+        final List<Expr<?>> pointerOps = new ArrayList<>();
+        final List<Expr<?>> indexOps = new ArrayList<>();
+        for (Expr<?> rawOp : addExpr.getOps()) {
+            Expr<?> op = stripPos(rawOp);
+            CComplexType opType = CComplexType.getType(op, parseContext);
+            if (opType instanceof CPointer || opType instanceof CArray) {
+                pointerOps.add(op);
+            } else {
+                indexOps.add(op);
+            }
+        }
+        if (pointerOps.size() != 1 || indexOps.isEmpty()) {
+            return null;
+        }
+        // Indices reaching here have their own C types -- a row offset is pointer-wide while the
+        // subscript beside it is an `int` -- so they are all brought to the index type before being
+        // combined, the same one `dereference` casts its offset to.
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final List<Expr<?>> casted = new ArrayList<>();
+        for (Expr<?> indexOp : indexOps) {
+            casted.add(indexType.castTo(indexOp));
+        }
+        casted.add(indexType.castTo(offset));
+        return casted.size() == 1 ? casted.get(0) : Add(casted);
+    }
+
+    /**
+     * Indexing an array *of arrays* selects a row, not a cell. A multi-dimensional array is one
+     * contiguous object -- `int a[3][4]` is twelve cells, not three row objects -- so `a[i]` is the
+     * region starting `i * 4` elements in, and `a[i][j]` lands on `arrays[a][i*4 + j]`. Returning
+     * the row as plain pointer arithmetic lets the next subscript fold into the offset (see {@link
+     * #foldPointerArithmetic}), and it makes a declared `int a[3][4]` and a `(int (*)[4])` view of
+     * a flat buffer address the same storage -- which is what the neural-network benchmarks cast.
+     *
+     * <p>Returns null when the element is not an array (an ordinary cell read) or when its length
+     * is not a compile-time constant.
+     */
+    private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
+        if (!(elemType instanceof CArray rowType)) {
+            return null;
+        }
+        final Long rowLength = constantArrayLength(rowType);
+        if (rowLength == null) {
+            return null;
+        }
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> scaled =
+                Mul(List.of(indexType.castTo(index), indexType.getValue("" + rowLength)));
+        final Expr<?> row = Add(List.of(base, scaled));
+        parseContext.getMetadata().create(row, "cType", rowType);
+        return row;
+    }
+
+    /** An array type's constant element count, or null if it has none (VLA, unsized). */
+    private Long constantArrayLength(CArray type) {
+        if (type.getArrayDimension() == null) {
+            return null;
+        }
+        final Expr<?> bound = ExprUtils.simplify(type.getArrayDimension().getExpression());
+        if (bound instanceof IntLitExpr intLit) {
+            return intLit.getValue().longValue();
+        }
+        if (bound instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+            return BvUtils.neutralBvLitExprToBigInteger(bvLit).longValue();
+        }
+        return null;
+    }
+
     private <T extends Type> Expr<?> dereference(
             Expr<?> accept, Expr<?> offset, CComplexType type) {
+        final Expr<?> folded = foldPointerArithmetic(accept, offset);
+        if (folded != null) {
+            Expr<?> pointerBase = null;
+            for (Expr<?> rawOp : ((AddExpr<?>) stripPos(accept)).getOps()) {
+                Expr<?> op = stripPos(rawOp);
+                CComplexType opType = CComplexType.getType(op, parseContext);
+                if (opType instanceof CPointer || opType instanceof CArray) {
+                    pointerBase = op;
+                }
+            }
+            accept = pointerBase;
+            offset = folded;
+        }
         // An offset is an *index*, so it is cast to the index type -- the same unsigned long the
         // zero offset above and the initializer-list dereferences use, and pointer-wide in every
         // data model. It used to be cast to the *pointer's own* type, which is a `CInteger` of that
@@ -2107,6 +2200,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
                     Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
+                    final Expr<?> row = rowOf(primary, index, elemType);
+                    if (row != null) {
+                        return row;
+                    }
                     primary = dereference(primary, index, elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
@@ -2115,6 +2212,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
                     Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
+                    final Expr<?> row = rowOf(primary, index, elemType);
+                    if (row != null) {
+                        return row;
+                    }
                     if (elemType instanceof CStruct && isLiteralZero(index)) {
                         // p[0] on a pointer-to-struct IS the pointee object, and a struct's value
                         // is its base id -- so the element's value is the pointer itself. A cell

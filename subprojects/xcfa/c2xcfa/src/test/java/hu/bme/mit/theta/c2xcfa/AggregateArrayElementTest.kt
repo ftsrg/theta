@@ -105,6 +105,30 @@ class AggregateArrayElementTest {
   }
 
   @Test
+  fun aPointerViewAddressesTheSameStorageAsTheDeclaredArray() {
+    // The point of laying a multi-dimensional array out contiguously: `int a[3][4]` and an
+    // `int (*)[4]` over it must name the same cells, in both directions. Row objects would not --
+    // and the neural-network benchmarks reach their weights exactly this way, by casting a flat
+    // buffer to `float (*)[N]`.
+    assertDoesNotThrow {
+      build(
+        """
+        int main() {
+          int a[3][4];
+          int (*A)[4] = a;
+          a[1][2] = 7;
+          if (A[1][2] != 7) { return 1; }
+          A[2][3] = 9;
+          if (a[2][3] != 9) { return 2; }
+          return 0;
+        }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
   fun anArrayOfStructsAboveTheCapStillBuilds() {
     // One allocation per element does not scale -- the benchmarks contain `S a[1000000]` -- so
     // above the cap the elements are left sharing a base instead. Build, don't hang.

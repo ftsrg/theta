@@ -1001,6 +1001,38 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 49 — multi-dimensional arrays are one contiguous object (unlocks neural-networks)
+
+Batch 48 gave every aggregate array element an object of its own, which fixed array-of-structs but
+was the wrong model for an array *of arrays*: it makes `int a[3][4]` three row objects, so a
+`(int (*)[4])` view of a flat buffer — exactly what the neural-network benchmarks cast their
+weights to — addresses different storage than the array itself. Rows are now flat instead.
+
+- **Addressing**: `a[i]` on an array of arrays is the region `i * len` elements in, produced as
+  plain pointer arithmetic; `dereference` folds that into the offset (`foldPointerArithmetic`), so
+  `a[i][j]` lands on `arrays[a][i*len + j]`. The unary `*` already did this folding for `*(p + i)`;
+  a subscript needs it too. Object sizes stay keyed on the base expression, which `a + i*len` is
+  not — hence the folding rather than a nested dereference.
+- **Sizing**: an array's cell count multiplies its dimensions (`flatArraySize`).
+- **Allocation**: rows are no longer objects, so nothing is allocated for them; only a *struct*
+  element still gets one (a struct's value is its base id). The 1024-element cap therefore applies
+  to arrays of structs alone.
+- **Index widths**: a row offset is pointer-wide while the subscript beside it is an `int`, so the
+  folded operands are cast to the index type first — without that the bitvector encoding refused
+  to unify `(Bv 64)` with `(Bv 32)` (integer arithmetic hid it, since every integer is one `Int`).
+
+**Result: the neural-networks cluster builds.** All 8 sampled files go from "Non-array expression
+used as array" to a complete build (the 441-file cluster's blocker). Verified in **both** encodings:
+a declared `int a[3][4]` and an `int (*A)[4]` over it read and write the same cells in both
+directions; 2-D round-trips keep rows distinct; array-of-structs elements stay distinct;
+pointer-to-array vs array-of-pointers still resolve correctly; VLAs and above-cap arrays build.
+`AggregateArrayElementTest` (5), `PointerToArrayTest` (4), module tests, 255 canaries and 14
+fixtures green.
+
+Remaining for TDX: the multi-field-struct-over-integer overlay
+(`struct { uint32_t lo; uint32_t hi; }` over `uint64_t raw`) — sub-word packing of two plain
+members into one word, the last of its three overlay shapes.
+
 ## Batch 48 — array elements that are aggregates get objects of their own
 
 Chasing the neural-networks gap turned up something broader: an array whose **elements are

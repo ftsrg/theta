@@ -387,7 +387,9 @@ class FrontendXcfaBuilder(
    * left unallocated, the pre-existing limitation for a member whose size the declaration omits.
    */
   private fun allocateStackArray(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
-    val size = fixedArraySize(type) ?: return
+    // Sized by the whole object: a multi-dimensional array's dimensions multiply, since its rows
+    // live in the same block rather than in objects of their own.
+    val size = flatArraySize(type) ?: return
     labels.add(alloca(target, size))
     allocateArrayElements(target, type, labels)
   }
@@ -414,7 +416,10 @@ class FrontendXcfaBuilder(
   ) {
     val size = fixedArraySize(type) ?: return
     val elementType = type.embeddedType
-    if (elementType !is CStruct && elementType !is CArray) return
+    // An array of arrays is one contiguous object -- `int a[3][4]` is twelve cells, addressed as
+    // arrays[a][i*4 + j] -- so its rows are not objects and nothing is allocated for them. Only an
+    // element that is a *struct* is an object in its own right (a struct's value is its base id).
+    if (elementType !is CStruct) return
     if (size > MAX_ELEMENT_ALLOCATIONS) {
       // One allocation per element does not scale: the benchmarks contain `S a[1000000]`, and
       // emitting a million of them makes the frontend run out of time long before the analysis
@@ -468,6 +473,19 @@ class FrontendXcfaBuilder(
       is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bounds).toInt()
       else -> null
     }
+  }
+
+  /**
+   * The number of cells an array occupies. A multi-dimensional array is contiguous -- `int a[3][4]`
+   * is twelve cells addressed as `arrays[a][i*4 + j]` -- so the dimensions multiply. Null when any
+   * of them is not a compile-time constant.
+   */
+  private fun flatArraySize(type: CArray): Int? {
+    val size = fixedArraySize(type) ?: return null
+    val elementType = type.embeddedType
+    if (elementType !is CArray) return size
+    val inner = flatArraySize(elementType) ?: return null
+    return size * inner
   }
 
   /**
