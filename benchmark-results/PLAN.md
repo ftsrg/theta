@@ -1056,12 +1056,15 @@ autonomous commit because a subtle offset error would silently mis-verify *every
 
 ## Batch 43-design (bitfield storage units + slicing — full plan for the focused pass)
 
-1. **Layout** (`TypeVisitor.visitCompoundDefinition`, after fields collected): walk members in
-   order assigning a `unitIndex`. Non-bitfield → its own new unit. Consecutive bitfields pack
-   into one unit while `bitsUsed + width ≤ unitBaseBits`; else start a new unit. A named 0-width
-   field forces a new unit. Store per-member `(unitIndex, bitOffset, width)` on CStruct (new
-   parallel map; keep the flat fields list for name lookup). **For structs with no bitfields,
-   unitIndex == field position — byte-identical to today, zero blast radius.**
+1. **Layout** — ✅ DONE (pure + tested, unwired): `BitfieldLayout.compute(List<Member>) → Layout`
+   (`compound/BitfieldLayout.java`, 6 tests in `BitfieldLayoutTest.kt`). Walks members assigning a
+   `unitIndex`: non-bitfield → its own new unit; consecutive bitfields pack into one unit while
+   `bitsUsed + width ≤ unitBaseBits`; ordinary member or named 0-width bitfield breaks the run.
+   Returns per-member `Slot(unitIndex, bitOffset, width, bitfield)` + `unitCount`. **For structs
+   with no bitfields, unitIndex == field position — byte-identical to today, zero blast radius.**
+   Remaining wiring (steps 2–7 below) is the deferred, sign-off-gated part: feed CStruct's field
+   `(baseBits, bitfieldWidth)` into this, store the Slots on CStruct, and drive memberOffset +
+   slicing + RMW assignment from them.
 2. **`memberOffset`** returns `unitIndex` (bitfield members in one unit share it). Unit count ≤
    byte size, so the memsafety valid-deref false alarm dies.
 3. **Cell iteration**: every `type.fields.forEachIndexed` site in FrontendXcfaBuilder must
