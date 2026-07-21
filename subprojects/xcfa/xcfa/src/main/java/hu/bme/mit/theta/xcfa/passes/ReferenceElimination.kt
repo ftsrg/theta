@@ -20,16 +20,36 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -291,7 +311,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     var changed = normalizeNestedReferenceAssignments(builder)
     val splitVars = discoverSplitVars(builder)
     if (splitVars.isEmpty()) return changed
-
     val edges = LinkedHashSet(builder.getEdges())
     for (edge in edges) {
       builder.removeEdge(edge)
@@ -674,16 +693,180 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       )
     }
     if (lhs in splitVars.keys) {
+      // Only a *flat* pointer value: a plain (never-split) variable, or a literal such as `NULL`.
+      // Deliberately NOT a dereference: `p = *q` loads a pointer that was *stored* to memory, and
+      // storing a split pointer writes base and offset to two separate channels (see the
+      // MemoryAssignStmt case). Reading only the base back and forcing the offset to 0 would
+      // silently drop a stored mid-object offset and address the wrong cell, so that case keeps
+      // failing loudly instead.
+      val flatPointerValue =
+        !rhs.containsSplitRefs(splitVars) &&
+          (strippedRhs is RefExpr<*> || strippedRhs is LitExpr<*>)
+      if (flatPointerValue) {
+        // `p = s` where `p` became split (through later arithmetic) but `s` never did: a plain
+        // pointer value is a base id at offset 0. Seed the halves accordingly -- `p_base = s`,
+        // `p_offset = 0` -- so the later `p++`/`p - s` operate on a well-defined origin. This is the
+        // same shape `seedSplitParams` gives a pointer parameter, applied to a local copy. A null
+        // pointer (`p = 0`) lands here too and is correctly (base 0, offset 0).
+        val dst = splitVars[lhs]!!
+        val baseExpr = rhs.changeComplexReferredVars(splitVars)
+        return listOf(
+          AssignStmt.of(cast(dst.base, dst.base.type), cast(baseExpr, dst.base.type)),
+          AssignStmt.of(
+            cast(dst.offset, dst.offset.type),
+            cast(getDefaultValue(dst.offset.type), dst.offset.type),
+          ),
+        )
+      }
       error("Unsupported pointer arithmetic: assignment to split pointer variable ${lhs.name}")
     }
     val rewrittenRhs = rhs.changeComplexReferredVars(splitVars)
     return listOf(AssignStmt.of(cast(lhs, lhs.type), cast(rewrittenRhs, lhs.type)))
   }
 
+  private fun Expr<*>.splitPairOf(splitVars: Map<VarDecl<*>, SplitVarPair>): SplitVarPair? {
+    val resolved = stripPos()
+    return if (resolved is RefExpr<*> && resolved.decl in splitVars.keys) splitVars[resolved.decl]
+    else null
+  }
+
+  /**
+   * The base-id channel of an operand in a pointer comparison. A split pointer contributes its own
+   * `base`; anything else -- a null literal, or a plain pointer/array variable that was never split
+   * -- denotes a base id at offset 0, so it contributes its (rewritten) value.
+   */
+  private fun Expr<*>.pointerBaseChannel(
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+    baseType: Type,
+  ): Expr<*> {
+    val split = splitPairOf(splitVars)
+    return if (split != null) cast(split.base.ref, baseType)
+    else cast(this.changeComplexReferredVars(splitVars), baseType)
+  }
+
+  /**
+   * The offset channel of an operand in a pointer comparison or difference. A split pointer
+   * contributes its `offset`; a plain pointer value is at offset 0.
+   */
+  private fun Expr<*>.pointerOffsetChannel(
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+    offsetType: Type,
+  ): Expr<*> {
+    val split = splitPairOf(splitVars)
+    return if (split != null) cast(split.offset.ref, offsetType) else getDefaultValue(offsetType)
+  }
+
+  /**
+   * Uses of a split pointer that stay *scalar* -- a comparison or a pointer difference -- rather than
+   * dereferencing or re-addressing it. The split model keeps a pointer as `(base, offset)`, so:
+   * - `p == q` is `base_p == base_q && off_p == off_q` (well-defined across objects: two pointers
+   *   into different objects compare unequal), and `!=` is its negation;
+   * - `p < q` (and `<=`, `>`, `>=`) is defined by C only within one object, so it is `off_p < off_q`
+   *   -- a different-object comparison is undefined and any answer is sound;
+   * - `p - q` is `off_p - off_q`, in element units, exactly what the offset already counts (each
+   *   `p++` advances the offset by one element). The frontend spells a difference as an `Add` whose
+   *   split bases cancel (`Add(p, Neg(q))`, or `Add(p, Neg(1), Neg(s1))` for `p - 1 - s1`); a net
+   *   non-zero base means a mid-object pointer *value* is escaping into a scalar context, which the
+   *   split model cannot carry, so that falls through to the bare-use error.
+   *
+   * Returns the decomposed expression, or `null` when the shape is not one of these (so the caller
+   * proceeds with its ordinary rewriting, including the loud refusal of an unsupported bare use).
+   */
+  @Suppress("UNCHECKED_CAST")
+  private fun <T : Type> Expr<T>.decomposeScalarPointerOp(
+    splitVars: Map<VarDecl<*>, SplitVarPair>
+  ): Expr<T>? {
+    if (
+      this is EqExpr<*> ||
+        this is NeqExpr<*> ||
+        this is LtExpr<*> ||
+        this is LeqExpr<*> ||
+        this is GtExpr<*> ||
+        this is GeqExpr<*>
+    ) {
+      val left = ops[0]
+      val right = ops[1]
+      val ref = left.splitPairOf(splitVars) ?: right.splitPairOf(splitVars) ?: return null
+      val baseType = ref.base.type
+      val offsetType = ref.offset.type
+      val baseL = left.pointerBaseChannel(splitVars, baseType)
+      val baseR = right.pointerBaseChannel(splitVars, baseType)
+      val offL = left.pointerOffsetChannel(splitVars, offsetType)
+      val offR = right.pointerOffsetChannel(splitVars, offsetType)
+      // Ordering compares offsets only when BOTH sides are pointers -- that is the one case C
+      // defines, and within an object the bases are equal. Against a plain integer it is not a
+      // pointer-vs-pointer comparison at all but a constraint on the pointer *value*, most often the
+      // range assume the frontend emits for a declaration (`0 <= us <= 4294967295`). Decomposing
+      // that onto the offset read the integer bound as "a pointer at offset 0" and collapsed the
+      // assume to `us_offset in [0,0]`, pinning the offset instead of stating a tautology. Such a
+      // constraint belongs on the base, the pointer's principal component.
+      val bothPointers = left.isPointerOperand(splitVars) && right.isPointerOperand(splitVars)
+      val ordL = if (bothPointers) offL else baseL
+      val ordR = if (bothPointers) offR else baseR
+      val decomposed: Expr<BoolType> =
+        when (this) {
+          is EqExpr<*> -> And(Eq(baseL, baseR), Eq(offL, offR))
+          is NeqExpr<*> -> Or(Neq(baseL, baseR), Neq(offL, offR))
+          is LtExpr<*> -> Lt(ordL, ordR)
+          is LeqExpr<*> -> Leq(ordL, ordR)
+          is GtExpr<*> -> Gt(ordL, ordR)
+          else -> Geq(ordL, ordR)
+        }
+      return cast(decomposed, this.type)
+    }
+    if (this is AddExpr<*>) {
+      val signed =
+        ops.map { op -> op.stripPos().let { if (it is NegExpr<*>) it.op to true else op to false } }
+      // Only a *split* pointer forces a decomposition here; without one the ordinary rewriting is
+      // fine (and a difference of two never-split pointers is not something this pass created).
+      val split = signed.firstOrNull { it.first.splitPairOf(splitVars) != null } ?: return null
+      // A difference is an Add whose pointer operands cancel: the bases drop out and only the
+      // element offsets remain. A net non-zero base means a mid-object pointer *value* is escaping
+      // into a scalar context, which the split model cannot carry -- fall through to the bare-use
+      // error rather than silently dropping the base.
+      val pointerTerms = signed.filter { it.first.isPointerOperand(splitVars) }
+      if (pointerTerms.count { !it.second } != pointerTerms.count { it.second }) return null
+      val offsetType = split.first.splitPairOf(splitVars)!!.offset.type
+      val summands =
+        signed.map { (term, negative) ->
+          // A split pointer contributes its offset; a plain pointer sits at offset 0; a plain
+          // integer term (`- 1`) contributes its own value.
+          val channel =
+            when {
+              term.splitPairOf(splitVars) != null ->
+                cast(term.splitPairOf(splitVars)!!.offset.ref, offsetType)
+              term.isPointerOperand(splitVars) -> getDefaultValue(offsetType)
+              else -> cast(term.changeComplexReferredVars(splitVars), offsetType)
+            }
+          if (negative) Neg(channel) else channel
+        }
+      return cast(Add(summands), this.type) as Expr<T>
+    }
+    return null
+  }
+
+  /**
+   * Whether an operand denotes a pointer value: a split pointer, or a plain variable declared with a
+   * pointer/array C type. Used to decide which operands of an `Add` are the bases that must cancel
+   * for it to be a scalar pointer difference.
+   */
+  private fun Expr<*>.isPointerOperand(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean {
+    if (splitPairOf(splitVars) != null) return true
+    val resolved = stripPos()
+    if (resolved is RefExpr<*>) {
+      val cType = CComplexType.getType((resolved.decl as VarDecl<*>).ref, parseContext)
+      return cType is CPointer || cType is CArray
+    }
+    return false
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.changeComplexReferredVars(
     splitVars: Map<VarDecl<*>, SplitVarPair>
   ): Expr<T> {
+    decomposeScalarPointerOp(splitVars)?.let {
+      return it
+    }
     if (this is RefExpr<*> && this.decl in splitVars.keys) {
       error("Unsupported pointer arithmetic: bare use of split variable ${this.decl.name}")
     }
