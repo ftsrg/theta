@@ -1117,6 +1117,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
+     * The pointer-or-array operand of a sum that {@link #foldPointerArithmetic} accepted -- the
+     * object the whole expression is an offset into. Only meaningful once folding succeeded, which
+     * is what guarantees exactly one such operand exists.
+     */
+    private Expr<?> pointerBaseOf(Expr<?> sum) {
+        Expr<?> pointerBase = null;
+        for (Expr<?> rawOp : ((AddExpr<?>) stripPos(sum)).getOps()) {
+            Expr<?> op = stripPos(rawOp);
+            CComplexType opType = CComplexType.getType(op, parseContext);
+            if (opType instanceof CPointer || opType instanceof CArray) {
+                pointerBase = op;
+            }
+        }
+        return pointerBase;
+    }
+
+    /**
      * Indexing an array *of arrays* selects a row, not a cell. A multi-dimensional array is one
      * contiguous object -- `int a[3][4]` is twelve cells, not three row objects -- so `a[i]` is the
      * region starting `i * 4` elements in, and `a[i][j]` lands on `arrays[a][i*4 + j]`. Returning
@@ -1133,24 +1150,73 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * `int array[ARR_SIZE][ARR_SIZE]`): rows aliased, a summation loop read back the wrong values,
      * and a safe program was reported unsafe.
      *
-     * <p>Returns null only when the element is not an array (an ordinary cell read) or when the row
-     * has no length expression at all -- an unsized `int a[][4]` parameter or a flexible member,
-     * where there is genuinely nothing to scale by.
+     * <p>An array of <b>structs</b> is laid out the same way, scaled by the struct's cell count:
+     * `s[i].f` becomes `arrays[s][i*k + f]`. That element used to be a *stored base* of its own,
+     * written by one alloca per element at the declaration -- which does not scale, so above
+     * {@code MAX_ELEMENT_ALLOCATIONS} the bases were simply left unwritten and two elements could
+     * be conflated, the same defect the VLA rows had. Offsets need no allocation and no cap.
+     *
+     * <p>Nothing here derives a *base* from another base. That distinction is the whole point: base
+     * ids are handed out three apart (`AllocaFunctionPass`), so an `s + i*k` used as a base would
+     * become another object's base almost immediately, whereas `arrays[s][i*k + f]` stays inside
+     * the row belonging to `s` and can never reach another object's row. Indexing past the end
+     * lands on cells of `s`'s own row that belong to no element, which is undefined behaviour in C
+     * and so constrains nothing.
+     *
+     * <p>Returns null only when the element is neither an array nor a struct (an ordinary cell
+     * read), or when a row has no length expression at all -- an unsized `int a[][4]` parameter or
+     * a flexible member, where there is genuinely nothing to scale by.
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
-        if (!(elemType instanceof CArray rowType)) {
+        // Only an aggregate element is a *region* to be offset into; a scalar element is an
+        // ordinary cell read and is left to the caller's dereference.
+        final boolean aggregate =
+                elemType instanceof CArray
+                        || (elemType instanceof CStruct s && !s.isUnion());
+        if (!aggregate) {
             return null;
         }
-        final Expr<?> rowLength = arrayLengthExpr(rowType);
-        if (rowLength == null) {
+        final Expr<?> elementCells = cellCountExpr(elemType);
+        if (elementCells == null) {
             return null;
         }
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final Expr<?> scaled =
-                Mul(List.of(indexType.castTo(index), indexType.castTo(rowLength)));
+                Mul(List.of(indexType.castTo(index), indexType.castTo(elementCells)));
         final Expr<?> row = Add(List.of(base, scaled));
-        parseContext.getMetadata().create(row, "cType", rowType);
+        parseContext.getMetadata().create(row, "cType", elemType);
         return row;
+    }
+
+    /**
+     * How many storage cells one value of [type] occupies, as an expression, or null when that
+     * cannot be determined (an array with no bound).
+     *
+     * <p>Cells, not elements: the two coincide for scalars but not for aggregates, and scaling by
+     * the wrong one silently misplaces everything. A row of `struct S a[2][3]` with a two-cell `S`
+     * is *six* cells wide, so `a[1]` starts at cell 6 -- scaling by the element count 3 would land
+     * it on cell 3, in the middle of row 0.
+     */
+    private Expr<?> cellCountExpr(CComplexType type) {
+        if (type instanceof CStruct structType) {
+            // A union is one cell: its members all share offset 0.
+            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
+            return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
+        }
+        if (type instanceof CArray arrayType) {
+            final Expr<?> length = arrayLengthExpr(arrayType);
+            if (length == null) {
+                return null;
+            }
+            final Expr<?> elementCells = cellCountExpr(arrayType.getEmbeddedType());
+            if (elementCells == null) {
+                return null;
+            }
+            final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+            return Mul(List.of(indexType.castTo(length), indexType.castTo(elementCells)));
+        }
+        // A scalar (or a pointer) occupies exactly one cell.
+        return CComplexType.getUnsignedLong(parseContext).getValue("1");
     }
 
     /**
@@ -1175,15 +1241,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             Expr<?> accept, Expr<?> offset, CComplexType type) {
         final Expr<?> folded = foldPointerArithmetic(accept, offset);
         if (folded != null) {
-            Expr<?> pointerBase = null;
-            for (Expr<?> rawOp : ((AddExpr<?>) stripPos(accept)).getOps()) {
-                Expr<?> op = stripPos(rawOp);
-                CComplexType opType = CComplexType.getType(op, parseContext);
-                if (opType instanceof CPointer || opType instanceof CArray) {
-                    pointerBase = op;
-                }
-            }
-            accept = pointerBase;
+            accept = pointerBaseOf(accept);
             offset = folded;
         }
         // An offset is an *index*, so it is cast to the index type -- the same unsigned long the
@@ -1548,10 +1606,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         : embeddedType;
         final Expr<?> idxExpr =
                 structType.getValue(String.valueOf(memberOffset(structType, memberName)));
+        // `a[i].f` on an array of structs: the subscript handed us the element as plain pointer
+        // arithmetic (`a + i*k`, see #elementOf), so the member offset folds into it and the whole
+        // access lands on `arrays[a][i*k + f]` -- one object, arithmetic offsets, no base derived
+        // from another. Without folding, `a + i*k` would be used as a *base*, and bases are handed
+        // out three apart, so element 3 of an array would collide with the next object entirely.
+        // Folds to null (leaving the plain access below) whenever the base is not such a sum.
+        final Expr<?> foldedOffset = foldPointerArithmetic(base, idxExpr);
+        final Expr<?> accessBase = foldedOffset == null ? base : pointerBaseOf(base);
+        final Expr<?> accessOffset = foldedOffset == null ? idxExpr : foldedOffset;
         final Expr<?> access =
                 Exprs.Dereference(
-                        cast(base, base.getType()),
-                        cast(idxExpr, base.getType()),
+                        cast(accessBase, accessBase.getType()),
+                        cast(accessOffset, accessBase.getType()),
                         cellType.getSmtType());
         parseContext.getMetadata().create(access, "cType", embeddedType);
         if (cellType != embeddedType) {

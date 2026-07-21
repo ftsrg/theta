@@ -117,6 +117,170 @@ class AggregateArrayElementTest {
   }
 
   @Test
+  fun structElementsAreInlineCellsOfTheArray() {
+    // `struct S a[3]` with a two-cell S is six cells of one object: a[0].x is offset 0, a[1].x is
+    // offset 2, a[2].y is offset 5. Elements used to be separate objects, one alloca each, whose
+    // bases had to be written at the declaration.
+    val w =
+      writes(
+        """
+        struct S { int x; int y; };
+        int main() {
+          struct S a[3];
+          a[0].x = 1;
+          a[1].x = 7;
+          a[2].y = 9;
+          return a[0].x;
+        }
+        """
+          .trimIndent()
+      )
+    assertEquals(1, w.map { it.first }.toSet().size, "all cells belong to the array itself; got $w")
+    assertTrue(
+      w.none { (base, _) -> base.contains("deref") },
+      "no element may live behind a stored base; got $w",
+    )
+    assertEquals(listOf("0", "2", "5"), w.map { it.second }, "flat element offsets; got $w")
+  }
+
+  @Test
+  fun aHugeStructArrayIsStillPreciseAndCostsNoAllocations() {
+    // The point of the change. One alloca per element does not scale -- the benchmarks contain
+    // `S a[1000000]` -- so above a 1024 cap the element bases were simply left unwritten, and the
+    // solver could equate a[0] with a[1500]: the same conflation that produced the multi-dim VLA
+    // false alarms, just harder to trigger. Offsets need no allocation, so the cap is gone.
+    val w =
+      writes(
+        """
+        struct S { int x; int y; };
+        int main() {
+          struct S a[2000];
+          a[0].x = 1;
+          a[1500].x = 7;
+          return a[0].x;
+        }
+        """
+          .trimIndent()
+      )
+    assertEquals(1, w.map { it.first }.toSet().size, "one object; got $w")
+    assertEquals(listOf("0", "3000"), w.map { it.second }, "1500 * 2 cells in; got $w")
+  }
+
+  @Test
+  fun anArrayOfArraysOfStructsScalesByCellsNotElements() {
+    // The trap in the flat model: a row of `struct S a[2][3]` with a two-cell S is *six* cells
+    // wide, not three. Scaling a row by its element count would land a[1] in the middle of row 0.
+    // a[1][2].y = (1*6) + (2*2) + 1 = 11.
+    val w =
+      writes(
+        """
+        struct S { int x; int y; };
+        int main() {
+          struct S a[2][3];
+          a[1][2].y = 7;
+          return a[1][2].y;
+        }
+        """
+          .trimIndent()
+      )
+    assertTrue(w.any { it.second == "11" }, "a[1][2].y is cell 11; got $w")
+  }
+
+  @Test
+  fun aStructIsCopiedToAndFromAnArrayElement() {
+    // An element is now an offset into the array rather than a variable, so both directions of
+    // `t = a[i]` / `a[i] = t` had to keep working. `t = a[1]` in particular looks like pointer
+    // arithmetic (`a + 1*k`) and was briefly rewritten to `t = &a[1]`, aliasing the two.
+    val from =
+      writes(
+        """
+        struct S { int x; int y; };
+        int main() { struct S a[3]; struct S t; a[1].x = 7; t = a[1]; return t.x; }
+        """
+          .trimIndent()
+      )
+    assertTrue(
+      from.any { it.first.contains("t") && it.second == "0" },
+      "t receives its own copy of the element's cells; got $from",
+    )
+    assertTrue(
+      from.any { it.first.contains("t") && it.second == "1" },
+      "the copy is field by field, not a shared base; got $from",
+    )
+
+    val into =
+      writes(
+        """
+        struct S { int x; int y; };
+        int main() { struct S a[3]; struct S t; t.x = 7; a[2] = t; return a[2].x; }
+        """
+          .trimIndent()
+      )
+    assertTrue(
+      into.any { it.first.contains("a") && it.second == "4" },
+      "a[2] starts at cell 4 and is written field by field; got $into",
+    )
+  }
+
+  @Test
+  fun anElementWithANestedAggregateStillGetsItsSubobject() {
+    // A nested struct field is still stored as a base id, so it needs allocating -- but into the
+    // element's *flat* cell (element 1's `in` sits at cell 1*2 + 1 = 3), not into a per-element
+    // object that no longer exists.
+    val w =
+      writes(
+        """
+        struct Inner { int p; int q; };
+        struct Outer { int x; struct Inner in; };
+        int main() {
+          struct Outer a[2];
+          a[0].x = 1;
+          a[1].in.p = 7;
+          return a[1].in.p;
+        }
+        """
+          .trimIndent()
+      )
+    assertTrue(
+      w.any { it.first.contains("deref") },
+      "the nested Inner keeps a base of its own; got $w",
+    )
+    assertTrue(
+      w.any { !it.first.contains("deref") && it.second == "3" },
+      "element 1's nested base is written to flat cell 3; got $w",
+    )
+  }
+
+  @Test
+  fun structArraysBuildUnderBothEncodings() {
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      val parseContext = ParseContext()
+      parseContext.arithmetic = arithmetic
+      assertDoesNotThrow({
+        getXcfaFromC(
+          """
+          extern int __VERIFIER_nondet_int();
+          struct S { int x; int y; };
+          int main() {
+            struct S a[8];
+            int i = __VERIFIER_nondet_int();
+            if (i < 0 || i >= 8) { return 0; }
+            a[i].y = 7;
+            return a[i].y;
+          }
+          """
+            .trimIndent()
+            .byteInputStream(),
+          parseContext,
+          false,
+          XcfaProperty(ErrorDetection.ERROR_LOCATION),
+          NullLogger.getInstance(),
+        )
+      }, "a struct array indexed symbolically must build under $arithmetic")
+    }
+  }
+
+  @Test
   fun aConstantMatrixStillFoldsToLiteralOffsets() {
     // The control: making the row length symbolic must not disturb the constant case, which still
     // has to fold to plain literals (`int a[2][3]`: a[1][0] is offset 3).

@@ -396,19 +396,19 @@ class FrontendXcfaBuilder(
 
   /**
    * Gives each element of [target] an object of its own, when the elements are themselves
-   * aggregates -- a row of `int a[3][4]`, or an element of `struct S a[3]`. Such an array holds a
-   * base per element in its cells, exactly as a struct holds one per field; leaving those bases
-   * unconstrained lets the solver conflate two elements, so `a[1][2] = 7` could be read back
-   * through `a[0][0]`. An array of scalars keeps its elements directly in its own cells and needs
-   * nothing here.
+   * aggregates. Rows of `int a[3][4]` and elements of `struct S a[3]` are *not* such objects: both
+   * live inline in the array's own cells, addressed as `arrays[a][i*k + f]` (see
+   * `ExpressionVisitor#rowOf`), so they need no base and nothing is allocated for them.
+   *
+   * What still needs allocating is an aggregate *inside* an element -- `struct Outer { struct Inner
+   * i; } a[3]` keeps a base per `Inner` in the cell at `i*k + offsetof(i)`, because a nested struct
+   * field is still stored as a base id. An element of plain scalars, which is the overwhelmingly
+   * common case and the one that used to blow past the cap, allocates nothing at all.
    *
    * Split out from [allocateStackArray] because a *declared* local array already gets its own base
-   * from the `alloca` the frontend emits at the declaration; only its elements are missing, and
+   * from the `alloca` the frontend emits at the declaration; only its subobjects are missing, and
    * they have to be allocated after that base is assigned, not before.
    */
-  /** How many array elements are worth giving an object of their own; see below. */
-  private val MAX_ELEMENT_ALLOCATIONS = 1024
-
   private fun allocateArrayElements(
     target: Expr<*>,
     type: CArray,
@@ -416,21 +416,24 @@ class FrontendXcfaBuilder(
   ) {
     val size = fixedArraySize(type) ?: return
     val elementType = type.embeddedType
-    // An array of arrays is one contiguous object -- `int a[3][4]` is twelve cells, addressed as
-    // arrays[a][i*4 + j] -- so its rows are not objects and nothing is allocated for them. Only an
-    // element that is a *struct* is an object in its own right (a struct's value is its base id).
-    if (elementType !is CStruct) return
-    if (size > MAX_ELEMENT_ALLOCATIONS) {
-      // One allocation per element does not scale: the benchmarks contain `S a[1000000]`, and
-      // emitting a million of them makes the frontend run out of time long before the analysis
-      // starts. Above the cap the elements keep sharing an unconstrained base, as they did before
-      // any of them were allocated -- imprecise for such an array, but bounded. Giving every
-      // element a base without naming it one statement at a time needs the derived-base memory
-      // model (AD7), which is the real fix.
-      return
-    }
+    if (elementType !is CStruct || elementType.isUnion) return
+    val cells = elementType.unitCount
+    // Only the fields that are themselves objects need anything; if none are, this loop body never
+    // runs and the whole array costs zero allocations however long it is.
+    val aggregateFields =
+      elementType.fields.withIndex().filter { (_, field) ->
+        field.get2() is CStruct || field.get2() is CArray
+      }
+    if (aggregateFields.isEmpty()) return
     for (index in 0 until size) {
-      allocateStackSubobject(subobjectCell(target, type, index, elementType), elementType, labels)
+      aggregateFields.forEach { (fieldIndex, field) ->
+        val offset = index * cells + elementType.unitOffsetOf(field.get1())
+        allocateStackSubobject(
+          subobjectCell(target, type, offset, field.get2()),
+          field.get2(),
+          labels,
+        )
+      }
     }
   }
 
@@ -446,19 +449,55 @@ class FrontendXcfaBuilder(
     }
   }
 
-  /** The cell `arrays[parent][index]` a subobject (struct field, array element) lives at. */
+  /**
+   * The cell `arrays[parent][index]` a subobject (struct field, array element) lives at.
+   *
+   * When [parent] is itself an offset into an object -- `a[i]` on an array of structs is `a + i*k`,
+   * see `ExpressionVisitor#rowOf` -- the two offsets are added and the *object* stays the base, so
+   * the cell is `arrays[a][i*k + index]`. Leaving the sum in the base position would both name a
+   * different object (bases are three apart) and hand `ReferenceElimination` a shape it has never
+   * seen: it walks a dereference's base expecting a plain variable, and reports a bare use of a
+   * split variable when it finds arithmetic there instead.
+   */
   private fun subobjectCell(
     parent: Expr<*>,
     parentType: CComplexType,
     index: Int,
     subobjectType: CComplexType,
-  ): Dereference<*, *, *> =
-    Dereference(
-        cast(parent, parent.type),
-        cast(parentType.getValue("$index"), parent.type),
-        subobjectType.smtType,
-      )
+  ): Dereference<*, *, *> {
+    val indexValue = parentType.getValue("$index")
+    val sum = parent.withoutPos() as? AddExpr<*>
+    val base = sum?.let { pointerOperandOf(it) }
+    return if (base == null) {
+        Dereference(
+          cast(parent, parent.type),
+          cast(indexValue, parent.type),
+          subobjectType.smtType,
+        )
+      } else {
+        val offsets = sum.ops.filter { it.withoutPos() !== base } + indexValue
+        Dereference(
+          cast(base, base.type),
+          cast(
+            AbstractExprs.Add(offsets.map { cast(it, base.type) }),
+            base.type,
+          ),
+          subobjectType.smtType,
+        )
+      }
       .also { parseContext.metadata.create(it, "cType", subobjectType) }
+  }
+
+  private fun Expr<*>.withoutPos(): Expr<*> = if (this is PosExpr<*>) op.withoutPos() else this
+
+  /** The pointer/array operand of a sum, i.e. the object the rest of it is an offset into. */
+  private fun pointerOperandOf(sum: AddExpr<*>): Expr<*>? =
+    sum.ops
+      .map { it.withoutPos() }
+      .firstOrNull {
+        val type = runCatching { CComplexType.getType(it, parseContext) }.getOrNull()
+        type is CPointer || type is CArray
+      }
 
   /**
    * An array's constant element count, or null when there isn't one: a flexible array member (no
@@ -476,16 +515,20 @@ class FrontendXcfaBuilder(
   }
 
   /**
-   * The number of cells an array occupies. A multi-dimensional array is contiguous -- `int a[3][4]`
-   * is twelve cells addressed as `arrays[a][i*4 + j]` -- so the dimensions multiply. Null when any
-   * of them is not a compile-time constant.
+   * The number of cells an array occupies. An array is contiguous, so the element's own cell count
+   * multiplies through: `int a[3][4]` is twelve cells addressed as `arrays[a][i*4 + j]`, and
+   * `struct S a[3]` with a two-cell `S` is six, addressed as `arrays[a][i*2 + f]`. Null when a
+   * dimension is not a compile-time constant.
    */
   private fun flatArraySize(type: CArray): Int? {
     val size = fixedArraySize(type) ?: return null
-    val elementType = type.embeddedType
-    if (elementType !is CArray) return size
-    val inner = flatArraySize(elementType) ?: return null
-    return size * inner
+    return when (val elementType = type.embeddedType) {
+      is CArray -> flatArraySize(elementType)?.let { size * it }
+      // A struct element occupies its own cells inline rather than a single cell holding a base --
+      // see ExpressionVisitor#rowOf. A union keeps one cell: its members all share offset 0.
+      is CStruct -> if (elementType.isUnion) size else size * elementType.unitCount
+      else -> size
+    }
   }
 
   /**
@@ -875,7 +918,18 @@ class FrontendXcfaBuilder(
 
         is RefExpr<*> -> {
           val lhsType = CComplexType.getType(lValue, parseContext)
-          if (
+          if (lhsType.isCopiedStruct(rExpression)) {
+            // Checked before the pointer-arithmetic rewrite below, because `t = a[i]` on an array
+            // of structs satisfies both: the element is now an offset into the array (`a + i*k`),
+            // so it *has* arithmetic, but assigning one struct to another of the same type is a
+            // copy, not a pointer assignment. Rewriting it to `t = &a[i]` instead made `t` an
+            // alias of the element -- and left it a split variable, which then failed outright on
+            // the next bare use of `t`.
+            SequenceLabel(
+              structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+              metadata = getMetadata(statement),
+            )
+          } else if (
             (lhsType is CPointer || lhsType is CArray || lhsType is CStruct) &&
               rExpression.hasArithmetic()
           ) {
@@ -899,11 +953,6 @@ class FrontendXcfaBuilder(
               cast(asReference, lValue.type),
               metadata = getMetadata(statement),
             )
-          } else if (lhsType.isCopiedStruct(rExpression)) {
-            SequenceLabel(
-              structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
-              metadata = getMetadata(statement),
-            )
           } else {
             // TODO: check if assignment to arrays (stack AND heap) are value- or pointer-based
             AssignStmtLabel(
@@ -911,6 +960,22 @@ class FrontendXcfaBuilder(
               cast(lhsType.castTo(rExpression), lValue.type),
               metadata = getMetadata(statement),
             )
+          }
+        }
+
+        // `a[i] = t` on an array of structs: the element is an offset into the array (`a + i*k`),
+        // so the left-hand side is a sum rather than a variable or a dereference. It still names a
+        // struct-shaped region, and assigning a struct to it is a copy -- [subobjectCell] folds the
+        // sum back into base and offset for each field.
+        is AddExpr<*> -> {
+          val lhsType = CComplexType.getType(lValue, parseContext)
+          if (lhsType.isCopiedStruct(rExpression)) {
+            SequenceLabel(
+              structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+              metadata = getMetadata(statement),
+            )
+          } else {
+            error("Could not handle left-hand side of assignment $statement")
           }
         }
 

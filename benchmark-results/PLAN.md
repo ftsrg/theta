@@ -1115,6 +1115,42 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 55 — arrays of structs are inline cells too; the 1024 cap is gone
+
+The generic case of batch 54, and it needed a correction to my own reasoning. I had concluded this
+was blocked on AD7 because a derived element base `a + i*k` collides with the next object (bases
+are handed out three apart). That analysed the wrong design. The right one is what multi-dimensional
+scalars already do: **keep the base, put everything in the offset** -- `s[i].f` is
+`arrays[s][i*k + f]`, so no base is ever derived and every base stays one the allocator issued.
+`deref(1, ...)` and `deref(4, ...)` are different rows of the 2D array and cannot meet. Indexing
+past the end lands on cells of the array's own row belonging to no element, which is UB and so
+constrains nothing.
+
+Consequences:
+- **The `MAX_ELEMENT_ALLOCATIONS = 1024` cap is deleted.** Above it, element bases were left
+  unwritten and the solver could equate `a[0]` with `a[1500]` -- the same conflation as the VLA rows,
+  just harder to trigger. `struct S a[2000]` now addresses `a[1500].x` as cell 3000, exactly.
+- **A plain struct array costs zero allocations**, however long. Only an element containing a nested
+  aggregate still needs one per element, written into the element's flat cell.
+
+Three things had to follow the element out of "is an object" into "is a region":
+1. `directMemberAccess` folds pointer arithmetic, so `a[i].f` lands on `arrays[a][i*k + f]` rather
+   than putting a sum in the base position.
+2. `subobjectCell` folds too, which is what makes struct copy, by-value arguments and nested
+   subobject allocation work on an element.
+3. `t = a[i]` satisfies *both* the pointer-arithmetic rewrite and the struct-copy branch. The copy
+   has to win: rewriting it to `t = &a[i]` aliased the two and left `t` a split variable, which then
+   failed outright on the next bare use. `a[i] = t` needed a new left-hand-side case for the same
+   reason.
+
+Scaling is by **cells, not elements** -- a row of `struct S a[2][3]` with a two-cell `S` is six
+cells wide, so `a[1][2].y` is cell 11. Scaling by the element count would have put row 1 inside
+row 0; the first implementation did exactly that and the test caught it.
+
+Gate: 359 module tests (6 new), 255 canaries, 18 fixtures. Verified against a stashed baseline that
+`a[i] = t` and `t = a[i]` both worked before and still do, and that the one probe that still fails
+(`p = q + i` on a split pointer) fails identically without this change.
+
 ## Batch 54 — multi-dimensional VLAs address flatly; `(Bv 8)` fixed
 
 Fixes both regressions the batch-51 run found.
