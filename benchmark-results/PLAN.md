@@ -1115,6 +1115,39 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Run 2026-07-21_13-24-sanity55 (sosy, 5750G, batches 51-55) — targeted sanity suite, clean
+
+Not a full run: 619 runs over nine folders chosen to cover what batches 51-55 changed plus the
+neighbourhoods where the existing wrong results live, so a regression would surface as a *new*
+wrong rather than being invisible. Compared per task+property against
+`results-2026-07-20_22-41-batch51`.
+
+**Correct 128 → 130. Error 469 → 473. Wrong 17 → 11 (−6). Newly wrong: none.**
+
+- **(a) All six multi-dimensional-VLA false alarms are gone.** `array-patterns/array{13,15,27,28,30}`
+  and `array-multidimensional/init-non-constant-2-n-u` all moved from `false(unreach-call)` on
+  safe programs to **TIMEOUT**. Worth stating plainly: I expected `Safe`, and that is *not* what
+  happened. The unsound aliasing that manufactured the counterexample is gone, so the answer is no
+  longer wrong (−16 → 0 apiece, so ≈ +96), but the analysis still cannot decide these within 5 min.
+  Soundness restored, capability not gained.
+- **(b) All three `(Bv 8)` regressions are correct again** (two `dib3000mc`, one `max8649`), which
+  is the `case "char"` fix confirmed end to end.
+- **(c) Zero newly wrong**, and that is the load-bearing check for batch 55: it changed how *every*
+  array of structs is addressed. The struct-heavy controls genuinely ran — `aws-c-common` 353 runs,
+  `ldv-regression` 107, `ntdrivers-simplified`, `heap-manipulation`, `list-properties` — and none
+  produced a new wrong or a new frontend failure.
+
+The only other movement is resource noise, and symmetric: two `ntdrivers-simplified` no-overflow
+tasks slipped to `TIMEOUT (false(no-overflow))` — the right answer, found too late — while a third
+in the same family came back the other way.
+
+Method note: the first comparison keyed on `runset|task|property` and silently matched only 524 of
+619 runs, because this suite's run definitions are named differently from `theta27-short.xml`'s.
+Keyed on task+property it matches all 619. A join that quietly drops a fifth of the rows is exactly
+the kind of thing that hides a regression, so the key has to be checked, not assumed.
+
+**Not covered by this run:** batch 56 (union slicing), which landed after it started.
+
 ## Batch 56 (AD7, the tractable half) — union members share the word as bit slices
 
 Measured first, then built. Ranking the remaining frontend failures in the batch-51 run put union
