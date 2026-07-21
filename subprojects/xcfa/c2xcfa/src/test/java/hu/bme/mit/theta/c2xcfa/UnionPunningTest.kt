@@ -224,15 +224,57 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aFloatingPointMemberIsStillRefused() {
-    // The other boundary: a double has its own SMT sort, so reading it as bits needs a
-    // reinterpretation this model does not have. This is the float-newlib idiom
-    // (`union { double value; struct { uint32_t lsw, msw; } parts; }`), ~265 tasks.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun aFloatingPointMemberSharesTheCellAsItsIeeeBits() {
+    // Formerly refused: a double's SMT sort is not a bitvector, so reading it as bits needs a
+    // reinterpretation. That reinterpretation now exists (FpToIeeeBv / FpFromIeeeBv), so the
+    // float-newlib idiom -- `union { double value; struct { uint32_t lsw, msw; } parts; }`, ~265
+    // tasks -- is modelled instead of rejected. A float always forces bitvector arithmetic, so the
+    // shared cell is a bitvector; the value semantics (double 1.0 -> msw 0x3FF00000, lsw 0, and
+    // back) are checked end to end elsewhere.
+    assertDoesNotThrow {
+      build(
+        """
+        typedef unsigned int u32;
+        typedef union { double value; struct { u32 lsw; u32 msw; } parts; } shape;
+        int main() {
+          shape u;
+          u.value = 1.0;
+          if (u.parts.msw != 0x3FF00000u) { return 1; }
+          u.parts.msw = 0x40000000u;
+          u.parts.lsw = 0u;
+          if (u.value != 2.0) { return 2; }
+          return 0;
+        }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aUnionOfADoubleAndAWideIntegerAliasesBothWays() {
+    // The scalar form: `union { double value; unsigned long bits; }` -- writing the double and
+    // reading the integer is the reinterpretation, both 64 bits wide.
+    assertDoesNotThrow {
       build(
         """
         union U { double value; unsigned long bits; };
-        int main() { union U u; u.value = 1.0; return (int) u.bits; }
+        int main() { union U u; u.value = 1.0; if (u.bits == 0) { return 1; } return 0; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aUnionOfADoubleAndAnArrayIsStillRefused() {
+    // The boundary that remains: an array member is many cells, not one word, so there is nothing
+    // to slice or reinterpret. This is what still blocks the intel-tdx-module buffer views.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U { double value; unsigned char bytes[8]; };
+        int main() { union U u; u.value = 1.0; return u.bytes[0]; }
         """
           .trimIndent()
       )

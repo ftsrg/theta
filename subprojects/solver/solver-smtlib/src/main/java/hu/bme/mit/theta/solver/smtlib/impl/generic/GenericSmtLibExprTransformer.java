@@ -61,6 +61,7 @@ import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromIeeeBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
@@ -81,6 +82,7 @@ import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToIeeeBvExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
@@ -276,6 +278,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
                 .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                 .addCase(FpToBvExpr.class, this::transformFpToBv)
+                .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
+                .addCase(FpToIeeeBvExpr.class, this::transformFpToIeeeBv)
                 .addCase(FpToFpExpr.class, this::transformFpToFp)
 
                 // Functions
@@ -1079,6 +1083,18 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                     transformFpRoundingMode(expr.getRoundingMode()),
                     toTerm(expr.getOp()));
         }
+    }
+
+    protected String transformFpToIeeeBv(final FpToIeeeBvExpr expr) {
+        // fp.to_ieee_bv is a Z3-only, non-standard SMT-LIB extension; not available generically.
+        throw new UnsupportedOperationException(
+                "IEEE bit reinterpretation (fp.to_ieee_bv) is not available over generic SMT-LIB");
+    }
+
+    protected String transformFpFromIeeeBv(final FpFromIeeeBvExpr expr) {
+        // The inverse of fp.to_ieee_bv; equally unavailable over generic SMT-LIB.
+        throw new UnsupportedOperationException(
+                "IEEE bit reinterpretation (fp.to_ieee_bv) is not available over generic SMT-LIB");
     }
 
     protected String transformFpToFp(final FpToFpExpr expr) {

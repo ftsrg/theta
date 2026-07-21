@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
+import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
@@ -1017,8 +1018,19 @@ class FrontendXcfaBuilder(
             as Number)
             .toInt()
         val cellType = CComplexType.getType(bitfieldCell, parseContext)
-        val newCell =
-          BitfieldSlice.write(bitfieldCell, cellType.castTo(rExpression), bitOffset, fieldWidth)
+        // A floating-point union member: the value spliced in is the right-hand side's raw IEEE
+        // bit pattern, not an integer cast of it. Everything else is identical -- for a full-width
+        // float, offset 0 and width == cell width, so the splice replaces the whole cell.
+        val isIeeeFloat =
+          parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.IEEE_FLOAT).isPresent
+        val spliced =
+          if (isIeeeFloat) {
+            @Suppress("UNCHECKED_CAST")
+            FpExprs.ToIeeeBv(rExpression as Expr<hu.bme.mit.theta.core.type.fptype.FpType>)
+          } else {
+            cellType.castTo(rExpression)
+          }
+        val newCell = BitfieldSlice.write(bitfieldCell, spliced, bitOffset, fieldWidth)
         val op = cast(bitfieldCell.array, bitfieldCell.array.type)
         val offset = cast(bitfieldCell.offset, op.type)
         val deref = Dereference(op, offset, cellType.smtType)

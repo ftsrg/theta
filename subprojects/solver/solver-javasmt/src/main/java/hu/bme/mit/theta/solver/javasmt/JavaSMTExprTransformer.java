@@ -61,6 +61,7 @@ import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromIeeeBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
@@ -81,6 +82,7 @@ import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToIeeeBvExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -295,6 +297,8 @@ final class JavaSMTExprTransformer {
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
                         .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                         .addCase(FpToBvExpr.class, this::transformFpToBv)
+                        .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
+                        .addCase(FpToIeeeBvExpr.class, this::transformFpToIeeeBv)
                         .addCase(FpToFpExpr.class, this::transformFpToFp)
 
                         // Functions
@@ -1084,6 +1088,22 @@ final class JavaSMTExprTransformer {
                 expr.getSgn(),
                 FormulaType.getBitvectorTypeWithSize(expr.getSize()),
                 roundingMode);
+    }
+
+    private Formula transformFpToIeeeBv(final FpToIeeeBvExpr expr) {
+        // The raw encoding, not a numeric cast -- toIeeeBitvector, no rounding mode.
+        final FloatingPointFormula op = (FloatingPointFormula) toTerm(expr.getOp());
+        return floatingPointFormulaManager.toIeeeBitvector(op);
+    }
+
+    private Formula transformFpFromIeeeBv(final FpFromIeeeBvExpr expr) {
+        // fromIeeeBitvector is the bit reinterpretation; castFrom (used by transformFpFromBv)
+        // would instead round the integer value.
+        final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
+        final FloatingPointType fpSort =
+                FloatingPointType.getFloatingPointType(
+                        expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
+        return floatingPointFormulaManager.fromIeeeBitvector(val, fpSort);
     }
 
     private Formula transformFpToFp(final FpToFpExpr expr) {

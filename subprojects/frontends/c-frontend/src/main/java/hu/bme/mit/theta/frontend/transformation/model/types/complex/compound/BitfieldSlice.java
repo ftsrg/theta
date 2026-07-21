@@ -57,6 +57,13 @@ public final class BitfieldSlice {
     public static final String WIDTH = "bitfieldWidth";
 
     /**
+     * Metadata marking a union member whose cell holds a floating-point value as its raw IEEE-754
+     * bit pattern. The read is a reinterpretation ({@code FpFromIeeeBv}); an assignment through it
+     * must splice {@code FpToIeeeBv} of the right-hand side, not a plain integer cast.
+     */
+    public static final String IEEE_FLOAT = "ieeeFloatCell";
+
+    /**
      * Metadata marking an expression as the *cell* of a union member that is one packed unit of
      * bitfields (see {@code CStruct#isPackedScalar}). Reading a member of such a struct slices this
      * cell instead of dereferencing it again, which is what makes the bitfield view and a sibling

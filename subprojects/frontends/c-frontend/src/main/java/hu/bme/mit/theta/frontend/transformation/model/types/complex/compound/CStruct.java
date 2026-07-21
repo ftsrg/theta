@@ -259,6 +259,14 @@ public class CStruct extends CInteger {
                 width = overlay;
             } else if (fieldType instanceof CArray) {
                 return null;
+            } else if (fieldType
+                    instanceof
+                    hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+                // A floating-point member shares the cell as its raw IEEE-754 bit pattern -- the
+                // width of its encoding, which equals the type's width. Reading it reinterprets the
+                // bits (FpFromIeeeBv), so a float always forces bitvector arithmetic and the cell is
+                // a bitvector; see the union access path.
+                width = fieldType.width();
             } else if (fieldType instanceof CInteger) {
                 // CPointer is a CInteger here: a pointer value is a pointer-wide integer.
                 final int declared = declaredBitfieldWidth(i);

@@ -32,6 +32,8 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -1635,29 +1637,84 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         parseContext
                 .getMetadata()
                 .create(access, "cType", slicedUnionMember ? cellType : embeddedType);
+        if (slicedUnionMember
+                && embeddedType
+                        instanceof
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
+                && embeddedType.width() == structType.unionCellWidth()) {
+            // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is the
+            // reinterpretation of those bits, not a slice. Only the full-width case is modelled --
+            // the whole cell is the float's pattern -- which is the newlib idiom
+            // `union { double value; struct { uint32_t lsw, msw; } parts; }`. The cell is stamped so
+            // an assignment splices FpToIeeeBv of the value back (see FrontendXcfaBuilder).
+            final FpType fpType = (FpType) embeddedType.getSmtType();
+            final Expr<?> value =
+                    hu.bme.mit.theta.core.type.fptype.FpExprs.FromIeeeBv(
+                            cast(access, (BvType) cellType.getSmtType()), fpType);
+            parseContext.getMetadata().create(value, "cType", embeddedType);
+            // The whole cell is the float's pattern: an assignment read-modify-writes bits [0,
+            // width) -- i.e. all of them -- with FpToIeeeBv of the value (see the IEEE_FLOAT path
+            // in FrontendXcfaBuilder).
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.CELL,
+                            access);
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.OFFSET,
+                            0);
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.WIDTH,
+                            structType.unionCellWidth());
+            parseContext
+                    .getMetadata()
+                    .create(
+                            value,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.IEEE_FLOAT,
+                            true);
+            return value;
+        }
+        if (slicedUnionMember
+                && embeddedType instanceof CStruct packed
+                && packed.overlayWidth() != null) {
+            // A packed-struct member of the union (`union { double value; struct {...} parts; }`).
+            // When it occupies the whole cell -- overlay width == cell width, the usual case -- the
+            // cell *is* the member, so return the Dereference itself with the PACKED_CELL mark. That
+            // matters for a nested write like `u.parts.msw = x`: the read-modify-write needs a real
+            // cell to slice, and a sliceOf wrapper (an Ite/arithmetic expression) is not one. A
+            // narrower packed member is genuinely a slice.
+            final var slot = structType.unionSlotOf(memberName);
+            final Expr<?> cellExpr =
+                    slot.bitOffset() == 0 && slot.width() == structType.unionCellWidth()
+                            ? access
+                            : sliceOf(
+                                    access, slot, unsignedIntegerOfWidth(packed.overlayWidth()));
+            parseContext.getMetadata().create(cellExpr, "cType", embeddedType);
+            parseContext
+                    .getMetadata()
+                    .create(
+                            cellExpr,
+                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                    .BitfieldSlice.PACKED_CELL,
+                            true);
+            return cellExpr;
+        }
         if (slicedUnionMember) {
-            // The member's value is the low bits of the union's word. `sliceOf` carries the cell
-            // along as metadata, so assigning to this member read-modify-writes just its bits and
-            // leaves the rest of the word -- i.e. whatever the sibling members hold -- intact.
-            final CComplexType embeddedIfStruct =
-                    embeddedType instanceof CStruct packed && packed.overlayWidth() != null
-                            ? unsignedIntegerOfWidth(packed.overlayWidth())
-                            : embeddedType;
-            final Expr<?> sliced =
-                    sliceOf(access, structType.unionSlotOf(memberName), embeddedIfStruct);
-            if (embeddedIfStruct != embeddedType) {
-                // A packed-struct member of the union: its value is the word, and member accesses
-                // on *it* slice that word further.
-                parseContext.getMetadata().create(sliced, "cType", embeddedType);
-                parseContext
-                        .getMetadata()
-                        .create(
-                                sliced,
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                        .BitfieldSlice.PACKED_CELL,
-                                true);
-            }
-            return sliced;
+            // A plain-integer member: its value is a slice of the union's word. `sliceOf` carries
+            // the cell along as metadata, so assigning to it read-modify-writes just its bits and
+            // leaves the rest of the word -- whatever the sibling members hold -- intact.
+            return sliceOf(access, structType.unionSlotOf(memberName), embeddedType);
         }
         if (cellType != embeddedType) {
             // The union's cell, read at the packed view's integer width: mark it so member

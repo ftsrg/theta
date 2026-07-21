@@ -1148,6 +1148,42 @@ the kind of thing that hides a regression, so the key has to be checked, not ass
 
 **Not covered by this run:** batch 56 (union slicing), which landed after it started.
 
+## Batch 58 (AD7) — floating-point union punning (unlocks ~265 float-newlib tasks)
+
+The other half of the union work, and the last big union cluster after batch 56. A union of a
+double and an integer view -- `union { double value; struct { uint32_t lsw, msw; } parts; }`,
+the newlib "extract the exponent/mantissa words" idiom, ~265 tasks -- was refused because a
+double's SMT sort is not a bitvector, so reading it as bits needs a *reinterpretation* the model
+lacked.
+
+Built in two layers. First the primitive (committed separately as `b683bb605`): `FpToIeeeBvExpr` /
+`FpFromIeeeBvExpr`, the raw IEEE-754 bit reinterpretation (`fpToIEEEBV` / 2-arg `mkFPToFP`), as
+opposed to `FpToBvExpr`'s numeric rounding. Verified against the JVM's own `Double.doubleToLongBits`
+in the constant folder and through a real z3-legacy solve. Wired into every solver backend: z3,
+z3-legacy, and JavaSMT natively; the generic SMT-LIB backend throws (`fp.to_ieee_bv` is Z3-only,
+and the portfolio uses Z3); Eldarica already has no FP support.
+
+Then the frontend. A float member now contributes to `unionCellWidth` as its encoding width, and
+because a float forces bitvector arithmetic the shared cell is always a bitvector. Reading the float
+is `FromIeeeBv(cell)`; an assignment is marked so the read-modify-write path splices `ToIeeeBv` of
+the value instead of an integer cast. One subtlety the reverse direction exposed: a packed-struct
+member that fills the whole cell (`parts`) must return the cell's `Dereference` directly, not a
+`sliceOf` wrapper -- a nested write `u.parts.msw = x` needs a real cell to slice, and an
+Ite/arithmetic expression is not one.
+
+Verified end to end, both directions and non-vacuously: `u.value = 1.0` gives `u.parts.msw ==
+0x3FF00000` and `lsw == 0` (Safe; Unsafe when the constant is falsified), and assembling
+`msw = 0x40000000, lsw = 0` gives `u.value == 2.0` (Safe). Three real `float-newlib` `.c` files that
+were frontend-rejected now build.
+
+**Still refused, and this is now the last union boundary:** an **array** member
+(`union { double value; unsigned char bytes[8]; }`) is many cells, not one word -- the
+intel-tdx-module buffer views (764 tasks), which need the byte-addressed layout `ObjectLayout`
+computes but nothing yet addresses memory through.
+
+Gate: 992 module tests (core 675 incl. the IEEE eval + z3 solve tests, c2xcfa 180, frontend 137;
+new FP-union tests replace the two that asserted the old rejection), 255 canaries, 21 fixtures.
+
 ## Batch 57 — multi-dimensional and nested brace initializers (unlocks 865 tasks)
 
 A global multi-dimensional array *with an initializer* was refused outright ("Not handling init
