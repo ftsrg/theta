@@ -919,6 +919,70 @@ an *address-taken local* rather than `alloca` (`int s; int *p = &s; for (*p = 0;
 the analysis and fails there with `IllegalStateException: Incomplete dereferences (missing
 uniquenessIdx)`. An error, not a wrong answer — but it is the next thing in this area.
 
+## Run 2026-07-20_22-41-batch51 (sosy, 5750G, batches 47–51) — the initializer fix confirmed, **and a 6-task soundness regression in multi-dim VLAs**
+
+First run to measure batches 47–51 at scale (pointer-to-array, aggregate array elements, multi-dim
+arrays, sub-word union overlay, the brace-initializer fix). Compared against
+`results-2026-07-20_15-44-batch46`:
+
+**Correct 10,277 → 10,308 (+31). Error 25,929 → 25,891 (−38). Unknown 368 → 369. Wrong 28 → 34 (+6).**
+
+Two of the three checks pass, and the third fails in the way that matters most.
+
+**(a) The batch-51 fix is confirmed.** Total frontend-failed **6,661 → 6,544 (−117)**, and the three
+directories the batch-46 regression hit moved exactly as predicted: `ldv-memsafety-bitfields`
+**5 → 0**, `ldv-linux-3.4-simple` 586 → 565, `ldv-challenges` 198 → 197.
+
+**(b) Correct recovered and beat the pre-regression baseline** — 10,308 against batch 43's 10,288.
+Transition directions confirm this is real rather than luck: deterministic frontend moves are
+**+30 error→correct against −3 the other way**, while timeout/OOM flips are symmetric noise
+(27 in, 23 out).
+
+**(c) The wrong-set is NOT clean: 6 newly wrong, 0 fixed.** `test-bitfields-1-1` is still correct,
+so batches 45–46 hold, but every new wrong is an array task:
+
+| task | was | now | expected |
+|---|---|---|---|
+| `array-patterns/array13_pattern` | frontend failed | **false(unreach-call)** | true |
+| `array-patterns/array15_pattern` | frontend failed | **false(unreach-call)** | true |
+| `array-patterns/array27_pattern` | frontend failed | **false(unreach-call)** | true |
+| `array-patterns/array28_pattern` | frontend failed | **false(unreach-call)** | true |
+| `array-patterns/array30_pattern` | frontend failed | **false(unreach-call)** | true |
+| `array-multidimensional/init-non-constant-2-n-u` | frontend failed | **false(unreach-call)** | true |
+
+All six are **multi-dimensional VLAs** — `int array[ARR_SIZE][ARR_SIZE]`, `unsigned A[m][n]` — and
+all six are `error → wrong`, one-directional, so this is deterministic, not noise.
+
+**Root cause (batch 49, mine).** The flat model lowers `a[i][j]` to `arrays[a][i*rowLen + j]`, and
+`rowOf` needs `rowLen` as a compile-time constant. For a VLA there is none, so `constantArrayLength`
+returns null, `rowOf` returns null, and the code **falls through to the old row-object model**:
+`arrays[arrays[a][i]][j]`. Those row bases are never allocated — `allocateArrayElements` only covers
+`CStruct` elements with a constant count — so they are unconstrained and the solver may make `a[0]`
+and `a[1]` the same base. Two rows alias, the summation loop reads back the wrong values, and the
+assertion is spuriously violated. This is the *same* class of bug batch 48 fixed for arrays of
+structs ("bases left unconstrained, so the solver could conflate two elements"); the VLA path slips
+past it because `rowOf` bails out before reaching the flat model at all.
+
+Before batches 47–49 these tasks died in the frontend, so the unsoundness existed but was masked.
+Unlocking them exposed it — the frontend work did not create the hole, it removed the lid.
+
+**Score impact is negative overall despite +31 correct.** A false alarm scores −16 in SV-COMP, so
+six of them is −96, against roughly +40 for the correct gains. **This branch should not ship in
+this state.**
+
+**Fix, in order of preference:**
+1. **Use the symbolic dimension** — `i*ARR_SIZE + j` is a perfectly good expression; nothing
+   requires `rowLen` to be a literal. Keeps the tasks unlocked *and* sound. Caveat to handle: C
+   fixes a VLA's size at declaration, so a later reassignment of `ARR_SIZE` must not retroactively
+   change the layout — capture the dimension into a temporary at declaration.
+2. **Failing that, reject** a non-constant multi-dim row length outright. That returns these tasks
+   to ERROR (score 0) instead of a wrong answer (−16) — the same "fail loudly rather than answer
+   wrongly" call as batch 45's initializer guard, which the batch-46 run vindicated.
+
+Also worth noting: **3 `ldv-linux-3.4-simple` tasks regressed correct → `frontend failed, before
+parsing finished`** (two `dib3000mc`, one `max8649`). Small and deterministic, so real, but
+unrelated to the array issue and not yet diagnosed.
+
 ## Run 2026-07-20_15-44-batch46 (sosy, 5750G, batches 45–46) — bitfield packing confirmed, **and a 36-task regression found**
 
 Full 36,602-run integer run on the batch-46 archive (bitfield storage units + slicing, union
