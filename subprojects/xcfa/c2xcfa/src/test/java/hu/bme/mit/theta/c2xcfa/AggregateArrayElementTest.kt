@@ -17,6 +17,7 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -113,6 +114,107 @@ class AggregateArrayElementTest {
     assertTrue(
       w.any { it.second != "0" && it.second.contains("n") },
       "a[1][0] must be offset by the symbolic row length; got $w",
+    )
+  }
+
+  /** The literal values a program's memory writes store, in program order, offset paired. */
+  private fun writtenValues(src: String): List<Pair<String, String>> {
+    val parseContext = ParseContext()
+    val (xcfa, _, _) =
+      getXcfaFromC(
+        src.byteInputStream(),
+        parseContext,
+        false,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        NullLogger.getInstance(),
+      )
+    val found = mutableListOf<Pair<String, String>>()
+    fun visit(label: XcfaLabel) {
+      when (label) {
+        is SequenceLabel -> label.labels.forEach { visit(it) }
+        is StmtLabel ->
+          (label.stmt as? MemoryAssignStmt<*, *, *>)?.let {
+            found.add(it.deref.offset.toString() to ExprUtils.simplify(it.expr).toString())
+          }
+        else -> {}
+      }
+    }
+    xcfa.procedures.forEach { proc -> proc.edges.forEach { visit(it.label) } }
+    return found
+  }
+
+  @Test
+  fun aFullyBracedMatrixInitializerFillsFlatCells() {
+    // The 865-task unlock: a global multi-dimensional array with an initializer used to be refused
+    // outright ("Not handling init expression of high dimsension array"), almost all
+    // neural-network weight matrices and hardness. `int a[2][3] = {{1,2,3},{4,5,6}}` is one
+    // contiguous object, so its values land in cells 0..5 in row-major order.
+    val w = writtenValues("int a[2][3] = {{1,2,3},{4,5,6}};\nint main() { return a[0][0]; }")
+    assertEquals(
+      listOf("1", "2", "3", "4", "5", "6"),
+      (0..5).map { off -> w.first { it.first == off.toString() }.second },
+      "row-major flat fill; got $w",
+    )
+  }
+
+  @Test
+  fun aBraceElidedMatrixInitializerFillsTheSameCells() {
+    // C allows the inner braces to be dropped: `{1,2,3,4,5,6}` fills `int a[2][3]` identically.
+    // This is where the frontend's per-element position stops being a cell index -- element k is
+    // row k, three cells wide -- so the flat walk descends by the running cursor instead.
+    val w = writtenValues("int a[2][3] = {1,2,3,4,5,6};\nint main() { return a[0][0]; }")
+    assertEquals(
+      listOf("1", "2", "3", "4", "5", "6"),
+      (0..5).map { off -> w.first { it.first == off.toString() }.second },
+      "elided fill matches the braced one; got $w",
+    )
+  }
+
+  @Test
+  fun shortRowsInAMatrixInitializerZeroFillTheRest() {
+    // A braced sub-object that runs out early still advances past its whole row, so
+    // `{{1,2},{4}}` is 1,2,0,4,0,0 -- the untouched cells keep the zero C guarantees them.
+    val w = writtenValues("int a[2][3] = {{1,2},{4}};\nint main() { return a[0][0]; }")
+    assertEquals(
+      listOf("1", "2", "0", "4", "0", "0"),
+      (0..5).map { off -> w.first { it.first == off.toString() }.second },
+      "short rows zero-fill to their row boundary; got $w",
+    )
+  }
+
+  @Test
+  fun deeplyBracedScalarLeavesAreUnwrapped() {
+    // The canary regression the initializer change first caused. A struct of structs initialized
+    // with nested braces bottoms out at scalar leaves that are themselves braced -- the kernel
+    // headers write `{{{{{0U}}}}}`. Once nested braces build real nested lists (they used to
+    // collapse to one UnsupportedInitializer), a scalar leaf arrives wrapped, and asking a list for
+    // its single `.expression` throws. It must be unwrapped instead. `int x = {{5}}` is the crux.
+    assertDoesNotThrow {
+      build(
+        """
+        struct Inner { int v; };
+        struct Outer { struct Inner in; int tag; };
+        struct Outer o = { { {5} }, 7 };
+        int over = {{9}};
+        int main() { return o.in.v + o.tag + over; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aThreeDimensionalInitializerFlattensToo() {
+    // The walk is depth-first, so it generalises past two dimensions. `int a[2][2][2]` fully
+    // braced fills cells 0..7 with 1..8 in order.
+    val w =
+      writtenValues(
+        "int a[2][2][2] = {{{1,2},{3,4}},{{5,6},{7,8}}};\nint main() { return a[0][0][0]; }"
+      )
+    assertEquals(
+      (1..8).map { it.toString() },
+      (0..7).map { off -> w.first { it.first == off.toString() }.second },
+      "3-D initializer flattens depth-first; got $w",
     )
   }
 

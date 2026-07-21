@@ -98,43 +98,9 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         // `= { }` (GNU / C23 empty initializer) has no initializerList at all.
                         final CParser.InitializerListContext initializerList =
                                 context.initializer().bracedPrimaryExpression().initializerList();
-                        CInitializerList cInitializerList =
-                                new CInitializerList(cSimpleType.getActualType(), parseContext);
                         try {
-                            // Elements are placed C-style: a designator sets the position, each
-                            // element advances it by one. A designation precedes its initializer
-                            // among the children, so walk them in order.
-                            int nextPosition = 0;
-                            for (org.antlr.v4.runtime.tree.ParseTree child :
-                                    initializerList == null
-                                            ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
-                                            : initializerList.children) {
-                                if (child instanceof CParser.DesignationContext designation) {
-                                    nextPosition =
-                                            designatedPosition(designation, cSimpleType);
-                                    continue;
-                                }
-                                if (!(child instanceof CParser.InitializerContext initializer)) {
-                                    continue; // comma
-                                }
-                                Expr<?> expr =
-                                        cSimpleType
-                                                .getActualType()
-                                                .castTo(
-                                                        initializer
-                                                                .assignmentExpression()
-                                                                .accept(functionVisitor)
-                                                                .getExpression());
-                                parseContext.getMetadata().create(expr, "cType", cSimpleType);
-                                cInitializerList.addStatement(
-                                        new CExpr(
-                                                IntLitExpr.of(
-                                                        java.math.BigInteger.valueOf(
-                                                                nextPosition++)),
-                                                parseContext),
-                                        new CExpr(expr, parseContext));
-                            }
-                            initializerExpression = cInitializerList;
+                            initializerExpression =
+                                    buildInitializerList(initializerList, cSimpleType);
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);
@@ -163,6 +129,64 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             ret.get(0).incDerefCounter(cSimpleType.getPointerLevel());
         }
         return ret;
+    }
+
+    /**
+     * Builds a (possibly nested) brace initializer into a {@link CInitializerList}.
+     *
+     * <p>Each element is placed C-style: a designator sets the position, otherwise it takes the
+     * next one. A scalar element is folded to its value; a *braced* element (`{{1,2,3},{4,5,6}}`)
+     * recurses into a nested list of its own -- which is what lets a multi-dimensional array carry
+     * an initializer at all. Before, the loop called {@code initializer.assignmentExpression()}
+     * unconditionally, so a nested brace (a `bracedPrimaryExpression`, not an assignment
+     * expression) made it NPE and the whole initializer was dropped as unsupported -- 865 tasks,
+     * almost all neural-network weight matrices.
+     *
+     * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the flat
+     * version did; the c2xcfa side re-casts to the true cell type when it writes the flat object, so
+     * the outer type here only has to be consistent, not exact.
+     */
+    private CInitializerList buildInitializerList(
+            CParser.InitializerListContext initializerList, CSimpleType cSimpleType) {
+        final CInitializerList cInitializerList =
+                new CInitializerList(cSimpleType.getActualType(), parseContext);
+        int nextPosition = 0;
+        for (org.antlr.v4.runtime.tree.ParseTree child :
+                initializerList == null
+                        ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
+                        : initializerList.children) {
+            if (child instanceof CParser.DesignationContext designation) {
+                nextPosition = designatedPosition(designation, cSimpleType);
+                continue;
+            }
+            if (!(child instanceof CParser.InitializerContext initializer)) {
+                continue; // comma
+            }
+            final CStatement value;
+            if (initializer.bracedPrimaryExpression() != null) {
+                value =
+                        buildInitializerList(
+                                initializer.bracedPrimaryExpression().initializerList(),
+                                cSimpleType);
+            } else {
+                final Expr<?> expr =
+                        cSimpleType
+                                .getActualType()
+                                .castTo(
+                                        initializer
+                                                .assignmentExpression()
+                                                .accept(functionVisitor)
+                                                .getExpression());
+                parseContext.getMetadata().create(expr, "cType", cSimpleType);
+                value = new CExpr(expr, parseContext);
+            }
+            cInitializerList.addStatement(
+                    new CExpr(
+                            IntLitExpr.of(java.math.BigInteger.valueOf(nextPosition++)),
+                            parseContext),
+                    value);
+        }
+        return cInitializerList;
     }
 
     @Override

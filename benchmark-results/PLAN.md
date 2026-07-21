@@ -1148,6 +1148,44 @@ the kind of thing that hides a regression, so the key has to be checked, not ass
 
 **Not covered by this run:** batch 56 (union slicing), which landed after it started.
 
+## Batch 57 — multi-dimensional and nested brace initializers (unlocks 865 tasks)
+
+A global multi-dimensional array *with an initializer* was refused outright ("Not handling init
+expression of high dimsension array") -- 865 tasks, almost all neural-network weight matrices
+(537) and hardness (306). Two things were actually broken, both fixed here.
+
+**The frontend could not build nested initializers at all.** `DeclarationVisitor` called
+`initializer.assignmentExpression()` on every element unconditionally, so a nested brace
+(`{{1,2,3},{4,5,6}}`, a `bracedPrimaryExpression` rather than an assignment expression) NPE'd and
+the *whole* initializer was dropped as `UnsupportedInitializer`. It now recurses: a scalar element
+folds to its value, a braced element builds a nested `CInitializerList` of its own.
+
+**c2xcfa now writes the initializer into the flat contiguous cells.** A multi-dimensional array is
+one object (batch 49/55), so its initializer has to fill `arrays[a][0..N]` directly; recursing per
+row -- the one-dimensional path -- would give each row a base of its own and initialise storage no
+read ever looks at, leaving the array silently zero. `initializeFlatArray` walks the initializer
+with a single running cursor, the "current object" of C's rules, so both spellings come out
+identical: `{{1,2,3},{4,5,6}}` and the brace-elided `{1,2,3,4,5,6}` both fill cells 0..5, and a
+short row `{{1,2},{4}}` zero-fills the rest of its row. The key subtlety: the frontend stamps every
+element with its per-level position, but for a *descending* scalar that index is not a cell offset
+(element k of `int[2][3]` is row k, three cells wide), so the scalar branch follows the running
+cursor and ignores it.
+
+Verified structurally (the exact cells 1..6, and 1,2,0,4,0,0 for the short-row case) and
+semantically: `a[0][0]+a[1][2]==7` proves Safe, `a[1][0]==4` proves Unsafe, both non-vacuous. Real
+hardness `.i` files build again (the neural-network amalgamations progress past this to a separate
+pre-existing `__VERIFIER_nondet_float` gap).
+
+**A regression the canaries caught, then fixed:** once nested braces build real lists, a *scalar*
+leaf of a deeply nested aggregate arrives wrapped in braces -- the kernel headers write
+`{{{{{0U}}}}}` -- and the scalar init branch threw asking a list for its single `.expression`. Three
+`ldv-linux-3.4-simple` tasks (`hid-ezkey`, `poulsbo`, `rc-adstech-dvb-t-pci`) went frontend-failed.
+`unwrapScalarInitializer` now peels braces down to the scalar (`int x = {{5}}` is 5); an empty or
+ambiguous list falls back to the zero value. This is exactly why the 255-canary gate runs on every
+frontend change.
+
+Gate: 374 module tests (5 new), 255 canaries, 20 fixtures.
+
 ## Batch 56 (AD7, the tractable half) — union members share the word as bit slices
 
 Measured first, then built. Ranking the remaining frontend failures in the batch-51 run put union

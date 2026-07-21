@@ -147,12 +147,6 @@ class FrontendXcfaBuilder(
       )
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
-      if (
-        globalDeclaration.get1().initExpr != null &&
-          globalDeclaration.get1().arrayDimensions.size > 1
-      ) {
-        error("Not handling init expression of high dimsension array ${globalDeclaration.get1()}")
-      }
       initializeGlobalVariable(
         builder,
         globalDeclaration.get2().ref,
@@ -681,6 +675,17 @@ class FrontendXcfaBuilder(
             .getValue(getArraySize(type, initExpr).toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
       }
+      if (type.embeddedType is CArray && initExpr != null) {
+        // A multi-dimensional array is one contiguous object, so its initializer has to be written
+        // straight into the flat cells. Recursing per row -- the one-dimensional path below --
+        // would give every row a base of its own and initialise *those* instead, storage no read
+        // ever looks at, since accesses go to arrays[a][i*stride + j]. The array would come back
+        // uninitialised, silently. (This case used to be refused outright: "Not handling init
+        // expression of high dimsension array", 865 tasks, almost all neural-networks weight
+        // matrices and hardness.)
+        initializeFlatArray(type, initExpr, globalDeclaration, initStmtList)
+        return
+      }
       initializeCompound(
         builder,
         getArraySize(type, initExpr),
@@ -728,12 +733,31 @@ class FrontendXcfaBuilder(
         )
       }
     } else {
-      if (initExpr != null && initExpr.expression !is UnsupportedInitializer) {
-        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(initExpr.expression)))
+      // C permits a scalar to be braced -- `int x = {5}`, and, more to the point, a scalar leaf of a
+      // deeply nested aggregate initializer like `{{{{{0U}}}}}` in the kernel headers. Now that
+      // nested braces build genuine nested lists (before, they collapsed to one UnsupportedInitializer
+      // that the guards swallowed), the scalar has to be unwrapped out of them; asking a
+      // CInitializerList for its single .expression throws.
+      val scalarInit = unwrapScalarInitializer(initExpr)
+      if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
+        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression)))
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
       }
     }
+  }
+
+  /**
+   * The scalar initializer inside any number of braces, or null when there is nothing usable.
+   * `5`, `{5}` and `{{5}}` all yield `5`; an empty `{}` or a designated/multi-element list that is
+   * not a plain scalar wrapper yields null, so the caller falls back to the zero value.
+   */
+  private fun unwrapScalarInitializer(initExpr: CStatement?): CStatement? {
+    var current = initExpr
+    while (current is CInitializerList) {
+      current = current.statements.singleOrNull()?.get2() ?: return null
+    }
+    return current
   }
 
   private fun initializeCompound(
@@ -751,6 +775,109 @@ class FrontendXcfaBuilder(
         Dereference(globalDeclaration, offsetLiteral(i.toLong()), et.smtType)
       parseContext.metadata.create(embeddedDeclaration, "cType", et)
       initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
+    }
+  }
+
+  /** How many storage cells one value of [type] occupies; mirrors `ExpressionVisitor#cellCountExpr`. */
+  private fun cellsOf(type: CComplexType): Int =
+    when (type) {
+      is CArray -> flatArraySize(type) ?: 1
+      is CStruct -> if (type.isUnion) 1 else type.unitCount
+      else -> 1
+    }
+
+  /** The scalar type the cells of a (possibly nested) array hold. */
+  private fun scalarElementOf(type: CArray): CComplexType {
+    var element: CComplexType = type.embeddedType
+    while (element is CArray) {
+      element = element.embeddedType
+    }
+    return element
+  }
+
+  /**
+   * Writes a multi-dimensional array's brace initializer into its flat cells.
+   *
+   * The walk carries a single running cursor rather than indexing row by row, which is what makes
+   * both spellings C allows come out the same: `float w[2][3] = {{1,2,3},{4,5,6}}` and the
+   * brace-elided `float w[2][3] = {1,2,3,4,5,6}` both fill cells 0..5. A designator resets the
+   * cursor to that element's start. Cells the initializer does not reach keep the zero C promises
+   * them.
+   */
+  private fun initializeFlatArray(
+    type: CArray,
+    initExpr: CStatement,
+    target: Expr<*>,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    val total = flatArraySize(type) ?: return
+    val scalarType = scalarElementOf(type)
+    val values = LinkedHashMap<Int, CStatement>()
+    fillFlat(type, initExpr, intArrayOf(0), values)
+    for (index in 0 until total) {
+      val cell = Dereference(target, offsetLiteral(index.toLong()), scalarType.smtType)
+      parseContext.metadata.create(cell, "cType", scalarType)
+      val value = values[index]
+      initStmtList.add(
+        AssignStmtLabel(
+          cell,
+          if (value == null) scalarType.nullValue else scalarType.castTo(value.expression),
+        )
+      )
+    }
+  }
+
+  /**
+   * Walks an initializer with a single running scalar cursor -- the "current object" of C's
+   * initialization rules -- so both spellings come out identical. A **scalar** value is placed at
+   * the cursor and advances it by one cell; that alone makes `{1,2,3,4,5,6}` (brace elision) fill
+   * cells 0..5. A **braced sub-list** initializes one whole sub-object: it is positioned at the
+   * next element boundary (or where a designator points), filled recursively, and then the cursor
+   * jumps past the entire sub-object, so a short row like `{1}` in `{{1},{4}}` still leaves the
+   * rest of its row zero. Only the multiply by the element stride is what a sub-list does that a
+   * scalar does not, which is exactly the distinction the earlier version got wrong.
+   */
+  private fun fillFlat(
+    type: CComplexType,
+    init: CStatement?,
+    cursor: IntArray,
+    out: MutableMap<Int, CStatement>,
+  ) {
+    if (init == null) return
+    if (init !is CInitializerList) {
+      out[cursor[0]] = init
+      cursor[0]++
+      return
+    }
+    if (type !is CArray) {
+      return // a struct member's own initializer keeps the per-unit path
+    }
+    val elementType = type.embeddedType
+    val stride = cellsOf(elementType)
+    val base = cursor[0]
+    init.statements.forEach { entry ->
+      val designated = designatedIndex(entry.get1())
+      val value = entry.get2()
+      if (value is CInitializerList) {
+        // A braced sub-object: place it at its element boundary and skip the whole thing after.
+        val elementStart =
+          when {
+            designated != null -> base + designated * stride
+            (cursor[0] - base) % stride == 0 -> cursor[0]
+            else -> base + ((cursor[0] - base) / stride + 1) * stride
+          }
+        cursor[0] = elementStart
+        fillFlat(elementType, value, cursor, out)
+        cursor[0] = elementStart + stride
+      } else {
+        // A scalar where a sub-object was expected: brace elision. It descends to the next cell of
+        // the flattened array at the running cursor. The frontend stamps every element with its
+        // per-level position, but for a descending scalar that index is not a cell offset (element
+        // k of `int[2][3]` is row k, three cells wide), so it is deliberately not consulted here --
+        // the running cursor is the current object, exactly as C defines it.
+        out[cursor[0]] = value
+        cursor[0]++
+      }
     }
   }
 
