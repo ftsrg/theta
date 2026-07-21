@@ -57,9 +57,12 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -302,9 +305,8 @@ class FrontendXcfaBuilder(
   ) {
     if (MemsafetyPass.enabled) {
       val fitsall = Fitsall(null, parseContext)
-      initStmtList.add(
-        builder.allocate(parseContext, objectExpr, fitsall.getValue("${type.unitCount}"))
-      )
+      val size = if (type.isUnion) unionCellCount(type) else type.unitCount
+      initStmtList.add(builder.allocate(parseContext, objectExpr, fitsall.getValue("$size")))
     }
     if (type.isUnion) return
     type.fields.forEach { field ->
@@ -360,7 +362,7 @@ class FrontendXcfaBuilder(
    * so a constant base cannot alias anything.
    */
   private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
-    labels.add(alloca(target, type.unitCount))
+    labels.add(alloca(target, if (type.isUnion) unionCellCount(type) else type.unitCount))
     if (type.isUnion) return
     type.fields.forEach { field ->
       allocateStackSubobject(
@@ -793,11 +795,23 @@ class FrontendXcfaBuilder(
     }
   }
 
+  /**
+   * How many cells a union occupies: the single placeholder cell every word-sliceable union gets,
+   * or -- for a byte-laid-out one (AD7, [CStruct.unionCellWidth] null: an array member or
+   * otherwise too wide/shaped for one packed word) -- its real [ObjectLayout] size in bytes, since
+   * that is the granularity [ExpressionVisitor]'s byte cells actually address it at. Getting this
+   * wrong either under- or over-sizes the allocation and `__theta_ptr_size`, so it must track
+   * [ExpressionVisitor]'s own byte-offset arithmetic exactly.
+   */
+  private fun unionCellCount(type: CStruct): Int =
+    if (type.unionCellWidth() == null) ObjectLayout.of(type, parseContext.architecture).bitSize / 8
+    else 1
+
   /** How many storage cells one value of [type] occupies; mirrors `ExpressionVisitor#cellCountExpr`. */
   private fun cellsOf(type: CComplexType): Int =
     when (type) {
       is CArray -> flatArraySize(type) ?: 1
-      is CStruct -> if (type.isUnion) 1 else type.unitCount
+      is CStruct -> if (type.isUnion) unionCellCount(type) else type.unitCount
       else -> 1
     }
 
@@ -1021,8 +1035,43 @@ class FrontendXcfaBuilder(
     val bitfieldCell =
       parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
         as? Dereference<*, *, *>
+    // Assigning to a byte-laid-out union member (AD7, the intractable half -- see
+    // ExpressionVisitor#byteScalarRead): unlike a bitfield there is no single cell to
+    // read-modify-write, so the right-hand side is split into its own one-byte cells and each is
+    // written outright to the union's own byte-cell array. A single unsigned byte never reaches
+    // here -- it is a bare Dereference (see ByteUnionSlice#WIDTH), handled by the ordinary
+    // `is Dereference` branch below like any other scalar lvalue.
+    val byteUnionBase =
+      parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.BASE).orElse(null) as? Expr<*>
     val label: XcfaLabel =
-      if (bitfieldCell != null) {
+      if (byteUnionBase != null) {
+        val byteOffset =
+          parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.OFFSET).orElseThrow()
+            as Expr<*>
+        val widthBytes =
+          (parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.WIDTH).orElseThrow()
+              as Number)
+            .toInt()
+        val cellCType = CUnsignedChar(null, parseContext)
+        val castRExpression = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+        val byteValues = ByteUnionSlice.toBytes(castRExpression, widthBytes)
+        val op = cast(byteUnionBase, byteUnionBase.type)
+        val indexType = CComplexType.getUnsignedLong(parseContext)
+        val writes =
+          (0 until widthBytes).map { j ->
+            val off =
+              if (j == 0) cast(byteOffset, op.type)
+              else
+                AbstractExprs.Add(
+                  cast(byteOffset, op.type),
+                  cast(indexType.getValue(j.toString()), op.type),
+                )
+            val deref = Dereference(op, cast(off, op.type), cellCType.smtType)
+            parseContext.metadata.create(deref, "cType", CPointer(null, cellCType, parseContext))
+            StmtLabel(MemoryAssignStmt.create(deref, cast(byteValues[j], deref.type)))
+          }
+        SequenceLabel(writes, metadata = getMetadata(statement))
+      } else if (bitfieldCell != null) {
         val bitOffset =
           (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.OFFSET).orElseThrow()
             as Number)
@@ -1095,6 +1144,7 @@ class FrontendXcfaBuilder(
             )
           } else if (
             (lhsType is CPointer || lhsType is CArray || lhsType is CStruct) &&
+              rExpression !is hu.bme.mit.theta.core.type.anytype.Reference<*, *> &&
               rExpression.hasArithmetic()
           ) {
             // A pointer *value* is an object id: memory is `arrays[base][offset]`, so the offset
@@ -1107,6 +1157,14 @@ class FrontendXcfaBuilder(
             // difference,
             // or a pointer buried under a multiply -- is still refused rather than answered
             // wrongly.
+            //
+            // An already-explicit `&expr` (a bare Reference) is excluded above rather than routed
+            // through this rewrite: `asPointerArithReference` finds its *one* base by looking for a
+            // pointer/array-typed leaf, but `&u.qwords[0]` on a byte-laid-out union's own base `u`
+            // is a CStruct leaf, so it would find none and refuse a perfectly good address purely
+            // because of the byte-offset arithmetic nested inside it (see ByteUnionSlice). A
+            // Reference is already a complete address value -- built by directMemberAccess's own
+            // Dereference, or by `&` elsewhere -- and needs no further reinterpretation here.
             val asReference =
               rExpression.asPointerArithReference(lhsType, parseContext)
                 ?: throw UnsupportedFrontendElementException(

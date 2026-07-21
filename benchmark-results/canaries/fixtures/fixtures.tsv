@@ -19,3 +19,5 @@ layout_attributes.c	efficient	LP64	PARSE-OK	53	packed/aligned attributes + unnam
 char_bitfield_bitvector.c	bitvector	LP64	PARSE-OK	54	unsigned char values under bitvector (Bv 8)
 union_slice_punning.c	efficient	LP64	PARSE-OK	56	union members of differing widths share the word
 union_slice_punning.c	bitvector	LP64	PARSE-OK	56	union slice punning, bitvector Extract/Concat
+byte_addressed_union.c	efficient	LP64	PARSE-OK	60	byte-addressed union (AD7, array members, no shared word)
+byte_addressed_union.c	bitvector	LP64	PARSE-OK	60	byte-addressed union, bitvector Concat/Extract

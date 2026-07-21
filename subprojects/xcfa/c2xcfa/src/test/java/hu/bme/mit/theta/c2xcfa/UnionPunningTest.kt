@@ -208,15 +208,167 @@ class UnionPunningTest {
   }
 
   @Test
-  fun anArrayMemberIsStillRefused() {
-    // Honest boundary. `union { uint64_t raw; uint8_t bytes[8]; }` needs the byte-addressed object
-    // layout: an array is many cells, not one word, so there is nothing to slice. Refused rather
-    // than answered wrongly -- and this is what still blocks the intel-tdx-module cluster.
+  fun anArrayMemberIsNowByteAddressed() {
+    // AD7, the intractable half. `union { uint64_t raw; uint8_t bytes[8]; }` has no single word a
+    // narrower member could slice out of -- an array is many cells, not one -- so this used to be
+    // refused outright ("members do not all share a representation"), which is what blocked the
+    // intel-tdx-module cluster (596 ERRORs on exactly this shape). Byte-granular cells fix that:
+    // `u.bytes[i]` is just the byte at offset `i`, plain address arithmetic under both encodings.
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      assertDoesNotThrow({
+        build(
+          """
+          union U { unsigned long raw; unsigned char bytes[8]; };
+          int main() { union U u; u.raw = 0; return u.bytes[0]; }
+          """
+            .trimIndent(),
+          arithmetic,
+        )
+      }, "byte array member of a byte-laid-out union under $arithmetic")
+    }
+  }
+
+  @Test
+  fun uint128StyleUnionByteAddressesQwordsDwordsAndBytesTogether() {
+    // The motivating intel-tdx-module shape: three views of the same 16 bytes, none of which is a
+    // single word every sibling can share -- qwords[2]/dwords[4]/bytes[16] each need real byte
+    // cells. Little-endian recombination (u.qwords[0] = 0x0102030405060708 => u.bytes[0] == 0x08,
+    // u.bytes[7] == 0x01, u.dwords[0] == 0x05060708) is checked end to end by the actual analysis
+    // under both encodings -- it proves Safe, and negating the assertion proves Unsafe, so the
+    // check is not vacuous -- the same pattern union_slice_punning.c documents for batch 56. This
+    // frontend-level test only pins that the shape keeps reaching the frontend at all.
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      assertDoesNotThrow({
+        build(
+          """
+          typedef union {
+            unsigned long qwords[2];
+            unsigned int dwords[4];
+            unsigned char bytes[16];
+          } uint128_t;
+          int main() {
+            uint128_t u;
+            u.qwords[0] = 0x0102030405060708UL;
+            u.qwords[1] = 0;
+            return u.bytes[0] + u.dwords[0];
+          }
+          """
+            .trimIndent(),
+          arithmetic,
+        )
+      }, "uint128_t-style byte-addressed union under $arithmetic")
+    }
+  }
+
+  @Test
+  fun byteAddressedUnionSupportsAVariableIndex() {
+    // The whole point of byte cells over a bit-sliced word: `u.bytes[i]` is bytes [i, i+1), an
+    // *arithmetic* offset, so a nondeterministic in-range `i` is just as fine as a literal one --
+    // unlike a variable bit-shift, which is only expressible under bitvector.
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      assertDoesNotThrow({
+        build(
+          """
+          extern int __VERIFIER_nondet_int(void);
+          union U { unsigned long raw; unsigned char bytes[8]; };
+          int main() {
+            union U u;
+            u.raw = 0x0102030405060708UL;
+            int i = __VERIFIER_nondet_int();
+            if (i < 0 || i >= 8) { return 0; }
+            return u.bytes[i];
+          }
+          """
+            .trimIndent(),
+          arithmetic,
+        )
+      }, "variable-index byte access under $arithmetic")
+    }
+  }
+
+  @Test
+  fun addressOfASingleByteCellIsFine() {
+    // `&u.bytes[i]` names exactly one byte cell, so the resulting pointer is perfectly meaningful
+    // and must not be refused.
+    assertDoesNotThrow {
+      build(
+        """
+        union U { unsigned long qwords[2]; unsigned char bytes[16]; };
+        int main() {
+          union U u;
+          u.qwords[0] = 0;
+          unsigned char *p = &u.bytes[0];
+          return *p;
+        }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun addressOfAMultiByteMemberIsRefused() {
+    // `&u.qwords[0]` would need a pointer that knows it reads 8 byte-cells as one value -- nothing
+    // in this model can express that, so it is refused rather than guessed at.
     assertThrows(UnsupportedFrontendElementException::class.java) {
       build(
         """
-        union U { unsigned long raw; unsigned char bytes[8]; };
-        int main() { union U u; u.raw = 0; return u.bytes[0]; }
+        union U { unsigned long qwords[2]; unsigned char bytes[16]; };
+        int main() {
+          union U u;
+          u.qwords[0] = 0;
+          unsigned long *p = &u.qwords[0];
+          return (int) *p;
+        }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aBitfieldInsideAByteLaidOutUnionIsStillRefused() {
+    // A bitfield is not a whole number of bytes, so it has no place in the byte-cell model; the
+    // union still needs byte cells for `bytes`, so this must stay refused rather than guessed at.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U { unsigned char bytes[8]; unsigned int lo:4; };
+        int main() { union U u; u.bytes[0] = 0; return (int) u.lo; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aNestedAggregateInsideAByteLaidOutUnionIsStillRefused() {
+    // A nested struct member would need its own base id (the containment model), which this core
+    // implementation does not wire up; refused rather than guessed at.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U {
+          unsigned char bytes[8];
+          struct { unsigned long lo; unsigned long hi; } parts;
+        };
+        int main() { union U u; u.bytes[0] = 0; return (int) u.parts.lo; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aFloatingPointMemberInsideAByteLaidOutUnionIsStillRefused() {
+    // The batch-59 NaN gate on fpToIEEEBV applies here too, not just to the word-sliceable path --
+    // the union still needs byte cells for `bytes`, so this must stay refused rather than reopen
+    // the unsound round-trip.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U { unsigned char bytes[8]; double d; };
+        int main() { union U u; u.bytes[0] = 0; return (int) u.d; }
         """
           .trimIndent()
       )

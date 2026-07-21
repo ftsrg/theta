@@ -69,9 +69,11 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
@@ -1006,6 +1008,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (isCallableFunctionPointer(originalOperand)) {
                     return originalOperand;
                 }
+                // A byte-laid-out union member wider than one cell (`&u.qwords[0]`): the resulting
+                // pointer would have to know it reads several byte-cells as one value, which no
+                // pointer in this model can express. A single byte (`&u.bytes[i]`) is a bare
+                // Dereference and never reaches here (see ByteUnionSlice#WIDTH / byteScalarRead).
+                final var byteUnionWidth =
+                        parseContext.getMetadata().getMetadataValue(originalOperand, ByteUnionSlice.WIDTH);
+                if (byteUnionWidth.isPresent() && ((Number) byteUnionWidth.get()).intValue() > 1) {
+                    throw new UnsupportedFrontendElementException(
+                            "Taking the address of a multi-byte member of a byte-addressed union is"
+                                    + " not supported.");
+                }
                 checkState(
                         originalOperand instanceof RefExpr<?>
                                 || originalOperand instanceof Dereference<?, ?, ?>,
@@ -1201,8 +1214,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> cellCountExpr(CComplexType type) {
         if (type instanceof CStruct structType) {
-            // A union is one cell: its members all share offset 0.
-            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
+            // A word-sliceable union is one cell: its members all share offset 0. A byte-laid-out
+            // one (AD7: unionCellWidth() == null, an array member or otherwise too wide/shaped for
+            // one word) needs its real ObjectLayout size in bytes instead, since that is the
+            // granularity its own members are addressed at -- see [byteLaidOutMemberAccess].
+            final int cells =
+                    structType.isUnion()
+                            ? (structType.unionCellWidth() == null
+                                    ? ObjectLayout.of(structType, parseContext.getArchitecture())
+                                                    .bitSize()
+                                            / 8
+                                    : 1)
+                            : structType.getUnitCount();
             return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
         }
         if (type instanceof CArray arrayType) {
@@ -1586,6 +1609,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
         final CComplexType embeddedType = structType.getFieldsAsMap().get(memberName);
 
+        // AD7, the intractable half: a union whose members cannot share one packed word at all
+        // (unionCellWidth() == null -- an array member, or one otherwise too wide/shaped for a
+        // single word) has no cell for the old slicing path to use. It still does not have to be
+        // refused, though: given real byte-addressed storage, `u.dwords[i]` is just bytes
+        // [i*4, i*4+4), which is plain arithmetic under both encodings.
+        //
+        // `unionMembersShareRepresentation` is deliberately NOT consulted for the trigger, and
+        // byteLaidOutMemberAccess throws its own refusal directly rather than falling back to the
+        // pre-existing "differing representations" check below: that check is only meaningful for
+        // the plain-integer overlay it was written for, since every aggregate type (CArray, CStruct)
+        // reports the same placeholder (ptr-width, unsigned=false) width/sort/sign regardless of its
+        // actual shape, so e.g. two differently-shaped arrays spuriously compare equal by it and
+        // would silently alias rather than being refused.
+        if (structType.isUnion()
+                && structType.unionCellWidth() == null
+                && !structType.getFields().isEmpty()) {
+            return byteLaidOutMemberAccess(base, structType, memberName, embeddedType);
+        }
+
         // Reading a member of a union's packed-bitfield view: its storage is the union's own cell,
         // which `base` already is, so slice that cell rather than dereferencing into a new object.
         // Slicing the same cell the sibling integer member reads is what makes the overlay alias.
@@ -1738,6 +1780,197 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return bitfieldSliceOf(access, structType, memberName, embeddedType);
         }
         return access;
+    }
+
+    /**
+     * Reads [memberName] of a byte-laid-out union (AD7): a plain scalar/pointer member reads
+     * straight from its own byte cells via {@link ByteUnionSlice}; an array member returns a marker
+     * for the next {@code [i]} to resolve, since {@code u.dwords[i]} is bytes {@code [i*4, i*4+4)} --
+     * an arithmetic offset the subscript computes, not something a bare member access can resolve by
+     * itself. Throws for a shape not (yet) supported here -- a bitfield, a floating-point member, a
+     * nested aggregate, or an array of either -- rather than returning null and falling back to the
+     * pre-existing "differing representations" check, which is unsound for this purpose (see below).
+     */
+    private Expr<?> byteLaidOutMemberAccess(
+            Expr<?> base, CStruct structType, String memberName, CComplexType embeddedType) {
+        // This union cannot be one packed word (the caller already checked unionCellWidth() ==
+        // null), so every member access below either resolves to real byte cells or is refused
+        // outright -- deliberately NOT by falling back to the pre-existing "differing
+        // representations" check, which compares an aggregate's *placeholder* representation
+        // (every CStruct/CArray reports the same generic ptr-width/unsigned=false triple regardless
+        // of its actual shape) and so would let two differently-shaped aggregates alias silently
+        // instead of refusing them.
+        if (isBitfieldMember(structType, memberName)) {
+            throw unsupportedByteLaidOutMember(
+                    memberName, "a bitfield is not a whole number of bytes");
+        }
+        final ArchitectureConfig.ArchitectureType arch = parseContext.getArchitecture();
+        final ObjectLayout.Field field = ObjectLayout.of(structType, arch).field(memberName);
+        if (field == null) {
+            throw unsupportedByteLaidOutMember(memberName, "its layout could not be determined");
+        }
+        final Expr<?> byteOffset = indexLiteral(field.bitOffset() / 8);
+        if (embeddedType instanceof CArray arrayType) {
+            final CComplexType elemType = arrayType.getEmbeddedType();
+            if (elemType instanceof
+                    hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+                throw unsupportedByteLaidOutMember(
+                        memberName, "a floating-point element is not supported");
+            }
+            if (!isByteAddressableScalar(elemType)) {
+                throw unsupportedByteLaidOutMember(
+                        memberName, "a nested aggregate element is not supported");
+            }
+            final int elemBytes = ObjectLayout.sizeBits(elemType, arch) / 8;
+            if (elemBytes <= 0) {
+                throw unsupportedByteLaidOutMember(memberName, "its element has no static size");
+            }
+            // A marker for the next `[i]`: wrapped in Pos so the metadata lands on a fresh node, not
+            // on `base`'s own (which already carries the union's cType and must keep it).
+            final Expr<?> marker = Pos(base);
+            parseContext.getMetadata().create(marker, "cType", embeddedType);
+            parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_BASE, base);
+            parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_OFFSET, byteOffset);
+            parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_ELEMENT_BYTES, elemBytes);
+            return marker;
+        }
+        if (embeddedType instanceof
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+            // The batch-59 NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable
+            // path: a floating-point member is refused rather than reopening the unsound round-trip.
+            throw unsupportedByteLaidOutMember(
+                    memberName, "a floating-point member is not supported");
+        }
+        if (!isByteAddressableScalar(embeddedType)) {
+            throw unsupportedByteLaidOutMember(memberName, "a nested aggregate is not supported");
+        }
+        final int widthBytes = ObjectLayout.sizeBits(embeddedType, arch) / 8;
+        if (widthBytes <= 0) {
+            throw unsupportedByteLaidOutMember(memberName, "it has no static size");
+        }
+        return byteScalarRead(base, byteOffset, widthBytes, embeddedType);
+    }
+
+    private static UnsupportedFrontendElementException unsupportedByteLaidOutMember(
+            String memberName, String reason) {
+        return new UnsupportedFrontendElementException(
+                "Accessing member [%s] of a byte-addressed union is not supported: %s."
+                        .formatted(memberName, reason));
+    }
+
+    /** Whether [memberName] of [structType] was declared as a bitfield (a non-whole-byte width). */
+    private boolean isBitfieldMember(CStruct structType, String memberName) {
+        final List<Tuple2<String, CComplexType>> fields = structType.getFields();
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).get1().equals(memberName)) {
+                return structType.declaredBitfieldWidth(i) >= 0;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether [type] can sit in a byte-laid-out union's cells directly: a plain integer or a
+     * pointer, both of which are always a whole number of bytes wide. Excludes a nested
+     * struct/union (needs its own base id, not a flat byte run) and a floating-point type (the
+     * batch-59 NaN gate on `fpToIEEEBV`, deliberately not reopened here).
+     */
+    private boolean isByteAddressableScalar(CComplexType type) {
+        return isPlainInteger(type) || type instanceof CPointer;
+    }
+
+    /** A literal of the current arithmetic's index type ({@code unsigned long}), for a byte offset. */
+    private Expr<?> indexLiteral(long value) {
+        return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(value));
+    }
+
+    /**
+     * The value of an {@code widthBytes}-byte little-endian member starting at byte [byteOffset] of
+     * the byte-laid-out union [base] is stored in. A single unsigned byte is returned bare -- the
+     * Dereference itself -- so that {@code &u.bytes[i]} stays a directly addressable pointer rather
+     * than being wrapped into a non-lvalue expression; anything wider (or signed) is the {@link
+     * ByteUnionSlice#read} recombination of its cells, which the write side of an assignment through
+     * it later splits back into cells (see {@code FrontendXcfaBuilder}).
+     */
+    private Expr<?> byteScalarRead(
+            Expr<?> base, Expr<?> byteOffset, int widthBytes, CComplexType memberType) {
+        final boolean signed = !effectivelyUnsigned(memberType);
+        final CComplexType byteType = unsignedIntegerOfWidth(8);
+        if (widthBytes == 1 && !signed) {
+            final Expr<?> cell = byteCellAt(base, byteOffset, 0, byteType);
+            parseContext.getMetadata().create(cell, "cType", memberType);
+            stampByteUnionMetadata(cell, base, byteOffset, 1);
+            return cell;
+        }
+        final List<Expr<?>> cells = new ArrayList<>(widthBytes);
+        for (int j = 0; j < widthBytes; j++) {
+            cells.add(byteCellAt(base, byteOffset, j, byteType));
+        }
+        final Expr<?> combined = ByteUnionSlice.read(cells, signed);
+        final Expr<?> value = memberType.castTo(combined);
+        parseContext.getMetadata().create(value, "cType", memberType);
+        stampByteUnionMetadata(value, base, byteOffset, widthBytes);
+        return value;
+    }
+
+    /** The one-byte cell at [byteOffset]{@code + j} of the byte-laid-out union [base]. */
+    private Expr<?> byteCellAt(Expr<?> base, Expr<?> byteOffset, int j, CComplexType byteType) {
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> off =
+                j == 0
+                        ? byteOffset
+                        : Add(indexType.castTo(byteOffset), indexType.castTo(indexLiteral(j)));
+        final Expr<?> deref =
+                Exprs.Dereference(
+                        cast(base, base.getType()), cast(off, base.getType()), byteType.getSmtType());
+        parseContext.getMetadata().create(deref, "cType", byteType);
+        return deref;
+    }
+
+    /** Stamps the metadata an assignment through [value] needs to write its cells back individually. */
+    private void stampByteUnionMetadata(
+            Expr<?> value, Expr<?> base, Expr<?> byteOffset, int widthBytes) {
+        parseContext.getMetadata().create(value, ByteUnionSlice.BASE, base);
+        parseContext.getMetadata().create(value, ByteUnionSlice.OFFSET, byteOffset);
+        parseContext.getMetadata().create(value, ByteUnionSlice.WIDTH, widthBytes);
+    }
+
+    /**
+     * `u.dwords[i]` on a byte-laid-out union's array member: the marker [directMemberAccess] left on
+     * `u.dwords` carries the array's own base and starting byte offset, so the subscript resolves to
+     * bytes {@code [byteOff + i*elemBytes, byteOff + i*elemBytes + elemBytes)} -- plain arithmetic
+     * even for a variable (nondeterministic) [indexExpr], which is the whole point of byte
+     * addressing over a variable bit-shift.
+     */
+    private Expr<?> byteLaidOutArraySubscript(Expr<?> marker, Expr<?> indexExpr) {
+        final CComplexType arrayCType = CComplexType.getType(marker, parseContext);
+        final CComplexType elemType = ((CArray) arrayCType).getEmbeddedType();
+        final Expr<?> base =
+                (Expr<?>)
+                        parseContext
+                                .getMetadata()
+                                .getMetadataValue(marker, ByteUnionSlice.ARRAY_BASE)
+                                .orElseThrow();
+        final Expr<?> startOffset =
+                (Expr<?>)
+                        parseContext
+                                .getMetadata()
+                                .getMetadataValue(marker, ByteUnionSlice.ARRAY_OFFSET)
+                                .orElseThrow();
+        final int elemBytes =
+                (Integer)
+                        parseContext
+                                .getMetadata()
+                                .getMetadataValue(marker, ByteUnionSlice.ARRAY_ELEMENT_BYTES)
+                                .orElseThrow();
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> byteOffset =
+                Add(
+                        indexType.castTo(startOffset),
+                        Mul(
+                                indexType.castTo(indexExpr),
+                                indexType.castTo(indexLiteral(elemBytes))));
+        return byteScalarRead(base, byteOffset, elemBytes, elemType);
     }
 
     /**
@@ -2424,6 +2657,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBrackets(
                 PostfixExpressionBracketsContext ctx) {
             return (primary) -> {
+                // A byte-laid-out union's array member, not yet subscripted (see
+                // ByteUnionSlice#ARRAY_BASE): resolve straight to its byte cells instead of the
+                // generic array/pointer path below, which knows nothing about byte granularity.
+                if (parseContext
+                        .getMetadata()
+                        .getMetadataValue(primary, ByteUnionSlice.ARRAY_BASE)
+                        .isPresent()) {
+                    Expr<?> index = ctx.accept(ExpressionVisitor.this);
+                    return byteLaidOutArraySubscript(primary, index);
+                }
                 CComplexType arrayType = CComplexType.getType(primary, parseContext);
                 if (arrayType instanceof CArray) {
                     CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
