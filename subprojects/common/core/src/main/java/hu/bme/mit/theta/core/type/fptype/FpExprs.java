@@ -193,4 +193,12 @@ public final class FpExprs {
             final int sig) {
         return FpToFpExpr.of(roundingMode, op, exp, sig);
     }
+
+    public static FpToIeeeBvExpr ToIeeeBv(final Expr<FpType> op) {
+        return FpToIeeeBvExpr.of(op);
+    }
+
+    public static FpFromIeeeBvExpr FromIeeeBv(final Expr<BvType> op, final FpType fpType) {
+        return FpFromIeeeBvExpr.of(op, fpType);
+    }
 }

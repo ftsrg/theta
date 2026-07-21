@@ -196,6 +196,8 @@ public final class ExprSimplifier {
                     .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
                     .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
                     .addCase(FpToBvExpr.class, this::simplifyFpToBv)
+                    .addCase(FpFromIeeeBvExpr.class, this::simplifyFpFromIeeeBv)
+                    .addCase(FpToIeeeBvExpr.class, this::simplifyFpToIeeeBv)
                     .addCase(FpToFpExpr.class, this::simplifyFpToFp)
 
                     // General
@@ -2133,6 +2135,22 @@ public final class ExprSimplifier {
     private Expr<BvType> simplifyFpToBv(final FpToBvExpr expr, final Valuation val) {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
+        if (op instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+        return expr.with(op);
+    }
+
+    private Expr<FpType> simplifyFpFromIeeeBv(final FpFromIeeeBvExpr expr, final Valuation val) {
+        final Expr<BvType> op = simplify(expr.getOp(), val);
+        if (op instanceof BvLitExpr) {
+            return expr.eval(val);
+        }
+        return expr.with(op);
+    }
+
+    private Expr<BvType> simplifyFpToIeeeBv(final FpToIeeeBvExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
         if (op instanceof FpLitExpr) {
             return expr.eval(val);
         }
