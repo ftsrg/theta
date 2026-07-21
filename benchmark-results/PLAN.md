@@ -1115,6 +1115,50 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 54 — multi-dimensional VLAs address flatly; `(Bv 8)` fixed
+
+Fixes both regressions the batch-51 run found.
+
+**1. Multi-dimensional VLAs (the 6 false alarms).** `rowOf` required the row length to be a
+compile-time *literal*. Nothing about the flat model needs that — `i * n + j` is as good an offset
+when `n` is a variable — but the literal check sent every VLA down the fallback path, where `a[i]`
+became a **stored base** read out of cell `i`. Nothing ever writes those bases, so the solver could
+pick the same one for two rows; rows aliased, a summation loop read back the wrong values, and five
+`array-patterns` tasks plus `init-non-constant-2-n-u` reported a safe program unsafe.
+
+`arrayLengthExpr` now returns the bound *expression*, literal or not. Verified by dumping the
+lowered accesses: `int a[n][n]` with a nondeterministic `n` gives
+`base=main::array, offset=(mod ARR_SIZE 2^64)` for `a[1][0]` and `offset=0` for `a[0][0]` — one
+object, arithmetic offsets, no stored row bases anywhere.
+
+The regression test pins the *structural* signature rather than a verdict: no write may be
+addressed through a base that is itself a dereference, since that is exactly what a stored row base
+looks like. Reverting the fix makes it fail.
+
+**Why not the same treatment for arrays of structs** (the >1024 cap, which has the same conflation
+defect): `AllocaFunctionPass` bumps the base counter by **3** per allocation regardless of the size
+argument (the 3k+1 residue class), and `size` only records bounds for memsafety. So a derived
+element base `a + i*k` would collide with the next object's base as soon as `i*k >= 3`. Derived
+bases need the allocator to reserve size-proportional ranges first — that is AD7 step 3, not a
+patch. Note the multi-dim fix is unaffected by this: it keeps `base = a` and puts everything in the
+*offset*, deriving no bases at all. Evidence that deferring is safe: none of the 34 wrong results
+in the batch-51 run is a large-struct-array task, so the cap currently costs nothing measurable —
+whereas *rejecting* above the cap would turn working tasks into errors for no gain.
+
+**2. `No suitable width found for type: (Bv 8)`.** `CComplexType.getType` matches a bitvector's
+width against the architecture's type-size table and switches on the name — but had **no
+`case "char"`**, and `char` is the first entry whose width is 8. Every 8-bit bitvector therefore
+fell out of the switch and threw, with no bitfield or initializer needed to trigger it. This is the
+gap batch 51 documented and worked around; it also explains the three `ldv-linux-3.4-simple` tasks
+(two `dib3000mc`, one `max8649`) that regressed correct → frontend-failed when a portfolio
+configuration reached it. One `case "char"` fixes it, and `unsigned char` bitfields now build under
+bitvector both with and without initializers.
+
+Gate: 359 module tests (3 new), 255 canaries, 18 fixtures (1 new, `char_bitfield_bitvector.c`), and
+all six formerly-wrong tasks build. **Not verified locally: the six verdicts flipping to Safe** —
+the portfolio needs SV-COMP's 900 s on faster hardware than this host, so what is shown here is
+that the aliasing *mechanism* is gone, not the final answers. The next run confirms them.
+
 ## Batch 53 (AD7 step 2) — `packed`/`aligned` and unnamed bitfields reach the layout
 
 Batch 52 left two documented gaps, both prerequisites for wiring. Both are closed.

@@ -250,6 +250,17 @@ public abstract class CComplexType {
                     switch (s) {
                         case "bool":
                             return new CBool(null, parseContext);
+                        case "char":
+                            // Was missing, so *every* 8-bit bitvector fell through this switch and
+                            // out of the loop to the throw below -- `char` is the first entry whose
+                            // width is 8. Any `unsigned char` value under bitvector arithmetic
+                            // therefore died with "No suitable width found for type: (Bv 8)",
+                            // including plain `unsigned char` bitfields with no initializer in
+                            // sight, and three ldv-linux tasks that reached it through a portfolio
+                            // configuration in the 2026-07-20 run.
+                            return ((BvType) type).getSigned()
+                                    ? new CSignedChar(null, parseContext)
+                                    : new CUnsignedChar(null, parseContext);
                         case "short":
                             return ((BvType) type).getSigned()
                                     ? new CSignedShort(null, parseContext)

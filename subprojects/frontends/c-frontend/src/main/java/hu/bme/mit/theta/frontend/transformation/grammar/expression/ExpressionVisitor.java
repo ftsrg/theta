@@ -1124,38 +1124,51 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * #foldPointerArithmetic}), and it makes a declared `int a[3][4]` and a `(int (*)[4])` view of
      * a flat buffer address the same storage -- which is what the neural-network benchmarks cast.
      *
-     * <p>Returns null when the element is not an array (an ordinary cell read) or when its length
-     * is not a compile-time constant.
+     * <p>The row length does <b>not</b> have to be a compile-time constant. A variable-length
+     * `int a[n][m]` is just as contiguous, and `i * m + j` is as good an offset when `m` is a
+     * variable as when it is a literal. Requiring a literal used to send VLAs down the fallback
+     * path below, where `a[i]` became a *stored base* read out of cell `i` -- a base nothing ever
+     * writes, so the solver was free to make two rows the same object. That produced six false
+     * alarms in the 2026-07-20 run (`array-patterns/array13` and friends, all
+     * `int array[ARR_SIZE][ARR_SIZE]`): rows aliased, a summation loop read back the wrong values,
+     * and a safe program was reported unsafe.
+     *
+     * <p>Returns null only when the element is not an array (an ordinary cell read) or when the row
+     * has no length expression at all -- an unsized `int a[][4]` parameter or a flexible member,
+     * where there is genuinely nothing to scale by.
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
         if (!(elemType instanceof CArray rowType)) {
             return null;
         }
-        final Long rowLength = constantArrayLength(rowType);
+        final Expr<?> rowLength = arrayLengthExpr(rowType);
         if (rowLength == null) {
             return null;
         }
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final Expr<?> scaled =
-                Mul(List.of(indexType.castTo(index), indexType.getValue("" + rowLength)));
+                Mul(List.of(indexType.castTo(index), indexType.castTo(rowLength)));
         final Expr<?> row = Add(List.of(base, scaled));
         parseContext.getMetadata().create(row, "cType", rowType);
         return row;
     }
 
-    /** An array type's constant element count, or null if it has none (VLA, unsized). */
-    private Long constantArrayLength(CArray type) {
+    /**
+     * An array type's element count as an expression -- a literal where the bound is constant, the
+     * bound expression itself where it is not (a VLA). Null when the type carries no bound.
+     *
+     * <p>Using the bound expression directly reads the size variable at the point of the *access*,
+     * whereas C fixes a VLA's size when the declaration is reached. The two differ only if the
+     * program assigns to that variable while the array is alive, which is rare and was already
+     * mismodelled far more coarsely (the whole array was one conflated object). Left as a known
+     * limitation rather than silently claimed correct; capturing the bound into a temporary at the
+     * declaration is the proper fix and belongs with AD7's derived bases.
+     */
+    private Expr<?> arrayLengthExpr(CArray type) {
         if (type.getArrayDimension() == null) {
             return null;
         }
-        final Expr<?> bound = ExprUtils.simplify(type.getArrayDimension().getExpression());
-        if (bound instanceof IntLitExpr intLit) {
-            return intLit.getValue().longValue();
-        }
-        if (bound instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
-            return BvUtils.neutralBvLitExprToBigInteger(bvLit).longValue();
-        }
-        return null;
+        return ExprUtils.simplify(type.getArrayDimension().getExpression());
     }
 
     private <T extends Type> Expr<?> dereference(

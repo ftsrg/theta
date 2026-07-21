@@ -1,8 +1,7 @@
 // batch 51: the same packed-bitfield initializer under bitvector arithmetic, where the fold uses
-// Extract/Concat rather than div/mod. Word-width (not char-width) bitfields on purpose: an
-// `unsigned char` bitfield hits a *separate, pre-existing* bitvector gap ("No suitable width
-// found for type: (Bv 8)") that has nothing to do with initializers -- it fails identically with
-// no initializer in sight -- so using one here would pin the wrong bug.
+// Extract/Concat rather than div/mod. Word-width bitfields on purpose, so that this fixture pins
+// the *initializer* fold and nothing else. (Char-width bitfields used to hit a separate,
+// pre-existing "(Bv 8)" gap; that is fixed in batch 54 and guarded by char_bitfield_bitvector.c.)
 struct F { unsigned x:4; unsigned y:4; unsigned rest:24; };
 struct F f = {1, 2};
 struct F g = {.y = 5};

@@ -16,10 +16,16 @@
 package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -42,6 +48,123 @@ class AggregateArrayElementTest {
         NullLogger.getInstance(),
       )
     assertTrue(xcfa.procedures.isNotEmpty(), "the program must build an XCFA")
+  }
+
+  /** Every memory write's (base, offset) pair, as strings. */
+  private fun writes(src: String): List<Pair<String, String>> {
+    val parseContext = ParseContext()
+    val (xcfa, _, _) =
+      getXcfaFromC(
+        src.byteInputStream(),
+        parseContext,
+        false,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        NullLogger.getInstance(),
+      )
+    val found = mutableListOf<Pair<String, String>>()
+    fun visit(label: XcfaLabel) {
+      when (label) {
+        is SequenceLabel -> label.labels.forEach { visit(it) }
+        is StmtLabel ->
+          (label.stmt as? MemoryAssignStmt<*, *, *>)?.let {
+            found.add(it.deref.array.toString() to it.deref.offset.toString())
+          }
+        else -> {}
+      }
+    }
+    xcfa.procedures.forEach { proc -> proc.edges.forEach { visit(it.label) } }
+    return found
+  }
+
+  @Test
+  fun aVariableLengthMatrixIsOneObjectWithNoStoredRowBases() {
+    // The 2026-07-20 soundness regression, and the property that fixes it. A multi-dimensional VLA
+    // is as contiguous as a constant one: `a[i][j]` must be `arrays[a][i*n + j]`, one object with
+    // arithmetic offsets. It used to fall back to `arrays[arrays[a][i]][j]` -- a *stored* row base
+    // that nothing ever writes, so the solver could pick the same base for two rows. Rows aliased,
+    // and five array-patterns tasks plus init-non-constant-2-n-u reported a safe program unsafe.
+    //
+    // The signature to pin is therefore structural: no write may be addressed through a base that
+    // is itself a dereference. That is exactly what a stored row base looks like.
+    val w =
+      writes(
+        """
+        extern short __VERIFIER_nondet_short();
+        int main() {
+          signed long long n = (signed long long) __VERIFIER_nondet_short();
+          if (n <= 0) { return 0; }
+          int a[n][n];
+          a[1][0] = 7;
+          a[0][0] = 1;
+          return a[0][0];
+        }
+        """
+          .trimIndent()
+      )
+    assertTrue(w.isNotEmpty(), "the writes must lower to memory assignments")
+    assertTrue(
+      w.none { (base, _) -> base.contains("deref") },
+      "no row may live behind a stored base -- that is the aliasing bug; got $w",
+    )
+    assertEquals(1, w.map { it.first }.toSet().size, "every cell belongs to one object; got $w")
+    // a[0][0] is offset 0; a[1][0] is offset 1*n, which stays symbolic rather than collapsing to a
+    // constant -- if it folded to 0 the two rows would coincide again.
+    assertTrue(w.any { it.second == "0" }, "a[0][0] sits at offset 0; got $w")
+    assertTrue(
+      w.any { it.second != "0" && it.second.contains("n") },
+      "a[1][0] must be offset by the symbolic row length; got $w",
+    )
+  }
+
+  @Test
+  fun aConstantMatrixStillFoldsToLiteralOffsets() {
+    // The control: making the row length symbolic must not disturb the constant case, which still
+    // has to fold to plain literals (`int a[2][3]`: a[1][0] is offset 3).
+    val w =
+      writes(
+        """
+        int main() {
+          int a[2][3];
+          a[1][0] = 7;
+          a[0][0] = 1;
+          return a[0][0];
+        }
+        """
+          .trimIndent()
+      )
+    assertEquals(1, w.map { it.first }.toSet().size, "one object; got $w")
+    assertTrue(w.any { it.second == "3" }, "a[1][0] folds to the literal offset 3; got $w")
+    assertTrue(w.any { it.second == "0" }, "a[0][0] is offset 0; got $w")
+  }
+
+  @Test
+  fun aVariableLengthMatrixKeepsItsRowsApartAcrossEncodings() {
+    // The same shape has to build under bitvector arithmetic too, where the offset is Bv rather
+    // than Int -- the multiply and add are typed differently there and have unified badly before.
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      val parseContext = ParseContext()
+      parseContext.arithmetic = arithmetic
+      assertDoesNotThrow({
+        getXcfaFromC(
+          """
+          extern short __VERIFIER_nondet_short();
+          int main() {
+            signed long long n = (signed long long) __VERIFIER_nondet_short();
+            if (n <= 0) { return 0; }
+            int a[n][n];
+            a[1][2] = 7;
+            return a[1][2];
+          }
+          """
+            .trimIndent()
+            .byteInputStream(),
+          parseContext,
+          false,
+          XcfaProperty(ErrorDetection.ERROR_LOCATION),
+          NullLogger.getInstance(),
+        )
+      }, "a VLA matrix must build under $arithmetic")
+    }
   }
 
   @Test
