@@ -1115,6 +1115,43 @@ bitvector overflow predicate for these concurrency tasks. Worth a focused diagno
 decision to ship bitvector for no-overflow. Integer remains the better default overall
 (more correct, fewer wrong, far fewer timeouts).
 
+## Batch 56 (AD7, the tractable half) — union members share the word as bit slices
+
+Measured first, then built. Ranking the remaining frontend failures in the batch-51 run put union
+punning at the top by a wide margin: **~1,029 tasks** rejected with "Accessing member [X] of a union
+whose members do not all share a representation" (`raw` 446, `value` 265, `__theta_anon_0` 207,
+`raw_void` 111), against 515 for "Only structs expected here" and 374 for library dereference
+offsets. The same ranking showed **217 "No suitable width found for type:"**, which is the `(Bv 8)`
+gap batch 54 fixed with one `case "char"` — so that one-liner is worth roughly 217 tasks, not the 3
+regressions it was found through.
+
+A union's members all start at offset 0, so a member narrower than the union is simply the **low
+bits of the same word**, and `BitfieldSlice` (batch 45) already reads and writes exactly that. So
+`union { uint64_t raw; uint32_t half; }` now aliases: the cell is read at the *union's* width and
+each member slices it. Assignment needs nothing new -- `sliceOf` stamps the cell as metadata, and
+the existing bitfield read-modify-write path splices just the member's bits and leaves its siblings
+alone.
+
+Verified semantically, not just structurally: `u.raw = 0; u.half = 7` leaves `u.raw == 7`, and
+`u.raw = 2^32 + 1` leaves `u.half == 1`, proving **Safe under both encodings** — and negating that
+assertion proves **Unsafe**, so the check is not vacuous.
+
+Two old tests asserted the *opposite* and had to be replaced: `int`/`unsigned` and `int`/`char`
+unions were rejected on the grounds that aliasing would lose the sign reinterpretation or the width.
+Slicing loses neither -- the read sign-extends from the member's own width, so `u.i = 300; u.c` is
+44 -- so those expectations encoded the limitation rather than a requirement.
+
+**What is still refused, honestly.** An **array** member (`union { uint64_t raw; uint8_t bytes[8]; }`)
+is many cells rather than one word, and a **floating-point** member has its own SMT sort, so reading
+it as bits needs a reinterpretation this model lacks. Those are exactly the two dominant clusters:
+`intel-tdx-module` (764, buffer and register-file views) and `float-newlib` (265, the
+`union { double value; struct { uint32_t lsw, msw; } parts; }` idiom). Both still want the
+byte-addressed object layout, which `ObjectLayout` (batches 52-53) already computes but nothing yet
+addresses memory through.
+
+Gate: 369 module tests (4 new, 2 rewritten), 255 canaries, 20 fixtures (union punning in both
+encodings).
+
 ## Batch 55 — arrays of structs are inline cells too; the 1024 cap is gone
 
 The generic case of batch 54, and it needed a correction to my own reasoning. I had concluded this

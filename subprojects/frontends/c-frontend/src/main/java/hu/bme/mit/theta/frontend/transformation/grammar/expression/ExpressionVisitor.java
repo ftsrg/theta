@@ -1598,12 +1598,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return sliceOf(base, structType.overlaySlotOf(memberName), embeddedType);
         }
 
-        final CComplexType cellType =
+        // A union whose members are not all stored alike is one word that each member slices; the
+        // cell is therefore read at the union's full width rather than at this member's.
+        final boolean slicedUnionMember =
                 structType.isUnion()
-                                && embeddedType instanceof CStruct packed
-                                && packed.overlayWidth() != null
-                        ? unsignedIntegerOfWidth(packed.overlayWidth())
-                        : embeddedType;
+                        && structType.unionCellWidth() != null
+                        && !unionMembersShareRepresentation(structType, embeddedType);
+        final CComplexType cellType =
+                slicedUnionMember
+                        ? unsignedIntegerOfWidth(structType.unionCellWidth())
+                        : structType.isUnion()
+                                        && embeddedType instanceof CStruct packed
+                                        && packed.overlayWidth() != null
+                                ? unsignedIntegerOfWidth(packed.overlayWidth())
+                                : embeddedType;
         final Expr<?> idxExpr =
                 structType.getValue(String.valueOf(memberOffset(structType, memberName)));
         // `a[i].f` on an array of structs: the subscript handed us the element as plain pointer
@@ -1620,7 +1628,37 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
                         cellType.getSmtType());
-        parseContext.getMetadata().create(access, "cType", embeddedType);
+        // The cell's recorded C type must match the width it was actually read at, not the
+        // member's: an assignment through it casts the right-hand side to this type before
+        // splicing, so recording the narrower member type here hands a 32-bit value to a 64-bit
+        // cell. `sliceOf` stamps the member's own type onto the slice, which is where it belongs.
+        parseContext
+                .getMetadata()
+                .create(access, "cType", slicedUnionMember ? cellType : embeddedType);
+        if (slicedUnionMember) {
+            // The member's value is the low bits of the union's word. `sliceOf` carries the cell
+            // along as metadata, so assigning to this member read-modify-writes just its bits and
+            // leaves the rest of the word -- i.e. whatever the sibling members hold -- intact.
+            final CComplexType embeddedIfStruct =
+                    embeddedType instanceof CStruct packed && packed.overlayWidth() != null
+                            ? unsignedIntegerOfWidth(packed.overlayWidth())
+                            : embeddedType;
+            final Expr<?> sliced =
+                    sliceOf(access, structType.unionSlotOf(memberName), embeddedIfStruct);
+            if (embeddedIfStruct != embeddedType) {
+                // A packed-struct member of the union: its value is the word, and member accesses
+                // on *it* slice that word further.
+                parseContext.getMetadata().create(sliced, "cType", embeddedType);
+                parseContext
+                        .getMetadata()
+                        .create(
+                                sliced,
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                        .BitfieldSlice.PACKED_CELL,
+                                true);
+            }
+            return sliced;
+        }
         if (cellType != embeddedType) {
             // The union's cell, read at the packed view's integer width: mark it so member
             // accesses on it slice instead of dereferencing.
@@ -1737,6 +1775,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return compound.unitOffsetOf(memberName);
         }
         CComplexType accessed = compound.getFieldsAsMap().get(memberName);
+        if (accessed != null && !unionMembersShareRepresentation(compound, accessed)) {
+            // Members of different widths still share the union's one cell -- a narrower one is the
+            // low bits of it -- so the access can slice instead of being refused. Only shapes a
+            // single word cannot hold (an array member, a float needing bit reinterpretation) still
+            // reach the rejection below.
+            if (compound.unionCellWidth() != null) {
+                return 0;
+            }
+        }
         if (accessed != null) {
             for (Tuple2<String, CComplexType> field : compound.getFields()) {
                 if (!sameRepresentation(accessed, field.get2())) {
@@ -1770,6 +1817,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * u.c} must be 44, not 300; signedness likewise, so {@code int}/{@code unsigned} do not alias
      * where the sign reinterpretation would be lost.
      */
+    /** Whether every member of [compound] occupies its cell exactly as [accessed] does. */
+    private boolean unionMembersShareRepresentation(CStruct compound, CComplexType accessed) {
+        for (Tuple2<String, CComplexType> field : compound.getFields()) {
+            if (!sameRepresentation(accessed, field.get2())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static boolean sameRepresentation(CComplexType a, CComplexType b) {
         // A struct of integers laid end to end is stored as the single word those bits make up, so
         // it shares a union's cell with a sibling integer of that width -- both the all-bitfield

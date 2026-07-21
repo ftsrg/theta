@@ -228,6 +228,69 @@ public class CStruct extends CInteger {
     /** Widest packed word an overlay may occupy; beyond this there is no integer to hold it. */
     private static final int MAX_OVERLAY_BITS = 64;
 
+    /**
+     * The width of the one cell a union's members can share, or null when they cannot share one.
+     *
+     * <p>A union's members all start at offset 0, so members that are plain integers -- of whatever
+     * widths -- are all just the low bits of a single word, and a narrower one is a *slice* of it
+     * (see {@link BitfieldSlice}). That is what lets `union { uint64_t raw; uint32_t half; }` behave
+     * as C says rather than being refused as type punning. Pointers count: a pointer value is an
+     * integer of pointer width in this model. So does a nested struct that is itself one packed word
+     * ({@link #overlayWidth}), which is the register-overlay idiom.
+     *
+     * <p>Null for the cases a single word genuinely cannot represent: an <b>array</b> member is many
+     * cells rather than one word, and a <b>floating-point</b> member has its own SMT sort, so
+     * reading it as bits needs a reinterpretation this model does not have. Those still need the
+     * byte-addressed object layout.
+     */
+    public Integer unionCellWidth() {
+        if (!union || fields.isEmpty()) {
+            return null;
+        }
+        int widest = 0;
+        for (int i = 0; i < fields.size(); i++) {
+            final CComplexType fieldType = fields.get(i).get2();
+            final int width;
+            if (fieldType instanceof CStruct nested) {
+                final Integer overlay = nested.overlayWidth();
+                if (overlay == null) {
+                    return null;
+                }
+                width = overlay;
+            } else if (fieldType instanceof CArray) {
+                return null;
+            } else if (fieldType instanceof CInteger) {
+                // CPointer is a CInteger here: a pointer value is a pointer-wide integer.
+                final int declared = declaredBitfieldWidth(i);
+                width = declared >= 0 ? declared : fieldType.width();
+            } else {
+                return null;
+            }
+            if (width <= 0 || width > MAX_OVERLAY_BITS) {
+                return null;
+            }
+            widest = Math.max(widest, width);
+        }
+        return widest;
+    }
+
+    /** The bits [0, width) that [memberName] occupies in a union's shared cell, or null. */
+    public BitfieldLayout.Slot unionSlotOf(String memberName) {
+        final int index = fieldIndexOf(memberName);
+        if (index < 0 || unionCellWidth() == null) {
+            return null;
+        }
+        final CComplexType fieldType = fields.get(index).get2();
+        final int declared = declaredBitfieldWidth(index);
+        final int width;
+        if (fieldType instanceof CStruct nested) {
+            width = nested.overlayWidth();
+        } else {
+            width = declared >= 0 ? declared : fieldType.width();
+        }
+        return new BitfieldLayout.Slot(0, 0, width, true);
+    }
+
     /** The unnamed bitfields between this struct's members, in declaration order. */
     public List<Padding> getPaddings() {
         return paddings;

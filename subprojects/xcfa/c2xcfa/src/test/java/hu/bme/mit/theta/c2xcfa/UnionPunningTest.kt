@@ -17,6 +17,7 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -32,8 +33,11 @@ import org.junit.jupiter.api.Test
  */
 class UnionPunningTest {
 
-  private fun build(src: String) {
+  private fun build(src: String) = build(src, ArithmeticType.efficient)
+
+  private fun build(src: String, arithmetic: ArithmeticType) {
     val parseContext = ParseContext()
+    parseContext.arithmetic = arithmetic
     getXcfaFromC(
       src.byteInputStream(),
       parseContext,
@@ -63,10 +67,12 @@ class UnionPunningTest {
   }
 
   @Test
-  fun signedAndUnsignedOfSameWidthDoNotAlias() {
-    // int/unsigned share the Int sort under integer arithmetic; aliasing them would lose the sign
-    // reinterpretation, so this must still be rejected.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun signedAndUnsignedOfSameWidthAliasThroughTheSlice() {
+    // This used to assert a *rejection*: int/unsigned share the Int sort under integer arithmetic,
+    // so aliasing them naively would lose the sign reinterpretation. Slicing does not lose it --
+    // the read sign-extends from the member's own width -- so the case is now supported rather
+    // than refused. The old expectation encoded the limitation, not a requirement.
+    assertDoesNotThrow {
       build(
         """
         union U { int s; unsigned u; };
@@ -78,10 +84,13 @@ class UnionPunningTest {
   }
 
   @Test
-  fun differentWidthMembersDoNotAlias() {
-    // int/char share the Int sort under integer arithmetic but differ in width; u.i = 300; u.c
-    // must be 44, not 300, so aliasing is rejected.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun narrowerMembersReadTheLowBitsOfTheWord() {
+    // Also formerly a rejection. `u.i = 300; u.c` must be 44, not 300 -- which is exactly what
+    // slicing the low 8 bits gives, so the width difference is now modelled instead of refused.
+    // The values are verified end to end rather than here: with `u.raw = 2^32 + 1`, `u.half == 1`
+    // proves Safe under both encodings, and negating that assertion proves Unsafe, so the check
+    // is not vacuous.
+    assertDoesNotThrow {
       build(
         """
         union U { int i; char c; };
@@ -147,6 +156,83 @@ class UnionPunningTest {
         """
         typedef union { struct { unsigned long a; unsigned long b; unsigned long c; }; unsigned long raw; } u_t;
         int main() { u_t u; u.raw = 0; return (int) u.a; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun membersOfDifferentWidthsShareTheWordAsSlices() {
+    // AD7, the tractable half. A union's members all start at offset 0, so a narrower member is
+    // simply the low bits of the same word -- `u.raw = 0; u.half = 7` must leave `u.raw == 7`.
+    // This used to be refused outright as "members do not all share a representation", which is
+    // the single largest addressable frontend cluster (~1,029 tasks in the 2026-07-20 run).
+    // Both encodings: the slice is div/mod under integer arithmetic and Extract/Concat under
+    // bitvector, and the cell is read at the *union's* width in either.
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      assertDoesNotThrow({
+        build(
+          """
+          union U { unsigned long raw; unsigned int half; };
+          int main() {
+            union U u;
+            u.raw = 0;
+            u.half = 7;
+            if (u.raw != 7) { return 1; }
+            return 0;
+          }
+          """
+            .trimIndent(),
+          arithmetic,
+        )
+      }, "differing widths must alias by slicing under $arithmetic")
+    }
+  }
+
+  @Test
+  fun differingSignsAndNarrowerTypesNowAliasToo() {
+    // Previously both were rejected: int/unsigned lose the sign reinterpretation if aliased
+    // naively, and int/char differ in width. Slicing handles both -- the read sign-extends from
+    // the member's own width, so `u.i = 300; u.c` is 44 rather than 300.
+    for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
+      assertDoesNotThrow({
+        build("union U { int s; unsigned u; };\nint main() { union U x; x.u = 1; return x.s; }",
+          arithmetic)
+      }, "int/unsigned under $arithmetic")
+      assertDoesNotThrow({
+        build("union U { int i; char c; };\nint main() { union U x; x.i = 300; return x.c; }",
+          arithmetic)
+      }, "int/char under $arithmetic")
+    }
+  }
+
+  @Test
+  fun anArrayMemberIsStillRefused() {
+    // Honest boundary. `union { uint64_t raw; uint8_t bytes[8]; }` needs the byte-addressed object
+    // layout: an array is many cells, not one word, so there is nothing to slice. Refused rather
+    // than answered wrongly -- and this is what still blocks the intel-tdx-module cluster.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U { unsigned long raw; unsigned char bytes[8]; };
+        int main() { union U u; u.raw = 0; return u.bytes[0]; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aFloatingPointMemberIsStillRefused() {
+    // The other boundary: a double has its own SMT sort, so reading it as bits needs a
+    // reinterpretation this model does not have. This is the float-newlib idiom
+    // (`union { double value; struct { uint32_t lsw, msw; } parts; }`), ~265 tasks.
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U { double value; unsigned long bits; };
+        int main() { union U u; u.value = 1.0; return (int) u.bits; }
         """
           .trimIndent()
       )

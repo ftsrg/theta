@@ -17,3 +17,5 @@ packed_bitfield_init.c	efficient	LP64	PARSE-OK	51	brace initializer over packed 
 packed_bitfield_init_bv.c	bitvector	LP64	PARSE-OK	51	packed bitfield initializer, bitvector fold
 layout_attributes.c	efficient	LP64	PARSE-OK	53	packed/aligned attributes + unnamed bitfields
 char_bitfield_bitvector.c	bitvector	LP64	PARSE-OK	54	unsigned char values under bitvector (Bv 8)
+union_slice_punning.c	efficient	LP64	PARSE-OK	56	union members of differing widths share the word
+union_slice_punning.c	bitvector	LP64	PARSE-OK	56	union slice punning, bitvector Extract/Concat
