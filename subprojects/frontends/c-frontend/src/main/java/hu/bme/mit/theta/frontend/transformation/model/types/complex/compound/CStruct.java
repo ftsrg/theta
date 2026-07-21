@@ -262,11 +262,16 @@ public class CStruct extends CInteger {
             } else if (fieldType
                     instanceof
                     hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
-                // A floating-point member shares the cell as its raw IEEE-754 bit pattern -- the
-                // width of its encoding, which equals the type's width. Reading it reinterprets the
-                // bits (FpFromIeeeBv), so a float always forces bitvector arithmetic and the cell is
-                // a bitvector; see the union access path.
-                width = fieldType.width();
+                // A floating-point member would share the cell as its raw IEEE-754 bit pattern, and
+                // the machinery for it exists (FpToIeeeBv / FpFromIeeeBv, and the union access path
+                // below). It is GATED OFF, though, and a float union is refused rather than answered:
+                // fpToIEEEBV is unspecified for NaN, and while a canonical-NaN guard on the write
+                // fixes the direct cases, a NaN routed through the integer view and back
+                // (`value = NaN; word = ...; value = word`, the pervasive newlib idiom) still yields
+                // a spurious non-NaN in the solver and produced 14 wrong float-newlib results in the
+                // 2026-07-21 run. Failing loudly (ERROR, score 0) beats those wrong answers until the
+                // round-trip is made sound. See PLAN.md batch 59.
+                return null;
             } else if (fieldType instanceof CInteger) {
                 // CPointer is a CInteger here: a pointer value is a pointer-wide integer.
                 final int declared = declaredBitfieldWidth(i);

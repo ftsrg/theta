@@ -1148,6 +1148,63 @@ the kind of thing that hides a regression, so the key has to be checked, not ass
 
 **Not covered by this run:** batch 56 (union slicing), which landed after it started.
 
+## Batch 59 — gate off float union punning: `fpToIEEEBV(NaN)` is unsound (fixes the batch-58 regression)
+
+The batch-58 run (below) unlocked the float union idiom and produced **14 wrong `float-newlib`
+results** -- a real soundness regression, caught at scale, that the batch-58 module tests missed
+because they used only finite values.
+
+**Root cause: `fpToIEEEBV` is unspecified for NaN.** The solver may then read a NaN's bits as any
+32/64-bit value, so `value = NaN; word = <bits>; value = word` -- the pervasive newlib idiom, and
+these benchmarks are *entirely* about NaN handling ("shall return NaN if the argument is NaN") --
+can turn a NaN into a normal float and defeat the `x != x` test. `float_req_bl_0310` (expected
+Safe) came back Unsafe on exactly this.
+
+A canonical-NaN guard on the write (`ite(isNaN(x), 0x7FC00000, fpToIEEEBV(x))`, so no `fpToIEEEBV`
+is ever applied to a NaN) fixes every direct case -- write-NaN-read-value, write-NaN-read-word,
+word-round-trip-read-value all verify Safe -- but the *full* round-trip through a symbolic
+canonicalised cell (`value = NaN; word = u.word; u.word = word; value = u.value`) still yields a
+spurious non-NaN. That is a deeper FP<->BV abstraction interaction, not closed by the guard.
+
+So float unions are **refused again** (ERROR, score 0) rather than answered wrongly -- the same
+"fail loudly" call as batch 45's initializer guard, which the run history keeps vindicating. The
+gate is one line in `CStruct.unionCellWidth` (reject a `CReal` member); the read/write machinery and
+the guard stay in place, documented, as the starting point for a sound implementation. The core
+primitive (`FpToIeeeBv`/`FpFromIeeeBv`, `b683bb605`) is unaffected -- it is correct; only the union
+*wiring* over NaN is not.
+
+Result: the 14 float-newlib tasks return to ERROR, so the sound branch is **wrong ~27, down from
+batch-51's 34** (the 7 real fixes -- 6 multi-dim VLAs + a bitfield task, now timeouts -- remain).
+The batch-56 integer union slicing and everything else stays. Gate: 990 module tests, 255 canaries,
+20 fixtures.
+
+## Run 2026-07-21_16-23-batch58 (sosy, **E3-1230 cluster**, batches 51-58) — big frontend wins, and a 14-task FP regression
+
+First full run covering all of this session's work (batches 51-58), on the **E3-1230 v5** cluster
+(`--vcloudCPUModel 1230`), which is slower than the usual 5750G -- so cputimes are not comparable and
+some solved tasks now time out. Compared per task+property against `results-2026-07-20_22-41-batch51`.
+
+**Correct 10,308 -> 10,257. Error 25,820 -> 25,863. Wrong 34 -> 41.**
+
+The frontend clusters moved exactly as the batches intended (these are CPU-independent):
+
+| frontend-failure cluster | batch51 | batch58 |
+|---|---:|---:|
+| total frontend-failed | 6,544 | **5,617** (-927) |
+| "high dimsension array" init (batch 57) | 865 | **0** |
+| "No suitable width found" / (Bv 8) (batch 54) | 217 | **0** |
+| union "do not all share a representation" (batches 56/58) | 1,257 | **784** |
+
+The **correct drop (-51) is the slower CPU, not a regression**: correct->error is 51 timeout + 58
+OOM + 24 other, against 84 error->correct -- the timeout/OOM churn is symmetric boundary noise that a
+slower machine makes worse, and the frontend unlocks still net positive underneath it.
+
+**Wrong 34 -> 41 (+7)** decomposes into **14 newly wrong, all `float-newlib`** (batch-58 FP punning,
+`ERROR -> false/true`, one-directional, deterministic -- the soundness bug) and **7 fixed** (the 6
+multi-dim-VLA false alarms + `test-bitfields-2-2`, now timeouts). The 14 are addressed by batch 59
+above (gated back to ERROR). No *other* newly-wrong task anywhere -- batches 55/56/57's core
+memory-addressing changes introduced zero wrong results across the struct/union-heavy families.
+
 ## Batch 58 (AD7) — floating-point union punning (unlocks ~265 float-newlib tasks)
 
 The other half of the union work, and the last big union cluster after batch 56. A union of a

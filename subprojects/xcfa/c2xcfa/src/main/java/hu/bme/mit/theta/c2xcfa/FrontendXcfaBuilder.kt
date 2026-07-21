@@ -485,6 +485,20 @@ class FrontendXcfaBuilder(
 
   private fun Expr<*>.withoutPos(): Expr<*> = if (this is PosExpr<*>) op.withoutPos() else this
 
+  /**
+   * The canonical quiet-NaN bit pattern for [fpType], as a bitvector literal: sign 0, exponent all
+   * ones, mantissa's top bit set. 0x7FC00000 for a 32-bit float, 0x7FF8000000000000 for a 64-bit
+   * double. Used to give the otherwise-unspecified fpToIEEEBV(NaN) a single deterministic value.
+   */
+  private fun canonicalNaNBits(fpType: hu.bme.mit.theta.core.type.fptype.FpType): Expr<BvType> {
+    val width = fpType.exponent + fpType.significand
+    val mantissaBits = fpType.significand - 1
+    val exponentAllOnes = java.math.BigInteger.ONE.shiftLeft(fpType.exponent).subtract(BigInteger.ONE)
+    val pattern =
+      exponentAllOnes.shiftLeft(mantissaBits).or(BigInteger.ONE.shiftLeft(mantissaBits - 1))
+    return BvUtils.bigIntegerToUnsignedBvLitExpr(pattern, width)
+  }
+
   /** The pointer/array operand of a sum, i.e. the object the rest of it is an offset into. */
   private fun pointerOperandOf(sum: AddExpr<*>): Expr<*>? =
     sum.ops
@@ -1026,7 +1040,18 @@ class FrontendXcfaBuilder(
         val spliced =
           if (isIeeeFloat) {
             @Suppress("UNCHECKED_CAST")
-            FpExprs.ToIeeeBv(rExpression as Expr<hu.bme.mit.theta.core.type.fptype.FpType>)
+            val fpExpr = rExpression as Expr<hu.bme.mit.theta.core.type.fptype.FpType>
+            // fpToIEEEBV is *unspecified for NaN*: the solver may then read a NaN's bits as any
+            // 32/64-bit value, so `value = NaN; word = ...; value = word` could turn NaN into a
+            // normal float and break the pervasive `x != x` NaN test -- 14 float-newlib tasks came
+            // back wrong from exactly this. Force NaN to a canonical quiet-NaN encoding so no
+            // ToIeeeBv is ever applied to a NaN; the from-bits direction is total and needs no
+            // guard, and canonical NaN bits still classify as NaN in the program's own bit checks.
+            hu.bme.mit.theta.core.type.anytype.IteExpr.of(
+              FpExprs.IsNan(fpExpr),
+              canonicalNaNBits(fpExpr.type),
+              FpExprs.ToIeeeBv(fpExpr) as Expr<BvType>,
+            )
           } else {
             cellType.castTo(rExpression)
           }

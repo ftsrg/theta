@@ -224,57 +224,19 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aFloatingPointMemberSharesTheCellAsItsIeeeBits() {
-    // Formerly refused: a double's SMT sort is not a bitvector, so reading it as bits needs a
-    // reinterpretation. That reinterpretation now exists (FpToIeeeBv / FpFromIeeeBv), so the
-    // float-newlib idiom -- `union { double value; struct { uint32_t lsw, msw; } parts; }`, ~265
-    // tasks -- is modelled instead of rejected. A float always forces bitvector arithmetic, so the
-    // shared cell is a bitvector; the value semantics (double 1.0 -> msw 0x3FF00000, lsw 0, and
-    // back) are checked end to end elsewhere.
-    assertDoesNotThrow {
-      build(
-        """
-        typedef unsigned int u32;
-        typedef union { double value; struct { u32 lsw; u32 msw; } parts; } shape;
-        int main() {
-          shape u;
-          u.value = 1.0;
-          if (u.parts.msw != 0x3FF00000u) { return 1; }
-          u.parts.msw = 0x40000000u;
-          u.parts.lsw = 0u;
-          if (u.value != 2.0) { return 2; }
-          return 0;
-        }
-        """
-          .trimIndent()
-      )
-    }
-  }
-
-  @Test
-  fun aUnionOfADoubleAndAWideIntegerAliasesBothWays() {
-    // The scalar form: `union { double value; unsigned long bits; }` -- writing the double and
-    // reading the integer is the reinterpretation, both 64 bits wide.
-    assertDoesNotThrow {
-      build(
-        """
-        union U { double value; unsigned long bits; };
-        int main() { union U u; u.value = 1.0; if (u.bits == 0) { return 1; } return 0; }
-        """
-          .trimIndent()
-      )
-    }
-  }
-
-  @Test
-  fun aUnionOfADoubleAndAnArrayIsStillRefused() {
-    // The boundary that remains: an array member is many cells, not one word, so there is nothing
-    // to slice or reinterpret. This is what still blocks the intel-tdx-module buffer views.
+  fun aFloatingPointMemberIsRefusedWhileTheNanRoundTripIsUnsound() {
+    // The FpToIeeeBv / FpFromIeeeBv machinery for float union punning exists and is correct on
+    // finite values, but is GATED OFF: fpToIEEEBV is unspecified for NaN, and a NaN routed through
+    // the integer view and back (`value = NaN; word = ...; value = word`, the newlib idiom) still
+    // yields a spurious non-NaN in the solver -- 14 wrong float-newlib results in the 2026-07-21
+    // run. Until the round-trip is sound the float union is refused, which scores 0 rather than a
+    // wrong answer's -16. (See PLAN.md batch 59.)
     assertThrows(UnsupportedFrontendElementException::class.java) {
       build(
         """
-        union U { double value; unsigned char bytes[8]; };
-        int main() { union U u; u.value = 1.0; return u.bytes[0]; }
+        typedef unsigned int u32;
+        typedef union { float value; u32 word; } shape;
+        int main() { shape u; u.value = 1.0f; return u.word; }
         """
           .trimIndent()
       )
