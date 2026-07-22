@@ -41,6 +41,7 @@ import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -363,15 +364,15 @@ final class Z3TermTransformer {
                 ImmutableList.builder();
         while (constInterp.getNumArgs() == 3) {
             var args = constInterp.getArgs();
-            var index = transform(args[1], model, vars);
-            var value = transform(args[2], model, vars);
+            var index = defaultingTransform(args[1], model, vars);
+            var value = defaultingTransform(args[2], model, vars);
             builder.add(Tuple2.of(List.of(index), value));
             constInterp = args[0];
         }
         var entryExprs = builder.build();
 
         checkState(constInterp.getNumArgs() == 1);
-        var elseExpr = transform(constInterp.getArgs()[0], model, vars);
+        var elseExpr = defaultingTransform(constInterp.getArgs()[0], model, vars);
 
         if (funcDecl.getRange() instanceof ArraySort sort) {
             return createArrayLitExpr(sort, entryExprs, elseExpr);
@@ -382,6 +383,33 @@ final class Z3TermTransformer {
                     entryExprs,
                     elseExpr);
         }
+    }
+
+    /**
+     * {@link #transform} of a model term, but never null: a null means Z3 gave the term's function
+     * declaration no interpretation, i.e. left it unconstrained, so any witness of the right sort is
+     * a sound part of a counterexample. Substitute that sort's default.
+     *
+     * <p>Without this, extracting a model for the two-dimensional memory array ({@code
+     * arrays[base][offset]}) crashed: a store entry whose value is an unconstrained *inner array*
+     * transformed to null, and {@code Tuple2.of(index, null)} threw a bare NullPointerException out
+     * of Guava. That aborted every counterexample touching a byte array -- exactly what a
+     * byte-addressed union produces.
+     */
+    private Expr<?> defaultingTransform(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
+        final Expr<?> transformed = transform(term, model, vars);
+        return transformed != null ? transformed : defaultLiteral(term.getSort());
+    }
+
+    /** A default literal of [sort], recursing through array nesting ({@link TypeUtils} refuses it). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private LitExpr<?> defaultLiteral(final com.microsoft.z3.Sort sort) {
+        if (sort instanceof ArraySort<?, ?> arraySort) {
+            final ArrayType arrayType = (ArrayType) transformSort(arraySort);
+            return (LitExpr<?>) Array(List.of(), defaultLiteral(arraySort.getRange()), arrayType);
+        }
+        return TypeUtils.getDefaultValue(transformSort(sort));
     }
 
     private Expr<?> createArrayLitExpr(

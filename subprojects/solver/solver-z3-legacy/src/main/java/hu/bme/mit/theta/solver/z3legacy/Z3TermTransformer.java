@@ -39,6 +39,7 @@ import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
@@ -366,7 +367,7 @@ final class Z3TermTransformer {
         }
         final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
                 createEntryExprs(funcInterp, model, vars);
-        final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
+        final Expr<?> elseExpr = defaultingTransform(funcInterp.getElse(), model, vars);
 
         if (funcDecl.getRange() instanceof ArraySort sort) {
             return createArrayLitExpr(sort, entryExprs, elseExpr);
@@ -593,7 +594,7 @@ final class Z3TermTransformer {
             final List<Decl<?>> vars) {
         final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
                 createEntryExprs(funcInterp, model, vars);
-        final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
+        final Expr<?> elseExpr = defaultingTransform(funcInterp.getElse(), model, vars);
         return createNestedIteExpr(paramDecl, entryExprs, elseExpr);
     }
 
@@ -632,14 +633,39 @@ final class Z3TermTransformer {
             checkArgument(entry.getArgs().length >= 1);
             final List<Expr<?>> args = new ArrayList<>();
             for (com.microsoft.z3legacy.Expr argTerm : entry.getArgs()) {
-                final Expr<?> argExpr = transform(argTerm, model, vars);
-                args.add(argExpr);
+                args.add(defaultingTransform(argTerm, model, vars));
             }
             final com.microsoft.z3legacy.Expr term2 = entry.getValue();
-            final Expr<?> expr2 = transform(term2, model, vars);
-            builder.add(Tuple2.of(args, expr2));
+            builder.add(Tuple2.of(args, defaultingTransform(term2, model, vars)));
         }
         return builder.build();
+    }
+
+    /**
+     * {@link #transform} of a model term, but never null: a null means Z3 gave the term's function
+     * declaration no interpretation, i.e. left it unconstrained, so any witness of the right sort is
+     * a sound part of a counterexample. Substitute that sort's default.
+     *
+     * <p>Without this, extracting a model for the two-dimensional memory array ({@code
+     * arrays[base][offset]}) crashed: a function-interp entry whose value (or argument) is an
+     * unconstrained *inner array* transformed to null, and {@code Tuple2.of(args, null)} threw a bare
+     * NullPointerException out of Guava. That aborted every counterexample touching a byte array --
+     * exactly what a byte-addressed union produces.
+     */
+    private Expr<?> defaultingTransform(
+            final com.microsoft.z3legacy.Expr term, final Model model, final List<Decl<?>> vars) {
+        final Expr<?> transformed = transform(term, model, vars);
+        return transformed != null ? transformed : defaultLiteral(term.getSort());
+    }
+
+    /** A default literal of [sort], recursing through array nesting ({@link TypeUtils} refuses it). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private LitExpr<?> defaultLiteral(final com.microsoft.z3legacy.Sort sort) {
+        if (sort instanceof com.microsoft.z3legacy.ArraySort arraySort) {
+            final ArrayType arrayType = (ArrayType) transformSort(arraySort);
+            return (LitExpr<?>) Array(List.of(), defaultLiteral(arraySort.getRange()), arrayType);
+        }
+        return TypeUtils.getDefaultValue(transformSort(sort));
     }
 
     private Expr<?> transformQuantifier(
