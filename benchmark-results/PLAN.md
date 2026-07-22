@@ -2750,6 +2750,68 @@ data-race tasks moved from **wrong** to **unknown** — they no longer invent a 
 rather than prove safety, which is not a win. *(Not* fptr candidate-set breadth or union offset-0
 aliasing — batch 20 probed both and neither is unsound.)
 
+## Development directive — 2026-07-22 (libvsync → _Atomic → TDX flat memory)
+
+New priority order set by the user. **The older execution plan below (§3, phases 1–6) is NOT
+discarded — it is postponed behind this directive; the still-relevant items (TDX/union byte layout,
+overflow, grammar B1–B6, function pointers, portfolio STM) remain queued and pick up after these.**
+
+### Priority A — libvsync (104 tasks, currently 0 correct / 0 wrong / **100% ERROR**, flat across
+batches 43→60). Goal: **every libvsync task parses and starts to verify (timeouts are fine).**
+
+Blockers measured on batch60 (`error_col`):
+- **66** `No such variable or macro: __atomic_compare_exchange_n` — plus `__atomic_fetch_{or,and,xor}`
+  and `__atomic_thread_fence` / `atomic_fence{,_rlx,_rel,_acq}` are unmodeled. (Load/store/exchange/
+  fetch_add/sub *are* handled, but **inline in `ExpressionVisitor` and NOT wrapped in an atomic
+  block** — `atomicReadModifyWrite` emits two `CAssignment`s and relies on LBE to keep them on one
+  edge; fragile for a concurrency library.)
+- **26** `Field [tail]/[next]/[_v] not found, available fields are [...]` — struct field resolution
+  picks the wrong struct type (anonymous/nested member confusion).
+- **10** `Unsupported library parameter: non-zero dereference offsets are not supported`.
+- **2** `Referencing non-lvalue expressions` (the `&`-of-sliced-member issue, shared with TDX).
+
+**A1 — all atomic operations as an XCFA pass (do first).** Route every `__atomic_*` / C11 `atomic_*`
+/ `atomic_fence*` / `__atomic_thread_fence` name in the frontend to emit a `CCall` (→ `InvokeLabel`,
+`params[0]`=ret, `params[1..]`=args) instead of the current inline lowering, and add a new
+`AtomicFunctionsPass` in the first pass group (next to `CLibraryFunctionsPass`, before
+`UnresolvedInvokeToHavocPass`) that replaces each such `InvokeLabel` with
+`[AtomicBeginLabel, <stmts>, AtomicEndLabel]` (a genuine atomic block — see `AtomicBeginLabel`/
+`AtomicEndLabel` in `XcfaLabel.kt`), or a `FenceLabel` for the fences. Operations: `load_n/load`,
+`store_n/store/init`, `exchange_n`, `compare_exchange_n/compare_exchange` (atomic CAS: if `*p==*exp`
+then `*p=des`, ret 1, else `*exp=*p`, ret 0), `fetch_{add,sub,or,and,xor,nand}`, `thread_fence`,
+`signal_fence`. Memory order args are ignored (analysis is SC). Pointee type comes from the arg
+pointer's `cType`. **A2 — then debug the rest** (field resolution, non-zero-offset library param,
+`&`-slice) until all 104 parse+start.
+
+### Priority B — `_Atomic` qualifier in all positions (correctness for multithreaded programs)
+- **B1 — new canaries.** The sv-benchmarks MR
+  (https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks/-/tree/atomic-qualifier-tasks) is checked
+  out in `../sv-benchmarks` (branch `atomic-qualifier-tasks`): `c/pthread-atomic-qualifier/` — **44
+  tasks** (33 `no-data-race` true, 8 `no-data-race` false, 3 `unreach-call` true). Add all as
+  canaries, **keyed on the correct property per task** (they are fast to verify). Cover `_Atomic` in
+  casts, arrays (incl. 2-D), pointer targets vs pointer-to-atomic, struct members, bool/char.
+- **B2 — atomic alignment.** `ObjectLayout.alignBits` caps scalar alignment at the arch width
+  (`Math.min(size, cap)` — the i386 `long long`→4 quirk). A power-of-2-sized `_Atomic` object must
+  align to its **size**, bypassing that cap (Oracle E60778, https://docs.oracle.com/cd/E60778_01/html/E60745/gqfbq.html:
+  atomic access needs natural alignment for sizes 1/2/4/8/16). Add the atomic-aware rule there.
+  **TDD it** with our own `sizeof`/`alignof` unit tests against gcc-computed expectations (never by
+  hand — see [[project-svcomp27-ad7-object-layout]]).
+
+### Priority C — local benchmark. After A+B, run **locally only** on libvsync + the 44 atomic-qual
+tasks; confirm parse/start (timeouts acceptable) and zero new wrong verdicts.
+
+### Priority D — TDX module: a configurable **flat** memory model (836 tasks, 100% ERROR on the
+byte-addressed-union barrier: nested aggregates + `&`-of-sliced-member). Add an *option* (keep the
+current 2-D `arrays[base][offset]` as default; **both must stay usable via config**):
+- **Flat layout:** every object's base is `0`; memory is byte-addressed **`Bv8`** cells. A read of a
+  wider value is a `Concat` of its bytes; a narrower read is an `Extract`; a store writes the bytes.
+  Saving a cell becomes trivial (no per-object base).
+- **Allocation:** the current malloc grows the *base* by 3 — the flat model instead grows the shared
+  *offset* by the allocation size (a bump allocator over one address space).
+- **No dynamic allocation ⇒ known total size:** model memory as a **fixed-size bitvector** then.
+- This is the sound way to model TDX's overlapping byte/word/register views and clears the `&`-slice
+  barrier (a byte cell is a real lvalue). Sequence after Priority C.
+
 ## Batch 61 — pointer arithmetic loses its pointer type: `*(p + i)` read the wrong cell (2026-07-22)
 
 Root-caused and fixed the false `valid-deref` on the whole Juliet CWE476 `*(dataArray + k)` family
