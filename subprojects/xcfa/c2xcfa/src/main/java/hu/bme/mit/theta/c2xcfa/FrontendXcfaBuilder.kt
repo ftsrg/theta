@@ -1980,6 +1980,12 @@ private fun Expr<*>.hasArithmetic(): Boolean =
     is SubExpr -> true
     is DivExpr -> true
     is MulExpr -> true
+    // A Dereference is a value *loaded* from a cell, not a pointer-arithmetic result: the
+    // arithmetic in its own offset is how the cell is addressed, and reading `p = *(q + i)` (i.e.
+    // `p = deref(q, i)`) as `p = &q[i]` would rebuild the load into `ref(deref(q, deref(0, i)))`,
+    // dereferencing a bogus base. The loaded value is already whatever pointer sat in the cell, so
+    // stop here rather than descending into the addressing arithmetic.
+    is Dereference<*, *, *> -> false
     else -> ops.any { it.hasArithmetic() }
   }
 

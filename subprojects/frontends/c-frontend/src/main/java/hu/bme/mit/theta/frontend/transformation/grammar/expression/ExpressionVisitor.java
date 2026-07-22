@@ -507,6 +507,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
+            final Expr<?> pointerArithmetic = pointerArithmetic(ctx, exprs, types);
+            if (pointerArithmetic != null) {
+                return pointerArithmetic;
+            }
             CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<?>> collect = new ArrayList<>();
             for (int i = 0; i < exprs.size(); i++) {
@@ -529,6 +533,86 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return add;
         }
         return ctx.multiplicativeExpression(0).accept(this);
+    }
+
+    /**
+     * Pointer arithmetic {@code p + i} (equivalently {@code i + p}, or {@code p - i}), as opposed to
+     * ordinary integer addition. C makes such a sum a pointer, not an integer: its value is the base
+     * {@code p} advanced by {@code i} elements, and the whole benchmark memory model keys object
+     * sizes on the <em>base</em> expression. The default integer path instead handed the sum to
+     * {@link CComplexType#getSmallestCommonType} -- which, because {@link CPointer} inherits {@link
+     * CInteger}'s rank logic with an unset rank, returned an <em>integer</em> common type and wrapped
+     * the result in {@code mod 2^32}. That (a) truncated a 64-bit base to 32 bits and (b) buried the
+     * {@code AddExpr} under a modulo, so {@code *(p + i)}'s fold in {@code visitUnaryExpression} (and
+     * {@link #foldPointerArithmetic}) -- which only peels {@code Pos} -- no longer recognized it and
+     * read {@code arrays[p + i][0]} instead of {@code arrays[p][i]}: an unallocated base, a false
+     * out-of-bounds/NULL-deref on the whole {@code *(dataArray + k)} family (Juliet CWE476).
+     *
+     * <p>Emitting a bare pointer-typed {@code Add(base, index)} -- the index cast to the index type
+     * and scaled by the pointee's cell count, with no width modulo -- keeps the sum in exactly the
+     * shape those folds already expect, so {@code *(p + i)} lowers to the same {@code deref(p, i)}
+     * that {@code p[i]} does. Returns null (falling back to the integer path) for anything that is
+     * not one pointer/array operand added to integer terms: a pointer <em>difference</em> {@code p -
+     * q} is a {@code ptrdiff_t} the {@code ReferenceElimination} decomposition handles, and a sum
+     * with no pointer operand is ordinary integer arithmetic.
+     */
+    private Expr<?> pointerArithmetic(
+            CParser.AdditiveExpressionContext ctx, List<Expr<?>> exprs, List<CComplexType> types) {
+        int pointerIdx = -1;
+        int pointerCount = 0;
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i) instanceof CPointer || types.get(i) instanceof CArray) {
+                pointerCount++;
+                pointerIdx = i;
+            }
+        }
+        // Exactly one pointer/array operand, added (not subtracted), with at least one index term.
+        if (pointerCount != 1 || exprs.size() < 2) {
+            return null;
+        }
+        final boolean pointerNegated =
+                pointerIdx > 0 && ctx.signs.get(pointerIdx - 1).getText().equals("-");
+        if (pointerNegated) {
+            return null; // `i - p` is not valid pointer arithmetic; leave it to the integer path.
+        }
+        final CComplexType pointerType = types.get(pointerIdx);
+        final Expr<?> base = exprs.get(pointerIdx);
+        final CComplexType pointee =
+                pointerType instanceof CPointer p
+                        ? p.getEmbeddedType()
+                        : ((CArray) pointerType).getEmbeddedType();
+        // A step of `p` is one *element*. For a scalar or pointer pointee that is one storage cell,
+        // so the index is used as-is -- keeping `*(p + 2)` byte-for-byte identical to the correct
+        // `p[2]` lowering (and, crucially, free of the `* 1` a scale would inject: an extra `MulExpr`
+        // inside the resulting dereference's offset makes the assignment path misread the *load* as
+        // pointer arithmetic). An aggregate element spans `cellCount(pointee)` cells and is scaled,
+        // matching the subscript path's `rowOf`; a null scale (an unsized element) means no factor.
+        final boolean aggregatePointee =
+                pointee instanceof CArray
+                        || (pointee instanceof CStruct s && !s.isUnion());
+        final Expr<?> cells = aggregatePointee ? cellCountExpr(pointee) : null;
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final List<Expr<?>> indexTerms = new ArrayList<>();
+        for (int i = 0; i < exprs.size(); i++) {
+            if (i == pointerIdx) {
+                continue;
+            }
+            Expr<?> term = indexType.castTo(exprs.get(i));
+            if (cells != null) {
+                term = indexType.castTo(Mul(List.of(indexType.castTo(term), indexType.castTo(cells))));
+            }
+            if (i > 0 && ctx.signs.get(i - 1).getText().equals("-")) {
+                term = AbstractExprs.Neg(term);
+            }
+            indexTerms.add(term);
+        }
+        final List<Expr<?>> addOps = new ArrayList<>();
+        addOps.add(base); // pointer operand kept intact -- its CPointer/CArray cType is what the
+        // `*(p + i)` and subscript folds classify as the object being indexed.
+        addOps.addAll(indexTerms);
+        final Expr<?> ptrArith = Add(addOps);
+        parseContext.getMetadata().create(ptrArith, "cType", pointerType);
+        return ptrArith;
     }
 
     @Override

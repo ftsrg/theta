@@ -2750,6 +2750,44 @@ data-race tasks moved from **wrong** to **unknown** — they no longer invent a 
 rather than prove safety, which is not a win. *(Not* fptr candidate-set breadth or union offset-0
 aliasing — batch 20 probed both and neither is unsound.)
 
+## Batch 61 — pointer arithmetic loses its pointer type: `*(p + i)` read the wrong cell (2026-07-22)
+
+Root-caused and fixed the false `valid-deref` on the whole Juliet CWE476 `*(dataArray + k)` family
+(4 wrong results → correct `Safe`). Two independent, pre-existing bugs compounded:
+
+1. **`p + i` was typed as an integer, not a pointer.** `visitAdditiveExpression` handed the sum to
+   `getSmallestCommonType`, and `CPointer` inherits `CInteger`'s rank logic with an unset rank — so
+   `pointer + int` returned an *integer* common type and wrapped the result in `mod 2^32`. That both
+   truncated a 64-bit base and buried the `AddExpr` under a modulo, so the `*(p + i)` fold in
+   `visitUnaryExpression` (which only peels `Pos`) no longer recognized it: `*(p + i)` became
+   `deref(p + i, 0)` — reading an unallocated base — instead of `deref(p, i)`. `p[i]` (subscript)
+   was unaffected because it never goes through the additive visitor. Fix: a `pointerArithmetic`
+   helper in `ExpressionVisitor` emits a bare **pointer-typed** `Add(base, index)` (index scaled by
+   the pointee's cell count only for aggregate pointees, no width modulo) — the exact shape the
+   `*(p + i)` and subscript folds already expect, so `*(p + i)` lowers to the same `deref(p, i)` as
+   `p[i]`.
+
+2. **The load was then re-read as pointer arithmetic.** With (1) fixed, `int *d = *(pp + 2)` produced
+   the correct `d = deref(pp, 2)` — but the CAssignment path's `hasArithmetic` recursed into the
+   *load's own offset*, saw the addressing arithmetic, mistook the load for `d = q + i`, and rewrote
+   it via `asPointerArithReference` into `d = &pp[deref(0, 2)]` (a pointer *into* `pp` at a nonsense
+   offset read out of the null object). Fix: `hasArithmetic` now treats a `Dereference` as a value
+   leaf — a load is never pointer arithmetic, whatever its offset does.
+
+**Validation.** All 4 CWE476 tasks (`int/struct/int64_t/long __66_good`) go `wrong → Safe`. Canary
+suite **254 PASS / 1 TIMEOUT / 0 FAIL** (the lone timeout, `admesh`, was confirmed a *pre-existing*
+local timeout: the stashed pre-change build times it out identically — the harness counts TIMEOUT as
+green). `:theta-c2xcfa:test` + `:theta-c-frontend:test` green (194 + 137). Regression test:
+`PointerInMemoryLoadTest` pins the lowering pre-pass.
+
+**Boundary — the DLL trio is a separate, larger problem.** `test-0504`, `test-0504_1`,
+`dll_extends_pointer` stay wrong (`Unsafe`) and are *not* fixed here: they store a **mid-object**
+pointer into a cell (`y->pData = &y->data`, base = `y`, offset = the field), then compare it back
+(`if (&y->data != y->pData)`). A cell in the `arrays[base][offset]` model holds one base id, so the
+offset is lost and the compare spuriously differs. Clearing these needs **(base, offset) pairs stored
+per cell** — a real memory-model extension, distinct from the whole-pointer (offset-0) loads batch 61
+handles. Left for a dedicated effort.
+
 ## 0. Result summary
 
 | Category | Count | Notes |
