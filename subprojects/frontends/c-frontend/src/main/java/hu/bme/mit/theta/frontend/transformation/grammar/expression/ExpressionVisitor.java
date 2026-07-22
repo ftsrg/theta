@@ -2827,7 +2827,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
-                return expr;
+                // Post-decrement `x--` evaluates to the OLD value, exactly like `x++` returns
+                // `primary` above -- the decrement is only the (post-statement) side effect. Returning
+                // `expr` (= primary - 1) made `x--` yield the decremented value, so `while (n2-- != 0)`
+                // read as `(n2 - 1) != 0` and ran its body once too often (at n2 == 0 it entered on
+                // `-1 != 0`). That surfaced as false valid-deref alarms on the string routines
+                // (`cstrncpy`, whose tail loop is `while (n2-- != 0) *us++ = 0;`).
+                return primary;
             };
         }
     }

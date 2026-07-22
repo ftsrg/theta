@@ -35,3 +35,4 @@ wrong		c/termination-recursive-malloc/rec_strcopy_malloc.yml	c/termination-recur
 neighbor	c/termination-recursive-malloc/rec_strcopy_malloc.yml	c/termination-recursive-malloc/chunk1-2.yml	c/termination-recursive-malloc/chunk1-2.i	no-overflow	c/properties/no-overflow.prp	true	LP64	7.113	termination-recursive-malloc
 neighbor	c/termination-recursive-malloc/rec_strcopy_malloc.yml	c/termination-recursive-malloc/chunk3.yml	c/termination-recursive-malloc/chunk3.i	no-overflow	c/properties/no-overflow.prp	false	LP64	9.348	termination-recursive-malloc
 wrong		c/ldv-memsafety-bitfields/test-bitfields-2-2.yml	c/ldv-memsafety-bitfields/test-bitfields-2-2.i	valid-memsafety	c/properties/valid-memsafety.prp	true	LP64	10.0	ldv-memsafety-bitfields
+wrong		c/array-memsafety/cstrncpy-alloca-2.yml	c/array-memsafety/cstrncpy-alloca-2.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	10	array-memsafety
