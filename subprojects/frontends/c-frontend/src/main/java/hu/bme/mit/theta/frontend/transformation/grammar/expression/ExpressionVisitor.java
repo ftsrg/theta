@@ -1103,6 +1103,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                             "Taking the address of a multi-byte member of a byte-addressed union is"
                                     + " not supported.");
                 }
+                // `&arr[i]` on an array of structs (or arrays): the subscript already resolved the
+                // element to its cell-region address `arr + i*cells` (an AddExpr typed as the
+                // aggregate, see rowOf), because an aggregate value *is* its base (`&a == a ==
+                // &a[0]`). Taking its address is then the identity -- re-typed to a pointer to the
+                // element -- not a `reference()` of a bare lvalue, which is why the libvsync
+                // per-thread node arrays (`&nodes[tid]`, MCS/CLH locks) tripped the check below.
+                final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
+                if ((ampType instanceof CStruct || ampType instanceof CArray)
+                        && !(originalOperand instanceof RefExpr<?>)
+                        && !(originalOperand instanceof Dereference<?, ?, ?>)) {
+                    final Expr<?> address = Pos(originalOperand);
+                    parseContext
+                            .getMetadata()
+                            .create(address, "cType", new CPointer(null, ampType, parseContext));
+                    return address;
+                }
                 checkState(
                         originalOperand instanceof RefExpr<?>
                                 || originalOperand instanceof Dereference<?, ?, ?>,

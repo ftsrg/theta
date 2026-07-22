@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
@@ -100,7 +101,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                                 context.initializer().bracedPrimaryExpression().initializerList();
                         try {
                             initializerExpression =
-                                    buildInitializerList(initializerList, cSimpleType);
+                                    buildInitializerList(
+                                            initializerList, cSimpleType.getActualType());
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);
@@ -147,37 +149,42 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * the outer type here only has to be consistent, not exact.
      */
     private CInitializerList buildInitializerList(
-            CParser.InitializerListContext initializerList, CSimpleType cSimpleType) {
+            CParser.InitializerListContext initializerList, CComplexType containerType) {
         final CInitializerList cInitializerList =
-                new CInitializerList(cSimpleType.getActualType(), parseContext);
+                new CInitializerList(containerType, parseContext);
         int nextPosition = 0;
         for (org.antlr.v4.runtime.tree.ParseTree child :
                 initializerList == null
                         ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
                         : initializerList.children) {
             if (child instanceof CParser.DesignationContext designation) {
-                nextPosition = designatedPosition(designation, cSimpleType);
+                nextPosition = designatedPosition(designation, containerType);
                 continue;
             }
             if (!(child instanceof CParser.InitializerContext initializer)) {
                 continue; // comma
             }
+            // Each element carries its *own* type -- a struct's member at this index, an array's
+            // element type -- not the aggregate's. A nested braced initializer (`.lock = { ._v =
+            // 0 }`) must therefore recurse with the member's type, or its inner designators resolve
+            // against the wrong struct (the `Field [_v] not found, available fields are [lock]`
+            // failures on libvsync's `vatomic*` wrappers), and a scalar element is cast to its
+            // member type, not to the aggregate.
+            final CComplexType elementType = elementTypeAt(containerType, nextPosition);
             final CStatement value;
             if (initializer.bracedPrimaryExpression() != null) {
                 value =
                         buildInitializerList(
                                 initializer.bracedPrimaryExpression().initializerList(),
-                                cSimpleType);
+                                elementType);
             } else {
                 final Expr<?> expr =
-                        cSimpleType
-                                .getActualType()
-                                .castTo(
-                                        initializer
-                                                .assignmentExpression()
-                                                .accept(functionVisitor)
-                                                .getExpression());
-                parseContext.getMetadata().create(expr, "cType", cSimpleType);
+                        elementType.castTo(
+                                initializer
+                                        .assignmentExpression()
+                                        .accept(functionVisitor)
+                                        .getExpression());
+                parseContext.getMetadata().create(expr, "cType", elementType);
                 value = new CExpr(expr, parseContext);
             }
             cInitializerList.addStatement(
@@ -187,6 +194,29 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                     value);
         }
         return cInitializerList;
+    }
+
+    /**
+     * The type of the element at [position] in an aggregate: a struct's member at that field index
+     * (a union's too -- its members share offset 0 but keep distinct indices), an array's element
+     * type. Anything else (a scalar being brace-wrapped, or an unknown shape) falls back to the
+     * container itself, which is the old whole-aggregate behaviour.
+     */
+    private CComplexType elementTypeAt(CComplexType containerType, int position) {
+        if (containerType
+                instanceof
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+                                struct
+                && position >= 0
+                && position < struct.getFields().size()) {
+            return struct.getFields().get(position).get2();
+        }
+        if (containerType
+                instanceof
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray array) {
+            return array.getEmbeddedType();
+        }
+        return containerType;
     }
 
     @Override
@@ -210,7 +240,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * field index, so both forms land in the same position space.
      */
     private int designatedPosition(
-            CParser.DesignationContext designation, CSimpleType cSimpleType) {
+            CParser.DesignationContext designation, CComplexType containerType) {
         final List<CParser.DesignatorContext> designators =
                 designation.designatorList().designator();
         if (designators.size() != 1) {
@@ -219,7 +249,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         }
         final CParser.DesignatorContext designator = designators.get(0);
         if (designator.Identifier() != null) {
-            if (!(cSimpleType.getActualType()
+            if (!(containerType
                     instanceof
                     hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
                                     struct)) {
