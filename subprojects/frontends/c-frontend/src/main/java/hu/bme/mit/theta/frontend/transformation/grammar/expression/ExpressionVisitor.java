@@ -1499,6 +1499,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 call.argumentExpressionList() == null
                         ? List.of()
                         : call.argumentExpressionList().assignmentExpression();
+        // The GCC `__atomic_*` builtins and their C11 `atomic_*` spellings are compiler intrinsics
+        // with no declaration to resolve; recognise them here and emit an ordinary call so that
+        // AtomicFunctionsPass can lower each into an atomic block. Only the return *type* is decided
+        // here (so the call's return variable is typed right); the semantics live in the pass.
+        Expr<?> atomic = atomicBuiltinCall(name, args);
+        if (atomic != null) {
+            return atomic;
+        }
         switch (name) {
             case "__builtin_expect", "__builtin_expect_with_probability" -> {
                 if (args.isEmpty()) {
@@ -1542,37 +1550,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // which is exactly how `abort` is already modelled (FinalLocationPass turns a call
                 // to it into an edge to the final location).
                 return callModeledLibraryFunction("abort", List.of(), false);
-            }
-            case "__atomic_load_n",
-                    "__atomic_load",
-                    // C11 `<stdatomic.h>` spells the same operations type-generically, with macros,
-                    // which this grammar cannot express -- so they are recognised by name and built
-                    // here, exactly like the builtins they compile down to.
-                    "atomic_load",
-                    "atomic_load_explicit" -> {
-                // An atomic load *is* a load. The memory order is only about what may be reordered
-                // around it, and the analysis is sequentially consistent anyway -- it never
-                // reorders
-                // -- so honouring the order would constrain nothing that is not already true.
-                return atomicLoad(args);
-            }
-            case "__atomic_store_n",
-                    "__atomic_store",
-                    "atomic_store",
-                    "atomic_store_explicit",
-                    "atomic_init" -> {
-                return atomicStore(args);
-            }
-            case "__atomic_exchange_n", "atomic_exchange", "atomic_exchange_explicit" -> {
-                // Read the old value, write the new one, yield the old: a read-modify-write with no
-                // arithmetic in the middle.
-                return atomicReadModifyWrite(args, null);
-            }
-            case "__atomic_fetch_add", "atomic_fetch_add", "atomic_fetch_add_explicit" -> {
-                return atomicReadModifyWrite(args, AbstractExprs::Add);
-            }
-            case "__atomic_fetch_sub", "atomic_fetch_sub", "atomic_fetch_sub_explicit" -> {
-                return atomicReadModifyWrite(args, AbstractExprs::Sub);
             }
             case "__builtin_bswap16", "__builtin_bswap32", "__builtin_bswap64" -> {
                 return byteSwap(args, Integer.parseInt(name.substring("__builtin_bswap".length())));
@@ -2375,85 +2352,108 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return null;
     }
 
-    /** `__atomic_load_n(p, order)` is `*p`. */
-    private Expr<?> atomicLoad(List<AssignmentExpressionContext> args) {
-        if (args.isEmpty()) {
-            return null;
-        }
-        Expr<?> pointer = args.get(0).accept(this);
-        CComplexType pointee = pointeeOf(pointer);
-        if (pointee == null) {
-            return null;
-        }
-        return dereference(
-                pointer, CComplexType.getUnsignedLong(parseContext).getNullValue(), pointee);
-    }
-
-    /** `__atomic_store_n(p, v, order)` is `*p = v`; it yields no value. */
-    private Expr<?> atomicStore(List<AssignmentExpressionContext> args) {
-        if (args.size() < 2 || functionVisitor == null) {
-            return null;
-        }
-        Expr<?> pointer = args.get(0).accept(this);
-        CComplexType pointee = pointeeOf(pointer);
-        if (pointee == null) {
-            return null;
-        }
-        Expr<?> target =
-                dereference(
-                        pointer,
-                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
-                        pointee);
-        preStatements.add(
-                new CAssignment(target, args.get(1).accept(functionVisitor), "=", parseContext));
-        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-        LitExpr<?> unused = signedInt.getNullValue(); // void: no one may read this
-        parseContext.getMetadata().create(unused, "cType", signedInt);
-        return unused;
-    }
+    // The GCC/C11 atomic builtins, grouped by what their call *returns* -- the only thing that has
+    // to be decided in the frontend so the return variable is typed correctly. The operations
+    // themselves (load/store/RMW/CAS/fence, each wrapped in an atomic block) are lowered by
+    // AtomicFunctionsPass, which owns the authoritative name lists; keep these in sync with it.
+    private static final java.util.Set<String> ATOMIC_RETURNS_POINTEE =
+            java.util.Set.of(
+                    "__atomic_load_n",
+                    "__atomic_load",
+                    "atomic_load",
+                    "atomic_load_explicit",
+                    "__atomic_exchange_n",
+                    "atomic_exchange",
+                    "atomic_exchange_explicit",
+                    "__atomic_fetch_add",
+                    "__atomic_fetch_sub",
+                    "__atomic_fetch_or",
+                    "__atomic_fetch_and",
+                    "__atomic_fetch_xor",
+                    "__atomic_fetch_nand",
+                    "atomic_fetch_add",
+                    "atomic_fetch_sub",
+                    "atomic_fetch_or",
+                    "atomic_fetch_and",
+                    "atomic_fetch_xor",
+                    "atomic_fetch_add_explicit",
+                    "atomic_fetch_sub_explicit",
+                    "atomic_fetch_or_explicit",
+                    "atomic_fetch_and_explicit",
+                    "atomic_fetch_xor_explicit",
+                    "__atomic_add_fetch",
+                    "__atomic_sub_fetch",
+                    "__atomic_or_fetch",
+                    "__atomic_and_fetch",
+                    "__atomic_xor_fetch",
+                    "__atomic_nand_fetch");
+    private static final java.util.Set<String> ATOMIC_RETURNS_VOID =
+            java.util.Set.of(
+                    "__atomic_store_n",
+                    "__atomic_store",
+                    "atomic_store",
+                    "atomic_store_explicit",
+                    "atomic_init",
+                    "__atomic_exchange", // ret is by pointer, the call value is unused
+                    "__atomic_thread_fence",
+                    "__atomic_signal_fence",
+                    "atomic_thread_fence",
+                    "atomic_signal_fence");
+    private static final java.util.Set<String> ATOMIC_RETURNS_INT =
+            java.util.Set.of(
+                    "__atomic_compare_exchange_n",
+                    "__atomic_compare_exchange",
+                    "atomic_compare_exchange_strong",
+                    "atomic_compare_exchange_weak",
+                    "atomic_compare_exchange_strong_explicit",
+                    "atomic_compare_exchange_weak_explicit");
 
     /**
-     * `atomic_fetch_add(p, v)` and friends: read what `p` points at, write something back, and
-     * yield the value that was there *before*. `atomic_exchange(p, v)` is the same shape with no
-     * arithmetic in the middle -- pass a null [combine] for it.
-     *
-     * <p>The old value is captured into a temporary before the write, because that is what the call
-     * evaluates to and the location no longer holds it afterwards. The read and the write are
-     * emitted as one statement each, on the same edge, so nothing may be interleaved between them
-     * -- which is the whole point of the operation being atomic.
+     * If [name] is an atomic builtin, emit it as a call (so {@code AtomicFunctionsPass} can lower it)
+     * with its return variable typed correctly, and return the call's value. Returns null otherwise,
+     * so ordinary builtin handling proceeds.
      */
-    private Expr<?> atomicReadModifyWrite(
-            List<AssignmentExpressionContext> args,
-            java.util.function.BinaryOperator<Expr<?>> combine) {
-        if (args.size() < 2 || functionVisitor == null) {
+    private Expr<?> atomicBuiltinCall(String name, List<AssignmentExpressionContext> args) {
+        if (ATOMIC_RETURNS_POINTEE.contains(name)) {
+            return atomicCall(name, args, AtomicReturn.POINTEE);
+        }
+        if (ATOMIC_RETURNS_VOID.contains(name)) {
+            return atomicCall(name, args, AtomicReturn.VOID);
+        }
+        if (ATOMIC_RETURNS_INT.contains(name)) {
+            return atomicCall(name, args, AtomicReturn.INT);
+        }
+        return null;
+    }
+
+    private enum AtomicReturn {
+        POINTEE,
+        INT,
+        VOID,
+    }
+
+    private Expr<?> atomicCall(
+            String name, List<AssignmentExpressionContext> args, AtomicReturn returnKind) {
+        if (functionVisitor == null) {
             return null;
         }
-        Expr<?> pointer = args.get(0).accept(this);
-        CComplexType pointee = pointeeOf(pointer);
-        if (pointee == null) {
-            return null;
+        List<CStatement> arguments = new ArrayList<>();
+        for (AssignmentExpressionContext arg : args) {
+            arguments.add(arg.accept(functionVisitor));
         }
-        Expr<?> zero = CComplexType.getUnsignedLong(parseContext).getNullValue();
-        Expr<?> target = dereference(pointer, zero, pointee);
-
-        // The value that was there before -- what the call yields. It has to be kept, because the
-        // write below is about to overwrite it.
-        VarDecl<?> old = functionVisitor.createTempVar(pointee, "atomic_old");
-        preStatements.add(
-                new CAssignment(old.getRef(), new CExpr(target, parseContext), "=", parseContext));
-
-        Expr<?> operand = args.get(1).accept(this);
-        Expr<?> written =
-                combine == null
-                        ? pointee.castTo(operand)
-                        : pointee.castTo(combine.apply(old.getRef(), pointee.castTo(operand)));
-        preStatements.add(
-                new CAssignment(
-                        dereference(pointer, zero, pointee),
-                        new CExpr(written, parseContext),
-                        "=",
-                        parseContext));
-        return old.getRef();
+        CComplexType returnType;
+        if (returnKind == AtomicReturn.POINTEE && !arguments.isEmpty()) {
+            // load/exchange/fetch return the value at the object -- the pointee of the first argument.
+            CComplexType pointee = pointeeOf(arguments.get(0).getExpression());
+            returnType = pointee != null ? pointee : CComplexType.getSignedInt(parseContext);
+        } else {
+            // compare-exchange returns a bool (int); store and fence are void (value unused).
+            returnType = CComplexType.getSignedInt(parseContext);
+        }
+        parseContext.getMetadata().create(name, "cType", returnType);
+        CCall cCall = new CCall(name, arguments, parseContext);
+        preStatements.add(cCall);
+        return cCall.getRet().getRef();
     }
 
     /**

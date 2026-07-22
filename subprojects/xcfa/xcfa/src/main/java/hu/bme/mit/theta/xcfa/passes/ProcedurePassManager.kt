@@ -46,6 +46,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
+      // turns their dereferences into the base/offset memory model, like any other `*p`.
+      AtomicFunctionsPass(parseContext),
     ),
     listOf(
       ReferenceElimination(parseContext),
@@ -139,6 +142,9 @@ class NontermValidationPasses(
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
+      // turns their dereferences into the base/offset memory model, like any other `*p`.
+      AtomicFunctionsPass(parseContext),
     ),
     listOf(
       ReferenceElimination(parseContext),
