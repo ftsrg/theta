@@ -55,6 +55,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -138,18 +139,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
-                val t = ptrType.embeddedType
                 val assign2 =
-                  if (t is CStruct) {
-                    val type = Fitsall(null, parseContext)
-                    builder.parent.allocate(
-                      parseContext,
-                      varDecl.ref,
-                      type.getValue("${t.fields.size}"),
-                    )
-                  } else {
-                    builder.parent.allocateUnit(parseContext, varDecl.ref)
-                  }
+                  builder.parent.allocateReferenced(
+                    parseContext,
+                    varDecl.ref,
+                    ptrType.embeddedType,
+                  )
 
                 listOf(assign, assign2)
               } else {
@@ -201,7 +196,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
             if (MemsafetyPass.enabled) {
-              val assign3 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+              val assign3 =
+                builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
 
               listOf(assign1, assign2, assign3)
             } else {
@@ -285,6 +281,46 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   private fun getDirectReferencedDecl(reference: Reference<*, *>): VarDecl<*>? =
     (reference.expr as? RefExpr<*>)?.decl as? VarDecl<*>
+
+  /**
+   * The number of flat cells an object of [type] occupies, or null when it is not statically sized
+   * (a VLA or a flexible array member). An array multiplies its constant dimensions through its
+   * element's cell count -- matching `FrontendXcfaBuilder.flatArraySize` and
+   * `ExpressionVisitor#rowOf`, which lay `int a[3][4]` out as twelve cells `arrays[a][i*4 + j]`.
+   */
+  private fun flatCellCount(type: CComplexType): Int? =
+    when (type) {
+      is CArray -> {
+        val dim = ObjectLayout.constantDimension(type) ?: return null
+        val elem = flatCellCount(type.embeddedType) ?: return null
+        dim * elem
+      }
+      is CStruct -> if (type.isUnion) 1 else type.unitCount
+      else -> 1
+    }
+
+  /**
+   * Sizes the object a taken address points to. An array is aliased with its own first element
+   * (`&a == a == &a[0]`), so the pointer the reference machinery hands out has to span the array's
+   * cells, not one: allocating a single unit made `arr[i]` for any `i > 0` -- reached through
+   * `(int **)&arr` and the like -- a spurious out-of-bounds `valid-deref`. A struct keeps its
+   * historical one-cell-per-field size; a scalar is one cell.
+   */
+  private fun XcfaBuilder.allocateReferenced(
+    parseContext: ParseContext,
+    base: Expr<*>,
+    embeddedType: CComplexType,
+  ): StmtLabel {
+    val cells =
+      when (embeddedType) {
+        is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
+        is CArray -> flatCellCount(embeddedType)
+        else -> 1
+      }
+    return if (cells != null)
+      allocate(parseContext, base, Fitsall(null, parseContext).getValue("$cells"))
+    else allocateUnit(parseContext, base)
+  }
 
   private data class SplitVarPair(val base: VarDecl<Type>, val offset: VarDecl<Type>)
 
