@@ -2770,6 +2770,26 @@ Blockers measured on batch60 (`error_col`):
 - **10** `Unsupported library parameter: non-zero dereference offsets are not supported`.
 - **2** `Referencing non-lvalue expressions` (the `&`-of-sliced-member issue, shared with TDX).
 
+**PROGRESS (2026-07-23).** Three of the four libvsync blockers are fixed and committed; all 19
+libvsync source files now **parse** (`ParsingResult Success`):
+- `f080e89f1` — **A1 atomics pass** (`AtomicFunctionsPass`): every `__atomic_*`/`atomic_*` builtin
+  now lowers to an atomic-block-wrapped memory op. Validated end-to-end (concurrent fetch_add+CAS →
+  Safe for unreach-call *and* no-data-race; single-threaded all-ops → Safe).
+- `6aea7b717` — **nested designated initializers** (`{ .lock = { ._v = 0 } }` resolved `._v` against
+  the outer struct) and **`&arr[i]` on an array of structs** (the `rowOf` region address is not a
+  bare lvalue; `&` of an aggregate is the identity re-typed to a pointer). These cleared the
+  `Field [X] not found` (26) and `Referencing non-lvalue` (7) errors.
+- **Remaining blocker — array-of-thread/mutex handles.** All 19 files now converge on
+  `CLibraryFunctionsPass.getParam` rejecting `pthread_create(&t[i], …)` / `pthread_join(t[i], …)`
+  over `pthread_t t[3]` (`non-zero dereference offsets are not supported`). The pthread model keys a
+  thread on its handle *VarDecl* (`StartLabel.pidVar`, matched to `JoinLabel.pidVar`); an array
+  element is not a VarDecl. Fixing it needs the create/join loop **unrolled before** the pthread
+  lowering (so offsets are constant) **and** a synthetic distinct pidVar per `(base, constOffset)` —
+  but `CLibraryFunctionsPass` runs before `LoopUnrollPass`, and it cannot simply move after
+  `ReferenceElimination` (which would first rewrite the handle) or after `AtomicFunctionsPass` (whose
+  dereferences ReferenceElimination must still process). A dedicated pthread-array-handle pass (unroll
+  the create/join loops locally, then lower each element to its own handle) is the next libvsync step.
+
 **A1 — all atomic operations as an XCFA pass (do first).** Route every `__atomic_*` / C11 `atomic_*`
 / `atomic_fence*` / `__atomic_thread_fence` name in the frontend to emit a `CCall` (→ `InvokeLabel`,
 `params[0]`=ret, `params[1..]`=args) instead of the current inline lowering, and add a new
@@ -2849,6 +2869,44 @@ pointer into a cell (`y->pData = &y->data`, base = `y`, offset = the field), the
 offset is lost and the compare spuriously differs. Clearing these needs **(base, offset) pairs stored
 per cell** — a real memory-model extension, distinct from the whole-pointer (offset-0) loads batch 61
 handles. Left for a dedicated effort.
+
+## Batch 62 — Priority B: `_Atomic` is a property of the accessed *cell* (2026-07-23)
+
+Local benchmark of the atomic-qualifier MR (`sv-benchmarks/c/pthread-atomic-qualifier/`, 44 tasks)
+found **26 pass / 16 false-race / 2 frontend crash**. The 16 false-races were all one root cause:
+the data-race check only knew atomicity of a pointer *variable* or an address-taken object, but
+`_Atomic` on a **struct field**, **array element**, **whole struct**, **nested field** or **pointee**
+lives on the accessed *cell*, and by analysis time that cell is a bare `(deref base offset)` of
+literals — the C type folded away (`XcfaDataRaceCheck.addressesAtomicData` only had the pointer-var
+and folded-literal-pointer branches).
+
+**Fix — record atomicity against the object's base id, which survives by value.** `ParseContext`
+gained an atomic-cell map (fully-atomic objects, per-unit-offset atomic cells, and parent-cell →
+subobject-base links for nesting). It is populated where base ids are minted:
+`FrontendXcfaBuilder.initializeGlobalVariable`/`giveStructObjectStorage` for globals and their
+struct-field subobjects, and `ReferenceElimination.globalReferredVars` for address-taken objects
+(which re-base the object to the invented pointer's id — so `&s`'s struct-field access lands on that
+new base, not the frontend one). `addressesAtomicData` now resolves the deref's base (a literal, or a
+nested `(deref parent off)` chain via `subObjectBaseAt`) and asks the map. Also fixed
+`pointsToAtomic` to consult the referred global's own `atomic` flag (the referred ref's recorded
+C type had lost the atomic level for address-taken scalars — why `_Atomic int *p = &v; *p` still raced).
+
+**Result: 40/44** (was 26). All object-declared-atomic cases correct; the 8 real-race controls stay
+`Unsafe` (no race hidden — verified). Alignment (B2) landed separately: `ObjectLayout.alignBits`
+bypasses the i386 cap for `_Atomic` scalars (commit `align _Atomic scalars…`, `AtomicAlignmentTest`).
+Regression guards: `XcfaDataRaceTest.testAtomicCellDataRace` (3 in-repo programs, no sv-benchmarks
+checkout needed) and `benchmark-results/canaries/atomic_qual.tsv` (all 44, full mode). Canary parse
+suite 255 PASS + 22 fixtures; guard_set full mode identical to baseline (6 pre-existing fails, none
+atomic-related — confirmed by stashed-build comparison).
+
+**4 still open** (distinct sub-problems, not object-declared-atomic):
+- `param-array`, `param-ptr-to-atomic` — atomicity comes from a **cast** `(_Atomic int *)` on a
+  *plain* object; after inline+fold the deref base is the plain object's id, no trace of the cast.
+  Needs cast/access-site atomicity, a separate mechanism from object atomicity.
+- `cast-ptr` — **pre-existing** frontend crash (not atomic-specific): `*(T *)&x = 1`, i.e. an
+  assignment through a *dereferenced cast lvalue*, NPEs in `visitUnaryExpressionCast` (`*(int*)q = 1`
+  reproduces with no `_Atomic`). The read form and the pointer-var form both work.
+- `funcptr` — `void (* _Atomic fp)(void)` (atomic function-pointer declaration) never registers `fp`.
 
 ## 0. Result summary
 

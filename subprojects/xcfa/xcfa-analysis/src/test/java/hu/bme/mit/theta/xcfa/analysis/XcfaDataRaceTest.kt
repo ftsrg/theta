@@ -68,6 +68,15 @@ class XcfaDataRaceTest {
         arrayOf("/07mutex.c", true, SafetyResult<*, *>::isSafe),
       )
     }
+
+    @JvmStatic
+    fun atomicData(): Collection<Array<Any>> {
+      return listOf(
+        arrayOf("/09atomicfield_norace.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/10plainfield_race.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/11atomicarray_norace.c", SafetyResult<*, *>::isSafe),
+      )
+    }
   }
 
   @ParameterizedTest
@@ -94,10 +103,30 @@ class XcfaDataRaceTest {
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")
+    Assertions.assertTrue(verdict(checkWithCegar(program)))
+  }
+
+  /**
+   * `_Atomic` is a property of the accessed cell, not of the pointer expression that reaches it. A
+   * struct field, array element, whole struct, nested field or pointee declared `_Atomic` is reached
+   * through a `(base, offset)` dereference whose C type is gone by analysis time, so its atomicity is
+   * resolved from the object's base id. These pin that the race check excludes such accesses -- and,
+   * via the plain-field control, that it still reports races on non-atomic cells of the same object.
+   */
+  @ParameterizedTest
+  @MethodSource("atomicData")
+  fun testAtomicCellDataRace(program: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing $program for atomic-cell data race...")
+    Assertions.assertTrue(verdict(checkWithCegar(program)), program)
+  }
+
+  private fun checkWithCegar(program: String): SafetyResult<*, *> {
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+    // One parse context throughout: the atomic-cell facts recorded while building the XCFA are read
+    // back by the error detector below, so it must be the same instance, not a fresh empty one.
+    val parseContext = ParseContext()
+    val xcfa = getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -142,8 +171,7 @@ class XcfaDataRaceTest {
       ) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
-    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
-    Assertions.assertTrue(verdict(safetyResult))
+    return cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
   }
 
   @ParameterizedTest

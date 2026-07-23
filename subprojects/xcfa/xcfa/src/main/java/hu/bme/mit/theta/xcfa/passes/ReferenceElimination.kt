@@ -57,6 +57,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
+import java.math.BigInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -129,12 +130,23 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .associateWith {
             val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
             val varDecl = Var(it.name + "*", ptrType.smtType)
-            val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
-            // Taking the address of an `_Atomic` variable does not make it any less atomic: every
-            // access to it now goes through this pointer, so the pointer has to carry the fact.
+            val objectBase = cnt // capture: reading cnt hands out this base and advances it
+            val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$objectBase")
+            // The referred object is atomic when the *variable's own type* is (`_Atomic int v`,
+            // `int * _Atomic p`); the global var already carries that flag, which is more reliable
+            // than the referred ref's recorded C type (address-taken scalars can lose the atomic
+            // level of that type). Taking its address does not make it any less atomic: every access
+            // to it now goes through this pointer, so the pointer has to carry the fact.
+            val referredAtomic =
+              builder.parent.getVars().firstOrNull { g -> g.wrappedVar == it }?.atomic == true
             builder.parent.addVar(
-              XcfaGlobalVar(varDecl, lit, pointsToAtomic = ptrType.embeddedType.isAtomic)
+              XcfaGlobalVar(
+                varDecl,
+                lit,
+                pointsToAtomic = ptrType.embeddedType.isAtomic || referredAtomic,
+              )
             )
+            recordReferencedObjectAtomicity(objectBase, ptrType.embeddedType, referredAtomic)
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
@@ -155,6 +167,32 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       }
     checkState(globalReferredVars is Map<*, *>, "ReferenceElimination needs info on references")
     return globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+  }
+
+  private fun cellsAreAtomic(type: CComplexType): Boolean =
+    type.isAtomic || (type is CArray && cellsAreAtomic(type.embeddedType))
+
+  /**
+   * Records which cells of an address-taken object are `_Atomic` against the base id its storage was
+   * given here, mirroring what the frontend builder does for objects that keep their compile-time
+   * base. Address-taken objects are re-based to this pointer's id, so a struct-field or pointee
+   * access through `&s` lands on this base, and the race check resolves atomicity from it.
+   */
+  private fun recordReferencedObjectAtomicity(
+    base: Int,
+    embeddedType: CComplexType,
+    referredAtomic: Boolean,
+  ) {
+    val baseId = BigInteger.valueOf(base.toLong())
+    if (referredAtomic || cellsAreAtomic(embeddedType)) {
+      parseContext.markObjectFullyAtomic(baseId)
+    } else if (embeddedType is CStruct) {
+      embeddedType.fields.forEach { field ->
+        if (cellsAreAtomic(field.get2())) {
+          parseContext.markObjectAtomicCell(baseId, embeddedType.unitOffsetOf(field.get1()))
+        }
+      }
+    }
   }
 
   private fun runSimpleReferenceElimination(builder: XcfaProcedureBuilder): Boolean {

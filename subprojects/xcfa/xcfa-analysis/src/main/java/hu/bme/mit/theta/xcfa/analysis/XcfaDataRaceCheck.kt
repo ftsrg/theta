@@ -25,7 +25,12 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import java.math.BigInteger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -47,34 +52,43 @@ import hu.bme.mit.theta.xcfa.utils.*
 private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
 /**
- * Whether this pointer addresses an `_Atomic` object -- accesses to which are, by definition, not
+ * Whether the cell this dereference reads is `_Atomic` -- accesses to it are, by definition, not
  * data races with anything.
  *
  * A race between two *variables* checks whether the **variable** is atomic (`!v1.globalVar.atomic`,
- * below). An access *through* a pointer touches what the pointer points **at**, which is a
- * different question, and `_Atomic` says which is which:
+ * below). An access *through* a dereference touches the cell it points **at**, which is a different
+ * question, and `_Atomic` says which is which:
  * ```
  * _Atomic int *p;   // p is an ordinary variable; p[i] is atomic, and cannot be raced on
  * int * _Atomic p;  // p itself is atomic; what it points at is not
  * ```
  *
- * A pointer variable can simply be asked. An **address-taken** object cannot: `&x` is folded to a
- * bare literal -- the object's id -- long before the analysis runs, and the C types are keyed by
- * object *identity*, so an expression any pass rebuilds has lost its type anyway. What survives is
- * the pointer [ReferenceElimination] invents for such a variable: it holds that same id, and it was
- * told what it points at. So the id is looked up there.
+ * `_Atomic` is a property of the accessed *cell* -- a struct field, an array element, or a pointee --
+ * but the expression that reaches it is a bare `(base, offset)` of literals by analysis time (folded
+ * constants, rebuilt exprs, identity-keyed C types all lost). So atomicity is recorded against the
+ * object's base id where that id is minted (global layout in the frontend builder, address-taken
+ * objects in [ReferenceElimination]) and resolved here by the base id's *value*.
+ *
+ * A live pointer *variable* (not folded to a base) is still asked its type directly.
  *
  * Nothing found means nothing skipped -- reporting a race is the safe direction.
  */
-private fun Expr<*>.addressesAtomicData(xcfa: XCFA, parseContext: ParseContext): Boolean {
-  // A pointer *variable*: its type says what it points at.
-  (this as? RefExpr<*>)?.decl?.let { decl ->
+private fun Dereference<*, *, *>.addressesAtomicData(
+  xcfa: XCFA,
+  parseContext: ParseContext,
+): Boolean {
+  // The object being accessed, identified by the base id its dereference resolves to.
+  array.resolveObjectBase(parseContext)?.let { base ->
+    if (parseContext.isAtomicObjectCell(base, offset.asConstantBigInteger()?.toInt())) return true
+  }
+  // A live pointer *variable*: its type says what it points at.
+  (array as? RefExpr<*>)?.decl?.let { decl ->
     xcfa.globalVars
       .firstOrNull { it.wrappedVar == decl }
       ?.let { if (it.pointsToAtomic) return true }
     val pointee =
       try {
-        when (val type = CComplexType.getType(this, parseContext)) {
+        when (val type = CComplexType.getType(array, parseContext)) {
           is CPointer -> type.embeddedType
           is CArray -> type.embeddedType
           else -> null
@@ -87,7 +101,32 @@ private fun Expr<*>.addressesAtomicData(xcfa: XCFA, parseContext: ParseContext):
   // An address-taken object, whose pointer has been folded to a bare literal -- its object id. The
   // pointer ReferenceElimination invented for it still holds that id, and remembers what it points
   // at.
-  return xcfa.globalVars.any { it.pointsToAtomic && it.initValue == this }
+  return xcfa.globalVars.any { it.pointsToAtomic && it.initValue == array }
+}
+
+/** The value of a bare integer/bitvector literal, or null when this is not a compile-time constant. */
+private fun Expr<*>.asConstantBigInteger(): BigInteger? =
+  when (this) {
+    is IntLitExpr -> value
+    is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
+    else -> null
+  }
+
+/**
+ * The base id of the object this dereference-base expression denotes: a bare literal is that id
+ * directly; a nested `(deref parent offset)` reads a subobject's base from its parent's cell, so it
+ * resolves through [ParseContext.subObjectBaseAt] (recursively, for `s.a.b.c`).
+ */
+private fun Expr<*>.resolveObjectBase(parseContext: ParseContext): BigInteger? {
+  asConstantBigInteger()?.let {
+    return it
+  }
+  if (this is Dereference<*, *, *>) {
+    val parent = array.resolveObjectBase(parseContext) ?: return null
+    val offsetValue = offset.asConstantBigInteger()?.toInt() ?: return null
+    return parseContext.subObjectBaseAt(parent, offsetValue)
+  }
+  return null
 }
 
 /** One of the two conflicting accesses of a data race. */
@@ -339,7 +378,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               label,
               deref.array,
               deref.offset,
-              deref.array.addressesAtomicData(xcfa, parseContext),
+              deref.addressesAtomicData(xcfa, parseContext),
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),

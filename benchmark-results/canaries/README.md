@@ -29,3 +29,13 @@ Add a fixture when a batch adds a frontend/grammar capability: write the smalles
 needs it, confirm it builds now, and add a row. Verdict-level bugs (a fix changes the *answer*,
 not whether it builds) belong in `guard_set.tsv`, not here — e.g. the deferred packed-bitfield
 memsafety wrongs (`test-bitfields-*`) are tracked there as known-wrong until slicing lands.
+
+## `atomic_qual.tsv` — `_Atomic`-qualifier verdict guard
+
+The 44 tasks of `sv-benchmarks/c/pthread-atomic-qualifier/` (the atomic-qualifier MR), keyed on
+their real property/verdict. Run in **full** mode — `run_canaries.sh "" full atomic_qual.tsv` — to
+check that `_Atomic` on a struct field, array element, whole struct, nested field or pointee still
+makes concurrent accesses race-free (and that plain cells still race). 40 are green; 4 are the
+known-open cases documented in `PLAN.md` (batch 62): `cast-ptr`/`funcptr` don't parse, and the two
+`param-*` cast-through-a-cast tasks report a false race. Fast (~2.5 s each). The in-repo counterpart
+that runs without an sv-benchmarks checkout is `XcfaDataRaceTest.testAtomicCellDataRace`.

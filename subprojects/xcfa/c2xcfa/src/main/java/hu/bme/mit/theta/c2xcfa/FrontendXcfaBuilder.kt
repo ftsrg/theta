@@ -297,11 +297,37 @@ class FrontendXcfaBuilder(
    * index does not describe their layout, and [CStruct.isUnion] accesses that would need a faithful
    * one are already refused.
    */
+  /** Whether every cell of an object of this type is `_Atomic` (the whole object, or every element
+   *  of an array whose elements are). A struct with only *some* atomic fields is not, and is recorded
+   *  per cell instead. */
+  private fun cellsAreAtomic(type: CComplexType): Boolean =
+    type.isAtomic || (type is CArray && cellsAreAtomic(type.embeddedType))
+
+  /**
+   * Records, against the object's compile-time base id, which of its cells are `_Atomic`, so the
+   * data-race check can exclude accesses to them (see [ParseContext.isAtomicObjectCell]). An access
+   * to such a cell is a bare `(deref base offset)` by analysis time, its C type long gone, so the
+   * fact is pinned to the base id -- which survives by value -- here where the id is minted.
+   */
+  private fun recordObjectAtomicity(base: Int, type: CComplexType) {
+    val baseId = BigInteger.valueOf(base.toLong())
+    if (cellsAreAtomic(type)) {
+      parseContext.markObjectFullyAtomic(baseId)
+    } else if (type is CStruct) {
+      type.fields.forEach { field ->
+        if (cellsAreAtomic(field.get2())) {
+          parseContext.markObjectAtomicCell(baseId, type.unitOffsetOf(field.get1()))
+        }
+      }
+    }
+  }
+
   private fun giveStructObjectStorage(
     builder: XcfaBuilder,
     objectExpr: Expr<*>,
     type: CStruct,
     initStmtList: MutableList<XcfaLabel>,
+    parentBase: Int,
   ) {
     if (MemsafetyPass.enabled) {
       val fitsall = Fitsall(null, parseContext)
@@ -312,19 +338,27 @@ class FrontendXcfaBuilder(
     type.fields.forEach { field ->
       val fieldType = field.get2()
       if (fieldType is CStruct) {
+        val subObjectBase = ptrCnt // capture: reading ptrCnt advances it
+        val unitOffset = type.unitOffsetOf(field.get1())
         val deref =
           Dereference(
             cast(objectExpr, objectExpr.type),
-            cast(type.getValue("${type.unitOffsetOf(field.get1())}"), objectExpr.type),
+            cast(type.getValue("$unitOffset"), objectExpr.type),
             fieldType.smtType,
           )
         parseContext.metadata.create(deref, "cType", fieldType)
         initStmtList.add(
           StmtLabel(
-            MemoryAssignStmt.create(deref, cast(fieldType.getValue("$ptrCnt"), deref.type))
+            MemoryAssignStmt.create(deref, cast(fieldType.getValue("$subObjectBase"), deref.type))
           )
         )
-        giveStructObjectStorage(builder, deref, fieldType, initStmtList)
+        parseContext.recordSubObjectCell(
+          BigInteger.valueOf(parentBase.toLong()),
+          unitOffset,
+          BigInteger.valueOf(subObjectBase.toLong()),
+        )
+        recordObjectAtomicity(subObjectBase, fieldType)
+        giveStructObjectStorage(builder, deref, fieldType, initStmtList, subObjectBase)
       }
     }
   }
@@ -681,7 +715,9 @@ class FrontendXcfaBuilder(
       )
     }
     if (type is CArray) {
-      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
+      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
+      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$objectBase")))
+      recordObjectAtomicity(objectBase, type)
       if (MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
@@ -712,8 +748,10 @@ class FrontendXcfaBuilder(
         globalDeclaration,
       )
     } else if (type is CStruct) {
-      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$ptrCnt")))
-      giveStructObjectStorage(builder, globalDeclaration, type, initStmtList)
+      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
+      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$objectBase")))
+      recordObjectAtomicity(objectBase, type)
+      giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
       // An initializer list is what initializeCompound is for; asking it for a single
       // `.expression` throws. Anything else that has one is genuinely unsupported here.
       if (
