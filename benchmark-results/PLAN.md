@@ -2779,16 +2779,26 @@ libvsync source files now **parse** (`ParsingResult Success`):
   the outer struct) and **`&arr[i]` on an array of structs** (the `rowOf` region address is not a
   bare lvalue; `&` of an aggregate is the identity re-typed to a pointer). These cleared the
   `Field [X] not found` (26) and `Referencing non-lvalue` (7) errors.
-- **Remaining blocker — array-of-thread/mutex handles.** All 19 files now converge on
-  `CLibraryFunctionsPass.getParam` rejecting `pthread_create(&t[i], …)` / `pthread_join(t[i], …)`
-  over `pthread_t t[3]` (`non-zero dereference offsets are not supported`). The pthread model keys a
-  thread on its handle *VarDecl* (`StartLabel.pidVar`, matched to `JoinLabel.pidVar`); an array
-  element is not a VarDecl. Fixing it needs the create/join loop **unrolled before** the pthread
-  lowering (so offsets are constant) **and** a synthetic distinct pidVar per `(base, constOffset)` —
-  but `CLibraryFunctionsPass` runs before `LoopUnrollPass`, and it cannot simply move after
-  `ReferenceElimination` (which would first rewrite the handle) or after `AtomicFunctionsPass` (whose
-  dereferences ReferenceElimination must still process). A dedicated pthread-array-handle pass (unroll
-  the create/join loops locally, then lower each element to its own handle) is the next libvsync step.
+- **Array-of-thread/mutex handles — FIXED (2026-07-23, commit `give each pthread array-element handle
+  its own thread…`).** `pthread_create(&t[i], …)` / `pthread_join(t[i], …)` over `pthread_t t[N]` keyed
+  a thread on its handle *VarDecl*, but an array element is a base/offset dereference. New
+  `PthreadArrayHandleUnrollPass` (before `CLibraryFunctionsPass`, so before `ReferenceElimination`
+  rewrites the handle) runs `LoopUnrollPass` — but *only* on a procedure that creates/joins through an
+  array element, so nothing else is unrolled early. `LoopUnrollPass` gained an opt-in mode that folds
+  each iteration's loop-variable value into the copied body (only the loop var, leaving `&x` of other
+  vars for `ReferenceElimination`), turning `&t[i]` into `&t[0]`, `&t[1]`, …; `getParam` maps each
+  constant `(base, offset)` to a distinct synthetic handle shared by a create and its join. `simplify`
+  now recurses into `SequenceLabel` and folds `InvokeLabel` args. Verified: a 2-thread array-handle
+  program races (Unsafe), mutexed form does not; canary parse + full guard set identical to baseline.
+- **Now 17/19 libvsync build** (from 0). The two that still fail the frontend: `hclhlock`
+  (`ReferenceElimination: bare use of split variable`) and `hmcslock` (`CInitializerList: Cannot create
+  expression of initializer list`) — separate frontend gaps.
+- **New shared blocker — `WitnessOptimizer` assumes an acyclic CFG.** All 19 now reach it (a witness
+  pass, `WitnessOptimizer.kt:64`) and it deadlocks (`firstNotNullOf … No element … non-null`) on the
+  locks' thread-body spin loops: `firstNotNullOf { valuations.size >= loc.incomingEdges.size }` never
+  fires at a loop head (the back-edge valuation is not yet available). A program with no thread-body
+  loop (the 2-thread test above) passes it. This is the next libvsync step — teach the propagation to
+  handle loop heads (or run it only where the CFG is acyclic).
 
 **A1 — all atomic operations as an XCFA pass (do first).** Route every `__atomic_*` / C11 `atomic_*`
 / `atomic_fence*` / `__atomic_thread_fence` name in the frontend to emit a `CCall` (→ `InvokeLabel`,
