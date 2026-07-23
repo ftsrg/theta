@@ -2793,12 +2793,21 @@ libvsync source files now **parse** (`ParsingResult Success`):
 - **Now 17/19 libvsync build** (from 0). The two that still fail the frontend: `hclhlock`
   (`ReferenceElimination: bare use of split variable`) and `hmcslock` (`CInitializerList: Cannot create
   expression of initializer list`) — separate frontend gaps.
-- **New shared blocker — `WitnessOptimizer` assumes an acyclic CFG.** All 19 now reach it (a witness
-  pass, `WitnessOptimizer.kt:64`) and it deadlocks (`firstNotNullOf … No element … non-null`) on the
-  locks' thread-body spin loops: `firstNotNullOf { valuations.size >= loc.incomingEdges.size }` never
-  fires at a loop head (the back-edge valuation is not yet available). A program with no thread-body
-  loop (the 2-thread test above) passes it. This is the next libvsync step — teach the propagation to
-  handle loop heads (or run it only where the CFG is acyclic).
+- **`WitnessOptimizer` deadlock — FIXED (2026-07-23, commit `run WitnessOptimizer only when a witness
+  was applied`).** `WitnessOptimizer` is misnamed: it is not the input-witness pass (that is
+  `ApplyWitnessPass`). The OC checker runs it once per thread (`oc/Utils.kt`) to normalize the segment
+  counters `ApplyWitnessPass` inserts *during witness validation*; without a witness there are none and
+  its only other effect (propagating thread-start literals) is redundant — `XcfaToEventGraph` already
+  binds each start param. Its forward propagation deadlocked on any thread-body loop
+  (`firstNotNullOf { valuations.size >= loc.incomingEdges.size }` never fires at a loop head). Gated to
+  run only when the procedure references the segment-counter variable (i.e. a witness was applied).
+- **Next OC blocker — `Feature not supported by OC checker: references` (`XcfaToEventGraph.exit:583`).**
+  Past `WitnessOptimizer`, the OC engine (STABLE's concurrency decision procedure) rejects `&x`/pointer
+  references, which the locks use throughout. This is a genuine OC-model limitation, not a crash to
+  route around; the portfolio does not fall back to CEGAR here (dies with code 202). So libvsync now
+  **builds** (17/19) and **starts** the OC engine, which then refuses references — the next libvsync
+  step is either OC reference support or a portfolio fallback to the explicit/CEGAR engine (which does
+  model references via the base/offset memory).
 
 **A1 — all atomic operations as an XCFA pass (do first).** Route every `__atomic_*` / C11 `atomic_*`
 / `atomic_fence*` / `__atomic_thread_fence` name in the frontend to emit a `CCall` (→ `InvokeLabel`,
