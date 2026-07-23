@@ -690,6 +690,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       is SequenceStmt ->
         listOf(SequenceStmt.of(stmts.flatMap { it.changeComplexReferredVars(splitVars) }))
       is SkipStmt -> listOf(this)
+      is HavocStmt<*> -> {
+        // A havoc has no expression to rewrite. If the havoced variable itself was split, both halves
+        // become non-deterministic; otherwise it passes through untouched.
+        val split = splitVars[varDecl]
+        if (split != null) listOf(HavocStmt.of(split.base), HavocStmt.of(split.offset))
+        else listOf(this)
+      }
       else -> TODO("Not yet implemented ($this)")
     }
 
@@ -1073,6 +1080,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           )
 
         is SkipStmt -> listOf(this)
+        is HavocStmt<*> -> listOf(this) // no expression to rewrite; the havoced var is not referred
         else -> TODO("Not yet implemented ($this)")
       }
     val metadataValue = parseContext?.metadata?.getMetadataValue(this, "sourceStatement")

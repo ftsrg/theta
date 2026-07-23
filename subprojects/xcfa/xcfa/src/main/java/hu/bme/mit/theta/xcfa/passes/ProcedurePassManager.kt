@@ -81,6 +81,14 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlinedProcedureRemovalPass()
     ),
     listOf(
+      // Inlining binds a `&(deref B O)` call argument (e.g. `&atomic_var` passed to a helper) to the
+      // callee's parameter as an assignment only now -- and the group-2 ReferenceElimination, which
+      // eliminates the complex `&(deref …)` form only from assignments and runs before inlining, never
+      // saw it. Run it again so no reference survives into the analyses (the OC checker rejects any
+      // residual reference outright); it is a no-op on procedures that have none.
+      ReferenceElimination(parseContext),
+    ),
+    listOf(
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property),
       UnusedLocRemovalPass(),
