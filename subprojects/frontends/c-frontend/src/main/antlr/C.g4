@@ -146,7 +146,12 @@ primaryExpression
     |   StringLiteral+                                                      # primaryExpressionStrings
     |   '(' expression ')'                                                  # primaryExpressionBraceExpression
     |   '(' compoundStatement ')'                                           # primaryExpressionCompoundStatement // GNU C extension?
-    |   '(' castDeclarationSpecifierList ')' initializer                    # primaryExpressionTypeInitializer
+    // A compound literal `(T){ ... }` -- the initializer must be BRACED. Allowing a bare
+    // `assignmentExpression` here (which `initializer` also permits) makes `(T)expr` ambiguous with a
+    // plain cast, and for an assignment LHS `*(T*)p = v` the type-initializer alternative greedily
+    // swallows `p = v` as its initializer, so the whole deref operand parses to null and NPEs. A cast
+    // is the correct reading of the unbraced form, so require the braces that a compound literal has.
+    |   '(' castDeclarationSpecifierList ')' bracedPrimaryExpression        # primaryExpressionTypeInitializer
     //|   genericSelection                                                    # primaryExpressionGenericSelection
     |   '__extension__'? '(' compoundStatement ')'                          # primaryExpressionGccExtension
     |   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
