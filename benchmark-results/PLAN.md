@@ -2891,7 +2891,8 @@ nested `(deref parent off)` chain via `subObjectBaseAt`) and asks the map. Also 
 `pointsToAtomic` to consult the referred global's own `atomic` flag (the referred ref's recorded
 C type had lost the atomic level for address-taken scalars — why `_Atomic int *p = &v; *p` still raced).
 
-**Result: 40/44** (was 26). All object-declared-atomic cases correct; the 8 real-race controls stay
+**Result: 40/44** (was 26), then 41/44 once the two frontend fixes below land. All object-declared-
+atomic cases correct; the 8 real-race controls stay
 `Unsafe` (no race hidden — verified). Alignment (B2) landed separately: `ObjectLayout.alignBits`
 bypasses the i386 cap for `_Atomic` scalars (commit `align _Atomic scalars…`, `AtomicAlignmentTest`).
 Regression guards: `XcfaDataRaceTest.testAtomicCellDataRace` (3 in-repo programs, no sv-benchmarks
@@ -2899,14 +2900,27 @@ checkout needed) and `benchmark-results/canaries/atomic_qual.tsv` (all 44, full 
 suite 255 PASS + 22 fixtures; guard_set full mode identical to baseline (6 pre-existing fails, none
 atomic-related — confirmed by stashed-build comparison).
 
-**4 still open** (distinct sub-problems, not object-declared-atomic):
-- `param-array`, `param-ptr-to-atomic` — atomicity comes from a **cast** `(_Atomic int *)` on a
-  *plain* object; after inline+fold the deref base is the plain object's id, no trace of the cast.
-  Needs cast/access-site atomicity, a separate mechanism from object atomicity.
-- `cast-ptr` — **pre-existing** frontend crash (not atomic-specific): `*(T *)&x = 1`, i.e. an
-  assignment through a *dereferenced cast lvalue*, NPEs in `visitUnaryExpressionCast` (`*(int*)q = 1`
-  reproduces with no `_Atomic`). The read form and the pointer-var form both work.
-- `funcptr` — `void (* _Atomic fp)(void)` (atomic function-pointer declaration) never registers `fp`.
+**Two of the four opens were then fixed (2026-07-23), → 41/44:**
+- `funcptr` — commit `register a type-qualified function-pointer declarator…`. `void (* _Atomic
+  fp)(void)` parenthesizes the star into the declarator, so its qualifier reached `visitDeclarator`
+  (not the type specifier), where a `checkState` threw and was swallowed by the two-pass parse,
+  silently dropping the whole declaration — any qualifier (const/volatile/restrict/`_Atomic`) did it.
+  Now const/volatile/restrict are ignored and `_Atomic` marks the pointer variable atomic (carried on
+  `CDeclaration`, applied to the function-pointer `CPointer` in `getActualType`). → `funcptr` Safe.
+- `cast-ptr`'s **parse crash** — commit `require braces on a compound literal…`. The compound-literal
+  rule `( type ) initializer` allowed a *bare* `assignmentExpression`, so on an assignment LHS
+  `*(T*)p = v` it swallowed `p = v` as the initializer, parsed the `*` operand to null and NPE'd
+  (pre-existing, not `_Atomic`-specific — `*(int*)q = 1` reproduces). A compound literal is braced, so
+  the rule now requires `bracedPrimaryExpression`; the unbraced form reads as the cast it is.
+
+**3 still open — all one mechanism (cast-through atomicity):** `cast-ptr`, `param-array`,
+`param-ptr-to-atomic` all get their atomicity from a **cast** `(_Atomic int *)` on a *plain* object,
+so after inline+fold the deref base is the plain object's id with no trace of the cast. This is
+access-path atomicity (the pointer's pointee type at the access), which the folding/inlining model
+discards — distinct from object-declared atomicity. Marking the object atomic would pass all three
+but is **unsound** (it hides a real race if the same object is ever also accessed plainly), so it is
+deliberately left rather than shipped as a heuristic. A sound fix needs per-access atomicity carried
+through folding, or a whole-object "every access is atomic" analysis.
 
 ## 0. Result summary
 

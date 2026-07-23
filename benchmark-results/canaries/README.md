@@ -35,7 +35,8 @@ memsafety wrongs (`test-bitfields-*`) are tracked there as known-wrong until sli
 The 44 tasks of `sv-benchmarks/c/pthread-atomic-qualifier/` (the atomic-qualifier MR), keyed on
 their real property/verdict. Run in **full** mode — `run_canaries.sh "" full atomic_qual.tsv` — to
 check that `_Atomic` on a struct field, array element, whole struct, nested field or pointee still
-makes concurrent accesses race-free (and that plain cells still race). 40 are green; 4 are the
-known-open cases documented in `PLAN.md` (batch 62): `cast-ptr`/`funcptr` don't parse, and the two
-`param-*` cast-through-a-cast tasks report a false race. Fast (~2.5 s each). The in-repo counterpart
-that runs without an sv-benchmarks checkout is `XcfaDataRaceTest.testAtomicCellDataRace`.
+makes concurrent accesses race-free (and that plain cells still race). 41 are green; the 3 known-open
+are the cast-through-a-cast tasks (`cast-ptr`, `param-array`, `param-ptr-to-atomic`), which report a
+false race because their atomicity comes from a `(_Atomic int *)` cast the folding model discards
+(PLAN.md batch 62). Fast (~2.5 s each). The in-repo counterpart that runs without an sv-benchmarks
+checkout is `XcfaDataRaceTest.testAtomicCellDataRace`.
