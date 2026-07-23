@@ -97,4 +97,23 @@ class AtomicRaceTest {
   )
   fun `atomicity lands on the level it was written at`(declaration: String, expected: String) =
     assertEquals(expected, atomicityOf(declaration), "for `$declaration`")
+
+  /** Whether the global function pointer `fp` the program declares is an atomic variable. */
+  private fun funcPointerIsAtomic(declaration: String): Boolean {
+    val (xcfa, _) = build("$declaration void main() { fp = 0; }")
+    return xcfa.globalVars.first { it.wrappedVar.name.substringAfterLast("::") == "fp" }.atomic
+  }
+
+  @ParameterizedTest(name = "{0} -> atomic = {1}")
+  @DisplayName("_Atomic on a function-pointer declarator makes the pointer atomic")
+  @CsvSource(
+    // The star sits inside the declarator's parentheses, so its `_Atomic` is carried by the
+    // declarator (not the type specifier). It makes the pointer VARIABLE atomic -- writing `fp` is
+    // race-free -- exactly as `int * _Atomic p` does. const/volatile there change nothing.
+    "void (*fp)(void);, false",
+    "void (* _Atomic fp)(void);, true",
+    "void (* const fp)(void);, false",
+  )
+  fun `atomic function pointer`(declaration: String, expected: Boolean) =
+    assertEquals(expected, funcPointerIsAtomic(declaration), "for `$declaration`")
 }

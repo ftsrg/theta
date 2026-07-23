@@ -22,3 +22,4 @@ union_slice_punning.c	bitvector	LP64	PARSE-OK	56	union slice punning, bitvector 
 byte_addressed_union.c	efficient	LP64	PARSE-OK	60	byte-addressed union (AD7, array members, no shared word)
 byte_addressed_union.c	bitvector	LP64	PARSE-OK	60	byte-addressed union, bitvector Concat/Extract
 deref_cast_lvalue.c	efficient	ILP32	PARSE-OK	62	assignment through a dereferenced cast lvalue (*(T*)p = v)
+funcptr_qualifier.c	efficient	ILP32	PARSE-OK	62	type qualifier on a function-pointer declarator (void (* _Atomic fp)(void))

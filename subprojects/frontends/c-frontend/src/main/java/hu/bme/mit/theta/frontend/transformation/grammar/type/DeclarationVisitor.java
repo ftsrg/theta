@@ -355,9 +355,6 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
 
     @Override
     public CDeclaration visitDeclarator(CParser.DeclaratorContext ctx) {
-        checkState(
-                ctx.pointer() == null || ctx.pointer().typeQualifierList().size() == 0,
-                "pointers should not have type qualifiers! (not yet implemented)");
         // checkState(ctx.gccDeclaratorExtension().size() == 0, "Cannot do anything with
         // gccDeclaratorExtensions!");
         CDeclaration decl = ctx.directDeclarator().accept(this);
@@ -368,6 +365,18 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             // Record where this star binds relative to any array dimensions seen so far, so
             // `T (*p)[N]` (pointer to array) and `T *p[N]` (array of pointers) stay distinct.
             decl.addDeclaratorPointer(size);
+            // A qualifier after the star inside a declarator -- `void (* _Atomic fp)(void)`, an
+            // atomic function pointer. `const`/`volatile`/`restrict` say nothing the model tracks and
+            // are ignored; `_Atomic` makes the pointer variable itself atomic (carried to the type in
+            // CDeclaration#getActualType). `int * _Atomic p` never reaches here -- there the star is
+            // at the type-specifier level (TypeVisitor#visitTypeSpecifierPointer).
+            final boolean atomic =
+                    ctx.pointer().typeQualifierList().stream()
+                            .flatMap(list -> list.typeQualifier().stream())
+                            .anyMatch(q -> q.getText().equals("_Atomic"));
+            if (atomic) {
+                decl.setAtomicPointer(true);
+            }
         }
         // `int b __attribute__((aligned(8)));` -- an attribute written after the declarator is a
         // declarator extension, not a declaration specifier, so it arrives here rather than with

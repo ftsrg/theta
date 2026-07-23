@@ -35,6 +35,24 @@ public class CDeclaration {
     private final List<VarDecl<?>> varDecls;
     private boolean isFunc;
     private boolean isFuncPointer;
+
+    /**
+     * An `_Atomic` written after a `*` inside the declarator, as in the atomic function pointer
+     * `void (* _Atomic fp)(void)`. Unlike `int * _Atomic p`, whose star is at the type-specifier
+     * level ({@link hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor}), this star
+     * is parenthesized into the declarator, so its atomicity is carried here and applied to the
+     * pointer the declarator builds (see {@link #getActualType()}).
+     */
+    private boolean atomicPointer = false;
+
+    public boolean isAtomicPointer() {
+        return atomicPointer;
+    }
+
+    public void setAtomicPointer(boolean atomicPointer) {
+        this.atomicPointer = atomicPointer;
+    }
+
     private int derefCounter = 0;
     private final List<CStatement> arrayDimensions = new ArrayList<>();
     private final List<CDeclaration> functionParams = new ArrayList<>();
@@ -146,6 +164,11 @@ public class CDeclaration {
             CPointer functionPointer =
                     new CPointer(pointerType, pointeeType, actualType.getParseContext());
             functionPointer.setFunctionPointer(true);
+            // `void (* _Atomic fp)(void)`: the `_Atomic` after the star makes the pointer variable
+            // itself atomic (writing `fp` is race-free), exactly as `int * _Atomic p` does.
+            if (atomicPointer) {
+                functionPointer.setAtomic();
+            }
             actualType = functionPointer;
         }
         // `T *p[N]`: the star belongs to the element type, so it goes on before the dimensions.
