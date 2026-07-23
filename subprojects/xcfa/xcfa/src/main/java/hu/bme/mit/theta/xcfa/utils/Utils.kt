@@ -180,6 +180,20 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
         tempLookup,
       )
 
+    is InvokeLabel ->
+      // Fold known values into the arguments -- notably the array index of a thread/mutex handle
+      // `&t[i]`, so an unrolled create/join loop yields the constant `&t[0]`, `&t[1]`, … that
+      // CLibraryFunctionsPass keys each handle on.
+      InvokeLabel(
+        name,
+        params.map { ExprUtils.simplify(it, valuation) },
+        metadata,
+        tempLookup,
+        isLibraryFunction,
+      )
+
+    is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
+
     else -> this
   }
 

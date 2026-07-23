@@ -21,14 +21,18 @@ import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
+import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
+import hu.bme.mit.theta.xcfa.utils.simplify
 import java.util.*
 import kotlin.math.max
 
@@ -38,7 +42,17 @@ import kotlin.math.max
  * not unrolled. Loops with unknown number of iterations are unrolled to FORCE_UNROLL_LIMIT
  * iterations (this way a safe result might not be valid).
  */
-class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
+/**
+ * @param substituteLoopVar when true, each unrolled copy has the loop variable replaced by its
+ *   constant value for that iteration (`&t[i]` becomes `&t[0]`, `&t[1]`, …). Only the loop variable
+ *   is substituted, so address-of expressions of other variables (`&x`) are left for
+ *   ReferenceElimination -- which is why this may safely run before it. Requires [parseContext].
+ */
+class LoopUnrollPass(
+  alwaysForceUnroll: Int = -1,
+  private val substituteLoopVar: Boolean = false,
+  private val parseContext: ParseContext? = null,
+) : ProcedurePass {
 
   companion object {
 
@@ -67,7 +81,12 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
     val exitEdges: Map<XcfaLocation, List<XcfaEdge>>,
     val properlyUnrollable: Boolean,
     val forceUnrollLimit: Int,
+    val substituteLoopVar: Boolean = false,
+    val parseContext: ParseContext? = null,
   ) {
+
+    /** The loop variable's value at each iteration, filled by [count] when [substituteLoopVar]. */
+    private val loopVarValues = mutableListOf<LitExpr<*>>()
 
     private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
       constructor(edge: XcfaEdge) : this(edge.label.toStmt())
@@ -136,12 +155,22 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
 
       var cnt = 0
       val loopCondAction = BasicStmtAction(loopStartEdges.first())
+      loopVarValues.clear()
       while (!transFunc.getSuccStates(state, loopCondAction, prec).first().isBottom) {
+        if (substituteLoopVar) loopVarValues.add(state.eval(loopVar).orElseThrow())
         cnt++
         if (UNROLL_LIMIT in 0 until cnt) return null
         state = transFunc.getSuccStates(state, BasicStmtAction(loopVarModifiers), prec).first()
       }
       return cnt
+    }
+
+    /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
+    private fun substituteLoopVarIn(label: XcfaLabel, index: Int): XcfaLabel {
+      if (!substituteLoopVar || parseContext == null || loopVar == null) return label
+      val valuation = MutableValuation()
+      valuation.put(loopVar, loopVarValues[index])
+      return label.simplify(valuation, parseContext)
     }
 
     private fun copyBody(
@@ -159,8 +188,9 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
 
       loopEdges.forEach {
         val newSource = if (it.source == loopStart) startLoc else locs[it.source]!!
-        val newLabel =
+        val condStripped =
           if (it.source == loopCondStart && removeCond) it.label.removeCondition() else it.label
+        val newLabel = substituteLoopVarIn(condStripped, index)
         val edge = XcfaEdge(newSource, locs[it.target]!!, newLabel, it.metadata)
         builder.addEdge(edge)
       }
@@ -337,6 +367,8 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
         exitEdges = exits,
         properlyUnrollable = properlyUnrollable,
         forceUnrollLimit = forceUnrollLimit,
+        substituteLoopVar = substituteLoopVar,
+        parseContext = parseContext,
       )
       .also { if (it in testedLoops) return null }
   }

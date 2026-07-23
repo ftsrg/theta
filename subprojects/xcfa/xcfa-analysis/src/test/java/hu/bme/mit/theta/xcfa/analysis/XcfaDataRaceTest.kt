@@ -48,6 +48,9 @@ import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.model.JoinLabel
+import hu.bme.mit.theta.xcfa.model.StartLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -77,6 +80,44 @@ class XcfaDataRaceTest {
         arrayOf("/11atomicarray_norace.c", SafetyResult<*, *>::isSafe),
       )
     }
+  }
+
+  /**
+   * Threads created and joined through an array of handles -- `pthread_t t[N]; for (i)
+   * pthread_create(&t[i], …)` -- must each become a distinct thread, which the pidVar identifies. The
+   * loops are unrolled and the index folded ([PthreadArrayHandleUnrollPass]), then each `&t[i]` / `t[i]`
+   * keys its own handle ([CLibraryFunctionsPass]); conflating them would spawn just one thread and hide
+   * every race the array's threads have. Checked structurally, so it does not depend on any one engine
+   * finding the race.
+   */
+  @org.junit.jupiter.api.Test
+  fun pthreadArrayHandlesAreDistinctThreads() {
+    val stream = javaClass.getResourceAsStream("/12pthread_array_race.c")
+    val xcfa =
+      getXcfaFromC(
+          stream!!,
+          ParseContext(),
+          false,
+          XcfaProperty(ErrorDetection.DATA_RACE),
+          NullLogger.getInstance(),
+        )
+        .first
+    val startPidVars =
+      xcfa.procedures
+        .flatMap { it.edges }
+        .flatMap { it.label.getFlatLabels() }
+        .filterIsInstance<StartLabel>()
+        .map { it.pidVar }
+    Assertions.assertEquals(2, startPidVars.size, "both array elements spawn a thread")
+    Assertions.assertEquals(2, startPidVars.toSet().size, "with distinct handles")
+    val joinPidVars =
+      xcfa.procedures
+        .flatMap { it.edges }
+        .flatMap { it.label.getFlatLabels() }
+        .filterIsInstance<JoinLabel>()
+        .map { it.pidVar }
+        .toSet()
+    Assertions.assertEquals(startPidVars.toSet(), joinPidVars, "each thread is joined on its handle")
   }
 
   @ParameterizedTest

@@ -45,6 +45,10 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so the
+      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and must
+      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too late.
+      PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
       // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
       // turns their dereferences into the base/offset memory model, like any other `*p`.
@@ -141,6 +145,10 @@ class NontermValidationPasses(
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so the
+      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and must
+      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too late.
+      PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
       // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
       // turns their dereferences into the base/offset memory model, like any other `*p`.
