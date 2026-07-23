@@ -136,7 +136,8 @@ public final class ObjectLayout {
      * <p>A scalar aligns to its own size, capped by the architecture's widest scalar alignment: the
      * i386 quirk that an 8-byte {@code long long} or {@code double} aligns to 4 is exactly this cap.
      * Types at least 128 bits wide ({@code long double}, {@code __int128}) align to their size on
-     * LP64 instead, which is what the x86-64 psABI specifies.
+     * LP64 instead, which is what the x86-64 psABI specifies. An {@code _Atomic} scalar bypasses the
+     * cap entirely and always aligns to its own size.
      */
     public static int alignBits(CComplexType type, ArchitectureType arch, Attributes attributes) {
         if (attributes.alignedToBits() > 0) {
@@ -153,6 +154,11 @@ public final class ObjectLayout {
             return alignBits(array.getEmbeddedType(), arch, Attributes.NONE);
         }
         final int size = type.width();
+        if (type.isAtomic()) {
+            // An _Atomic scalar must be read/written by a single instruction, so it aligns to its
+            // own size even where the architecture would otherwise cap a plain scalar lower.
+            return size;
+        }
         final int cap = arch == ArchitectureType.LP64 ? 64 : 32;
         if (size >= 128 && arch == ArchitectureType.LP64) {
             return size;
