@@ -93,6 +93,15 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (initDeclContext != null) {
             for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
                 CDeclaration declaration = context.declarator().accept(this);
+                // The initializer's container is the *declared* type, dimensions and all: for
+                // `T a[N] = { [i] = {...} }` the array-ness lives on the declarator, not the specifier
+                // type, so `getActualType()` (which folds the declarator's array dimensions onto the
+                // specifier) is the right container. Passing the bare `cSimpleType.getActualType()`
+                // instead read the array's `[i]` designators as struct field indices of the element
+                // type -- "Field designator on a non-struct type" once the element was itself an
+                // aggregate (the Intel TDX-Module lookup tables). setType now so getActualType sees
+                // the specifier.
+                declaration.setType(cSimpleType);
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
                     if (context.initializer().bracedPrimaryExpression() != null) {
@@ -102,7 +111,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         try {
                             initializerExpression =
                                     buildInitializerList(
-                                            initializerList, cSimpleType.getActualType());
+                                            initializerList, declaration.getActualType());
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);

@@ -740,7 +740,12 @@ class FrontendXcfaBuilder(
             .getValue(getArraySize(type, initExpr).toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
       }
-      if (type.embeddedType is CArray && initExpr != null) {
+      val flatElement = type.embeddedType
+      if (
+        initExpr != null &&
+          (flatElement is CArray ||
+            (flatElement is CStruct && isFlatScalarStruct(flatElement)))
+      ) {
         // A multi-dimensional array is one contiguous object, so its initializer has to be written
         // straight into the flat cells. Recursing per row -- the one-dimensional path below --
         // would give every row a base of its own and initialise *those* instead, storage no read
@@ -748,6 +753,14 @@ class FrontendXcfaBuilder(
         // uninitialised, silently. (This case used to be refused outright: "Not handling init
         // expression of high dimsension array", 865 tasks, almost all neural-networks weight
         // matrices and hardness.)
+        //
+        // The same is true of an array whose elements are (scalar-field) structs: `S a[N]` stores
+        // each element inline at `a[i*unitCount + f]` (see flatArraySize / ExpressionVisitor#rowOf),
+        // so the initializer must be laid flat too. The old per-element path gave every element its
+        // own base id, which the inline access never dereferences -- every `a[i].f` read the base id
+        // itself, and elements silently aliased (their bases happening to differ only by the base
+        // counter). Restricted to structs of plain scalars so the flat cell types are unambiguous;
+        // bitfields, unions, and nested aggregates keep the per-object path.
         initializeFlatArray(type, initExpr, globalDeclaration, initStmtList)
         return
       }
@@ -870,6 +883,18 @@ class FrontendXcfaBuilder(
       else -> 1
     }
 
+  /**
+   * Whether [type]'s cells hold only plain scalars, one per unit: no bitfield packing (units would
+   * not map one-to-one to fields), no union (members overlap at offset 0), and no nested aggregate
+   * field (which takes its own base id rather than an inline cell). Only such a struct can be
+   * initialized flat cell-by-cell to match how its array elements are accessed inline; anything else
+   * keeps the per-object initialization path.
+   */
+  private fun isFlatScalarStruct(type: CStruct): Boolean =
+    !type.isUnion &&
+      type.unitCount == type.fields.size &&
+      type.fields.all { it.get2() !is CStruct && it.get2() !is CArray }
+
   /** The scalar type the cells of a (possibly nested) array hold. */
   private fun scalarElementOf(type: CArray): CComplexType {
     var element: CComplexType = type.embeddedType
@@ -878,6 +903,30 @@ class FrontendXcfaBuilder(
     }
     return element
   }
+
+  /**
+   * The scalar type stored in flat cell [offset] of [type]'s layout: the array element's type at
+   * `offset % stride` recursively, and -- for a struct laid inline -- the field whose unit range
+   * covers [offset]. Lets a flat initializer of a struct array give each cell the right type instead
+   * of assuming one uniform scalar (which only holds for a scalar array).
+   */
+  private fun cellTypeAt(type: CComplexType, offset: Int): CComplexType =
+    when (type) {
+      is CArray -> {
+        val stride = cellsOf(type.embeddedType)
+        cellTypeAt(type.embeddedType, if (stride > 0) offset % stride else 0)
+      }
+      is CStruct ->
+        if (type.isUnion) type
+        else
+          type.fields
+            .firstOrNull { f ->
+              val u = type.unitOffsetOf(f.get1())
+              offset >= u && offset < u + cellsOf(f.get2())
+            }
+            ?.let { cellTypeAt(it.get2(), offset - type.unitOffsetOf(it.get1())) } ?: type
+      else -> type
+    }
 
   /**
    * Writes a multi-dimensional array's brace initializer into its flat cells.
@@ -895,17 +944,17 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
   ) {
     val total = flatArraySize(type) ?: return
-    val scalarType = scalarElementOf(type)
     val values = LinkedHashMap<Int, CStatement>()
     fillFlat(type, initExpr, intArrayOf(0), values)
     for (index in 0 until total) {
-      val cell = Dereference(target, offsetLiteral(index.toLong()), scalarType.smtType)
-      parseContext.metadata.create(cell, "cType", scalarType)
+      val cellType = cellTypeAt(type, index)
+      val cell = Dereference(target, offsetLiteral(index.toLong()), cellType.smtType)
+      parseContext.metadata.create(cell, "cType", cellType)
       val value = values[index]
       initStmtList.add(
         AssignStmtLabel(
           cell,
-          if (value == null) scalarType.nullValue else scalarType.castTo(value.expression),
+          if (value == null) cellType.nullValue else cellType.castTo(value.expression),
         )
       )
     }
@@ -933,8 +982,24 @@ class FrontendXcfaBuilder(
       cursor[0]++
       return
     }
+    if (type is CStruct && !type.isUnion) {
+      // A struct laid inline in an array's flat cells (see the routing in initializeGlobalVariable):
+      // place each field's initializer at (struct start + the field's unit offset), so `arr[i].f`
+      // lands at `arr[i*stride + unitOffset(f)]` -- the very cell an access reads -- instead of
+      // giving the element its own base id, which the access (being inline) never dereferences.
+      // Only reached for the scalar-field structs the routing allows (bitfields/unions/nested
+      // structs keep the per-object path), so a field's own fill is always a scalar leaf.
+      val structStart = cursor[0]
+      val positions = elementPositions(init)
+      type.fields.forEachIndexed { idx, field ->
+        cursor[0] = structStart + type.unitOffsetOf(field.get1())
+        fillFlat(field.get2(), positions[idx], cursor, out)
+      }
+      cursor[0] = structStart + cellsOf(type)
+      return
+    }
     if (type !is CArray) {
-      return // a struct member's own initializer keeps the per-unit path
+      return // a union member's own initializer keeps the per-unit path
     }
     val elementType = type.embeddedType
     val stride = cellsOf(elementType)

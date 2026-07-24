@@ -367,11 +367,12 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aNestedUnionInsideAByteLaidOutUnionIsStillRefused() {
-    // The remaining boundary: a nested *union* member would have to compose its own byte addressing
-    // on top of the outer one, which the byte-slice STRUCT marker does not handle. Still refused
-    // rather than guessed at (only nested plain structs are lifted).
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun aNestedUnionInsideAByteLaidOutUnionResolvesByBytes() {
+    // A nested union member resolves by byte slicing too: its members all share offset 0, so the
+    // slice lands at the nested union's own byte offset -- `u.parts.whole` reads the same bytes the
+    // other views of `parts` do. (gcc-validated: writing through `bytes` and reading through the
+    // nested union agree.)
+    assertDoesNotThrow {
       build(
         """
         union U {

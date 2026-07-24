@@ -1724,14 +1724,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final var structMarkerBase =
                 parseContext.getMetadata().getMetadataValue(base, ByteUnionSlice.STRUCT_BASE);
         if (structMarkerBase.isPresent()) {
-            if (structType.isUnion()) {
-                // A member of a *nested union* in a byte-addressed union: resolving it would have to
-                // compose the inner union's own byte addressing on top of the outer one, which is not
-                // handled. The marker still exists so `&u.nestedUnion` (its address) works; only field
-                // resolution through it is refused.
-                throw unsupportedByteLaidOutMember(
-                        memberName, "it is a member of a nested union in a byte-addressed union");
-            }
+            // Works for a nested union too: its members all share offset 0, so ObjectLayout gives the
+            // field a byte offset of 0 within it, and the slice lands at the union's own offset --
+            // exactly the punning `u.nested.asA` / `u.nested.asB` expect (they read the same bytes at
+            // different widths).
             final Expr<?> unionBase = (Expr<?>) structMarkerBase.get();
             final Expr<?> structOffset =
                     (Expr<?>)
