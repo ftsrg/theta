@@ -37,9 +37,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
@@ -77,6 +79,18 @@ private fun Dereference<*, *, *>.addressesAtomicData(
   xcfa: XCFA,
   parseContext: ParseContext,
 ): Boolean {
+  if (parseContext.memoryModel == MemoryModelType.flat) {
+    // FlatMemoryPass folded the base into the offset: array is a bare 0 and offset is the flat
+    // address objectBase*STRIDE + cell. Decode it back to (base, cell) and ask directly; the
+    // multi-model branches below must not run, because their array-based resolution (a RefExpr
+    // pointer, or `initValue == array`) would spuriously match the folded 0 and mark a racy access
+    // atomic -- missing a real race. When the address is not a compile-time constant we cannot
+    // resolve the object, so we answer "not atomic": that keeps the access in the race check
+    // (sound; at worst over-reports), never excludes it.
+    val flatAddr = offset.asConstantBigInteger() ?: return false
+    val stride = BigInteger.valueOf(FlatMemoryPass.FLAT_STRIDE)
+    return parseContext.isAtomicObjectCell(flatAddr.divide(stride), flatAddr.mod(stride).toInt())
+  }
   // The object being accessed, identified by the base id its dereference resolves to.
   array.resolveObjectBase(parseContext)?.let { base ->
     if (parseContext.isAtomicObjectCell(base, offset.asConstantBigInteger()?.toInt())) return true
