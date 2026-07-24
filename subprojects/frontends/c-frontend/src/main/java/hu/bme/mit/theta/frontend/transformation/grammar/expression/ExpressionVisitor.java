@@ -1686,6 +1686,24 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
         final CComplexType embeddedType = structType.getFieldsAsMap().get(memberName);
 
+        // Resolving a field of a nested struct reached through a byte-addressed union's STRUCT
+        // marker: the marker carries the union's own base and the nested struct's byte offset, so
+        // continue the byte-slice resolution at (that offset + this field's offset) instead of
+        // treating the marker (a mere placeholder) as a real object base.
+        final var structMarkerBase =
+                parseContext.getMetadata().getMetadataValue(base, ByteUnionSlice.STRUCT_BASE);
+        if (structMarkerBase.isPresent()) {
+            final Expr<?> unionBase = (Expr<?>) structMarkerBase.get();
+            final Expr<?> structOffset =
+                    (Expr<?>)
+                            parseContext
+                                    .getMetadata()
+                                    .getMetadataValue(base, ByteUnionSlice.STRUCT_OFFSET)
+                                    .orElseThrow();
+            return byteLaidOutMemberAccess(
+                    unionBase, structType, memberName, embeddedType, structOffset);
+        }
+
         // AD7, the intractable half: a union whose members cannot share one packed word at all
         // (unionCellWidth() == null -- an array member, or one otherwise too wide/shaped for a
         // single word) has no cell for the old slicing path to use. It still does not have to be
@@ -1870,6 +1888,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> byteLaidOutMemberAccess(
             Expr<?> base, CStruct structType, String memberName, CComplexType embeddedType) {
+        return byteLaidOutMemberAccess(
+                base, structType, memberName, embeddedType, indexLiteral(0));
+    }
+
+    /**
+     * As above, but resolving relative to [baseByteOffset]: the byte offset of [structType]'s
+     * storage within [base]. It is 0 when [base] is the union object itself; it is the nested
+     * member's own offset when this resolves a field of a nested struct reached through an earlier
+     * byte-union member access (its {@link ByteUnionSlice#STRUCT_OFFSET} marker), so the field lands
+     * at (nested member offset + field offset within it), all in the same flat byte run.
+     */
+    private Expr<?> byteLaidOutMemberAccess(
+            Expr<?> base,
+            CStruct structType,
+            String memberName,
+            CComplexType embeddedType,
+            Expr<?> baseByteOffset) {
         // This union cannot be one packed word (the caller already checked unionCellWidth() ==
         // null), so every member access below either resolves to real byte cells or is refused
         // outright -- deliberately NOT by falling back to the pre-existing "differing
@@ -1886,7 +1921,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (field == null) {
             throw unsupportedByteLaidOutMember(memberName, "its layout could not be determined");
         }
-        final Expr<?> byteOffset = indexLiteral(field.bitOffset() / 8);
+        final CComplexType byteOffsetType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> byteOffset =
+                Add(
+                        byteOffsetType.castTo(baseByteOffset),
+                        byteOffsetType.castTo(indexLiteral(field.bitOffset() / 8)));
         if (embeddedType instanceof CArray arrayType) {
             final CComplexType elemType = arrayType.getEmbeddedType();
             if (elemType instanceof
@@ -1917,6 +1956,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // path: a floating-point member is refused rather than reopening the unsound round-trip.
             throw unsupportedByteLaidOutMember(
                     memberName, "a floating-point member is not supported");
+        }
+        if (embeddedType instanceof CStruct nestedStruct && !nestedStruct.isUnion()) {
+            // A nested (non-union) struct member: return a marker carrying the union's own base and
+            // this member's byte offset, so a subsequent `.field` resolves to a byte slice at (this
+            // offset + the field's offset within the nested struct) -- the struct analogue of the
+            // array marker above. A nested union is still refused: composing its own byte addressing
+            // on top of this one is not handled here.
+            final Expr<?> marker = Pos(base);
+            parseContext.getMetadata().create(marker, "cType", embeddedType);
+            parseContext.getMetadata().create(marker, ByteUnionSlice.STRUCT_BASE, base);
+            parseContext.getMetadata().create(marker, ByteUnionSlice.STRUCT_OFFSET, byteOffset);
+            return marker;
         }
         if (!isByteAddressableScalar(embeddedType)) {
             throw unsupportedByteLaidOutMember(memberName, "a nested aggregate is not supported");

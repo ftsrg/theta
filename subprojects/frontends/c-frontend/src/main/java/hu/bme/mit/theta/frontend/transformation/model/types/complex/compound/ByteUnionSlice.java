@@ -28,6 +28,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.math.BigInteger;
@@ -75,6 +76,17 @@ public final class ByteUnionSlice {
     /** Metadata: one element's width in bytes (an {@code Integer}). */
     public static final String ARRAY_ELEMENT_BYTES = "byteUnionArrayElementBytes";
 
+    /**
+     * Metadata on a nested struct-typed union member accessed without a field yet: the union's own
+     * base expression. A subsequent {@code .field} resolves to a byte slice at {@link #STRUCT_OFFSET}
+     * plus the field's offset within the nested struct, exactly like {@link #ARRAY_BASE} does for a
+     * later {@code [i]}.
+     */
+    public static final String STRUCT_BASE = "byteUnionStructBase";
+
+    /** Metadata: the nested struct member's own starting byte offset within the union (an {@link Expr}). */
+    public static final String STRUCT_OFFSET = "byteUnionStructOffset";
+
     private ByteUnionSlice() {}
 
     /**
@@ -92,7 +104,13 @@ public final class ByteUnionSlice {
             for (int j = n - 1; j >= 0; j--) {
                 parts.add(cast(cellsLsbFirst.get(j), BvType.of(8)));
             }
-            return parts.size() == 1 ? parts.get(0) : BvExprs.Concat(parts);
+            final Expr<BvType> concat = parts.size() == 1 ? parts.get(0) : BvExprs.Concat(parts);
+            // Concat yields a *neutral* (signedness-less) bitvector. Stamp it with the member's
+            // declared signedness so a relational comparison on the result (`u.x <= n`) is well
+            // typed -- Lt/Leq/Gt/Geq reject a neutral BvType. Equality tolerated the neutral type,
+            // which is why this only surfaced once a byte-union member reached a `<`/`<=` (the Intel
+            // TDX-Module tasks, under bitvector arithmetic).
+            return BvSignChangeExpr.of(concat, BvType.of(8 * n, signed));
         }
         if (cellType instanceof IntType) {
             Expr<?> sum = Int(0);

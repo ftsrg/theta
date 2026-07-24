@@ -149,9 +149,13 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aStructTooWideForAWordStillRejects() {
-    // Sixteen 64-bit registers are not a word; there is no integer to hold the overlay.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun aStructTooWideForAWordResolvesByByteSlicing() {
+    // Three 64-bit registers are not one word, but a byte-addressed union does not need a single
+    // integer to hold the overlay: `u.a` is bytes [0,8), aliasing `u.raw` at offset 0. Reaching it
+    // through the anonymous (nested) struct now resolves to that byte slice via a STRUCT marker
+    // rather than being refused. Read and write of the nested-struct byte-union case are gcc-
+    // validated (see byte_union_nested / bun_write).
+    assertDoesNotThrow {
       build(
         """
         typedef union { struct { unsigned long a; unsigned long b; unsigned long c; }; unsigned long raw; } u_t;
@@ -342,10 +346,13 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aNestedAggregateInsideAByteLaidOutUnionIsStillRefused() {
-    // A nested struct member would need its own base id (the containment model), which this core
-    // implementation does not wire up; refused rather than guessed at.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun aNestedStructInsideAByteLaidOutUnionResolvesByBytes() {
+    // A nested (non-union) struct member of a byte-addressed union resolves by byte slicing rather
+    // than needing its own base id: `u.parts.lo` is bytes [0,8), aliasing `u.bytes[0..8)`. The
+    // member access returns a STRUCT marker (the union base + this member's byte offset) so the
+    // following `.lo` reads/writes the right slice -- the struct analogue of the array marker.
+    // gcc-validated for both read and write.
+    assertDoesNotThrow {
       build(
         """
         union U {
@@ -353,6 +360,25 @@ class UnionPunningTest {
           struct { unsigned long lo; unsigned long hi; } parts;
         };
         int main() { union U u; u.bytes[0] = 0; return (int) u.parts.lo; }
+        """
+          .trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun aNestedUnionInsideAByteLaidOutUnionIsStillRefused() {
+    // The remaining boundary: a nested *union* member would have to compose its own byte addressing
+    // on top of the outer one, which the byte-slice STRUCT marker does not handle. Still refused
+    // rather than guessed at (only nested plain structs are lifted).
+    assertThrows(UnsupportedFrontendElementException::class.java) {
+      build(
+        """
+        union U {
+          unsigned char bytes[8];
+          union { unsigned long whole; unsigned int halves[2]; } parts;
+        };
+        int main() { union U u; u.bytes[0] = 0; return (int) u.parts.whole; }
         """
           .trimIndent()
       )
