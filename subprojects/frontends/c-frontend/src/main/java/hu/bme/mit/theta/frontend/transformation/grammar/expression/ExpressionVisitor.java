@@ -1092,6 +1092,37 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (isCallableFunctionPointer(originalOperand)) {
                     return originalOperand;
                 }
+                // `&u.sub` where `u.sub` is a nested struct/union member of a byte-addressed union (a
+                // STRUCT marker): the sub-region has no object of its own, but it does have a byte
+                // location -- the address of the byte cell at (union base, member offset). Its value
+                // is correct; dereferencing it back as the aggregate is a separate concern (not
+                // reached by the TDX invariants, which only pass such an address to a stub).
+                final var structMarkerBaseAmp =
+                        parseContext
+                                .getMetadata()
+                                .getMetadataValue(originalOperand, ByteUnionSlice.STRUCT_BASE);
+                if (structMarkerBaseAmp.isPresent()) {
+                    final Expr<?> markerBase = (Expr<?>) structMarkerBaseAmp.get();
+                    final Expr<?> markerOffset =
+                            (Expr<?>)
+                                    parseContext
+                                            .getMetadata()
+                                            .getMetadataValue(
+                                                    originalOperand, ByteUnionSlice.STRUCT_OFFSET)
+                                            .orElseThrow();
+                    final CComplexType markerType =
+                            CComplexType.getType(originalOperand, parseContext);
+                    final Expr<?> cell =
+                            Exprs.Dereference(
+                                    cast(markerBase, markerBase.getType()),
+                                    cast(markerOffset, markerBase.getType()),
+                                    unsignedIntegerOfWidth(8).getSmtType());
+                    parseContext.getMetadata().create(cell, "cType", unsignedIntegerOfWidth(8));
+                    final CPointer subPtr = new CPointer(null, markerType, parseContext);
+                    final Reference<Type, ?> subAddr = Reference(cell, subPtr.getSmtType());
+                    parseContext.getMetadata().create(subAddr, "cType", subPtr);
+                    return subAddr;
+                }
                 // A byte-laid-out union member wider than one cell (`&u.qwords[0]`): the resulting
                 // pointer would have to know it reads several byte-cells as one value, which no
                 // pointer in this model can express. A single byte (`&u.bytes[i]`) is a bare
@@ -1693,6 +1724,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final var structMarkerBase =
                 parseContext.getMetadata().getMetadataValue(base, ByteUnionSlice.STRUCT_BASE);
         if (structMarkerBase.isPresent()) {
+            if (structType.isUnion()) {
+                // A member of a *nested union* in a byte-addressed union: resolving it would have to
+                // compose the inner union's own byte addressing on top of the outer one, which is not
+                // handled. The marker still exists so `&u.nestedUnion` (its address) works; only field
+                // resolution through it is refused.
+                throw unsupportedByteLaidOutMember(
+                        memberName, "it is a member of a nested union in a byte-addressed union");
+            }
             final Expr<?> unionBase = (Expr<?>) structMarkerBase.get();
             final Expr<?> structOffset =
                     (Expr<?>)
@@ -1957,12 +1996,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             throw unsupportedByteLaidOutMember(
                     memberName, "a floating-point member is not supported");
         }
-        if (embeddedType instanceof CStruct nestedStruct && !nestedStruct.isUnion()) {
-            // A nested (non-union) struct member: return a marker carrying the union's own base and
-            // this member's byte offset, so a subsequent `.field` resolves to a byte slice at (this
-            // offset + the field's offset within the nested struct) -- the struct analogue of the
-            // array marker above. A nested union is still refused: composing its own byte addressing
-            // on top of this one is not handled here.
+        if (embeddedType instanceof CStruct) {
+            // A nested struct or union member: return a marker carrying the union's own base and this
+            // member's byte offset. For a struct a subsequent `.field` resolves to a byte slice at
+            // (this offset + the field's offset within it) -- the struct analogue of the array marker
+            // above. For a union, member resolution stays refused (see directMemberAccess), so its
+            // marker is only useful for taking the member's address (`&u.sub`), which maps to the
+            // sub-region's byte location.
             final Expr<?> marker = Pos(base);
             parseContext.getMetadata().create(marker, "cType", embeddedType);
             parseContext.getMetadata().create(marker, ByteUnionSlice.STRUCT_BASE, base);
