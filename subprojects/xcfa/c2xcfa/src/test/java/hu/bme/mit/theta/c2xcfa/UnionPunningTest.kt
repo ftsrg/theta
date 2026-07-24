@@ -331,10 +331,11 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aBitfieldInsideAByteLaidOutUnionIsStillRefused() {
-    // A bitfield is not a whole number of bytes, so it has no place in the byte-cell model; the
-    // union still needs byte cells for `bytes`, so this must stay refused rather than guessed at.
-    assertThrows(UnsupportedFrontendElementException::class.java) {
+  fun aBitfieldInsideAByteLaidOutUnionResolvesByBits() {
+    // A bitfield reads by slicing the bits out of the bytes it spans -- the byte-cell analogue of
+    // the packed-struct bitfield read. `u.lo` is bits [0, 4) of the shared bytes, so it aliases
+    // `u.bytes[0]`'s low nibble. gcc-validated for wider bitfields (`full : 52`).
+    assertDoesNotThrow {
       build(
         """
         union U { unsigned char bytes[8]; unsigned int lo:4; };

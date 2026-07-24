@@ -1947,16 +1947,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // (every CStruct/CArray reports the same generic ptr-width/unsigned=false triple regardless
         // of its actual shape) and so would let two differently-shaped aggregates alias silently
         // instead of refusing them.
-        if (isBitfieldMember(structType, memberName)) {
-            throw unsupportedByteLaidOutMember(
-                    memberName, "a bitfield is not a whole number of bytes");
-        }
         final ArchitectureConfig.ArchitectureType arch = parseContext.getArchitecture();
         final ObjectLayout.Field field = ObjectLayout.of(structType, arch).field(memberName);
         if (field == null) {
             throw unsupportedByteLaidOutMember(memberName, "its layout could not be determined");
         }
         final CComplexType byteOffsetType = CComplexType.getUnsignedLong(parseContext);
+        if (field.isBitfield()) {
+            // A bitfield in a byte-laid-out union: read the bytes its storage spans and slice the
+            // `[bitInByte, +width)` bits out of them -- the byte-cell analogue of the packed-struct
+            // bitfield read ([sliceOf]). The starting byte is the union offset plus the bitfield's
+            // own byte-aligned offset; the remaining bit within that byte is where the slice begins.
+            final Expr<?> unitByteStart =
+                    Add(
+                            byteOffsetType.castTo(baseByteOffset),
+                            byteOffsetType.castTo(indexLiteral(field.bitOffset() / 8)));
+            return byteBitfieldRead(
+                    base,
+                    unitByteStart,
+                    field.bitOffset() % 8,
+                    field.bitfieldWidth(),
+                    embeddedType);
+        }
         final Expr<?> byteOffset =
                 Add(
                         byteOffsetType.castTo(baseByteOffset),
@@ -2074,6 +2086,46 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> value = memberType.castTo(combined);
         parseContext.getMetadata().create(value, "cType", memberType);
         stampByteUnionMetadata(value, base, byteOffset, widthBytes);
+        return value;
+    }
+
+    /**
+     * The value of a [width]-bit bitfield starting [bitInByte] bits into the byte at [unitByteStart]
+     * of the byte-laid-out union [base]. Reads the bytes the bitfield spans -- `ceil((bitInByte +
+     * width) / 8)` of them -- recombines them into one word, and slices the member's bits out with
+     * {@link hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice},
+     * exactly as the packed-struct path does over a single storage cell.
+     */
+    private Expr<?> byteBitfieldRead(
+            Expr<?> base, Expr<?> unitByteStart, int bitInByte, int width, CComplexType memberType) {
+        final int spanBytes = (bitInByte + width + 7) / 8;
+        // Recombine into a *standard* cell width (8/16/32/64...): a slice pads back up to the cell's
+        // width and casting a non-standard bit width (e.g. 56) to the member type has no C type to
+        // land on. The extra high bytes are zero-padded -- they sit above the member's bits, so they
+        // never affect the `[bitInByte, +width)` slice.
+        int cellBytes = Integer.highestOneBit(spanBytes);
+        if (cellBytes < spanBytes) cellBytes *= 2;
+        final CComplexType byteType = unsignedIntegerOfWidth(8);
+        final List<Expr<?>> cells = new ArrayList<>(cellBytes);
+        for (int j = 0; j < cellBytes; j++) {
+            cells.add(
+                    j < spanBytes ? byteCellAt(base, unitByteStart, j, byteType) : byteType.getValue("0"));
+        }
+        final Expr<?> cell =
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
+                        .read(cells, false);
+        final boolean signed =
+                memberType
+                                instanceof
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                                .CInteger
+                                        integer
+                        && integer.isSsigned();
+        final Expr<?> value =
+                memberType.castTo(
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.read(cell, bitInByte, width, signed));
+        parseContext.getMetadata().create(value, "cType", memberType);
         return value;
     }
 
@@ -2703,10 +2755,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
             boolean negativeIsUnaryMinus = false;
 
-            boolean isLongLong = text.endsWith("l");
-            if (isLongLong) text = text.substring(0, text.length() - 1);
-            boolean isUnsigned = text.endsWith("u");
-            if (isUnsigned) text = text.substring(0, text.length() - 1);
+            // Integer suffixes u and l come in any order (ul, lu, llu, ull, ...); one trailing 'l'
+            // may already have been stripped for the shared long/float check above. Strip whatever
+            // u/l remain, in any order -- otherwise a hex constant like `0xFFFLLU` reaches the parser
+            // as "fffll" (u stripped, the l's stranded behind it) and throws NumberFormatException.
+            // long-long needs two l's (a single l is long), so count them across both strips.
+            int longCount = isLong ? 1 : 0;
+            boolean isUnsigned = false;
+            while (!text.isEmpty()) {
+                final char suffix = text.charAt(text.length() - 1);
+                if (suffix == 'u') {
+                    isUnsigned = true;
+                } else if (suffix == 'l') {
+                    longCount++;
+                } else {
+                    break;
+                }
+                text = text.substring(0, text.length() - 1);
+            }
+            boolean isLongLong = longCount >= 2;
 
             BigInteger bigInteger;
             if (text.startsWith("0x")) {
