@@ -164,6 +164,30 @@ internal fun postVerificationLogging(
           } catch (e: Exception) {
             logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
           }
+
+          if (config.frontendConfig.inputType == InputType.SVLIB) {
+            try {
+              val svLibWitnessFile = File(resultFolder, "witness.svlib")
+              SvLibWitnessWriter()
+                .writeWitness(
+                  safetyResult,
+                  config.outputConfig.witnessConfig.inputFileForWitness
+                    ?: config.inputConfig.input!!,
+                  config.inputConfig.property,
+                  getSolver(
+                    config.outputConfig.witnessConfig.concretizerSolver,
+                    config.outputConfig.witnessConfig.validateConcretizerSolver,
+                  ),
+                  parseContext,
+                  svLibWitnessFile,
+                  ltlSpecification,
+                  (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+                  logger,
+                )
+            } catch (e: Exception) {
+              logger.info("Could not emit witness as SV-LIB file: ${e.stackTraceToString()}")
+            }
+          }
         }
 
         else -> {}
