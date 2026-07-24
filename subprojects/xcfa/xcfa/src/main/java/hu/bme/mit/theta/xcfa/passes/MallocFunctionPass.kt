@@ -98,7 +98,18 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 ret.type,
                 EmptyMetaData,
               )
-            val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
+            val assign2 =
+              AssignStmtLabel(
+                ret,
+                cast(
+                  FlatMemoryPass.flatBaseExpr(
+                    mallocVar.ref,
+                    CComplexType.getType(ret, parseContext),
+                    parseContext,
+                  ),
+                  ret.type,
+                ),
+              )
             val labels =
               if (MemsafetyPass.enabled) {
                 val assign3 = builder.parent.allocate(parseContext, ret, arg)

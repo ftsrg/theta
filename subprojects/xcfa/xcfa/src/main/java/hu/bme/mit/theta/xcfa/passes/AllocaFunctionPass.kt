@@ -105,7 +105,17 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               )
             // 3k+1: the residue class the memcleanup scan does not enumerate.
             val assignRet =
-              AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type))
+              AssignStmtLabel(
+                ret,
+                cast(
+                  FlatMemoryPass.flatBaseExpr(
+                    Add(mallocVar.ref, retType.getValue("1")),
+                    retType,
+                    parseContext,
+                  ),
+                  ret.type,
+                ),
+              )
             val labels =
               if (MemsafetyPass.enabled) {
                 listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))

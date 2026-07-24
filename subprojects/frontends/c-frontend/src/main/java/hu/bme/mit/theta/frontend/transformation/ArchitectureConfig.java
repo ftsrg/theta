@@ -94,6 +94,24 @@ public class ArchitectureConfig {
         efficient
     }
 
+    /**
+     * How a pointer value that lives in a memory cell is represented.
+     *
+     * <ul>
+     *   <li><b>multi</b>: the default 2-D model. Memory is {@code __arrays[base][offset]}; a pointer
+     *       is a (base, offset) pair. Storing a pointer into a cell therefore needs the cell
+     *       duplicated -- one storage location for the base, a parallel one for the offset (a struct
+     *       pointer field is duplicated the same way).
+     *   <li><b>flat</b>: a single flat address space, as if every object's base were 0. Each object
+     *       occupies a disjoint slice of one address line, so a pointer is a single scalar address
+     *       (base + offset folded together) and storing it into a cell needs no duplication at all.
+     * </ul>
+     */
+    public enum MemoryModelType {
+        multi,
+        flat
+    }
+
     public static CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> getCastVisitor(
             ParseContext parseContext) {
         if (parseContext.getArithmetic() == ArithmeticType.bitvector) {

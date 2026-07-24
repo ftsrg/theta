@@ -220,6 +220,7 @@ private fun frontend(
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
+    parseContext.memoryModel = cConfig.memoryModel
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)

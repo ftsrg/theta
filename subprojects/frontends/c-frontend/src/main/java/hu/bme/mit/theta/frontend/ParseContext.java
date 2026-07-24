@@ -17,6 +17,7 @@ package hu.bme.mit.theta.frontend;
 
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import java.math.BigInteger;
@@ -33,6 +34,7 @@ public class ParseContext {
     private Boolean multiThreading = false;
     private ArithmeticType arithmetic = ArithmeticType.efficient;
     private Boolean signedWraparound = false;
+    private MemoryModelType memoryModel = MemoryModelType.multi;
 
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell* --
@@ -114,6 +116,14 @@ public class ParseContext {
 
     public void setSignedWraparound(Boolean signedWraparound) {
         this.signedWraparound = signedWraparound;
+    }
+
+    public MemoryModelType getMemoryModel() {
+        return memoryModel;
+    }
+
+    public void setMemoryModel(MemoryModelType memoryModel) {
+        this.memoryModel = memoryModel;
     }
 
     public CStmtCounter getCStmtCounter() {

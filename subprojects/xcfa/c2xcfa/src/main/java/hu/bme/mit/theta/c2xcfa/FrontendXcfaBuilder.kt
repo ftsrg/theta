@@ -68,6 +68,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFa
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
+import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import java.math.BigInteger
@@ -349,7 +350,13 @@ class FrontendXcfaBuilder(
         parseContext.metadata.create(deref, "cType", fieldType)
         initStmtList.add(
           StmtLabel(
-            MemoryAssignStmt.create(deref, cast(fieldType.getValue("$subObjectBase"), deref.type))
+            MemoryAssignStmt.create(
+              deref,
+              cast(
+                fieldType.getValue(FlatMemoryPass.flatBaseValue(subObjectBase, parseContext)),
+                deref.type,
+              ),
+            )
           )
         )
         parseContext.recordSubObjectCell(
@@ -716,7 +723,12 @@ class FrontendXcfaBuilder(
     }
     if (type is CArray) {
       val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$objectBase")))
+      initStmtList.add(
+        AssignStmtLabel(
+          globalDeclaration,
+          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+        )
+      )
       recordObjectAtomicity(objectBase, type)
       if (MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
@@ -749,7 +761,12 @@ class FrontendXcfaBuilder(
       )
     } else if (type is CStruct) {
       val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(AssignStmtLabel(globalDeclaration, type.getValue("$objectBase")))
+      initStmtList.add(
+        AssignStmtLabel(
+          globalDeclaration,
+          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+        )
+      )
       recordObjectAtomicity(objectBase, type)
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
       // An initializer list is what initializeCompound is for; asking it for a single

@@ -177,6 +177,13 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
+  @Parameter(
+    names = ["--memory-model"],
+    description =
+      "Pointer memory model: multi = 2-D arrays[base][offset] (default), flat = one flat address" +
+        " line as if every base were 0 (a pointer is a single scalar address).",
+  )
+  var memoryModel: ArchitectureConfig.MemoryModelType = ArchitectureConfig.MemoryModelType.multi,
   @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
   var useCir2c: Boolean = false,
   @Parameter(

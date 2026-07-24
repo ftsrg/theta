@@ -51,6 +51,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -105,7 +106,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     // - normalize nested ref-to-deref occurrences with temporary vars
     // - split pointer-carrying vars to `<v>_base` and `<v>_offset`
     // - rewrite dereferences through split vars to `(deref v_base (+ v_offset off))`
-    val complexChanged = runComplexReferenceElimination(builder)
+    //
+    // Under the flat memory model the split is unnecessary: a pointer is a single scalar address,
+    // so `(ref (deref B O))` is just `B + O` and no `_base`/`_offset` pair is ever introduced. This
+    // is what lets a pointer value be stored into a memory cell with no duplication (the offset
+    // rides along inside the value); the address itself is later folded to base 0 by
+    // [FlatMemoryPass].
+    val complexChanged =
+      if (parseContext.memoryModel == MemoryModelType.flat) {
+        runFlatReferenceElimination(builder)
+      } else {
+        runComplexReferenceElimination(builder)
+      }
 
     if (simpleChanged || complexChanged) {
       return DeterministicPass().run(NormalizePass().run(builder))
@@ -131,7 +143,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
             val varDecl = Var(it.name + "*", ptrType.smtType)
             val objectBase = cnt // capture: reading cnt hands out this base and advances it
-            val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$objectBase")
+            val lit =
+              CComplexType.getType(varDecl.ref, parseContext)
+                .getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext))
             // The referred object is atomic when the *variable's own type* is (`_Atomic int v`,
             // `int * _Atomic p`); the global var already carries that flag, which is more reliable
             // than the referred ref's recorded C type (address-taken scalars can lose the atomic
@@ -374,6 +388,70 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * the split variable the base/offset machinery tracks.
    */
   private fun Expr<*>.stripPos(): Expr<*> = if (this is PosExpr<*>) op.stripPos() else this
+
+  /**
+   * The flat-model counterpart of [runComplexReferenceElimination]: it never splits. Every
+   * `(ref (deref B O))` -- how the frontend spells `&a[i]`, `p + i`, `p++`, and every other computed
+   * address -- becomes the single scalar `B + O`, so a pointer stays one value that can be copied,
+   * compared, differenced, stored, and loaded with no `_base`/`_offset` bookkeeping. Simple
+   * references (`(ref x)`) were already turned into flat-based pointer variables by
+   * [runSimpleReferenceElimination]; anything left is a ref-to-deref this collapses.
+   */
+  private fun runFlatReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
+    var changed = false
+    builder.getEdges().toList().forEach { edge ->
+      val newLabel = edge.label.flattenReferences()
+      if (newLabel != edge.label) {
+        changed = true
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(newLabel))
+      }
+    }
+    return changed
+  }
+
+  private fun XcfaLabel.flattenReferences(): XcfaLabel =
+    when (this) {
+      is SequenceLabel -> SequenceLabel(labels.map { it.flattenReferences() }, metadata)
+      is NondetLabel -> NondetLabel(labels.map { it.flattenReferences() }.toSet(), metadata)
+      is StmtLabel -> StmtLabel(stmt.flattenReferences(), choiceType, metadata)
+      is InvokeLabel ->
+        InvokeLabel(
+          name,
+          params.map { it.flattenReferences() },
+          metadata,
+          tempLookup,
+          isLibraryFunction,
+        )
+      is StartLabel ->
+        StartLabel(name, params.map { it.flattenReferences() }, pidVar, metadata, tempLookup)
+      is ReturnLabel -> ReturnLabel(enclosedLabel.flattenReferences())
+      else -> this
+    }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun Stmt.flattenReferences(): Stmt =
+    when (this) {
+      is AssignStmt<*> ->
+        AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.flattenReferences(), varDecl.type))
+      is MemoryAssignStmt<*, *, *> -> {
+        val d = (deref as Expr<*>).flattenReferences() as Dereference<*, *, *>
+        MemoryAssignStmt.create(d, cast(expr.flattenReferences(), d.type))
+      }
+      is AssumeStmt -> AssumeStmt.of(cond.flattenReferences())
+      else -> this
+    }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T : Type> Expr<T>.flattenReferences(): Expr<T> =
+    if (this is Reference<*, *> && this.expr is Dereference<*, *, *>) {
+      val innerDeref = this.expr as Dereference<*, *, *>
+      val base = innerDeref.array.flattenReferences()
+      val off = innerDeref.offset.flattenReferences()
+      cast(Add(cast(base, base.type), cast(off, base.type)), this.type) as Expr<T>
+    } else {
+      withOps(ops.map { it.flattenReferences() })
+    }
 
   private fun runComplexReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
     val hasRefToDeref =

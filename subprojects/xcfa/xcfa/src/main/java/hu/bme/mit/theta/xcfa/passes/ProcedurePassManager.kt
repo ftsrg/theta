@@ -127,6 +127,11 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // (all passes that consume specific calls -- free, malloc, pthread_*, nondet -- have
     // already run), so they do not crash the analysis later with "No such method ...".
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
+    // Flat memory model: collapse every (base, offset) dereference to the single flat address
+    // (deref 0 (+ base offset)). Runs last, downstream of every pass that creates or rewrites a
+    // dereference (memsafety, overflow, data-race, mem*), so all three memory backends see already
+    // flattened addresses. A no-op under the default multi model.
+    listOf(FlatMemoryPass(parseContext)),
     listOf(
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),
