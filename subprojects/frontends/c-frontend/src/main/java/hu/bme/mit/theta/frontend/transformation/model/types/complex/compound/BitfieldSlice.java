@@ -28,6 +28,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.math.BigInteger;
@@ -83,7 +84,12 @@ public final class BitfieldSlice {
             final Expr<BvType> slice =
                     BvExprs.Extract(cast(cell, bv), Int(bitOffset), Int(bitOffset + width));
             final BvType full = BvType.of(bv.getSize());
-            return signed ? BvExprs.SExt(slice, full) : BvExprs.ZExt(slice, full);
+            final Expr<BvType> extended = signed ? BvExprs.SExt(slice, full) : BvExprs.ZExt(slice, full);
+            // Extract/SExt/ZExt yield a *neutral* (signedness-less) bitvector, and a caller's `castTo`
+            // to a same-width member type is a no-op that leaves it neutral -- so it then blew up in
+            // any Div/Rem/Lt on the field ("Neutral BvType cannot be used here", intel-tdx-module's
+            // `field_code`-indexed lookups). Stamp the field's own signedness on the result.
+            return BvSignChangeExpr.of(extended, BvType.of(bv.getSize(), signed));
         }
         if (type instanceof IntType) {
             final Expr<IntType> c = cast(cell, IntType.getInstance());
