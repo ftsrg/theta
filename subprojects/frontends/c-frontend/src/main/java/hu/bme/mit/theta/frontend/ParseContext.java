@@ -37,16 +37,20 @@ public class ParseContext {
     private MemoryModelType memoryModel = MemoryModelType.multi;
 
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
-    // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell* --
-    // a struct field, an array element, or what a pointer points at -- not of the pointer expression
+    // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
+    // --
+    // a struct field, an array element, or what a pointer points at -- not of the pointer
+    // expression
     // that reaches it, and that expression is a bare base-id literal by the time the analysis runs
     // (folded constants, rebuilt exprs, identity-keyed C types all lost). The base id survives by
-    // value, so atomicity is recorded against it where the id is minted (global object layout in the
+    // value, so atomicity is recorded against it where the id is minted (global object layout in
+    // the
     // frontend builder, address-taken objects in ReferenceElimination) and looked up by value here.
     private final Set<BigInteger> fullyAtomicObjects = new LinkedHashSet<>();
     private final Map<BigInteger, Set<Integer>> atomicObjectCells = new LinkedHashMap<>();
 
-    // A struct-typed field is a subobject with a base id of its own, kept in the parent's cell. So a
+    // A struct-typed field is a subobject with a base id of its own, kept in the parent's cell. So
+    // a
     // nested access `s.i.f` reaches the atomic cell through `(deref (deref parent i) f)`: the inner
     // dereference yields the subobject's base. This maps (parent base, field offset) -> subobject
     // base so the race check can follow that chain to the object the atomicity is recorded against.
@@ -159,14 +163,19 @@ public class ParseContext {
         return offsets != null && offsets.contains(unitOffset);
     }
 
-    /** Records that cell [unitOffset] of object [parentBase] holds the base id of subobject [subBase]. */
+    /**
+     * Records that cell [unitOffset] of object [parentBase] holds the base id of subobject
+     * [subBase].
+     */
     public void recordSubObjectCell(BigInteger parentBase, int unitOffset, BigInteger subBase) {
-        subObjectCells.computeIfAbsent(parentBase, k -> new LinkedHashMap<>()).put(unitOffset, subBase);
+        subObjectCells
+                .computeIfAbsent(parentBase, k -> new LinkedHashMap<>())
+                .put(unitOffset, subBase);
     }
 
     /**
-     * The base id of the subobject held in cell [unitOffset] of object [parentBase], or null when no
-     * subobject is recorded there.
+     * The base id of the subobject held in cell [unitOffset] of object [parentBase], or null when
+     * no subobject is recorded there.
      */
     public BigInteger subObjectBaseAt(BigInteger parentBase, Integer unitOffset) {
         if (unitOffset == null) {

@@ -2941,6 +2941,91 @@ but is **unsound** (it hides a real race if the same object is ever also accesse
 deliberately left rather than shipped as a heuristic. A sound fix needs per-access atomicity carried
 through folding, or a whole-object "every access is atomic" analysis.
 
+## Batch 63 — PLAN (no code yet): FLAT memory-model benchmark triage — run 62 (flat) vs run 61 (multi) (2026-07-24)
+
+Two full runs finished on sosy 2026-07-24, **same build** (at/after `09daaeaf5`: flat memory model +
+byte-union bitfield reads + `_Atomic`-cell atomicity), differing **only in the memory model**:
+`Theta-svcomp-61` = MULTI (default; the non-disruptiveness check) and **`Theta-svcomp-62` = FLAT**
+(flat as a temporary default, uncommitted). Both real & complete (0 `Cannot start process`, 55 XMLs,
+tmux gone). This entry compares **flat (62) vs multi (61)** — that isolates the memory model, which is
+the point of the run. Tooling: `benchmark-results/compare_runs.py <baseDir> <newDir>` (score
+reproduces benchexec exactly: multi 16,320, flat 15,364). XMLs downloaded to
+`results-2026-07-24_04-26-batch61/` (multi) and `results-2026-07-24_11-00-batch62/` (flat); flat
+logfiles stay on sosy at `results/Theta-svcomp-62/theta27-short.xml/2026-07-24_11:00:39/…logfiles`.
+
+| Category | multi (61) | flat (62) | Δ |
+|---|---|---|---|
+| correct | 10,424 | 10,693 | **+269** |
+| wrong | 41 | 132 | **+91** |
+| — incorrect **false** | 18 | 107 | **+89** |
+| error | 25,769 | 25,412 | −357 |
+| unknown | 368 | 365 | −3 |
+| **score** | **16,320** | **15,364** | **−956** |
+
+**Verdict: flat delivers its design goal but is NOT shippable as default yet.** Wins: `error→correct`
+**399** (flat parses/solves pointer-heavy tasks multi couldn't) and **5 `wrong→correct`** — including
+the flagship targets flat was built for: `09-regions_28-list2alloc` + `09-regions_03-list2_rc`
+(no-data-race, the base/offset-loss race flat was designed to catch → now correct `false`),
+`race-3_2-container_of-global`, `add_last-alloca-1` + `test22-2` (no-overflow). But flat introduces
+**103 new wrong results** (`error→wrong` 97, `correct→wrong` 6), dominated by a memsafety
+false-alarm flood, and the −956 score says the flood outweighs the gains. ⚠️ This **refutes** the
+earlier session hypothesis that "flat memsafety is likely fine as-is (STRIDE ≡ 1 mod 3 preserves the
+malloc/alloca partition)" — it is not fine on the alloca/malloc string family.
+
+New-wrong breakdown (103): **valid-memsafety 81** (79 `false(valid-deref)` + 2 `false(valid-free)`),
+no-data-race 10, no-overflow 6, unreach-call 6. Prior (multi) state of these 103: 50 were TIMEOUT,
+47 frontend-failed, **6 were CORRECT in multi** (the strict regressions — see F2/F3).
+
+### Investigation queue — flat-specific, by impact
+
+**F1 (THE blocker — 81 tasks, −~1,300 score). valid-memsafety `false(valid-deref)`/`false(valid-free)`
+flood on the alloca/malloc string family.** Every `cstr*`, `openbsd_c*`, `str{cpy,len,cmp,chr,spn,
+cspn,pbrk,ncpy}*`, `mem{chr,rchr,set}*`, `strreplace/subseq/substring`, `mcslock`/`ticketlock`, and
+`memleaks_test2x` variant with an `alloca`/`malloc` buffer now reports a spurious deref/free; almost
+all were TIMEOUT or frontend-fail in multi, so flat both *runs* them and gets them *wrong*. Hypothesis:
+flat addressing (`base = id*STRIDE`, `STRIDE = 2^16`, access folded to `deref(0, base+offset)`) breaks
+the memsafety bounds check for dynamically-sized/`alloca` buffers — either the buffer's flat extent is
+mis-bounded, or `base+offset` for a walked string index crosses into the neighbouring object's flat
+range and trips a bounds guard that `MemsafetyPass` (which runs *before* the fold, on `base=id*STRIDE`)
+set on the un-folded base. First step: reproduce `cstrcpy_malloc` and `cstrlen-alloca-1` locally under
+`--memory-model flat --backend BOUNDED`, dump the emitted deref bounds vs the flat address arithmetic,
+and confirm whether the violation is an off-by-object-boundary (STRIDE collision) or a mis-sized
+alloca/malloc extent. This single cluster gates flat-as-default.
+
+**F2 (UNSOUND regression — 4 tasks). no-data-race `correct→wrong/'true'`: flat now MISSES a race multi
+caught.** `04-mutex_11-ptr_rc`, `05-lval_ls_05-glob_idx_rc`, `05-lval_ls_07-glob_fld_rc`,
+`05-lval_ls_08-glob_fld_2_rc` (all goblint-regression, expected `false`). Multi reported the race
+correctly; flat says `true`. The folding to a single flat address plausibly **merges two distinct
+racing accesses** (global index / global field) into aliases that the race check then sees as the same
+location, or conversely loses the distinctness needed to flag the pair. Directly opposes flat's win on
+`09-regions_*` — same benchmark family, opposite direction — so worth a joint look. First step: diff
+the event graph / race pairs for `05-lval_ls_07-glob_fld_rc` between multi and flat.
+
+**F3 (regression + spurious — 6 tasks). no-overflow `false(no-overflow)`.** 2 were CORRECT in multi
+(`openbsd_cstrncmp-alloca-1`, `test22-1`), 4 were frontend-fail (`cstr{cspn,len,spn}_reverse_alloca`,
+`openbsd_cstrstr-alloca-1`). Same alloca-string family as F1 but on the overflow property — likely the
+same flat-addressing root cause surfacing as a spurious overflow instead of a deref. First step: check
+whether fixing F1 also clears these (shared alloca extent computation).
+
+**F4 (mixed — 6 tasks). unreach-call.** 3 spurious `false(unreach-call)` (`aws_linked_list_{init,
+node_reset,remove}_harness` — all frontend-fail in multi) and 3 missed-bug `true` where expected
+`false` (`race-2_2-container_of`, two `linux-3.12-rc1` cil driver entry points). The aws_linked_list
+trio is pointer-heavy (flat's target area) yet goes wrong — pair with F1. The 3 `true` misses are
+unsound; check whether flat aliasing hides the reachable error.
+
+### Wins to preserve (regression-guard candidates once flat is fixed)
+`wrong→correct` (5): `09-regions_28-list2alloc`, `09-regions_03-list2_rc`, `race-3_2-container_of-global`,
+`add_last-alloca-1`, `test22-2`. These are exactly the base/offset-loss unsoundness flat was built to
+kill — lock them into the guard set so an F1 fix can't silently undo them.
+
+### Note on run 61 (multi) vs the last downloaded run (batch60, older build)
+Multi (61) vs `results-2026-07-22_09-36-batch60` (07-22 build, pre-flat/atomic/bitfield): +86 correct,
+−3 wrong (44→41), score 16,227→16,320 (+93) — a clean net win from the 07-23 frontend batch. Its 9
+new wrong are latent analysis bugs the parse-unlock exposed (C11 weak-memory race misses in
+`reorder_c11_good-*`, `rec_ticketlock` spurious race, `test-bitfields-2-2` bitfield deref,
+`aws_string_new…negated` missed bug) — tracked separately from the flat work; not the subject of this
+plan. `compare_60_61.py` retains that diff.
+
 ## 0. Result summary
 
 | Category | Count | Notes |

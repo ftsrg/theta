@@ -153,12 +153,12 @@ class PointerArithmeticTest {
   fun `a pointer difference with an extra integer term builds`() {
     // Exercises the n-ary `Add` shape the frontend emits for `p - 1 - s`: three signed terms (split
     // `p` positive, integer literal `1` negative, plain pointer `s` negative). The literal is not a
-    // pointer operand at all, so it must be carried through as its own value (subtracted once) while
-    // still cancelling the two pointer bases -- distinct from the plain two-term `p - q` case above.
+    // pointer operand at all, so it must be carried through as its own value (subtracted once)
+    // while
+    // still cancelling the two pointer bases -- distinct from the plain two-term `p - q` case
+    // above.
     buildBoth(
-      main(
-        "int a[10]; int *p = &a[7]; int *s = a; int d = p - 1 - s; if (d != 6) reach_error();"
-      )
+      main("int a[10]; int *p = &a[7]; int *s = a; int d = p - 1 - s; if (d != 6) reach_error();")
     )
   }
 
@@ -178,7 +178,8 @@ class PointerArithmeticTest {
 
   @Test
   fun `a split pointer compared against the null pointer constant builds`() {
-    // `0` is not a `RefExpr`, so it is not itself split -- this exercises the "one side is split, the
+    // `0` is not a `RefExpr`, so it is not itself split -- this exercises the "one side is split,
+    // the
     // other is a bare literal" branch of the channel decomposition, where the literal's base/offset
     // channels fall back to (its rewritten value, offset 0) instead of a split pair.
     buildBoth(

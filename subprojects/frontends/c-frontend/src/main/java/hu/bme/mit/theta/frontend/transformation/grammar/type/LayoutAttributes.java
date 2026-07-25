@@ -47,7 +47,8 @@ public final class LayoutAttributes {
             if (specifier.gccAttributeList() == null) {
                 continue;
             }
-            for (CParser.GccAttributeContext attribute : specifier.gccAttributeList().gccAttribute()) {
+            for (CParser.GccAttributeContext attribute :
+                    specifier.gccAttributeList().gccAttribute()) {
                 if (attribute == null || attribute.getChildCount() == 0) {
                     continue;
                 }

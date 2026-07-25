@@ -45,8 +45,8 @@ import hu.bme.mit.theta.xcfa.model.*
  * Folding here, downstream of [ReferenceElimination], means every memory backend (the monolithic
  * [DereferenceToArrayPass], the ordering-consistency event graph, the CEGAR pointer analysis) sees
  * addresses already normalized to a single scalar, so two syntactically different `(base, offset)`
- * pairs that name the same cell -- `a[j]` as `(deref A j)` and `p = &a[j]; *p` as `(deref A+j 0)` --
- * alias correctly without any per-backend change.
+ * pairs that name the same cell -- `a[j]` as `(deref A j)` and `p = &a[j]; *p` as `(deref A+j 0)`
+ * -- alias correctly without any per-backend change.
  */
 class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -74,9 +74,9 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     /**
      * Spaces a *runtime* base id (the `alloca`/`malloc` counter value, not a compile-time constant)
      * onto the flat address line under the flat model: `rawBase` becomes `rawBase * `[FLAT_STRIDE].
-     * The residue class of `rawBase` (mod 3: heap / alloca / address-taken) survives division by the
-     * stride, so the memsafety partitioning still recovers it as `base / FLAT_STRIDE`. A no-op under
-     * the multi model.
+     * The residue class of `rawBase` (mod 3: heap / alloca / address-taken) survives division by
+     * the stride, so the memsafety partitioning still recovers it as `base / FLAT_STRIDE`. A no-op
+     * under the multi model.
      */
     fun <T : Type> flatBaseExpr(
       rawBase: Expr<T>,
@@ -84,7 +84,10 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
       parseContext: ParseContext,
     ): Expr<T> =
       if (parseContext.memoryModel.flatAddressing()) {
-        cast(Mul(rawBase, cast(retType.getValue(FLAT_STRIDE.toString()), rawBase.type)), rawBase.type)
+        cast(
+          Mul(rawBase, cast(retType.getValue(FLAT_STRIDE.toString()), rawBase.type)),
+          rawBase.type,
+        )
       } else {
         rawBase
       }
@@ -126,8 +129,7 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
       is InvokeLabel ->
         InvokeLabel(name, params.map { it.foldFlat() }, metadata, tempLookup, isLibraryFunction)
 
-      is StartLabel ->
-        StartLabel(name, params.map { it.foldFlat() }, pidVar, metadata, tempLookup)
+      is StartLabel -> StartLabel(name, params.map { it.foldFlat() }, pidVar, metadata, tempLookup)
 
       is ReturnLabel -> ReturnLabel(enclosedLabel.foldFlat())
       else -> this

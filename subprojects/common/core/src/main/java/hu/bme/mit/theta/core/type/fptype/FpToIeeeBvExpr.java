@@ -23,9 +23,10 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 
 /**
  * The raw IEEE-754 bit pattern of a floating-point value, as a bitvector of the same width -- a
- * *reinterpretation*, not a numeric conversion. This is what {@code fpToIEEEBV} in Z3 does, and what
- * the kernel/newlib idiom {@code union { double value; uint64_t bits; }} needs: {@code bits} is the
- * exact encoding of {@code value}, so {@code 1.0} becomes {@code 0x3FF0000000000000}, not {@code 1}.
+ * *reinterpretation*, not a numeric conversion. This is what {@code fpToIEEEBV} in Z3 does, and
+ * what the kernel/newlib idiom {@code union { double value; uint64_t bits; }} needs: {@code bits}
+ * is the exact encoding of {@code value}, so {@code 1.0} becomes {@code 0x3FF0000000000000}, not
+ * {@code 1}.
  *
  * <p>Distinct from {@link FpToBvExpr}, which rounds the *value* to an integer ({@code (uint64_t)1.0
  * == 1}). The result width is fixed by the float's format -- sign + exponent + significand -- so
@@ -51,12 +52,12 @@ public class FpToIeeeBvExpr extends UnaryExpr<FpType, BvType> {
     /**
      * The bitvector width the float's format encodes to.
      *
-     * <p>{@code getSignificand()} counts the implicit leading bit, which IEEE does not store, so the
-     * on-the-wire fraction is {@code getSignificand() - 1} bits. With the sign bit the total is
-     * {@code 1 + exponent + (significand - 1) == exponent + significand}: 64 for double
-     * {@code FpType.of(11, 53)}, 32 for float {@code FpType.of(8, 24)}. (Not {@code + 1} more --
-     * {@code FpLitExpr.of(bv, fpType)} uses a different, incompatible convention; do not route
-     * through it.)
+     * <p>{@code getSignificand()} counts the implicit leading bit, which IEEE does not store, so
+     * the on-the-wire fraction is {@code getSignificand() - 1} bits. With the sign bit the total is
+     * {@code 1 + exponent + (significand - 1) == exponent + significand}: 64 for double {@code
+     * FpType.of(11, 53)}, 32 for float {@code FpType.of(8, 24)}. (Not {@code + 1} more -- {@code
+     * FpLitExpr.of(bv, fpType)} uses a different, incompatible convention; do not route through
+     * it.)
      */
     public static int bitWidth(final FpType fpType) {
         return fpType.getExponent() + fpType.getSignificand();

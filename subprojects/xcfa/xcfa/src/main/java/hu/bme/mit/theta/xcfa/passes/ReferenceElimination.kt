@@ -40,29 +40,28 @@ import hu.bme.mit.theta.core.type.abstracttype.NegExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
-import java.math.BigInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import java.math.BigInteger
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
@@ -149,7 +148,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             // The referred object is atomic when the *variable's own type* is (`_Atomic int v`,
             // `int * _Atomic p`); the global var already carries that flag, which is more reliable
             // than the referred ref's recorded C type (address-taken scalars can lose the atomic
-            // level of that type). Taking its address does not make it any less atomic: every access
+            // level of that type). Taking its address does not make it any less atomic: every
+            // access
             // to it now goes through this pointer, so the pointer has to carry the fact.
             val referredAtomic =
               builder.parent.getVars().firstOrNull { g -> g.wrappedVar == it }?.atomic == true
@@ -166,11 +166,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val labels =
               if (MemsafetyPass.enabled) {
                 val assign2 =
-                  builder.parent.allocateReferenced(
-                    parseContext,
-                    varDecl.ref,
-                    ptrType.embeddedType,
-                  )
+                  builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
 
                 listOf(assign, assign2)
               } else {
@@ -187,10 +183,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     type.isAtomic || (type is CArray && cellsAreAtomic(type.embeddedType))
 
   /**
-   * Records which cells of an address-taken object are `_Atomic` against the base id its storage was
-   * given here, mirroring what the frontend builder does for objects that keep their compile-time
-   * base. Address-taken objects are re-based to this pointer's id, so a struct-field or pointee
-   * access through `&s` lands on this base, and the race check resolves atomicity from it.
+   * Records which cells of an address-taken object are `_Atomic` against the base id its storage
+   * was given here, mirroring what the frontend builder does for objects that keep their
+   * compile-time base. Address-taken objects are re-based to this pointer's id, so a struct-field
+   * or pointee access through `&s` lands on this base, and the race check resolves atomicity from
+   * it.
    */
   private fun recordReferencedObjectAtomicity(
     base: Int,
@@ -352,11 +349,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
 
   /**
-   * Sizes the object a taken address points to. An array is aliased with its own first element
-   * (`&a == a == &a[0]`), so the pointer the reference machinery hands out has to span the array's
-   * cells, not one: allocating a single unit made `arr[i]` for any `i > 0` -- reached through
-   * `(int **)&arr` and the like -- a spurious out-of-bounds `valid-deref`. A struct keeps its
-   * historical one-cell-per-field size; a scalar is one cell.
+   * Sizes the object a taken address points to. An array is aliased with its own first element (`&a
+   * == a == &a[0]`), so the pointer the reference machinery hands out has to span the array's
+   * cells, not one: allocating a single unit made `arr[i]` for any `i > 0` -- reached through `(int
+   * **)&arr` and the like -- a spurious out-of-bounds `valid-deref`. A struct keeps its historical
+   * one-cell-per-field size; a scalar is one cell.
    */
   private fun XcfaBuilder.allocateReferenced(
     parseContext: ParseContext,
@@ -390,8 +387,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   private fun Expr<*>.stripPos(): Expr<*> = if (this is PosExpr<*>) op.stripPos() else this
 
   /**
-   * The flat-model counterpart of [runComplexReferenceElimination]: it never splits. Every
-   * `(ref (deref B O))` -- how the frontend spells `&a[i]`, `p + i`, `p++`, and every other computed
+   * The flat-model counterpart of [runComplexReferenceElimination]: it never splits. Every `(ref
+   * (deref B O))` -- how the frontend spells `&a[i]`, `p + i`, `p++`, and every other computed
    * address -- becomes the single scalar `B + O`, so a pointer stays one value that can be copied,
    * compared, differenced, stored, and loaded with no `_base`/`_offset` bookkeeping. Simple
    * references (`(ref x)`) were already turned into flat-based pointer variables by
@@ -476,14 +473,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * A pointer parameter that gets split still enters the procedure as the single value the caller
    * bound to it. This pass runs per-procedure, *before* inlining, so it never sees that binding: it
    * splits the parameter `p` into `p_base`/`p_offset` and rewrites the body onto them, but nothing
-   * ever gives them a value. Inlining then binds the (now unused) original `p`, leaving `p_base` and
-   * `p_offset` unconstrained -- so the solver is free to pick an out-of-range offset and walk off the
-   * object, a false `valid-deref` on every `str*`-style callee that increments its argument.
+   * ever gives them a value. Inlining then binds the (now unused) original `p`, leaving `p_base`
+   * and `p_offset` unconstrained -- so the solver is free to pick an out-of-range offset and walk
+   * off the object, a false `valid-deref` on every `str*`-style callee that increments its
+   * argument.
    *
-   * Seed the halves at the procedure entry from the still-bound parameter: `p_base = p`, `p_offset =
-   * 0`. The offset is zero because a pointer argument is a base id at offset 0 -- the model cannot
-   * carry a mid-object pointer across a call (passing a bare split variable is rejected outright),
-   * so whatever the caller binds to `p` is exactly the base.
+   * Seed the halves at the procedure entry from the still-bound parameter: `p_base = p`, `p_offset
+   * = 0`. The offset is zero because a pointer argument is a base id at offset 0 -- the model
+   * cannot carry a mid-object pointer across a call (passing a bare split variable is rejected
+   * outright), so whatever the caller binds to `p` is exactly the base.
    */
   private fun seedSplitParams(
     builder: XcfaProcedureBuilder,
@@ -769,7 +767,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         listOf(SequenceStmt.of(stmts.flatMap { it.changeComplexReferredVars(splitVars) }))
       is SkipStmt -> listOf(this)
       is HavocStmt<*> -> {
-        // A havoc has no expression to rewrite. If the havoced variable itself was split, both halves
+        // A havoc has no expression to rewrite. If the havoced variable itself was split, both
+        // halves
         // become non-deterministic; otherwise it passes through untouched.
         val split = splitVars[varDecl]
         if (split != null) listOf(HavocStmt.of(split.base), HavocStmt.of(split.offset))
@@ -781,9 +780,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   private fun Expr<*>.containsSplitRefs(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean =
     when {
       this is RefExpr<*> -> this.decl in splitVars.keys
-      // A dereference reads a value *through* a pointer. A split var in its address is the pointer we
-      // read through -- the deref rewriting folds it to `deref(base, offset)` -- not a pointer *value*
-      // being stored, and the value it reads is a single memory cell (a scalar, for `*to = *from`; a
+      // A dereference reads a value *through* a pointer. A split var in its address is the pointer
+      // we
+      // read through -- the deref rewriting folds it to `deref(base, offset)` -- not a pointer
+      // *value*
+      // being stored, and the value it reads is a single memory cell (a scalar, for `*to = *from`;
+      // a
       // single base id for a pointer in memory), never a split var. Recursing into it counted the
       // address as if it were a stored pointer, so `*to = *from` (a char copy through two split
       // pointers) was wrongly channel-split into `arrays[to_offset][…] := arrays[from_offset][…]`,
@@ -864,7 +866,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       if (flatPointerValue) {
         // `p = s` where `p` became split (through later arithmetic) but `s` never did: a plain
         // pointer value is a base id at offset 0. Seed the halves accordingly -- `p_base = s`,
-        // `p_offset = 0` -- so the later `p++`/`p - s` operate on a well-defined origin. This is the
+        // `p_offset = 0` -- so the later `p++`/`p - s` operate on a well-defined origin. This is
+        // the
         // same shape `seedSplitParams` gives a pointer parameter, applied to a local copy. A null
         // pointer (`p = 0`) lands here too and is correctly (base 0, offset 0).
         val dst = splitVars[lhs]!!
@@ -916,12 +919,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * Uses of a split pointer that stay *scalar* -- a comparison or a pointer difference -- rather than
-   * dereferencing or re-addressing it. The split model keeps a pointer as `(base, offset)`, so:
+   * Uses of a split pointer that stay *scalar* -- a comparison or a pointer difference -- rather
+   * than dereferencing or re-addressing it. The split model keeps a pointer as `(base, offset)`,
+   * so:
    * - `p == q` is `base_p == base_q && off_p == off_q` (well-defined across objects: two pointers
    *   into different objects compare unequal), and `!=` is its negation;
-   * - `p < q` (and `<=`, `>`, `>=`) is defined by C only within one object, so it is `off_p < off_q`
-   *   -- a different-object comparison is undefined and any answer is sound;
+   * - `p < q` (and `<=`, `>`, `>=`) is defined by C only within one object, so it is `off_p <
+   *   off_q` -- a different-object comparison is undefined and any answer is sound;
    * - `p - q` is `off_p - off_q`, in element units, exactly what the offset already counts (each
    *   `p++` advances the offset by one element). The frontend spells a difference as an `Add` whose
    *   split bases cancel (`Add(p, Neg(q))`, or `Add(p, Neg(1), Neg(s1))` for `p - 1 - s1`); a net
@@ -954,7 +958,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       val offR = right.pointerOffsetChannel(splitVars, offsetType)
       // Ordering compares offsets only when BOTH sides are pointers -- that is the one case C
       // defines, and within an object the bases are equal. Against a plain integer it is not a
-      // pointer-vs-pointer comparison at all but a constraint on the pointer *value*, most often the
+      // pointer-vs-pointer comparison at all but a constraint on the pointer *value*, most often
+      // the
       // range assume the frontend emits for a declaration (`0 <= us <= 4294967295`). Decomposing
       // that onto the offset read the integer bound as "a pointer at offset 0" and collapsed the
       // assume to `us_offset in [0,0]`, pinning the offset instead of stating a tautology. Such a
@@ -1005,9 +1010,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * Whether an operand denotes a pointer value: a split pointer, or a plain variable declared with a
-   * pointer/array C type. Used to decide which operands of an `Add` are the bases that must cancel
-   * for it to be a scalar pointer difference.
+   * Whether an operand denotes a pointer value: a split pointer, or a plain variable declared with
+   * a pointer/array C type. Used to decide which operands of an `Add` are the bases that must
+   * cancel for it to be a scalar pointer difference.
    */
   private fun Expr<*>.isPointerOperand(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean {
     if (splitPairOf(splitVars) != null) return true

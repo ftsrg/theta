@@ -173,7 +173,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     // A single shared exit edge: one per check would pile up parallel label-less edges on
     // `invalidFree`, which the OC backend rejects as a branching location without assumes.
     if (invalidFree.incomingEdges.isNotEmpty()) {
-      builder.addEdge(XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
+      builder.addEdge(
+        XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData)
+      )
     }
   }
 

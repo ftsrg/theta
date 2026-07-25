@@ -30,14 +30,15 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
- * The value of an assignment expression is the value assigned, taken at the assignment -- not a later
- * re-read of the destination.
+ * The value of an assignment expression is the value assigned, taken at the assignment -- not a
+ * later re-read of the destination.
  *
  * `while ((*s1++ = *s2++))` tests the value of the assignment. The value is the copied `char`; the
  * post-increments `s1++`/`s2++` are side effects that run before the next sequence point. The value
  * used to be `getExpression()` = the destination lvalue `*s1`, re-read *after* `s1++` had moved the
- * pointer -- so the guard read uninitialised memory one past the copy, the loop ran on, and the next
- * iteration read `*s2` out of bounds (the openbsd/`strcpy_small` alloca `valid-deref` false alarms).
+ * pointer -- so the guard read uninitialised memory one past the copy, the loop ran on, and the
+ * next iteration read `*s2` out of bounds (the openbsd/`strcpy_small` alloca `valid-deref` false
+ * alarms).
  *
  * The value is now snapshotted at the assignment, so the loop-guard test is over that scalar and
  * never re-dereferences the moved pointer -- which is what is asserted: no branch condition of the
@@ -46,7 +47,9 @@ import org.junit.jupiter.api.Test
 class AssignmentValuePostIncrementTest {
 
   @Test
-  @DisplayName("a post-increment assignment used as a loop guard is not re-read through the pointer")
+  @DisplayName(
+    "a post-increment assignment used as a loop guard is not re-read through the pointer"
+  )
   fun guardTestsTheSnapshotNotTheMovedLvalue() {
     val parseContext = ParseContext()
     parseContext.architecture = ArchitectureType.LP64

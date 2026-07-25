@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test
 
 /**
  * The bit-slice read/write that packed bitfields lower to, checked by constant-folding on concrete
- * cells in both arithmetic encodings. Layout under test: a single byte holding b:2=2, c:2=3,
- * d:4=4, i.e. 4<<4 | 3<<2 | 2 = 78.
+ * cells in both arithmetic encodings. Layout under test: a single byte holding b:2=2, c:2=3, d:4=4,
+ * i.e. 4<<4 | 3<<2 | 2 = 78.
  */
 class BitfieldSliceTest {
 

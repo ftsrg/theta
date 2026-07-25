@@ -24,10 +24,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * `switch` on a wide controlling expression (e.g. `size_t`) with narrower `int` case labels used
- * to throw "(Bv 64) and (Bv 32) can not be unified" when the guard compared them directly. C
- * converts labels to the controlling expression's promoted type, so the comparison must happen in
- * the operands' common type.
+ * `switch` on a wide controlling expression (e.g. `size_t`) with narrower `int` case labels used to
+ * throw "(Bv 64) and (Bv 32) can not be unified" when the guard compared them directly. C converts
+ * labels to the controlling expression's promoted type, so the comparison must happen in the
+ * operands' common type.
  */
 class SwitchWidthTest {
 

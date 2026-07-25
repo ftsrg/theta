@@ -94,8 +94,10 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
                 CDeclaration declaration = context.declarator().accept(this);
                 // The initializer's container is the *declared* type, dimensions and all: for
-                // `T a[N] = { [i] = {...} }` the array-ness lives on the declarator, not the specifier
-                // type, so `getActualType()` (which folds the declarator's array dimensions onto the
+                // `T a[N] = { [i] = {...} }` the array-ness lives on the declarator, not the
+                // specifier
+                // type, so `getActualType()` (which folds the declarator's array dimensions onto
+                // the
                 // specifier) is the right container. Passing the bare `cSimpleType.getActualType()`
                 // instead read the array's `[i]` designators as struct field indices of the element
                 // type -- "Field designator on a non-struct type" once the element was itself an
@@ -153,14 +155,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * expression) made it NPE and the whole initializer was dropped as unsupported -- 865 tasks,
      * almost all neural-network weight matrices.
      *
-     * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the flat
-     * version did; the c2xcfa side re-casts to the true cell type when it writes the flat object, so
-     * the outer type here only has to be consistent, not exact.
+     * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the
+     * flat version did; the c2xcfa side re-casts to the true cell type when it writes the flat
+     * object, so the outer type here only has to be consistent, not exact.
      */
     private CInitializerList buildInitializerList(
             CParser.InitializerListContext initializerList, CComplexType containerType) {
-        final CInitializerList cInitializerList =
-                new CInitializerList(containerType, parseContext);
+        final CInitializerList cInitializerList = new CInitializerList(containerType, parseContext);
         int nextPosition = 0;
         for (org.antlr.v4.runtime.tree.ParseTree child :
                 initializerList == null
@@ -213,8 +214,9 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      */
     private CComplexType elementTypeAt(CComplexType containerType, int position) {
         if (containerType
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+                        instanceof
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                        .CStruct
                                 struct
                 && position >= 0
                 && position < struct.getFields().size()) {
@@ -222,7 +224,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         }
         if (containerType
                 instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray array) {
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+                        array) {
             return array.getEmbeddedType();
         }
         return containerType;
@@ -244,9 +247,9 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     }
 
     /**
-     * The element position a designator selects: the field's index for `.name`, the folded
-     * constant for `[expr]`. Only single-level designators are supported; member layout is by
-     * field index, so both forms land in the same position space.
+     * The element position a designator selects: the field's index for `.name`, the folded constant
+     * for `[expr]`. Only single-level designators are supported; member layout is by field index,
+     * so both forms land in the same position space.
      */
     private int designatedPosition(
             CParser.DesignationContext designation, CComplexType containerType) {
@@ -261,7 +264,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             if (!(containerType
                     instanceof
                     hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
-                                    struct)) {
+                            struct)) {
                 throw new UnsupportedFrontendElementException(
                         "Field designator on a non-struct type: " + designation.getText());
             }
@@ -332,7 +335,9 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         return LayoutAttributes.of(specifiers);
     }
 
-    /** The folded bitfield width, or -1 when it cannot be resolved (falls back to a plain field). */
+    /**
+     * The folded bitfield width, or -1 when it cannot be resolved (falls back to a plain field).
+     */
     private int foldBitfieldWidth(CParser.ConstantExpressionContext ctx) {
         if (functionVisitor == null) {
             return -1;
@@ -375,9 +380,12 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             // `T (*p)[N]` (pointer to array) and `T *p[N]` (array of pointers) stay distinct.
             decl.addDeclaratorPointer(size);
             // A qualifier after the star inside a declarator -- `void (* _Atomic fp)(void)`, an
-            // atomic function pointer. `const`/`volatile`/`restrict` say nothing the model tracks and
-            // are ignored; `_Atomic` makes the pointer variable itself atomic (carried to the type in
-            // CDeclaration#getActualType). `int * _Atomic p` never reaches here -- there the star is
+            // atomic function pointer. `const`/`volatile`/`restrict` say nothing the model tracks
+            // and
+            // are ignored; `_Atomic` makes the pointer variable itself atomic (carried to the type
+            // in
+            // CDeclaration#getActualType). `int * _Atomic p` never reaches here -- there the star
+            // is
             // at the type-specifier level (TypeVisitor#visitTypeSpecifierPointer).
             final boolean atomic =
                     ctx.pointer().typeQualifierList().stream()

@@ -31,19 +31,20 @@ import org.junit.jupiter.api.Test
 /**
  * A struct argument is passed *by value*: copied into a fresh object the callee is handed.
  *
- * A struct's value is its base id, so passing the variable passed the caller's object -- the callee's
- * parameter took the same base, and a write to a by-value parameter (`void f(struct T t){ t.len = 9;
- * }`) was read back by the caller. C copies at the call, so the argument is copied into a new object
- * and the callee gets that object's base.
+ * A struct's value is its base id, so passing the variable passed the caller's object -- the
+ * callee's parameter took the same base, and a write to a by-value parameter (`void f(struct T t){
+ * t.len = 9; }`) was read back by the caller. C copies at the call, so the argument is copied into
+ * a new object and the callee gets that object's base.
  *
- * The fingerprint is that copy: a write that reads a field of one object and writes the same field of
- * *another* (`arrays[argtmp][i] := arrays[a][i]`), one per field. Without the fix the argument is
- * passed by reference and no such cross-object copy exists at all. (The fixture has no other struct
- * assignment, so the copies counted here are the argument's.)
+ * The fingerprint is that copy: a write that reads a field of one object and writes the same field
+ * of *another* (`arrays[argtmp][i] := arrays[a][i]`), one per field. Without the fix the argument
+ * is passed by reference and no such cross-object copy exists at all. (The fixture has no other
+ * struct assignment, so the copies counted here are the argument's.)
  *
  * The object copied into is a stack allocation like any other local, so it is held by a temporary
- * whose base is drawn at run time -- two threads calling the function at once must not copy into one
- * shared object. That is why the two sides are compared as expressions rather than as constants.
+ * whose base is drawn at run time -- two threads calling the function at once must not copy into
+ * one shared object. That is why the two sides are compared as expressions rather than as
+ * constants.
  */
 class StructParameterTest {
 

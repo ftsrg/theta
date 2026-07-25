@@ -33,15 +33,16 @@ import org.junit.jupiter.api.Test
 /**
  * Copying a scalar *through* two split pointers is one memory write, not a pointer store.
  *
- * `ReferenceElimination` splits a pointer that is used with arithmetic (`++from`) into `<v>_base` and
- * `<v>_offset`. Storing a *pointer value* to memory then has to write both halves to two channels;
- * but `*to = *from` where the value is a `char` stores a single scalar. It was misclassified: the
- * split var `from` appears inside the value expression `*from`, only as the *address* being read
- * through, and that was counted as a stored pointer. The store was then split into two -- one of them
- * `arrays[to_offset][…] := arrays[from_offset][…]`, a dereference *through the offset variable as if
- * it were a base*. Its bounds check read `__theta_ptr_size[from_offset]` (an unallocated object, size
- * 0) and reported a spurious invalid dereference -- the whole `openbsd_*strcpy-alloca`/`strcpy_small`
- * cluster.
+ * `ReferenceElimination` splits a pointer that is used with arithmetic (`++from`) into `<v>_base`
+ * and `<v>_offset`. Storing a *pointer value* to memory then has to write both halves to two
+ * channels; but `*to = *from` where the value is a `char` stores a single scalar. It was
+ * misclassified: the split var `from` appears inside the value expression `*from`, only as the
+ * *address* being read through, and that was counted as a stored pointer. The store was then split
+ * into two -- one of them `arrays[to_offset][…] := arrays[from_offset][…]`, a dereference *through
+ * the offset variable as if it were a base*. Its bounds check read `__theta_ptr_size[from_offset]`
+ * (an unallocated object, size
+ * 0) and reported a spurious invalid dereference -- the whole
+ *    `openbsd_*strcpy-alloca`/`strcpy_small` cluster.
  *
  * The correct lowering derefs only through the base (`arrays[to_base][to_offset]`), so no memory
  * write may address the *offset* half of a split pointer -- which is what is asserted here.
@@ -81,7 +82,8 @@ class SplitPointerScalarCopyTest {
         .map { it.stmt }
         .filterIsInstance<MemoryAssignStmt<*, *, *>>()
 
-    // The copy is present: a write through a `_base` pointer (the split pointer folded to its base).
+    // The copy is present: a write through a `_base` pointer (the split pointer folded to its
+    // base).
     assertTrue(
       memWrites.any { w ->
         ((w.deref as? Dereference<*, *, *>)?.array as? RefExpr<*>)?.decl?.name?.endsWith("_base") ==
@@ -89,7 +91,8 @@ class SplitPointerScalarCopyTest {
       },
       "the scalar copy must still write through the pointer's base",
     )
-    // But never through an `_offset` half used as a base -- that was the fabricated bogus dereference.
+    // But never through an `_offset` half used as a base -- that was the fabricated bogus
+    // dereference.
     val offsetAsBase =
       memWrites.filter { w ->
         val a = (w.deref as? Dereference<*, *, *>)?.array

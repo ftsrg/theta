@@ -26,10 +26,10 @@ import org.junit.jupiter.api.Test
 
 /**
  * The byte-granular memory model (`--memory-model bytes`) lowers every memory access through
- * one-byte cells, so a wider scalar is the Concat of its bytes and struct/union members sit at their
- * real ObjectLayout byte offsets in the one byte array. These tests pin that the frontend keeps
- * *lowering* each construct under the bytes model -- cross-width punning, ABI-padded structs, nested
- * structs, arrays of structs, byte-array and pointer unions, bitfields, and the address of a
+ * one-byte cells, so a wider scalar is the Concat of its bytes and struct/union members sit at
+ * their real ObjectLayout byte offsets in the one byte array. These tests pin that the frontend
+ * keeps *lowering* each construct under the bytes model -- cross-width punning, ABI-padded structs,
+ * nested structs, arrays of structs, byte-array and pointer unions, bitfields, and the address of a
  * multi-byte union member (which the multi model refuses). The end-to-end verdicts against gcc are
  * checked separately by the analysis (STABLE portfolio) and are not re-run here; this is the cheap
  * guard that the bytes lowering does not regress to an exception.
@@ -139,7 +139,8 @@ class BytesMemoryModelTest {
 
   @Test
   fun addressOfAMultiByteUnionMemberAndDerefThroughLowers() {
-    // TDX barrier 9: the multi model refuses `&u.raw` for a multi-byte member; the bytes model gives
+    // TDX barrier 9: the multi model refuses `&u.raw` for a multi-byte member; the bytes model
+    // gives
     // it a real byte address whose dereference reads the same bytes back.
     assertDoesNotThrow {
       buildBytes(

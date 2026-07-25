@@ -27,8 +27,8 @@ import org.junit.jupiter.api.Test
  * `T (*p)[N]` (a pointer to an array) and `T *p[N]` (an array of pointers) reach the declarator
  * with the same star and dimension counts and are told apart only by the order they arrived in.
  * Getting that wrong is silent: an earlier attempt that applied the star unconditionally turned
- * every array of pointers into a pointer to an array, which still builds and still verifies --
- * just against the wrong object. Both forms are pinned here.
+ * every array of pointers into a pointer to an array, which still builds and still verifies -- just
+ * against the wrong object. Both forms are pinned here.
  */
 class PointerToArrayTest {
 
@@ -107,7 +107,8 @@ class PointerToArrayTest {
 
   @Test
   fun pointerToArrayOfUnspecifiedSize() {
-    // The TDX/kernel shape: `T (*dest)[]` with the size left open, subscripted through `(*dest)[i]`.
+    // The TDX/kernel shape: `T (*dest)[]` with the size left open, subscripted through
+    // `(*dest)[i]`.
     assertDoesNotThrow {
       build(
         """

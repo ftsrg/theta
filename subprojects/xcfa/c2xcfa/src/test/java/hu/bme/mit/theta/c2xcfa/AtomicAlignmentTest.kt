@@ -62,7 +62,11 @@ class AtomicAlignmentTest {
         "AtLL",
         ArchitectureType.ILP32,
       )
-    assertEquals(64, atomic.bitAlignment, "_Atomic long long forces 8-byte struct alignment on i386")
+    assertEquals(
+      64,
+      atomic.bitAlignment,
+      "_Atomic long long forces 8-byte struct alignment on i386",
+    )
     assertEquals(128, atomic.bitSize, "and rounds the size up to 16 bytes")
     assertEquals(64, atomic.field("c")!!.bitOffset, "c sits after the 8-byte atomic member")
   }

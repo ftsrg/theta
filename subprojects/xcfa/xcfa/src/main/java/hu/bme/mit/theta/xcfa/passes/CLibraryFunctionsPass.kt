@@ -285,11 +285,11 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
   /**
    * A distinct thread/mutex handle per array element `t[i]`. A pthread handle is an identity key (a
-   * [VarDecl] the analysis maps to a thread id, matching a start to its join); an array of handles --
-   * `pthread_t t[3]` with `pthread_create(&t[i], …)` / `pthread_join(t[i], …)` -- needs a distinct one
-   * per element, and `&t[i]` and `t[i]` for the same constant `i` must resolve to the *same* key. The
-   * element index has to be a compile-time constant, which is why the create/join loops are unrolled
-   * before this pass runs (see the extra [LoopUnrollPass] in [CPasses]).
+   * [VarDecl] the analysis maps to a thread id, matching a start to its join); an array of handles
+   * -- `pthread_t t[3]` with `pthread_create(&t[i], …)` / `pthread_join(t[i], …)` -- needs a
+   * distinct one per element, and `&t[i]` and `t[i]` for the same constant `i` must resolve to the
+   * *same* key. The element index has to be a compile-time constant, which is why the create/join
+   * loops are unrolled before this pass runs (see the extra [LoopUnrollPass] in [CPasses]).
    */
   private val arrayElementHandles = mutableMapOf<Pair<VarDecl<*>, BigInteger>, VarDecl<*>>()
 
@@ -318,7 +318,10 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
         // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
         // single-object cases -- while every higher element gets its own synthetic handle.
         if (offset == BigInteger.ZERO) base
-        else arrayElementHandles.getOrPut(base to offset) { Decls.Var("${base.name}_$offset", base.type) }
+        else
+          arrayElementHandles.getOrPut(base to offset) {
+            Decls.Var("${base.name}_$offset", base.type)
+          }
       }
 
       else -> error("Unsupported library parameter expression: $param")

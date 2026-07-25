@@ -271,8 +271,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     /**
      * `struct S { ... } __attribute__((packed));` -- by far the commonest spelling, and the one the
      * struct specifier never sees: the attribute sits *after* the body, so the grammar makes it a
-     * sibling declaration specifier rather than part of `structOrUnionSpecifier`, and
-     * {@link #visitCompoundDefinition} is only handed the attributes written before the body.
+     * sibling declaration specifier rather than part of `structOrUnionSpecifier`, and {@link
+     * #visitCompoundDefinition} is only handed the attributes written before the body.
      *
      * <p>Applied only when this specifier list actually *defines* the struct. An attribute on a
      * variable of an already-defined type (`struct S x __attribute__((aligned(16)));`) describes
@@ -431,7 +431,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                         // A C11 anonymous struct/union member. It needs a slot in the field list
                         // (member lookup flattens through it), and `addField` needs a name.
                         final var anon =
-                                new CDeclaration(CStruct.ANONYMOUS_FIELD_PREFIX + anonymousFields++);
+                                new CDeclaration(
+                                        CStruct.ANONYMOUS_FIELD_PREFIX + anonymousFields++);
                         anon.setType(cSimpleType);
                         struct.addField(anon);
                     } else {
@@ -688,11 +689,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     }
 
     /**
-     * `typeof(expr)` for expressions that need no variable context -- which covers the macro
-     * idiom it exists for: `container_of` expands to `typeof(((struct T*)0)->field)`, a member
-     * access on a null literal. The expression is built only to ask its type; it is never emitted.
-     * An expression that references variables (a plain `typeof(x)`) is out of reach here -- the
-     * type visitor has no scope -- and is reported as unsupported rather than mistyped.
+     * `typeof(expr)` for expressions that need no variable context -- which covers the macro idiom
+     * it exists for: `container_of` expands to `typeof(((struct T*)0)->field)`, a member access on
+     * a null literal. The expression is built only to ask its type; it is never emitted. An
+     * expression that references variables (a plain `typeof(x)`) is out of reach here -- the type
+     * visitor has no scope -- and is reported as unsupported rather than mistyped.
      */
     @Override
     public CSimpleType visitTypeSpecifierTypeof(CParser.TypeSpecifierTypeofContext ctx) {

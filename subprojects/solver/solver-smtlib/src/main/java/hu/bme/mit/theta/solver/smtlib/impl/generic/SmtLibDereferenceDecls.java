@@ -29,12 +29,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A {@link Dereference} is an application of the {@code deref} uninterpreted function, but -- unlike
- * an ordinary {@code (f x)} whose {@code f} is a {@link ConstDecl} that {@code getConstants} finds
- * and the solver declares -- {@code deref} has no backing declaration in the expression, so an
- * SMT-LIB solver would emit {@code (deref …)} with no {@code (declare-fun deref …)} and be rejected
- * ("unknown symbol: deref"). The native Z3 API sidesteps this by minting a {@code FuncDecl} per
- * application; SMT-LIB cannot, and it additionally forbids redeclaring one name with two signatures.
+ * A {@link Dereference} is an application of the {@code deref} uninterpreted function, but --
+ * unlike an ordinary {@code (f x)} whose {@code f} is a {@link ConstDecl} that {@code getConstants}
+ * finds and the solver declares -- {@code deref} has no backing declaration in the expression, so
+ * an SMT-LIB solver would emit {@code (deref …)} with no {@code (declare-fun deref …)} and be
+ * rejected ("unknown symbol: deref"). The native Z3 API sidesteps this by minting a {@code
+ * FuncDecl} per application; SMT-LIB cannot, and it additionally forbids redeclaring one name with
+ * two signatures.
  *
  * <p>This gives every {@code deref} signature a canonical function {@link ConstDecl} -- cached, so
  * the same instance is used both when collecting the constants to declare and when transforming the
@@ -61,9 +62,14 @@ public final class SmtLibDereferenceDecls {
                     // unfolds this into the flat parameter list `(arraySort offsetSort Int)`.
                     final FuncType<?, ?> funcType =
                             FuncType.of(
-                                    arrayType, FuncType.of(offsetType, FuncType.of(indexType, resultType)));
+                                    arrayType,
+                                    FuncType.of(offsetType, FuncType.of(indexType, resultType)));
                     final String name =
-                            "deref_%s_%s_%s".formatted(mangle(arrayType), mangle(offsetType), mangle(resultType));
+                            "deref_%s_%s_%s"
+                                    .formatted(
+                                            mangle(arrayType),
+                                            mangle(offsetType),
+                                            mangle(resultType));
                     return Decls.Const(name, funcType);
                 });
     }
@@ -82,7 +88,10 @@ public final class SmtLibDereferenceDecls {
         expr.getOps().forEach(op -> collect(op, result));
     }
 
-    /** A sort's string form reduced to a legal SMT-LIB symbol fragment (e.g. {@code (_ BitVec 64)} -> {@code BitVec64}). */
+    /**
+     * A sort's string form reduced to a legal SMT-LIB symbol fragment (e.g. {@code (_ BitVec 64)}
+     * -> {@code BitVec64}).
+     */
     private static String mangle(final Type type) {
         return type.toString().replaceAll("[^A-Za-z0-9]", "");
     }

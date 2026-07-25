@@ -68,9 +68,9 @@ public class Z3IeeeBvTest {
                                 Long.toUnsignedString(Double.doubleToLongBits(3.141592653589793))),
                         64);
         solver.add(AbstractExprs.Eq(FpExprs.ToIeeeBv(f.getRef()), piBits));
-        // The round trip is forced: reinterpreting those same bits back must equal f. Negation UNSAT.
-        solver.add(
-                BoolExprs.Not(AbstractExprs.Eq(FpExprs.FromIeeeBv(piBits, DOUBLE), f.getRef())));
+        // The round trip is forced: reinterpreting those same bits back must equal f. Negation
+        // UNSAT.
+        solver.add(BoolExprs.Not(AbstractExprs.Eq(FpExprs.FromIeeeBv(piBits, DOUBLE), f.getRef())));
         assertEquals(SolverStatus.UNSAT, solver.check());
     }
 
@@ -84,7 +84,8 @@ public class Z3IeeeBvTest {
                         AbstractExprs.Eq(
                                 FpExprs.FromIeeeBv(FpExprs.ToIeeeBv(f.getRef()), DOUBLE),
                                 f.getRef())));
-        // NaN != NaN would make this SAT spuriously; exclude NaN, which is the one value that is not
+        // NaN != NaN would make this SAT spuriously; exclude NaN, which is the one value that is
+        // not
         // its own equal.
         solver.add(BoolExprs.Not(FpExprs.IsNan(f.getRef())));
         assertEquals(SolverStatus.UNSAT, solver.check());

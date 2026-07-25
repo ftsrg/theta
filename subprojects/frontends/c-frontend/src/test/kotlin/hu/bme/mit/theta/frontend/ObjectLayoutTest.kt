@@ -70,8 +70,7 @@ class ObjectLayoutTest {
     // gcc both models: struct S1 { char a; int b; } size=8 align=4 a=0 b=4
     for (arch in listOf(ArchitectureType.ILP32, ArchitectureType.LP64)) {
       val c = ctx(arch)
-      val layout =
-        ObjectLayout.of(struct(c, listOf("a" to uchar(c), "b" to int(c))), arch)
+      val layout = ObjectLayout.of(struct(c, listOf("a" to uchar(c), "b" to int(c))), arch)
       assertEquals(64, layout.bitSize, "size, $arch")
       assertEquals(32, layout.bitAlignment, "alignment, $arch")
       assertEquals(0, layout.field("a")!!.bitOffset, "a offset, $arch")
@@ -145,10 +144,7 @@ class ObjectLayoutTest {
     for (arch in listOf(ArchitectureType.ILP32, ArchitectureType.LP64)) {
       val c = ctx(arch)
       val layout =
-        ObjectLayout.of(
-          struct(c, listOf("a" to uchar(c), "b" to short(c), "c" to int(c))),
-          arch,
-        )
+        ObjectLayout.of(struct(c, listOf("a" to uchar(c), "b" to short(c), "c" to int(c))), arch)
       assertEquals(64, layout.bitSize, "size, $arch")
       assertEquals(16, layout.field("b")!!.bitOffset, "b at byte 2, $arch")
       assertEquals(32, layout.field("c")!!.bitOffset, "c at byte 4, $arch")
@@ -217,10 +213,7 @@ class ObjectLayoutTest {
       val c = ctx(arch)
       val inner = struct(c, listOf("a" to uchar(c), "b" to int(c)))
       val layout =
-        ObjectLayout.of(
-          struct(c, listOf("a" to uchar(c), "inner" to inner, "z" to uchar(c))),
-          arch,
-        )
+        ObjectLayout.of(struct(c, listOf("a" to uchar(c), "inner" to inner, "z" to uchar(c))), arch)
       assertEquals(128, layout.bitSize, "size = 16 bytes, $arch")
       assertEquals(32, layout.field("inner")!!.bitOffset, "inner at byte 4, $arch")
       assertEquals(96, layout.field("z")!!.bitOffset, "z at byte 12, $arch")
@@ -233,10 +226,7 @@ class ObjectLayoutTest {
     for (arch in listOf(ArchitectureType.ILP32, ArchitectureType.LP64)) {
       val c = ctx(arch)
       val layout =
-        ObjectLayout.of(
-          struct(c, listOf("a" to uchar(c), "d" to double(c)), union = true),
-          arch,
-        )
+        ObjectLayout.of(struct(c, listOf("a" to uchar(c), "d" to double(c)), union = true), arch)
       assertEquals(64, layout.bitSize, "size = 8 bytes, $arch")
       assertEquals(0, layout.field("a")!!.bitOffset, "$arch")
       assertEquals(0, layout.field("d")!!.bitOffset, "both members start at bit 0, $arch")

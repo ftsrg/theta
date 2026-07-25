@@ -30,7 +30,6 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.dereferences
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type>>
 
@@ -199,5 +198,4 @@ class DereferenceToArrayPass : ProcedurePass {
     } else {
       withOps(ops.map { it.getArrayReads(xcfa) })
     }
-
 }

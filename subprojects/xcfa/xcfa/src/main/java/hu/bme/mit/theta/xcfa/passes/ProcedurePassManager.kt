@@ -45,9 +45,12 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so the
-      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and must
-      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too late.
+      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so
+      // the
+      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and
+      // must
+      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too
+      // late.
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
       // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
@@ -81,12 +84,14 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlinedProcedureRemovalPass()
     ),
     listOf(
-      // Inlining binds a `&(deref B O)` call argument (e.g. `&atomic_var` passed to a helper) to the
+      // Inlining binds a `&(deref B O)` call argument (e.g. `&atomic_var` passed to a helper) to
+      // the
       // callee's parameter as an assignment only now -- and the group-2 ReferenceElimination, which
-      // eliminates the complex `&(deref …)` form only from assignments and runs before inlining, never
+      // eliminates the complex `&(deref …)` form only from assignments and runs before inlining,
+      // never
       // saw it. Run it again so no reference survives into the analyses (the OC checker rejects any
       // residual reference outright); it is a no-op on procedures that have none.
-      ReferenceElimination(parseContext),
+      ReferenceElimination(parseContext)
     ),
     listOf(
       EmptyEdgeRemovalPass(),
@@ -163,9 +168,12 @@ class NontermValidationPasses(
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so the
-      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and must
-      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too late.
+      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so
+      // the
+      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and
+      // must
+      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too
+      // late.
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
       // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination

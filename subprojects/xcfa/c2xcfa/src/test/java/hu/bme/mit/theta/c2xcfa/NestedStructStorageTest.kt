@@ -47,7 +47,9 @@ import org.junit.jupiter.api.Test
  */
 class NestedStructStorageTest {
 
-  /** Field-cell writes whose value comes from the allocation counter -- i.e. the inner allocations. */
+  /**
+   * Field-cell writes whose value comes from the allocation counter -- i.e. the inner allocations.
+   */
   private fun allocatedInnerStructs(body: String): List<MemoryAssignStmt<*, *, *>> {
     val parseContext = ParseContext()
     parseContext.architecture = ArchitectureType.LP64

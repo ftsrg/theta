@@ -36,14 +36,14 @@ import org.junit.jupiter.api.Test
 /**
  * Loading a pointer value out of an array of pointers -- `int *d = *(dataArray + 2)` (equivalently
  * `dataArray[2]`) -- must be a plain dereference `arrays[dataArray][2]`, whose result is the stored
- * pointer. Two bugs conspired to turn it into `ref(deref(dataArray, deref(0, 2)))`, a pointer *into*
- * `dataArray` at a nonsense offset read out of the null object:
+ * pointer. Two bugs conspired to turn it into `ref(deref(dataArray, deref(0, 2)))`, a pointer
+ * *into* `dataArray` at a nonsense offset read out of the null object:
  * 1. `p + 2` lost its pointer type in `getSmallestCommonType`, so the sum was integer arithmetic
  *    wrapped in a modulo -- which both truncated the base and hid the `AddExpr` from the `*(p + i)`
  *    fold, so `*(dataArray + 2)` no longer became `deref(dataArray, 2)`.
  * 2. Even once it did, the assignment path's `hasArithmetic` recursed into the load's own offset,
- *    mistook the load for pointer arithmetic, and rewrote `d = deref(dataArray, 2)` into
- *    `d = &dataArray[deref(0, 2)]`.
+ *    mistook the load for pointer arithmetic, and rewrote `d = deref(dataArray, 2)` into `d =
+ *    &dataArray[deref(0, 2)]`.
  *
  * The net effect was a false `valid-deref` on the whole Juliet CWE476 `*(dataArray + k)` family.
  * This pins the lowering directly (pre-pass, before ReferenceElimination folds bases to literals).
@@ -76,7 +76,8 @@ class PointerInMemoryLoadTest {
   }
 
   private fun collectDerefs(e: hu.bme.mit.theta.core.type.Expr<*>): List<Dereference<*, *, *>> =
-    (if (e is Dereference<*, *, *>) listOf(e) else emptyList()) + e.ops.flatMap { collectDerefs(it) }
+    (if (e is Dereference<*, *, *>) listOf(e) else emptyList()) +
+      e.ops.flatMap { collectDerefs(it) }
 
   private fun hasReference(e: hu.bme.mit.theta.core.type.Expr<*>): Boolean =
     e is Reference<*, *> || e.ops.any { hasReference(it) }
@@ -112,8 +113,7 @@ class PointerInMemoryLoadTest {
   fun scalarLoadThroughPointerArithmeticKeepsIndexAsOffset() {
     // The scalar sibling: `int j = *(pi + 2)` was already handled, but guard it so the pointer fix
     // does not regress it -- base `pi`, offset `2`, no arithmetic folded into the base.
-    val src =
-      "int main(){ int *pi; int j = *(pi + 2U); if (j != 5) { } return 0; }"
+    val src = "int main(){ int *pi; int j = *(pi + 2U); if (j != 5) { } return 0; }"
     val parseContext = ParseContext()
     val program =
       parseTypeAware(CharStreams.fromStream(src.byteInputStream()))

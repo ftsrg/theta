@@ -643,14 +643,14 @@ final class Z3TermTransformer {
 
     /**
      * {@link #transform} of a model term, but never null: a null means Z3 gave the term's function
-     * declaration no interpretation, i.e. left it unconstrained, so any witness of the right sort is
-     * a sound part of a counterexample. Substitute that sort's default.
+     * declaration no interpretation, i.e. left it unconstrained, so any witness of the right sort
+     * is a sound part of a counterexample. Substitute that sort's default.
      *
      * <p>Without this, extracting a model for the two-dimensional memory array ({@code
      * arrays[base][offset]}) crashed: a function-interp entry whose value (or argument) is an
-     * unconstrained *inner array* transformed to null, and {@code Tuple2.of(args, null)} threw a bare
-     * NullPointerException out of Guava. That aborted every counterexample touching a byte array --
-     * exactly what a byte-addressed union produces.
+     * unconstrained *inner array* transformed to null, and {@code Tuple2.of(args, null)} threw a
+     * bare NullPointerException out of Guava. That aborted every counterexample touching a byte
+     * array -- exactly what a byte-addressed union produces.
      */
     private Expr<?> defaultingTransform(
             final com.microsoft.z3legacy.Expr term, final Model model, final List<Decl<?>> vars) {
@@ -658,7 +658,9 @@ final class Z3TermTransformer {
         return transformed != null ? transformed : defaultLiteral(term.getSort());
     }
 
-    /** A default literal of [sort], recursing through array nesting ({@link TypeUtils} refuses it). */
+    /**
+     * A default literal of [sort], recursing through array nesting ({@link TypeUtils} refuses it).
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private LitExpr<?> defaultLiteral(final com.microsoft.z3legacy.Sort sort) {
         if (sort instanceof com.microsoft.z3legacy.ArraySort arraySort) {

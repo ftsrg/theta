@@ -32,12 +32,12 @@ import org.junit.jupiter.api.Test
 /**
  * A stack array is an `alloca` block, not a `malloc`+`free` one.
  *
- * A local array's base used to come from `malloc` -- heap memory (`3k+0`) the program is responsible
- * for freeing, so the frontend also emitted a `free` at scope exit. That is the wrong model: the
- * memory is released when the function returns, not by the program, and the free made a returned
- * block look doubly freed and a block declared in a loop look leaked. `alloca` states it directly --
- * the block goes in the free residue class (`3k+1`, not scanned for leaks, never freeable) and gets
- * a *fresh runtime* base, so two activations of the function cannot alias.
+ * A local array's base used to come from `malloc` -- heap memory (`3k+0`) the program is
+ * responsible for freeing, so the frontend also emitted a `free` at scope exit. That is the wrong
+ * model: the memory is released when the function returns, not by the program, and the free made a
+ * returned block look doubly freed and a block declared in a loop look leaked. `alloca` states it
+ * directly -- the block goes in the free residue class (`3k+1`, not scanned for leaks, never
+ * freeable) and gets a *fresh runtime* base, so two activations of the function cannot alias.
  *
  * Both `malloc` and `alloca` lower to `base := __malloc (+ residue)`; what tells them apart is the
  * residue, `+1` for `alloca` against a bare `__malloc` for `malloc`. The allocation feeding the
@@ -79,8 +79,10 @@ class StackArrayAllocaTest {
         .filter { add -> add.ops.any { it is RefExpr<*> && (it.decl.name == "__malloc") } }
 
     assertTrue(counterAdds.isNotEmpty(), "the array must be allocated from the __malloc counter")
-    // `malloc` assigns a bare `__malloc` (a plain ref, no Add); only `alloca` adds the `+1` residue,
-    // so an Add over `__malloc` at all is the alloca fingerprint. The bump `__malloc := __malloc + 3`
+    // `malloc` assigns a bare `__malloc` (a plain ref, no Add); only `alloca` adds the `+1`
+    // residue,
+    // so an Add over `__malloc` at all is the alloca fingerprint. The bump `__malloc := __malloc +
+    // 3`
     // adds a literal 3; the allocation adds 1.
     assertTrue(
       counterAdds.any { add ->

@@ -32,8 +32,6 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -46,7 +44,9 @@ import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.*;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -536,24 +536,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
-     * Pointer arithmetic {@code p + i} (equivalently {@code i + p}, or {@code p - i}), as opposed to
-     * ordinary integer addition. C makes such a sum a pointer, not an integer: its value is the base
-     * {@code p} advanced by {@code i} elements, and the whole benchmark memory model keys object
-     * sizes on the <em>base</em> expression. The default integer path instead handed the sum to
-     * {@link CComplexType#getSmallestCommonType} -- which, because {@link CPointer} inherits {@link
-     * CInteger}'s rank logic with an unset rank, returned an <em>integer</em> common type and wrapped
-     * the result in {@code mod 2^32}. That (a) truncated a 64-bit base to 32 bits and (b) buried the
-     * {@code AddExpr} under a modulo, so {@code *(p + i)}'s fold in {@code visitUnaryExpression} (and
-     * {@link #foldPointerArithmetic}) -- which only peels {@code Pos} -- no longer recognized it and
-     * read {@code arrays[p + i][0]} instead of {@code arrays[p][i]}: an unallocated base, a false
-     * out-of-bounds/NULL-deref on the whole {@code *(dataArray + k)} family (Juliet CWE476).
+     * Pointer arithmetic {@code p + i} (equivalently {@code i + p}, or {@code p - i}), as opposed
+     * to ordinary integer addition. C makes such a sum a pointer, not an integer: its value is the
+     * base {@code p} advanced by {@code i} elements, and the whole benchmark memory model keys
+     * object sizes on the <em>base</em> expression. The default integer path instead handed the sum
+     * to {@link CComplexType#getSmallestCommonType} -- which, because {@link CPointer} inherits
+     * {@link CInteger}'s rank logic with an unset rank, returned an <em>integer</em> common type
+     * and wrapped the result in {@code mod 2^32}. That (a) truncated a 64-bit base to 32 bits and
+     * (b) buried the {@code AddExpr} under a modulo, so {@code *(p + i)}'s fold in {@code
+     * visitUnaryExpression} (and {@link #foldPointerArithmetic}) -- which only peels {@code Pos} --
+     * no longer recognized it and read {@code arrays[p + i][0]} instead of {@code arrays[p][i]}: an
+     * unallocated base, a false out-of-bounds/NULL-deref on the whole {@code *(dataArray + k)}
+     * family (Juliet CWE476).
      *
      * <p>Emitting a bare pointer-typed {@code Add(base, index)} -- the index cast to the index type
      * and scaled by the pointee's cell count, with no width modulo -- keeps the sum in exactly the
      * shape those folds already expect, so {@code *(p + i)} lowers to the same {@code deref(p, i)}
      * that {@code p[i]} does. Returns null (falling back to the integer path) for anything that is
-     * not one pointer/array operand added to integer terms: a pointer <em>difference</em> {@code p -
-     * q} is a {@code ptrdiff_t} the {@code ReferenceElimination} decomposition handles, and a sum
+     * not one pointer/array operand added to integer terms: a pointer <em>difference</em> {@code p
+     * - q} is a {@code ptrdiff_t} the {@code ReferenceElimination} decomposition handles, and a sum
      * with no pointer operand is ordinary integer arithmetic.
      */
     private Expr<?> pointerArithmetic(
@@ -583,13 +584,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         : ((CArray) pointerType).getEmbeddedType();
         // A step of `p` is one *element*. For a scalar or pointer pointee that is one storage cell,
         // so the index is used as-is -- keeping `*(p + 2)` byte-for-byte identical to the correct
-        // `p[2]` lowering (and, crucially, free of the `* 1` a scale would inject: an extra `MulExpr`
+        // `p[2]` lowering (and, crucially, free of the `* 1` a scale would inject: an extra
+        // `MulExpr`
         // inside the resulting dereference's offset makes the assignment path misread the *load* as
         // pointer arithmetic). An aggregate element spans `cellCount(pointee)` cells and is scaled,
         // matching the subscript path's `rowOf`; a null scale (an unsized element) means no factor.
         final boolean aggregatePointee =
-                pointee instanceof CArray
-                        || (pointee instanceof CStruct s && !s.isUnion());
+                pointee instanceof CArray || (pointee instanceof CStruct s && !s.isUnion());
         // Under the bytes model a step of `p` is the pointee's whole byte size, whatever its shape;
         // under multi/flat only an aggregate element spans more than one cell and is scaled. A unit
         // stride stays null so no `* 1` is injected (see the note below).
@@ -608,7 +609,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
             Expr<?> term = indexType.castTo(exprs.get(i));
             if (cells != null) {
-                term = indexType.castTo(Mul(List.of(indexType.castTo(term), indexType.castTo(cells))));
+                term =
+                        indexType.castTo(
+                                Mul(List.of(indexType.castTo(term), indexType.castTo(cells))));
             }
             if (i > 0 && ctx.signs.get(i - 1).getText().equals("-")) {
                 term = AbstractExprs.Neg(term);
@@ -777,11 +780,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * `__builtin_offsetof(struct S, f)` evaluates to f's *element index* in S -- the same unit
-     * every member dereference uses as its offset -- so the `container_of` idiom
-     * `(struct S*)((char*)p - offsetof(struct S, f))` round-trips exactly: `&obj->f` is
-     * (base, index(f)), and subtracting index(f) lands back on (base, 0), the object itself.
-     * Nested (`a.b`) and indexed (`a[3]`) designators are rejected: a struct-typed field holds a
-     * base id of its own in this model, so no single linear offset describes them.
+     * every member dereference uses as its offset -- so the `container_of` idiom `(struct
+     * S*)((char*)p - offsetof(struct S, f))` round-trips exactly: `&obj->f` is (base, index(f)),
+     * and subtracting index(f) lands back on (base, 0), the object itself. Nested (`a.b`) and
+     * indexed (`a[3]`) designators are rejected: a struct-typed field holds a base id of its own in
+     * this model, so no single linear offset describes them.
      */
     @Override
     public Expr<?> visitPrimaryExpressionBuiltinOffsetof(
@@ -821,9 +824,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
-     * `__builtin_types_compatible_p(t1, t2)` is a compile-time 0/1. Where both types resolve
-     * (plain type names), they are compared structurally. The dominant benchmark use is the
-     * kernel's `__must_be_array` assert, whose arguments are `typeof(expr)` over local variables --
+     * `__builtin_types_compatible_p(t1, t2)` is a compile-time 0/1. Where both types resolve (plain
+     * type names), they are compared structurally. The dominant benchmark use is the kernel's
+     * `__must_be_array` assert, whose arguments are `typeof(expr)` over local variables --
      * unresolvable here -- and whose value in any program that compiles is 0 (the negative-width
      * bitfield the macro wraps it in would otherwise have been a compile error), so 0 is the
      * fallback, with a warning.
@@ -862,10 +865,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * `__builtin_object_size(ptr, type)` is a compile-time size query used by _FORTIFY_SOURCE
-     * wrappers. The pointee object's size is not modelled, so this returns gcc's own
-     * size-unknown fallback: `(size_t)-1` for types 0/1 (no upper bound, so the wrapped
-     * `__*_chk` never spuriously aborts) and `0` for types 2/3. The pointer argument is not
-     * evaluated -- like sizeof it has no side effects.
+     * wrappers. The pointee object's size is not modelled, so this returns gcc's own size-unknown
+     * fallback: `(size_t)-1` for types 0/1 (no upper bound, so the wrapped `__*_chk` never
+     * spuriously aborts) and `0` for types 2/3. The pointer argument is not evaluated -- like
+     * sizeof it has no side effects.
      */
     @Override
     public Expr<?> visitPrimaryExpressionBuiltinObjectSize(
@@ -1116,9 +1119,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (isCallableFunctionPointer(originalOperand)) {
                     return originalOperand;
                 }
-                // `&u.sub` where `u.sub` is a nested struct/union member of a byte-addressed union (a
+                // `&u.sub` where `u.sub` is a nested struct/union member of a byte-addressed union
+                // (a
                 // STRUCT marker): the sub-region has no object of its own, but it does have a byte
-                // location -- the address of the byte cell at (union base, member offset). Its value
+                // location -- the address of the byte cell at (union base, member offset). Its
+                // value
                 // is correct; dereferencing it back as the aggregate is a separate concern (not
                 // reached by the TDX invariants, which only pass such an address to a stub).
                 final var structMarkerBaseAmp =
@@ -1152,7 +1157,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // pointer in this model can express. A single byte (`&u.bytes[i]`) is a bare
                 // Dereference and never reaches here (see ByteUnionSlice#WIDTH / byteScalarRead).
                 final var byteUnionWidth =
-                        parseContext.getMetadata().getMetadataValue(originalOperand, ByteUnionSlice.WIDTH);
+                        parseContext
+                                .getMetadata()
+                                .getMetadataValue(originalOperand, ByteUnionSlice.WIDTH);
                 if (byteUnionWidth.isPresent() && ((Number) byteUnionWidth.get()).intValue() > 1) {
                     throw new UnsupportedFrontendElementException(
                             "Taking the address of a multi-byte member of a byte-addressed union is"
@@ -1265,12 +1272,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
-     * The stride, in real bytes, of one element of [type] -- what turns an element index into a byte
-     * offset under the bytes memory model. Mirrors {@link #cellCountExpr} but in the declared byte
-     * layout (padded struct sizes, byte-sized scalars from {@link ObjectLayout}), so a subscript, a
-     * multi-dimensional row step, and pointer arithmetic all land on the byte the layout puts the
-     * element at, and object sizes recorded from {@code sizeof} bound them exactly. Null when the
-     * size is not statically known (an unsized array), like {@link #cellCountExpr}.
+     * The stride, in real bytes, of one element of [type] -- what turns an element index into a
+     * byte offset under the bytes memory model. Mirrors {@link #cellCountExpr} but in the declared
+     * byte layout (padded struct sizes, byte-sized scalars from {@link ObjectLayout}), so a
+     * subscript, a multi-dimensional row step, and pointer arithmetic all land on the byte the
+     * layout puts the element at, and object sizes recorded from {@code sizeof} bound them exactly.
+     * Null when the size is not statically known (an unsized array), like {@link #cellCountExpr}.
      */
     private Expr<?> byteStrideExpr(CComplexType type) {
         if (type instanceof CArray arrayType) {
@@ -1372,20 +1379,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * #foldPointerArithmetic}), and it makes a declared `int a[3][4]` and a `(int (*)[4])` view of
      * a flat buffer address the same storage -- which is what the neural-network benchmarks cast.
      *
-     * <p>The row length does <b>not</b> have to be a compile-time constant. A variable-length
-     * `int a[n][m]` is just as contiguous, and `i * m + j` is as good an offset when `m` is a
-     * variable as when it is a literal. Requiring a literal used to send VLAs down the fallback
-     * path below, where `a[i]` became a *stored base* read out of cell `i` -- a base nothing ever
-     * writes, so the solver was free to make two rows the same object. That produced six false
-     * alarms in the 2026-07-20 run (`array-patterns/array13` and friends, all
-     * `int array[ARR_SIZE][ARR_SIZE]`): rows aliased, a summation loop read back the wrong values,
-     * and a safe program was reported unsafe.
+     * <p>The row length does <b>not</b> have to be a compile-time constant. A variable-length `int
+     * a[n][m]` is just as contiguous, and `i * m + j` is as good an offset when `m` is a variable
+     * as when it is a literal. Requiring a literal used to send VLAs down the fallback path below,
+     * where `a[i]` became a *stored base* read out of cell `i` -- a base nothing ever writes, so
+     * the solver was free to make two rows the same object. That produced six false alarms in the
+     * 2026-07-20 run (`array-patterns/array13` and friends, all `int array[ARR_SIZE][ARR_SIZE]`):
+     * rows aliased, a summation loop read back the wrong values, and a safe program was reported
+     * unsafe.
      *
      * <p>An array of <b>structs</b> is laid out the same way, scaled by the struct's cell count:
      * `s[i].f` becomes `arrays[s][i*k + f]`. That element used to be a *stored base* of its own,
-     * written by one alloca per element at the declaration -- which does not scale, so above
-     * {@code MAX_ELEMENT_ALLOCATIONS} the bases were simply left unwritten and two elements could
-     * be conflated, the same defect the VLA rows had. Offsets need no allocation and no cap.
+     * written by one alloca per element at the declaration -- which does not scale, so above {@code
+     * MAX_ELEMENT_ALLOCATIONS} the bases were simply left unwritten and two elements could be
+     * conflated, the same defect the VLA rows had. Offsets need no allocation and no cap.
      *
      * <p>Nothing here derives a *base* from another base. That distinction is the whole point: base
      * ids are handed out three apart (`AllocaFunctionPass`), so an `s + i*k` used as a base would
@@ -1402,14 +1409,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // Only an aggregate element is a *region* to be offset into; a scalar element is an
         // ordinary cell read and is left to the caller's dereference.
         final boolean aggregate =
-                elemType instanceof CArray
-                        || (elemType instanceof CStruct s && !s.isUnion());
+                elemType instanceof CArray || (elemType instanceof CStruct s && !s.isUnion());
         if (!aggregate) {
             return null;
         }
         // A row step is one whole element: real bytes under the bytes model (so `a[i][j]` lands on
         // the byte the declared layout puts it at, padding included), storage cells otherwise.
-        final Expr<?> elementCells = byteAddressed() ? byteStrideExpr(elemType) : cellCountExpr(elemType);
+        final Expr<?> elementCells =
+                byteAddressed() ? byteStrideExpr(elemType) : cellCountExpr(elemType);
         if (elementCells == null) {
             return null;
         }
@@ -1635,7 +1642,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         : call.argumentExpressionList().assignmentExpression();
         // The GCC `__atomic_*` builtins and their C11 `atomic_*` spellings are compiler intrinsics
         // with no declaration to resolve; recognise them here and emit an ordinary call so that
-        // AtomicFunctionsPass can lower each into an atomic block. Only the return *type* is decided
+        // AtomicFunctionsPass can lower each into an atomic block. Only the return *type* is
+        // decided
         // here (so the call's return variable is typed right); the semantics live in the pass.
         Expr<?> atomic = atomicBuiltinCall(name, args);
         if (atomic != null) {
@@ -1780,9 +1788,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     /**
      * `<base>.<member>`, flattening through C11 anonymous struct/union members: `s.a` finds `a`
-     * inside `struct S { union { int a; ... }; }` by first accessing the synthetic
-     * {@link CStruct#ANONYMOUS_FIELD_PREFIX} field, then `a` within it. Each step is one
-     * Dereference at the member's field index.
+     * inside `struct S { union { int a; ... }; }` by first accessing the synthetic {@link
+     * CStruct#ANONYMOUS_FIELD_PREFIX} field, then `a` within it. Each step is one Dereference at
+     * the member's field index.
      */
     private Expr<?> structMemberAccess(Expr<?> base, CStruct structType, String memberName) {
         if (structType.getFieldsAsMap().get(memberName) != null) {
@@ -1816,14 +1824,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * `<base>.<member>` under the bytes memory model. The member's real byte offset comes straight
-     * from {@link ObjectLayout}; a scalar or pointer member is the plain dereference of its own type
-     * at (object base + that offset), which {@link hu.bme.mit.theta.xcfa.passes.ByteMemoryPass} then
-     * lowers to the member's own byte cells for both read and write -- no slicing, packing, or
-     * write-back metadata, because every member of the object shares the one byte array and
-     * overlapping members therefore alias by construction. A nested struct/array member is the
-     * sub-region at that offset, returned as plain pointer arithmetic so the following {@code .field}
-     * or {@code [i]} folds back onto the object's base. The member offset is folded onto a clean base
-     * so the memsafety check still sizes the access by the object's real base id.
+     * from {@link ObjectLayout}; a scalar or pointer member is the plain dereference of its own
+     * type at (object base + that offset), which {@link
+     * hu.bme.mit.theta.xcfa.passes.ByteMemoryPass} then lowers to the member's own byte cells for
+     * both read and write -- no slicing, packing, or write-back metadata, because every member of
+     * the object shares the one byte array and overlapping members therefore alias by construction.
+     * A nested struct/array member is the sub-region at that offset, returned as plain pointer
+     * arithmetic so the following {@code .field} or {@code [i]} folds back onto the object's base.
+     * The member offset is folded onto a clean base so the memsafety check still sizes the access
+     * by the object's real base id.
      */
     private Expr<?> byteModeMemberAccess(
             Expr<?> base, CStruct structType, String memberName, CComplexType embeddedType) {
@@ -1838,14 +1847,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (field.isBitfield()) {
             return byteModeBitfieldAccess(base, memberName, embeddedType, field, offsetType);
         }
-        final Expr<?> memberByteOffset =
-                offsetType.getValue(String.valueOf(field.bitOffset() / 8));
+        final Expr<?> memberByteOffset = offsetType.getValue(String.valueOf(field.bitOffset() / 8));
         final Expr<?> folded = foldPointerArithmetic(base, memberByteOffset);
         final Expr<?> accessBase = folded == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = folded == null ? memberByteOffset : folded;
         if (embeddedType instanceof CStruct || embeddedType instanceof CArray) {
-            final Expr<?> region =
-                    Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
             parseContext.getMetadata().create(region, "cType", embeddedType);
             return region;
         }
@@ -1866,10 +1873,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * every other view of those bytes. The value is the {@link
      * hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice} of the
      * {@code [bitInUnit, +width)} bits; the same {@code CELL}/{@code OFFSET}/{@code WIDTH} metadata
-     * the packed-struct path stamps lets an assignment read-modify-write only those bits (see {@code
-     * FrontendXcfaBuilder}), leaving the neighbours sharing the unit -- and its other bytes --
-     * intact. A field the ABI straddled across two declared-type units (only possible in a packed
-     * struct) is refused rather than mismodelled.
+     * the packed-struct path stamps lets an assignment read-modify-write only those bits (see
+     * {@code FrontendXcfaBuilder}), leaving the neighbours sharing the unit -- and its other bytes
+     * -- intact. A field the ABI straddled across two declared-type units (only possible in a
+     * packed struct) is refused rather than mismodelled.
      */
     private Expr<?> byteModeBitfieldAccess(
             Expr<?> base,
@@ -1884,8 +1891,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (bitInUnit + field.bitfieldWidth() > unitBits) {
             throw new UnsupportedFrontendElementException(
                     "Bitfield member [%s] straddles two storage units, which the bytes memory model"
-                            + " does not support."
-                            .formatted(memberName));
+                            + " does not support.".formatted(memberName));
         }
         final Expr<?> unitOffset = offsetType.getValue(String.valueOf(unitByteOffset));
         final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
@@ -1907,7 +1913,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> value =
                 declaredType.castTo(
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.read(cell, bitInUnit, field.bitfieldWidth(), signed));
+                                .BitfieldSlice.read(
+                                cell, bitInUnit, field.bitfieldWidth(), signed));
         parseContext.getMetadata().create(value, "cType", declaredType);
         parseContext
                 .getMetadata()
@@ -1938,7 +1945,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
         // Under the bytes model every member sits at its real ObjectLayout byte offset in the one
         // byte array, so member access needs none of the union-slicing/packing machinery below: a
-        // scalar member is the dereference of its own type at that offset (ByteMemoryPass then reads
+        // scalar member is the dereference of its own type at that offset (ByteMemoryPass then
+        // reads
         // and writes it as its bytes, and overlapping members alias because they share the array),
         // and a nested aggregate is the sub-region at that offset.
         if (byteAddressed()) {
@@ -1952,9 +1960,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final var structMarkerBase =
                 parseContext.getMetadata().getMetadataValue(base, ByteUnionSlice.STRUCT_BASE);
         if (structMarkerBase.isPresent()) {
-            // Works for a nested union too: its members all share offset 0, so ObjectLayout gives the
+            // Works for a nested union too: its members all share offset 0, so ObjectLayout gives
+            // the
             // field a byte offset of 0 within it, and the slice lands at the union's own offset --
-            // exactly the punning `u.nested.asA` / `u.nested.asB` expect (they read the same bytes at
+            // exactly the punning `u.nested.asA` / `u.nested.asB` expect (they read the same bytes
+            // at
             // different widths).
             final Expr<?> unionBase = (Expr<?>) structMarkerBase.get();
             final Expr<?> structOffset =
@@ -1976,8 +1986,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // `unionMembersShareRepresentation` is deliberately NOT consulted for the trigger, and
         // byteLaidOutMemberAccess throws its own refusal directly rather than falling back to the
         // pre-existing "differing representations" check below: that check is only meaningful for
-        // the plain-integer overlay it was written for, since every aggregate type (CArray, CStruct)
-        // reports the same placeholder (ptr-width, unsigned=false) width/sort/sign regardless of its
+        // the plain-integer overlay it was written for, since every aggregate type (CArray,
+        // CStruct)
+        // reports the same placeholder (ptr-width, unsigned=false) width/sort/sign regardless of
+        // its
         // actual shape, so e.g. two differently-shaped arrays spuriously compare equal by it and
         // would silently alias rather than being refused.
         if (structType.isUnion()
@@ -2042,10 +2054,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         instanceof
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
                 && embeddedType.width() == structType.unionCellWidth()) {
-            // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is the
+            // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is
+            // the
             // reinterpretation of those bits, not a slice. Only the full-width case is modelled --
             // the whole cell is the float's pattern -- which is the newlib idiom
-            // `union { double value; struct { uint32_t lsw, msw; } parts; }`. The cell is stamped so
+            // `union { double value; struct { uint32_t lsw, msw; } parts; }`. The cell is stamped
+            // so
             // an assignment splices FpToIeeeBv of the value back (see FrontendXcfaBuilder).
             final FpType fpType = (FpType) embeddedType.getSmtType();
             final Expr<?> value =
@@ -2090,7 +2104,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 && packed.overlayWidth() != null) {
             // A packed-struct member of the union (`union { double value; struct {...} parts; }`).
             // When it occupies the whole cell -- overlay width == cell width, the usual case -- the
-            // cell *is* the member, so return the Dereference itself with the PACKED_CELL mark. That
+            // cell *is* the member, so return the Dereference itself with the PACKED_CELL mark.
+            // That
             // matters for a nested write like `u.parts.msw = x`: the read-modify-write needs a real
             // cell to slice, and a sliceOf wrapper (an Ite/arithmetic expression) is not one. A
             // narrower packed member is genuinely a slice.
@@ -2098,8 +2113,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             final Expr<?> cellExpr =
                     slot.bitOffset() == 0 && slot.width() == structType.unionCellWidth()
                             ? access
-                            : sliceOf(
-                                    access, slot, unsignedIntegerOfWidth(packed.overlayWidth()));
+                            : sliceOf(access, slot, unsignedIntegerOfWidth(packed.overlayWidth()));
             parseContext.getMetadata().create(cellExpr, "cType", embeddedType);
             parseContext
                     .getMetadata()
@@ -2143,24 +2157,24 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * Reads [memberName] of a byte-laid-out union (AD7): a plain scalar/pointer member reads
      * straight from its own byte cells via {@link ByteUnionSlice}; an array member returns a marker
-     * for the next {@code [i]} to resolve, since {@code u.dwords[i]} is bytes {@code [i*4, i*4+4)} --
-     * an arithmetic offset the subscript computes, not something a bare member access can resolve by
-     * itself. Throws for a shape not (yet) supported here -- a bitfield, a floating-point member, a
-     * nested aggregate, or an array of either -- rather than returning null and falling back to the
-     * pre-existing "differing representations" check, which is unsound for this purpose (see below).
+     * for the next {@code [i]} to resolve, since {@code u.dwords[i]} is bytes {@code [i*4, i*4+4)}
+     * -- an arithmetic offset the subscript computes, not something a bare member access can
+     * resolve by itself. Throws for a shape not (yet) supported here -- a bitfield, a
+     * floating-point member, a nested aggregate, or an array of either -- rather than returning
+     * null and falling back to the pre-existing "differing representations" check, which is unsound
+     * for this purpose (see below).
      */
     private Expr<?> byteLaidOutMemberAccess(
             Expr<?> base, CStruct structType, String memberName, CComplexType embeddedType) {
-        return byteLaidOutMemberAccess(
-                base, structType, memberName, embeddedType, indexLiteral(0));
+        return byteLaidOutMemberAccess(base, structType, memberName, embeddedType, indexLiteral(0));
     }
 
     /**
      * As above, but resolving relative to [baseByteOffset]: the byte offset of [structType]'s
      * storage within [base]. It is 0 when [base] is the union object itself; it is the nested
      * member's own offset when this resolves a field of a nested struct reached through an earlier
-     * byte-union member access (its {@link ByteUnionSlice#STRUCT_OFFSET} marker), so the field lands
-     * at (nested member offset + field offset within it), all in the same flat byte run.
+     * byte-union member access (its {@link ByteUnionSlice#STRUCT_OFFSET} marker), so the field
+     * lands at (nested member offset + field offset within it), all in the same flat byte run.
      */
     private Expr<?> byteLaidOutMemberAccess(
             Expr<?> base,
@@ -2185,7 +2199,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // A bitfield in a byte-laid-out union: read the bytes its storage spans and slice the
             // `[bitInByte, +width)` bits out of them -- the byte-cell analogue of the packed-struct
             // bitfield read ([sliceOf]). The starting byte is the union offset plus the bitfield's
-            // own byte-aligned offset; the remaining bit within that byte is where the slice begins.
+            // own byte-aligned offset; the remaining bit within that byte is where the slice
+            // begins.
             final Expr<?> unitByteStart =
                     Add(
                             byteOffsetType.castTo(baseByteOffset),
@@ -2203,7 +2218,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         byteOffsetType.castTo(indexLiteral(field.bitOffset() / 8)));
         if (embeddedType instanceof CArray arrayType) {
             final CComplexType elemType = arrayType.getEmbeddedType();
-            if (elemType instanceof
+            if (elemType
+                    instanceof
                     hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
                 throw unsupportedByteLaidOutMember(
                         memberName, "a floating-point element is not supported");
@@ -2216,26 +2232,33 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (elemBytes <= 0) {
                 throw unsupportedByteLaidOutMember(memberName, "its element has no static size");
             }
-            // A marker for the next `[i]`: wrapped in Pos so the metadata lands on a fresh node, not
+            // A marker for the next `[i]`: wrapped in Pos so the metadata lands on a fresh node,
+            // not
             // on `base`'s own (which already carries the union's cType and must keep it).
             final Expr<?> marker = Pos(base);
             parseContext.getMetadata().create(marker, "cType", embeddedType);
             parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_BASE, base);
             parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_OFFSET, byteOffset);
-            parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_ELEMENT_BYTES, elemBytes);
+            parseContext
+                    .getMetadata()
+                    .create(marker, ByteUnionSlice.ARRAY_ELEMENT_BYTES, elemBytes);
             return marker;
         }
-        if (embeddedType instanceof
+        if (embeddedType
+                instanceof
                 hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
             // The batch-59 NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable
-            // path: a floating-point member is refused rather than reopening the unsound round-trip.
+            // path: a floating-point member is refused rather than reopening the unsound
+            // round-trip.
             throw unsupportedByteLaidOutMember(
                     memberName, "a floating-point member is not supported");
         }
         if (embeddedType instanceof CStruct) {
-            // A nested struct or union member: return a marker carrying the union's own base and this
+            // A nested struct or union member: return a marker carrying the union's own base and
+            // this
             // member's byte offset. For a struct a subsequent `.field` resolves to a byte slice at
-            // (this offset + the field's offset within it) -- the struct analogue of the array marker
+            // (this offset + the field's offset within it) -- the struct analogue of the array
+            // marker
             // above. For a union, member resolution stays refused (see directMemberAccess), so its
             // marker is only useful for taking the member's address (`&u.sub`), which maps to the
             // sub-region's byte location.
@@ -2283,7 +2306,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return isPlainInteger(type) || type instanceof CPointer;
     }
 
-    /** A literal of the current arithmetic's index type ({@code unsigned long}), for a byte offset. */
+    /**
+     * A literal of the current arithmetic's index type ({@code unsigned long}), for a byte offset.
+     */
     private Expr<?> indexLiteral(long value) {
         return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(value));
     }
@@ -2293,8 +2318,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * the byte-laid-out union [base] is stored in. A single unsigned byte is returned bare -- the
      * Dereference itself -- so that {@code &u.bytes[i]} stays a directly addressable pointer rather
      * than being wrapped into a non-lvalue expression; anything wider (or signed) is the {@link
-     * ByteUnionSlice#read} recombination of its cells, which the write side of an assignment through
-     * it later splits back into cells (see {@code FrontendXcfaBuilder}).
+     * ByteUnionSlice#read} recombination of its cells, which the write side of an assignment
+     * through it later splits back into cells (see {@code FrontendXcfaBuilder}).
      */
     private Expr<?> byteScalarRead(
             Expr<?> base, Expr<?> byteOffset, int widthBytes, CComplexType memberType) {
@@ -2318,18 +2343,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
-     * The value of a [width]-bit bitfield starting [bitInByte] bits into the byte at [unitByteStart]
-     * of the byte-laid-out union [base]. Reads the bytes the bitfield spans -- `ceil((bitInByte +
-     * width) / 8)` of them -- recombines them into one word, and slices the member's bits out with
-     * {@link hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice},
-     * exactly as the packed-struct path does over a single storage cell.
+     * The value of a [width]-bit bitfield starting [bitInByte] bits into the byte at
+     * [unitByteStart] of the byte-laid-out union [base]. Reads the bytes the bitfield spans --
+     * `ceil((bitInByte + width) / 8)` of them -- recombines them into one word, and slices the
+     * member's bits out with {@link
+     * hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice}, exactly
+     * as the packed-struct path does over a single storage cell.
      */
     private Expr<?> byteBitfieldRead(
-            Expr<?> base, Expr<?> unitByteStart, int bitInByte, int width, CComplexType memberType) {
+            Expr<?> base,
+            Expr<?> unitByteStart,
+            int bitInByte,
+            int width,
+            CComplexType memberType) {
         final int spanBytes = (bitInByte + width + 7) / 8;
-        // Recombine into a *standard* cell width (8/16/32/64...): a slice pads back up to the cell's
+        // Recombine into a *standard* cell width (8/16/32/64...): a slice pads back up to the
+        // cell's
         // width and casting a non-standard bit width (e.g. 56) to the member type has no C type to
-        // land on. The extra high bytes are zero-padded -- they sit above the member's bits, so they
+        // land on. The extra high bytes are zero-padded -- they sit above the member's bits, so
+        // they
         // never affect the `[bitInByte, +width)` slice.
         int cellBytes = Integer.highestOneBit(spanBytes);
         if (cellBytes < spanBytes) cellBytes *= 2;
@@ -2337,7 +2369,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final List<Expr<?>> cells = new ArrayList<>(cellBytes);
         for (int j = 0; j < cellBytes; j++) {
             cells.add(
-                    j < spanBytes ? byteCellAt(base, unitByteStart, j, byteType) : byteType.getValue("0"));
+                    j < spanBytes
+                            ? byteCellAt(base, unitByteStart, j, byteType)
+                            : byteType.getValue("0"));
         }
         final Expr<?> cell =
                 hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
@@ -2366,12 +2400,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         : Add(indexType.castTo(byteOffset), indexType.castTo(indexLiteral(j)));
         final Expr<?> deref =
                 Exprs.Dereference(
-                        cast(base, base.getType()), cast(off, base.getType()), byteType.getSmtType());
+                        cast(base, base.getType()),
+                        cast(off, base.getType()),
+                        byteType.getSmtType());
         parseContext.getMetadata().create(deref, "cType", byteType);
         return deref;
     }
 
-    /** Stamps the metadata an assignment through [value] needs to write its cells back individually. */
+    /**
+     * Stamps the metadata an assignment through [value] needs to write its cells back individually.
+     */
     private void stampByteUnionMetadata(
             Expr<?> value, Expr<?> base, Expr<?> byteOffset, int widthBytes) {
         parseContext.getMetadata().create(value, ByteUnionSlice.BASE, base);
@@ -2380,11 +2418,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
-     * `u.dwords[i]` on a byte-laid-out union's array member: the marker [directMemberAccess] left on
-     * `u.dwords` carries the array's own base and starting byte offset, so the subscript resolves to
-     * bytes {@code [byteOff + i*elemBytes, byteOff + i*elemBytes + elemBytes)} -- plain arithmetic
-     * even for a variable (nondeterministic) [indexExpr], which is the whole point of byte
-     * addressing over a variable bit-shift.
+     * `u.dwords[i]` on a byte-laid-out union's array member: the marker [directMemberAccess] left
+     * on `u.dwords` carries the array's own base and starting byte offset, so the subscript
+     * resolves to bytes {@code [byteOff + i*elemBytes, byteOff + i*elemBytes + elemBytes)} -- plain
+     * arithmetic even for a variable (nondeterministic) [indexExpr], which is the whole point of
+     * byte addressing over a variable bit-shift.
      */
     private Expr<?> byteLaidOutArraySubscript(Expr<?> marker, Expr<?> indexExpr) {
         final CComplexType arrayCType = CComplexType.getType(marker, parseContext);
@@ -2460,8 +2498,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> value =
                 memberType.castTo(
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.read(
-                                cell, slot.bitOffset(), slot.width(), signed));
+                                .BitfieldSlice.read(cell, slot.bitOffset(), slot.width(), signed));
         parseContext.getMetadata().create(value, "cType", memberType);
         parseContext
                 .getMetadata()
@@ -2543,13 +2580,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * reading the other is exactly the identity.
      *
      * <p>Not the C class, but the storage the model gives the value: same SMT sort, same width,
-     * same signedness. Requiring identical classes was too strict -- the pervasive
-     * {@code union { void *ptr; size_t i; }} idiom pairs a pointer with a pointer-wide unsigned
-     * integer, which occupy their shared cell identically, yet their classes differ. Width must be
-     * checked explicitly because under integer arithmetic every integer type is the same unbounded
-     * {@code Int}, so an {@code int} and a {@code char} share an SMT sort though {@code u.i = 300;
-     * u.c} must be 44, not 300; signedness likewise, so {@code int}/{@code unsigned} do not alias
-     * where the sign reinterpretation would be lost.
+     * same signedness. Requiring identical classes was too strict -- the pervasive {@code union {
+     * void *ptr; size_t i; }} idiom pairs a pointer with a pointer-wide unsigned integer, which
+     * occupy their shared cell identically, yet their classes differ. Width must be checked
+     * explicitly because under integer arithmetic every integer type is the same unbounded {@code
+     * Int}, so an {@code int} and a {@code char} share an SMT sort though {@code u.i = 300; u.c}
+     * must be 44, not 300; signedness likewise, so {@code int}/{@code unsigned} do not alias where
+     * the sign reinterpretation would be lost.
      */
     /** Whether every member of [compound] occupies its cell exactly as [accessed] does. */
     private boolean unionMembersShareRepresentation(CStruct compound, CComplexType accessed) {
@@ -2585,16 +2622,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return type
                         instanceof
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
-                                        .CInteger
+                                .CInteger
                 && !(type instanceof CStruct)
                 && !(type instanceof CArray)
                 && !(type instanceof CPointer);
     }
 
-    /** A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false. */
+    /**
+     * A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false.
+     */
     private static boolean effectivelyUnsigned(CComplexType t) {
-        if (t instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                        .CPointer) {
+        if (t
+                instanceof
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer) {
             return true;
         }
         if (t
@@ -2792,9 +2832,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "atomic_compare_exchange_weak_explicit");
 
     /**
-     * If [name] is an atomic builtin, emit it as a call (so {@code AtomicFunctionsPass} can lower it)
-     * with its return variable typed correctly, and return the call's value. Returns null otherwise,
-     * so ordinary builtin handling proceeds.
+     * If [name] is an atomic builtin, emit it as a call (so {@code AtomicFunctionsPass} can lower
+     * it) with its return variable typed correctly, and return the call's value. Returns null
+     * otherwise, so ordinary builtin handling proceeds.
      */
     private Expr<?> atomicBuiltinCall(String name, List<AssignmentExpressionContext> args) {
         if (ATOMIC_RETURNS_POINTEE.contains(name)) {
@@ -2826,7 +2866,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
         CComplexType returnType;
         if (returnKind == AtomicReturn.POINTEE && !arguments.isEmpty()) {
-            // load/exchange/fetch return the value at the object -- the pointee of the first argument.
+            // load/exchange/fetch return the value at the object -- the pointee of the first
+            // argument.
             CComplexType pointee = pointeeOf(arguments.get(0).getExpression());
             returnType = pointee != null ? pointee : CComplexType.getSignedInt(parseContext);
         } else {
@@ -2985,7 +3026,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
             // Integer suffixes u and l come in any order (ul, lu, llu, ull, ...); one trailing 'l'
             // may already have been stripped for the shared long/float check above. Strip whatever
-            // u/l remain, in any order -- otherwise a hex constant like `0xFFFLLU` reaches the parser
+            // u/l remain, in any order -- otherwise a hex constant like `0xFFFLLU` reaches the
+            // parser
             // as "fffll" (u stripped, the l's stranded behind it) and throws NumberFormatException.
             // long-long needs two l's (a single l is long), so count them across both strips.
             int longCount = isLong ? 1 : 0;
@@ -3078,9 +3120,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * A GNU statement expression `({ stmt; ...; last; })`: the statements run for their effects
      * (they are queued like any other side effect of the surrounding expression) and the last
      * statement's value is the expression's value. This is what `container_of` expands to. When
-     * there is no value to yield -- no function visitor, or the block does not end in an
-     * expression -- fall back to the old null result: in statement position the value is
-     * discarded anyway, and a value position fails downstream exactly as it always did.
+     * there is no value to yield -- no function visitor, or the block does not end in an expression
+     * -- fall back to the old null result: in statement position the value is discarded anyway, and
+     * a value position fails downstream exactly as it always did.
      */
     private Expr<?> statementExpression(CParser.CompoundStatementContext ctx) {
         if (functionVisitor == null) {
@@ -3310,8 +3352,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 // Post-decrement `x--` evaluates to the OLD value, exactly like `x++` returns
-                // `primary` above -- the decrement is only the (post-statement) side effect. Returning
-                // `expr` (= primary - 1) made `x--` yield the decremented value, so `while (n2-- != 0)`
+                // `primary` above -- the decrement is only the (post-statement) side effect.
+                // Returning
+                // `expr` (= primary - 1) made `x--` yield the decremented value, so `while (n2-- !=
+                // 0)`
                 // read as `(n2 - 1) != 0` and ran its body once too often (at n2 == 0 it entered on
                 // `-1 != 0`). That surfaced as false valid-deref alarms on the string routines
                 // (`cstrncpy`, whose tail loop is `while (n2-- != 0) *us++ = 0;`).

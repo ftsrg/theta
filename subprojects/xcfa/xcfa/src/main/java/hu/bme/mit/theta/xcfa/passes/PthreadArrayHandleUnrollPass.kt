@@ -27,16 +27,16 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 /**
  * Unrolls the thread create/join loops so an array of pthread handles becomes constant-indexed.
  *
- * A pthread handle is an identity key the analysis maps to a thread id ([CLibraryFunctionsPass]); an
- * array of them, `pthread_t t[N]; for (i) pthread_create(&t[i], …)`, needs one distinct key per
+ * A pthread handle is an identity key the analysis maps to a thread id ([CLibraryFunctionsPass]);
+ * an array of them, `pthread_t t[N]; for (i) pthread_create(&t[i], …)`, needs one distinct key per
  * element, so the index has to be a compile-time constant when [CLibraryFunctionsPass] runs. That
  * pass runs before [ReferenceElimination] (which would rewrite `&t[i]` into the base/offset memory
- * model, losing the handle) and hence before the ordinary [LoopUnrollPass], so the create/join loops
- * are still rolled and `&t[i]` carries the loop variable as its offset.
+ * model, losing the handle) and hence before the ordinary [LoopUnrollPass], so the create/join
+ * loops are still rolled and `&t[i]` carries the loop variable as its offset.
  *
  * This pass fills the gap: on a procedure that actually creates or joins threads through an array
- * element -- and only such a procedure, so nothing else is touched -- it runs [LoopUnrollPass] early,
- * turning `&t[i]` into `&t[0]`, `&t[1]`, … before the handles are read. It sits right before
+ * element -- and only such a procedure, so nothing else is touched -- it runs [LoopUnrollPass]
+ * early, turning `&t[i]` into `&t[0]`, `&t[1]`, … before the handles are read. It sits right before
  * [CLibraryFunctionsPass] in [CPasses]; the later [LoopUnrollPass] then finds these loops already
  * unrolled and leaves them.
  */
@@ -56,7 +56,9 @@ class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : Pro
       }
     }
 
-  /** The thread handle -- `params[1]` for both create and join -- is a non-constant array element. */
+  /**
+   * The thread handle -- `params[1]` for both create and join -- is a non-constant array element.
+   */
   private fun InvokeLabel.hasArrayElementHandle(): Boolean {
     if (params.size <= 1) return false
     var handle = params[1]

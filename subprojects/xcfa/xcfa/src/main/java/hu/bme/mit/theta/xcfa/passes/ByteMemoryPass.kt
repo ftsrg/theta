@@ -31,12 +31,13 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
 
 /**
- * The second half of the [hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType.bytes]
- * model: every memory cell is one byte. It rewrites each wide dereference into the little-endian
- * `Concat` of the one-byte cells at its own byte offset, and each wide memory *write* into a
- * per-byte `Extract`-and-store -- so that after this pass every `(deref … Bv8)` reaching a backend
- * names a single byte, and two differently-typed views of the same storage (an `int` and the
- * `char`s overlapping it, a union member and its byte array) land in the one `Bv8` array and alias.
+ * The second half of the
+ * [hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType.bytes] model: every
+ * memory cell is one byte. It rewrites each wide dereference into the little-endian `Concat` of the
+ * one-byte cells at its own byte offset, and each wide memory *write* into a per-byte
+ * `Extract`-and-store -- so that after this pass every `(deref … Bv8)` reaching a backend names a
+ * single byte, and two differently-typed views of the same storage (an `int` and the `char`s
+ * overlapping it, a union member and its byte array) land in the one `Bv8` array and alias.
  *
  * The frontend has already emitted **byte** offsets under the bytes model (subscripts scaled by the
  * element's byte size, struct members at their real `offsetof`, pointer arithmetic scaled by the
@@ -45,11 +46,11 @@ import java.math.BigInteger
  * (an address-taken local, a folded flat address) are byte-split here too, uniformly with the
  * frontend's own.
  *
- * A cell whose element type is not a bitvector wider than one byte is left untouched: a byte (`Bv8`)
- * is already a single cell, and a floating-point cell keeps its own array (byte-splitting a float
- * would need the `fpToIEEEBV` round-trip that is gated off for its NaN unsoundness). Byte splitting
- * is a bitvector operation, so the model presumes bitvector arithmetic; an `IntType` cell (integer
- * arithmetic) has no fixed width and is likewise left alone.
+ * A cell whose element type is not a bitvector wider than one byte is left untouched: a byte
+ * (`Bv8`) is already a single cell, and a floating-point cell keeps its own array (byte-splitting a
+ * float would need the `fpToIEEEBV` round-trip that is gated off for its NaN unsoundness). Byte
+ * splitting is a bitvector operation, so the model presumes bitvector arithmetic; an `IntType` cell
+ * (integer arithmetic) has no fixed width and is likewise left alone.
  */
 class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -67,8 +68,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /** Whether [type] is a bitvector strictly wider than one byte and a whole number of bytes. */
-  private fun wide(type: Type): Boolean =
-    type is BvType && type.size > 8 && type.size % 8 == 0
+  private fun wide(type: Type): Boolean = type is BvType && type.size > 8 && type.size % 8 == 0
 
   private fun XcfaLabel.bytify(): XcfaLabel =
     when (this) {
@@ -93,12 +93,15 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
       is InvokeLabel ->
         InvokeLabel(name, params.map { it.expandReads() }, metadata, tempLookup, isLibraryFunction)
 
-      is StartLabel -> StartLabel(name, params.map { it.expandReads() }, pidVar, metadata, tempLookup)
+      is StartLabel ->
+        StartLabel(name, params.map { it.expandReads() }, pidVar, metadata, tempLookup)
       is ReturnLabel -> ReturnLabel(enclosedLabel.bytify())
       else -> this
     }
 
-  /** `(deref B O Bv_{8n}) := v` -> the `n` byte writes `(deref B O+j Bv8) := Extract(v, 8j, 8j+8)`. */
+  /**
+   * `(deref B O Bv_{8n}) := v` -> the `n` byte writes `(deref B O+j Bv8) := Extract(v, 8j, 8j+8)`.
+   */
   private fun splitWrite(stmt: MemoryAssignStmt<*, *, *>): XcfaLabel {
     val deref = stmt.deref
     if (!wide(deref.type)) {
@@ -124,8 +127,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   private fun rebuildMemoryAssign(
     deref: Dereference<*, *, *>,
     expr: Expr<*>,
-  ): MemoryAssignStmt<*, *, *> =
-    buildMemoryAssign(deref as Dereference<Type, Type, Type>, expr)
+  ): MemoryAssignStmt<*, *, *> = buildMemoryAssign(deref as Dereference<Type, Type, Type>, expr)
 
   private fun <P : Type, O : Type, D : Type> buildMemoryAssign(
     deref: Dereference<P, O, D>,
@@ -152,14 +154,17 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   /** The one-byte cell at byte `O + j` of base [base]. */
   private fun byteCell(base: Expr<*>, offset: Expr<*>, j: Int): Dereference<Type, Type, BvType> {
     val off: Expr<*> =
-      if (j == 0) offset
-      else Add(cast(offset, offset.type), literalOf(offset.type, j))
+      if (j == 0) offset else Add(cast(offset, offset.type), literalOf(offset.type, j))
     return Dereference.of(cast(base, base.type), cast(off, base.type), BvType.of(8, false))
   }
 
-  /** A literal of value [value] at bitvector type [type] (offsets are bitvectors under this model). */
+  /**
+   * A literal of value [value] at bitvector type [type] (offsets are bitvectors under this model).
+   */
   private fun literalOf(type: Type, value: Int): Expr<*> {
-    check(type is BvType) { "The bytes memory model requires bitvector arithmetic, found offset type $type" }
+    check(type is BvType) {
+      "The bytes memory model requires bitvector arithmetic, found offset type $type"
+    }
     return BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), type.size)
   }
 }

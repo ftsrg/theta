@@ -107,10 +107,10 @@ public class CDeclaration {
     /**
      * Stars written in the declarator itself, split by where they bind relative to the array
      * dimensions. The declarator is walked outwards from the identifier, so a star seen while no
-     * dimension has been recorded yet sits *inside* the parentheses and binds outside the array
-     * (`T (*p)[N]`, a pointer to an array); a star seen after a dimension binds to the element
-     * (`T *p[N]`, an array of pointers). Both end up with the same star and dimension counts, so
-     * the order they arrived in is the only thing that tells them apart.
+     * dimension has been recorded yet sits *inside* the parentheses and binds outside the array (`T
+     * (*p)[N]`, a pointer to an array); a star seen after a dimension binds to the element (`T
+     * *p[N]`, an array of pointers). Both end up with the same star and dimension counts, so the
+     * order they arrived in is the only thing that tells them apart.
      */
     private int pointerAroundArray = 0;
 

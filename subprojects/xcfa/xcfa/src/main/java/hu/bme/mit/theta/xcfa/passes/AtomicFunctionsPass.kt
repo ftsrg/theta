@@ -23,8 +23,6 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
@@ -47,10 +45,11 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 /**
  * Lowers the GCC `__atomic_*` builtins and their C11 `<stdatomic.h>` `atomic_*` spellings into
  * memory operations wrapped in an atomic block, so that a read-modify-write cannot be interleaved.
- * The frontend cannot express these type-generic macros in the grammar, so it emits them as ordinary
- * calls ([InvokeLabel]s, `params[0]` the return variable, `params[1..]` the arguments) and this pass
- * — running in the same group as [CLibraryFunctionsPass], before [UnresolvedInvokeToHavocPass] —
- * turns each into its statement sequence between an [AtomicBeginLabel] and an [AtomicEndLabel].
+ * The frontend cannot express these type-generic macros in the grammar, so it emits them as
+ * ordinary calls ([InvokeLabel]s, `params[0]` the return variable, `params[1..]` the arguments) and
+ * this pass — running in the same group as [CLibraryFunctionsPass], before
+ * [UnresolvedInvokeToHavocPass] — turns each into its statement sequence between an
+ * [AtomicBeginLabel] and an [AtomicEndLabel].
  *
  * Memory orders are ignored: the analysis is sequentially consistent, so a fence and any ordering
  * constraint hold vacuously. A pointer argument is used as an expression (not restricted to a base
@@ -69,9 +68,16 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     NAND,
   }
 
-  private val loadNames = setOf("__atomic_load_n", "__atomic_load", "atomic_load", "atomic_load_explicit")
+  private val loadNames =
+    setOf("__atomic_load_n", "__atomic_load", "atomic_load", "atomic_load_explicit")
   private val storeNames =
-    setOf("__atomic_store_n", "__atomic_store", "atomic_store", "atomic_store_explicit", "atomic_init")
+    setOf(
+      "__atomic_store_n",
+      "__atomic_store",
+      "atomic_store",
+      "atomic_store_explicit",
+      "atomic_init",
+    )
   private val exchangeNames =
     setOf("__atomic_exchange_n", "__atomic_exchange", "atomic_exchange", "atomic_exchange_explicit")
   // desired is a *value* for these; `__atomic_compare_exchange` (no `_n`) takes a *pointer* to it.
@@ -153,7 +159,9 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
           if (predicate(first)) {
             val invoke = first as InvokeLabel
             val labels = lower(invoke, builder)
-            builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(labels), it.label.metadata))
+            builder.addEdge(
+              XcfaEdge(it.source, it.target, SequenceLabel(labels), it.label.metadata)
+            )
           } else {
             builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
           }
@@ -209,12 +217,12 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
   /**
    * Wraps a read-modify-write's statements in an atomic block. The block is what marks the accesses
-   * atomic for the multi-threaded race detector (which tracks atomicity by the begin/end fences) and
-   * keeps them uninterleavable. In a single-threaded program there is nothing to interleave and no
-   * race to detect, so the fences are pure redundancy — and worse, the single-thread monolithic
-   * adapter rejects any label that is not a plain statement; the whole edge is one atomic transition
-   * there anyway, so emit the bare statements. `multiThreading` is set at parse time on any `pthread`
-   * call, before this pass runs.
+   * atomic for the multi-threaded race detector (which tracks atomicity by the begin/end fences)
+   * and keeps them uninterleavable. In a single-threaded program there is nothing to interleave and
+   * no race to detect, so the fences are pure redundancy — and worse, the single-thread monolithic
+   * adapter rejects any label that is not a plain statement; the whole edge is one atomic
+   * transition there anyway, so emit the bare statements. `multiThreading` is set at parse time on
+   * any `pthread` call, before this pass runs.
    */
   private fun atomic(body: List<XcfaLabel>): List<XcfaLabel> =
     if (parseContext.multiThreading) listOf(AtomicBeginLabel()) + body + listOf(AtomicEndLabel())
@@ -234,7 +242,8 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     }
 
     if (name in storeNames) {
-      // *p = v ; void.  __atomic_store(p, &v, order) passes v by pointer, __atomic_store_n by value.
+      // *p = v ; void.  __atomic_store(p, &v, order) passes v by pointer, __atomic_store_n by
+      // value.
       val p = args[0]
       val pointee = pointeeOf(p)
       val value = if (name == "__atomic_store") deref(args[1], pointeeOf(args[1])) else args[1]
@@ -298,11 +307,11 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * `compare_exchange(p, expected, desired, …)`: if `*p == *expected`, store `desired` into `*p` and
-   * return true; otherwise load `*p` into `*expected` and return false. Modelled branch-free inside
-   * one atomic block with [Ite]s so it stays a straight-line label sequence. The current values are
-   * captured into temporaries *first*, so the two stores below cannot re-read a cell one of them has
-   * already changed (and it stays correct even if `p` and `expected` alias):
+   * `compare_exchange(p, expected, desired, …)`: if `*p == *expected`, store `desired` into `*p`
+   * and return true; otherwise load `*p` into `*expected` and return false. Modelled branch-free
+   * inside one atomic block with [Ite]s so it stays a straight-line label sequence. The current
+   * values are captured into temporaries *first*, so the two stores below cannot re-read a cell one
+   * of them has already changed (and it stays correct even if `p` and `expected` alias):
    * ```
    *   old = *p ; exp = *expected
    *   *p        = old == exp ? desired : old
@@ -334,7 +343,8 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     val success =
       cast(Eq(cast(old, pointee.smtType), cast(exp, pointee.smtType)), BoolType.getInstance())
 
-    val newAtP = Ite(success, cast(pointee.castTo(desired), pointee.smtType), cast(old, pointee.smtType))
+    val newAtP =
+      Ite(success, cast(pointee.castTo(desired), pointee.smtType), cast(old, pointee.smtType))
     val newAtExpected = Ite(success, cast(exp, expPointee.smtType), cast(old, expPointee.smtType))
     val retType = CComplexType.getType(ret, parseContext)
     val retSuccess =

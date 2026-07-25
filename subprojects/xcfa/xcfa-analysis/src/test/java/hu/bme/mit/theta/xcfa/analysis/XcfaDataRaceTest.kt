@@ -47,9 +47,9 @@ import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
-import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.model.JoinLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
+import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import org.junit.jupiter.api.Assertions
@@ -84,11 +84,11 @@ class XcfaDataRaceTest {
 
   /**
    * Threads created and joined through an array of handles -- `pthread_t t[N]; for (i)
-   * pthread_create(&t[i], …)` -- must each become a distinct thread, which the pidVar identifies. The
-   * loops are unrolled and the index folded ([PthreadArrayHandleUnrollPass]), then each `&t[i]` / `t[i]`
-   * keys its own handle ([CLibraryFunctionsPass]); conflating them would spawn just one thread and hide
-   * every race the array's threads have. Checked structurally, so it does not depend on any one engine
-   * finding the race.
+   * pthread_create(&t[i], …)` -- must each become a distinct thread, which the pidVar identifies.
+   * The loops are unrolled and the index folded ([PthreadArrayHandleUnrollPass]), then each `&t[i]`
+   * / `t[i]` keys its own handle ([CLibraryFunctionsPass]); conflating them would spawn just one
+   * thread and hide every race the array's threads have. Checked structurally, so it does not
+   * depend on any one engine finding the race.
    */
   @org.junit.jupiter.api.Test
   fun pthreadArrayHandlesAreDistinctThreads() {
@@ -117,7 +117,11 @@ class XcfaDataRaceTest {
         .filterIsInstance<JoinLabel>()
         .map { it.pidVar }
         .toSet()
-    Assertions.assertEquals(startPidVars.toSet(), joinPidVars, "each thread is joined on its handle")
+    Assertions.assertEquals(
+      startPidVars.toSet(),
+      joinPidVars,
+      "each thread is joined on its handle",
+    )
   }
 
   @ParameterizedTest
@@ -149,10 +153,11 @@ class XcfaDataRaceTest {
 
   /**
    * `_Atomic` is a property of the accessed cell, not of the pointer expression that reaches it. A
-   * struct field, array element, whole struct, nested field or pointee declared `_Atomic` is reached
-   * through a `(base, offset)` dereference whose C type is gone by analysis time, so its atomicity is
-   * resolved from the object's base id. These pin that the race check excludes such accesses -- and,
-   * via the plain-field control, that it still reports races on non-atomic cells of the same object.
+   * struct field, array element, whole struct, nested field or pointee declared `_Atomic` is
+   * reached through a `(base, offset)` dereference whose C type is gone by analysis time, so its
+   * atomicity is resolved from the object's base id. These pin that the race check excludes such
+   * accesses -- and, via the plain-field control, that it still reports races on non-atomic cells
+   * of the same object.
    */
   @ParameterizedTest
   @MethodSource("atomicData")

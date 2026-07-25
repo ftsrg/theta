@@ -93,7 +93,9 @@ public final class BitfieldSlice {
             }
             // Two's-complement sign: a value with the field's top bit set is negative.
             return Ite(
-                    Geq(unsignedValue, pow2(width - 1)), Sub(unsignedValue, pow2(width)), unsignedValue);
+                    Geq(unsignedValue, pow2(width - 1)),
+                    Sub(unsignedValue, pow2(width)),
+                    unsignedValue);
         }
         throw new IllegalArgumentException("Unsupported cell type for a bitfield: " + type);
     }
@@ -127,7 +129,9 @@ public final class BitfieldSlice {
             final Expr<?> below = Mod(c, pow2(bitOffset)); // bits below the field, kept
             final Expr<?> newField = Mul(Mod(v, pow2(width)), pow2(bitOffset));
             final Expr<?> above =
-                    Mul(Div(c, pow2(bitOffset + width)), pow2(bitOffset + width)); // bits above, kept
+                    Mul(
+                            Div(c, pow2(bitOffset + width)),
+                            pow2(bitOffset + width)); // bits above, kept
             return Add(below, Add(newField, above));
         }
         throw new IllegalArgumentException("Unsupported cell type for a bitfield: " + type);

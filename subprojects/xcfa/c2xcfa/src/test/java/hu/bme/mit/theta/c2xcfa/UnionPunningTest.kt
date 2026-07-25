@@ -17,8 +17,8 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
@@ -175,9 +175,10 @@ class UnionPunningTest {
     // Both encodings: the slice is div/mod under integer arithmetic and Extract/Concat under
     // bitvector, and the cell is read at the *union's* width in either.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
-      assertDoesNotThrow({
-        build(
-          """
+      assertDoesNotThrow(
+        {
+          build(
+            """
           union U { unsigned long raw; unsigned int half; };
           int main() {
             union U u;
@@ -187,10 +188,12 @@ class UnionPunningTest {
             return 0;
           }
           """
-            .trimIndent(),
-          arithmetic,
-        )
-      }, "differing widths must alias by slicing under $arithmetic")
+              .trimIndent(),
+            arithmetic,
+          )
+        },
+        "differing widths must alias by slicing under $arithmetic",
+      )
     }
   }
 
@@ -200,14 +203,24 @@ class UnionPunningTest {
     // naively, and int/char differ in width. Slicing handles both -- the read sign-extends from
     // the member's own width, so `u.i = 300; u.c` is 44 rather than 300.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
-      assertDoesNotThrow({
-        build("union U { int s; unsigned u; };\nint main() { union U x; x.u = 1; return x.s; }",
-          arithmetic)
-      }, "int/unsigned under $arithmetic")
-      assertDoesNotThrow({
-        build("union U { int i; char c; };\nint main() { union U x; x.i = 300; return x.c; }",
-          arithmetic)
-      }, "int/char under $arithmetic")
+      assertDoesNotThrow(
+        {
+          build(
+            "union U { int s; unsigned u; };\nint main() { union U x; x.u = 1; return x.s; }",
+            arithmetic,
+          )
+        },
+        "int/unsigned under $arithmetic",
+      )
+      assertDoesNotThrow(
+        {
+          build(
+            "union U { int i; char c; };\nint main() { union U x; x.i = 300; return x.c; }",
+            arithmetic,
+          )
+        },
+        "int/char under $arithmetic",
+      )
     }
   }
 
@@ -219,16 +232,19 @@ class UnionPunningTest {
     // intel-tdx-module cluster (596 ERRORs on exactly this shape). Byte-granular cells fix that:
     // `u.bytes[i]` is just the byte at offset `i`, plain address arithmetic under both encodings.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
-      assertDoesNotThrow({
-        build(
-          """
+      assertDoesNotThrow(
+        {
+          build(
+            """
           union U { unsigned long raw; unsigned char bytes[8]; };
           int main() { union U u; u.raw = 0; return u.bytes[0]; }
           """
-            .trimIndent(),
-          arithmetic,
-        )
-      }, "byte array member of a byte-laid-out union under $arithmetic")
+              .trimIndent(),
+            arithmetic,
+          )
+        },
+        "byte array member of a byte-laid-out union under $arithmetic",
+      )
     }
   }
 
@@ -242,9 +258,10 @@ class UnionPunningTest {
     // check is not vacuous -- the same pattern union_slice_punning.c documents for batch 56. This
     // frontend-level test only pins that the shape keeps reaching the frontend at all.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
-      assertDoesNotThrow({
-        build(
-          """
+      assertDoesNotThrow(
+        {
+          build(
+            """
           typedef union {
             unsigned long qwords[2];
             unsigned int dwords[4];
@@ -257,10 +274,12 @@ class UnionPunningTest {
             return u.bytes[0] + u.dwords[0];
           }
           """
-            .trimIndent(),
-          arithmetic,
-        )
-      }, "uint128_t-style byte-addressed union under $arithmetic")
+              .trimIndent(),
+            arithmetic,
+          )
+        },
+        "uint128_t-style byte-addressed union under $arithmetic",
+      )
     }
   }
 
@@ -270,9 +289,10 @@ class UnionPunningTest {
     // *arithmetic* offset, so a nondeterministic in-range `i` is just as fine as a literal one --
     // unlike a variable bit-shift, which is only expressible under bitvector.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
-      assertDoesNotThrow({
-        build(
-          """
+      assertDoesNotThrow(
+        {
+          build(
+            """
           extern int __VERIFIER_nondet_int(void);
           union U { unsigned long raw; unsigned char bytes[8]; };
           int main() {
@@ -283,10 +303,12 @@ class UnionPunningTest {
             return u.bytes[i];
           }
           """
-            .trimIndent(),
-          arithmetic,
-        )
-      }, "variable-index byte access under $arithmetic")
+              .trimIndent(),
+            arithmetic,
+          )
+        },
+        "variable-index byte access under $arithmetic",
+      )
     }
   }
 

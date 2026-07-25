@@ -358,9 +358,10 @@ class AggregateArrayElementTest {
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
       val parseContext = ParseContext()
       parseContext.arithmetic = arithmetic
-      assertDoesNotThrow({
-        getXcfaFromC(
-          """
+      assertDoesNotThrow(
+        {
+          getXcfaFromC(
+            """
           extern int __VERIFIER_nondet_int();
           struct S { int x; int y; };
           int main() {
@@ -371,14 +372,16 @@ class AggregateArrayElementTest {
             return a[i].y;
           }
           """
-            .trimIndent()
-            .byteInputStream(),
-          parseContext,
-          false,
-          XcfaProperty(ErrorDetection.ERROR_LOCATION),
-          NullLogger.getInstance(),
-        )
-      }, "a struct array indexed symbolically must build under $arithmetic")
+              .trimIndent()
+              .byteInputStream(),
+            parseContext,
+            false,
+            XcfaProperty(ErrorDetection.ERROR_LOCATION),
+            NullLogger.getInstance(),
+          )
+        },
+        "a struct array indexed symbolically must build under $arithmetic",
+      )
     }
   }
 
@@ -410,9 +413,10 @@ class AggregateArrayElementTest {
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
       val parseContext = ParseContext()
       parseContext.arithmetic = arithmetic
-      assertDoesNotThrow({
-        getXcfaFromC(
-          """
+      assertDoesNotThrow(
+        {
+          getXcfaFromC(
+            """
           extern short __VERIFIER_nondet_short();
           int main() {
             signed long long n = (signed long long) __VERIFIER_nondet_short();
@@ -422,14 +426,16 @@ class AggregateArrayElementTest {
             return a[1][2];
           }
           """
-            .trimIndent()
-            .byteInputStream(),
-          parseContext,
-          false,
-          XcfaProperty(ErrorDetection.ERROR_LOCATION),
-          NullLogger.getInstance(),
-        )
-      }, "a VLA matrix must build under $arithmetic")
+              .trimIndent()
+              .byteInputStream(),
+            parseContext,
+            false,
+            XcfaProperty(ErrorDetection.ERROR_LOCATION),
+            NullLogger.getInstance(),
+          )
+        },
+        "a VLA matrix must build under $arithmetic",
+      )
     }
   }
 

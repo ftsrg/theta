@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
 public class CStruct extends CInteger {
 
     /**
-     * Field-list name given to a C11 anonymous struct/union member. Member lookup flattens
-     * through fields with this prefix, so `s.a` finds `a` inside `struct S { union { int a; }; }`.
+     * Field-list name given to a C11 anonymous struct/union member. Member lookup flattens through
+     * fields with this prefix, so `s.a` finds `a` inside `struct S { union { int a; }; }`.
      */
     public static final String ANONYMOUS_FIELD_PREFIX = "__theta_anon_";
 
@@ -42,8 +42,8 @@ public class CStruct extends CInteger {
      * Per-field storage-unit layout, parallel to {@link #fields}. For a struct with no bitfields
      * every field is its own unit and {@code slots.get(i).unitIndex() == i} -- byte-for-byte the
      * historical one-cell-per-field model. Consecutive bitfields pack into a shared unit (see
-     * {@link BitfieldLayout}), so a member access lowers to that unit's cell and, for a bitfield,
-     * a slice of it.
+     * {@link BitfieldLayout}), so a member access lowers to that unit's cell and, for a bitfield, a
+     * slice of it.
      */
     private final List<BitfieldLayout.Slot> slots;
 
@@ -161,8 +161,8 @@ public class CStruct extends CInteger {
      *
      * <p>A struct of integers laid end to end -- whether they are bitfields or whole members -- has
      * no substructure to address: its content is just those bits. As a union member it can then
-     * share the union's cell with a sibling integer of the same width, which is the register-overlay
-     * idiom, in both the forms the kernel and TDX headers use:
+     * share the union's cell with a sibling integer of the same width, which is the
+     * register-overlay idiom, in both the forms the kernel and TDX headers use:
      *
      * <pre>
      *   union { uint64_t raw; struct { uint64_t leaf:16; uint64_t version:8; ... }; };
@@ -233,13 +233,13 @@ public class CStruct extends CInteger {
      *
      * <p>A union's members all start at offset 0, so members that are plain integers -- of whatever
      * widths -- are all just the low bits of a single word, and a narrower one is a *slice* of it
-     * (see {@link BitfieldSlice}). That is what lets `union { uint64_t raw; uint32_t half; }` behave
-     * as C says rather than being refused as type punning. Pointers count: a pointer value is an
-     * integer of pointer width in this model. So does a nested struct that is itself one packed word
-     * ({@link #overlayWidth}), which is the register-overlay idiom.
+     * (see {@link BitfieldSlice}). That is what lets `union { uint64_t raw; uint32_t half; }`
+     * behave as C says rather than being refused as type punning. Pointers count: a pointer value
+     * is an integer of pointer width in this model. So does a nested struct that is itself one
+     * packed word ({@link #overlayWidth}), which is the register-overlay idiom.
      *
-     * <p>Null for the cases a single word genuinely cannot represent: an <b>array</b> member is many
-     * cells rather than one word, and a <b>floating-point</b> member has its own SMT sort, so
+     * <p>Null for the cases a single word genuinely cannot represent: an <b>array</b> member is
+     * many cells rather than one word, and a <b>floating-point</b> member has its own SMT sort, so
      * reading it as bits needs a reinterpretation this model does not have. Those still need the
      * byte-addressed object layout.
      */
@@ -264,12 +264,16 @@ public class CStruct extends CInteger {
                     hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
                 // A floating-point member would share the cell as its raw IEEE-754 bit pattern, and
                 // the machinery for it exists (FpToIeeeBv / FpFromIeeeBv, and the union access path
-                // below). It is GATED OFF, though, and a float union is refused rather than answered:
+                // below). It is GATED OFF, though, and a float union is refused rather than
+                // answered:
                 // fpToIEEEBV is unspecified for NaN, and while a canonical-NaN guard on the write
                 // fixes the direct cases, a NaN routed through the integer view and back
-                // (`value = NaN; word = ...; value = word`, the pervasive newlib idiom) still yields
-                // a spurious non-NaN in the solver and produced 14 wrong float-newlib results in the
-                // 2026-07-21 run. Failing loudly (ERROR, score 0) beats those wrong answers until the
+                // (`value = NaN; word = ...; value = word`, the pervasive newlib idiom) still
+                // yields
+                // a spurious non-NaN in the solver and produced 14 wrong float-newlib results in
+                // the
+                // 2026-07-21 run. Failing loudly (ERROR, score 0) beats those wrong answers until
+                // the
                 // round-trip is made sound. See PLAN.md batch 59.
                 return null;
             } else if (fieldType instanceof CInteger) {

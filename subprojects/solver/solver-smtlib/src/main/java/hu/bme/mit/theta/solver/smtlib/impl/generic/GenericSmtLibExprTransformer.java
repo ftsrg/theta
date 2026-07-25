@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -666,7 +666,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         // SMT-LIB `concat` is a *binary* function (it is not declared `:left-assoc` like `bvand` /
         // `bvadd`), so an n-ary BvConcatExpr must be nested into binary applications -- otherwise a
         // strict solver (MathSAT, cvc5) rejects `(concat a b c d)` as "concat takes exactly 2
-        // arguments". Nesting left-associatively keeps the first operand the most significant, which
+        // arguments". Nesting left-associatively keeps the first operand the most significant,
+        // which
         // is BvConcatExpr's own bit order.
         String result = opTerms[0];
         for (int i = 1; i < opTerms.length; i++) {
@@ -1217,10 +1218,13 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         checkState(
                 expr.getUniquenessIdx().isPresent(),
                 "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
-        // `deref` is a genuine uninterpreted function, but it has no ConstDecl in the expression for
+        // `deref` is a genuine uninterpreted function, but it has no ConstDecl in the expression
+        // for
         // the solver to declare, so route it through a canonical per-signature function declaration
-        // (see SmtLibDereferenceDecls): `toSymbol` registers its `(declare-fun …)` exactly as for any
-        // other uninterpreted function, and the solver emits it with the assertion's other constants.
+        // (see SmtLibDereferenceDecls): `toSymbol` registers its `(declare-fun …)` exactly as for
+        // any
+        // other uninterpreted function, and the solver emits it with the assertion's other
+        // constants.
         final String funcSymbol = transformer.toSymbol(SmtLibDereferenceDecls.funcDecl(expr));
         return "(%s %s %s %s)"
                 .formatted(

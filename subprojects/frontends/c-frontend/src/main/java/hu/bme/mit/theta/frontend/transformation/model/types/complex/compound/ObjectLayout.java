@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
@@ -51,8 +51,8 @@ import java.util.List;
  * {@code __attribute__((packed))} and {@code ((aligned(n)))} change layout, and both are honored:
  * packed drops every member to byte alignment and removes tail padding, {@code aligned(n)} raises
  * an object's or a member's alignment. A member's own {@code aligned(n)} wins over its struct's
- * {@code packed}, which is what GCC does. They reach here through {@link CStruct}, which the
- * {@code TypeVisitor} now populates from the attribute lists the grammar was already parsing (and
+ * {@code packed}, which is what GCC does. They reach here through {@link CStruct}, which the {@code
+ * TypeVisitor} now populates from the attribute lists the grammar was already parsing (and
  * previously discarded).
  *
  * <h2>Unnamed bitfields</h2>
@@ -65,7 +65,9 @@ import java.util.List;
  */
 public final class ObjectLayout {
 
-    /** GCC layout attributes on a declaration. Nothing populates these yet -- see the class note. */
+    /**
+     * GCC layout attributes on a declaration. Nothing populates these yet -- see the class note.
+     */
     public record Attributes(boolean packed, int alignedToBits) {
         public static final Attributes NONE = new Attributes(false, 0);
     }
@@ -74,7 +76,8 @@ public final class ObjectLayout {
      * One member's placement. {@code bitfieldWidth} is -1 for an ordinary member; for a bitfield it
      * is the declared width, which is what makes {@code bitOffset} not byte-aligned.
      */
-    public record Field(String name, CComplexType type, int bitOffset, int bitWidth, int bitfieldWidth) {
+    public record Field(
+            String name, CComplexType type, int bitOffset, int bitWidth, int bitfieldWidth) {
         public boolean isBitfield() {
             return bitfieldWidth >= 0;
         }
@@ -119,7 +122,8 @@ public final class ObjectLayout {
         if (type instanceof CArray array) {
             final Integer count = constantDimension(array);
             if (count == null) {
-                // A flexible array member (`int a[];`) contributes nothing to its struct's size, and
+                // A flexible array member (`int a[];`) contributes nothing to its struct's size,
+                // and
                 // a VLA has no static size at all. Both are "no bits here" for layout purposes.
                 return 0;
             }
@@ -134,10 +138,10 @@ public final class ObjectLayout {
      * The alignment [type] demands, in bits.
      *
      * <p>A scalar aligns to its own size, capped by the architecture's widest scalar alignment: the
-     * i386 quirk that an 8-byte {@code long long} or {@code double} aligns to 4 is exactly this cap.
-     * Types at least 128 bits wide ({@code long double}, {@code __int128}) align to their size on
-     * LP64 instead, which is what the x86-64 psABI specifies. An {@code _Atomic} scalar bypasses the
-     * cap entirely and always aligns to its own size.
+     * i386 quirk that an 8-byte {@code long long} or {@code double} aligns to 4 is exactly this
+     * cap. Types at least 128 bits wide ({@code long double}, {@code __int128}) align to their size
+     * on LP64 instead, which is what the x86-64 psABI specifies. An {@code _Atomic} scalar bypasses
+     * the cap entirely and always aligns to its own size.
      */
     public static int alignBits(CComplexType type, ArchitectureType arch, Attributes attributes) {
         if (attributes.alignedToBits() > 0) {
@@ -251,8 +255,7 @@ public final class ObjectLayout {
         for (int i = 0; i < members.size(); i++) {
             final CComplexType memberType = members.get(i).get2();
             final int bitfieldWidth = union.declaredBitfieldWidth(i);
-            final int memberBits =
-                    bitfieldWidth >= 0 ? bitfieldWidth : sizeBits(memberType, arch);
+            final int memberBits = bitfieldWidth >= 0 ? bitfieldWidth : sizeBits(memberType, arch);
             // Every union member starts at the same address -- that is the whole construct.
             fields.add(new Field(members.get(i).get1(), memberType, 0, memberBits, bitfieldWidth));
             size = Math.max(size, memberBits);

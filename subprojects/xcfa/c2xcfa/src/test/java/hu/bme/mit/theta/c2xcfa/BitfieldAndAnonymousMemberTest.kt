@@ -17,7 +17,6 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -34,8 +33,7 @@ import org.junit.jupiter.api.Test
  * A single bitfield or anonymous member used to kill the whole struct's field list (the builder
  * threw, the caller swallowed it, and every later member lookup failed or mis-resolved). Bitfields
  * are now regular fields of their base type, unnamed bitfields are padding without a field slot,
- * and C11 anonymous struct/union members get a synthetic field that member lookup flattens
- * through.
+ * and C11 anonymous struct/union members get a synthetic field that member lookup flattens through.
  */
 class BitfieldAndAnonymousMemberTest {
 

@@ -22,13 +22,13 @@ import java.util.List;
  * The storage-unit layout of a struct's members, packing consecutive bitfields into shared cells.
  *
  * <p>Theta models a struct member access as {@code __arrays_T[base][unitIndex]} -- one cell per
- * <em>storage unit</em>, not one per member. For ordinary members that is one cell each (unit
- * index == member position, the historical behaviour). Consecutive bitfield members instead pack
- * into a single unit while they fit in that unit's base-type width, so the number of cells matches
- * the byte layout the program allocates for: {@code struct A { unsigned char a; unsigned char b:2;
+ * <em>storage unit</em>, not one per member. For ordinary members that is one cell each (unit index
+ * == member position, the historical behaviour). Consecutive bitfield members instead pack into a
+ * single unit while they fit in that unit's base-type width, so the number of cells matches the
+ * byte layout the program allocates for: {@code struct A { unsigned char a; unsigned char b:2;
  * unsigned char c:2; unsigned char d:4; }} occupies 2 cells (a, then b/c/d packed), so {@code
- * malloc(2)} is sufficient -- the field-index-vs-byte-size mismatch that makes the fourth member
- * of a packed struct look like an out-of-bounds access.
+ * malloc(2)} is sufficient -- the field-index-vs-byte-size mismatch that makes the fourth member of
+ * a packed struct look like an out-of-bounds access.
  *
  * <p>This is the pure layout computation only; it does not yet drive {@code memberOffset} or the
  * bit-slice access/assignment lowering (see PLAN.md batch 43-design). It is exercised directly by

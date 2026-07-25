@@ -24,8 +24,8 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,8 +66,8 @@ public class Struct extends NamedType {
     private boolean currentlyBeingBuilt;
 
     /**
-     * The expanded field list of the *canonical* definition, shared by every copy. A nested
-     * struct type re-expands its whole subtree on each use; without this cache the expansion is
+     * The expanded field list of the *canonical* definition, shared by every copy. A nested struct
+     * type re-expands its whole subtree on each use; without this cache the expansion is
      * exponential in nesting depth (large LDV kernel headers ran out of heap inside it).
      * Invalidated on {@link #addField}, so a still-growing definition never serves a stale
      * snapshot.
@@ -152,8 +152,7 @@ public class Struct extends NamedType {
      */
     public void addPadding(int bitWidth, int baseBits) {
         final Struct canonical = canonical();
-        canonical.paddings.add(
-                new CStruct.Padding(canonical.fields.size(), bitWidth, baseBits));
+        canonical.paddings.add(new CStruct.Padding(canonical.fields.size(), bitWidth, baseBits));
     }
 
     /** Layout attributes (`packed`, `aligned(n)`) on the struct itself. */
@@ -190,13 +189,16 @@ public class Struct extends NamedType {
         // consecutive bitfields into shared storage units. resolvedFields() is insertion-ordered,
         // the same order actualFields was built in.
         final List<Integer> bitfieldWidths = new ArrayList<>();
-        resolvedFields().forEach((s, cDeclaration) -> bitfieldWidths.add(cDeclaration.getBitfieldWidth()));
+        resolvedFields()
+                .forEach((s, cDeclaration) -> bitfieldWidths.add(cDeclaration.getBitfieldWidth()));
 
         // Layout attributes and unnamed-bitfield padding live on the canonical definition too: a
         // copy is made mid-parse (see canonicalRef) and would otherwise freeze an empty list.
         final List<ObjectLayout.Attributes> fieldAttributes = new ArrayList<>();
         resolvedFields()
-                .forEach((s, cDeclaration) -> fieldAttributes.add(cDeclaration.getLayoutAttributes()));
+                .forEach(
+                        (s, cDeclaration) ->
+                                fieldAttributes.add(cDeclaration.getLayoutAttributes()));
 
         CComplexType type =
                 new CStruct(

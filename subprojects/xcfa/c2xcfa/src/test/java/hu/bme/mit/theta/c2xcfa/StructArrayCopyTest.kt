@@ -32,9 +32,9 @@ import org.junit.jupiter.api.Test
  * A struct's array field is copied element by element, not by sharing the array.
  *
  * A struct field that is an array holds a base id, just like a struct-typed field. Copying a struct
- * used to assign that base straight across, so the destination's array *was* the source's -- writing
- * one showed up in the other. C copies the elements, so the destination keeps the array it was
- * allocated and each element is copied into it: `arrays[dst_a][k] := arrays[src_a][k]`.
+ * used to assign that base straight across, so the destination's array *was* the source's --
+ * writing one showed up in the other. C copies the elements, so the destination keeps the array it
+ * was allocated and each element is copied into it: `arrays[dst_a][k] := arrays[src_a][k]`.
  *
  * Those element copies are the fingerprint: a write per element that reads one array and writes a
  * *different* one. A three-element field yields three; without the fix there is one base assignment

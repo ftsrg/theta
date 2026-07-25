@@ -46,8 +46,8 @@ import java.util.List;
  * shift -- unlike a bit-sliced word, which would need {@code 2^(8*i)} for a variable byte index and
  * so only works under bitvector.
  *
- * <p>Metadata keys mirror {@link BitfieldSlice}'s: stamped on the <em>value</em> a read produces, so
- * that an assignment through it can find what to write back to. {@link #BASE}/{@link #OFFSET}/
+ * <p>Metadata keys mirror {@link BitfieldSlice}'s: stamped on the <em>value</em> a read produces,
+ * so that an assignment through it can find what to write back to. {@link #BASE}/{@link #OFFSET}/
  * {@link #WIDTH} mark a resolved (possibly multi-byte) member value. {@link #ARRAY_BASE}/{@link
  * #ARRAY_OFFSET}/{@link #ARRAY_ELEMENT_BYTES} mark an <em>array-typed</em> member accessed without
  * its subscript yet, so that the next {@code [i]} can compute {@code byteOff + i*elementSize}
@@ -67,7 +67,9 @@ public final class ByteUnionSlice {
     /** Metadata: the resolved member's width in bytes (an {@code Integer}). */
     public static final String WIDTH = "byteUnionWidthBytes";
 
-    /** Metadata on an array-typed union member accessed without a subscript yet: the union's base. */
+    /**
+     * Metadata on an array-typed union member accessed without a subscript yet: the union's base.
+     */
     public static final String ARRAY_BASE = "byteUnionArrayBase";
 
     /** Metadata: the array member's own starting byte offset within the union. */
@@ -78,13 +80,16 @@ public final class ByteUnionSlice {
 
     /**
      * Metadata on a nested struct-typed union member accessed without a field yet: the union's own
-     * base expression. A subsequent {@code .field} resolves to a byte slice at {@link #STRUCT_OFFSET}
-     * plus the field's offset within the nested struct, exactly like {@link #ARRAY_BASE} does for a
-     * later {@code [i]}.
+     * base expression. A subsequent {@code .field} resolves to a byte slice at {@link
+     * #STRUCT_OFFSET} plus the field's offset within the nested struct, exactly like {@link
+     * #ARRAY_BASE} does for a later {@code [i]}.
      */
     public static final String STRUCT_BASE = "byteUnionStructBase";
 
-    /** Metadata: the nested struct member's own starting byte offset within the union (an {@link Expr}). */
+    /**
+     * Metadata: the nested struct member's own starting byte offset within the union (an {@link
+     * Expr}).
+     */
     public static final String STRUCT_OFFSET = "byteUnionStructOffset";
 
     private ByteUnionSlice() {}
@@ -108,7 +113,8 @@ public final class ByteUnionSlice {
             // Concat yields a *neutral* (signedness-less) bitvector. Stamp it with the member's
             // declared signedness so a relational comparison on the result (`u.x <= n`) is well
             // typed -- Lt/Leq/Gt/Geq reject a neutral BvType. Equality tolerated the neutral type,
-            // which is why this only surfaced once a byte-union member reached a `<`/`<=` (the Intel
+            // which is why this only surfaced once a byte-union member reached a `<`/`<=` (the
+            // Intel
             // TDX-Module tasks, under bitvector arithmetic).
             return BvSignChangeExpr.of(concat, BvType.of(8 * n, signed));
         }
@@ -128,10 +134,10 @@ public final class ByteUnionSlice {
     }
 
     /**
-     * Splits {@code value} -- already cast to the member's own {@code 8*n}-bit-wide type -- into its
-     * {@code n} one-byte cells, {@code [0]} being the lowest address (the least-significant byte). No
-     * read-modify-write is needed here: a whole-byte member overwrites every cell it touches
-     * outright, unlike a bitfield sharing a cell with a neighbour.
+     * Splits {@code value} -- already cast to the member's own {@code 8*n}-bit-wide type -- into
+     * its {@code n} one-byte cells, {@code [0]} being the lowest address (the least-significant
+     * byte). No read-modify-write is needed here: a whole-byte member overwrites every cell it
+     * touches outright, unlike a bitfield sharing a cell with a neighbour.
      */
     public static List<Expr<?>> toBytes(Expr<?> value, int n) {
         final Type type = value.getType();

@@ -98,20 +98,21 @@ public class ArchitectureConfig {
      * How a pointer value that lives in a memory cell is represented.
      *
      * <ul>
-     *   <li><b>multi</b>: the default 2-D model. Memory is {@code __arrays[base][offset]}; a pointer
-     *       is a (base, offset) pair. Storing a pointer into a cell therefore needs the cell
-     *       duplicated -- one storage location for the base, a parallel one for the offset (a struct
-     *       pointer field is duplicated the same way).
+     *   <li><b>multi</b>: the default 2-D model. Memory is {@code __arrays[base][offset]}; a
+     *       pointer is a (base, offset) pair. Storing a pointer into a cell therefore needs the
+     *       cell duplicated -- one storage location for the base, a parallel one for the offset (a
+     *       struct pointer field is duplicated the same way).
      *   <li><b>flat</b>: a single flat address space, as if every object's base were 0. Each object
      *       occupies a disjoint slice of one address line, so a pointer is a single scalar address
      *       (base + offset folded together) and storing it into a cell needs no duplication at all.
-     *   <li><b>bytes</b>: the flat address line above, but byte-granular -- every memory cell is one
-     *       byte ({@code Bv8}) and a wider scalar is the {@code Concat} of its bytes on read and the
-     *       {@code Extract}-and-split of them on write. Offsets are therefore real byte offsets, so
-     *       two differently-typed views of the same storage (an {@code int} and the {@code char}s
-     *       overlapping it, a union member and its byte array) alias correctly through the one byte
-     *       array. Builds on flat addressing (a pointer must be a single scalar to be storable as
-     *       bytes); requires bitvector arithmetic (byte splitting is a bitvector operation).
+     *   <li><b>bytes</b>: the flat address line above, but byte-granular -- every memory cell is
+     *       one byte ({@code Bv8}) and a wider scalar is the {@code Concat} of its bytes on read
+     *       and the {@code Extract}-and-split of them on write. Offsets are therefore real byte
+     *       offsets, so two differently-typed views of the same storage (an {@code int} and the
+     *       {@code char}s overlapping it, a union member and its byte array) alias correctly
+     *       through the one byte array. Builds on flat addressing (a pointer must be a single
+     *       scalar to be storable as bytes); requires bitvector arithmetic (byte splitting is a
+     *       bitvector operation).
      * </ul>
      */
     public enum MemoryModelType {

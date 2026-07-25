@@ -31,11 +31,11 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  *
  * The target `alloca(target, size)` writes the fresh base into may be a variable (a plain `alloca`,
  * or a stack-allocated struct/array whose value is its base) or a memory cell (a struct's
- * struct/array-typed *field*, whose base lives at `arrays[parent][i]`). The assignment dispatches on
- * which -- an ordinary assign for the variable, a memory-write for the cell -- so that every stack
- * object gets a *fresh runtime* base per allocation. A compile-time constant base would be the same
- * for every activation of the procedure, so two recursive frames or two threads running it would
- * alias; a runtime base from the shared counter cannot.
+ * struct/array-typed *field*, whose base lives at `arrays[parent][i]`). The assignment dispatches
+ * on which -- an ordinary assign for the variable, a memory-write for the cell -- so that every
+ * stack object gets a *fresh runtime* base per allocation. A compile-time constant base would be
+ * the same for every activation of the procedure, so two recursive frames or two threads running it
+ * would alias; a runtime base from the shared counter cannot.
  *
  * Pointer bases are partitioned by residue mod 3: `3k+0` is malloc'd heap memory, `3k+2` is
  * address-taken locals ([ReferenceElimination]). The memcleanup check

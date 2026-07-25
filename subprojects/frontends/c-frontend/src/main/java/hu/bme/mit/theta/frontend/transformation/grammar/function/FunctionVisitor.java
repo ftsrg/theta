@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
@@ -39,6 +38,7 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
@@ -760,8 +760,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * have to be hoisted ahead of the assignment or the call never happens.
      */
     /**
-     * The cell an initializer-list element writes: its stored designated position when present
-     * (the frontend resolves designators to positions), otherwise the running position.
+     * The cell an initializer-list element writes: its stored designated position when present (the
+     * frontend resolves designators to positions), otherwise the running position.
      */
     private LitExpr<?> initPosition(
             Optional<CStatement> designator, CComplexType ptrType, LitExpr<?> runningPosition) {
@@ -815,7 +815,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // (recursion, threads) cannot alias -- but `alloca` is the honest model: its memory
                 // is released when the function returns, not by the program, so it lands in the
                 // free residue class and is neither a leak the program must clean up nor freeable.
-                // The old free at scope exit modelled it as heap, which reported a bogus double-free
+                // The old free at scope exit modelled it as heap, which reported a bogus
+                // double-free
                 // for a returned-and-reused block and a bogus leak when the scope was a loop body.
                 parseContext
                         .getMetadata()
@@ -1012,13 +1013,18 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         recordMetadata(ctx, compound);
         expressionVisitor.getPostStatements().forEach(postStatements::addCStatement);
         compound.setPostStatements(postStatements);
-        // The value of an assignment expression is the value assigned, taken at the assignment -- not
+        // The value of an assignment expression is the value assigned, taken at the assignment --
+        // not
         // a later re-read of the destination. When the expression has deferred side effects -- a
-        // post-increment, as in `*s1++ = *s2++` -- the destination lvalue `*s1` moves before the value
-        // is consumed, so re-reading it (which is what `getExpression()` does) reads the wrong cell.
+        // post-increment, as in `*s1++ = *s2++` -- the destination lvalue `*s1` moves before the
+        // value
+        // is consumed, so re-reading it (which is what `getExpression()` does) reads the wrong
+        // cell.
         // `while ((*s1++ = *s2++))` then tested `*s1` at the advanced pointer, i.e. uninitialised
-        // memory, instead of the assigned char, ran on and walked off the buffer (the openbsd/strcpy
-        // alloca `valid-deref` false alarms). Snapshot the value here, after the store and before the
+        // memory, instead of the assigned char, ran on and walked off the buffer (the
+        // openbsd/strcpy
+        // alloca `valid-deref` false alarms). Snapshot the value here, after the store and before
+        // the
         // post-statements, and make it the compound's value. Assignments without side effects are
         // untouched (a plain `a = b` re-read is harmless), so the common case is unchanged.
         if (!postStatements.getcStatementList().isEmpty()) {

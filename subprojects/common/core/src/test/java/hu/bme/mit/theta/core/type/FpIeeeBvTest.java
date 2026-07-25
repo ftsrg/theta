@@ -51,8 +51,7 @@ public class FpIeeeBvTest {
     }
 
     private long evalBits(FpLitExpr lit) {
-        final BvLitExpr bv =
-                (BvLitExpr) FpExprs.ToIeeeBv(lit).eval(ImmutableValuation.empty());
+        final BvLitExpr bv = (BvLitExpr) FpExprs.ToIeeeBv(lit).eval(ImmutableValuation.empty());
         // longValue() keeps the low 64 bits as two's complement -- the raw pattern, so a value with
         // the sign bit set (a negative double) does not overflow the way longValueExact would.
         return BvUtils.unsignedBvLitExprToBigInteger(bv).longValue();
@@ -62,9 +61,7 @@ public class FpIeeeBvTest {
     void toIeeeBvMatchesDoubleToLongBits() {
         for (double v : new double[] {1.0, 0.0, -1.0, 2.5, -0.5, 1e300, 3.14159265358979}) {
             assertEquals(
-                    Double.doubleToLongBits(v),
-                    evalBits(doubleLit(v)),
-                    "IEEE double bits of " + v);
+                    Double.doubleToLongBits(v), evalBits(doubleLit(v)), "IEEE double bits of " + v);
         }
     }
 
@@ -85,8 +82,7 @@ public class FpIeeeBvTest {
                     BvUtils.bigIntegerToUnsignedBvLitExpr(
                             BigInteger.valueOf(Double.doubleToLongBits(v)), 64);
             final FpLitExpr back =
-                    (FpLitExpr)
-                            FpExprs.FromIeeeBv(bits, DOUBLE).eval(ImmutableValuation.empty());
+                    (FpLitExpr) FpExprs.FromIeeeBv(bits, DOUBLE).eval(ImmutableValuation.empty());
             assertEquals(
                     v,
                     FpUtils.fpLitExprToBigFloat(FpRoundingMode.RNE, back).doubleValue(),

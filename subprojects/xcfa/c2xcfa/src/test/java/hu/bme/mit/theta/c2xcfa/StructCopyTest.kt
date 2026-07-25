@@ -33,10 +33,10 @@ import org.junit.jupiter.api.Test
  * `b = a` on structs copies a's contents into b. It must not make b *be* a.
  *
  * A struct variable's value is its base id, so assigning one struct to another assigned the base:
- * the two names then denoted a single object, and a write to the source after the copy was read back
- * through the destination -- `a.len = 1; b = a; a.len = 2;` left `b.len` reading 2. C copies at the
- * assignment, so the destination keeps the storage it was given and receives a's values into it,
- * which is a write per field: `arrays[b][i] := arrays[a][i]`.
+ * the two names then denoted a single object, and a write to the source after the copy was read
+ * back through the destination -- `a.len = 1; b = a; a.len = 2;` left `b.len` reading 2. C copies
+ * at the assignment, so the destination keeps the storage it was given and receives a's values into
+ * it, which is a write per field: `arrays[b][i] := arrays[a][i]`.
  *
  * Those writes are what is asserted here -- one per field, each reading the source object and
  * writing the destination. The struct variables themselves do not survive to be asserted on: their

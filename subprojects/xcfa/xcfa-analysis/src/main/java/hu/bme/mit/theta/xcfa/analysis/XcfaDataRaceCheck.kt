@@ -27,29 +27,28 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
-import hu.bme.mit.theta.core.utils.BvUtils
-import java.math.BigInteger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.*
+import java.math.BigInteger
 
 private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
@@ -65,11 +64,11 @@ private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().cre
  * int * _Atomic p;  // p itself is atomic; what it points at is not
  * ```
  *
- * `_Atomic` is a property of the accessed *cell* -- a struct field, an array element, or a pointee --
- * but the expression that reaches it is a bare `(base, offset)` of literals by analysis time (folded
- * constants, rebuilt exprs, identity-keyed C types all lost). So atomicity is recorded against the
- * object's base id where that id is minted (global layout in the frontend builder, address-taken
- * objects in [ReferenceElimination]) and resolved here by the base id's *value*.
+ * `_Atomic` is a property of the accessed *cell* -- a struct field, an array element, or a pointee
+ * -- but the expression that reaches it is a bare `(base, offset)` of literals by analysis time
+ * (folded constants, rebuilt exprs, identity-keyed C types all lost). So atomicity is recorded
+ * against the object's base id where that id is minted (global layout in the frontend builder,
+ * address-taken objects in [ReferenceElimination]) and resolved here by the base id's *value*.
  *
  * A live pointer *variable* (not folded to a base) is still asked its type directly.
  *
@@ -118,7 +117,9 @@ private fun Dereference<*, *, *>.addressesAtomicData(
   return xcfa.globalVars.any { it.pointsToAtomic && it.initValue == array }
 }
 
-/** The value of a bare integer/bitvector literal, or null when this is not a compile-time constant. */
+/**
+ * The value of a bare integer/bitvector literal, or null when this is not a compile-time constant.
+ */
 private fun Expr<*>.asConstantBigInteger(): BigInteger? =
   when (this) {
     is IntLitExpr -> value
