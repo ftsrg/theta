@@ -590,7 +590,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean aggregatePointee =
                 pointee instanceof CArray
                         || (pointee instanceof CStruct s && !s.isUnion());
-        final Expr<?> cells = aggregatePointee ? cellCountExpr(pointee) : null;
+        // Under the bytes model a step of `p` is the pointee's whole byte size, whatever its shape;
+        // under multi/flat only an aggregate element spans more than one cell and is scaled. A unit
+        // stride stays null so no `* 1` is injected (see the note below).
+        final Expr<?> cells;
+        if (byteAddressed()) {
+            final Expr<?> stride = byteStrideExpr(pointee);
+            cells = (stride == null || isLiteralOne(stride)) ? null : stride;
+        } else {
+            cells = aggregatePointee ? cellCountExpr(pointee) : null;
+        }
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final List<Expr<?>> indexTerms = new ArrayList<>();
         for (int i = 0; i < exprs.size(); i++) {
@@ -1008,6 +1017,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * that is a little small would bring the bound check back down onto real accesses.
      */
     private int sizeOf(CComplexType type) {
+        // Under the bytes model everything is addressed in real bytes, so `sizeof` must be the
+        // declared (padded) byte size -- the same layout subscripts, members, and pointer
+        // arithmetic use, and the size that then bounds them exactly in the memsafety check.
+        if (byteAddressed()) {
+            return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
+        }
         if (type instanceof CStruct cStruct) {
             final List<Integer> fieldSizes =
                     cStruct.getFields().stream().map(f -> sizeOf(f.get2())).toList();
@@ -1224,6 +1239,67 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return false;
     }
 
+    private static boolean isLiteralOne(Expr<?> expr) {
+        Expr<?> stripped = stripPos(ExprUtils.simplify(expr));
+        if (stripped instanceof IntLitExpr intLit) {
+            return intLit.getValue().equals(BigInteger.ONE);
+        }
+        if (stripped instanceof BvLitExpr bvLit) {
+            return BvUtils.neutralBvLitExprToBigInteger(bvLit).equals(BigInteger.ONE);
+        }
+        return false;
+    }
+
+    /** Whether the bytes memory model is in effect (every memory cell is one byte). */
+    private boolean byteAddressed() {
+        return parseContext.getMemoryModel().byteAddressed();
+    }
+
+    /**
+     * The stride, in real bytes, of one element of [type] -- what turns an element index into a byte
+     * offset under the bytes memory model. Mirrors {@link #cellCountExpr} but in the declared byte
+     * layout (padded struct sizes, byte-sized scalars from {@link ObjectLayout}), so a subscript, a
+     * multi-dimensional row step, and pointer arithmetic all land on the byte the layout puts the
+     * element at, and object sizes recorded from {@code sizeof} bound them exactly. Null when the
+     * size is not statically known (an unsized array), like {@link #cellCountExpr}.
+     */
+    private Expr<?> byteStrideExpr(CComplexType type) {
+        if (type instanceof CArray arrayType) {
+            final Expr<?> length = arrayLengthExpr(arrayType);
+            if (length == null) {
+                return null;
+            }
+            final Expr<?> elementBytes = byteStrideExpr(arrayType.getEmbeddedType());
+            if (elementBytes == null) {
+                return null;
+            }
+            final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+            return Mul(List.of(indexType.castTo(length), indexType.castTo(elementBytes)));
+        }
+        final int bytes = ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8;
+        return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(bytes));
+    }
+
+    /**
+     * Turns an element [index] into the offset a dereference should carry: the byte offset {@code
+     * index * byteStride(elemType)} under the bytes model, the bare element index otherwise (the
+     * multi/flat models address cells directly). A unit stride injects no {@code * 1} -- an extra
+     * {@code MulExpr} in a load's offset makes the assignment path misread it as pointer arithmetic
+     * (see {@link #pointerArithmetic}) -- so byte and {@code char} accesses stay byte-for-byte as
+     * they were.
+     */
+    private Expr<?> indexToOffset(Expr<?> index, CComplexType elemType) {
+        if (!byteAddressed()) {
+            return index;
+        }
+        final Expr<?> stride = byteStrideExpr(elemType);
+        if (stride == null || isLiteralOne(stride)) {
+            return index;
+        }
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        return Mul(List.of(indexType.castTo(index), indexType.castTo(stride)));
+    }
+
     @SuppressWarnings("unchecked")
     /**
      * Splits pointer arithmetic out of a dereference base: {@code arrays[p + i][j]} has to become
@@ -1322,7 +1398,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (!aggregate) {
             return null;
         }
-        final Expr<?> elementCells = cellCountExpr(elemType);
+        // A row step is one whole element: real bytes under the bytes model (so `a[i][j]` lands on
+        // the byte the declared layout puts it at, padding included), storage cells otherwise.
+        final Expr<?> elementCells = byteAddressed() ? byteStrideExpr(elemType) : cellCountExpr(elemType);
         if (elementCells == null) {
             return null;
         }
@@ -2931,7 +3009,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     if (row != null) {
                         return row;
                     }
-                    primary = dereference(primary, index, elemType);
+                    primary = dereference(primary, indexToOffset(index, elemType), elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else if (arrayType instanceof CPointer) {
@@ -2953,7 +3031,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         parseContext.getMetadata().create(element, "cType", elemType);
                         return element;
                     }
-                    primary = dereference(primary, index, elemType);
+                    primary = dereference(primary, indexToOffset(index, elemType), elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else {

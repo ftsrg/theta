@@ -79,7 +79,7 @@ private fun Dereference<*, *, *>.addressesAtomicData(
   xcfa: XCFA,
   parseContext: ParseContext,
 ): Boolean {
-  if (parseContext.memoryModel == MemoryModelType.flat) {
+  if (parseContext.memoryModel.flatAddressing()) {
     // FlatMemoryPass folded the base into the offset: array is a bare 0 and offset is the flat
     // address objectBase*STRIDE + cell. Decode it back to (base, cell) and ask directly; the
     // multi-model branches below must not run, because their array-based resolution (a RefExpr

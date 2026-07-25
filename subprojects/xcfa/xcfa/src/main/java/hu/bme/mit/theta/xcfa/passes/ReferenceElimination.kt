@@ -113,7 +113,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     // rides along inside the value); the address itself is later folded to base 0 by
     // [FlatMemoryPass].
     val complexChanged =
-      if (parseContext.memoryModel == MemoryModelType.flat) {
+      if (parseContext.memoryModel.flatAddressing()) {
         runFlatReferenceElimination(builder)
       } else {
         runComplexReferenceElimination(builder)

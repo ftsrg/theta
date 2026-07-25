@@ -65,7 +65,7 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
      * which types it for the decided arithmetic.
      */
     fun flatBaseValue(rawId: Int, parseContext: ParseContext): String =
-      if (parseContext.memoryModel == MemoryModelType.flat) {
+      if (parseContext.memoryModel.flatAddressing()) {
         (rawId.toLong() * FLAT_STRIDE).toString()
       } else {
         rawId.toString()
@@ -83,7 +83,7 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
       retType: CComplexType,
       parseContext: ParseContext,
     ): Expr<T> =
-      if (parseContext.memoryModel == MemoryModelType.flat) {
+      if (parseContext.memoryModel.flatAddressing()) {
         cast(Mul(rawBase, cast(retType.getValue(FLAT_STRIDE.toString()), rawBase.type)), rawBase.type)
       } else {
         rawBase
@@ -91,7 +91,7 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (parseContext.memoryModel != MemoryModelType.flat) return builder
+    if (!parseContext.memoryModel.flatAddressing()) return builder
 
     builder.getEdges().toList().forEach { edge ->
       val newLabel = edge.label.foldFlat()

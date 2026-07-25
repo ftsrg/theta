@@ -181,7 +181,9 @@ data class CFrontendConfig(
     names = ["--memory-model"],
     description =
       "Pointer memory model: multi = 2-D arrays[base][offset] (default), flat = one flat address" +
-        " line as if every base were 0 (a pointer is a single scalar address).",
+        " line as if every base were 0 (a pointer is a single scalar address), bytes = the flat" +
+        " line but byte-granular (every cell is one byte; wider scalars Concat/Extract). bytes" +
+        " requires bitvector arithmetic.",
   )
   var memoryModel: ArchitectureConfig.MemoryModelType = ArchitectureConfig.MemoryModelType.multi,
   @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")

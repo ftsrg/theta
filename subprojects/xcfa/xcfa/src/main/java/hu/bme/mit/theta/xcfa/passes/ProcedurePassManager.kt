@@ -132,6 +132,11 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // dereference (memsafety, overflow, data-race, mem*), so all three memory backends see already
     // flattened addresses. A no-op under the default multi model.
     listOf(FlatMemoryPass(parseContext)),
+    // Byte-granular memory model: split every wide dereference into its one-byte cells (Concat on
+    // read, Extract-and-store on write). Runs right after FlatMemoryPass so it also byte-splits the
+    // flat-folded addresses, and before any backend consumes the derefs. A no-op unless the bytes
+    // model is selected.
+    listOf(ByteMemoryPass(parseContext)),
     listOf(
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),
