@@ -33,6 +33,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
@@ -163,12 +164,19 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             CParser.InitializerListContext initializerList, CComplexType containerType) {
         final CInitializerList cInitializerList = new CInitializerList(containerType, parseContext);
         int nextPosition = 0;
+        // The remaining designator path when a `.name` reached a field inside an anonymous member,
+        // consumed by the value that follows the designation (see buildDesignatedInner); null for a
+        // direct field or an array index.
+        List<Integer> pendingInnerPath = null;
         for (org.antlr.v4.runtime.tree.ParseTree child :
                 initializerList == null
                         ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
                         : initializerList.children) {
             if (child instanceof CParser.DesignationContext designation) {
-                nextPosition = designatedPosition(designation, containerType);
+                final List<Integer> path = designatedPath(designation, containerType);
+                nextPosition = path.get(0);
+                pendingInnerPath =
+                        path.size() > 1 ? new ArrayList<>(path.subList(1, path.size())) : null;
                 continue;
             }
             if (!(child instanceof CParser.InitializerContext initializer)) {
@@ -181,22 +189,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             // failures on libvsync's `vatomic*` wrappers), and a scalar element is cast to its
             // member type, not to the aggregate.
             final CComplexType elementType = elementTypeAt(containerType, nextPosition);
-            final CStatement value;
-            if (initializer.bracedPrimaryExpression() != null) {
-                value =
-                        buildInitializerList(
-                                initializer.bracedPrimaryExpression().initializerList(),
-                                elementType);
-            } else {
-                final Expr<?> expr =
-                        elementType.castTo(
-                                initializer
-                                        .assignmentExpression()
-                                        .accept(functionVisitor)
-                                        .getExpression());
-                parseContext.getMetadata().create(expr, "cType", elementType);
-                value = new CExpr(expr, parseContext);
-            }
+            final CStatement value =
+                    pendingInnerPath == null
+                            ? buildLeafValue(elementType, initializer)
+                            : buildDesignatedInner(elementType, pendingInnerPath, initializer);
+            pendingInnerPath = null;
             cInitializerList.addStatement(
                     new CExpr(
                             IntLitExpr.of(java.math.BigInteger.valueOf(nextPosition++)),
@@ -204,6 +201,47 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                     value);
         }
         return cInitializerList;
+    }
+
+    /**
+     * One initializer element's value at [type]: a nested list for a braced element (`{ ... }`),
+     * otherwise the folded scalar cast to [type].
+     */
+    private CStatement buildLeafValue(
+            CComplexType type, CParser.InitializerContext initializer) {
+        if (initializer.bracedPrimaryExpression() != null) {
+            return buildInitializerList(
+                    initializer.bracedPrimaryExpression().initializerList(), type);
+        }
+        final Expr<?> expr =
+                type.castTo(
+                        initializer.assignmentExpression().accept(functionVisitor).getExpression());
+        parseContext.getMetadata().create(expr, "cType", type);
+        return new CExpr(expr, parseContext);
+    }
+
+    /**
+     * A designator that named a field inside an anonymous member (`.leaf`, where `leaf` lives in an
+     * anonymous {@code union}/{@code struct}) initialises that inner field. The value is wrapped in
+     * one nested initializer list per anonymous level, so the flat writer places it in the right
+     * cell -- exactly as if the source had written {@code .__theta_anon_0 = { .leaf = value }}.
+     */
+    private CStatement buildDesignatedInner(
+            CComplexType type, List<Integer> innerPath, CParser.InitializerContext initializer) {
+        if (innerPath.isEmpty()) {
+            return buildLeafValue(type, initializer);
+        }
+        final int position = innerPath.get(0);
+        final CInitializerList nested = new CInitializerList(type, parseContext);
+        final CStatement inner =
+                buildDesignatedInner(
+                        elementTypeAt(type, position),
+                        innerPath.subList(1, innerPath.size()),
+                        initializer);
+        nested.addStatement(
+                new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(position)), parseContext),
+                inner);
+        return nested;
     }
 
     /**
@@ -247,11 +285,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     }
 
     /**
-     * The element position a designator selects: the field's index for `.name`, the folded constant
-     * for `[expr]`. Only single-level designators are supported; member layout is by field index,
-     * so both forms land in the same position space.
+     * The path of element positions a designator selects: the field's index for `.name` (descending
+     * through anonymous members, so `.leaf` on a struct with an anonymous union member reaches the
+     * `leaf` inside it), the folded constant for `[expr]`. Only single-level *source* designators
+     * are supported; the returned path has one element for a direct field or array index, more only
+     * when an anonymous member had to be flattened through.
      */
-    private int designatedPosition(
+    private List<Integer> designatedPath(
             CParser.DesignationContext designation, CComplexType containerType) {
         final List<CParser.DesignatorContext> designators =
                 designation.designatorList().designator();
@@ -261,23 +301,18 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         }
         final CParser.DesignatorContext designator = designators.get(0);
         if (designator.Identifier() != null) {
-            if (!(containerType
-                    instanceof
-                    hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
-                            struct)) {
+            if (!(containerType instanceof CStruct struct)) {
                 throw new UnsupportedFrontendElementException(
                         "Field designator on a non-struct type: " + designation.getText());
             }
             final String fieldName = designator.Identifier().getText();
-            final var fields = struct.getFields();
-            for (int i = 0; i < fields.size(); i++) {
-                if (fields.get(i).get1().equals(fieldName)) {
-                    return i;
-                }
+            final List<Integer> path = fieldPath(struct, fieldName);
+            if (path == null) {
+                throw new UnsupportedFrontendElementException(
+                        "Field [%s] not found, available fields are: %s"
+                                .formatted(fieldName, struct.getFieldsAsMap().keySet()));
             }
-            throw new UnsupportedFrontendElementException(
-                    "Field [%s] not found, available fields are: %s"
-                            .formatted(fieldName, struct.getFieldsAsMap().keySet()));
+            return path;
         }
         if (functionVisitor == null) {
             throw new UnsupportedFrontendElementException(
@@ -288,14 +323,44 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 hu.bme.mit.theta.core.utils.ExprUtils.simplify(
                         designator.constantExpression().accept(functionVisitor).getExpression());
         if (folded instanceof IntLitExpr intLit) {
-            return intLit.getValue().intValueExact();
+            return List.of(intLit.getValue().intValueExact());
         }
         if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
-            return hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
-                    .intValueExact();
+            return List.of(
+                    hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
+                            .intValueExact());
         }
         throw new UnsupportedFrontendElementException(
                 "Array designator is not a constant: " + designation.getText());
+    }
+
+    /**
+     * The path of field indices reaching [fieldName] in [struct], descending through anonymous
+     * struct/union members (the C11 flattening a `.` member access also does), or null if it is not
+     * a member at any depth. A direct field gives a one-element path.
+     */
+    private List<Integer> fieldPath(CStruct struct, String fieldName) {
+        final var fields = struct.getFields();
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).get1().equals(fieldName)) {
+                final List<Integer> path = new ArrayList<>();
+                path.add(i);
+                return path;
+            }
+        }
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).get1().startsWith(CStruct.ANONYMOUS_FIELD_PREFIX)
+                    && fields.get(i).get2() instanceof CStruct anonymous) {
+                final List<Integer> sub = fieldPath(anonymous, fieldName);
+                if (sub != null) {
+                    final List<Integer> path = new ArrayList<>();
+                    path.add(i);
+                    path.addAll(sub);
+                    return path;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
