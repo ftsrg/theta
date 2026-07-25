@@ -863,34 +863,54 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         }
                     } else {
                         Expr<?> expression = declaration.getInitExpr().getExpression();
-                        // A struct value is its base id, whether read from a variable or out of
-                        // another object's cell: `struct S s = *p;` and `= o.field` copy the same
-                        // way `= other;` does.
-                        checkState(
-                                expression instanceof RefExpr<?>
-                                        || expression instanceof Dereference<?, ?, ?>,
-                                "Initializer type not handled for structs: " + expression);
-                        final var type = CComplexType.getType(expression, parseContext);
-                        checkState(
-                                type instanceof CStruct,
-                                "Initializer type not handled for structs: " + type);
-                        checkState(
-                                type.equals(declaration.getActualType()),
-                                "Mismatching types: "
-                                        + type
-                                        + " vs. "
-                                        + declaration.getActualType());
-                        // Checking the types is not initialising the variable: this branch used to
-                        // stop here, so `struct S s = other;` declared `s` and then quietly never
-                        // copied anything into it, leaving every field of `s` unconstrained. The
-                        // solver could then read whatever it liked out of `s`. The shape is not
-                        // exotic -- it is what a struct-returning function looks like at the call
-                        // site (`struct aws_byte_buf buf = aws_byte_buf_from_array(a, len);`), so
-                        // the aws-c-common byte_buf/byte_cursor harnesses all asserted on an
-                        // uninitialised struct and false-alarmed. The plain statement form (`s =
-                        // other;`) always worked, so emit exactly that, as the non-struct branch
-                        // below does.
-                        emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
+                        final var initType = CComplexType.getType(expression, parseContext);
+                        if (expression instanceof RefExpr<?>
+                                || expression instanceof Dereference<?, ?, ?>
+                                || initType instanceof CStruct) {
+                            // A struct value is its base id, whether read from a variable or out of
+                            // another object's cell: `struct S s = *p;` and `= o.field` copy the same
+                            // way `= other;` does.
+                            checkState(
+                                    initType instanceof CStruct,
+                                    "Initializer type not handled for structs: " + expression);
+                            checkState(
+                                    initType.equals(declaration.getActualType()),
+                                    "Mismatching types: "
+                                            + initType
+                                            + " vs. "
+                                            + declaration.getActualType());
+                            // Checking the types is not initialising the variable: this branch used
+                            // to stop here, so `struct S s = other;` declared `s` and then quietly
+                            // never copied anything into it, leaving every field of `s`
+                            // unconstrained. The solver could then read whatever it liked out of
+                            // `s`. The shape is not exotic -- it is what a struct-returning function
+                            // looks like at the call site (`struct aws_byte_buf buf =
+                            // aws_byte_buf_from_array(a, len);`), so the aws-c-common
+                            // byte_buf/byte_cursor harnesses all asserted on an uninitialised struct
+                            // and false-alarmed. The plain statement form (`s = other;`) always
+                            // worked, so emit exactly that, as the non-struct branch below does.
+                            emitInitAssignment(
+                                    ctx, declaration, compound, preCompound, postCompound);
+                        } else {
+                            // A struct/union initialised with a *scalar* (`union U u = raw;`, the
+                            // register-overlay idiom the intel-tdx-module firmware uses): C
+                            // initialises the object's first member, so write the value into its
+                            // first cell (offset 0), exactly as `= { raw }` would. Refusing this used
+                            // to fail parsing outright ("Initializer type not handled").
+                            final VarDecl<?> varDecl = declaration.getVarDecls().get(0);
+                            final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                            final LitExpr<?> zero = ptrType.getNullValue();
+                            final var deref =
+                                    Exprs.Dereference(
+                                            cast(varDecl.getRef(), zero.getType()),
+                                            cast(zero, zero.getType()),
+                                            expression.getType());
+                            CAssignment cAssignment =
+                                    new CAssignment(
+                                            deref, declaration.getInitExpr(), "=", parseContext);
+                            recordMetadata(ctx, cAssignment);
+                            compound.addCStatement(cAssignment);
+                        }
                     }
                 } else {
                     checkState(
