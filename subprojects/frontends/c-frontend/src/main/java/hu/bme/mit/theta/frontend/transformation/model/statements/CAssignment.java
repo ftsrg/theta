@@ -79,8 +79,19 @@ public class CAssignment extends CStatement {
                 ret = AbstractExprs.Div(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "%=":
-                ret = AbstractExprs.Mod(type.castTo(lValue), type.castTo(rExpression));
-                break;
+                {
+                    // C's `%` is truncated remainder, not floored modulo: `Rem` (URem/SRem by
+                    // signedness) for bitvectors, matching the binary `%` operator. `Mod` mapped to
+                    // the signed-only SMod and threw ("Unsigned BvType cannot be used here") on an
+                    // unsigned `x %= y`.
+                    final Expr<?> modLeft = type.castTo(lValue);
+                    final Expr<?> modRight = type.castTo(rExpression);
+                    ret =
+                            (modLeft.getType() instanceof BvType && modRight.getType() instanceof BvType)
+                                    ? AbstractExprs.Rem(modLeft, modRight)
+                                    : AbstractExprs.Mod(modLeft, modRight);
+                    break;
+                }
             case "+=":
                 ret = AbstractExprs.Add(type.castTo(lValue), type.castTo(rExpression));
                 break;
