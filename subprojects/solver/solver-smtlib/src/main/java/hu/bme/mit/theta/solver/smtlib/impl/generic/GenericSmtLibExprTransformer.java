@@ -663,7 +663,16 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     protected String transformBvConcat(final BvConcatExpr expr) {
         final String[] opTerms = expr.getOps().stream().map(this::toTerm).toArray(String[]::new);
 
-        return String.format("(concat %s)", String.join(" ", opTerms));
+        // SMT-LIB `concat` is a *binary* function (it is not declared `:left-assoc` like `bvand` /
+        // `bvadd`), so an n-ary BvConcatExpr must be nested into binary applications -- otherwise a
+        // strict solver (MathSAT, cvc5) rejects `(concat a b c d)` as "concat takes exactly 2
+        // arguments". Nesting left-associatively keeps the first operand the most significant, which
+        // is BvConcatExpr's own bit order.
+        String result = opTerms[0];
+        for (int i = 1; i < opTerms.length; i++) {
+            result = String.format("(concat %s %s)", result, opTerms[i]);
+        }
+        return result;
     }
 
     protected String transformBvExtract(final BvExtractExpr expr) {
