@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibDereferenceDecls;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
@@ -112,6 +113,9 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         checkArgument(markers.toCollection().contains(marker));
 
         final var consts = ExprUtils.getConstants(assertion);
+        // Declare the `deref` uninterpreted function (per signature) alongside the ordinary
+        // constants; it has no ConstDecl in the assertion of its own (see SmtLibDereferenceDecls).
+        consts.addAll(SmtLibDereferenceDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
         enumStrategy.declareDatatypes(

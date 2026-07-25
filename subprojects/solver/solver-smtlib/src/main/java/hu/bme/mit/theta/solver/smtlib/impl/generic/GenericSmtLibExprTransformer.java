@@ -1217,8 +1217,14 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         checkState(
                 expr.getUniquenessIdx().isPresent(),
                 "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
-        return "(deref %s %s %s)"
+        // `deref` is a genuine uninterpreted function, but it has no ConstDecl in the expression for
+        // the solver to declare, so route it through a canonical per-signature function declaration
+        // (see SmtLibDereferenceDecls): `toSymbol` registers its `(declare-fun …)` exactly as for any
+        // other uninterpreted function, and the solver emits it with the assertion's other constants.
+        final String funcSymbol = transformer.toSymbol(SmtLibDereferenceDecls.funcDecl(expr));
+        return "(%s %s %s %s)"
                 .formatted(
+                        funcSymbol,
                         toTerm(expr.getArray()),
                         toTerm(expr.getOffset()),
                         toTerm(expr.getUniquenessIdx().get()));
