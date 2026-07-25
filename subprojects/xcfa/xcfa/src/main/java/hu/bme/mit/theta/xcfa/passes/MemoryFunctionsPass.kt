@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
@@ -32,6 +34,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -67,21 +70,29 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
     /** `dst`, `c`, `n` -- fills with a byte. */
     private val FILL = setOf("memset", "__builtin_memset")
+
+    /** `mem`, `size` -- fills every byte with an independent nondeterministic value. */
+    private val NONDET_FILL = setOf("__VERIFIER_nondet_memory")
   }
+
+  private var nondetMemCounter = 0
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val defined = builder.parent.getProcedures().map { it.name }.toSet()
 
     builder.getEdges().toList().forEach { edge ->
       val labels = edge.label.getFlatLabels()
-      if (labels.none { it is InvokeLabel && it.name in COPY + FILL && it.name !in defined }) {
+      if (
+        labels.none { it is InvokeLabel && it.name in COPY + FILL + NONDET_FILL && it.name !in defined }
+      ) {
         return@forEach
       }
       val rewritten =
         labels.map { label ->
           if (label !is InvokeLabel || label.name in defined) label
           else if (label.name in COPY) copy(label) ?: label
-          else if (label.name in FILL) fill(label) ?: label else label
+          else if (label.name in FILL) fill(label) ?: label
+          else if (label.name in NONDET_FILL) nondetFill(label, builder) ?: label else label
         }
       if (rewritten != labels) {
         builder.removeEdge(edge)
@@ -137,6 +148,43 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     return SequenceLabel(
       stmts.map { StmtLabel(it, metadata = invoke.metadata) } + returns(invoke, dst)
     )
+  }
+
+  /**
+   * `__VERIFIER_nondet_memory(mem, size)`: initialise `size` bytes at `mem` to arbitrary values --
+   * one independent nondeterministic byte per cell, which is SV-COMP's own definition (`unsigned
+   * char *p = mem; for i in [0, size): p[i] = __VERIFIER_nondet_uchar()`).
+   *
+   * Only spelled out under the **bytes** memory model, where it is sound: memory is one-byte cells
+   * and every wider read is recombined from them, so a per-byte havoc is exactly visible to a later
+   * read of any type overlapping the region. Under the 2-D model this would havoc a `uchar` array
+   * that a sibling read of the same bytes at a wider type never sees -- a silent under-approximation
+   * that could prove an unsafe program safe -- so it is left to fail loudly instead. A symbolic or
+   * over-large size is likewise left unmodelled rather than havocing the wrong number of bytes.
+   */
+  private fun nondetFill(invoke: InvokeLabel, builder: XcfaProcedureBuilder): XcfaLabel? {
+    if (!parseContext.memoryModel.byteAddressed()) return null
+    // The last two arguments are `mem` and `size`, whether or not a (void) return slot precedes them.
+    if (invoke.params.size < 2) return null
+    val mem = invoke.params[invoke.params.size - 2]
+    val size = literalValue(invoke.params[invoke.params.size - 1]) ?: return giveUp(invoke)
+    if (size.signum() < 0 || size > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
+
+    val byteType = CUnsignedChar(null, parseContext)
+    val stmts =
+      (0 until size.toInt()).flatMap { i ->
+        val fresh = Var("__nondet_mem_${nondetMemCounter++}", byteType.smtType)
+        builder.addVar(fresh)
+        val cell = deref(mem, indexOf(i, mem), byteType)
+        listOf(
+          StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata),
+          StmtLabel(
+            MemoryAssignStmt.create(cell, cast(fresh.ref, byteType.smtType)),
+            metadata = invoke.metadata,
+          ),
+        )
+      }
+    return SequenceLabel(stmts)
   }
 
   /** `mem*` all return their destination; keep that, so `p = memcpy(p, q, n)` still works. */

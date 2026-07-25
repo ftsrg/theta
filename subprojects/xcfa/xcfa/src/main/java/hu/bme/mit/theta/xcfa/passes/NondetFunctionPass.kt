@@ -75,6 +75,10 @@ class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   private fun predicate(it: XcfaLabel): Boolean {
     return it is InvokeLabel &&
       it.name.startsWith("__VERIFIER_nondet") &&
-      it.name !in definedProcedures
+      it.name !in definedProcedures &&
+      // `__VERIFIER_nondet_memory(mem, size)` is not a value-returning nondet whose effect is its
+      // havoced return -- it writes `size` bytes at `mem`. Under the bytes model MemoryFunctionsPass
+      // spells that out; leave it for that pass rather than refusing it here for "having arguments".
+      !(parseContext.memoryModel.byteAddressed() && it.name == "__VERIFIER_nondet_memory")
   }
 }
