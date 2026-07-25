@@ -805,8 +805,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 memberName,
                 ((CStruct) type).getFieldsAsMap().keySet());
         CComplexType resultType = CComplexType.getUnsignedLong(parseContext);
-        Expr<?> ret =
-                resultType.getValue(String.valueOf(memberOffset((CStruct) type, memberName)));
+        // Under the bytes model `offsetof` is the member's real byte offset, matching the byte
+        // member access and the byte pointer arithmetic the `container_of` idiom subtracts it with;
+        // otherwise it is the member's element index, the unit the multi/flat models address in.
+        final int offset =
+                byteAddressed()
+                        ? ObjectLayout.of((CStruct) type, parseContext.getArchitecture())
+                                        .field(memberName)
+                                        .bitOffset()
+                                / 8
+                        : memberOffset((CStruct) type, memberName);
+        Expr<?> ret = resultType.getValue(String.valueOf(offset));
         parseContext.getMetadata().create(ret, "cType", resultType);
         return ret;
     }
@@ -1317,7 +1326,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         for (Expr<?> rawOp : addExpr.getOps()) {
             Expr<?> op = stripPos(rawOp);
             CComplexType opType = CComplexType.getType(op, parseContext);
-            if (opType instanceof CPointer || opType instanceof CArray) {
+            if (isPointerArithmeticBase(opType)) {
                 pointerOps.add(op);
             } else {
                 indexOps.add(op);
@@ -1348,7 +1357,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         for (Expr<?> rawOp : ((AddExpr<?>) stripPos(sum)).getOps()) {
             Expr<?> op = stripPos(rawOp);
             CComplexType opType = CComplexType.getType(op, parseContext);
-            if (opType instanceof CPointer || opType instanceof CArray) {
+            if (isPointerArithmeticBase(opType)) {
                 pointerBase = op;
             }
         }
@@ -1792,8 +1801,76 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         .formatted(memberName, structType.getFieldsAsMap().keySet()));
     }
 
+    /**
+     * Whether an operand of a dereference-base sum names the object being indexed. A pointer or an
+     * array always does; under the bytes model a struct/union value does too, because an aggregate
+     * value is its base id and a nested member reached as {@code base + offset} keeps that base an
+     * operand of the sum -- so folding it back out (see {@link #foldPointerArithmetic}) leaves the
+     * dereference on the object's real base, which the memsafety check needs to size it.
+     */
+    private boolean isPointerArithmeticBase(CComplexType opType) {
+        return opType instanceof CPointer
+                || opType instanceof CArray
+                || (byteAddressed() && opType instanceof CStruct);
+    }
+
+    /**
+     * `<base>.<member>` under the bytes memory model. The member's real byte offset comes straight
+     * from {@link ObjectLayout}; a scalar or pointer member is the plain dereference of its own type
+     * at (object base + that offset), which {@link hu.bme.mit.theta.xcfa.passes.ByteMemoryPass} then
+     * lowers to the member's own byte cells for both read and write -- no slicing, packing, or
+     * write-back metadata, because every member of the object shares the one byte array and
+     * overlapping members therefore alias by construction. A nested struct/array member is the
+     * sub-region at that offset, returned as plain pointer arithmetic so the following {@code .field}
+     * or {@code [i]} folds back onto the object's base. The member offset is folded onto a clean base
+     * so the memsafety check still sizes the access by the object's real base id.
+     */
+    private Expr<?> byteModeMemberAccess(
+            Expr<?> base, CStruct structType, String memberName, CComplexType embeddedType) {
+        final ObjectLayout.Field field =
+                ObjectLayout.of(structType, parseContext.getArchitecture()).field(memberName);
+        if (field == null) {
+            throw new UnsupportedFrontendElementException(
+                    "Member [%s] of a byte-addressed struct has no resolved layout."
+                            .formatted(memberName));
+        }
+        if (field.isBitfield()) {
+            throw new UnsupportedFrontendElementException(
+                    "Bitfield member [%s] is not yet supported under the bytes memory model."
+                            .formatted(memberName));
+        }
+        final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> memberByteOffset =
+                offsetType.getValue(String.valueOf(field.bitOffset() / 8));
+        final Expr<?> folded = foldPointerArithmetic(base, memberByteOffset);
+        final Expr<?> accessBase = folded == null ? base : pointerBaseOf(base);
+        final Expr<?> accessOffset = folded == null ? memberByteOffset : folded;
+        if (embeddedType instanceof CStruct || embeddedType instanceof CArray) {
+            final Expr<?> region =
+                    Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            parseContext.getMetadata().create(region, "cType", embeddedType);
+            return region;
+        }
+        final Expr<?> access =
+                Exprs.Dereference(
+                        cast(accessBase, accessBase.getType()),
+                        cast(accessOffset, accessBase.getType()),
+                        embeddedType.getSmtType());
+        parseContext.getMetadata().create(access, "cType", embeddedType);
+        return access;
+    }
+
     private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
         final CComplexType embeddedType = structType.getFieldsAsMap().get(memberName);
+
+        // Under the bytes model every member sits at its real ObjectLayout byte offset in the one
+        // byte array, so member access needs none of the union-slicing/packing machinery below: a
+        // scalar member is the dereference of its own type at that offset (ByteMemoryPass then reads
+        // and writes it as its bytes, and overlapping members alias because they share the array),
+        // and a nested aggregate is the sub-region at that offset.
+        if (byteAddressed()) {
+            return byteModeMemberAccess(base, structType, memberName, embeddedType);
+        }
 
         // Resolving a field of a nested struct reached through a byte-addressed union's STRUCT
         // marker: the marker carries the union's own base and the nested struct's byte offset, so
