@@ -1289,16 +1289,32 @@ class FrontendXcfaBuilder(
               // because of the byte-offset arithmetic nested inside it (see ByteUnionSlice). A
               // Reference is already a complete address value -- built by directMemberAccess's own
               // Dereference, or by `&` elsewhere -- and needs no further reinterpretation here.
-              val asReference =
-                rExpression.asPointerArithReference(lhsType, parseContext)
-                  ?: throw UnsupportedFrontendElementException(
-                    "Pointer arithmetic not supported: $lValue = $rExpression"
-                  )
-              AssignStmtLabel(
-                lValue,
-                cast(asReference, lValue.type),
-                metadata = getMetadata(statement),
-              )
+              val asReference = rExpression.asPointerArithReference(lhsType, parseContext)
+              if (asReference == null && parseContext.memoryModel.flatAddressing()) {
+                // Under flat/bytes addressing a pointer *is* a single scalar address, so `p = <ptr
+                // arithmetic>` of any shape is just scalar arithmetic -- assign it directly, with no
+                // base/offset split and none of the reference rewrite's `pointer + integer(s)` shape
+                // restriction (which refuses a pointer difference or a pointer under a multiply, both
+                // fine once the address is one scalar). This is what unblocks the pointer arithmetic
+                // the intel-tdx-module firmware does that the 2-D model cannot split.
+                AssignStmtLabel(
+                  lValue,
+                  cast(lhsType.castTo(rExpression), lValue.type),
+                  metadata = getMetadata(statement),
+                )
+              } else {
+                AssignStmtLabel(
+                  lValue,
+                  cast(
+                    asReference
+                      ?: throw UnsupportedFrontendElementException(
+                        "Pointer arithmetic not supported: $lValue = $rExpression"
+                      ),
+                    lValue.type,
+                  ),
+                  metadata = getMetadata(statement),
+                )
+              }
             } else {
               // TODO: check if assignment to arrays (stack AND heap) are value- or pointer-based
               AssignStmtLabel(
