@@ -1834,12 +1834,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "Member [%s] of a byte-addressed struct has no resolved layout."
                             .formatted(memberName));
         }
-        if (field.isBitfield()) {
-            throw new UnsupportedFrontendElementException(
-                    "Bitfield member [%s] is not yet supported under the bytes memory model."
-                            .formatted(memberName));
-        }
         final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
+        if (field.isBitfield()) {
+            return byteModeBitfieldAccess(base, memberName, embeddedType, field, offsetType);
+        }
         final Expr<?> memberByteOffset =
                 offsetType.getValue(String.valueOf(field.bitOffset() / 8));
         final Expr<?> folded = foldPointerArithmetic(base, memberByteOffset);
@@ -1858,6 +1856,81 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         embeddedType.getSmtType());
         parseContext.getMetadata().create(access, "cType", embeddedType);
         return access;
+    }
+
+    /**
+     * A bitfield member under the bytes model. The bitfield lives in a storage unit of its declared
+     * integer type ({@code unsigned int f:4} is packed into a 4-byte unit), so the cell is the
+     * dereference of that declared type at the unit's byte offset -- an ordinary wide dereference
+     * {@link hu.bme.mit.theta.xcfa.passes.ByteMemoryPass} lowers to the unit's bytes, so it aliases
+     * every other view of those bytes. The value is the {@link
+     * hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice} of the
+     * {@code [bitInUnit, +width)} bits; the same {@code CELL}/{@code OFFSET}/{@code WIDTH} metadata
+     * the packed-struct path stamps lets an assignment read-modify-write only those bits (see {@code
+     * FrontendXcfaBuilder}), leaving the neighbours sharing the unit -- and its other bytes --
+     * intact. A field the ABI straddled across two declared-type units (only possible in a packed
+     * struct) is refused rather than mismodelled.
+     */
+    private Expr<?> byteModeBitfieldAccess(
+            Expr<?> base,
+            String memberName,
+            CComplexType declaredType,
+            ObjectLayout.Field field,
+            CComplexType offsetType) {
+        final int unitBits = declaredType.width();
+        final int unitBytes = unitBits / 8;
+        final int unitByteOffset = (field.bitOffset() / unitBits) * unitBytes;
+        final int bitInUnit = field.bitOffset() - unitByteOffset * 8;
+        if (bitInUnit + field.bitfieldWidth() > unitBits) {
+            throw new UnsupportedFrontendElementException(
+                    "Bitfield member [%s] straddles two storage units, which the bytes memory model"
+                            + " does not support."
+                            .formatted(memberName));
+        }
+        final Expr<?> unitOffset = offsetType.getValue(String.valueOf(unitByteOffset));
+        final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
+        final Expr<?> accessBase = folded == null ? base : pointerBaseOf(base);
+        final Expr<?> accessOffset = folded == null ? unitOffset : folded;
+        final Expr<?> cell =
+                Exprs.Dereference(
+                        cast(accessBase, accessBase.getType()),
+                        cast(accessOffset, accessBase.getType()),
+                        declaredType.getSmtType());
+        parseContext.getMetadata().create(cell, "cType", declaredType);
+        final boolean signed =
+                declaredType
+                                instanceof
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                                .CInteger
+                                        integer
+                        && integer.isSsigned();
+        final Expr<?> value =
+                declaredType.castTo(
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.read(cell, bitInUnit, field.bitfieldWidth(), signed));
+        parseContext.getMetadata().create(value, "cType", declaredType);
+        parseContext
+                .getMetadata()
+                .create(
+                        value,
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.CELL,
+                        cell);
+        parseContext
+                .getMetadata()
+                .create(
+                        value,
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.OFFSET,
+                        bitInUnit);
+        parseContext
+                .getMetadata()
+                .create(
+                        value,
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                                .BitfieldSlice.WIDTH,
+                        field.bitfieldWidth());
+        return value;
     }
 
     private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
