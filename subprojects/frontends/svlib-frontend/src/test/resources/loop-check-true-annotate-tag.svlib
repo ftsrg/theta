@@ -18,7 +18,7 @@
 (declare-const input Int)
 
 (annotate-tag loop-body-entry
-  :check-true (< x 3))
+  :check-true (<= x 5))
 
 (verify-call loopExample (input))
 (get-witness)

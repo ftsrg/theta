@@ -150,13 +150,6 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitDeclareVar(SvLibParser.DeclareVarContext ctx) {
-    String name = ctx.symbol().getText();
-    declarations.put(name, Var(name, sortOf(ctx.sort())));
-    return null;
-  }
-
-  @Override
   public Void visitDefineProc(SvLibParser.DefineProcContext ctx) {
     String name = ctx.symbol().getText();
     if (entryProcedureName != null && !entryProcedureName.equals(name)) {
@@ -288,15 +281,6 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
             NopLabel.INSTANCE,
             EmptyMetaData.INSTANCE));
   }
-
-  @Override
-  public Void visitVerifyCall(SvLibParser.VerifyCallContext ctx) {
-    entryProcedureName = ctx.symbol().getText();
-    entryArguments = List.copyOf(ctx.term());
-    return null;
-  }
-
-
 
   private XcfaLocation addLabels(
       XcfaProcedureBuilder builder, XcfaLocation from, List<XcfaLabel> labels) {

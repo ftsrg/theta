@@ -25,7 +25,7 @@ class SvLibFrontendTest {
           ((x Int))
           ((y Int))
           ((tmp Int))
-          body
+          (sequence)
         )
         """;
 
@@ -212,6 +212,20 @@ class SvLibFrontendTest {
                         && outgoingCounts.getOrDefault(loc, 0L) >= 2));
 
 
+  }
+
+  @Test
+  void loopCheckTrueAnnotateTagPrintsDot() throws IOException {
+    var xcfa = parseResource("loop-check-true-annotate-tag.svlib");
+    var dot = toDot(xcfa, null);
+
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("loop-check-true-annotate-tag.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertFalse(dot.isBlank());
   }
 
   private static hu.bme.mit.theta.xcfa.model.XCFA parseResource(String name) {
