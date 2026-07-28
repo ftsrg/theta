@@ -91,7 +91,7 @@ fun multithreadPortfolio(
     val ocXcfa =
       if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE)
         xcfa.optimizeFurther(
-          ProcedurePassManager(listOf(DataRaceToReachabilityPass(property, true)))
+          ProcedurePassManager(listOf(DataRaceToReachabilityPass(property, parseContext, enabled = true)))
         )
       else xcfa
 

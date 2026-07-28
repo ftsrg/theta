@@ -39,6 +39,7 @@ import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnusedLocRemovalPass
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -111,7 +112,23 @@ class XcfaOcChecker(
    */
   private fun check(forceUnrollBound: Int): Pair<SafetyResult<EmptyProof, Cex>, Boolean> {
     // force loop unroll for BMC
-    val xcfa = xcfa.optimizeFurther(ProcedurePassManager(listOf(LoopUnrollPass(forceUnrollBound))))
+    // UnusedLocRemovalPass after the unroll: force unrolling leaves behind copies past the bound
+    // that nothing can reach, including whole dead cycles. Those are invisible to the traversal
+    // below but not to the incoming-edge *counts* it waits on, so a live merge point would sit
+    // forever waiting for a predecessor that can never execute -- reported as "loops".
+    val xcfa =
+      xcfa.optimizeFurther(
+        ProcedurePassManager(
+          listOf(
+            // parseContext is what lets the pass expand recursive calls (it needs the C types to
+            // build the parameter assignments); whether it does so is the --force-unroll-recursion
+            // setting. Re-running it per bound is the point: each escalation expands the recursion
+            // one level deeper, which inlining -- a one-shot, all-or-nothing pass -- cannot do.
+            LoopUnrollPass(forceUnrollBound, parseContext = parseContext),
+            UnusedLocRemovalPass(),
+          )
+        )
+      )
     logger.info("  -> unsafe unroll ${if (xcfa.unsafeUnrollUsed) "" else "NOT"} used")
 
     logger.mainStep("Creating event graph...")
@@ -211,9 +228,9 @@ class XcfaOcChecker(
         .forEach { (event, rels) ->
           rels.forEach { rel ->
             var conseq = And(rel.from.guardExpr, rel.to.guardExpr)
-            if (rel.from.const != eg.memoryGarbage) {
+            if (rel.from.const !in eg.memoryGarbages) {
               conseq = And(conseq, Eq(rel.from.const.ref, rel.to.const.ref))
-              if (v == eg.memoryDecl) {
+              if (v in eg.memoryDecls) {
                 conseq =
                   And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
               }

@@ -139,6 +139,11 @@ public class Struct extends NamedType {
         return canonical().fields;
     }
 
+    /** Whether this tag has been given a body yet (see the forward-declaration path). */
+    public boolean hasFields() {
+        return !canonical().fields.isEmpty();
+    }
+
     public void addField(CDeclaration decl) {
         fields.put(checkNotNull(decl.getName()), checkNotNull(decl));
         cachedActualFields = null;

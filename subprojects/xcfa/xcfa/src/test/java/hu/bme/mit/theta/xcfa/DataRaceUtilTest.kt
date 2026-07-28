@@ -200,7 +200,7 @@ class DataRaceUtilTest {
       xcfa.optimizeFurther(
         ProcedurePassManager(
           listOf(
-            DataRaceToReachabilityPass(property, true),
+            DataRaceToReachabilityPass(property, enabled = true),
             UnusedLocRemovalPass(),
             NormalizePass(),
             DeterministicPass(),

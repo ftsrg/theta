@@ -42,23 +42,44 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  */
 class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : ProcedurePass {
 
-  private val threadFunctions = setOf("pthread_create", "pthread_join")
+  /**
+   * The library calls whose handle argument has to resolve to one statically-named object.
+   *
+   * Mutexes need this as much as threads do: `CLibraryFunctionsPass.getParam` resolves a
+   * `pthread_mutex_lock(&mutex[j])` handle exactly like a `pthread_create(&t[i], ...)` one, so with
+   * only the thread functions here a loop locking an array of mutexes was never unrolled, `j`
+   * stayed a variable, and the whole task was refused for a "non-constant dereference offset" --
+   * even at a trip count of ten, well inside the unroll limit.
+   */
+  private val handleFunctions =
+    setOf(
+      "pthread_create",
+      "pthread_join",
+      "pthread_mutex_lock",
+      "pthread_mutex_unlock",
+      "pthread_mutex_init",
+      "pthread_mutex_destroy",
+      "pthread_mutex_trylock",
+      "pthread_cond_wait",
+      "pthread_cond_signal",
+      "pthread_cond_broadcast",
+      "pthread_cond_init",
+      "pthread_cond_destroy",
+    )
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder =
-    if (createsThreadThroughArrayElement(builder))
+    if (usesArrayElementHandle(builder))
       LoopUnrollPass(substituteLoopVar = true, parseContext = parseContext).run(builder)
     else builder
 
-  private fun createsThreadThroughArrayElement(builder: XcfaProcedureBuilder): Boolean =
+  private fun usesArrayElementHandle(builder: XcfaProcedureBuilder): Boolean =
     builder.getEdges().any { edge ->
       edge.label.getFlatLabels().any { label ->
-        label is InvokeLabel && label.name in threadFunctions && label.hasArrayElementHandle()
+        label is InvokeLabel && label.name in handleFunctions && label.hasArrayElementHandle()
       }
     }
 
-  /**
-   * The thread handle -- `params[1]` for both create and join -- is a non-constant array element.
-   */
+  /** The handle -- `params[1]` for every one of [handleFunctions] -- is a non-constant array element. */
   private fun InvokeLabel.hasArrayElementHandle(): Boolean {
     if (params.size <= 1) return false
     var handle = params[1]

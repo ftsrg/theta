@@ -77,9 +77,85 @@ class AtomicReadsOneWritePass : ProcedurePass {
       }
     }
 
+    // A branching location's outgoing edges must each start with an assume (the OC backend requires
+    // it). When the leading guard *itself* reads a variable that has to be localized, the copy-in
+    // cannot be placed in front of it on the same edge, and the `prefix` mitigation below computes
+    // 0. Hoist the copy-in onto a new edge *above* the branch instead, shared by every sibling.
+    //
+    // It has to cover every outgoing edge with one shared local, not just the edge that needs it:
+    // the OC encoding ties sibling branch conditions together through the declaration they read
+    // (`assumeConsts` in XcfaToEventGraph), so localizing one branch while its siblings keep reading
+    // the global unties them and lets the two branches disagree about the value of the same global
+    // -- a false race, not a crash. Hoisting gives a single read of the global that all the guards
+    // share, which preserves the tie.
+    //
+    // This is exactly the shape DataRaceToReachabilityPass produces: `assume(assertion); set;
+    // access; unset` on the MAIN_PATH edge (so the flag is written twice -> wrongWrite) against
+    // `assume(!assertion)` on the ALTERNATIVE_PATH sibling, which only reads the same flags.
+    val hoistedAway = mutableSetOf<XcfaEdge>()
+    builder.getLocs().toSet().forEach { source ->
+      val outgoing = source.outgoingEdges.toSet()
+      if (outgoing.size <= 1) return@forEach
+      val perEdge = outgoing.associateWith { it.wrongWriteVars() }
+      val blocked =
+        perEdge.any { (e, tr) ->
+          tr.isNotEmpty() &&
+            e.getFlatLabels().firstOrNull().let { first ->
+              first is StmtLabel &&
+                first.stmt is AssumeStmt &&
+                first.collectVarsWithAccessType().any { (v, _) -> v in tr }
+            }
+        }
+      if (!blocked) return@forEach
+      val shared = perEdge.values.flatten().toSet()
+      if (shared.isEmpty()) return@forEach
+
+      val localVersions =
+        shared.associateWith { v ->
+          indexing = indexing.inc(v)
+          v.localVersion(indexing, builder)
+        }
+      val branchLoc =
+        XcfaLocation(
+          "${source.name}_dr_local${XcfaLocation.uniqueCounter()}",
+          metadata = source.metadata,
+        )
+      builder.addLoc(branchLoc)
+      outgoing.forEach { e ->
+        // Write the local back only on the branches that actually modify it: an unconditional
+        // write-back would add a spurious write event to the global on a read-only branch.
+        val written =
+          e.collectVarsWithAccessType().any { (v, at) -> v in shared && at.isWritten }
+        val newLabels = e.getFlatLabels().map { it.replaceAccesses(localVersions) }
+        val finalAssigns =
+          if (!written) listOf()
+          else
+            localVersions.map { (v, local) ->
+              StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)))
+            }
+        builder.removeEdge(e)
+        val moved =
+          XcfaEdge(branchLoc, e.target, SequenceLabel(newLabels + finalAssigns), e.metadata)
+        builder.addEdge(moved)
+        hoistedAway.add(moved)
+      }
+      builder.addEdge(
+        XcfaEdge(
+          source,
+          branchLoc,
+          SequenceLabel(
+            localVersions.map { (v, local) ->
+              StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
+            }
+          ),
+          EmptyMetaData,
+        )
+      )
+    }
+
     builder.getEdges().toSet().forEach { edge ->
-      val toReplace =
-        edge.countEdgeAccesses().mapNotNull { (v, ao) -> if (ao.wrongWrite) v else null }
+      if (edge in hoistedAway) return@forEach
+      val toReplace = edge.wrongWriteVars()
       if (toReplace.isNotEmpty()) {
         val localVersions =
           toReplace.associateWith { v ->
@@ -149,6 +225,10 @@ class AtomicReadsOneWritePass : ProcedurePass {
 
     return accesses
   }
+
+  /** The variables this edge reads or writes *after* having written them (see [AccessOrder]). */
+  private fun XcfaEdge.wrongWriteVars(): List<VarDecl<*>> =
+    countEdgeAccesses().mapNotNull { (v, ao) -> if (ao.wrongWrite) v else null }
 
   private fun XcfaEdge.countEdgeAccesses(): Map<VarDecl<*>, AccessOrder> {
     val accesses = mutableMapOf<VarDecl<*>, AccessOrder>()

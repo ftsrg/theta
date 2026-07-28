@@ -36,6 +36,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -122,6 +123,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
   LoopUnrollPass.FORCE_UNROLL_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
+  LoopUnrollPass.UNROLL_RECURSION = !config.frontendConfig.noForceUnrollRecursion
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
@@ -198,6 +200,19 @@ private fun parseInputFiles(
     Triple(xcfa, mcm, parseContext)
   }
 
+/**
+ * Builds the XCFA (plus MCM and parse context) for the configured input.
+ *
+ * The default `multi` memory model splits a pointer into a base and an offset channel, and there
+ * are local-variable patterns its splitting machinery cannot represent -- those make the frontend
+ * throw [UnsupportedPointerSplitException]. The `flat` model has no splitting at all (a pointer is
+ * a single scalar address), so the very same program builds there; when the model was left at its
+ * default we therefore rebuild the whole frontend under `flat` rather than failing.
+ *
+ * The fallback is deliberately restricted to the *default* model: an explicit `--memory-model` is
+ * the user's decision, and is never overridden -- not even when it names the same `multi` we would
+ * otherwise have replaced.
+ */
 private fun frontend(
   config: XcfaConfig<*, *>,
   logger: Logger,
@@ -207,6 +222,35 @@ private fun frontend(
     return config.inputConfig.xcfaWCtx!!
   }
 
+  val cConfig = config.frontendConfig.specConfig as? CFrontendConfig
+  val mayFallBackToFlat =
+    config.frontendConfig.inputType == InputType.C && cConfig != null && cConfig.memoryModel == null
+
+  return try {
+    buildFrontend(config, logger, uniqueLogger, mayFallBackToFlat)
+  } catch (e: UnsupportedPointerSplitException) {
+    logger.write(
+      Logger.Level.RESULT,
+      "%s%n",
+      "note: frontend build failed due to a pointer-splitting limitation under --memory-model" +
+        " ${cConfig!!.effectiveMemoryModel}; retrying with --memory-model flat",
+    )
+    logger.info("%s", "Pointer-splitting limitation was: ${e.message}")
+    // Pin the model for everything downstream too: the portfolio re-runs the frontend once per
+    // configuration it tries (in-process runs re-parse from this very config), and they must all
+    // agree with the XCFA we return here.
+    cConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
+    // No fallback left to offer: whatever this attempt throws is reported as a real failure.
+    buildFrontend(config, logger, uniqueLogger, allowFlatFallback = false)
+  }
+}
+
+private fun buildFrontend(
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+  allowFlatFallback: Boolean,
+): Triple<XCFA, MCM, ParseContext> {
   val stopwatch = Stopwatch.createStarted()
 
   val input = config.inputConfig.input!!
@@ -220,10 +264,10 @@ private fun frontend(
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
-    parseContext.memoryModel = cConfig.memoryModel
+    parseContext.memoryModel = cConfig.effectiveMemoryModel
   }
 
-  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
+  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger, allowFlatFallback)
   val mcm =
     if (config.inputConfig.catFile != null) {
       CatDslManager.createMCM(config.inputConfig.catFile!!)

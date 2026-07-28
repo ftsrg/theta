@@ -52,98 +52,6 @@ import java.math.BigInteger
 
 private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
-/**
- * Whether the cell this dereference reads is `_Atomic` -- accesses to it are, by definition, not
- * data races with anything.
- *
- * A race between two *variables* checks whether the **variable** is atomic (`!v1.globalVar.atomic`,
- * below). An access *through* a dereference touches the cell it points **at**, which is a different
- * question, and `_Atomic` says which is which:
- * ```
- * _Atomic int *p;   // p is an ordinary variable; p[i] is atomic, and cannot be raced on
- * int * _Atomic p;  // p itself is atomic; what it points at is not
- * ```
- *
- * `_Atomic` is a property of the accessed *cell* -- a struct field, an array element, or a pointee
- * -- but the expression that reaches it is a bare `(base, offset)` of literals by analysis time
- * (folded constants, rebuilt exprs, identity-keyed C types all lost). So atomicity is recorded
- * against the object's base id where that id is minted (global layout in the frontend builder,
- * address-taken objects in [ReferenceElimination]) and resolved here by the base id's *value*.
- *
- * A live pointer *variable* (not folded to a base) is still asked its type directly.
- *
- * Nothing found means nothing skipped -- reporting a race is the safe direction.
- */
-private fun Dereference<*, *, *>.addressesAtomicData(
-  xcfa: XCFA,
-  parseContext: ParseContext,
-): Boolean {
-  if (parseContext.memoryModel.flatAddressing()) {
-    // FlatMemoryPass folded the base into the offset: array is a bare 0 and offset is the flat
-    // address objectBase*STRIDE + cell. Decode it back to (base, cell) and ask directly; the
-    // multi-model branches below must not run, because their array-based resolution (a RefExpr
-    // pointer, or `initValue == array`) would spuriously match the folded 0 and mark a racy access
-    // atomic -- missing a real race. When the address is not a compile-time constant we cannot
-    // resolve the object, so we answer "not atomic": that keeps the access in the race check
-    // (sound; at worst over-reports), never excludes it.
-    val flatAddr = offset.asConstantBigInteger() ?: return false
-    val stride = BigInteger.valueOf(FlatMemoryPass.FLAT_STRIDE)
-    return parseContext.isAtomicObjectCell(flatAddr.divide(stride), flatAddr.mod(stride).toInt())
-  }
-  // The object being accessed, identified by the base id its dereference resolves to.
-  array.resolveObjectBase(parseContext)?.let { base ->
-    if (parseContext.isAtomicObjectCell(base, offset.asConstantBigInteger()?.toInt())) return true
-  }
-  // A live pointer *variable*: its type says what it points at.
-  (array as? RefExpr<*>)?.decl?.let { decl ->
-    xcfa.globalVars
-      .firstOrNull { it.wrappedVar == decl }
-      ?.let { if (it.pointsToAtomic) return true }
-    val pointee =
-      try {
-        when (val type = CComplexType.getType(array, parseContext)) {
-          is CPointer -> type.embeddedType
-          is CArray -> type.embeddedType
-          else -> null
-        }
-      } catch (e: Exception) {
-        null
-      }
-    if (pointee?.isAtomic == true) return true
-  }
-  // An address-taken object, whose pointer has been folded to a bare literal -- its object id. The
-  // pointer ReferenceElimination invented for it still holds that id, and remembers what it points
-  // at.
-  return xcfa.globalVars.any { it.pointsToAtomic && it.initValue == array }
-}
-
-/**
- * The value of a bare integer/bitvector literal, or null when this is not a compile-time constant.
- */
-private fun Expr<*>.asConstantBigInteger(): BigInteger? =
-  when (this) {
-    is IntLitExpr -> value
-    is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
-    else -> null
-  }
-
-/**
- * The base id of the object this dereference-base expression denotes: a bare literal is that id
- * directly; a nested `(deref parent offset)` reads a subobject's base from its parent's cell, so it
- * resolves through [ParseContext.subObjectBaseAt] (recursively, for `s.a.b.c`).
- */
-private fun Expr<*>.resolveObjectBase(parseContext: ParseContext): BigInteger? {
-  asConstantBigInteger()?.let {
-    return it
-  }
-  if (this is Dereference<*, *, *>) {
-    val parent = array.resolveObjectBase(parseContext) ?: return null
-    val offsetValue = offset.asConstantBigInteger()?.toInt() ?: return null
-    return parseContext.subObjectBaseAt(parent, offsetValue)
-  }
-  return null
-}
-
 /** One of the two conflicting accesses of a data race. */
 data class DataRaceAccess(val pid: Int, val edge: XcfaEdge, val label: XcfaLabel)
 
@@ -393,7 +301,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               label,
               deref.array,
               deref.offset,
-              deref.addressesAtomicData(xcfa, parseContext),
+              deref.addressesAtomicData(xcfa.globalVars, parseContext),
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),

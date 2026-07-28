@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -49,11 +50,21 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
+/**
+ * Builds the XCFA for the configured input.
+ *
+ * With [rethrowPointerSplitLimitation] the one failure mode the caller can recover from -- the
+ * base/offset pointer splitting of `--memory-model multi` giving up, see
+ * [UnsupportedPointerSplitException] -- is handed back untouched instead of being reported as a
+ * frontend failure, so the caller can rebuild everything under `--memory-model flat`. Every other
+ * failure is reported and exits as before.
+ */
 fun getXcfa(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
+  rethrowPointerSplitLimitation: Boolean = false,
 ) =
   try {
     when (config.frontendConfig.inputType) {
@@ -115,12 +126,32 @@ fun getXcfa(
       }
     }
   } catch (e: Exception) {
+    // Give the caller its chance to retry under a memory model that has no pointer splitting at
+    // all, before anything is logged as a failure -- this build attempt is not the last word.
+    if (rethrowPointerSplitLimitation) {
+      e.pointerSplitLimitation()?.let { throw it }
+    }
     if (config.debugConfig.stacktrace) e.printStackTrace()
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
     logger.write(Logger.Level.RESULT, "%s", "Frontend failed! ($location, $e)\n")
     exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
+
+/**
+ * The [UnsupportedPointerSplitException] in this throwable's cause chain, or null if the failure is
+ * something else entirely. The chain has to be walked because the frontend wraps failures on its
+ * way out (e.g. the retry-with-bitvector-arithmetic path in [parseC]).
+ */
+private fun Throwable.pointerSplitLimitation(): UnsupportedPointerSplitException? {
+  val seen = mutableSetOf<Throwable>()
+  var current: Throwable? = this
+  while (current != null && seen.add(current)) {
+    if (current is UnsupportedPointerSplitException) return current
+    current = current.cause
+  }
+  return null
+}
 
 private fun CFA.toXcfa(): XCFA {
   val xcfaBuilder = XcfaBuilder("chc")

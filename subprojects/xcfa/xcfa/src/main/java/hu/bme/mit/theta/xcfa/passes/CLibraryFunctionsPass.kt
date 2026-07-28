@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
@@ -280,7 +281,18 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     when (this) {
       is IntLitExpr -> value
       is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
-      else -> null
+      // A constant that has not been folded yet is still a constant. Unrolling substitutes the
+      // index but leaves the unsigned-wraparound wrapper the frontend put around it, so the offset
+      // of `&t[4]` arrives as `(mod 4 4294967296)` -- matching only a bare literal rejected the
+      // handle as "non-constant dereference offset" even though its value is perfectly known.
+      else ->
+        ExprUtils.simplify(this).let { simplified ->
+          when (simplified) {
+            is IntLitExpr -> simplified.value
+            is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(simplified)
+            else -> null
+          }
+        }
     }
 
   /**

@@ -59,6 +59,24 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                         false);
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
+                // A bare prototype repeating a function that was already *defined* above must not
+                // replace it: the definition carries the body, the prototype does not. Preprocessed
+                // sources hit this routinely, where a header re-declares a `static inline` function
+                // it has already defined. Overwriting would silently turn the function into an
+                // undefined one (havoc'd return value, so false alarms) and would also drop the
+                // identifiers its body uses, pruning everything only it called. Overwriting stays
+                // correct for redeclared globals -- a tentative definition followed by the real
+                // initializer -- which is what this branch was written for.
+                if (usedContexts.stream()
+                        .anyMatch(
+                                c ->
+                                        Objects.equals(c.get1(), declaration.getName())
+                                                && c.get2()
+                                                        instanceof
+                                                        CParser
+                                                                .ExternalFunctionDefinitionContext)) {
+                    continue;
+                }
                 globalUsages.remove(declaration.getName());
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
                 if (usedContexts.stream()

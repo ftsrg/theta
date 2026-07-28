@@ -712,8 +712,27 @@ class FrontendXcfaBuilder(
       return
     }
     if (globalDeclaration is RefExpr<*>) {
+      // `_Atomic int *p` makes the *pointee* atomic, not p, so it is `pointsToAtomic` that the
+      // declaration sets -- and it is what a memory access through p has to ask. Leaving it false
+      // meant an access through a pointer declared to point at atomic data was checked for races
+      // like any other, which is how the `_Atomic int *A; A = (_Atomic int*)malloc(...); A[i]++;`
+      // shape (popl20/weaver) got a race reported on data that is atomic by construction. This is
+      // the *access path's* atomicity -- the object itself is untouched, so a second access to the
+      // same memory through a plain `int *` is still checked, which marking the object would have
+      // silently excluded.
+      val pointeeAtomic =
+        when (type) {
+          is CPointer -> type.embeddedType?.isAtomic == true
+          is CArray -> type.embeddedType?.isAtomic == true
+          else -> false
+        }
       builder.addVar(
-        XcfaGlobalVar(globalDeclaration.decl as VarDecl<*>, type.nullValue, atomic = isAtomic)
+        XcfaGlobalVar(
+          globalDeclaration.decl as VarDecl<*>,
+          type.nullValue,
+          atomic = isAtomic,
+          pointsToAtomic = pointeeAtomic,
+        )
       )
     }
     if (type is CArray) {

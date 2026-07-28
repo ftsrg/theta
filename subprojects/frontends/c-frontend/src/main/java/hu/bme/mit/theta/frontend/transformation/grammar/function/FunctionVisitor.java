@@ -56,6 +56,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.*;
 import java.util.stream.Stream;
@@ -238,6 +239,42 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             parseContext
                     .getMetadata()
                     .create(typedef.getName(), "cTypedefName", typedef.getActualType());
+        }
+
+        // Introduce every function's name before any global declaration is processed. A function has
+        // file scope, so C guarantees it is visible wherever the source refers to it -- but the
+        // order these contexts are visited in is not the source order: a global that is declared
+        // early and *defined* later (`int (*p)(void);` ... `int (*p)(void) = f;`) keeps its original
+        // position while adopting the later context (see GlobalDeclUsageVisitor), so its initializer
+        // is evaluated here long before the `f` it names would be reached. That made whole driver
+        // families die with "No such variable or macro: <function>". Creating the names up front
+        // costs nothing: these functions are visited below anyway, and each adopts the variable made
+        // here rather than making its own (the prototype-before-definition path).
+        for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
+            if (externalDeclarationContext
+                    instanceof CParser.ExternalFunctionDefinitionContext funcDefCtx) {
+                CParser.FunctionDefinitionContext funcDef = funcDefCtx.functionDefinition();
+                CSimpleType returnType = funcDef.declarationSpecifiers().accept(typeVisitor);
+                if (returnType.isTypedef()) continue;
+                CDeclaration funcDecl = funcDef.declarator().accept(declarationVisitor);
+                funcDecl.setType(returnType);
+                if (funcDecl.getName() != null
+                        && !variables.peek().get2().containsKey(funcDecl.getName())) {
+                    parseContext
+                            .getMetadata()
+                            .create(funcDecl.getName(), "cType", returnType.getActualType());
+                    createVars(funcDecl);
+                    // Record it as a function too, not just as a name. Taking a function's address
+                    // is recognised by looking the variable up in this map
+                    // (registerIfFunctionUsedAsValue), and the id that lookup registers is what
+                    // initialises the address. Creating the variable here without the entry made
+                    // the later prototype/definition skip its own registration -- the name resolved,
+                    // but every address-taken function lost its id and its initial value.
+                    for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
+                        functions.put(varDecl, funcDecl);
+                    }
+                }
+            }
         }
 
         CProgram program = new CProgram(parseContext);
@@ -796,6 +833,95 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
     }
 
+    /**
+     * How many storage cells one value of {@code type} occupies in the flat cell-indexed model
+     * this initializer loop uses (one cell per scalar field/element); mirrors
+     * FrontendXcfaBuilder#cellsOf, which the same-shaped global initializer uses.
+     */
+    private int cellsOf(CComplexType type) {
+        if (type instanceof CArray cArrayType) {
+            final Integer dimension = ObjectLayout.constantDimension(cArrayType);
+            final int count = dimension == null ? 1 : dimension;
+            return count * cellsOf(cArrayType.getEmbeddedType());
+        } else if (type instanceof CStruct cStructType) {
+            if (cStructType.isUnion()) {
+                final Integer width = cStructType.unionCellWidth();
+                return width == null
+                        ? ObjectLayout.of(cStructType, parseContext.getArchitecture()).bitSize()
+                                / 8
+                        : 1;
+            }
+            return cStructType.getUnitCount();
+        } else {
+            return 1;
+        }
+    }
+
+    /**
+     * The declared type of the {@code index}-th member of an aggregate {@code parentType}: an
+     * array's (uniform) embedded type, or a struct's {@code index}-th field, positionally --
+     * designators aside, this matches how the surrounding loop already indexes cells. Needed only
+     * to size a further-nested initializer list; a plain scalar list entry never consults it.
+     */
+    private CComplexType subElementTypeOf(CComplexType parentType, int index) {
+        if (parentType instanceof CArray cArrayType) {
+            return cArrayType.getEmbeddedType();
+        } else if (parentType instanceof CStruct cStructType) {
+            final List<Tuple2<String, CComplexType>> fields = cStructType.getFields();
+            if (fields.isEmpty()) {
+                return parentType;
+            }
+            // A union's members overlap at offset 0; every entry addresses the same storage.
+            final int i = cStructType.isUnion() ? 0 : Math.min(index, fields.size() - 1);
+            return fields.get(i).get2();
+        }
+        return parentType;
+    }
+
+    /**
+     * Emits one cell-assignment per scalar leaf of a (possibly nested) initializer-list value,
+     * starting at {@code baseOffset} cells within {@code varDecl}'s storage. {@code elementType}
+     * is the declared type of one unit at this nesting level -- only consulted when {@code value}
+     * turns out to be itself a nested {@link CInitializerList}, to size that nested group's cells.
+     * A plain scalar {@code value} (the pre-existing, non-nested case) is handled exactly as
+     * before: one cell, using the value's own type for the dereference.
+     */
+    private void flattenInitializer(
+            CStatement value,
+            CComplexType elementType,
+            LitExpr<?> baseOffset,
+            VarDecl<?> varDecl,
+            CComplexType ptrType,
+            CCompound compound,
+            CParser.BodyDeclarationContext ctx) {
+        if (value instanceof CInitializerList nestedList) {
+            LitExpr<?> offset = ptrType.getNullValue();
+            int index = 0;
+            for (Tuple2<Optional<CStatement>, CStatement> entry : nestedList.getStatements()) {
+                offset = initPosition(entry.get1(), ptrType, offset);
+                final CComplexType subType = subElementTypeOf(elementType, index);
+                final LitExpr<?> cellOffset =
+                        (LitExpr<?>) Add(baseOffset, offset).eval(ImmutableValuation.empty());
+                flattenInitializer(entry.get2(), subType, cellOffset, varDecl, ptrType, compound, ctx);
+                offset =
+                        (LitExpr<?>)
+                                Add(offset, ptrType.getValue(String.valueOf(cellsOf(subType))))
+                                        .eval(ImmutableValuation.empty());
+                index++;
+            }
+        } else {
+            final var expr = value.getExpression();
+            final var deref =
+                    Exprs.Dereference(
+                            cast(varDecl.getRef(), baseOffset.getType()),
+                            cast(baseOffset, baseOffset.getType()),
+                            expr.getType());
+            CAssignment cAssignment = new CAssignment(deref, value, "=", parseContext);
+            recordMetadata(ctx, cAssignment);
+            compound.addCStatement(cAssignment);
+        }
+    }
+
     @Override
     public CStatement visitBodyDeclaration(CParser.BodyDeclarationContext ctx) {
         List<CDeclaration> declarations =
@@ -843,23 +969,29 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         List<VarDecl<?>> varDecls = declaration.getVarDecls();
                         VarDecl<?> varDecl = varDecls.get(0);
                         final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        final var structType = (CStruct) declaration.getActualType();
                         LitExpr<?> currentValue = ptrType.getNullValue();
-                        LitExpr<?> unitValue = ptrType.getUnitValue();
+                        int fieldIndex = 0;
                         for (Tuple2<Optional<CStatement>, CStatement> statement :
                                 initializerList.getStatements()) {
-                            final var expr = statement.get2().getExpression();
                             currentValue = initPosition(statement.get1(), ptrType, currentValue);
-                            final var deref =
-                                    Exprs.Dereference(
-                                            cast(varDecl.getRef(), currentValue.getType()),
-                                            cast(currentValue, currentValue.getType()),
-                                            expr.getType());
-                            CAssignment cAssignment =
-                                    new CAssignment(deref, statement.get2(), "=", parseContext);
-                            recordMetadata(ctx, cAssignment);
-                            compound.addCStatement(cAssignment);
+                            final CComplexType elementType =
+                                    subElementTypeOf(structType, fieldIndex);
+                            flattenInitializer(
+                                    statement.get2(),
+                                    elementType,
+                                    currentValue,
+                                    varDecl,
+                                    ptrType,
+                                    compound,
+                                    ctx);
                             currentValue =
-                                    Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                                    Add(
+                                                    currentValue,
+                                                    ptrType.getValue(
+                                                            String.valueOf(cellsOf(elementType))))
+                                            .eval(ImmutableValuation.empty());
+                            fieldIndex++;
                         }
                     } else {
                         Expr<?> expression = declaration.getInitExpr().getExpression();
@@ -918,27 +1050,33 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             "non-struct declarations shall only have one variable!");
                     if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
                         final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        final var varDecl = declaration.getVarDecls().get(0);
+                        // Uniform across entries: an array's (single) embedded type, or -- for the
+                        // degenerate `int x = {5};` / `{{5}}` braced-scalar case, where the
+                        // declared type is not a CArray at all -- the scalar type itself (only
+                        // consulted if an entry turns out to be a further-nested list).
+                        final CComplexType elementType =
+                                declaration.getActualType() instanceof CArray cArrayType
+                                        ? cArrayType.getEmbeddedType()
+                                        : declaration.getActualType();
                         LitExpr<?> currentValue = ptrType.getNullValue();
-                        LitExpr<?> unitValue = ptrType.getUnitValue();
                         for (Tuple2<Optional<CStatement>, CStatement> statement :
                                 initializerList.getStatements()) {
-                            //                            checkState(false, "Code here seems to be
-                            // buggy");
-                            final var expr = statement.get2().getExpression();
                             currentValue = initPosition(statement.get1(), ptrType, currentValue);
-                            final var deref =
-                                    Exprs.Dereference(
-                                            cast(
-                                                    declaration.getVarDecls().get(0).getRef(),
-                                                    currentValue.getType()),
-                                            cast(currentValue, currentValue.getType()),
-                                            expr.getType());
-                            CAssignment cAssignment =
-                                    new CAssignment(deref, statement.get2(), "=", parseContext);
-                            recordMetadata(ctx, cAssignment);
-                            compound.addCStatement(cAssignment);
+                            flattenInitializer(
+                                    statement.get2(),
+                                    elementType,
+                                    currentValue,
+                                    varDecl,
+                                    ptrType,
+                                    compound,
+                                    ctx);
                             currentValue =
-                                    Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                                    Add(
+                                                    currentValue,
+                                                    ptrType.getValue(
+                                                            String.valueOf(cellsOf(elementType))))
+                                            .eval(ImmutableValuation.empty());
                         }
                     } else {
                         emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);

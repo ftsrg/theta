@@ -25,6 +25,8 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
@@ -266,11 +268,35 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
           .also { builder.parent.addVar(it) }
           .wrappedVar
-    val remained = // 3k+0: malloc
-      Gt(
-        ArrayReadExpr.create<Type, Type>(sizeVar.ref, Mul(anyBase.ref, pointerType.getValue("3"))),
-        fitsall.nullValue,
-      )
+    val mallocBase = Mul(anyBase.ref, pointerType.getValue("3")) // 3k+0: malloc
+    val stillAllocated =
+      Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
+
+    // valid-memtrack is "pointed to OR deallocated" -- Valgrind's *definitely* lost -- so a block a
+    // live pointer still names is tracked, freed or not. Checking only whether everything was freed
+    // reported a leak for the ordinary `char *v; v = malloc(1);` shape, where the global keeps
+    // pointing at the block for the whole run and nothing is ever lost (sv-benchmarks `singleton`
+    // and friends expect `true` there). Locals are gone by the final location, so the pointers that
+    // can still name a block are the global ones; a block reachable only *through* another heap
+    // block is not covered, which keeps this on the safe side -- it can only report a leak that is
+    // not one, never miss one.
+    // ...but only for valid-memtrack. `valid-memcleanup` is the stricter property: *all* memory
+    // must be released before the program exits, and whether something still points at a block is
+    // beside the point -- `CWE401_Memory_Leak`, a global holding a never-freed malloc, is a
+    // violation of memcleanup and not of memtrack. Applying the exemption to both turned 32 of
+    // those from correct into missed leaks.
+    val trackedIfPointedTo = property.inputProperty != ErrorDetection.MEMCLEANUP
+    val globalPointers =
+      if (!trackedIfPointedTo) emptyList()
+      else
+        builder.parent
+          .getVars()
+          .map { it.wrappedVar }
+          .filter { it != anyBase && it != sizeVar }
+          .filter { CComplexType.getType(it.ref, parseContext) is CPointer }
+    val pointedTo = globalPointers.map { Eq(cast(it.ref, mallocBase.type), mallocBase) }
+    val remained =
+      if (pointedTo.isEmpty()) stillAllocated else And(stillAllocated, Not(Or(pointedTo)))
 
     val preFinalHavoc = XcfaLocation("_pre_final_havoc", metadata = EmptyMetaData)
     val preFinal = XcfaLocation("_pre_final", metadata = EmptyMetaData)

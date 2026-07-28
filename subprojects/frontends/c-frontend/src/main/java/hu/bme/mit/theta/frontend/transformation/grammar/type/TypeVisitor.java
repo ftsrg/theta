@@ -410,8 +410,17 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             if (ctx.Identifier() != null) {
                 name = ctx.Identifier().getText();
             }
+            // Complete a tag that was only referred to so far (`struct Cell;` / `typedef struct
+            // Cell Cell;` seen before the definition) rather than replacing it, so the copies that
+            // already bound to it see these fields. A tag that already *has* fields is a genuine
+            // redefinition and still gets its own instance, which is what keeps an earlier
+            // definition's copies resolving to the fields they were written against.
+            final Struct forwardDeclared = name == null ? null : Struct.getByName(name, union);
             Struct struct =
-                    CSimpleTypeFactory.Struct(name, union, parseContext, uniqueWarningLogger);
+                    forwardDeclared != null && !forwardDeclared.hasFields()
+                            ? forwardDeclared
+                            : CSimpleTypeFactory.Struct(
+                                    name, union, parseContext, uniqueWarningLogger);
             // `struct __attribute__((packed)) { ... }` / `((aligned(64)))`: layout attributes are
             // the only ones this frontend acts on, and ObjectLayout cannot place members without
             // them (a packed struct laid out unpacked misplaces everything after the first member).
@@ -477,7 +486,19 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     @Override
     public CSimpleType visitCompoundUsage(CParser.CompoundUsageContext ctx) {
         String text = ctx.Identifier().getText();
-        return Struct.getByName(text, ctx.structOrUnion().Struct() == null);
+        final boolean union = ctx.structOrUnion().Struct() == null;
+        final Struct existing = Struct.getByName(text, union);
+        if (existing != null) {
+            return existing;
+        }
+        // `struct X` introduces the tag even where X has no definition yet -- the forward-typedef
+        // idiom `typedef struct Cell Cell; struct Cell { ... };` names the tag a line before it is
+        // defined. Returning null here left the specifier with no type at all and it fell back to
+        // `int`, which the typedef then froze: a field declared with that typedef became an int, so
+        // a nested struct member was an int and `x.cell.pnext` died with "Only structs expected
+        // here". Registering the tag now means the definition below fills in *this* instance, and
+        // everything that referred to it meanwhile resolves through the completed field map.
+        return CSimpleTypeFactory.Struct(text, union, parseContext, uniqueWarningLogger);
     }
 
     @Override

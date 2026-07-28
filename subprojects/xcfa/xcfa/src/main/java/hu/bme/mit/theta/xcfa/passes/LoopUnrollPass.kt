@@ -30,6 +30,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.simplify
@@ -52,12 +53,41 @@ class LoopUnrollPass(
   alwaysForceUnroll: Int = -1,
   private val substituteLoopVar: Boolean = false,
   private val parseContext: ParseContext? = null,
+  unrollRecursion: Boolean? = null,
 ) : ProcedurePass {
 
   companion object {
 
     var UNROLL_LIMIT = 1000
     var FORCE_UNROLL_LIMIT = -1
+
+    /**
+     * Expand recursive calls to the force-unroll bound, the same way loops are expanded to it.
+     *
+     * This lives here rather than in [InlineProceduresPass] on purpose. Inlining runs once, up
+     * front, and gives up entirely on a procedure that (transitively) reaches recursion --
+     * `canInline` is all-or-nothing, so one recursive callee leaves *every* call in that procedure
+     * un-inlined. A backend that raises its bound and re-runs (the OC checker escalates
+     * `forceUnrollBound` until a safe result is no longer bound-limited) therefore gets no benefit
+     * from it. Expanding here means each new bound re-expands the recursion to the new depth, and
+     * the result is marked unsafe-unroll exactly like a force-unrolled loop, so a `safe` verdict
+     * stays flagged as bound-limited.
+     *
+     * On by default: it only ever fires where a force-unroll bound is already in effect, and a
+     * program without recursion has nothing for it to expand, so the programs it changes are
+     * exactly the ones a call-free-CFA backend used to reject outright.
+     */
+    var UNROLL_RECURSION = true
+
+    /**
+     * Seed for the order [findLoop] explores edges in.
+     *
+     * Which loop the search happens to reach first decides which loops get taken apart and which
+     * are left for the fallbacks, so an unseeded source made the whole pass -- and every verdict
+     * downstream of it -- differ between two runs of the same input. That turns a reproducible
+     * failure into an intermittent one; set this to vary the exploration deliberately instead.
+     */
+    var EXPLORATION_SEED = 0L
 
     private val transFunc: ExplStmtTransFunc by lazy {
       val solver = Z3SolverFactory.getInstance().createSolver()
@@ -67,7 +97,22 @@ class LoopUnrollPass(
 
   private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, alwaysForceUnroll)
 
+  private val unrollRecursion = unrollRecursion ?: UNROLL_RECURSION
+
+  /** Seeded so that the same input explores loops the same way on every run. */
+  private val exploration = java.util.Random(EXPLORATION_SEED)
+
   private val testedLoops = mutableSetOf<Loop>()
+
+  /**
+   * Which procedures are recursive, decided once for the whole program.
+   *
+   * The pass instance is reused across procedures, and expanding a call rewrites the *callee's* body
+   * in place, so asking again once some bodies have already been expanded gives a different -- and
+   * order-dependent -- answer. Recursion is a property of the program as it arrived, so it is
+   * settled on first use and kept.
+   */
+  private var recursiveProcedures: Set<String>? = null
 
   private data class Loop(
     val loopStart: XcfaLocation,
@@ -142,12 +187,40 @@ class LoopUnrollPass(
           builder.addEdge(XcfaEdge(startLocation, edge.target, label, edge.metadata))
         }
       }
+
+      // Only the *outgoing* edges of the loop locations were removed above, so an edge that came
+      // into the middle of the body from outside it -- which nested and repeated unrolling of the
+      // same region does produce -- is left pointing at a location that no longer exists. It can
+      // never be taken again either way (its target is gone), but left in the edge set it breaks
+      // every consumer that maps edges through the procedure's locations: `XcfaProcedure.deepCopy`
+      // dies on a bare `!!`, with nothing to say which pass was responsible. Drop them here, at the
+      // point the locations went away.
+      builder
+        .getEdges()
+        .filter { it.source !in builder.getLocs() || it.target !in builder.getLocs() }
+        .forEach(builder::removeEdge)
     }
 
     private fun count(): Int? {
       if (!properlyUnrollable) return null
       check(loopVar != null && loopVarModifiers != null && loopVarInit != null)
       check(loopStartEdges.size == 1)
+
+      // Counting the iterations means asking a solver to evaluate these statements, and the
+      // dereferences the frontend emits carry no `uniquenessIdx` -- which every solver transformer
+      // rejects outright ("Incomplete dereferences ... are not handled properly"). That index is
+      // added later, and only on the CEGAR path (`PtrUtils.uniqueDereferences`, driven by
+      // `PtrAction`), so a pass running before it must not hand a dereference to the solver at all.
+      // A loop whose trip count touches memory therefore counts as "not statically known", exactly
+      // like any other loop this analysis cannot resolve: return null and let the caller force
+      // unroll it. Without this the pass throws, which killed every OC run on a task with such a
+      // loop.
+      if (
+        (loopStartEdges + loopVarModifiers + loopVarInit).any {
+          it.label.dereferences.isNotEmpty()
+        }
+      )
+        return null
 
       val prec = ExplPrec.of(listOf(loopVar))
       var state = ExplState.of(ImmutableValuation.empty())
@@ -179,9 +252,23 @@ class LoopUnrollPass(
       index: Int,
       removeCond: Boolean,
     ): XcfaLocation {
+      // `${name}_loop${index}` is not unique: copying the same region again in a later round
+      // (nested loops produce exactly the clashing `_loop0_loop1` shapes) can regenerate a name the
+      // procedure already holds. `addLoc` is a silent no-op for a location it already has, while
+      // the map below would keep handing out the *stray* instance created here. XcfaLocation is a
+      // data class, so edges built from that twin still satisfy addEdge's `in locs` check by
+      // equality -- yet the twin owns its own, empty adjacency sets. Every adjacency-walking
+      // traversal is then blind to those edges (including this pass's own back-edge cut), while
+      // XcfaProcedure.deepCopy resolves endpoints through a map keyed by equality and re-points
+      // them onto the registered instance. A cycle hidden that way only materialises in the
+      // per-thread copy, where the OC checker rejects the task for "loops". Only disambiguate on an
+      // actual clash, so the usual names stay stable.
+      val takenNames = builder.getLocs().mapTo(mutableSetOf()) { it.name }
       val locs =
         loopLocs.associateWith {
-          val loc = XcfaLocation("${it.name}_loop${index}", metadata = it.metadata)
+          var name = "${it.name}_loop${index}"
+          while (!takenNames.add(name)) name = "${it.name}_loop${index}_${XcfaLocation.uniqueCounter()}"
+          val loc = XcfaLocation(name, metadata = it.metadata)
           builder.addLoc(loc)
           loc
         }
@@ -220,12 +307,140 @@ class LoopUnrollPass(
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    // Before the loops: a spliced-in body brings its own loops with it, and those still have to be
+    // taken apart by the search below.
+    if (forceUnrollLimit != -1 && unrollRecursion) unrollRecursiveCalls(builder)
     while (true) {
       val loop = findLoop(builder.initLoc) ?: break
       loop.unroll(builder)
       testedLoops.add(loop)
     }
+    if (forceUnrollLimit != -1) cutRemainingBackEdges(builder)
     return builder
+  }
+
+  /**
+   * Expands the calls left over after inlining, capping recursive ones at [forceUnrollLimit].
+   *
+   * [InlineProceduresPass] refuses a procedure that (transitively) reaches recursion, and it refuses
+   * it *whole*: `canInline` is all-or-nothing, so a single recursive callee leaves every call in
+   * that procedure un-inlined, not just the recursive one. Backends that need a call-free CFA (the
+   * OC checker does) then reject the task outright. Expanding here recovers those programs whenever
+   * the interesting depth is bounded -- and, because this runs per force-unroll bound rather than
+   * once at inlining time, raising the bound genuinely re-expands the recursion deeper.
+   *
+   * A call that is still recursive at the bound is cut, dropping the executions past it, which is
+   * the same promise force unrolling makes for loops; [XcfaProcedureBuilder.setUnsafeUnroll] records
+   * that so a `safe` verdict stays flagged as bound-limited.
+   */
+  private fun unrollRecursiveCalls(builder: XcfaProcedureBuilder) {
+    val parseContext = parseContext ?: return
+    // Counted per callee: a non-recursive call chain is finite and expands to nothing on its own,
+    // so only the calls that can come back round need a cap.
+    val recursive =
+      recursiveProcedures ?: recursiveProcedureNames(builder.parent).also { recursiveProcedures = it }
+    val expansions = mutableMapOf<String, Int>()
+    while (true) {
+      // Capture every body before anything in this round is spliced. A self-recursive call has the
+      // callee and the caller as the same builder, so snapshotting after the call edge was removed
+      // would splice a body with the recursive call already gone -- truncating the recursion to one
+      // level, and doing so silently, with no cut and therefore no unsafe-unroll mark.
+      val bodies = builder.parent.getProcedures().associate { it.name to it.snapshotBody() }
+      var expandedOne = false
+      for (edge in ArrayList(builder.getEdges())) {
+        val pred: (XcfaLabel) -> Boolean = { builder.callsKnownProcedure(it) }
+        val split = edge.splitIf(pred)
+        if (split.isEmpty()) continue
+        val hasCall =
+          split.size > 1 || pred((split[0].label as SequenceLabel).labels[0])
+        if (!hasCall) continue
+
+        builder.removeEdge(edge)
+        split.forEach { e ->
+          val head = (e.label as SequenceLabel).labels[0]
+          if (!pred(head)) {
+            builder.addEdge(e)
+            return@forEach
+          }
+          val invokeLabel = head as InvokeLabel
+          val callee = checkNotNull(builder.calleeOf(invokeLabel))
+          val bounded = callee.name in recursive
+          val used = expansions.getOrDefault(callee.name, 0)
+          if (bounded && used >= forceUnrollLimit) {
+            // Past the bound: drop the path rather than expand it again.
+            builder.setUnsafeUnroll()
+            return@forEach
+          }
+          expansions[callee.name] = used + 1
+          expandedOne = true
+          inlineCallSite(
+            builder = builder,
+            source = e.source,
+            target = e.target,
+            invokeLabel = invokeLabel,
+            callee = checkNotNull(bodies[callee.name]),
+            parseContext = parseContext,
+            freshFrame = true,
+            metadata = e.metadata,
+          )
+        }
+      }
+      if (!expandedOne) return
+    }
+  }
+
+  /**
+   * Cuts any back edge [findLoop] left behind, once no more loops can be taken apart.
+   *
+   * A loop survives the pass whenever [getLoop] cannot describe it -- a shape whose elements
+   * [getLoopElements] fails to determine, or one already attempted and recorded in [testedLoops] --
+   * and the pass would then quietly return a CFA that still has cycles in it. That is harmless for
+   * a backend that handles loops itself, but not for one that requires an acyclic CFA (the OC
+   * checker rejects the whole task), so it is only done when a force-unroll bound is in effect:
+   * that bound already limits the result to executions within it, and dropping a back edge keeps
+   * exactly those, which is the same promise force unrolling makes everywhere else. The result is
+   * marked unsafe-unroll accordingly, so a `safe` verdict stays flagged as bound-limited.
+   */
+  private fun cutRemainingBackEdges(builder: XcfaProcedureBuilder) {
+    while (true) {
+      val backEdge = findBackEdge(builder.initLoc) ?: break
+      builder.setUnsafeUnroll()
+      builder.removeEdge(backEdge)
+    }
+  }
+
+  /**
+   * Any edge that closes a cycle reachable from [initLoc], or null when the CFA is acyclic.
+   *
+   * Standard three-colour DFS: an edge is a back edge exactly when its target is still on the
+   * recursion stack. Marking edges explored globally instead would miss cycles -- a back edge first
+   * reached along a path that does not go through its target is then never recognised as one, and
+   * the surviving cycle only shows up much later as the OC checker rejecting the task for "loops".
+   */
+  private fun findBackEdge(initLoc: XcfaLocation): XcfaEdge? { // DFS
+    val onStack = mutableSetOf<XcfaLocation>()
+    val finished = mutableSetOf<XcfaLocation>()
+    val stack = mutableListOf<Pair<XcfaLocation, Iterator<XcfaEdge>>>()
+
+    fun push(loc: XcfaLocation) {
+      onStack.add(loc)
+      stack.add(loc to loc.outgoingEdges.toList().iterator())
+    }
+
+    push(initLoc)
+    while (stack.isNotEmpty()) {
+      val (loc, edges) = stack.last()
+      if (edges.hasNext()) {
+        val edge = edges.next()
+        if (edge.target in onStack) return edge
+        if (edge.target !in finished) push(edge.target)
+      } else {
+        stack.removeLast()
+        onStack.remove(loc)
+        finished.add(loc)
+      }
+    }
+    return null
   }
 
   private fun findLoop(initLoc: XcfaLocation): Loop? { // DFS
@@ -238,7 +453,9 @@ class LoopUnrollPass(
       if (edgesToExplore.isEmpty()) {
         stack.pop()
       } else {
-        val edge = edgesToExplore.random()
+        // Deterministic given EXPLORATION_SEED: `edgesToExplore` keeps insertion order (the sets
+        // it comes from are linked), so indexing it with a seeded source repeats exactly.
+        val edge = edgesToExplore.elementAt(exploration.nextInt(edgesToExplore.size))
         if (edge.target in stack) { // loop found
           getLoop(edge)?.let {
             return it
@@ -288,7 +505,11 @@ class LoopUnrollPass(
             vars.keys.first()
           }
         }
-        .reduce { v1, v2 -> if (v1 != v2) null else v1 }
+        // reduceOrNull, not reduce: a loop-condition location with no outgoing edges at all (a dead
+        // end left behind by an earlier unroll) makes this an empty collection, and `reduce` throws
+        // "Empty collection can't be reduced" instead of just reporting that no single loop variable
+        // could be identified. Null is already the "not properly unrollable" answer handled below.
+        .reduceOrNull { v1, v2 -> if (v1 != v2) null else v1 }
     if (loopVar == null) properlyUnrollable = false
 
     val (loopVarInit, loopVarModifiers) =

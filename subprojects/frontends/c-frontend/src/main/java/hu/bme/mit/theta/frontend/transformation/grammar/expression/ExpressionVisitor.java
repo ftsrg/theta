@@ -3278,7 +3278,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 PostfixExpressionMemberAccessContext ctx) {
             return (primary) -> {
                 final CComplexType type = CComplexType.getType(primary, parseContext);
-                checkState(type instanceof CStruct, "Only structs expected here");
+                checkState(
+                        type instanceof CStruct,
+                        "Only structs expected here, got %s (%s) accessing .%s of %s",
+                        type,
+                        type.getClass().getSimpleName(),
+                        ctx.Identifier().getText(),
+                        primary);
                 return structMemberAccess(primary, (CStruct) type, ctx.Identifier().getText());
             };
         }

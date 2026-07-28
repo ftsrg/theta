@@ -120,10 +120,10 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
         LbePass(parseContext),
         NormalizePass(), // needed after lbe, TODO
         DeterministicPass(), // needed after lbe, TODO
-        SimplifyExprsPass(parseContext),
+        SimplifyExprsPass(parseContext, property),
       )
     } ?: emptyList(),
-    listOf(DataRaceToReachabilityPass(property)),
+    listOf(DataRaceToReachabilityPass(property, parseContext)),
     listOf(OverflowDetectionPass(property, parseContext)),
     // Spell out the mem* copies before anything havocs them: a havoc would leave the destination
     // holding whatever it held before, which is not what a copy does.

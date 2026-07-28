@@ -55,39 +55,23 @@ record InterpolationMetadata(
         FuncDecl<BoolSort> itp = ctx.mkFuncDecl("itp", exprsToSorts(cSym), ctx.getBoolSort());
 
         // Rule 1: a => A(sA)
-        BoolExpr rule1 =
-                ctx.mkForall(aSym, ctx.mkImplies(a, A.apply(aSym)), 1, null, null, null, null);
+        BoolExpr rule1 = forallOrBody(ctx, aSym, ctx.mkImplies(a, A.apply(aSym)));
         hornSolver.add(rule1);
 
         // Rule 2: b => B(sB)
-        BoolExpr rule2 =
-                ctx.mkForall(bSym, ctx.mkImplies(b, B.apply(bSym)), 1, null, null, null, null);
+        BoolExpr rule2 = forallOrBody(ctx, bSym, ctx.mkImplies(b, B.apply(bSym)));
         hornSolver.add(rule2);
 
         // Rule 3: A(sA) => itp(sC)
-        BoolExpr rule3 =
-                ctx.mkForall(
-                        aSym,
-                        ctx.mkImplies(A.apply(aSym), itp.apply(cSym)),
-                        1,
-                        null,
-                        null,
-                        null,
-                        null);
-        ;
+        BoolExpr rule3 = forallOrBody(ctx, aSym, ctx.mkImplies(A.apply(aSym), itp.apply(cSym)));
         hornSolver.add(rule3);
 
         // Rule 4: itp(sC) ∧ B(sB) => false
         BoolExpr rule4 =
-                ctx.mkForall(
+                forallOrBody(
+                        ctx,
                         bSym,
-                        ctx.mkImplies(ctx.mkAnd(itp.apply(cSym), B.apply(bSym)), ctx.mkFalse()),
-                        1,
-                        null,
-                        null,
-                        null,
-                        null);
-        ;
+                        ctx.mkImplies(ctx.mkAnd(itp.apply(cSym), B.apply(bSym)), ctx.mkFalse()));
         hornSolver.add(rule4);
 
         Status result = hornSolver.check();
@@ -106,5 +90,15 @@ record InterpolationMetadata(
 
     private static Sort[] exprsToSorts(Expr[] exprs) {
         return Arrays.stream(exprs).map(Expr::getSort).toArray(Sort[]::new);
+    }
+
+    /**
+     * {@code ctx.mkForall} over zero bound variables throws ("number of bound variables is 0")
+     * rather than treating it as the vacuous, semantically equivalent case: a universal quantifier
+     * over no variables is just its body. Hit when {@code a} or {@code b} (the CEGAR path segment
+     * being interpolated) has no free constants -- e.g. a closed/literal-only conjunct.
+     */
+    private static BoolExpr forallOrBody(Context ctx, com.microsoft.z3.Expr<?>[] vars, BoolExpr body) {
+        return vars.length == 0 ? body : ctx.mkForall(vars, body, 1, null, null, null, null);
     }
 }

@@ -135,6 +135,12 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var forceUnroll: Int = -1,
   @Parameter(
+    names = ["--no-force-unroll-recursion"],
+    description =
+      "Disable expanding recursive procedure calls to the depth loops are force-unrolled to. Expansion is on wherever a force-unroll bound is in effect: calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe, and it lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
+  )
+  var noForceUnrollRecursion: Boolean = false,
+  @Parameter(
     names = ["--datarace-to-reachability"],
     description =
       "Enable specification transformation from data race to reachability. Use this when the desired backend does not natively support data race checking.",
@@ -183,9 +189,11 @@ data class CFrontendConfig(
       "Pointer memory model: multi = 2-D arrays[base][offset] (default), flat = one flat address" +
         " line as if every base were 0 (a pointer is a single scalar address), bytes = the flat" +
         " line but byte-granular (every cell is one byte; wider scalars Concat/Extract). bytes" +
-        " requires bitvector arithmetic.",
+        " requires bitvector arithmetic. Left unset, the model is multi, but the frontend may" +
+        " fall back to flat for programs multi cannot represent; passing this flag explicitly" +
+        " disables that fallback.",
   )
-  var memoryModel: ArchitectureConfig.MemoryModelType = ArchitectureConfig.MemoryModelType.multi,
+  var memoryModel: ArchitectureConfig.MemoryModelType? = null,
   @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
   var useCir2c: Boolean = false,
   @Parameter(
@@ -201,7 +209,17 @@ data class CFrontendConfig(
         " overflow detection (no-overflow).",
   )
   var enableSignedWraparound: Boolean = false,
-) : SpecFrontendConfig
+) : SpecFrontendConfig {
+
+  /**
+   * The memory model actually in effect. [memoryModel] is null exactly when the user did not pass
+   * `--memory-model` at all, which is the only case in which the frontend is allowed to swap the
+   * model on its own (see the flat fallback in `frontend()`); an explicitly requested model -- even
+   * if it is the default `multi` -- is always honoured as given.
+   */
+  val effectiveMemoryModel: ArchitectureConfig.MemoryModelType
+    get() = memoryModel ?: ArchitectureConfig.MemoryModelType.multi
+}
 
 /** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
 enum class ChcCategory {

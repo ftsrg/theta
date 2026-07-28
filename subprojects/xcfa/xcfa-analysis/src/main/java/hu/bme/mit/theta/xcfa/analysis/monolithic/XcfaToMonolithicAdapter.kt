@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.xcfa.utils.defaultValue
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
@@ -94,23 +95,6 @@ abstract class XcfaToMonolithicAdapter(
       .filter { it !in excludedVars }
       .map { reprEq(it.ref, it.type.defaultValue) }
       .let { And(it) }
-
-  private val Type.defaultValue: LitExpr<out Type>
-    get() =
-      when (this) {
-        is IntType -> smtInt(0)
-        is BoolType -> Bool(false)
-        is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, size)
-        is RatType -> Rat(0, 1)
-        is FpType -> FpUtils.bigFloatToFpLitExpr(BigFloat.zero(significand), this)
-        is ArrayType<*, *> ->
-          ArrayLitExpr.of(
-            listOf(),
-            cast(elemType.defaultValue, elemType),
-            ArrayType.of(indexType, elemType),
-          )
-        else -> error("No default value for type $this")
-      }
 
   protected fun events(stmts: List<Stmt>): List<Event<VarDecl<*>>> =
     stmts

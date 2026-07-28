@@ -63,6 +63,22 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
 import java.math.BigInteger
 
+/**
+ * Signals that the base/offset pointer splitting of `--memory-model multi` ran into a pattern it
+ * cannot represent (a split variable read or assigned as a whole, instead of through a
+ * dereference).
+ *
+ * This is a limitation of the splitting machinery, not of the input program: under
+ * `--memory-model flat` a pointer is a single scalar address, nothing is ever split into a
+ * base/offset pair, and the very same program builds fine. That is why the CLI recognises this
+ * exact failure and transparently rebuilds the frontend with the flat model instead of reporting a
+ * frontend failure.
+ *
+ * It stays an [IllegalStateException] so that everything catching the `error(...)` it replaced
+ * keeps behaving identically.
+ */
+class UnsupportedPointerSplitException(message: String) : IllegalStateException(message)
+
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
@@ -880,7 +896,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           ),
         )
       }
-      error("Unsupported pointer arithmetic: assignment to split pointer variable ${lhs.name}")
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: assignment to split pointer variable ${lhs.name}"
+      )
     }
     val rewrittenRhs = rhs.changeComplexReferredVars(splitVars)
     return listOf(AssignStmt.of(cast(lhs, lhs.type), cast(rewrittenRhs, lhs.type)))
@@ -1032,7 +1050,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       return it
     }
     if (this is RefExpr<*> && this.decl in splitVars.keys) {
-      error("Unsupported pointer arithmetic: bare use of split variable ${this.decl.name}")
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: bare use of split variable ${this.decl.name}"
+      )
     }
     if (this is Dereference<*, *, *>) {
       // The address may have come back through a width-preserving integer cast (`*(T *)q` after
