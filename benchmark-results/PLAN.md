@@ -3988,3 +3988,42 @@ whether to benchmark at 900s instead.
 
 Run 79 (this build, all fixes) launched on sosy pinned to `5750G` — the same CPU model batch 61 used,
 so the comparison is clean.
+
+### Batch 74 addendum — serial batch-61-vs-now comparison (the authoritative numbers)
+
+Re-run **serially** (the 8 GB cgroup makes parallel local runs worthless, see above), batch 61's
+build vs the current one, same host:
+
+| task | property | b61 | now | x | verdict |
+|---|---|---|---|---|---|
+| `46_monabsex2_vs` | memsafety | 5.9s | 414.5s | **70x** | Safe (same) |
+| `45_monabsex1_vs` | memsafety | 6.9s | 398.4s | **58x** | Safe (same) |
+| `43_1a_cilled…plusb` | termination | 11.9s | 113.6s | 9.5x | Unsafe (same) |
+| `id_build.i.p+nlh-reducer` | unreach | 17.1s | 160.1s | 9.4x | Safe (same) |
+| `32_1_cilled…empeg` | termination | 13.5s | 113.2s | 8.4x | Unsafe (same) |
+| `id_build.i.p+sep-reducer` | unreach | 17.7s | 140.9s | 8.0x | Safe (same) |
+| `email_spec3_product27` | termination | 117.9s | 120.6s | 1.0x | Safe (same) |
+| `email_spec27_product28` | termination | 90.0s | 91.6s | 1.0x | Safe (same) |
+| `cast_float_ptr` | unreach | 23.4s | 23.5s | 1.0x | same (both TIMEOUT) |
+| `mannadiv_unwindbound10` | unreach | 70.6s | 69.9s | 1.0x | Unsafe (same) |
+
+**Every verdict is unchanged — the regressions are purely performance.**
+
+⚠️ **Corrects the parallel-run reading above.** The product-lines "OOM cluster" does **not** regress:
+`email_spec27_product28`, flagged as the most suspicious memory jump (1.88 GB -> OOM in run 78), is
+identical on both builds serially and returns Safe. Those run-78 OOMs were benchexec-side variance.
+4 of the 10 tasks do not regress at all, so this is **not** a broad slowdown — and `cast_float_ptr`
+TIMEOUTs on batch 61 too, so its batch-61 "correct" was itself marginal.
+
+Two mechanisms among the 6 that do regress:
+
+1. **`45`/`46_monabsex*` (58-70x)** — the OC budget mechanism above: OC used to crash out instantly,
+   now runs to its 250s timeout before the fall-through solves the task.
+2. **The 8-9.5x group** — mechanism **not identified**. Ruled out *by measurement*: recursion
+   unrolling (`forceUnroll=-1`, so it never triggers), frontend/parse time (identical, 1.7s), config
+   path (identical), alias graph (identical, `9 -> [1,1,…]`), and `checkEdgesHaveLocations` (runs
+   once per pass, not per edge — far too cheap). A function-pointer-precision hypothesis was
+   **discarded**: the alias graph is byte-identical between builds.
+   Supported-but-unconfirmed suspect: the `LoopUnrollPass` determinism/back-edge changes — the
+   regressing tasks are exactly the loop-heavy ones (LDV drivers, loop-invgen reducers) while the
+   unaffected sequential tasks are small.
