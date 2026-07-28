@@ -53,6 +53,24 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     private final ParseContext parseContext;
     private final Logger uniqueWarningLogger;
 
+    /**
+     * Builds an {@link ExpressionVisitor} bound to the enclosing function's variable scope, so that
+     * `typeof(x)` over an ordinary variable can be typed. Installed by the function visitor; stays
+     * null until a function scope exists, where the empty-scope visitor below still handles the
+     * constant-expression forms.
+     *
+     * <p>The supplied visitor deliberately carries a *null* function visitor: asking for a type must
+     * not emit anything, and a real function visitor would let a call inside the operand push
+     * pre-statements into the function currently being built. A `typeof(f())` therefore still fails
+     * and is reported as unsupported, which is the best-effort behaviour we want.
+     */
+    private java.util.function.Supplier<ExpressionVisitor> scopedExpressionVisitor = null;
+
+    public void setScopedExpressionVisitor(
+            java.util.function.Supplier<ExpressionVisitor> supplier) {
+        this.scopedExpressionVisitor = supplier;
+    }
+
     private static final List<String> standardTypes =
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
@@ -736,28 +754,36 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             throw new UnsupportedFrontendElementException(
                     "typeof over an unresolvable type: " + ctx.getText());
         }
-        try {
-            ExpressionVisitor expressionVisitor =
-                    new ExpressionVisitor(
-                            Set.of(),
-                            parseContext,
-                            null,
-                            new ArrayDeque<>(List.of(Tuple2.of("", Map.of()))),
-                            Map.of(),
-                            typedefVisitor,
-                            this,
-                            uniqueWarningLogger);
-            Expr<?> expr = ctx.constantExpression().accept(expressionVisitor);
-            CSimpleType origin = CComplexType.getType(expr, parseContext).getOrigin();
-            if (origin != null) {
-                return origin.copyOf();
+        // The enclosing function's scope first, so `typeof(x)` resolves x; the empty scope second,
+        // which still covers a typeof at file scope over a constant expression.
+        final List<java.util.function.Supplier<ExpressionVisitor>> attempts = new ArrayList<>();
+        if (scopedExpressionVisitor != null) {
+            attempts.add(scopedExpressionVisitor);
+        }
+        attempts.add(
+                () ->
+                        new ExpressionVisitor(
+                                Set.of(),
+                                parseContext,
+                                null,
+                                new ArrayDeque<>(List.of(Tuple2.of("", Map.of()))),
+                                Map.of(),
+                                typedefVisitor,
+                                this,
+                                uniqueWarningLogger));
+        for (java.util.function.Supplier<ExpressionVisitor> attempt : attempts) {
+            try {
+                Expr<?> expr = ctx.constantExpression().accept(attempt.get());
+                CSimpleType origin = CComplexType.getType(expr, parseContext).getOrigin();
+                if (origin != null) {
+                    return origin.copyOf();
+                }
+            } catch (RuntimeException e) {
+                // try the next scope, then fall through to the unsupported report below
             }
-        } catch (RuntimeException e) {
-            // fall through to the unsupported report below
         }
         throw new UnsupportedFrontendElementException(
-                "typeof over an expression that references variables is not supported: "
-                        + ctx.getText());
+                "typeof over an expression whose type could not be determined: " + ctx.getText());
     }
 
     @Override

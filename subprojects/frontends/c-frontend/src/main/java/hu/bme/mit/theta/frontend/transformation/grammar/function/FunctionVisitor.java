@@ -178,6 +178,20 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         this.parseContext = parseContext;
         globalDeclUsageVisitor = new GlobalDeclUsageVisitor(declarationVisitor);
         atomicVariables = new LinkedHashSet<>();
+        // Lets `typeof(x)` resolve x against the scope we are currently in. Lazy, because the scope
+        // stack is pushed and popped as bodies are visited. Null function visitor on purpose -- see
+        // TypeVisitor#scopedExpressionVisitor.
+        this.typeVisitor.setScopedExpressionVisitor(
+                () ->
+                        new ExpressionVisitor(
+                                atomicVariables,
+                                parseContext,
+                                null,
+                                variables,
+                                functions,
+                                typedefVisitor,
+                                typeVisitor,
+                                uniqueWarningLogger));
     }
 
     /**

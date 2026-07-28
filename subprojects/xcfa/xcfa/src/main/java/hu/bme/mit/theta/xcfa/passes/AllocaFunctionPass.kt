@@ -21,6 +21,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.ensureMallocVar
+import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.mallocVar
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -59,6 +61,11 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
+    // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
+    // snapshot's init-procedure edges (see [ensureMallocVar]).
+    builder.firstAllocationRetType(parseContext, this::predicate)?.let {
+      builder.parent.ensureMallocVar(parseContext, it)
+    }
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
       if (
@@ -74,28 +81,6 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             val ret = invokeLabel.params[0]
             val arg = invokeLabel.params[1]
             val retType = CComplexType.getType(ret, parseContext)
-            if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
-              builder.parent.addVar(XcfaGlobalVar(mallocVar, retType.nullValue))
-              val initProc = builder.parent.getInitProcedures().map { it.first }
-              check(initProc.size == 1) { "Multiple start procedure are not handled well" }
-              initProc.forEach { proc ->
-                val initAssign =
-                  StmtLabel(
-                    Assign(cast(mallocVar, mallocVar.type), cast(retType.nullValue, mallocVar.type))
-                  )
-                val newEdges =
-                  proc.initLoc.outgoingEdges.map {
-                    it.withLabel(
-                      SequenceLabel(
-                        listOf(initAssign) + it.label.getFlatLabels(),
-                        it.label.metadata,
-                      )
-                    )
-                  }
-                proc.initLoc.outgoingEdges.forEach(proc::removeEdge)
-                newEdges.forEach(proc::addEdge)
-              }
-            }
             val bump =
               AssignStmtLabel(
                 mallocVar,
