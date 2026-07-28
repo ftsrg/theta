@@ -4027,3 +4027,50 @@ Two mechanisms among the 6 that do regress:
    Supported-but-unconfirmed suspect: the `LoopUnrollPass` determinism/back-edge changes — the
    regressing tasks are exactly the loop-heavy ones (LDV drivers, loop-invgen reducers) while the
    unaffected sequential tasks are small.
+
+## Batch 75 — run 79 (all fixes) vs batch 61: score +155, and a newly-exposed false-alarm family (2026-07-28)
+
+Run 79 = current `svcomp27-fixes` build (through `865dc7607c`), `theta27-short.xml`, pinned to
+`5750G` — the same CPU model batch 61 used. Real & complete: 55 XMLs, 0 `Cannot start process`,
+tmux gone, 13:13 -> 19:28 (~6.25h). Downloaded to `results-2026-07-28_13-13-run79/`.
+
+| category | batch 61 | run 79 | Δ |
+|---|---|---|---|
+| correct | 10,424 | 10,861 | **+437** |
+| wrong | 41 | 83 | **+42** |
+| error | 25,769 | 25,308 | −461 |
+| unknown | 368 | 350 | −18 |
+| **score** | **16,320** | **16,475** | **+155** |
+
+Transitions: `error->correct` 455, `unknown->correct` 21, `wrong->correct` 7; `error->wrong` **51**,
+`correct->error` 45.
+
+### The 46 lost-correct are ALL resource — the accepted performance regression
+
+31 TIMEOUT + 14 OOM + 1 unknown, **zero** wrong verdicts. Termination is the worst hit (23 lost: 13
+OOM, 10 timeout), matching the 8-9.5x slowdown measured on `*_cilled_*` in the batch-74 addendum.
+So the perf regression costs ~46 correct results; the fixes still net +437.
+
+### 51 new wrong = 46 false alarms + 5 missed bugs, and one family dominates
+
+| family | n |
+|---|---|
+| `cstr*` / `openbsd*` alloca-string | **30** |
+| `aws_*` harnesses | 6 |
+| `*_cilled_*` LDV (termination) | 2 |
+| assorted singletons | 13 |
+
+By property: valid-memsafety **36**, unreach-call 7, no-overflow 4, no-data-race 2, termination 2.
+
+⚠️ **These are not new defects — they are old ones the frontend errors were hiding.** Almost every
+one was `ERROR (frontend failed, after parsing finished)` in batch 61. The batch-70/73 frontend
+fixes make these tasks parse for the first time, and they then hit the **pre-existing false
+`valid-deref` on the alloca/malloc string family** — the very same "F1 flood" recorded as the
+blocker for the flat memory model (81 false-derefs there). It is visible under the *default* model
+now only because the tasks finally get far enough to be judged.
+
+**This is the highest-value open item.** A wrong `false` scores −16; the same task answered
+correctly scores +2. Fixing the 30 `cstr*`/`openbsd*` false-derefs is worth roughly **+540 score**,
+far more than the entire +155 this run gained. Two termination LDV tasks are also wrong
+(`false(termination)`, expected true) — those reproduce locally on batch 61's build too, so they are
+pre-existing and were merely masked by OOM.
