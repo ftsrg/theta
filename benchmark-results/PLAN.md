@@ -4116,9 +4116,24 @@ First run on **benchcloud** rather than sosy, at the real SV-COMP time limit: `x
 (`timelimit="15 min" hardtimelimit="16 min"`, 7 GB, 2 cores), tool dir `Theta-svcomp-80`, pinned to
 `--vcloudCPUModel Skylake`, `--vcloudClientHeap 8192`, screen session `theta-bench-80`.
 
-⚠️ **benchcloud's vcloud is Intel Xeon (Skylake); sosy's was AMD Ryzen 7 PRO 5750G.** Run 80 is
-therefore *not* comparable to runs 61-79 — different hardware *and* a 300s -> 900s limit change. It
-is a new baseline, and the two variables cannot be separated after the fact.
+benchcloud's vcloud is Intel Xeon (Skylake); sosy's was AMD Ryzen 7 PRO 5750G, and the limit moved
+300s -> 900s. **Compare run 80 against run 79 anyway** — the delta is informative and these
+differences are usually not large enough to swamp the signal; just read the resource-shaped
+categories (timeout/OOM) with the confound in mind rather than treating them as pure regressions.
+
+Two parts of the comparison are *confound-free* and should be read directly:
+
+- **Frontend failures are deterministic** — they do not depend on CPU or time limit at all. The
+  run-79 -> run-80 delta in the `ERROR (frontend failed …)` buckets is attributable to the batch-76
+  fixes and nothing else. Expected to fall by roughly the classes above (193 + 155 + 164 + 251 +
+  903 + 174, minus the layering effect that made batch 73's 108 fixes net only -20).
+- **Wrong results** are likewise mostly determinism-driven, so a change there is a real signal
+  (with the caveat that a longer limit lets some tasks reach a verdict they previously timed out
+  before reaching, which can *expose* latent wrong answers — as run 79 did for the alloca-string
+  family).
+
+Correct-count and score deltas carry both the hardware and the budget change; expect the 900s limit
+alone to convert a large share of run 79's ~18,000 timeouts.
 
 ⚠️ The abs-path trap fired on the first launch attempt: `~/Theta-svcomp-80` expands before `ssh`, and
 benchcloud's `run-theta.sh` also uses `--hidden-dir /home --overlay-dir "$PWD"`, so the container
