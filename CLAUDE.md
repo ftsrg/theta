@@ -38,6 +38,25 @@ Same idea, different layout — and one trap that fakes a successful run.
      "cd /data/scratch/bajczi && ./run-tool.sh xmls/theta27-short.xml Theta-svcomp-NN \
       --vcloudCPUModel 5750G > /data/scratch/bajczi/bench-theta27-NN-<ts>.log 2>&1"'`
 
+⚠️ **Always pin the CPU model (`--vcloudCPUModel 5750G`) — no exceptions.** Results get compared
+across configs and against runs from weeks earlier; on unpinned runs the jobs land on whatever
+vcloud machines happen to be free, so a config difference and a hardware difference become
+indistinguishable after the fact and the run is useless as a baseline. Pin it even when the run is
+large enough that pinning noticeably slows it down — throughput is the cheaper thing to give up.
+(A `<require cpuModel="..."/>` in the XML does the same job, but the launch flag lets one XML be
+reused.)
+
+⚠️ **Pass `--vcloudClientHeap <MB>` for anything but a plain full run.** The vcloud client's
+default heap is **100 MB** (`benchexec/contrib/vcloud/vcloudbenchmarkbase.py`, grown only by
+`numberOfRuns // 10`), and its own help says "A too small heap-size may terminate the client
+without any results" — which is exactly what happens: `OutOfMemoryError` in
+`BenchmarkRunCollectionBuilder` a few seconds in, **0 submissions, tmux session gone, and a normal
+looking benchexec epilogue with all the `.xml.bz2` names printed**. Another
+looks-complete-but-worthless failure, same family as the abs-path trap below. `8192` was ample for a
+62-run job. Do NOT reach for `JAVA_TOOL_OPTIONS`/`_JAVA_OPTIONS` instead: they make every JVM print
+`Picked up JAVA_TOOL_OPTIONS: …`, which pollutes `theta-start.sh --version` output and breaks
+benchexec's tool-info with `ValueError: invalid literal for int() with base 10: ''`.
+
 ⚠️ **The tool dir MUST be relative** (`Theta-svcomp-NN`), never an absolute path.
 `run-tool.sh` runs the job with `--hidden-dir /home --overlay-dir "$PWD"`; with an
 absolute path the container cannot resolve `theta-start.sh`, so **every** run dies as

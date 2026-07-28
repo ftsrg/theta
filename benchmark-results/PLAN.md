@@ -3026,6 +3026,63 @@ new wrong are latent analysis bugs the parse-unlock exposed (C11 weak-memory rac
 `aws_string_new…negated` missed bug) — tracked separately from the flat work; not the subject of this
 plan. `compare_60_61.py` retains that diff.
 
+## Batch 64 — PLAN (immediate next step after Batch 63/TDX F1 flood fix): libvsync remaining issues — 4 wrong verdicts + 2 hard blockers (2026-07-25)
+
+Queued as the **next thing after the Batch 63 TDX flat-model flood (F1) is fixed** — picks back up
+Priority A/C from the 2026-07-22 directive, whose stated goal ("every libvsync task parses+starts;
+timeouts fine; **zero new wrong verdicts**") is currently violated by 4 tasks. Source: batch62
+(`results-2026-07-24_11-00-batch62`), the latest downloaded round covering libvsync (17 no-data-race +
+12 unreach-call + 14 valid-memsafety = 43 run instances). Current state: 1 correct, **4 wrong**, 38
+timeout/OOM/error — a big improvement over batch61 (most tasks frontend-failed there; see the A1/A2
+progress notes above) but not clean.
+
+### L1 (blocker — 2 tasks). Frontend/solver hard failures, unrelated to each other
+- **`hmcslock.yml`** — still dies in the frontend: `CInitializerList: Cannot create expression of
+  initializer list`. Flagged in the 2026-07-23 progress note ("two that still fail the frontend:
+  hclhlock and hmcslock") and never revisited after hclhlock's blocker (bare-split-variable) was fixed
+  alongside the array-handle work. Needs its own root-cause pass.
+- **`hclhlock.yml` / `rwlock.yml`** — now parse (progress), but both crash post-parse with
+  `com.microsoft.z3legacy.Z3Exception: theory not supported by interpolation or bad proof`
+  (unreach-call + valid-memsafety, both tasks; no-data-race instead OOMs on hclhlock). This is a *new*
+  blocker only exposed once parsing got past the array-handle/atomics fixes — likely a CEGAR
+  interpolation config hitting a theory (array-of-struct or bitvector-in-array shape from the lock's
+  node array) it can't interpolate. First step: reproduce `hclhlock` locally under the exact failing
+  portfolio config with `--debug --stacktrace`, identify which domain/interpolation combo issues the
+  unsupported query, and either route around it (drop that config from the libvsync-relevant portfolio
+  slice) or fix the interpolation gap.
+
+### L2 (soundness — 4 tasks). New/latent wrong verdicts on libvsync
+| Task | Property | Expected | Got |
+|---|---|---|---|
+| `bounded_mpmc_check_full.yml` | no-data-race | true | `false(no-data-race)` |
+| `rec_ticketlock.yml` | no-data-race | true | `false(no-data-race)` |
+| `mcslock.yml` | valid-memsafety | true | `false(valid-deref)` |
+| `ticketlock.yml` | valid-memsafety | true | `false(valid-deref)` |
+
+`rec_ticketlock` is not new — already named as a "latent analysis bug the parse-unlock exposed"
+(`rec_ticketlock` spurious race) in the batch60→61 note above; the other 3 are new since batch61
+(where they frontend-failed instead, so never got a verdict). All 4 are false positives (Unsafe
+reported on a Safe task) — same failure shape as **W6** (OC checker false positives, §1) and the F2
+flat-race-merge regression in Batch 63 — worth checking whether they share a root cause before treating
+each independently:
+- `bounded_mpmc_check_full` + `rec_ticketlock` (no-data-race, spurious race): diff the OC event graph /
+  race pair against a known-correct sibling (same approach as F2's "first step"); check whether the
+  atomics pass's `AtomicBeginLabel`/`AtomicEndLabel` wrapping (A1, 2026-07-23) is too coarse and
+  serializes/desyncs otherwise-independent accesses into a false race, or too narrow and misses that an
+  op is atomic.
+- `mcslock` + `ticketlock` (valid-memsafety, spurious deref): both are lock queue/ticket structures
+  walked through array-element handles — check interaction with `PthreadArrayHandleUnrollPass` (the
+  2026-07-23 array-handle fix): does the per-iteration constant-folded `(base,offset)` handle produce a
+  bounds check that the *real* (loop-driven) access pattern would satisfy but the unrolled/folded one
+  doesn't line up with memsafety's bounds tracking?
+
+### L3 — after L1+L2: re-run Priority C
+Once L1's two hard failures are resolved or explicitly routed around and L2's 4 wrong verdicts are
+fixed or reclassified as pre-existing/out-of-scope, re-run Priority C as originally scoped: a full
+local pass over libvsync (104 tasks) + the 44 atomic-qualifier tasks (Priority B), confirm parse/start
+(timeouts fine) and **zero wrong verdicts**, then fold the libvsync + atomic-qual tasks into the canary
+guard set so this doesn't silently regress again.
+
 ## 0. Result summary
 
 | Category | Count | Notes |
@@ -3249,3 +3306,685 @@ Resolved (per review, 2026-07-09):
 | AD10 (W2/1.3) | Who sets `--enable-signed-wraparound` | **Resolved**: nobody, currently — SV-COMP doesn't mandate modular signed semantics, and it would break overflow detection; add input-flag validation rejecting it together with the overflow property (+ test) |
 
 **All architectural decisions are now resolved (2026-07-09). The plan is ready to execute.**
+
+---
+
+## Batch 65 — libvsync/OC: five fixes take the family from ~0 to 31/38 running (2026-07-27)
+
+Executes the 2026-07-26 directive: *"run a benchmark with full 900 seconds of timeout for libvsync
+only, with OC. Try the clocks/refinement config as well with MathSAT. If there are wrong results, or
+exceptions/errors, go after them and repeat this until all libvsync tasks can at least be started in
+all tested configs."*
+
+**Baseline = run 67** (`Theta-svcomp-67`, `xmls/theta27-libvsync-oc3.xml`, 900 s, 3 decision
+procedures x 2 properties = 6 rundefinitions, ~108 runs): **0 wrong** (good) but **52 ERROR / 27 OOM /
+8 TIMEOUT / 0 correct**. Errors were near-identical across the three configs, i.e. config-independent
+and therefore frontend/graph-construction bugs rather than solver ones. Failure sites:
+`XcfaToEventGraph.exit:730` x24 and `LoopUnrollPass.getLoop:468` x9.
+
+### Fixes (all validated against a local repro; canary 255 + 24 fixtures green, 0 FAIL)
+
+1. **`LoopUnrollPass.kt` ~374 — `.reduce` -> `.reduceOrNull`.** A loop-condition location whose
+   outgoing-edge list is empty made the loop-variable fold throw *"Empty collection can't be
+   reduced"*. Hit caslock / hclhlock / ttaslock.
+2. **`DataRaceToReachabilityPass.kt` — dereference flags are now per component type.** The four
+   flags (`_deref_{array,offset}_{read,write}`) were hardcoded `IntType` behind
+   `check(type == Int())`, which surfaced as a bare, message-less *"Check failed."* on arraylock /
+   hclhlock / rwlock. Pointer components are **not** always Int (bitvector architectures and the
+   non-default memory models produce BvType ones). Now one flag per `(kind, type)` via
+   `derefFlagVar`, with a typed sentinel `noAccess(type)` (`Int(-1)`, or an all-ones Bv). The needed
+   flags are discovered by scanning the whole `XcfaBuilder` **up front** (`derefFlags`) because they
+   must exist before the init edge is constructed — they cannot be created lazily per procedure.
+3. **`XcfaToEventGraph.kt` ~433 — a label-less outgoing edge is no longer rejected.** Such an edge is
+   semantically `assume(true)`: it contributes no condition and the guard carries over unchanged,
+   which is exactly what the traversal already did. The error message now names the offending label
+   instead of being opaque. Hit hclhlock.
+4. **`GlobalDeclUsageVisitor.java` — WRONG-RESULT bug, global, not OC-specific.**
+   `visitGlobalDeclaration` overwrote an already-recorded function **definition** with a later bare
+   **prototype** (via `usedContexts.replaceAll`) and wiped the usage set the body had recorded. The
+   function became *undefined* -> havoc'd return value. Minimal repro:
+   `static inline int helper(int x){return x+1;}` followed by `static inline int helper(int x);` and
+   `if (helper(1) != 2) reach_error();` verdicts **Unsafe**; delete the prototype and it is Safe; gcc
+   confirms no error is reachable. Preprocessed sources do this constantly, so the blast radius is
+   far wider than libvsync — **this one needs a full benchmark, not just the libvsync run.** In
+   libvsync it showed up as *"Unknown procedure: rec_{spinlock,ticketlock,mcslock}_acquire"*. Note
+   `rec_` means **reentrant**, not recursive: these are ordinary inline functions and this was never
+   an OC recursion limit. Fix: skip the declaration when an `ExternalFunctionDefinitionContext` is
+   already recorded under that name (overwriting stays correct for redeclared *globals*, i.e. a
+   tentative definition followed by the real initializer, which is what the branch was written for).
+5. **`Builders.kt` `removeLocs` — edges and locations are kept in sync.** Found by the
+   `checkEdgesHaveLocations` instrumentation added earlier this session (the user's "instrument the
+   XcfaBuilders to find where we're inserting an edge without a proper location"); it fired under
+   `--force-unroll` as *"SimplifyExprsPass left N edge(s) of procedure run attached to locations it
+   no longer contains"*. `removeLocs` re-evaluated its predicate **while** unhooking edges, and the
+   usual predicate asks whether a location has incoming edges — which the unhooking itself changes.
+   So a location could leave `locs` with an edge still pointing at it. Now the match set is
+   snapshotted per round and every edge **incident in either direction** to a removed location is
+   dropped, unhooking both adjacency lists. Only caller is `UnusedLocRemovalPass`, whose predicate
+   requires `incomingEdges.isEmpty()`, so the new target-side branch fires only in the corrupt case.
+
+### Result
+
+Local sweep, all 19 tasks x both properties (70 s cap): **31/38 configs now run** instead of
+erroring. 7 errors remain, in 3 classes:
+
+- **`loops` — MOSTLY FIXED (4 of 5) by two further changes.** Diagnosis came from making the error
+  name the stuck locations and their incoming-edge deficits
+  (`run_error_1[26/66], __loc_2664_loop1_1[1/2], ...`). Force unrolling leaves behind copies past
+  the bound that nothing can reach, including whole **dead cycles**; every location in such a cycle
+  has an incoming edge from within the cycle, so `UnusedLocRemovalPass`'s "no incoming edges" test
+  kept them alive forever. They are invisible to the OC traversal but not to the incoming-edge
+  *counts* it waits on, so a live merge point sat forever waiting for a predecessor that can never
+  execute. Two changes:
+  (a) **`UnusedLocRemovalPass` is now reachability-based** (reachable from `initLoc`) instead of
+      predecessor-count based, which subsumes the old behaviour and also catches dead cycles;
+  (b) **`XcfaOcChecker.check(i)` now runs `UnusedLocRemovalPass` after `LoopUnrollPass`** — the OC
+      path built its pass manager with `LoopUnrollPass` *alone*, so no dead-code removal ran there
+      at all. This was the actual blocker; (a) alone changed nothing on the OC path.
+  Also rewrote **`LoopUnrollPass.findBackEdge` as a proper three-colour DFS**: the old one marked
+  edges explored globally, so a back edge first reached along a path not through its target was
+  never recognised. That did not fix these tasks but is a real latent-correctness bug.
+  Result: ticketlock, cnalock, hemlock, ttaslock now build their event graph and verify in both
+  properties. **`caslock-race` still reports `loops`** — its `run_error` deficit dropped from
+  `[21/156]` to `[21/92]`, so dead code was genuinely removed but one *reachable* cycle survives
+  `cutRemainingBackEdges`; that residue is the remaining lead. Note `count()` deliberately bails on
+  loops whose edges carry dereferences (guard added earlier to stop a Z3 crash on derefs lacking
+  `uniquenessIdx`), which is precisely the shape of a spin loop.
+
+  **`--force-unroll` is not the answer for this class.** It does get all ten configs past graph
+  construction, but it sets `unsafeUnroll`, and `XcfaOcChecker` correctly refuses a Safe verdict
+  that used an incomplete bound and escalates. ticketlock / cnalock / ttaslock are expected
+  **true** on both properties, so Safe is unreachable and they would merely turn from errors into
+  timeouts; only caslock and hemlock (expected **false**) could gain. No wrong-result risk either
+  way, but no real win — a config tradeoff, not a fix.
+- **`branching with non-assume labels` (2)** — bounded_mpmc_check_{empty,full}-race. Root cause
+  traced: `AtomicReadsOneWritePass` localizes a deref flag that is written twice on one edge (the
+  set/unset pair), and its copy-in (`_deref_array_read_Int_l35 := _deref_array_read_Int`) must
+  precede a branch-guard assume that *reads the same flag*, so the existing `prefix` guard (leading
+  assumes must not touch a localized var) computes 0 and the copy-in lands first.
+
+  **Design constraint for whoever fixes this — two tempting fixes are both unsound:**
+  1. *Relaxing OC's `firstLabel`* to mean "first assume" rather than "first label" skips populating
+     `assumeConsts`, so the "constants in the different branches must be equal" constraints
+     (`XcfaToEventGraph` ~line 440) are never emitted and sibling branches may read different
+     values of the same global.
+  2. *Hoisting the copy-in above the branching location for only the edge that needs it* has the
+     same effect by a different route: that branch's assume then references the local `_lNN` while
+     its siblings still reference the global, so the `assumeConsts` key differs and the branches are
+     again untied.
+
+  The hoist is only correct if it covers **every** outgoing edge of the branching location and they
+  all share **one** local per variable: then there is a single read of the global, every sibling
+  assume references that same local, and `assumeConsts` ties them as before. That means
+  `localVersions` must be computed per *branching location* rather than per edge (today it is
+  per-edge, `AtomicReadsOneWritePass` ~line 84), with a new location inserted so the copy-in edge
+  sits above the branch. Correctness-critical: this is the data-race path, so a subtle error here
+  produces silent wrong race verdicts, not a crash.
+- **`OC checker requires function inlining: init` (1)** — hmcslock-unreach. **Inherent, not a bug:**
+  `hmcslock_acquire_real(lock->parent, &lock->qnode, depth - 1)` is genuinely recursive, so
+  `canInline()` marks the caller non-inlinable and OC requires full inlining. (Secondary
+  observation: `canInline` is all-or-nothing per caller, so one recursive callee blocks inlining of
+  every other call in that procedure, including the perfectly inlinable `init` — worth improving,
+  but it would not unblock this task.) hmcslock-**race** does now run.
+
+### Measurement caveat — local sweeps UNDER-REPORT errors
+
+A local sweep with a short per-task cap is not a reliable error count. These OC failures happen at
+graph construction, i.e. deterministically and early *in the run*, but a run under heavy local
+parallelism (8-10 concurrent JVMs at `-Xmx8g` on a 24-core box) may not have reached graph
+construction by the cap, and then shows as "still running" rather than as the error it will
+deterministically produce. Confirmed on `ttaslock-unreach`: it appeared clean in one sweep, yet a
+direct single run fails at the very first unroll bound every time. So treat local sweep numbers as
+a *lower bound* on the error count; only the 900 s benchmark on dedicated vcloud cores is
+authoritative.
+
+### Process note (cost a discarded canary run)
+
+Never rebuild / re-extract `subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp` while a
+canary sweep or local sweep is in flight — they execute out of that exact directory, so the `rm -rf`
+lands mid-run and silently invalidates the results.
+
+
+## Batch 66 — libvsync/OC runs 68 and 69: errors cut 65%, but the family still yields no verdicts (2026-07-27)
+
+Two 900 s libvsync-only OC benchmarks on sosy, same `xmls/theta27-libvsync-oc3.xml` (87 runs, 3
+decision procedures x 2 properties). Run 68 = Batch 65 fixes 1-5; run 69 = all 8.
+
+| | run 67 (baseline) | run 68 (fixes 1-5) | run 69 (all 8) |
+|---|---|---|---|
+| ERROR | 52 | 36 | **18** |
+| OUT OF MEMORY | 27 | 35 | **48** |
+| TIMEOUT | 8 | 16 | **21** |
+| correct | 0 | 0 | **0** |
+| **wrong** | **0** | **0** | **0** |
+
+**What the fixes achieved.** Every error class targeted in Batch 65 is gone from the real
+benchmark: "Empty collection can't be reduced", the bare "Check failed.", and "Unknown procedure:
+rec_*" do not appear in run 68 or 69, and the dead-cycle fix removed the loops errors for cnalock,
+hclhlock, ticketlock, mcslock and rec_mcslock in run 69. Errors fell 52 -> 18 (-65%), and no wrong
+result was introduced at any point.
+
+**What they did NOT achieve, and this is the honest headline: the libvsync family still produces
+zero verdicts.** Every error removed became an OOM or a TIMEOUT, not a `correct`. OOM is now the
+dominant outcome (48 of 87, up from 27), which says the OC event graphs for these locks simply do
+not fit the 7 GB limit. That is a scaling problem, distinct from the frontend/graph-construction
+bugs fixed here, and it is what actually gates any score from this family. Chasing the last error
+classes has low marginal value until it is addressed.
+
+**Remaining 18 errors = 6 task-configs x 3 solver configs** (identical in all three, i.e. still
+config-independent):
+- `loops` (6): **caslock-race**, **ttaslock-unreach** only. One reachable cycle survives
+  `cutRemainingBackEdges`; see Batch 65 for the diagnostic that localises it.
+- `branching with non-assume labels` (6): **bounded_mpmc_check_full-race**, **bounded_spsc-race**.
+  Fix design and the two unsound shortcuts are recorded in Batch 65.
+- `OC checker requires function inlining` (6): **hmcslock** both properties — inherent,
+  `hmcslock_acquire_real` genuinely recurses and OC requires full inlining.
+
+Artifacts: `scratchpad/r68`, `scratchpad/r69` (logfiles + per-config result XMLs).
+
+
+## Batch 67 — the last two tractable OC error classes, root-caused and fixed (2026-07-27)
+
+Follow-up to Batch 66's 18 remaining errors (6 task-configs x 3 decision procedures). Two of the
+three classes are now fixed; the third is inherent.
+
+### `loops` (6 runs: caslock-race, ttaslock-unreach) — FIXED. Stray location twins.
+
+Earlier entries called this "a reachable cycle surviving `cutRemainingBackEdges`". That was wrong.
+The real mechanism:
+
+`LoopUnrollPass.copyBody` names each copied location `${name}_loop${index}`. That name is **not
+unique** -- copying the same region again in a later round, which nested loops do, regenerates a
+name the procedure already holds. `XcfaProcedureBuilder.addLoc` is a silent no-op for a location it
+already has, but `copyBody` kept handing out the *stray instance* it had just constructed. Because
+`XcfaLocation` is a **data class** (structural equality on name/flags/metadata), edges built from
+that twin still satisfy `addEdge`'s `toAdd.target in locs` check -- while the twin owns its own,
+empty `incomingEdges`/`outgoingEdges` sets.
+
+Consequences, in order of how they hid the bug:
+1. Every adjacency-walking traversal is blind to those edges. That includes `findBackEdge`, so the
+   pass's own back-edge cut saw an acyclic graph and cut nothing.
+2. `XcfaProcedure.deepCopy` resolves endpoints through a map keyed by *equality*, so it re-points
+   the edges onto the registered instance. The cycle therefore materialises only in the per-thread
+   copy -- which is precisely where the OC checker reported "loops".
+3. `checkEdgesHaveLocations` (the instrumentation added earlier this session) missed it because it
+   tested membership with `in`, i.e. by equality. **Making that check identity-based named the
+   offending pass immediately** and is kept: it is a strictly better invariant.
+
+Fix: disambiguate the copied name only on an actual clash, so the usual names stay stable --
+`PassTests` asserts on them, and an unconditional counter suffix broke that test.
+
+### `branching with non-assume labels` (6 runs: bounded_mpmc_check_full-race, bounded_spsc-race) — FIXED.
+
+Implemented the hoist design recorded in Batch 65. `AtomicReadsOneWritePass` now detects a branching
+location where some outgoing edge's *leading guard* reads a variable that must be localized (so the
+old `prefix` mitigation computes 0), and inserts a new location above the branch carrying a single
+`local := global` copy-in. **Every** sibling edge is then rewritten to read that shared local.
+
+Covering all siblings is the part that makes it sound: OC ties sibling branch conditions together
+through the declaration they read (`assumeConsts` in `XcfaToEventGraph`), so localizing only the
+edge that needs it unties them and lets two branches disagree about the value of the same global --
+a false race, not a crash. The write-back is emitted only on branches that actually modify the
+local; an unconditional one would add a spurious write event to the global on the read-only branch.
+
+This matches exactly what `DataRaceToReachabilityPass` produces: `assume(assertion); set; access;
+unset` on the MAIN_PATH edge (flag written twice -> `wrongWrite`) against `assume(!assertion)` on
+the ALTERNATIVE_PATH sibling, which only reads the same flags.
+
+### `OC checker requires function inlining` (6 runs: hmcslock, both properties) — INHERENT.
+
+`hmcslock_acquire_real(lock->parent, &lock->qnode, depth - 1)` is genuinely recursive and OC
+requires full inlining. The recursion depth *is* bounded by a constant (`num_levels = 3`), so
+bounded recursive inlining would unblock it -- that is a feature, not a fix, and is not attempted.
+
+### Validation
+
+696 unit tests, 255 parse canaries + 24 fixtures, and -- because the branching fix is on the
+data-race path, where a mistake yields wrong race verdicts rather than a crash -- **all 30
+`no-data-race` canaries re-run in full verdict mode: 30/30 PASS**.
+
+### Expected payoff: errors 18 -> 6, score unchanged
+
+Runs 68 and 69 both showed every removed error becoming an OOM or TIMEOUT, never a `correct`. These
+12 will very likely do the same. The OOM wall (48 of 87 runs in run 69) remains the binding
+constraint for this family; it is a scaling problem in the OC event-graph encoding, not an error
+class, and no amount of further error-chasing will produce a verdict here without addressing it.
+
+
+## Batch 68 — run 70 result: libvsync error chase COMPLETE (2026-07-27)
+
+`Theta-svcomp-70`, same `xmls/theta27-libvsync-oc3.xml` (87 runs, 900 s, 3 decision procedures x 2
+properties). Full progression of the chase:
+
+| | run 67 | run 68 | run 69 | **run 70** |
+|---|---|---|---|---|
+| ERROR | 52 | 36 | 18 | **6** |
+| OUT OF MEMORY | 27 | 35 | 48 | **57** |
+| TIMEOUT | 8 | 16 | 21 | **24** |
+| correct | 0 | 0 | 0 | **0** |
+| **wrong** | **0** | **0** | **0** | **0** |
+
+**Errors down 88% (52 -> 6), zero wrong results at every step.** The only remaining errors are
+`hmcslock` in all six configs -- the inherent recursion case (`hmcslock_acquire_real` recurses on
+`lock->parent`; OC requires full inlining). 18 of 19 libvsync tasks now start in every tested
+config, which closes the "every libvsync task at least starts" directive apart from that one.
+
+**And the predicted null result held exactly: the score did not move.** Every error removed across
+runs 68-70 became an OOM or a TIMEOUT; not one became a `correct`. OOM is now 57 of 87 runs (66%,
+up from 27 at the start). This is the honest conclusion of the whole exercise:
+
+> The libvsync family produces **zero verdicts**, and the binding constraint is that the OC event
+> graph for these locks does not fit in 7 GB. That is a scaling property of the encoding, not an
+> error class. No further error-chasing can produce a score here; the next real step for this
+> family is the memory footprint of `XcfaToEventGraph` (or a larger memlimit), not more frontend or
+> graph-construction fixes.
+
+Ten fixes landed across Batches 65-67 to get here. Their durable value is not the libvsync score
+(there is none) but the general bugs found along the way -- above all the
+prototype-after-definition **wrong-result** bug (Batch 65 fix 4), which is global and still wants a
+full `theta27-short` run before it is trusted.
+
+
+## Batch 69 — `--force-unroll-recursion`: expand recursive calls at the force-unroll bound (2026-07-27)
+
+Per the user's design: a setting that unrolls call invocations to the same degree as force
+unrolling, wired into **`LoopUnrollPass`, not `InlineProceduresPass`**, so it is re-applied when the
+bound increases -- and with the inlining machinery factored into shared utilities.
+
+### Structure
+
+New `ProcedureInlining.kt` holds what both callers need: `inlineCallSite`, `inlinedCopy`,
+`callsKnownProcedure`, `calleeOf`, `recursiveProcedureNames`, and a `ProcedureBody` snapshot type.
+`InlineProceduresPass` now delegates to it and is otherwise unchanged (verified as a pure refactor:
+unit tests green before the new feature was added). `LoopUnrollPass.unrollRecursiveCalls` runs
+*before* the loop search (a spliced body brings its own loops) and is gated on
+`--force-unroll-recursion`; `XcfaOcChecker` passes `parseContext` so the splice can build the
+parameter assignments. Because the pass runs per force-unroll bound, each escalation expands the
+recursion one level deeper -- which a one-shot inlining pass cannot do.
+
+### Three bugs the design flushed out, all producing WRONG VERDICTS rather than crashes
+
+1. **Self-recursion aliases caller and callee.** `callee === builder`, so walking the callee's edges
+   while adding to the builder threw `ConcurrentModificationException`.
+2. **The snapshot was taken after the call edge had been removed**, so the spliced body no longer
+   contained the recursive call. Recursion was silently truncated to a single level -- no cut, no
+   `unsafeUnroll`, and a confident wrong answer. Fixed by capturing every body at the start of a
+   round, before anything is spliced (`ProcedureBody`).
+3. **Nested frames shared variable declarations.** Every spliced copy reused the callee's decls, so
+   the inner `sum(n-1)` wrote the very `n` its caller was still using and the outer guards read the
+   innermost value. Verdicts were wrong in *both* directions. Fixed with a per-expansion frame
+   (`_inlNN` renaming through `changeVars`), requested via `inlineCallSite(freshFrame = true)`.
+
+Also replaced `canInline()` as the recursion test: it caches in `metaData` and conflates "is
+recursive" with "reaches recursion", so once bodies start mutating it gives order-dependent answers
+(it reported the plainly self-recursive `sum` as non-recursive). `recursiveProcedureNames` computes
+it from the call graph, settled once per pass instance.
+
+### What it does and does not achieve
+
+- **Bug-finding works.** `int sum(int n){ if (n<=0) return 0; return n + sum(n-1); }` with
+  `sum(3) != 5` -> **Unsafe** (correct) at bound 2.
+- **Proving safety of a recursive program does not terminate.** With `sum(3) != 6` the checker
+  escalates 2,3,4,5,6,7... indefinitely: at every bound a call site *structurally* remains (inside
+  the base-case copy), so the cut fires, `unsafeUnroll` stays set, and the checker correctly refuses
+  the bound-limited `safe`. Recognising that the remaining call is *semantically* unreachable needs
+  reasoning bounded unrolling does not have -- the same reason BMC cannot prove loop safety. With
+  `forceUnrollBoundEnd = -1` this is an unbounded escalation, i.e. a timeout in practice.
+- **hmcslock** now clears the `requires function inlining` barrier and stops on a *different*,
+  pre-existing OC restriction: `variable (var t0::hmcslock_init_ret_inl14150 Int) is not
+  initialized` (`XcfaToEventGraph.addCrossThreadRelations`). A void callee never writes its
+  frontend-invented `_ret` variable, so the caller's write-back reads something OC considers
+  uninitialized. `InlineProceduresPass` has always had this shape; hmcslock simply never got far
+  enough to hit it. Fixing it means initialising the spliced frame's OUT params at the call site --
+  not attempted here.
+
+### Open policy question for the user
+
+Should `--force-unroll-recursion` respect `forceUnrollBoundEnd` so a safe recursive program ends as
+`unknown` instead of running out the clock? That changes escalation semantics, so it was left alone.
+
+### Validation
+
+Off by default (`LoopUnrollPass.UNROLL_RECURSION = false`) and verified inert -- without the flag
+the recursive test still reports `requires function inlining`. 696 unit tests, 255 parse canaries +
+24 fixtures, all green.
+
+
+## Batch 70 — run 72 triage: frontend failures and propagator wrong results (2026-07-27)
+
+Run 72 = full concurrency set, 5 OC configs x 4 properties, 15,880 runs. Headline numbers are in the
+session notes; this entry records the bugs found and fixed from it.
+
+### Frontend failures: 562 per config (2,810 runs, 17.7%), config-independent
+
+Root causes, by share: `CLibraryFunctionsPass` 397 (71%) -- non-constant deref offset in a library
+arg 226, local (non-global) mutex handle 139, lib arg not a reference base 32 -- then
+`ExpressionVisitor` 115, and a tail of ~50.
+
+**Fixed (108 of 562):**
+1. **"No such variable or macro: <function>" (81).** Not a missing symbol -- an *ordering* bug.
+   `GlobalDeclUsageVisitor` keeps a redeclared global at its *original* position while adopting the
+   later context, so `int (*p)(void); ... int (*p)(void) = f;` evaluates the initializer long before
+   `f` is reached. Fix: introduce every function's name before any global declaration is processed.
+   **Watch out:** the variable must also be registered in `FunctionVisitor.functions`, or
+   `registerIfFunctionUsedAsValue` no longer recognises an address-taken function and every one of
+   them loses its id and initial value -- caught by `FunctionPointerReturnTypeTest`.
+2. **"Only structs expected here" (27).** Also not where it appeared. `ThreadInfo.cell`, declared
+   `Cell cell;`, resolved to `NamedType[int]`: the forward-typedef idiom
+   `typedef struct Cell Cell; struct Cell {...};` hit `visitCompoundUsage`, whose bare map lookup
+   returned **null** for a tag with no definition yet, and the specifier fell back to `int`, which
+   the typedef froze. Fix: a `struct X` reference now *introduces the tag*, and the definition
+   *completes that instance* instead of replacing it. A tag that already has fields still gets a
+   fresh instance, preserving redefinition behaviour.
+
+**Not fixed:** the `CLibraryFunctionsPass` mutex-handle family (397). All three of its errors are one
+limitation -- *a pthread handle must resolve to one statically-named object* -- failing three ways:
+index not constant (dominated by goblint's `pthread_t t[10000]` loops, 10x over `UNROLL_LIMIT`;
+raising the limit is not the answer), object function-local, object reached through a struct field
+or pointer. `PthreadArrayHandleUnrollPass` also only triggers on `pthread_create`/`join`, so
+`for (j...) pthread_mutex_lock(&mutex[j])` is never unrolled -- that part looks cheap.
+
+### Propagator (baseline) wrong results: 19 -> 16
+
+**Fixed:**
+3. **`MemsafetyPass.annotateLost` (2 tasks: `singleton`, `singleton_with-uninit-problems`).** It
+   checked only whether everything was *freed*, contradicting its own doc comment and SV-COMP's
+   valid-memtrack ("pointed to OR deallocated" = Valgrind *definitely* lost). A block still named by
+   a live global is now tracked. Locals are gone at the final location, so globals are the pointers
+   that matter; a block reachable only *through* another heap block is not covered, which errs
+   towards reporting a leak that is not one rather than missing one. **Backend-independent** -- the
+   same false alarm existed on the CEGAR path.
+4. **Integer limit macros (`04-mutex_17-ps_add1_nr`).** `MacroExprs` defined every limit as the C
+   standard's *minimum guaranteed* magnitude -- the 16-bit ones: `INT_MAX` = 32767 where `int` is 32
+   bits, `UINT_MAX` = 65535. So `if (i == INT_MAX) return;` compared against the wrong constant and
+   left the real overflow reachable. Separately, the MIN values used `-MAX` instead of `-MAX-1`,
+   ignoring two's-complement asymmetry (`INT_MIN` was -32767). All limits are now derived from the
+   type's actual width. Also silently wrong before on LP64, where `LONG_MAX`/`ULONG_MAX` held ILP32
+   values.
+
+**Not fixed, with reasons:**
+- **3 `popl20-*.wvr` race false alarms** -- atomicity arrives via a *cast on a malloc'd object*
+  (`_Atomic int* arr = (_Atomic int*)malloc(...)`). Recorded earlier as deliberately deferred: the
+  obvious fix (marking the object atomic) *hides* real races if the object is ever accessed plainly.
+  Needs per-access atomicity, not a patch.
+- **10 missed bugs.** `reorder_c11_good-{10..50}` (5) are the known C11 weak-memory gap.
+  `09-regions_{03,05}` and `race-2_2b-container_of` need two heap cells reached through *different*
+  pointer chains to be recognised as the same object (`A->next` and `B->next` both point at `p`,
+  guarded by different mutexes) -- an aliasing-precision limit in the race check, not a localized
+  bug. **Verified this is not a memory-model choice: `--memory-model flat` misses them too.**
+
+### IDL: 63 missed bugs, unsound
+
+Both IDL configs miss ~63 bugs against 6-10 for the others, and **57 are solved correctly by another
+config** -- so it is neither task difficulty nor the solver, but the IDL decision procedure itself.
+Concentrated in goblint `04-mutex`/`13-*` and `02-base` malloc-race families. Untouched; this is the
+single largest correctness item outstanding.
+
+### Validation
+
+Every fix above: 255 parse canaries + 24 fixtures + full unit tests, 0 failures. The memsafety change
+additionally re-ran the 18 memsafety canaries in **verdict mode** (16 PASS, 2 TIMEOUT, 0 FAIL),
+because it *weakens* a check and could otherwise mask a real leak.
+
+
+## Batch 71 — `pointsToAtomic` was never set for declared globals (2026-07-27)
+
+Following the user's observation that "the result of the cast should have the atomic flag" for the
+popl20/weaver race false alarms.
+
+**Found and fixed.** `XcfaGlobalVar.pointsToAtomic` documents exactly the right notion -- *"The
+object this points at is `_Atomic`: `_Atomic int *p` ... A different question from [atomic], and the
+one a memory access has to ask"* -- but `FrontendXcfaBuilder.initializeGlobalVariable` never
+populated it:
+
+    XcfaGlobalVar(decl, type.nullValue, atomic = isAtomic)   // pointsToAtomic defaults to false
+
+So `_Atomic int *A;` recorded that A itself is not atomic (right) and forgot that its *pointee* is.
+It is now derived from the declared type (`CPointer`/`CArray` with an atomic element). Verified it
+computes `pointeeAtomic=true` for `A`.
+
+This is the **sound** form of the idea, and the distinction matters: it records the atomicity of the
+*access path*, not of the object, so a second access to the same memory through a plain `int *` is
+still race-checked. Marking the object atomic -- the variant rejected in earlier batches -- would
+silently exclude it.
+
+**It does not fix popl20**, and two follow-up attempts failed for the same underlying reason:
+1. The `pointsToAtomic` branch in `XcfaDataRaceCheck.addressesAtomicData` needs the dereference's
+   base to still be a `RefExpr` to the global. For heap memory it is not: by analysis time the base
+   is the allocation's id, and a malloc'd object's base is a *runtime* value that can never be
+   registered through `isAtomicObjectCell`.
+2. Asking the *access's own* recorded C type (`A[i]` yields an `_Atomic int` lvalue) also fails --
+   the metadata is keyed by object identity, so the passes that rebuild the expression lose it,
+   which is the very reason `pointsToAtomic` exists as a stored flag. That attempt was reverted
+   rather than left as unvalidated code in the race check.
+
+**What closing popl20 actually needs:** the atomicity has to survive expression rebuilding -- either
+by keeping the originating pointer on the dereference, or by marking the allocated object's cells
+atomic when a pointer-to-atomic is assigned a fresh allocation. The second is the variant previously
+flagged as risky, though the risk is narrower than first recorded: accessing an atomic object
+through a non-atomic lvalue is UB in C, so for well-defined programs it is defensible. A design
+call, not a patch.
+
+Validation: 255 parse canaries + 24 fixtures + full unit tests, 0 failures.
+
+
+## Batch 72 — atomic dereferences were never filtered in the race *transformation* (2026-07-27)
+
+The user granted the assumption that no UB other than the checked property is reachable, which
+removes the objection recorded in earlier batches against treating cast/declared atomicity as
+authoritative. The actual gap turned out to be simpler and did not need that licence.
+
+**`DataRaceToReachabilityPass` had no atomicity filtering for dereferences at all.**
+`addressesAtomicData` lived only in `XcfaDataRaceCheck` -- the *native* race checker, which the OC
+path (`--datarace-to-reachability`) does not use. Variables were filtered through
+`potentialRacingVars`; dereferences never were. So every atomic heap access -- `_Atomic int *A;
+A[i]++` -- was instrumented and reported as racing with itself.
+
+Two changes:
+1. **Extracted** the resolution into `xcfa/utils/AtomicAccessUtils.kt` (`addressesAtomicData`,
+   `resolveObjectBase`, `asConstantBigInteger`), parameterised on the global-var collection.
+   `XcfaDataRaceCheck` delegates to it -- no duplicate copy.
+2. **`DataRaceToReachabilityPass` filters atomic dereferences** with it. Needed a `ParseContext`,
+   which meant updating three other construction sites (two passed `enabled` positionally, plus a
+   unit test) -- all caught at compile time.
+
+Together with Batch 71 (`pointsToAtomic` now set from the declared type) the chain works end to end:
+the declaration records that the pointee is atomic, and the transformation consults it.
+
+Verified discriminating: `_Atomic int *A` + malloc, two threads on `A[0]` -> **Safe**; the same with
+a plain `int *` -> **Unsafe** (real race still caught); and the full popl20 shape -- a helper
+returning `(_Atomic int*)malloc(...)`, loops, two threads -> **Safe**.
+
+**Gate: 30/30 data-race canaries in verdict mode**, plus 255 parse canaries + 24 fixtures and full
+unit tests. That verdict run is the one that matters, since this change *suppresses* race reports.
+The three real `popl20-*.wvr` tasks get past the frontend but do not finish in 800 s locally, which
+is consistent with the spurious counterexample being gone (proving safety is harder than finding a
+false race) but is not proof -- the benchmark will confirm.
+
+## Missed races: a 15-line reproducer for the `09-regions` class
+
+Not fixed, but reduced from a 60-line benchmark to this, which is the useful artefact:
+
+    struct s { int datum; struct s *next; } *A, *B;
+    // main: p = malloc(...); A = malloc(...); A->next = p; B = malloc(...); B->next = p;
+    // thread: lock(m1); A->next->datum++; unlock(m1);
+    // main:   lock(m2); B->next->datum++; unlock(m2);      // RACE: same cell, different mutexes
+
+Bisected precisely:
+- `(*p)++` in both, different mutexes  -> **Unsafe** (correct: the core mechanism works)
+- `(*p)++` in both, same mutex         -> **Safe** (correct)
+- `A->next->datum++` in *both*         -> **Unsafe** (correct)
+- `A->next` vs `B->next` (they alias)  -> **Safe** (MISSED)
+- same, but each loaded to a local first -> **Safe** (MISSED)
+
+So the miss is specifically *two different pointer chains that alias at runtime*; it is not about
+nesting per se, since the identical-chain case is caught. Note the points-to analysis
+(`xcfa.pointsToGraph`) feeds only COI and POR, not the race path, so the alias graph is not the
+filter. This is pre-existing -- it is `09-regions_03-list2_rc` in run 72 -- and unaffected by any of
+today's changes.
+
+
+## Batch 73 — run 77: three low-hanging fixes, propagator 1515 -> 1721 correct, ZERO false alarms (2026-07-28)
+
+Run 77 = same benchmark as run 72 (Concurrency set, 5 OC configs x 4 properties, 15,880 runs,
+15 GB / 2 cores / 900 s) with the session's fixes, and **CPU-pinned** this time.
+
+### Propagator baseline, run 72 -> run 77
+
+| outcome | 72 | 77 | delta |
+|---|---|---|---|
+| correct | 1515 | **1721** | **+206** |
+| server error | 290 | **83** | **-207** |
+| frontend failure | 562 | 542 | -20 |
+| timeout | 671 | 695 | +24 |
+| out of memory | 98 | 103 | +5 |
+| **wrong** | 19 | **10** | **-9** |
+
+**All nine false alarms are gone; the remaining 10 wrong are exactly the missed bugs** identified
+earlier and not fixed: `reorder_c11_good-{10..50}` (5), `race-2_2*-container_of` (2),
+`09-regions_{03,05}` races (2), `09-regions_09-arraylist-deref` memsafety (1).
+
+All five configs: propagator 1515->1721, refinement_z3 1491->1698, refinement_mathsat 1484->1651,
+idl_z3 1426->1614, **idl_mathsat 1162->1157 (the only regression)**. Wrong counts: propagator
+19->10, refinement_z3 14->8, refinement_mathsat 12->8, idl_z3 66->64, idl_mathsat 63->63 — the IDL
+missed-bug count is untouched at ~63 and is now unambiguously the largest correctness item.
+
+### The three fixes
+
+1. **Terminal-sink exemption (the big one).** ~220 of the 233 memsafety "server errors" were one
+   cause: *"incoming paths disagree on atomic nesting"* at thread **final** locations.
+   `MemsafetyPass.breakUpErrors` redirects error edges into the final location, so it collects both
+   ordinary completion and paths that were inside a locked region. Execution stops there, so no
+   later event exists for an atomic context to govern. `isErrorSink` generalised to
+   `isTerminalSink` (also `final`, or no outgoing edges). Memsafety alone went 185 -> 390 correct.
+2. **`PthreadArrayHandleUnrollPass` trigger set** extended to the mutex/condvar handle functions.
+3. **`asConstant()` simplifies** before matching a literal, so `(mod 4 4294967296)` counts.
+
+### Why the frontend total only moved 20 — layered barriers, not independent buckets
+
+Both parse fixes worked exactly as projected: `no such variable/macro` **88 -> 7**,
+`only structs expected` **27 -> 0**. That is the 108 runs predicted. But the net is only -20,
+because the same tasks then stop at the *next* construct in the same file, some of it newly
+reachable code:
+
+| bucket | 72 | 77 |
+|---|---|---|
+| ExprVisitor: no such variable/macro | 88 | **7** |
+| ExprVisitor: only structs expected | 27 | **0** |
+| other: getrExpression | 0 | **68** (new) |
+| CLibFn: local mutex handle | 139 | 152 |
+| FrontendBuilder: pointer arithmetic | 3 | 11 |
+| other: handleUnsignedConversion | 0 | 8 (new) |
+| other: structMemberAccess | 0 | 4 (new) |
+
+Zero *new* frontend failures among tasks that previously parsed, so nothing regressed. **Lesson for
+estimating: removing a frontend barrier is not the same as gaining a verdict** — the driver families
+need several fixes each. The memsafety fix converted cleanly precisely because those tasks already
+parsed and only the OC check rejected them.
+
+Also visible: `non-constant deref offset` 226 -> 213 (-13) with `local mutex handle` +13 — the
+mutex-array unroll works and hands those tasks to the local-mutex-handle barrier.
+
+### Retracted: local mutex handles (was listed as low-hanging)
+
+`MutexToVarPass` keys mutex identity by **name** (`_mutex_flag_<name>`) and runs *before* per-thread
+copying, so allowing a function-local mutex would give two threads running the same function one
+shared flag for two independent locks. That serialises them and **hides races**. It needs
+per-thread-instance mutex identity; not a one-line relaxation.
+
+Validation: 255 parse canaries + 24 fixtures, 30/30 race verdict canaries, memsafety verdict
+canaries 16 -> **17** PASS, full unit tests — 0 failures.
+
+## Batch 74 — C11 reordering races; and what the run-78 "regressions" actually are (2026-07-28)
+
+Two separate things: a **real soundness fix** (`reorder_c11_good-*`), and the **attribution of the
+64 portfolio regressions** in run 78 vs batch 61, which are mostly not defects.
+
+### Fix: constant folding erased the racing reads (`reorder_c11_good-{10,20,30,40,50}`)
+
+All 5 were missed bugs (expected `false(no-data-race)`, we said Safe). The task shape:
+
+```c
+static void *setThread(void *p)   { __VERIFIER_atomic_begin(); a = 1;  __VERIFIER_atomic_end(); ... }
+static void *checkThread(void *p) { if ((a == 0 && b == 0) || (a == 1 && b == -1) || 1) ; else ERROR; }
+```
+
+`setThread` writes `a`/`b` inside atomic sections; `checkThread` reads them **unprotected**. Atomic
+sections create no happens-before edge, so those conflict — a real race.
+
+Three minimal variants isolated the cause (atomic sections are a red herring):
+
+| variant | `\|\| 1` | atomic sections | verdict |
+|---|---|---|---|
+| A = benchmark shape | yes | yes | **Safe** (the missed bug) |
+| B | **no** | yes | **Unsafe** (race found) |
+| C | yes | **no** | **Safe** |
+
+`ExprUtils.simplify` folds `X \|\| Y \|\| 1` to `true`, which erases the reads of `a` and `b`
+inside it. Sound for reachability; fatal for data race — the conflicting access simply stops
+existing. `SimplifyExprsPass` runs at `ProcedurePassManager` lines 68/98/123, all **before**
+`DataRaceToReachabilityPass` (126).
+
+Fix: under `inputProperty == DATA_RACE`, keep the original label when simplification would drop a
+shared access. Precedent: the pass already bails out entirely for `OVERFLOW`.
+
+⚠️ **The guard must apply to assumes only.** The first attempt guarded every label and broke
+`09atomicfield_norace` (a *false alarm* on an `_Atomic` field) — caught by `XcfaDataRaceTest`.
+Simplification also **rewrites** a dereference's address expression, folding `base + offset` to a
+constant, and that fold is exactly what lets the atomic-cell check resolve the object base. A
+rewrite drops the old global var *and* the old `Dereference` key from the label without dropping
+the access, so no access-set comparison can tell "rewritten" from "removed". Assumes don't need
+address folding, so scoping the guard to them keeps both behaviours. Comparing dereferences by
+*count* instead of identity was also tried and still failed — the global var `s` is lost too.
+
+Validation: 5/5 real tasks now `Unsafe`; 255 parse canaries + 24 fixtures; **30/30 race verdict
+canaries**; memcleanup 1/1; 433 unit tests, 0 failures.
+
+### The 64 run-78 regressions vs batch 61 are mostly NOT defects
+
+| property | n | shape |
+|---|---|---|
+| valid-memcleanup | 16 | verdict lost — the CWE401 memtrack-exemption bug, already fixed + gated |
+| termination | 16 | 6 OOM + 10 TIMEOUT |
+| unreach-call | 16 | 15 TIMEOUT + 1 OOM |
+| valid-memsafety | 8 | 7 TIMEOUT + 1 unknown |
+| no-overflow | 6 | TIMEOUT |
+| no-data-race | 1 | TIMEOUT |
+
+**34 of the 49 resource regressions were already >150s in batch 61** against a 300s limit — margin,
+not mechanism. Local master-vs-ours runs on the fast ones:
+
+| task | master | ours | verdict |
+|---|---|---|---|
+| `45_monabsex1_vs` | 7.0s / 0.37GB | **120.4s / 1.69GB** | both **Safe** |
+| `46_monabsex2_vs` | 6.9s | **125.8s** | both **Safe** |
+| `id_build.i.p+sep-reducer` | 13.7s | **107.6s** | both **Safe** |
+| `mannadiv_unwindbound10` | TIMEOUT | 74.7s | ours **Unsafe** (better) |
+
+**No correctness regression anywhere** — every task ours completes gives the same or a better
+verdict. Cause, straight from the logs: master's OC stage **crashes instantly**
+(`IllegalStateException` at `XcfaToEventGraph.kt:232`, exit 202) and falls through to a config that
+solves the task in ~3.5s; our OC fixes removed that crash, so OC now genuinely runs to its
+`timeoutMs = 250_000` (exit 201) first. That is the *cost of the fix*, not a new defect.
+
+⚠️ **The portfolio timeouts are tuned for SV-COMP's real 900s budget, not our 300s benchmark.**
+`multithread.kt`: OC 250s, EXPL_SEQ_ITP 300s, PRED_BW 320s, PRED_SEQ_ITP 750s. Under
+`theta27-short.xml` (`timelimit="5 min"`) OC alone eats 83% of the budget; at 900s it is ~28% and
+the fall-through still has ~650s. Locally ours *does* finish (wall 267s, Safe). **Do not retune the
+portfolio to the short benchmark** — that optimises the proxy, not the target. The open question is
+whether to benchmark at 900s instead.
+
+### Two measurement traps (both faked results before being caught)
+
+1. **Upstream master is not a valid baseline for the portfolio.** It `Frontend failed!`s in 1.4-3.0s
+   on the entire termination + product-lines set (`*_cilled_*`, `email_spec*`, `elevator_*`) — those
+   tasks only became solvable in our own line of work. Baseline = batch 61. Master is valid only for
+   the OC/concurrency configs.
+2. **This container is capped at 8 GB** (`/sys/fs/cgroup/memory.max`); `free` reports the TrueNAS
+   host's ~62 GB. `theta-start.sh` hardcodes `-Xmx14210m`, so 4 parallel local runs get SIGKILLed at
+   ~2 GB RSS (rc=137) — indistinguishable from a real OOM regression — and `./gradlew test` dies with
+   `Test Executor ... exit value 137`, which is the OOM killer, *not* a test failure. Run one theta
+   at a time; `--max-workers=1` for tests.
+
+Run 79 (this build, all fixes) launched on sosy pinned to `5750G` — the same CPU model batch 61 used,
+so the comparison is clean.
