@@ -1160,7 +1160,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         parseContext
                                 .getMetadata()
                                 .getMetadataValue(originalOperand, ByteUnionSlice.WIDTH);
-                if (byteUnionWidth.isPresent() && ((Number) byteUnionWidth.get()).intValue() > 1) {
+                if (byteUnionWidth.isPresent()
+                        && ((Number) byteUnionWidth.get()).intValue() > 1
+                        && !byteAddressed()) {
+                    // Under the bytes memory model this restriction does not apply: every object is
+                    // a run of byte cells and a pointer is a plain byte address, so `&u.qwords[0]`
+                    // is just the address of the first of the member's cells and a read through it
+                    // recombines the cells it spans. It is only the cell-per-value models that
+                    // cannot express a pointer knowing it covers several cells.
                     throw new UnsupportedFrontendElementException(
                             "Taking the address of a multi-byte member of a byte-addressed union is"
                                     + " not supported.");
@@ -2224,10 +2231,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 throw unsupportedByteLaidOutMember(
                         memberName, "a floating-point element is not supported");
             }
-            if (!isByteAddressableScalar(elemType)) {
-                throw unsupportedByteLaidOutMember(
-                        memberName, "a nested aggregate element is not supported");
-            }
+            // An aggregate element is allowed: `[i]` on it resolves to a *sub-region* of the same
+            // byte run rather than to a value (see byteLaidOutArraySubscript), so `u.arr[i].f`
+            // and `u.arr[i][j]` keep descending through byte offsets. Only the element's total
+            // size is needed here, which ObjectLayout gives for aggregates just as for scalars.
             final int elemBytes = ObjectLayout.sizeBits(elemType, arch) / 8;
             if (elemBytes <= 0) {
                 throw unsupportedByteLaidOutMember(memberName, "its element has no static size");
@@ -2452,6 +2459,33 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         Mul(
                                 indexType.castTo(indexExpr),
                                 indexType.castTo(indexLiteral(elemBytes))));
+        // An aggregate element is a *region*, not a value: `u.arr[i]` where the element is a struct
+        // or a nested array yields a marker at the element's byte offset, so the following `.f` or
+        // `[j]` descends into it exactly as it does for a directly named nested member. Only a
+        // scalar element is an actual read.
+        if (elemType instanceof CStruct) {
+            final Expr<?> sub = Pos(base);
+            parseContext.getMetadata().create(sub, "cType", elemType);
+            parseContext.getMetadata().create(sub, ByteUnionSlice.STRUCT_BASE, base);
+            parseContext.getMetadata().create(sub, ByteUnionSlice.STRUCT_OFFSET, byteOffset);
+            return sub;
+        }
+        if (elemType instanceof CArray innerArray) {
+            final int innerBytes =
+                    ObjectLayout.sizeBits(
+                                    innerArray.getEmbeddedType(), parseContext.getArchitecture())
+                            / 8;
+            if (innerBytes > 0) {
+                final Expr<?> sub = Pos(base);
+                parseContext.getMetadata().create(sub, "cType", elemType);
+                parseContext.getMetadata().create(sub, ByteUnionSlice.ARRAY_BASE, base);
+                parseContext.getMetadata().create(sub, ByteUnionSlice.ARRAY_OFFSET, byteOffset);
+                parseContext
+                        .getMetadata()
+                        .create(sub, ByteUnionSlice.ARRAY_ELEMENT_BYTES, innerBytes);
+                return sub;
+            }
+        }
         return byteScalarRead(base, byteOffset, elemBytes, elemType);
     }
 
