@@ -4074,3 +4074,53 @@ correctly scores +2. Fixing the 30 `cstr*`/`openbsd*` false-derefs is worth roug
 far more than the entire +155 this run gained. Two termination LDV tasks are also wrong
 (`false(termination)`, expected true) — those reproduce locally on batch 61's build too, so they are
 pre-existing and were merely masked by OOM.
+
+## Batch 76 — five of the seven run-79 frontend classes fixed; run 80 on benchcloud at 900s (2026-07-28)
+
+Worked the run-75 frontend breakdown in the agreed order. Landed (`7de55d4797`, `b05791081c`):
+
+| # | class | runs | outcome |
+|---|---|---|---|
+| 1 | `AllocaFunctionPass` double-remove | 193 | **fixed**, 3/3 sampled parse |
+| 2 | `typeof` over a variable | 155 | **fixed**, 3/3 sampled parse |
+| 3 | missing semantic cast (`TypeUtils.cast`) | 164 | **fixed**, 3/3 sampled parse |
+| 5 | pointer arithmetic / LHS | 251 | **fixed as a side effect of 3** — those expressions go through `castTo`; 0 pointer-arithmetic errors left in the sample |
+| 7 | byte-union nested aggregate element | 903 | **fixed**, 8/10 sampled parse |
+| 7b | address of multi-byte union member | 174 | **lifted under the bytes model only** |
+
+⚠️ **Item 4 (function pre-registration, 918) was implemented and then REVERTED.** Extending the
+batch-70 pre-registration loop to function *declarations* did resolve the ordering case (`memcpy`
+used at line 6372, declared at 6507), but `declarationVisitor.getDeclarations` has side effects and
+calling it early broke three known-good LDV canaries (`ez_devices` stopped resolving) — 255 parse
+canaries fell to 252. Measured gain on 20 sampled tasks of the class: **0** now parse, because each
+merely advances to the next unresolved symbol. Negative net value, so it is out. The residual is
+heterogeneous — kernel externs of opaque type (`__this_module`, `platform_bus_type`), static
+functions referenced from struct initialisers (`uvc_probe`), locals. Every isolated reproduction of
+the suspected declarator forms **parses fine**, so the cause is context-dependent and still open.
+
+⚠️ **Item 6 (pthread candidate sets, 415) NOT implemented.** Enumerating candidates needs the array
+extent, and the way the code gets that today is by unrolling the loop — which is exactly what fails
+here (goblint's `pthread_t t[10000]` is 10x over `UNROLL_LIMIT`). Worse, dispatching `pthread_create`
+over N candidate handles multiplies *thread identity*, and the failure mode of getting it wrong is a
+**silently hidden race**, which 30 race canaries cannot be relied on to catch. Wants its own
+validation cycle. The 118 affected tasks are dominated by goblint `28-race*` (39) and `09-regions`
+(13). Note the earlier claim that this class is mostly 10000-element arrays came from the batch-70
+note, not from data; the family breakdown here is new.
+
+Also left deliberately: the **floating-point union member** refusal (287) is the batch-59 NaN gate on
+`fpToIEEEBV`, an unsound round-trip that must not be reopened as a side effect.
+
+### Run 80 — benchcloud, 900s
+
+First run on **benchcloud** rather than sosy, at the real SV-COMP time limit: `xmls/theta27-long900.xml`
+(`timelimit="15 min" hardtimelimit="16 min"`, 7 GB, 2 cores), tool dir `Theta-svcomp-80`, pinned to
+`--vcloudCPUModel Skylake`, `--vcloudClientHeap 8192`, screen session `theta-bench-80`.
+
+⚠️ **benchcloud's vcloud is Intel Xeon (Skylake); sosy's was AMD Ryzen 7 PRO 5750G.** Run 80 is
+therefore *not* comparable to runs 61-79 — different hardware *and* a 300s -> 900s limit change. It
+is a new baseline, and the two variables cannot be separated after the fact.
+
+⚠️ The abs-path trap fired on the first launch attempt: `~/Theta-svcomp-80` expands before `ssh`, and
+benchcloud's `run-theta.sh` also uses `--hidden-dir /home --overlay-dir "$PWD"`, so the container
+cannot resolve `theta-start.sh`. Killed and relaunched with the relative `Theta-svcomp-80`; health
+check then showed 0 "Cannot start process" and submissions accumulating.
