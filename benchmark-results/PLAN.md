@@ -4139,3 +4139,59 @@ alone to convert a large share of run 79's ~18,000 timeouts.
 benchcloud's `run-theta.sh` also uses `--hidden-dir /home --overlay-dir "$PWD"`, so the container
 cannot resolve `theta-start.sh`. Killed and relaunched with the relative `Theta-svcomp-80`; health
 check then showed 0 "Cannot start process" and submissions accumulating.
+
+## Batch 77 — run 80 (benchcloud, 900s): the 300s limit was hiding a large unsoundness (2026-07-29)
+
+Run 80 = batch-76 build, benchcloud, `theta27-long900.xml` (900s), Skylake-pinned. Real & complete:
+55 XMLs, 0 `Cannot start process`, screen gone, 22:15 -> 19:45 (~21.5h).
+
+| category | run 79 (sosy, 300s) | run 80 (benchcloud, 900s) | Δ |
+|---|---|---|---|
+| correct | 10,861 | 12,521 | **+1,660** |
+| wrong | 83 | **399** | **+316** |
+| error | 25,308 | 22,932 | −2,376 |
+| unknown | 350 | 750 | +400 |
+| **score** | **16,475** | **13,734** | **−2,741** |
+
+**+1,660 correct and the score still fell by 2,741**, because 316 new wrong answers at −16 each swamp
+the gains. Transitions: `error->correct` 1,818, `error->wrong` **316**, `correct->error` 156.
+
+### The confound-free part: the batch-76 frontend fixes worked
+
+Frontend failures are deterministic, so this delta is attributable to the fixes alone:
+**4,702 -> 3,955 (−747)**. Nominal target was ~1,840; the shortfall is the usual layering (a task
+clears one barrier and stops at the next), and this is a far better conversion ratio than batch 73's
+108 fixes for a net −20.
+
+### ⚠️ The headline: 278 of the 316 new wrong are ONE family
+
+`unreach-call.Hardness`, and within it **every one is `hardness_wrappers_*`, all reporting
+`false(unreach-call)` where the expected verdict is `true`** — 278 spurious counterexamples.
+All of them **TIMED OUT at 300s**. The Hardness set as a whole: run 79 had 1,060 correct / 2 wrong;
+run 80 has 1,035 correct / **280 wrong**.
+
+So this is not a regression from the batch-76 work. It is a **pre-existing unsoundness that the 300s
+limit was masking**: given enough time the analysis runs to completion on these tasks and produces a
+wrong counterexample. Since SV-COMP runs at 900s, **this is the real behaviour**, and every short-
+benchmark score to date has been flattered by it. 278 wrong is ~4,450 score points — fixing this one
+family more than recovers the entire −2,741.
+
+Overall direction of the new wrong: **304 false alarms / 12 missed bugs**; 305 of 316 were TIMEOUT in
+run 79, 11 were frontend errors.
+
+Those 11 are worth naming: `softsign_*` / `tanh_*` `.c-amalgamation` NN tasks that the batch-76
+**alloca double-remove fix** unblocked, which now return `false(unreach-call)` — the same
+expose-a-latent-bug pattern as the alloca-string family in run 79. Unblocking the frontend keeps
+converting errors into wrong answers rather than into correct ones, which is the third independent
+sighting of that effect.
+
+### Resource shift (carries the hardware + budget confound)
+
+timeout 18,049 -> 12,407 (−5,642) but OOM 2,503 -> **6,499** (+3,996): a longer budget lets a run
+allocate its way into the 7 GB cap instead of being cut off first.
+
+### Priority
+
+1. **`hardness_wrappers_*` false `false(unreach-call)`** — 278 tasks, one family, ~+4,450 score.
+2. The alloca-string / newly-parsing false-deref family (still open from batch 75).
+3. Everything else.
