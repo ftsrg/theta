@@ -58,6 +58,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
@@ -106,7 +107,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     // every access to it must go through the shared dereference, and the init procedure
     // must seed the pointer variables (e.g. `main` calling pthread_create on a thread whose
     // body takes `&y` — the `&t` handle was already consumed by CLibraryFunctionsPass).
-    if (references.isEmpty() && globalReferredVars(builder).isEmpty()) return builder
+    // A global that is base/offset-split *elsewhere* also concerns us: this procedure may only
+    // dereference it, with no reference of its own, and skipping it here would leave those
+    // dereferences on the original variable that nothing assigns any more (see
+    // runComplexReferenceElimination).
+    if (
+      references.isEmpty() &&
+        globalReferredVars(builder).isEmpty() &&
+        (parseContext.memoryModel.flatAddressing() ||
+          globalSplitVars(builder).keys.none { it in builder.usedVars() })
+    ) {
+      return builder
+    }
 
     // Case 2: simple elimination first.
     // Summary: for references to VarDecls (`(ref x)`), keep the old behavior:
@@ -471,7 +483,16 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder.getEdges().any { edge ->
         edge.label.getFlatLabels().flatMap { it.references }.any { it.expr is Dereference<*, *, *> }
       }
-    if (!hasRefToDeref) return false
+    // A *global* split anywhere concerns every procedure that touches it, even one containing no
+    // reference of its own: `p = &q[1]` in main splits p into p_base/p_offset and rewrites main's
+    // accesses onto them, but a callee doing `return *p` was skipped here and kept dereferencing
+    // the original p -- which nothing assigns any more. p is then unconstrained, so the solver may
+    // alias it with anything, and a trivially safe program gets a counterexample (all 278
+    // `hardness_wrappers_*` false `false(unreach-call)` results, plus everything else that reads a
+    // global element pointer from a function).
+    if (!hasRefToDeref && globalSplitVars(builder).keys.none { it in builder.usedVars() }) {
+      return false
+    }
 
     var changed = normalizeNestedReferenceAssignments(builder)
     val splitVars = discoverSplitVars(builder)
@@ -541,10 +562,68 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     return changed
   }
 
+  /** Every variable this procedure reads or writes, including inside dereferences. */
+  private fun XcfaProcedureBuilder.usedVars(): Set<VarDecl<*>> =
+    getEdges()
+      .flatMap { edge -> edge.label.getFlatLabels().flatMap { it.collectVars() } }
+      .toSet()
+
+  /**
+   * The globals that get base/offset-split anywhere in the XCFA, with the *same* [SplitVarPair] for
+   * every procedure.
+   *
+   * The split has to be program-wide for a global: a pointer assigned `&q[i]` in one procedure and
+   * dereferenced in another must be rewritten onto one pair of halves, or the two procedures end up
+   * talking about different variables. Computed once and cached on the parent, exactly like the
+   * simple-reference map above, so each procedure's own discovery starts from it rather than
+   * inventing a second pair of `_base`/`_offset` decls under the same names.
+   */
+  private fun globalSplitVars(
+    builder: XcfaProcedureBuilder
+  ): MutableMap<VarDecl<*>, SplitVarPair> {
+    @Suppress("UNCHECKED_CAST")
+    return builder.parent.metaData.computeIfAbsent("complexSplitGlobals") {
+      val shared = linkedMapOf<VarDecl<*>, SplitVarPair>()
+      val globals = builder.parent.getVars().map { it.wrappedVar }.toSet()
+      var changed: Boolean
+      do {
+        changed = false
+        builder.parent.getProcedures().forEach { proc ->
+          proc.getEdges().forEach { edge ->
+            edge.label.getFlatLabels().forEach { label ->
+              if (label is StmtLabel && label.stmt is AssignStmt<*>) {
+                val stmt = label.stmt as AssignStmt<*>
+                val lhs = stmt.varDecl
+                if (lhs !in globals) return@forEach
+                val rhs = stmt.expr
+                when {
+                  rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *> -> {
+                    val deref = rhs.expr as Dereference<*, *, *>
+                    changed =
+                      ensureSplitVar(proc, shared, lhs, deref.array.type, deref.offset.type) ||
+                        changed
+                  }
+                  rhs.stripPos().let { it is RefExpr<*> && it.decl in shared.keys } -> {
+                    val src = shared[(rhs.stripPos() as RefExpr<*>).decl]!!
+                    changed =
+                      ensureSplitVar(proc, shared, lhs, src.base.type, src.offset.type) || changed
+                  }
+                }
+              }
+            }
+          }
+        }
+      } while (changed)
+      shared
+    } as MutableMap<VarDecl<*>, SplitVarPair>
+  }
+
   private fun discoverSplitVars(
     builder: XcfaProcedureBuilder
   ): MutableMap<VarDecl<*>, SplitVarPair> {
+    // Start from the program-wide global splits so every procedure agrees on their halves.
     val splitVars = linkedMapOf<VarDecl<*>, SplitVarPair>()
+    splitVars.putAll(globalSplitVars(builder))
     var changed: Boolean
     do {
       changed = false
