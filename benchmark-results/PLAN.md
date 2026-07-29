@@ -4263,3 +4263,51 @@ argument yet for fixing the `valid-deref` over-approximation before any further 
 
 By property the remainder is dominated by **valid-memsafety (68 of 119)**, and by direction it is
 84 false alarms / 35 missed bugs.
+
+## Batch 79 — valid-deref false alarm narrowed to "pointer parameter incremented in a loop inside a callee" (2026-07-30, IN PROGRESS)
+
+The `cstr*`/`openbsd*` alloca-string family (32 wrong, `false(valid-deref)` against expected `true`).
+Representative task, `cstrchr-alloca-1`, is 12 lines of actual code:
+
+```c
+char *cstrchr(const char *s, int c) { while (*s != '\0' && *s != (char)c) s++; return ...; }
+int main() {
+  int length = __VERIFIER_nondet_int(); if (length < 1) length = 1;
+  char* s = (char*) __builtin_alloca (length * sizeof(char));
+  s[length-1] = '\0';                 /* terminator stops the scan -> safe */
+  cstrchr(s, __VERIFIER_nondet_int());
+}
+```
+
+Minimal repro reproduces the false alarm (`scratchpad/deref/scan.c`). The trigger has been narrowed by
+elimination — each of these was run and is recorded, not assumed:
+
+| variant | verdict | conclusion |
+|---|---|---|
+| `s[length-1]=0; assert(s[length-1]==0)` (symbolic size **and** offset) | **Safe** | the symbolic-offset write IS visible — hypothesis killed |
+| `alloca(2147483647)` / `1073741823` / `100`, deref offset 0 | **Safe** | large/symbolic size alone is fine — hypothesis killed |
+| scan **inlined into main**, symbolic length ≤ 6 | **Safe** | not the loop as such |
+| `p=p+1` then deref, in main | **Safe** | not pointer increment as such |
+| loop `p++` then deref, in main | **Safe** | not loop-increment as such |
+| single increment inside a **callee**, all concrete | **Safe** | not the call boundary as such |
+| terminator at concrete offset 0 (loop exits immediately) | **Safe** | the loop must actually iterate |
+| **scan in a callee, `length` bounded ≤ 6** | **Unsafe** | reproduces |
+| **scan in a callee, `length` fully concrete (6)** | **Unsafe** | reproduces |
+
+So the trigger is specifically **a pointer parameter incremented inside a loop in a callee**, and it
+reproduces with a *fully concrete, bounded* program — which makes it a **modelling bug, not an
+abstraction imprecision**. (A bounded 6-byte program is finite and trivially provable.)
+
+The `valid-deref` check itself (MemsafetyPass.kt ~line 200) is
+`base <= 0 || size[base] <= offset || offset < 0`, with the size looked up **keyed by the base**. The
+suspicion is therefore that in this shape the deref's base is not the value the allocation recorded a
+size under, so `size[base]` is unconstrained and the middle disjunct becomes satisfiable. Note
+`ReferenceElimination.seedSplitParams` already exists to fix an earlier instance of exactly this
+symptom ("a false `valid-deref` on every `str*`-style callee that increments its argument"), so this is
+a *remaining* hole in that mechanism, not virgin territory.
+
+⚠️ NOT yet confirmed: which base the deref actually carries. The confirming step is to dump the model
+— but `--enable-c-serialization` writes nothing under the memsafety property (it works under
+unreach-call), so the next step is `--enable-xcfa-serialization`, or an observational test
+(a callee that loop-increments then writes, checked from the caller). Do not write the fix before that
+is nailed down; two hypotheses have already been killed by measurement here.
