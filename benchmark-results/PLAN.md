@@ -4195,3 +4195,71 @@ allocate its way into the 7 GB cap instead of being cut off first.
 1. **`hardness_wrappers_*` false `false(unreach-call)`** — 278 tasks, one family, ~+4,450 score.
 2. The alloca-string / newly-parsing false-deref family (still open from batch 75).
 3. Everything else.
+
+## Batch 78 — the hardness unsoundness root-caused and fixed; remaining wrong triaged (2026-07-29)
+
+### Root cause: a global pointer split in one procedure, left unsplit in every other
+
+All 278 `hardness_wrappers_*` false `false(unreach-call)` results come from one bug in
+`ReferenceElimination` under `--memory-model multi`.
+
+The pass decides **per procedure**. `runComplexReferenceElimination` returns early unless the
+procedure itself contains a `ref(deref(...))`, and case 1 returns even earlier unless it contains a
+reference or a *directly* referenced global — `getDirectReferencedDecl` only matches `ref(x)`, never
+`ref(deref(q,i))`. So for
+
+```c
+long q[3]; long *p;
+long readp(void) { return *p; }     // no reference of its own -> skipped entirely
+int main(void) { p = &q[1]; ... }   // splits p into p_base / p_offset
+```
+
+`main` rewrites its accesses onto the halves while `readp` keeps dereferencing the original `p`,
+**which nothing assigns any more**. `p` is unconstrained, so the solver may alias it freely; in the
+hardness wrappers it picks `SL2 == SL1`, so `*SL2 = *SL1 + *SL0` clobbers `*SL1` and the property
+genuinely fails *in the model*. Every conjunct of those tasks fails for the same reason, which is why
+the family looked like a property bug rather than a memory-model one.
+
+**Confirmed spurious by execution**: compiled natively with theta's own witness values
+(`A[0] = -1040187392`, `A[1] = 0`), the property holds and no error is reached.
+
+Fix: the split of a **global** is now computed once for the whole XCFA and cached on the parent, so
+every procedure rewrites those globals onto the same halves, and both early returns stand down when a
+procedure merely *uses* such a global. Flat/bytes never split, so they are untouched.
+
+Minimal repros (all Unsafe before, Safe after): deref in a callee at offset 1 (`p1`) and at offset 0
+(`p5`), write through a callee (`p2`), and the reduced wrapper (`r1`). Deref in `main` (`p4`) was
+always Safe — the fold hides the bug whenever the reference and the dereference sit in one procedure,
+which is why it survived so long.
+
+⚠️ On the real tasks this converts **wrong -> no verdict**, not yet wrong -> correct: locally the two
+sampled wrappers reach no verdict in 500s. That is still +16 score each. Run 81 (Hardness only, 900s,
+benchcloud, Skylake) will show how many become `correct`.
+
+### Canary set extended (260 tasks)
+
+Five shapes this work unblocked, so they cannot silently regress: a global element pointer
+dereferenced in a callee, `alloca` in the init procedure, `typeof` over a real variable, a byte-union
+aggregate array element, and a semantic cast before a bitvector conversion.
+
+### The other 119 wrong results are NOT the same bug
+
+Re-checked a 12-task sample on the fixed build: 2 improved to no-verdict, **10 still wrong**. So the
+remaining families each need their own root cause:
+
+| family | n | direction |
+|---|---|---|
+| `cstr*`/`openbsd*` alloca-string | 32 | false `valid-deref` |
+| `aws_*` harnesses | 11 | mixed |
+| `scopes*` / `test-*` / `nested_structure_noptr` | ~20 | both directions |
+| concurrency misc (`bounded_mpmc`, `mcslock`, `ticketlock`, …) | ~10 | false `valid-deref` |
+| `memleaks_*` | 6 | |
+| `softsign_*`/`tanh_*` NN | 7 | false `unreach-call` |
+
+⚠️ The `softsign_*`/`tanh_*` tasks are ones the batch-76 **alloca fix unblocked**, and they now land
+on a *different* false alarm. Same pattern as the alloca-string family: unblocking the frontend keeps
+converting errors into wrong answers. That is now the fourth sighting, and it is the strongest
+argument yet for fixing the `valid-deref` over-approximation before any further frontend work.
+
+By property the remainder is dominated by **valid-memsafety (68 of 119)**, and by direction it is
+84 false alarms / 35 missed bugs.
