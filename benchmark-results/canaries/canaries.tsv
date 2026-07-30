@@ -259,3 +259,5 @@ c/neural-networks/poly_256_thresh_2_safe.c-amalgamation.yml	c/neural-networks/po
 c/uthash-2.0.2/uthash_JEN_test5-1.yml	c/uthash-2.0.2/uthash_JEN_test5-1.i	valid-memcleanup	c/properties/valid-memcleanup.prp	false	ILP32	0.000	uthash-2.0.2
 c/neural-networks/cartpole_0_safe.c-amalgamation.yml	c/neural-networks/cartpole_0_safe.c-amalgamation.i	unreach-call	c/properties/unreach-call.prp	true	ILP32	0.000	neural-networks
 c/loops-crafted-1/discover_list.yml	c/loops-crafted-1/discover_list.c	unreach-call	c/properties/unreach-call.prp	true	ILP32	0.000	loops-crafted-1
+c/libvsync/mcslock.yml	c/libvsync/mcslock.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	0.000	libvsync
+c/pthread-complex/safestack_relacy.yml	c/pthread-complex/safestack_relacy.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	0.000	pthread-complex

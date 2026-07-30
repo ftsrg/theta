@@ -750,9 +750,17 @@ class FrontendXcfaBuilder(
         // literal through getValue types it for the *current* arithmetic. The stored dimension
         // expression cannot be used directly: types registered by the early typedef pass carry
         // dimension literals typed for the default arithmetic, not the decided one.
+        //
+        // Scaled by the element's *flat cell count*, because that is the unit accesses index in:
+        // `a[i].f` lands at `a[i * unitCount + f]` (see ExpressionVisitor#rowOf). Registering the
+        // bare element count made the recorded size smaller than the object's own addressable
+        // range, so the valid-deref bound `size <= offset` was satisfiable for perfectly good
+        // accesses to later elements -- `struct Item arr[3]` recorded 3 for a 6-cell object, and
+        // every `arr[2].b` was reported as an invalid dereference.
+        val elementCells = cellsOf(type.embeddedType)
         val bounds =
           CComplexType.getUnsignedLong(parseContext)
-            .getValue(getArraySize(type, initExpr).toString())
+            .getValue((getArraySize(type, initExpr).toLong() * elementCells).toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
       }
       val flatElement = type.embeddedType
@@ -778,6 +786,26 @@ class FrontendXcfaBuilder(
         // counter). Restricted to structs of plain scalars so the flat cell types are unambiguous;
         // bitfields, unions, and nested aggregates keep the per-object path.
         initializeFlatArray(type, initExpr, globalDeclaration, initStmtList)
+        return
+      }
+      if (
+        initExpr == null &&
+          (flatElement is CArray || (flatElement is CStruct && isFlatScalarStruct(flatElement)))
+      ) {
+        // The same reasoning with *no* initializer. A global without one is zero-initialized by C,
+        // and the per-element path below would give every element its own base id and zero those
+        // separate objects instead of the flat cells the accesses read -- so `arr[0].a` came back
+        // holding element 0's *base id* as integer data, and later cells were never written at all.
+        // Zero the flat cells directly. (Scalar-element arrays are unaffected: one cell per element,
+        // so the per-element path already writes the cells that are read.)
+        val total = flatArraySize(type) ?: 0
+        for (index in 0 until total) {
+          val cellType = cellTypeAt(type, index)
+          val cell =
+            Dereference(globalDeclaration, offsetLiteral(index.toLong()), cellType.smtType)
+          parseContext.metadata.create(cell, "cType", cellType)
+          initStmtList.add(AssignStmtLabel(cell, cellType.nullValue))
+        }
         return
       }
       initializeCompound(

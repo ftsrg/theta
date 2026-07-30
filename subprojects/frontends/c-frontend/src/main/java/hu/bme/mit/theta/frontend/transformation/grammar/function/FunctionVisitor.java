@@ -964,8 +964,29 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 "alloca",
                                 "cType",
                                 new CPointer(null, cArray.getEmbeddedType(), parseContext));
-                final var alloca =
-                        new CCall("alloca", List.of(cArray.getArrayDimension()), parseContext);
+                // The block has to span the array's *flat cells*, not its element count: `a[i].f`
+                // is addressed as `a[i * unitCount + f]` (see ExpressionVisitor#rowOf), so an
+                // element occupying several cells makes the object that many times longer. Passing
+                // the bare dimension recorded a size smaller than the object's own addressable
+                // range, and every access past the first element then satisfied the valid-deref
+                // bound `size <= offset` -- `struct Item arr[3]` was recorded as 3 cells for a
+                // 6-cell object.
+                //
+                // Built as an expression, not folded to an int: the dimension may be a VLA's
+                // runtime value, so the scale factor is multiplied in rather than computed here.
+                final int elementCells = cellsOf(cArray.getEmbeddedType());
+                CStatement allocaSize = cArray.getArrayDimension();
+                if (elementCells != 1) {
+                    final var dimExpr = allocaSize.getExpression();
+                    final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
+                    final var scaled =
+                            AbstractExprs.Mul(
+                                    dimType.castTo(dimExpr),
+                                    dimType.getValue(String.valueOf(elementCells)));
+                    parseContext.getMetadata().create(scaled, "cType", dimType);
+                    allocaSize = new CExpr(scaled, parseContext);
+                }
+                final var alloca = new CCall("alloca", List.of(allocaSize), parseContext);
                 preCompound.addCStatement(alloca);
                 CAssignment cAssignment =
                         new CAssignment(
