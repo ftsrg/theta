@@ -4311,3 +4311,93 @@ a *remaining* hole in that mechanism, not virgin territory.
 unreach-call), so the next step is `--enable-xcfa-serialization`, or an observational test
 (a callee that loop-increments then writes, checked from the caller). Do not write the fix before that
 is nailed down; two hypotheses have already been killed by measurement here.
+
+## Batch 80 — run 81 confirms the hardness fix (280 wrong -> 0); five families root-caused (2026-07-30)
+
+### Run 81: the ReferenceElimination cross-procedure split fix is confirmed on the real benchmark
+
+Hardness-only, 900s, benchcloud/Skylake, 6,789 tasks — same set as run 80, so directly comparable:
+
+| category | run 80 (before) | run 81 (after) |
+|---|---|---|
+| **wrong** | **280** | **0** |
+| correct | 1,035 | 1,050 |
+| error | 5,474 | 5,739 |
+
+Transitions: `wrong->error(TIMEOUT)` **274**, `wrong->correct` **6**, `error->correct` 26,
+`correct->error(TIMEOUT)` 17. **NEW wrong: 0.** So every one of the 280 false alarms is gone and
+nothing regressed into a wrong answer. At SV-COMP weights that is roughly **+4,500** on this family
+(280 x 16 recovered, minus ~34 for the 17 that slipped to timeout).
+
+⚠️ Most became TIMEOUT, not `correct` — the fix removes the spurious counterexample but the tasks are
+then genuinely hard, so the gain is "no longer penalised", not "+2 each". Do not double-count it.
+(`compare_runs.py` cannot score run 81 against run 80: the Hardness-only xml has one rundefinition and
+the task keys do not align — `common: 0`. The per-task transition table above is the valid comparison.)
+
+### Five families root-caused by parallel investigations
+
+Full write-ups preserved in `benchmark-results/findings-run80/` (1,761 lines). Headline: **several
+families share ONE cause**, and it is not what any of the per-family hypotheses assumed.
+
+**SHARED ROOT CAUSE — the valid-deref check is not flat-model-aware.** `MemsafetyPass.annotateDeref`
+(MemsafetyPass.kt:201-220) builds
+`Or(Leq(deref.array, 0), Leq(sizeVar[deref.array], deref.offset), Lt(deref.offset, 0))`, assuming
+`deref.array` is an object **base id** and `sizeVar[base]` its whole size. Under
+`--memory-model flat`, `ReferenceElimination.runFlatReferenceElimination` collapses `&(deref B O)` to
+the single scalar `B + O`, so a **mid-object address** legitimately lands in the `array` slot. The size
+array has an entry only at `B`, so `sizeVar[B+O]` reads 0 and the middle disjunct is a **tautology** —
+the edge to `__THETA_bad_deref` is enabled on every path. Guaranteed false `false(valid-deref)`.
+
+Five-line repro, sequential, no threads, no heap:
+```c
+struct S { int a; int b; };
+struct S s;
+int main(void) { int *p = &s.b; return *p; }     /* flat: Unsafe. expected Safe */
+```
+Trigger is *any* deref through `base + nonzero offset`; offset 0 works because `base+0 == base`.
+Confirmed on ticketlock by dump: `(<= (read __theta_ptr_size 131073) 0)` where 131073 = `lock*`(131072)+1
+and only 131072 ever gets a size.
+
+**Why concurrency tasks are affected at all: they are not really concurrency bugs.** The `multi`
+frontend throws `UnsupportedPointerSplitException` on `&l->owner`-style mid-object arguments and the CLI
+**silently falls back to flat**, where the instrumentation is broken. Ruled out by the investigator:
+interleaving/OC (a 5-line single-threaded file reproduces it; OC dies with code 201 and never produces
+these verdicts) and abstraction imprecision (the bad-deref assume is unconditionally true, so the cex is
+feasible *in the model* — refinement cannot help).
+
+⚠️ **A second flat defect constrains the fix.** Flat object bases are minted inconsistently: globals and
+alloca objects get `flatBaseValue(id) = id * 65536`, but address-taken **locals** use `__sp`, whose init
+is `cnt` and whose increment is `+3` — **unscaled** (ReferenceElimination.kt:252 and :269). So the
+obvious base recovery `(addr / 65536) * 65536` would map every `__sp` object to base 0 (NULL) and trade
+one false alarm for another. **Any fix must scale `__sp` too** (init `flatBaseValue(cnt)`, increment
+`3 * FLAT_STRIDE`). That scaling is independently valuable: today local objects sit 3 apart inside the
+first stride slice while `allocateReferenced` may give them a size > 3, so two distinct locals **overlap
+on the flat address line** — a latent aliasing unsoundness, and the most likely mechanism behind
+`bounded_mpmc_check_full`'s false `false(no-data-race)` (not verified).
+
+**Other confirmed causes** (details in findings-run80/):
+- *NN amalgamation (7)*: a **local** aggregate with a partial brace initializer is not zero-filled —
+  `float a[4] = {0}` writes only cell 0, cells 1..3 stay unconstrained, violating C11 6.7.9p21. Globals
+  do this correctly; `FunctionVisitor.flattenInitializer` never pads. Independently reproduced here:
+  `LOCAL float a[4]={0.0f}` and `LOCAL int a[4]={1}` are both **Unsafe**. Blast radius: 656 files under
+  `c/` contain `[N>=2] = {0}`. NOT an "uninitialized memory" bug — zero-fill is *required* by C for
+  declarations that have an initializer, and the no-initializer nondeterministic path is correct and
+  must not be touched.
+- *filter2_alt*: the `static` storage class is **silently dropped** (`TypeVisitor.java:381`
+  `case "static": return null;`), so a static local is re-`alloca`d per call and never persists.
+- *scopes/test-\**: five distinct causes (A-E), including a nested struct initializer flattened onto the
+  outer object, `(*p).field` taking one dereference too many, storing a split pointer writing both halves
+  to the same cell, and a local array of structs allocated `dim` cells instead of `dim * cellsPerElement`.
+- *aws_\**: two confirmed bugs (A is `multi`-only), 3 false alarms + 8 missed bugs.
+- *no-overflow*: `Stockholm-2`/`dijkstra6` are additive-chain instrumentation gaps; `test22-2` is
+  `ReferenceElimination` **silently deleting all overflow instrumentation** from a procedure.
+
+### Sequencing
+
+1. **Flat valid-deref base recovery + `__sp` scaling** — one fix, unblocks the largest set (the whole
+   concurrency valid-deref subgroup, `stpcpy`, scopes cause B2, and probably the alloca-string family
+   that motivated this batch, since those fall back to flat too). Must be done as one change.
+2. **Local partial-initializer zero-fill** — 7 NN wrongs, precedented by the global path, but measure
+   model blow-up (a local is emitted per inlined call site).
+3. scopes causes A/C/D/E, aws A/B, overflow families — smaller and independent.
+4. `static` storage duration — larger, worth 1 task here.
