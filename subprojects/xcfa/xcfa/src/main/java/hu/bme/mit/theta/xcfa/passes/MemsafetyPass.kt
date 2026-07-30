@@ -139,7 +139,12 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                   // first came from an allocator. The size check above cannot catch the others: an
                   // alloca'd block records a *real* size (it has to, or reads through it would look
                   // out of bounds), so `free(alloca(n))` sailed through as a perfectly good free.
-                  Neq(Mod(argument, pointerType.getValue("3")), pointerType.nullValue),
+                  // `Rem`, not `Mod`: pointer types are unsigned bitvectors and Theta's `Mod` is
+                  // signed-only ("Unsigned BvType cannot be used here"). The two agree on the
+                  // non-negative values an address can take. This only ever surfaced once the flat
+                  // model started being reached for these tasks -- under flat the residue class
+                  // still identifies the allocator, since a base is `id * 65536` and 65536 = 1 mod 3.
+                  Neq(Rem(argument, pointerType.getValue("3")), pointerType.nullValue),
                 ),
               )
 
@@ -202,18 +207,45 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
               Or(
                 it.label.labels[0].derefsWithShortCircuitCond.map { (deref, shortCircuitConds) ->
                   val sizeVar = builder.parent.getPtrSizeVar()
+                  // Which address the object's size is filed under, and where inside the object
+                  // this access lands.
+                  //
+                  // The `array` slot is an object *base* under the multi model, but NOT under flat:
+                  // there `runFlatReferenceElimination` collapses `&(deref B O)` to the single
+                  // scalar `B + O`, so a legitimate mid-object address appears in that slot. The
+                  // size array only ever has an entry at `B`, so reading it at `B + O` returned 0
+                  // and `size <= offset` became a *tautology* -- the edge to __THETA_bad_deref was
+                  // enabled on every path, a guaranteed false valid-deref for any access through an
+                  // address with a nonzero offset (`&s.b`, `&a[2]`, `&l->owner`, ...). Recover the
+                  // base by truncating to the object's stride slice, and fold the truncated part
+                  // back into the index so the bound still covers the whole access.
+                  val flat = parseContext.memoryModel.flatAddressing()
+                  val strideLit = pointerType.getValue(FlatMemoryPass.FLAT_STRIDE.toString())
+                  val sizeKey =
+                    if (flat) Mul(Div(deref.array, strideLit), strideLit) else deref.array
+                  val indexInObject =
+                    if (flat) {
+                      // `addr - base`, not `addr mod stride`: pointer types are *unsigned*
+                      // bitvectors and Theta's `Mod` is signed-only ("Unsigned BvType cannot be
+                      // used here"). Subtracting the truncated base is the same value here and one
+                      // operation cheaper, which matters because this guard is emitted per
+                      // dereference.
+                      Add(Sub(deref.array, sizeKey).toFitsall(), deref.offset.toFitsall())
+                    } else {
+                      deref.offset.toFitsall()
+                    }
                   And(
                     And(shortCircuitConds),
                     Or(
-                      Leq(deref.array, pointerType.nullValue), // uninit ptr
+                      Leq(sizeKey, pointerType.nullValue), // uninit ptr
                       // Sizes are Fitsall-typed, offsets are pointer-typed: the offset has to be
                       // widened to compare against a size (they are the same unbounded Int under
                       // integer arithmetic, but different bitvector widths otherwise).
                       Leq(
-                        ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
-                        deref.offset.toFitsall(),
+                        ArrayReadExpr.create<Type, Type>(sizeVar.ref, sizeKey),
+                        indexInObject,
                       ), // freed/not big enough ptr
-                      Lt(deref.offset.toFitsall(), fitsall.nullValue), // negative index
+                      Lt(indexInObject, fitsall.nullValue), // negative index
                     ),
                   )
                 }

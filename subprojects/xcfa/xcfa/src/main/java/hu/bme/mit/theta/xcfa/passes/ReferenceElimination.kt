@@ -249,7 +249,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val ptrType = CPointer(null, CComplexType.getType(v.ref, parseContext), parseContext)
 
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
-            val initVal = ptrType.getValue("$cnt")
+            // Address-taken locals are handed bases from this counter. Under flat addressing they
+            // must be spaced by FLAT_STRIDE like every other object, for two reasons: unscaled,
+            // they all land inside the *first* stride slice only 3 apart, so two distinct objects
+            // whose size exceeds 3 overlap on the flat address line (a latent aliasing
+            // unsoundness); and recovering an object's base from a mid-object address by
+            // `addr / FLAT_STRIDE` -- which the valid-deref check now does -- would otherwise map
+            // every one of them to base 0, i.e. NULL.
+            val rawId = cnt // reading hands out this id and advances the counter
+            val initVal =
+              if (parseContext.memoryModel.flatAddressing()) {
+                ptrType.getValue(FlatMemoryPass.flatBaseValue(rawId, parseContext))
+              } else {
+                ptrType.getValue("$rawId")
+              }
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
@@ -265,8 +278,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               newEdges.forEach(proc::addEdge)
             }
           }
-          val assign1 =
-            AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType)
+          // Step by the same unit the init above uses, so consecutive objects stay one stride apart
+          // under flat and three raw ids apart under multi (the 3k+2 residue class).
+          val step =
+            if (parseContext.memoryModel.flatAddressing()) {
+              ptrType.getValue((3L * FlatMemoryPass.FLAT_STRIDE).toString())
+            } else {
+              ptrType.getValue("3")
+            }
+          val assign1 = AssignStmtLabel(ptrVar, Add(ptrVar.ref, step), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)

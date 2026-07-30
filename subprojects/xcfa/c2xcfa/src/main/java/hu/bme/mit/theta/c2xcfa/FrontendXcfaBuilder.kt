@@ -70,6 +70,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import java.math.BigInteger
 
@@ -1326,7 +1327,15 @@ class FrontendXcfaBuilder(
                   lValue,
                   cast(
                     asReference
-                      ?: throw UnsupportedFrontendElementException(
+                      // A *multi-model-only* limitation, not a limitation of the program: the
+                      // branch above shows flat addressing assigns any pointer-arithmetic shape
+                      // directly, because there a pointer is one scalar address. Reporting it as a
+                      // generic frontend failure gave up on the task entirely; throwing the
+                      // splitting-specific exception instead lets the CLI transparently rebuild
+                      // under `flat` (see ExecuteConfig / XcfaParser, which look for exactly this
+                      // exception in the cause chain), which is what already happens for the other
+                      // shapes the base/offset split cannot represent.
+                      ?: throw UnsupportedPointerSplitException(
                         "Pointer arithmetic not supported: $lValue = $rExpression"
                       ),
                     lValue.type,

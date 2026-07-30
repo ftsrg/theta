@@ -138,9 +138,13 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val zero = literalValue(value)?.equals(BigInteger.ZERO) == true
     if (!zero && element.width() != 8) return giveUp(invoke)
 
+    // Convert to the *element's* type, not the argument's own. `memset` takes an `int` and stores
+    // `(unsigned char)value` in each byte, so a literal like `memset(p, ' ', n)` arrives as a
+    // 32-bit value that has to be narrowed to the one-byte element. Keeping it in the argument's
+    // type left a Bv32 to be `cast(..., Bv8)`d below, which threw ClassCastException and failed the
+    // whole frontend (`discover_list`).
     val filler =
-      if (zero) element.nullValue as Expr<*>
-      else CComplexType.getType(value, parseContext).castTo(value)
+      if (zero) element.nullValue as Expr<*> else element.castTo(value)
     val stmts =
       (0 until count).map { i ->
         MemoryAssignStmt.create(deref(dst, indexOf(i, dst), element), cast(filler, element.smtType))
