@@ -4452,3 +4452,49 @@ literal div/mod in `SimplifyExprsPass` would recover most of that cost.
 Corrections from the investigators worth keeping: **`stpcpy` is the flat subgroup, not the
 str*-pointer-param bug** (it *cannot* run under multi at all — "bare use of split variable"), while
 `rec_strcopy_malloc` does run under multi and is the str* one.
+
+## Batch 81 — arrays sized by flat cells; the value bug that shipped with it (2026-07-30)
+
+Landed as `03ebee79c8`. Root cause supplied by the concurrency investigation, which also found the
+site I could not: `allocateStackArray` was a red herring (never called for a declared local array).
+
+An array whose element spans more than one flat cell was registered with its **element count** while
+every access indexes it in **cells** (`a[i].f` -> `a[i * unitCount + f]`). The recorded size was
+therefore smaller than the object's addressable range, so `size <= offset` was satisfiable for good
+accesses. Two-line repro, was Unsafe, now Safe:
+`int arr[3][2]; int main(void){ arr[2][1]=1; return arr[2][1]; }`
+
+Three sites fixed: `FunctionVisitor` (the `alloca` for a declared local array passed the bare outer
+dimension — built as an *expression*, since a VLA dimension is a runtime value), and the global
+`allocate` bound in `FrontendXcfaBuilder` both with and without an initializer.
+
+**A wrong-*value* bug shipped with it, deliberately, because size alone was not enough.** An
+uninitialised global aggregate array fell through to the per-element path, which gives every element
+its own base id and zeroes *those objects* rather than the flat cells accesses read. `arr[0].a` came
+back holding element 0's **base id as integer data**, and cells 3..5 were never written. That is a
+value-level unsoundness independent of memsafety — it produced a wrong `unreach-call` verdict.
+Now the flat cells are zeroed directly (C zero-initializes a global without an initializer).
+
+### Corrections from the investigation — worth keeping
+
+- ⚠️ **Subgroup B blocked 4 of the 5 flat concurrency tasks, not one.** Registered vs needed:
+  `mcslock` 3/6, `elimination_backoff_stack` 4/12, `safestack_relacy` 3/6, `cnalock`/`bounded_mpmc`
+  same shape. Only `ticketlock` was cleared by the earlier flat fix (`145bffaac0`) — it has no
+  multi-cell array.
+- ⚠️ **`bounded_mpmc_check_full`'s false `false(no-data-race)` is NOT fixed by the `__sp` scaling.**
+  Both candidate mechanisms were disproved: its `q->buf[...]` slots are plain `void *`, not atomic,
+  so there is no atomicity exemption to miss, and the dump shows every base a clean stride multiple
+  so there is no aliasing. It is the **CAS/ownership-gated CEGAR precision gap** already recorded in
+  memory for libvsync. Do not count it as fixed.
+- The `--portfolio STABLE` sweeps run outside the shared lock starved seven queued jobs; several
+  "timeouts" in the investigation logs are queue starvation, not results, and are labelled as such.
+
+Canaries added for both shapes (`mcslock`, `safestack_relacy`), bringing the set to 262.
+
+### Remaining, in order
+1. Local aggregates with a partial brace initializer are not zero-filled (7 NN wrongs) — same family
+   of bug as the one just fixed, but on the *local* path and *with* an initializer.
+2. `static` storage class silently dropped (`filter2_alt`).
+3. scopes causes A/C/D/E; aws Bug A/B/C + 8 negated harnesses; no-overflow additive chains;
+   `test22-2`'s deleted overflow instrumentation; `memleaks_*`; `2SB`/`4SB`.
+4. Fold literal `div`/`mod` in `SimplifyExprsPass` to recover the per-deref guard cost.

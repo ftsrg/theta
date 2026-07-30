@@ -466,3 +466,15 @@ unambiguous), but SV-COMP's rationale for classifying a zero-length VLA as `vali
 not documented inside the repository; I inferred it from C11 plus the fact that all seven
 sibling tasks share that and only that shape. If the intended violation were something
 else, the fix would be different.
+
+## Verdicts confirmed for the missed-bug subgroup (pre-13:24 dist)
+```
+scopes1        --svcomp --portfolio STABLE  -> (SafetyResult Safe)
+scopes5        --svcomp --portfolio STABLE  -> (SafetyResult Safe)
+derefInLoop1   --svcomp --portfolio STABLE  -> (SafetyResult Safe)
+getNumbers1-1  --svcomp --portfolio STABLE  -> (SafetyResult Safe)
+cmp-freed-ptr  --backend CEGAR --domain EXPL -> (SafetyResult Safe)   (portfolio needs >200 s)
+```
+i.e. theta really does prove these safe, matching run 80. `scopes3` was not re-run (same
+model shape as scopes5/derefInLoop1, dump identical in the relevant respect); `sum_array-2`
+not re-run (unbounded loop over `M`, slow).

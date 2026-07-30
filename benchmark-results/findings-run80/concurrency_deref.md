@@ -567,3 +567,269 @@ The box was shared with another agent running an unserialised `--portfolio STABL
   value-level unsoundness independent of memsafety.
 * post-fix audits of `mcslock.i` / `elimination_backoff_stack.i` dumps (checking no bad-deref guard
   bypasses the new div/mod recovery) — queued, never ran.
+
+---
+# ROUND 2 (against commit 145bffaac0, dist rebuilt 13:24)
+
+## MAJOR: subgroup B hits most of the family too — the A fix alone will NOT clear them
+
+The post-fix `elimination_backoff_stack` dump (`scratchpad/dump_ebs2`, taken on the 07:53 jar)
+audits clean for subgroup A — **all 77 distinct bad-deref guards go through the new div/mod
+recovery, none bypasses it**. But its size registrations expose subgroup B in the wild:
+```
+(array (131072 1) (65536 1) (262144 8) (458752 4) (default 0))
+write __theta_ptr_size 3014656 4      # int allocated[4]      -> 4  (correct, 1 cell/elem)
+write __theta_ptr_size (deref 0 (+ 458752 k) Int) 3)  k=1,2,3  # per-element objects, 3 units each
+```
+* `262144` (=4·STRIDE) size 8 = `ThreadInfo *location[8]` — correct, pointers are 1 cell.
+* `458752` (=7·STRIDE) size **4** = `ThreadInfo threads[4]`. But
+  `struct ThreadInfo { unsigned id; int op; Cell cell; }` is **3 units** (the size-3 writes above
+  confirm it), so the object spans 4·3 = **12** flat cells and was registered as 4.
+  `threads[i].op` is at flat offset `i*3+1`, i.e. up to 10 — so every access with `i >= 2`
+  false-alarms. Not a tautology (i=0 passes), but guaranteed once i>=2 is reachable, and it is
+  (4 threads).
+
+By the same argument from source, **`mcslock` is affected too**:
+`struct mcs_node_s { mcs_node_t *next; vatomic32_t locked; }` = 2 units, global
+`struct mcs_node_s nodes[NTHREADS=3]` -> registered 3, needs 6; `&nodes[tid]` for tid>=2 lands past
+the registered size. `cnalock` / `bounded_mpmc_check_full` have the same array-of-struct shape.
+
+=> **Revised attribution: subgroup B is not just `safestack_relacy`. It very likely covers
+`elimination_backoff_stack`, `mcslock`, `cnalock` and `bounded_mpmc_check_full` as well** (verified
+from the dump for elimination_backoff_stack; inferred from the struct definitions for the rest,
+mcslock dump running). Subgroup B is therefore the blocking item for this whole family, not a
+one-task footnote.
+
+## ITEM 1 — RESOLVED: the local-path site is in the C frontend, not FrontendXcfaBuilder
+
+`allocateStackArray` is **never called for a declared local array**, which is why its correct
+`flatArraySize` never applies. Two independent confirmations in the source:
+
+* `FrontendXcfaBuilder.kt:255-258` — local variables get stack storage only when
+  `type is CStruct`:
+  ```kotlin
+  val type = CComplexType.getType(flatVariable.ref, parseContext)
+  if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
+    allocateStackStruct(flatVariable.ref, type, initStmtList)
+  }
+  ```
+  A local `CArray` is not handled here at all.
+* the doc comment on `allocateArrayElements` (`FrontendXcfaBuilder.kt:451-453`) says it outright:
+  *"Split out from [allocateStackArray] because a **declared local array already gets its own base
+  from the `alloca` the frontend emits at the declaration**; only its subobjects are missing."*
+
+**THE SITE:** `subprojects/frontends/c-frontend/src/main/java/hu/bme/mit/theta/frontend/transformation/grammar/function/FunctionVisitor.java`, `visitBodyDeclaration`, line **968**:
+```java
+if (declaration.getActualType() instanceof CArray cArray) {
+    ...
+    final var alloca = new CCall("alloca", List.of(cArray.getArrayDimension()), parseContext);
+```
+It passes **`cArray.getArrayDimension()` — the OUTER dimension only** — as the alloca size, which
+`AllocaFunctionPass` then writes straight into `__theta_ptr_size`. That is exactly the 3 observed for
+both `struct Item arr[3]` and `int arr[3][2]`.
+
+So `flatArraySize` was a red herring: it is only reached for arrays nested *inside* a struct field
+(via `allocateStackSubobject` -> `allocateStackArray`), never for a top-level local declaration.
+
+### The three sites that must all change, and how
+
+| storage class | site | currently passes | must pass |
+|---|---|---|---|
+| local declaration | `FunctionVisitor.java:968` | `cArray.getArrayDimension()` (outer dim) | `dimension * flatCellsPerElement` |
+| global | `FrontendXcfaBuilder.kt:752-755` | `getArraySize(type, initExpr)` (outer count) | `flatArraySize(type) ?: getArraySize(...)` |
+| struct member array | whatever sizes it (safestack registered 3 for a 6-cell object) | outer count | flat cell count |
+
+`flatCellsPerElement` is computable entirely inside the C frontend, so the local fix needs no new
+module dependency: `CArray.getEmbeddedType()` (line 47) and `CStruct.getUnitCount()` (line 155) are
+both public. Recursively: `CStruct` (non-union) -> `getUnitCount()`; `CArray` -> `dim * cells(embedded)`;
+anything else -> 1. Note `getArrayDimension()` returns a `CStatement` (VLAs are supported), so the
+multiplication must be built as an expression `dim * constantCells`, not folded into an int.
+
+**Internal contradiction worth citing in the commit:** `allocateArrayElements` already allocates an
+element's nested aggregate at flat offset `index * cells + unitOffsetOf(field)`
+(`FrontendXcfaBuilder.kt:466-474`) — i.e. the *subobject* bookkeeping already assumes the flattened
+layout — while the array's own registered size uses the element count. The two halves of the same
+declaration disagree.
+
+RISK of the subgroup-B fix: unchanged from my earlier assessment — it only ever makes objects larger
+in the size map, over cells that genuinely belong to them under the layout accesses use, so **it
+cannot hide a real invalid dereference** (a genuine OOB past the flat cell count is still caught) and
+it **cannot hide a race** (`MemsafetyPass` is off for `no-data-race`).
+
+## TESTABLE PREDICTION for item 3 (which of the five the A fix alone clears)
+
+Of the five subgroup-A concurrency tasks, only **`ticketlock` has no array whose elements span more
+than one flat cell**: `ticketlock_t lock` is a struct of two `vatomic32_t` (each a 1-field struct,
+handled correctly by `giveStructObjectStorage`'s CStruct recursion), and `main`'s `pthread_t t[3]` is
+an array of scalars (1 cell each). The other four all carry an array of multi-cell structs:
+* `mcslock`  : `struct mcs_node_s nodes[3]`, element = 2 units
+* `cnalock`  : same shape
+* `bounded_mpmc_check_full` : bounded-queue array of structs
+* `elimination_backoff_stack` : `ThreadInfo threads[4]`, element = 3 units (verified in the dump)
+plus `safestack_relacy` (multi model): `SafeStackItem array[3]`, element = 2 units.
+
+PREDICTION: post-A-fix, `ticketlock` should no longer be Unsafe, while the other four (and
+safestack_relacy) should still be Unsafe on subgroup B. Testing `mcslock` now — an Unsafe there is
+fast to find and would confirm the family-wide subgroup-B claim empirically.
+
+## ITEM 2 — REFRAMED: both of my earlier candidates are WRONG; the `__sp` scaling will NOT fix it
+
+Decisive evidence from `libvsync/src/include/vsync/queue/bounded_mpmc.h`:
+```c
+    q->buf[curr % q->size] = v;        /* line 88, producer */
+    *v = q->buf[curr % q->size];       /* line 124, consumer */
+```
+**The ring-buffer slots are plain `void *`, not `vatomic*`.** Only the four ticket counters
+(`phead`/`ptail`/`chead`/`ctail`) are atomic. The buffer accesses are genuinely non-atomic reads and
+writes to shared memory; the program is race-free only because the ticket protocol guarantees no two
+threads touch the same slot concurrently.
+
+Consequences for my two earlier candidates:
+* (a) **address aliasing from unscaled `__sp` — RULED OUT.** The post-fix no-data-race dump
+  (`scratchpad/dump_mpmc/xcfa.dot`) shows every base is already a clean multiple of the stride
+  (`65536`, `131072`, `524288`, `2031616` = 1/2/8/31 x STRIDE, plus mid-object `131073..131075`).
+  Nothing sits in the first slice; no two objects can overlap.
+* (b) **atomicity-lookup miss — RULED OUT as the cause.** It is real (`addressesAtomicData` bails
+  with `offset.asConstantBigInteger() ?: return false`, so an atomic cell at a *symbolic* index is
+  never recognised — and this dump does contain `deref 0 (+ 2031616 writer::for19::idx)`), but it is
+  irrelevant here because the slots are **not atomic in the first place**. There is no exemption to
+  miss.
+
+WHAT IT ACTUALLY IS (medium confidence, static): the checker found a concrete pair of conflicting
+accesses to `buf[curr % q->size]` that it believes concurrent, i.e. it failed to establish the
+ticket protocol's mutual exclusion. That is the **CAS/ownership-gated CEGAR precision gap already
+recorded for libvsync** (see memory `project_svcomp27_batch64_libvsync`: "mcslock + bounded_mpmc
+reproduce real wrong verdicts fast, both = same CAS/ownership-gated CEGAR precision gap as
+rec_ticketlock"). It is orthogonal to everything in this investigation, and **the `__sp` scaling
+should not be expected to fix it.**
+
+I cannot tell from the model alone whether it is a precision gap (should have been `unknown`) or an
+unsound modelling of the atomic RMW that lets two threads take the same ticket. Distinguishing them
+needs the counterexample interleaving from the witness for that specific run, which I could not get:
+see the starvation note below. **Do not count this task as fixed by 145bffaac0.**
+
+## ITEM 1 — EMPIRICAL PROOF, and the contradiction inside a single init edge
+
+`repro/outerarr.c` (3 lines) — local `struct Outer arr[3]`, `Outer { struct Inner in; int y; }`,
+so `unitCount(Outer)` = 2 and the array spans 3x2 = 6 flat cells. Its whole init edge
+(`scratchpad/dump_oa/xcfa.dot`):
+```
+(assign __malloc (+ __malloc 3)) ; (assign call_alloca_ret0 (+ __malloc 1))
+(assign __theta_ptr_size (write __theta_ptr_size call_alloca_ret0 3))   # size 3 = OUTER DIMENSION
+(assign main::arr (+ call_alloca_ret0))
+(write __theta_ptr_size (deref main::arr 0 Int) 1)   # Inner of arr[0], flat offset 0
+(write __theta_ptr_size (deref main::arr 2 Int) 1)   # Inner of arr[1], flat offset 2
+(write __theta_ptr_size (deref main::arr 4 Int) 1)   # Inner of arr[2], flat offset 4
+```
+and the guards it generates:
+```
+(<= (read __theta_ptr_size main::arr) 0)   # pass
+(<= (read __theta_ptr_size main::arr) 2)   # pass  (2 < 3)
+(<= (read __theta_ptr_size main::arr) 4)   # 3 <= 4  TRUE -> TAUTOLOGY, during initialisation
+(<= (read __theta_ptr_size main::arr) 5)   # 3 <= 5  TRUE -> TAUTOLOGY
+```
+**The same init edge registers the object as 3 cells and then writes subobjects at flat offsets
+0, 2 and 4.** `allocateArrayElements` does run for a declared local array (as its own doc comment
+says) and it uses the flattened `index * unitCount + offsetof` layout, while the size beside it is
+the outer dimension from `FunctionVisitor.java:968`. That is the contradiction, self-contained in a
+3-line program, and it fires while the frontend is still initialising — which is why `localarr.c`
+had trace length 4.
+
+## ITEM 3 — settled at MODEL level for the five (no CEGAR run needed)
+
+Checked size registrations in the post-fix (13:24 jar) dumps. All guards in every dump go through the
+new div/mod recovery — **subgroup A is clean everywhere** (mcslock 22/22, elimination_backoff_stack
+77/77, ticketlock all).
+
+| task | multi-cell array? | registered | needed | subgroup B? |
+|---|---|---|---|---|
+| **ticketlock** (`dump_tl2`) | none — `lock` = 2 x 1-unit structs, `t[3]` scalars | `lock`=2, `t`=3 | 2, 3 | **CLEAN** |
+| **mcslock** (`dump_mcs3`) | `struct mcs_node_s nodes[3]`, elem = 2 units | `655360`->**3** | 6 | **STILL WRONG** |
+| **elimination_backoff_stack** (`dump_ebs2`) | `ThreadInfo threads[4]`, elem = 3 units | `458752`->**4** | 12 | **STILL WRONG** |
+| safestack_relacy (`dump_ss`, multi) | `SafeStackItem array[3]`, elem = 2 units | `stack.array`->**3** | 6 | **STILL WRONG** |
+| cnalock / bounded_mpmc | same array-of-struct shape (from source) | — | — | expected wrong (dump not taken) |
+
+`mcslock`: `&nodes[2]` is flat offset 2x2 = 4, guard `size[655360]=3 <= 4` -> TRUE. Confirmed from the
+model, so **the prediction holds: of the five, only `ticketlock` is cleared by 145bffaac0.** The other
+four stay wrong until subgroup B is fixed. I did not need the CEGAR runs for this — the tautology is
+visible in the size map.
+
+## ITEM 4 — ANSWERED, and it is a WRONG-VERDICT bug outside memsafety entirely
+
+`repro/zeroinit.c`, default multi model, `--property unreach-call`, PRED_CART:
+```c
+extern void abort(void);
+void reach_error() { abort(); }
+struct Item { int a; int b; };
+struct Item arr[3];
+int main(void) { if (arr[2].b != 0) { reach_error(); } return 0; }
+```
+=> `(Property unreach-call) (SafetyResult Unsafe Trace length: 3)`. **Expected `true`** — a global
+array is zero-initialised by C.
+
+So the flat cells of an uninitialised global aggregate do **not** read as 0. The zero-initialisation
+writes the *nested* per-element storage (each element gets its own base id and its cells are zeroed),
+while `arr[2].b` reads flat cell 5 of the array object, which nothing ever wrote. This is a **false
+`false(unreach-call)` on a trivially safe program** — the same nested-vs-flat split as subgroup B, but
+now producing wrong answers in the *largest* SV-COMP category rather than only in memsafety.
+It is also worse than subgroup B in kind: subgroup B makes a safe program look unsafe via a bogus
+*check*; this makes a safe program look unsafe via a bogus *value*.
+
+Note this also means flat cell 0 of such an array holds **element 0's base id** (a pointer value like
+65536) rather than data, so reading `arr[0].a` should return a base id. Controls running to confirm
+and to bound the scope:
+* `zi_scalar.c`  `int arr[3]; if (arr[2] != 0)` — expect **Safe** (1 cell/elem, no nested split)
+* `zi_first.c`   `if (arr[0].a != 0)` — expect **Unsafe**, reading a base id as data
+* `zi_plainstruct.c` `struct Item s; if (s.b != 0)` — a plain struct, no array
+
+### ITEM 4 — mechanism PROVEN from the model (no further runs needed)
+
+`scratchpad/dump_ga/xcfa.dot` (global `struct Item arr[3]`, array object base 1), every memassign:
+```
+(memassign (deref 1 0 Int) 4)              # flat cell 0 := element 0's BASE ID
+(memassign (deref 1 1 Int) 7)              # flat cell 1 := element 1's BASE ID
+(memassign (deref 1 2 Int) 10)             # flat cell 2 := element 2's BASE ID
+(memassign (deref (deref 1 k Int) f Int) 0)  k=0..2, f=0..1   # the ZEROES go into the ELEMENT objects
+(memassign (deref 1 5 Int) 1)              # `arr[2].b = 1` -> flat cell 5
+```
+Flat cells **3, 4, 5 are never written by the initialisation at all**. So:
+* `arr[2].b` (flat cell 5) reads the array's default — never zeroed => the `!= 0` branch is
+  satisfiable => false `false(unreach-call)`. This is the observed Unsafe.
+* `arr[0].a` (flat cell 0) reads **4**, i.e. *element 0's base id interpreted as integer data*. A
+  pointer value leaks into a data read. Worse in kind than an uninitialised read.
+* a scalar array (`int arr[3]`) has one cell per element, so no nested split exists and the zeroes
+  land in the very cells that are read — which is why it is correct, and why this has stayed hidden.
+
+So the nested/flat split is not merely a size-bookkeeping mismatch (subgroup B): for an
+**uninitialised** aggregate the *data* is written to one representation and read from the other.
+Fixing subgroup B's sizes alone would leave this wrong-value bug in place — they must be fixed
+together, by making the initialisation write the flat cells (as `initializeFlatArray` already does for
+the *initialised* case, `FrontendXcfaBuilder.kt:758-778`) and dropping the per-element objects for
+inline-laid-out elements.
+
+NOTE the asymmetry that makes the fix clear: `FrontendXcfaBuilder.kt:758-778` already routes
+*initialised* multi-dimensional / flat-scalar-struct arrays through `initializeFlatArray`, precisely
+because "the old per-element path gave every element its own base id, which the inline access never
+dereferences". The condition is guarded by `initExpr != null`, so the **uninitialised** case still
+takes the per-element path — which is exactly the bug. Extending that same treatment to
+`initExpr == null` (zero-fill the flat cells) is the natural fix and it is the same code path.
+
+---
+## STARVATION REPORT (explicit, as requested — these are NOT results)
+
+At 14:44-15:00 the shared `theta.lock` had **7 waiters** and was held by another agent's long
+`--portfolio STABLE` run (a portfolio holds the lock for its whole multi-config sweep). The following
+runs of mine never got a turn and produced **no output at all** — do not read them as timeouts or as
+negative results:
+* `mcslock.i` valid-memsafety FLAT with the benchmark's winning CEGAR config (superseded anyway — the
+  subgroup-B tautology is proven from its model dump).
+* valid-memsafety dumps of `cnalock.i` and `bounded_mpmc_check_full.i` (would have completed the
+  subgroup-B table; both are inferred from their struct definitions instead).
+* the three zero-init controls `zi_scalar.c` / `zi_first.c` / `zi_plainstruct.c`. Their expected
+  outcomes are *derived from the on-disk `dump_ga` model* (which shows exactly which cells are
+  written), so the mechanism is proven without them; the runs would only have been corroboration.
+* `bounded_mpmc_check_full` no-data-race re-run — not attempted, because the static analysis above
+  shows the `__sp` scaling cannot be the cause.
+
+Earlier (round 1) the same thing killed the real `ticketlock` CEGAR run: it returned `RC=1` with no
+verdict line, i.e. killed by its own `timeout` while queued — again not a result.
