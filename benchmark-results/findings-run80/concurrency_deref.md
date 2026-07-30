@@ -278,3 +278,292 @@ So stpcpy **cannot be built under multi at all** — the flat fallback is the on
 runs in, and its `false(valid-deref)` is the subgroup-A flat bug. It is not the multi-model
 "pointer parameter incremented in a loop in a callee" bug. `rec_strcopy_malloc` does run under
 multi and is NOT mine.
+
+### Subgroup B: FINISHED. Exact numbers from all three variants
+
+All three dumps show the same mismatch: the size registered for an array-of-structs object is the
+**element count**, while every `arr[i].f` access addresses that object with the **flat cell offset**
+`i * unitCount(elem) + fieldOffset`.
+
+**1) Plain GLOBAL array of structs** (`globalarr.c`, `scratchpad/dump_ga/xcfa.dot`):
+```
+(assign __theta_ptr_size (array (1 3) (default 0)))        # arr object base 1, size 3  <- element count
+(write ... (deref 1 0 Int) 2) (deref 1 1) 2) (deref 1 2) 2) # per-element objects, size 2 each
+bad_deref: (<= (read __theta_ptr_size 1) 0/1/2)            # zero-init, pass (0,1,2 < 3)
+bad_deref: (<= (read __theta_ptr_size 1) 5)                # arr[2].b  -> 3 <= 5 TRUE -> TAUTOLOGY
+```
+Note both addressings coexist in one program: the nested one `(deref (deref 1 k) f)` for the
+element objects and the flattened one `(deref 1 5)` for `arr[2].b`.
+
+**2) GLOBAL struct member array of structs** (safestack_relacy shape, `dump_ss`):
+`size[stack.array object] = 3`, accesses at flat offsets 0..5 => `3 <= 5` TRUE.
+
+**3) LOCAL array of structs** (`localarr.c`, `scratchpad/dump_la/xcfa.dot`) — full init edge:
+```
+(assign __malloc (+ __malloc 3))
+(assign call_alloca_ret0 (+ __malloc 1))
+(assign __theta_ptr_size (write __theta_ptr_size call_alloca_ret0 3))   # size 3 <- element count
+(assign main::arr (+ call_alloca_ret0))
+...
+bad_deref: (<= (read __theta_ptr_size main::arr) 5)                     # 3 <= 5 TRUE -> TAUTOLOGY
+(memassign (deref main::arr 5 Int) 1)                                  # the real store, cell 5
+```
+(My earlier guess that the local case was an *unconstrained base* is RETRACTED — the base and size
+are both assigned; the size is just in the wrong unit. `AllocaFunctionPass` had already lowered the
+`alloca` marker, which is why my first grep for `alloca` found nothing.)
+
+TRUE SCOPE of subgroup B: **every array whose elements occupy more than one flat cell**, i.e. any
+array of (non-union) structs — global, struct-member, or local. Not member-specific, not
+global-specific. Any access at flat offset >= elementCount false-alarms, so it bites from
+`arr[1].<second field>` onward: it is not an edge case, it is the common case for any such array
+touched beyond its first element.
+
+Open sub-question (does not change the fix): `allocateStackArray` (FrontendXcfaBuilder.kt:431-436)
+*claims* to use `flatArraySize(type)` (= `size * elementType.unitCount` = 6 here), yet the local
+model registers 3. Either the local declaration reaches a third path, or `flatArraySize`'s
+`is CStruct ->` branch does not fire because `type.embeddedType` is not a `CStruct` at that point.
+Discriminator running: a local `int arr[3][2]` — if it registers 6 the array-of-array branch works
+and the CStruct branch is the broken one; if 3, the declaration bypasses `flatArraySize` entirely.
+
+### Subgroup B SCOPE ESCALATION (verified): it hits plain multi-dimensional arrays too
+
+`ga2d.c` / `la2d.c` — **no structs at all**:
+```c
+int arr[3][2];                                            /* or local to main */
+int main(void) { arr[2][1] = 1; return arr[2][1]; }
+```
+Both **Unsafe** (`false(valid-deref)`) under the default multi model, PRED_CART. Expected Safe.
+
+GLOBAL 2-D dump (`dump_ga2/xcfa.dot`) — identical shape to the array-of-structs case:
+```
+(assign __theta_ptr_size (array (1 3) (default 0)))      # arr object base 1, size 3  <- ROW count
+(write ... (deref 1 k Int) 2)  k=0,1,2                   # each ROW gets its own 2-cell object
+bad_deref: (<= (read __theta_ptr_size 1) 0/1/2)          # zero-init via the NESTED view: passes
+bad_deref: (<= (read __theta_ptr_size 1) 5)              # arr[2][1] via the FLAT view: 3<=5 TAUTOLOGY
+```
+LOCAL 2-D dump (`dump_la2/xcfa.dot`) — full init edge:
+```
+(assign __malloc (+ __malloc 3)) ; (assign call_alloca_ret0 (+ __malloc 1))
+(assign __theta_ptr_size (write __theta_ptr_size call_alloca_ret0 3))   # size 3 <- ROW count
+(assign main::arr (+ call_alloca_ret0))
+bad_deref: (<= (read __theta_ptr_size main::arr) 5)                     # 3 <= 5 TAUTOLOGY
+(memassign (deref main::arr 5 Int) 1)                                   # real store at flat cell 5
+```
+
+FINAL SCOPE of subgroup B: **any array whose element occupies more than one flat cell** — an array
+of non-union structs, or a multi-dimensional array — in *any* storage class (global, struct member,
+local). The object's size is registered as its **outer element count** while accesses use the
+**flattened** offset `outerIndex * innerCells + innerOffset`. Every access with flat offset >=
+outer count is a tautological `__THETA_bad_deref`. `int a[3][2]` is a 2-line reproducer.
+
+Two views of the same object genuinely coexist in the emitted model — the nested one (each row /
+element gets its own base id stored in the parent's cell, correctly sized) is used by the
+zero-initialisation, and the flattened one is used by ordinary indexing. They disagree, and the size
+map only ever describes the nested one.
+
+WHICH SITE: for the GLOBAL path it is `FrontendXcfaBuilder.kt:752-755`, which sizes the object with
+`getArraySize(type, initExpr)` (outer element count) instead of `flatArraySize(type)`.
+For the LOCAL path `allocateStackArray` (`FrontendXcfaBuilder.kt:431-436`) *claims* to use
+`flatArraySize(type)` (which would give 6), yet the model registers 3 — so either a third path emits
+that `alloca`, or `flatArraySize` falls through its `else -> size` branch because
+`type.embeddedType` is not the `CArray`/`CStruct` it expects. **COULD NOT DETERMINE which**, because
+distinguishing them needs a log/assert inside the frontend and I am not permitted to rebuild.
+
+### NOTE: the prebuilt dist WAS rebuilt at 07:53 today and already contains the subgroup-A fix
+
+`theta.jar` mtime = Jul 30 07:53 (my first dumps were 21:46 the previous evening). Proof the fix is
+in: `bounded_mpmc_check_full` dumped now shows `(assign __sp 327680)` = 5 * FLAT_STRIDE and
+`(assign __sp (+ __sp 196608))` = +3 * FLAT_STRIDE, whereas yesterday's ticketlock dump showed
+`(assign __sp 5)` / `+3`. So `__sp` is now on the flat address line.
+=> contrary to the coordinator's note, subgroup A can be re-verified by running, not only reasoned
+about. Doing that below.
+
+Also learned from that dump: for `--property no-data-race`, `MemsafetyPass.enabled` is false, so
+`__theta_ptr_size` and all the deref checks are absent from the model entirely. **The size map
+therefore cannot be the mechanism behind `bounded_mpmc_check_full`'s false `false(no-data-race)`.**
+The only flat-specific mechanism left for that verdict is *address aliasing* — two distinct objects
+folded onto the same flat address — which is exactly what the `__sp` scaling fixes. So that verdict
+is now plausibly fixed too, and is worth re-running rather than reasoning about.
+
+### VERIFIED: the subgroup-A fix in the rebuilt dist fixes all three subgroup-A repros
+
+`--memory-model flat --backend CEGAR --domain EXPL --property valid-memsafety --architecture ILP32`:
+| file | before (jar of 21:46) | after (jar of 07:53) |
+|---|---|---|
+| `inline.c`  `int *p = &s.b; return *p;` | Unsafe (false alarm) | **Safe** |
+| `arr.c`     `rd(&a[2])` on `int a[4]`   | Unsafe (false alarm) | **Safe** |
+| `midfield.c` `rd(&s.b)` via a callee     | Unsafe (false alarm) | **Safe** |
+
+### VERIFIED at model level: the tautology is gone from the real ticketlock task too
+
+Post-fix ticketlock dump (`scratchpad/dump_tl2/xcfa.dot`), the edge that used to be a tautology:
+```
+before: (<= (read __theta_ptr_size 131073) 0)                        # 0 <= 0  -> ALWAYS TRUE
+after : (<= (read __theta_ptr_size (* (div 131073 65536) 65536))     # size[131072] = 2
+              (+ (mod 131073 65536) 0))                             # offset    = 1
+                                                                    # 2 <= 1   -> FALSE. correct.
+```
+All seven distinct bad-deref guards in the procedure now go through
+`(* (div addr 65536) 65536)` / `(mod addr 65536)`, including the ones whose address is a parameter
+(`vatomic32_read::a`) or loaded from memory (`(deref 0 (+ 131072 1))`). The subgroup-A defect is
+repaired in the model.
+
+MINOR PERF NOTE on the fix (not a correctness issue): the `div`/`mod` are **not constant-folded**
+even when the address is a literal — the model literally carries `(div 131072 65536)`. Every deref
+check now hands the solver two extra arithmetic ops (four counting the negated copy on the twin
+edge). Since the guard sits on every dereference edge, tasks that currently finish close to the
+limit may tip over. Folding `div`/`mod` of two literals in `SimplifyExprsPass` would remove most of
+the cost for statically-based objects, which is the common case.
+
+### CONFIRMED: subgroup B is untouched by the subgroup-A fix
+
+`globalarr.c` (`struct Item arr[3]` global, `arr[2].b = 1`) against the 07:53 jar, default multi
+model, PRED_CART: still `(Property valid-deref) (SafetyResult Unsafe)`. Expected. The two bugs are
+independent — subgroup A lives in the flat *checking* formula, subgroup B in the *frontend's* choice
+of unit for an array object's size, under the default multi model.
+
+---
+
+## SUGGESTED FIX — subgroup B
+
+FILE: `subprojects/xcfa/c2xcfa/src/main/java/hu/bme/mit/theta/c2xcfa/FrontendXcfaBuilder.kt`
+
+1. **Global array path, lines ~752-755.** Sizes the object with
+   `getArraySize(type, initExpr)` (outer element count). It must be the flat cell count, i.e. the
+   same `flatArraySize(type)` the stack path names — with a fall-back to the element count when
+   `flatArraySize` returns null (non-fixed dimensions).
+2. **The local/stack path.** `allocateStackArray` (lines 431-436) already calls
+   `flatArraySize(type)`, which for `int[3][2]` and for `struct Item[3]` should be 6 — yet the
+   emitted model registers 3. So either this is not the site that fires for a plain local array
+   declaration, or `flatArraySize` is falling through its `else -> size` branch because
+   `type.embeddedType` is not the `CArray`/`CStruct` it expects. One `logger`/assert inside
+   `flatArraySize` settles it; I could not, since rebuilding is out of scope for me.
+3. **`giveStructObjectStorage`, lines ~329-345.** Sizes a struct as `type.unitCount` (one unit per
+   field) and recurses only into `CStruct` fields, never `CArray` fields. The member-array object's
+   size therefore comes from elsewhere and is again the element count (safestack: 3 for a 6-cell
+   object). Whatever sizes a member array must use the flat cell count too.
+
+RISK: **low, and it cannot hide a real invalid dereference.** The change only ever makes an object
+*larger* in the size map, so it converts "reported invalid" into "accepted" — but only for flat
+offsets in `[elemCount, elemCount*innerCells)`, and those cells genuinely belong to the object under
+the flattened layout that every ordinary access uses. Today's reports there are spurious, not real
+detections. Genuine out-of-bounds (offset >= flat cell count) is still caught unchanged.
+RISK to race detection: **none.** `MemsafetyPass.enabled` is false for `--property no-data-race`
+(verified: the bounded_mpmc no-data-race dump contains no `__theta_ptr_size` at all), so the size map
+plays no part in the race checker.
+
+SIDE OBSERVATION worth its own ticket: for an *uninitialised* aggregate the frontend builds a
+**second, nested** representation — each row/element gets its own base id stored in the parent's
+cell, correctly sized — and the zero-initialisation writes through *that*, while every ordinary
+`arr[i][j]` / `arr[i].f` access uses the flattened cells. The nested storage is written and never
+read (dead), but it means the flat cells are not what the zero-initialisation wrote to. Whether the
+flat cells still read as 0 depends on the memory backend's default; probe running (`zeroinit.c`,
+`if (arr[2].b != 0) reach_error();` on an uninitialised global array of structs — an `Unsafe` there
+would be a value-level unsoundness independent of memsafety).
+
+---
+
+## SUMMARY TABLE — final attribution of the 8 tasks I was given
+
+| task | subgroup | cause | status |
+|---|---|---|---|
+| libvsync/ticketlock | A | flat check indexes size map with a mid-object address | **fixed** in 07:53 jar (model verified) |
+| libvsync/mcslock | A | same | fixed (same mechanism; `&nodes[tid]`, `&l->owner`) |
+| libvsync/cnalock | A | same | fixed (same mechanism) |
+| libvsync/bounded_mpmc_check_full | A | same | fixed (valid-deref side) |
+| pthread-complex/elimination_backoff_stack | A | same (`&threads[i]`, `&location[mypid]`, `&p->cell`) | fixed |
+| termination-dietlibc/stpcpy | A | same — **not** the multi-model str* bug, see below | fixed |
+| pthread-complex/safestack_relacy | **B** | array-of-structs object sized in elements, addressed in flat cells | **OPEN** |
+| termination-recursive-malloc/rec_strcopy_malloc | neither | runs under multi, no flat fallback — the parallel str*/loop-incremented-pointer-parameter investigation | not mine |
+
+`bounded_mpmc_check_full` also has a wrong `false(no-data-race)`; it is produced under the same flat
+fallback, and since `MemsafetyPass` is off for that property the only flat-specific mechanism is
+address aliasing from unscaled `__sp` — which the 07:53 jar fixes. Not re-run (needs the full
+concurrent check to terminate); flagged as likely-fixed-but-unverified.
+
+## CONFIDENCE
+
+* Subgroup A root cause: **high**. Tautological guard read straight off the model dump, 4- and
+  5-line repros, offset-0 control that stays Safe, correct behaviour under multi, and the fix
+  (already landed) flips all three repros to Safe and removes the tautology from the real task.
+* Subgroup B root cause: **high**. Exact size values and exact access offsets read off three
+  independent dumps (plain global array, struct-member array, local array), a 3-line repro, and a
+  control (`int arr[3]` inside a struct) that is Safe precisely because element count == cell count.
+* Subgroup B *scope* (multi-dimensional arrays as well as arrays of structs, all storage classes):
+  **high** — verified by running, not inferred.
+* Which source line mints the wrong size on the **local** path: **low** — see "could not determine".
+* `bounded_mpmc_check_full`'s false `false(no-data-race)` mechanism: **low/medium**. I ruled out the
+  size map (it does not exist for that property) and identified unscaled-`__sp` address aliasing as
+  the only remaining flat-specific mechanism, but never exhibited an actual aliased pair.
+
+## ANYTHING I COULD NOT DETERMINE
+
+1. **Which frontend site registers the wrong size for a LOCAL array** whose elements span several
+   cells. `allocateStackArray` names `flatArraySize` (would be 6) but the model shows 3. Either a
+   third path emits that `alloca`, or `flatArraySize` falls through `else -> size`. Distinguishing
+   needs a print inside the frontend; rebuilding was out of scope for me.
+2. **Whether `bounded_mpmc_check_full`'s false `false(no-data-race)` is really the `__sp` overlap.**
+   I proved the size map is irrelevant there and that `__sp` is now scaled, but I did not exhibit two
+   objects that actually collided pre-fix, and I did not re-run the (long, concurrent) task post-fix.
+3. **Whether the five subgroup-A concurrency tasks now come out `true` rather than `unknown`.** The
+   false alarm is gone at model level, but these are concurrent lock algorithms and the checker still
+   has to *prove* safety; a timeout is a plausible outcome. The real ticketlock run I launched was
+   still going when I finished. This needs the benchmark, not a single local run.
+4. **Whether the flat cells of an uninitialised aggregate read as 0.** Probe (`zeroinit.c`) launched
+   but not returned. If it is Unsafe, there is a value-level unsoundness (zero-init writes the dead
+   nested storage, not the flat cells that accesses use) that is independent of memsafety.
+
+---
+
+## RESIDUAL RISK REVIEW of the (already landed) subgroup-A fix
+
+1. **Could it hide a real invalid dereference? Yes, in one narrow class — flag it.** Recovering the
+   base as `(addr / STRIDE) * STRIDE` means an access more than `FLAT_STRIDE` (65536) cells past its
+   object's base is attributed to a *different* object's slice, and is accepted if that object is
+   large enough. Before the fix such an access was reported (accidentally, because `size[base+huge]`
+   was 0). This is the limitation `FlatMemoryPass`'s own doc already acknowledges ("as long as no
+   object is larger than FLAT_STRIDE cells"); the fix turns an accidental catch into a possible miss.
+   Out-of-bounds in sv-benchmarks is by a few cells, so the practical exposure is small, but it is a
+   real narrowing of detection and should be recorded.
+2. **Does the scaled `__sp` risk hiding real races? No — it removes a source of spurious ones.**
+   `AtomicAccessUtils.addressesAtomicData` (lines 58-69) already decodes a flat address as
+   `isAtomicObjectCell(addr / STRIDE, addr % STRIDE)`. With the *old* unscaled `__sp`, an
+   address-taken local's base (5, 8, 11, …) divided by 65536 gave id **0**, which is never a recorded
+   object, so the lookup always answered "not atomic" — keeping the access in the race check
+   (over-reporting, per that function's own comment). With `__sp` scaled the division now yields the
+   real id, matching what `recordReferencedObjectAtomicity` records against the raw `cnt`. So the
+   scaling makes the atomicity resolution *correct* where it was previously always-miss. Direction of
+   change: fewer spurious races, no new missed ones.
+3. **Cost.** See the perf note above: `div`/`mod` are not constant-folded, so every deref guard grew.
+
+## `bounded_mpmc_check_full`'s false `false(no-data-race)` — TWO candidates, NEITHER verified
+
+For that property `MemsafetyPass` is off, so the size map is out (verified from the dump). Remaining
+flat-specific candidates:
+* (a) **Address aliasing from the old unscaled `__sp`**: local objects sat at 5/8/11/… inside the
+  first stride slice, only 3 apart, while `allocateReferenced` can hand one a size > 3 — two distinct
+  local objects then overlap on the flat address line. Fixed by the scaling.
+* (b) **Atomicity lookup always missing for address-taken locals** (point 2 above): pre-fix every
+  such object resolved to id 0, so `_Atomic` cells were treated as ordinary and became race
+  candidates. Also fixed by the scaling. Weakened as an explanation by the fact that the `__atomic_*`
+  builtins are additionally lowered into `F[ATOMIC_BEGIN]`/`F[ATOMIC_END]` blocks (visible in the
+  ticketlock dump), which the race checker should already respect.
+I did not exhibit a concrete aliased pair or a concrete mis-resolved atomic cell for either, and I
+did not re-run the task post-fix (it is a long concurrent check). **Both remain hypotheses**; note
+they are both fixed by the same landed change, so a re-run of that one task settles it.
+
+---
+
+## RUNS THAT DID NOT RETURN (machine contention, not results)
+
+The box was shared with another agent running an unserialised `--portfolio STABLE` job, so my
+`flock`-queued runs starved. These are INCONCLUSIVE, not negative:
+* real `ticketlock.i` post-fix with the benchmark's winning config
+  (`--domain PRED_CART --refinement BW_BIN_ITP --initprec ALLASSUMES --por AASPOR --coi COI
+  --memory-model flat`) — never returned a verdict. The model-level check above already shows the
+  tautology is gone; whether the checker now *proves* Safe or times out is unknown.
+* `zeroinit.c` (does an uninitialised global array of structs read as 0 through the flat cells?) —
+  killed by its own timeout while queued. Still worth answering: an `Unsafe` there would be a
+  value-level unsoundness independent of memsafety.
+* post-fix audits of `mcslock.i` / `elimination_backoff_stack.i` dumps (checking no bad-deref guard
+  bypasses the new div/mod recovery) — queued, never ran.

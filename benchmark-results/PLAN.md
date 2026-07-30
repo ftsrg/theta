@@ -4401,3 +4401,54 @@ on the flat address line** — a latent aliasing unsoundness, and the most likel
    model blow-up (a local is emitted per inlined call site).
 3. scopes causes A/C/D/E, aws A/B, overflow families — smaller and independent.
 4. `static` storage duration — larger, worth 1 task here.
+
+### Batch 80 addendum — flat valid-deref fix landed; two bugs uncovered on the way (2026-07-30)
+
+Landed as `145bffaac0`. Verified by the investigator against the rebuilt jar, not just by me: the
+5-line repro, `arr.c` and `midfield.c` are all Safe now (were Unsafe), and the real ticketlock guard
+became `size[(div 131073 65536)*65536] <= (131073-base)+0` → `2 <= 1` → false.
+
+Two bugs the fix uncovered, both now fixed in the same commit:
+
+- **`MemoryFunctionsPass.fill` built the filler in the argument's type**, then cast it to the element
+  type: `memset(p, ' ', n)` produced a `Bv32` cast to `Bv8` → ClassCastException → whole frontend
+  failed. C converts the argument to `unsigned char`, so it is converted to the element type now.
+  **Caught by the `discover_list` canary added the day before** — the canary set paid for itself
+  within a day, one commit after the byte-union work that introduced it.
+- **"Pointer arithmetic not supported" now throws `UnsupportedPointerSplitException`.** It is a
+  multi-only representational limitation, so the CLI can silently rebuild under flat (which handles
+  any pointer-arithmetic shape) instead of failing the task. ⚠️ This also **corrects batch 76**: the
+  pointer-arithmetic class was *not* fully resolved by the semantic-cast fix. It was merely absent
+  from the 5-task sample I checked; `uthash_JEN_test5-1` still hit it.
+- `Mod` -> `Rem` in `annotateFree`: pointer types are unsigned bitvectors and Theta's `Mod` is
+  signed-only. Latent until flat started being reached for these tasks.
+
+⚠️ **Recorded narrowing of the flat fix.** Recovering the base by truncation means an access more
+than `FLAT_STRIDE` (65536) cells past its base is now attributed to the *next* object's slice and
+accepted, where it used to be caught accidentally by the missing-size tautology. Small exposure, but
+a genuine loss of detection under flat — noted so it is not rediscovered as a mystery later.
+
+Also from the investigator, and **worth doing next**: `div`/`mod` in the new guard are not
+constant-folded, so the model literally carries `(div 131072 65536)` on every deref guard. Folding
+literal div/mod in `SimplifyExprsPass` would recover most of that cost.
+
+### Still open, with root causes in hand (see findings-run80/)
+
+1. **Array object sized by element count, not flat cell count** (concurrency subgroup B). Any array
+   whose element spans more than one flat cell, in any storage class. 2-line repro:
+   `int arr[3][2]; int main(void){ arr[2][1]=1; return arr[2][1]; }` → Unsafe. Fix sites:
+   `FrontendXcfaBuilder.kt` global path (~752-755) uses `getArraySize` where it needs
+   `flatArraySize`; `giveStructObjectStorage` (~329) sizes structs as `unitCount` and never recurses
+   into `CArray` fields. Risk assessed as **low — cannot hide a real invalid deref** (it only
+   enlarges objects over cells that genuinely belong to them), and no race risk since MemsafetyPass
+   is off for `no-data-race`. Unresolved: which frontend site mints the wrong size on the *local*
+   path (`allocateStackArray` names `flatArraySize`, which would give the right answer, yet the model
+   shows the element count).
+2. **Local aggregates with a partial brace initializer are not zero-filled** (7 NN wrongs).
+3. `static` storage class silently dropped (`filter2_alt`).
+4. scopes causes A/C/D/E; aws Bug A + Bug C and the 8 negated harnesses; no-overflow additive chains;
+   `test22-2`'s deleted overflow instrumentation; `memleaks_*`; `2SB`/`4SB`.
+
+Corrections from the investigators worth keeping: **`stpcpy` is the flat subgroup, not the
+str*-pointer-param bug** (it *cannot* run under multi at all — "bare use of split variable"), while
+`rec_strcopy_malloc` does run under multi and is the str* one.

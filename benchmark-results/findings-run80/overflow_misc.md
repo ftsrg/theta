@@ -371,3 +371,129 @@ given the model reads a full `int`), i.e. up to 4 wrong results.
 
 **CONFIDENCE: high** (mechanism, per-procedure discrimination, and a one-line minimal repro).
 
+---
+
+# FAMILY 2 — `memleaks_*` valid-memsafety (6)
+
+**DIRECTION: all 6 are FALSE ALARMS** (theta `false(...)`, yml `expected_verdict: true` for
+`valid-memsafety` in every one of the six). None is a missed bug.
+
+| task | theta verdict | falls back to flat? |
+|---|---|---|
+| `memleaks_test11`   | `false(valid-deref)` | **NO — stays on `multi`** |
+| `memleaks_test20-2` | `false(valid-free)`  | yes |
+| `memleaks_test21-2` | `false(valid-free)`  | yes |
+| `memleaks_test22_1-2` | `false(valid-deref)` | yes |
+| `memleaks_test22_2-2` | `false(valid-deref)` | yes |
+| `memleaks_test22_3-1` | `false(valid-deref)` | yes |
+
+(`falls back` = the CLI printed
+`note: frontend build failed due to a pointer-splitting limitation under --memory-model multi;
+retrying with --memory-model flat`. Measured per task with `--backend NONE`.)
+
+## 2a — the five flat-fallback tasks: `container_of`
+
+All five hit the same C idiom, the Linux `container_of`:
+```c
+struct A20 *p = ({ const typeof(((struct A20*)0)->dev) *__mptr = (dev);
+                   (struct A20*)((char*)__mptr - ((size_t)&((struct A20*)0)->dev)); });
+```
+`test20-2`/`test21-2` then `free(p)` → `false(valid-free)`; the three `test22_*` go through
+`ldv_kobject_release` → `ldv_kobject_cleanup(kobj)`, whose first statement is
+`char *name = kobj->name;` — a *read* through the reconstructed pointer → `false(valid-deref)`.
+Same idiom, the verdict just depends on which operation touches the bad address first.
+
+Under `--memory-model multi` the frontend **crashes**:
+```
+UnsupportedPointerSplitException: Unsupported pointer arithmetic: bare use of split variable main::back
+  at ReferenceElimination.changeComplexReferredVars(ReferenceElimination.kt:1132)
+```
+and the CLI silently retries with `--memory-model flat`, where the false alarm is produced.
+
+### MINIMAL REPRO (17 lines) — reproduces both verdicts and the fallback
+
+```c
+typedef unsigned int size_t;
+extern void *malloc(size_t);
+extern void free(void *);
+struct Inner { int c; };
+struct Outer { int data; struct Inner in; };
+struct Inner *g;
+int main() {
+  struct Outer *o = (struct Outer *)malloc(sizeof(struct Outer));
+  if (!o) return 0;
+  g = &o->in;
+  struct Outer *back = (struct Outer *)((char *)g - ((size_t) &((struct Outer *)0)->in));
+  int v = back->data;              /* valid-deref */
+  free(back);                      /* valid-free  */
+  return v;
+}
+```
+```
+--memory-model multi : Frontend failed! UnsupportedPointerSplitException: bare use of split variable main::back
+--memory-model flat  : (Property valid-deref) (SafetyResult Unsafe Trace length: 5)   <-- FALSE ALARM
+```
+(kept at `…/scratchpad/work/r/co.c`)
+
+Trace length 5 and no `__VERIFIER_nondet` choices in the witness beyond "malloc succeeded" — so
+this is a deterministic modelling failure, not a subtle search artefact.
+
+**STATUS / OWNERSHIP:** the coordinator reports this root cause has been independently confirmed
+and **fixed**: in the flat model `MemsafetyPass` mis-keys the object size, because it assumes the
+`Dereference`'s `array` slot holds a base id while flat puts a mid-object `B+O` scalar there, so
+`size[B+O]` reads 0 and the bad-deref check degenerates to a tautology. I stopped here on the
+coordinator's instruction and did **not** re-derive it.
+
+**One thing to double-check against that fix**, because it may not be covered by it: `test20-2` and
+`test21-2` fail on **`valid-free`**, not `valid-deref`. If the fix only repaired the size lookup in
+the bad-*deref* check, the `free()` validity check (`is this address a live allocation base?`) may
+still see `base + offsetof` rather than `base` and keep reporting `false(valid-free)`. The repro
+above exercises both in one file (`back->data` then `free(back)`), so it is a cheap regression check
+for that.
+
+## 2b — `memleaks_test11`: NOT the flat-fallback bug, a separate cause (UNRESOLVED)
+
+`memleaks_test11` is the one member that stays on `--memory-model multi` (no fallback note) and
+still reports `false(valid-deref)`. It contains no `container_of`; the pointer chain is plain
+nested struct-member access through malloc'd objects:
+```c
+int alloc_11(struct ldv_i2c_client *client) {
+  struct ldv_m88ts2022_config *cfg = client->dev.platform_data;   /* deref -> field -> field */
+  struct ldv_dvb_frontend *fe = cfg->fe;                          /* deref of a loaded pointer */
+  ...
+}
+/* entry_point mallocs c11, cfg, fe and wires c11->dev.platform_data = cfg; cfg->fe = fe; */
+```
+The suspicious step is `client->dev.platform_data`: a field of an *embedded struct* (`dev`) reached
+through a pointer — i.e. a non-zero constant offset added to a pointer parameter, whose result is
+then itself dereferenced. `ldv_i2c_set_clientdata(client, priv)` /
+`ldv_i2c_get_clientdata(client)` additionally pass `&dev->dev` (a mid-object address) across a call.
+That is the same *shape* that makes the multi model throw elsewhere, so it is plausibly a
+multi-model offset/size mis-keying rather than the flat one — but **I did not confirm which
+operation the counterexample blames, so I am not claiming a root cause here.**
+See "COULD NOT DETERMINE" at the end.
+
+---
+
+## Cross-check: the no-overflow `*-alloca-*` tasks are NOT the flat-fallback bug
+
+Explicitly measured (`--backend NONE --property no-overflow.prp --architecture ILP32`, counting the
+`retrying with --memory-model flat` note):
+
+```
+add_last-alloca-1.i   flat-fallback = 0
+stroeder1-alloca-1.i  flat-fallback = 0
+stroeder2-alloca-1.i  flat-fallback = 0
+test22-2.c            flat-fallback = 0
+```
+
+All four run on the default `multi` model. Corroborated independently: `xcfa.c` *was* produced for
+all four, and their models contain multi-model artefacts (`main::a_base[main::a_offset]`,
+`main::arr[(mod … 4294967296)]`, `__malloc = __malloc + 3`) — whereas every flat run in this session
+produced **no** `xcfa.c` at all (`XcfaToC` throws on flat derefs and `writeXcfaAsC` swallows it,
+`AnalysisLogging.kt:88`), which is itself a reliable flat-vs-multi discriminator.
+
+So family 1b (cType metadata destroyed by `changeComplexReferredVars` → **zero** overflow
+instrumentation in the procedure) is a genuinely distinct defect from the flat-fallback
+`MemsafetyPass` size mis-keying, and needs its own fix.
+

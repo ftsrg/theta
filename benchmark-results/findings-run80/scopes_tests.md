@@ -326,3 +326,143 @@ Working hypotheses to test (nothing confirmed yet):
 - cmp-freed-ptr — each `malloc` gets a fresh base id, so `(intptr_t)x == (intptr_t)y`
   after `free(y)` is unsatisfiable and the double `free(x)` is unreachable.
 - sum_array-2 — zero-length VLA `int A[M]` with `M == 0`.
+
+---
+
+# MISSED-BUG SUBGROUP (theta `true`, expected `false`) — 7 tasks
+
+These need the opposite argument from the false alarms: the real violation is located in
+the C, then the model is shown to have no way to reach it. All evidence is from
+`--enable-xcfa-serialization` dumps under the default (`multi`) model.
+
+## CONFIRMED ROOT CAUSE G — an object's lifetime never ends: no deallocation at scope/block/iteration exit
+Tasks: **scopes1, scopes3, scopes5, derefInLoop1** (4 of the 7).
+
+The real violations:
+- `scopes1` — `{ int myNumberA = 7; myPointerA = &myNumberA; }` then `*myPointerA` after
+  the block. Dereference of a pointer to an out-of-scope automatic object.
+- `scopes5` — `if(1) { int a[10]; p = a; }` then `p[0] = 1`.
+- `scopes3` — `for(...){ int a[10]; p = a; p[0]=1; }` then `p[0] = 2` after the loop.
+- `derefInLoop1` — `for(i=0;i<2;i++){ int a[10]; if(i==0) p=a; else p[0]=1; }`: iteration 1
+  writes through iteration 0's dead `a`.
+
+Why the model cannot see them. `__theta_ptr_size[base]` is written **once, on the procedure
+entry edge**, and is *only* ever cleared by `MemsafetyPass.annotateFree` at an explicit
+`free`. Nothing in any pass emits a `deallocate` for an automatic object.
+
+`scopes1` (address-taken scalars get compile-time bases 5 and 8):
+```
+main_init -> __loc_19 : ptr_size := (default 0); ptr_size := (5 1)(default 0); ptr_size := (5 1)(8 1)(default 0)
+__loc_19 -> __loc_32  : memassign (deref 5 0 Int) := 7        # myNumberA = 7, inside the block
+__loc_32 -> __loc_45  : memassign (deref 8 0 Int) := 3        # myNumberB = 3
+__loc_45 -> _pre_final: assume (not (ptr_size[5] <= 0 || ptr_size[8] <= 0)) ...   # both still live
+```
+There is not even a location where object 5's block ends — the whole procedure has three
+edges. `ptr_size[5]` stays 1 forever.
+
+`scopes5` — the block-local array's `alloca` is *hoisted to `main_init`*, so the object is
+created before its block is entered and is never released:
+```
+main_init -> __loc_41 : __malloc += 3; call_alloca_ret0 := __malloc+1; ptr_size[·] := 10
+                        main::if0::then1::a := call_alloca_ret0 ; main::p := a mod 2^32
+__loc_41 -> _pre_final: assume (not (ptr_size[main::p] <= 0)) ; memassign (deref main::p 0) := 1
+```
+
+`derefInLoop1` is the sharpest evidence that this is a *lifetime* problem and not an
+aliasing one — the model does give each unrolled iteration its **own** base:
+```
+main_init : __malloc+=3; ret0 := __malloc+1; ptr_size[ret0] := 10; for0::a := ret0   # iteration 0
+            main::p := for0::a                                                       # p = &a(0)
+            __malloc+=3; ret0 := __malloc+1; ptr_size[ret0] := 10; for0::a := ret0   # iteration 1, NEW base
+__loc_58_loop1 -> _pre_final : assume (not (ptr_size[main::p] <= 0)) ; memassign (deref main::p 0) := 1
+```
+`p` still names iteration 0's base, whose `ptr_size` is still 10 → the write is accepted.
+Had iteration 0's object been deallocated at the end of its iteration, `ptr_size[p]` would
+be 0 and the existing `annotateDeref` guard would have fired *unchanged*. Same for
+`scopes3`, where all ten unrolled iterations allocate a fresh base and none is released.
+
+So the check machinery is already right; the missing piece is the *deallocation events*.
+
+## CONFIRMED ROOT CAUSE H — `alloca` memory is never released at function return
+Task: **getNumbers1-1**.
+
+Real violation: `int *array = alloca(10*sizeof(int)); ... return array;` and main then reads
+`*(numbers+i)` — a use-after-return of an `alloca`'d block.
+
+Evidence:
+```
+main_init : __malloc+=3; call_alloca_ret0 := __malloc+1; ptr_size[call_alloca_ret0] := 40
+            getNumbers::array := call_alloca_ret0
+...        : (assign getNumbers_ret getNumbers::array) (assign main::numbers ...)
+__loc_89_loopN -> ... : assume (not (ptr_size[main::numbers] <= N))       # N = 0..9, all pass
+```
+`ptr_size[·]` is set once and never cleared, so after `getNumbers` returns the block is
+still live. Note `FunctionVisitor.visitBodyDeclaration`'s own comment asserts the opposite —
+*"`alloca` ... its memory is released when the function returns, not by the program"* — but
+no pass emits that release. `AllocaFunctionPass` only ever calls `builder.parent.allocate`
+(`AllocaFunctionPass.kt:106`); there is no `deallocate` anywhere outside
+`MemsafetyPass.annotateFree`.
+
+This is the same missing mechanism as cause G, one scope level up (procedure instead of
+block), so G and H are really one design gap; I list them separately because the *trigger*
+differs (block exit vs. procedure return) and a fix could plausibly land one without the
+other.
+
+**Side finding (same task, opposite direction, worth a separate note):** `alloca(40)` records
+`ptr_size = 40` — the byte count used directly as a **cell** count. The object really has 10
+`int` cells. So bounds through an `alloca`'d block are 4× too loose under ILP32:
+`numbers[10..39]` would be accepted. This hides genuine out-of-bounds bugs on
+`alloca`/`malloc`-sized-in-bytes blocks (it cannot cause a false alarm, only a missed one).
+
+## CONFIRMED ROOT CAUSE I — allocation bases come from a monotone counter, so a freed address is never reused
+Task: **cmp-freed-ptr**.
+
+Real violation (valid-free): `y = malloc(...); adressY = (intptr_t)y; free(y); x = malloc(...);
+adressX = (intptr_t)x; if (adressX == adressY) free(x); free(x);` — a real allocator may
+hand the just-freed block back, so `adressX == adressY` is possible and the program then
+double-frees.
+
+Evidence:
+```
+main_init  : __malloc += 3 (=3); call_malloc_ret0 := __malloc; ptr_size[3] := 4; main::y := 3; adressY := y
+__loc_42   : ptr_size[main::y] := 0                            # free(y)
+             __malloc += 3 (=6); call_malloc_ret2 := __malloc; ptr_size[6] := 4; main::x := 6; adressX := x
+__loc_68   : assume (adressX = adressY)  -> __loc_78 -> free(x)      # UNSAT: 6 != 3
+__loc_68   : assume (adressX /= adressY) -> __loc_88 -> free(x)      # the only feasible path
+```
+`__malloc` is strictly increasing and `deallocate` only writes `ptr_size[base] := 0` — it
+never returns the base to the pool. `adressX == adressY` is therefore unsatisfiable, the
+first `free(x)` is unreachable, and the single remaining `free(x)` passes its guard.
+
+## CONFIRMED ROOT CAUSE J — no check that a VLA's length is > 0
+Task: **sum_array-2**.
+
+Real violation: `unsigned int M = __VERIFIER_nondet_uint(); int A[M], B[M], C[M];` with **no**
+`assume(M > 0)`. `M == 0` makes the VLA declaration itself undefined — C11 6.7.6.2p5: a
+variably-modified type's size "shall evaluate to a value greater than zero" — which SV-COMP
+files under `valid-deref`.
+
+Corroboration that this (and not something inside the loops) is the intended violation:
+*every* `loops/` task with `expected_verdict: false, subproperty: valid-deref` has exactly
+this shape and nothing else in common —
+`sum_array-1`, `sum_array-2`, `matrix-2` (`int matriz[N_COL][N_LIN]`),
+`insertion_sort-1` (`int v[SIZE]`), `invert_string-2` (`char str1[MAX], str2[MAX]`, which
+additionally does `str1[MAX-1]` → `str1[-1]` when `MAX == 0`), `insertion_sort-2`,
+`bubble_sort-1`. All size a VLA from an unconstrained nondet with no positivity assume.
+
+Evidence that the model cannot see it — the three VLAs are allocated with size `M` itself
+and every access is guarded correctly:
+```
+write __theta_ptr_size call_alloca_ret4 main::M
+write __theta_ptr_size call_alloca_ret5 main::M
+write __theta_ptr_size call_alloca_ret6 main::M
+```
+With `M == 0` the object has size 0 (indistinguishable from freed/never-allocated, which is
+fine), every loop `for(i=0;i<M;i++)` has zero iterations, so **no dereference happens at
+all** and no guard can fire. There is no check attached to the *declaration*.
+
+Confidence on J: **medium** — the "model cannot see it" half is certain (the dump is
+unambiguous), but SV-COMP's rationale for classifying a zero-length VLA as `valid-deref` is
+not documented inside the repository; I inferred it from C11 plus the fact that all seven
+sibling tasks share that and only that shape. If the intended violation were something
+else, the fix would be different.
