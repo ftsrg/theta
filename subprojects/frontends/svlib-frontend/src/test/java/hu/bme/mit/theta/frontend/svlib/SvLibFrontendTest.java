@@ -1,8 +1,10 @@
 
 package hu.bme.mit.theta.frontend.svlib;
 
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 
 import org.antlr.v4.runtime.CharStreams;
@@ -137,6 +139,7 @@ class SvLibFrontendTest {
 
     assertTrue(dot.startsWith("digraph G"));
     assertTrue(dot.contains("SvLibXCFA"));
+    assertTrue(dot.contains("(assign x (+ x 1))"));
     assertFalse(dot.isBlank());
   }
 
@@ -185,6 +188,110 @@ class SvLibFrontendTest {
         dot);
 
     assertEquals(2, sequenceLabel.getLabels().size());
+  }
+
+  @Test
+  void havocStatementCreatesHavocLabel() throws IOException {
+    var xcfa = parseResource("havoc.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("havoc.svlib.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertFalse(dot.isBlank());
+    assertTrue(
+        procedure.getEdges().stream()
+            .map(edge -> edge.getLabel())
+            .filter(StmtLabel.class::isInstance)
+            .map(StmtLabel.class::cast)
+            .anyMatch(label -> label.getStmt() instanceof HavocStmt<?>));
+  }
+
+  @Test
+  void returnStatementCreatesFinalLocationEdge() throws IOException {
+    var xcfa = parseResource("return.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+    var finalLoc = procedure.getFinalLoc().orElseThrow();
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("return.svlib.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertFalse(dot.contains("(assign x (+ x 1))"));
+    assertFalse(dot.isBlank());
+    assertTrue(
+        procedure.getEdges().stream()
+            .anyMatch(
+                edge ->
+                    edge.getTarget().equals(finalLoc)
+                        && edge.getSource().getMetadata() instanceof SvLibMetadata metadata
+                        && metadata.getSourceName().equals("assign")));
+  }
+
+  @Test
+  void ifWithReturningBranchContinuesOnlyFromOtherBranch() throws IOException {
+    var xcfa = parseResource("return-if.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+    var finalLoc = procedure.getFinalLoc().orElseThrow();
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("return-if.svlib.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertTrue(dot.contains("(assign x (+ x 1))"));
+    assertFalse(dot.isBlank());
+    assertEquals(
+        2,
+        procedure.getEdges().stream()
+            .filter(edge -> edge.getTarget().equals(finalLoc))
+            .count());
+  }
+
+  @Test
+  void whileBodyReturnDoesNotCreateBackEdge() throws IOException {
+    var xcfa = parseResource("return-while.svlib");
+    var procedure = xcfa.getProcedures().iterator().next();
+    var finalLoc = procedure.getFinalLoc().orElseThrow();
+
+    var dot = toDot(xcfa, null);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("return-while.svlib.dot"),
+        dot);
+
+    assertTrue(dot.startsWith("digraph G"));
+    assertTrue(dot.contains("SvLibXCFA"));
+    assertTrue(dot.contains("(assign x (+ x 1))"));
+    assertTrue(dot.contains("(assign x (+ x 2))"));
+    assertTrue(dot.contains("(assign x (+ x 3))"));
+    assertFalse(dot.isBlank());
+    assertEquals(
+        2,
+        procedure.getEdges().stream()
+            .filter(edge -> edge.getTarget().equals(finalLoc))
+            .count());
+    assertTrue(
+        procedure.getLocs().stream()
+            .anyMatch(
+                loc ->
+                    loc.getIncomingEdges().size() >= 2
+                        && loc.getOutgoingEdges().stream()
+                            .anyMatch(edge -> edge.getLabel().toString().contains("(< x 3)"))));
+    assertTrue(
+        procedure.getEdges().stream()
+            .filter(edge -> edge.getTarget().equals(finalLoc))
+            .filter(edge -> edge.getLabel().toString().contains("Nop"))
+            .map(edge -> edge.getSource())
+            .anyMatch(source -> source.getOutgoingEdges().size() == 1));
   }
 
   @Test

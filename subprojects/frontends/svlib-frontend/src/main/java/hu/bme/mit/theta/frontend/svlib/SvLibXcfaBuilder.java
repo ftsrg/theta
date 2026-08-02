@@ -187,15 +187,16 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     }
 
     XcfaLocation start = addLabels(procedure, procedure.getInitLoc(), entryLabels);
-    XcfaLocation exit =
-        new SvLibStatementVisitor(procedure, declarations, this::nextLoc)
-            .visit(
-                ctx.statement(), start);
+    SvLibStatementVisitor statementVisitor =
+        new SvLibStatementVisitor(procedure, declarations, this::nextLoc);
+    XcfaLocation exit = statementVisitor.visit(ctx.statement(), start);
 
     applyTaggedCheckTrueProperties(procedure);
     checkTrueByTag.clear();
 
-    addExitEdges(procedure, exit);
+    if (!statementVisitor.isTerminal(exit)) {
+      addExitEdges(procedure, exit);
+    }
     this.entryProcedure = procedure;
 
     return null;

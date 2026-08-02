@@ -1,0 +1,22 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc returnWhileExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (assign (x x0))
+    (while (< x 3)
+      (sequence
+        (assign (x (+ x 1)))
+        (if (= x 2)
+          (return)
+          (assign (x (+ x 3))))))
+    (assign (x (+ x 2)))))
+
+(declare-const input Int)
+
+(verify-call returnWhileExample (input))
+(get-witness)

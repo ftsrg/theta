@@ -17,6 +17,7 @@ package hu.bme.mit.theta.frontend.svlib;
 
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.boolExpr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.expr;
 import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.relationalBoolExpr;
@@ -26,7 +27,6 @@ import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -41,7 +41,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +52,7 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
     private final XcfaProcedureBuilder builder;
     private final Map<String, VarDecl<?>> declarations;
     private final BiFunction<String, Boolean, XcfaLocation> nextLoc;
+    private final Set<XcfaLocation> terminalLocations = new HashSet<>();
     private XcfaLocation currentEntry;
 
     SvLibStatementVisitor(
@@ -67,6 +68,10 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
         currentEntry = entry;
         XcfaLocation result = super.visit(statement);
         return result == null ? entry : result;
+    }
+
+    boolean isTerminal(XcfaLocation location) {
+        return terminalLocations.contains(location);
     }
 
     @Override
@@ -94,6 +99,9 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
         XcfaLocation last = currentEntry;
         for (SvLibParser.StatementContext statement : ctx.statement()) {
             last = visit(statement, last);
+            if (terminalLocations.contains(last)) {
+                break;
+            }
         }
         return last;
     }
@@ -161,8 +169,20 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
 
         XcfaLocation endLoc = nextLoc.apply("if-end", false);
 
-        builder.addEdge(new XcfaEdge(thenEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
-        builder.addEdge(new XcfaEdge(elseEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+        boolean thenTerminal = terminalLocations.contains(thenEnd);
+        boolean elseTerminal = terminalLocations.contains(elseEnd);
+
+        if (!thenTerminal) {
+            builder.addEdge(
+                new XcfaEdge(thenEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+        }
+        if (!elseTerminal) {
+            builder.addEdge(
+                new XcfaEdge(elseEnd, endLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+        }
+        if (thenTerminal && elseTerminal) {
+            terminalLocations.add(endLoc);
+        }
 
         return endLoc;
     }
@@ -175,9 +195,33 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
         XcfaLocation bodyEntry = addLabel(head, new StmtLabel(AssumeStmt.of(condition)));
         XcfaLocation exit = visit(ctx.statement(), bodyEntry);
 
-        builder.addEdge(new XcfaEdge(exit, head, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+        if (!terminalLocations.contains(exit)) {
+            builder.addEdge(new XcfaEdge(exit, head, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
+        }
 
         return addLabel(head, new StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))));
+    }
+
+    @Override
+    public XcfaLocation visitHavocStatement(SvLibParser.HavocStatementContext ctx) {
+        List<XcfaLabel> labels = new ArrayList<>();
+        for (int i = 0; i < ctx.symbol().size(); i++) {
+            VarDecl<?> variable = resolveVar(ctx.symbol(i).getText(), builder, declarations);
+            labels.add(new StmtLabel(Havoc(variable)));
+        }
+        return addLabels(currentEntry, labels, "havoc");
+    }
+
+    @Override
+    public XcfaLocation visitReturnStatement(SvLibParser.ReturnStatementContext ctx) {
+        builder.addEdge(
+            new XcfaEdge(
+                currentEntry,
+                builder.getFinalLoc().orElseThrow(),
+                NopLabel.INSTANCE,
+                EmptyMetaData.INSTANCE));
+        terminalLocations.add(currentEntry);
+        return currentEntry;
     }
 
     private XcfaLocation addLabel(XcfaLocation from, XcfaLabel label) {
