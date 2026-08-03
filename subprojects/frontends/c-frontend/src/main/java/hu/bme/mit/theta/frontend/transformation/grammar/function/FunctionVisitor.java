@@ -895,37 +895,202 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /**
-     * Writes zero into every cell of {@code declaration}'s storage that {@code written} does not
-     * cover.
+     * Whether a member of {@code containerType} that is itself of {@code memberType} lives in an
+     * object of its own, rather than inline in the container's cells.
      *
-     * <p>C11 6.7.9p21: when an aggregate has an initializer but fewer entries than it has members,
-     * the remainder is initialized as if it had static storage duration -- i.e. zero. The global
-     * path already does this; a *local* one wrote only the cells the braces mention and left the
-     * rest unconstrained, so `float a[4] = {0}` gave cells 1..3 arbitrary values and the solver was
-     * free to invent a counterexample out of them.
+     * <p>Mirrors what the allocator actually does (FrontendXcfaBuilder#allocateStackStruct /
+     * #allocateArrayElements), which is what the *read* path then addresses: a non-union struct
+     * stores an aggregate field as a base id in one cell and gives it storage of its own, while an
+     * array's elements -- and a union's members -- live inline in the container's own cells.
      */
-    private void zeroFillRemainingCells(
-            CComplexType actualType,
-            Set<Integer> written,
+    private boolean ownsObject(CComplexType containerType, CComplexType memberType) {
+        return containerType instanceof CStruct container
+                && !container.isUnion()
+                && (memberType instanceof CStruct || memberType instanceof CArray);
+    }
+
+    /** The cell {@code position} of {@code containerType} starts at, in the container's own cells. */
+    private int memberOffset(CComplexType containerType, int position) {
+        if (containerType instanceof CArray cArrayType) {
+            return position * cellsOf(cArrayType.getEmbeddedType());
+        }
+        if (containerType instanceof CStruct cStructType) {
+            final List<Tuple2<String, CComplexType>> fields = cStructType.getFields();
+            if (cStructType.isUnion() || fields.isEmpty()) {
+                return 0; // a union's members all start at the same address
+            }
+            return cStructType.unitOffsetOf(fields.get(Math.min(position, fields.size() - 1)).get1());
+        }
+        return position;
+    }
+
+    /** The cell `arrays[base][offset]`, typed as {@code type}. */
+    private Dereference<?, ?, ?> cellOf(
+            Expr<?> base, int offset, CComplexType type, CComplexType ptrType) {
+        final var offsetLit = ptrType.getValue(String.valueOf(offset));
+        final var deref =
+                Exprs.Dereference(
+                        cast(base, offsetLit.getType()),
+                        cast(offsetLit, offsetLit.getType()),
+                        type.getSmtType());
+        parseContext.getMetadata().create(deref, "cType", type);
+        return deref;
+    }
+
+    /**
+     * Writes an initializer list into the object {@code objectBase}, following the same object
+     * structure the accesses do, and zero-fills whatever the braces leave out.
+     *
+     * <p>The old writer numbered every scalar leaf as a flat offset in the *declared variable*, as
+     * if nested aggregates were laid out inline. The object model does the opposite: a struct's
+     * struct- or array-typed field gets storage of its own and the parent keeps only its base id.
+     * So `struct Outer { struct Inner in; int z; } o = {{1,2}, 3};` wrote `o[0]=1; o[1]=2; o[1]=3`
+     * -- the first write destroying the base of `in`'s object (which every read of `o.in.x` then
+     * dereferences), and the last two colliding on `z`'s cell. Both a false alarm and a missed bug,
+     * depending on which side of the collision the program looked at.
+     *
+     * <p>C11 6.7.9p21 also requires the members the braces do not reach to be zero, including the
+     * members of an aggregate member that is not mentioned at all; each object is filled in its own
+     * right, and the cells holding subobject bases are left alone.
+     */
+    private void initializeObject(
+            Expr<?> objectBase,
+            CComplexType objectType,
+            CInitializerList list,
             CComplexType ptrType,
-            VarDecl<?> varDecl,
             CCompound compound,
             CParser.BodyDeclarationContext ctx) {
-        final int total = cellsOf(actualType);
-        for (int index = 0; index < total; index++) {
-            if (written.contains(index)) {
+        final Set<Integer> written = new LinkedHashSet<>();
+        if (list != null) {
+            writeMembers(objectBase, objectType, list, 0, written, ptrType, compound, ctx);
+        }
+        zeroFillObject(objectBase, objectType, 0, written, ptrType, compound, ctx);
+    }
+
+    /**
+     * Writes one initializer list's entries at {@code baseOffset} cells into {@code objectBase},
+     * recording every cell it fills. Entries whose member has an object of its own recurse into
+     * that object; entries laid out inline (array elements, union members) recurse in place.
+     */
+    private void writeMembers(
+            Expr<?> objectBase,
+            CComplexType containerType,
+            CInitializerList list,
+            int baseOffset,
+            Set<Integer> written,
+            CComplexType ptrType,
+            CCompound compound,
+            CParser.BodyDeclarationContext ctx) {
+        int nextPosition = 0;
+        for (Tuple2<Optional<CStatement>, CStatement> entry : list.getStatements()) {
+            final int position = designatedPosition(entry.get1(), nextPosition);
+            nextPosition = position + 1;
+            final CComplexType memberType = subElementTypeOf(containerType, position);
+            final int offset = baseOffset + memberOffset(containerType, position);
+            final CStatement value = entry.get2();
+            if (value instanceof CInitializerList nested) {
+                if (ownsObject(containerType, memberType)) {
+                    // This cell holds the member's base, put there by the allocator; keep it.
+                    written.add(offset);
+                    initializeObject(
+                            cellOf(objectBase, offset, memberType, ptrType),
+                            memberType,
+                            nested,
+                            ptrType,
+                            compound,
+                            ctx);
+                } else {
+                    writeMembers(
+                            objectBase,
+                            memberType,
+                            nested,
+                            offset,
+                            written,
+                            ptrType,
+                            compound,
+                            ctx);
+                }
+            } else {
+                final CComplexType cellType =
+                        memberType instanceof CStruct || memberType instanceof CArray
+                                ? memberType
+                                : cellTypeAt(containerType, offset - baseOffset);
+                final CAssignment cAssignment =
+                        new CAssignment(
+                                cellOf(objectBase, offset, cellType, ptrType), value, "=",
+                                parseContext);
+                recordMetadata(ctx, cAssignment);
+                compound.addCStatement(cAssignment);
+                written.add(offset);
+            }
+        }
+    }
+
+    /**
+     * Zeroes the cells of {@code objectBase} that {@code written} does not cover, walking the type
+     * rather than the flat cell range so that each cell gets its own null value -- and so that a
+     * cell holding a subobject's base is recognised as such: it is never zeroed, and if nothing
+     * initialised that subobject at all, the subobject itself is zeroed instead.
+     */
+    private void zeroFillObject(
+            Expr<?> objectBase,
+            CComplexType type,
+            int offset,
+            Set<Integer> written,
+            CComplexType ptrType,
+            CCompound compound,
+            CParser.BodyDeclarationContext ctx) {
+        if (type instanceof CArray cArrayType) {
+            final Integer dimension = ObjectLayout.constantDimension(cArrayType);
+            if (dimension == null) {
+                return; // a VLA's extent is a runtime value; there is no cell range to fill
+            }
+            final CComplexType element = cArrayType.getEmbeddedType();
+            final int stride = cellsOf(element);
+            for (int index = 0; index < dimension; index++) {
+                zeroFillObject(
+                        objectBase,
+                        element,
+                        offset + index * stride,
+                        written,
+                        ptrType,
+                        compound,
+                        ctx);
+            }
+            return;
+        }
+        if (type instanceof CStruct cStructType && !cStructType.isUnion()) {
+            for (Tuple2<String, CComplexType> field : cStructType.getFields()) {
+                final int fieldOffset = offset + cStructType.unitOffsetOf(field.get1());
+                if (ownsObject(cStructType, field.get2())) {
+                    if (written.add(fieldOffset)) {
+                        // Never mentioned by the braces, so the whole subobject is zero.
+                        initializeObject(
+                                cellOf(objectBase, fieldOffset, field.get2(), ptrType),
+                                field.get2(),
+                                null,
+                                ptrType,
+                                compound,
+                                ctx);
+                    }
+                    continue;
+                }
+                zeroFillObject(
+                        objectBase, field.get2(), fieldOffset, written, ptrType, compound, ctx);
+            }
+            return;
+        }
+        // A scalar, or a union (whose members share its cells, so it is filled as one).
+        for (int cell = 0; cell < cellsOf(type); cell++) {
+            if (!written.add(offset + cell)) {
                 continue;
             }
-            final CComplexType cellType = cellTypeAt(actualType, index);
-            final var offset = ptrType.getValue(String.valueOf(index));
-            final var deref =
-                    Exprs.Dereference(
-                            cast(varDecl.getRef(), offset.getType()),
-                            cast(offset, offset.getType()),
-                            cellType.getSmtType());
+            final CComplexType cellType = type instanceof CStruct ? cellTypeAt(type, cell) : type;
             final CAssignment cAssignment =
                     new CAssignment(
-                            deref, new CExpr(cellType.getNullValue(), parseContext), "=",
+                            cellOf(objectBase, offset + cell, cellType, ptrType),
+                            new CExpr(cellType.getNullValue(), parseContext),
+                            "=",
                             parseContext);
             recordMetadata(ctx, cAssignment);
             compound.addCStatement(cAssignment);
@@ -1001,89 +1166,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return parentType;
     }
 
-    /**
-     * Emits one cell-assignment per scalar leaf of a (possibly nested) initializer-list value,
-     * starting at {@code baseOffset} cells within {@code varDecl}'s storage. {@code elementType}
-     * is the declared type of one unit at this nesting level -- only consulted when {@code value}
-     * turns out to be itself a nested {@link CInitializerList}, to size that nested group's cells.
-     * A plain scalar {@code value} (the pre-existing, non-nested case) is handled exactly as
-     * before: one cell, using the value's own type for the dereference.
-     */
-    private void flattenInitializer(
-            CStatement value,
-            CComplexType elementType,
-            LitExpr<?> baseOffset,
-            VarDecl<?> varDecl,
-            CComplexType ptrType,
-            CCompound compound,
-            CParser.BodyDeclarationContext ctx) {
-        flattenInitializer(
-                value, elementType, baseOffset, varDecl, ptrType, compound, ctx, 0, null);
-    }
-
-    /**
-     * As above, but also records which cells the initializer actually writes. {@code baseIndex} is
-     * {@code baseOffset}'s numeric value, carried in parallel so the cell index never has to be
-     * decoded back out of a typed literal, and {@code written} collects them (null to not collect).
-     */
-    private void flattenInitializer(
-            CStatement value,
-            CComplexType elementType,
-            LitExpr<?> baseOffset,
-            VarDecl<?> varDecl,
-            CComplexType ptrType,
-            CCompound compound,
-            CParser.BodyDeclarationContext ctx,
-            int baseIndex,
-            Set<Integer> written) {
-        if (value instanceof CInitializerList nestedList) {
-            LitExpr<?> offset = ptrType.getNullValue();
-            int offsetIndex = 0;
-            int index = 0;
-            for (Tuple2<Optional<CStatement>, CStatement> entry : nestedList.getStatements()) {
-                final LitExpr<?> before = offset;
-                offset = initPosition(entry.get1(), ptrType, offset);
-                // A designator jumps the cursor; recover the jump as an int the same way the
-                // literal path does, so the parallel index stays in step with the literal offset.
-                if (offset != before && entry.get1().isPresent()) {
-                    offsetIndex = designatedPosition(entry.get1(), offsetIndex);
-                }
-                final CComplexType subType = subElementTypeOf(elementType, index);
-                final LitExpr<?> cellOffset =
-                        (LitExpr<?>) Add(baseOffset, offset).eval(ImmutableValuation.empty());
-                flattenInitializer(
-                        entry.get2(),
-                        subType,
-                        cellOffset,
-                        varDecl,
-                        ptrType,
-                        compound,
-                        ctx,
-                        baseIndex + offsetIndex,
-                        written);
-                offset =
-                        (LitExpr<?>)
-                                Add(offset, ptrType.getValue(String.valueOf(cellsOf(subType))))
-                                        .eval(ImmutableValuation.empty());
-                offsetIndex += cellsOf(subType);
-                index++;
-            }
-        } else {
-            if (written != null) {
-                written.add(baseIndex);
-            }
-            final var expr = value.getExpression();
-            final var deref =
-                    Exprs.Dereference(
-                            cast(varDecl.getRef(), baseOffset.getType()),
-                            cast(baseOffset, baseOffset.getType()),
-                            expr.getType());
-            CAssignment cAssignment = new CAssignment(deref, value, "=", parseContext);
-            recordMetadata(ctx, cAssignment);
-            compound.addCStatement(cAssignment);
-        }
-    }
-
     @Override
     public CStatement visitBodyDeclaration(CParser.BodyDeclarationContext ctx) {
         List<CDeclaration> declarations =
@@ -1151,35 +1233,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             if (declaration.getInitExpr() != null) {
                 if (declaration.getActualType() instanceof CStruct) {
-                    if (declaration.getInitExpr() instanceof CInitializerList) {
-                        final var initializerList = (CInitializerList) declaration.getInitExpr();
-                        List<VarDecl<?>> varDecls = declaration.getVarDecls();
-                        VarDecl<?> varDecl = varDecls.get(0);
-                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
-                        final var structType = (CStruct) declaration.getActualType();
-                        LitExpr<?> currentValue = ptrType.getNullValue();
-                        int fieldIndex = 0;
-                        for (Tuple2<Optional<CStatement>, CStatement> statement :
-                                initializerList.getStatements()) {
-                            currentValue = initPosition(statement.get1(), ptrType, currentValue);
-                            final CComplexType elementType =
-                                    subElementTypeOf(structType, fieldIndex);
-                            flattenInitializer(
-                                    statement.get2(),
-                                    elementType,
-                                    currentValue,
-                                    varDecl,
-                                    ptrType,
-                                    compound,
-                                    ctx);
-                            currentValue =
-                                    Add(
-                                                    currentValue,
-                                                    ptrType.getValue(
-                                                            String.valueOf(cellsOf(elementType))))
-                                            .eval(ImmutableValuation.empty());
-                            fieldIndex++;
-                        }
+                    if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
+                        initializeObject(
+                                declaration.getVarDecls().get(0).getRef(),
+                                declaration.getActualType(),
+                                initializerList,
+                                CComplexType.getUnsignedLong(parseContext),
+                                compound,
+                                ctx);
                     } else {
                         Expr<?> expression = declaration.getInitExpr().getExpression();
                         final var initType = CComplexType.getType(expression, parseContext);
@@ -1236,49 +1297,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             declaration.getVarDecls().size() == 1,
                             "non-struct declarations shall only have one variable!");
                     if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
-                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
-                        final var varDecl = declaration.getVarDecls().get(0);
-                        // Uniform across entries: an array's (single) embedded type, or -- for the
-                        // degenerate `int x = {5};` / `{{5}}` braced-scalar case, where the
-                        // declared type is not a CArray at all -- the scalar type itself (only
-                        // consulted if an entry turns out to be a further-nested list).
-                        final CComplexType elementType =
-                                declaration.getActualType() instanceof CArray cArrayType
-                                        ? cArrayType.getEmbeddedType()
-                                        : declaration.getActualType();
-                        LitExpr<?> currentValue = ptrType.getNullValue();
-                        final Set<Integer> written = new LinkedHashSet<>();
-                        int currentIndex = 0;
-                        for (Tuple2<Optional<CStatement>, CStatement> statement :
-                                initializerList.getStatements()) {
-                            currentValue = initPosition(statement.get1(), ptrType, currentValue);
-                            currentIndex = designatedPosition(statement.get1(), currentIndex);
-                            flattenInitializer(
-                                    statement.get2(),
-                                    elementType,
-                                    currentValue,
-                                    varDecl,
-                                    ptrType,
-                                    compound,
-                                    ctx,
-                                    currentIndex,
-                                    written);
-                            currentValue =
-                                    Add(
-                                                    currentValue,
-                                                    ptrType.getValue(
-                                                            String.valueOf(cellsOf(elementType))))
-                                            .eval(ImmutableValuation.empty());
-                            currentIndex += cellsOf(elementType);
-                        }
-                        // C11 6.7.9p21: the members the braces do not reach are zero, exactly as
-                        // the global path already does. Emitted after the explicit writes and only
-                        // for the cells they missed, so a fully-specified initializer costs nothing.
-                        zeroFillRemainingCells(
+                        initializeObject(
+                                declaration.getVarDecls().get(0).getRef(),
                                 declaration.getActualType(),
-                                written,
-                                ptrType,
-                                varDecl,
+                                initializerList,
+                                CComplexType.getUnsignedLong(parseContext),
                                 compound,
                                 ctx);
                     } else {

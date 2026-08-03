@@ -28,3 +28,6 @@ string_array_init.c	efficient	LP64	SAFE	82	char array initialised from a string 
 alloca_static_base.c	efficient	LP64	SAFE	82	alloca bases start above the compile-time bases (no static/stack aliasing)
 char_literal_escapes.c	efficient	LP64	SAFE	82	character constant escapes, radixes and case
 static_local_storage.c	efficient	LP64	SAFE	82	static locals keep their value across calls (storage class no longer dropped)
+nested_aggregate_init.c	efficient	LP64	SAFE	82	nested-struct initializer follows the subobject, and untouched members are zero
+array_member_init.c	efficient	LP64	SAFE	82	array member is its own object; array elements and rows stay inline
+deref_dot_member.c	efficient	LP64	SAFE	82	(*p).field is one dereference, like p->field and p[0].field

@@ -1212,6 +1212,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     parseContext.getMetadata().create(arrayObject, "cType", pointeeArray);
                     return arrayObject;
                 }
+                // The same rule for a pointer to a *struct*: a struct's value is its base id, so
+                // `*p` is the pointer value itself. Falling through to a cell read instead made
+                // `(*p).a` come out as `(deref (deref p 0) 0)` -- field 0's *content* used as the
+                // object's base -- while the identical `p->a` and `p[0].a`, both of which already
+                // have this rule, came out right. With a nondet in field 0 that is an arbitrary
+                // address, so valid-deref reported a bogus invalid dereference (`test22-1`).
+                if (type instanceof CPointer pointerToStruct
+                        && pointerToStruct.getEmbeddedType() instanceof CStruct pointeeStruct) {
+                    Expr<?> structObject = Pos(originalOperand);
+                    parseContext.getMetadata().create(structObject, "cType", pointeeStruct);
+                    return structObject;
+                }
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
                 else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
                 // C defines *(p + i) as p[i]. Object sizes are keyed on the base expression, so
