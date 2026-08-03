@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -33,8 +34,10 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -126,10 +129,24 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                                             cSimpleType);
                         }
                     } else {
+                        // `char s[8] = "ab"` is an aggregate initializer written without braces,
+                        // and it is the only initializer form whose contents the expression path
+                        // cannot carry: a string literal folds to the opaque `int(1)`, so the
+                        // declaration used to emit `s = 1` -- clobbering the array's own base with
+                        // a bare integer, leaving every cell unwritten *and* aliasing `s` onto
+                        // whatever object happens to have base id 1. Rewrite it into the brace form
+                        // it is equivalent to, so the ordinary aggregate path (including its tail
+                        // zero-fill) does the work.
+                        final CInitializerList asString =
+                                stringInitializerList(
+                                        context.initializer().assignmentExpression(),
+                                        declaration.getActualType());
                         initializerExpression =
-                                context.initializer()
-                                        .assignmentExpression()
-                                        .accept(functionVisitor);
+                                asString != null
+                                        ? asString
+                                        : context.initializer()
+                                                .assignmentExpression()
+                                                .accept(functionVisitor);
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
@@ -213,6 +230,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             return buildInitializerList(
                     initializer.bracedPrimaryExpression().initializerList(), type);
         }
+        final CInitializerList asString =
+                stringInitializerList(initializer.assignmentExpression(), type);
+        if (asString != null) {
+            return asString;
+        }
         final Expr<?> expr =
                 type.castTo(
                         initializer.assignmentExpression().accept(functionVisitor).getExpression());
@@ -242,6 +264,78 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(position)), parseContext),
                 inner);
         return nested;
+    }
+
+    /**
+     * The brace initializer a string literal is equivalent to, when {@code containerType} is a
+     * character array being initialised from one -- {@code null} in every other case, so callers
+     * fall through to their ordinary expression handling.
+     *
+     * <p>The bytes are followed by the terminating NUL, truncated to the declared dimension when
+     * that is known: C permits `char a[2] = "ab"`, which stores exactly the two characters and no
+     * terminator, and emitting a third cell there would write past the object.
+     */
+    private CInitializerList stringInitializerList(
+            CParser.AssignmentExpressionContext assignment, CComplexType containerType) {
+        if (assignment == null || !(containerType instanceof CArray arrayType)) {
+            return null;
+        }
+        if (!(arrayType.getEmbeddedType() instanceof CInteger element) || element.width() != 8) {
+            return null;
+        }
+        final CParser.PrimaryExpressionStringsContext strings = wholeStringLiteral(assignment);
+        if (strings == null) {
+            return null;
+        }
+        final List<Integer> bytes = stringLiteralBytes(strings);
+        bytes.add(0); // the terminating NUL is part of the literal's value
+        final Integer dimension = ObjectLayout.constantDimension(arrayType);
+        final int cells = dimension == null ? bytes.size() : Math.min(dimension, bytes.size());
+        final CInitializerList list = new CInitializerList(containerType, parseContext);
+        for (int index = 0; index < cells; index++) {
+            final int value = element.isSsigned() && bytes.get(index) > 127
+                    ? bytes.get(index) - 256
+                    : bytes.get(index);
+            list.addStatement(
+                    new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(index)), parseContext),
+                    new CExpr(element.getValue(String.valueOf(value)), parseContext));
+        }
+        return list;
+    }
+
+    /**
+     * The string literal an expression consists of *entirely* -- descending only through nodes with
+     * a single child, so `"ab"` matches but `f("ab")` or `"ab"[0]` do not.
+     */
+    private static CParser.PrimaryExpressionStringsContext wholeStringLiteral(
+            org.antlr.v4.runtime.tree.ParseTree node) {
+        org.antlr.v4.runtime.tree.ParseTree current = node;
+        while (!(current instanceof CParser.PrimaryExpressionStringsContext)) {
+            if (current.getChildCount() != 1) {
+                return null;
+            }
+            current = current.getChild(0);
+        }
+        return (CParser.PrimaryExpressionStringsContext) current;
+    }
+
+    /**
+     * The byte values of a (possibly multi-token, adjacent-concatenated) string literal, escapes
+     * decoded. The encoding prefix is dropped: a wide literal is only ever reached here for a
+     * one-byte element type, where treating it as bytes is the closest available reading.
+     */
+    private static List<Integer> stringLiteralBytes(
+            CParser.PrimaryExpressionStringsContext ctx) {
+        final List<Integer> bytes = new ArrayList<>();
+        for (org.antlr.v4.runtime.tree.TerminalNode token : ctx.StringLiteral()) {
+            final String text = token.getText();
+            final int open = text.indexOf('"');
+            if (open < 0 || text.length() < open + 2) {
+                continue;
+            }
+            bytes.addAll(CLiterals.stringBytes(text.substring(open + 1, text.length() - 1)));
+        }
+        return bytes;
     }
 
     /**

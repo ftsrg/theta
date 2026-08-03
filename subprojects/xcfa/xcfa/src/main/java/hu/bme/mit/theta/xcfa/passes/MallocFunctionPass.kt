@@ -37,6 +37,29 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
     /**
+     * [XcfaBuilder.metaData] key under which the frontend publishes the first compile-time base id
+     * it did *not* hand out to a global. The allocation counter starts at or above it, so a runtime
+     * block can never be given the address of a static object. Absent (older/synthetic builders)
+     * means no compile-time bases were minted, and the counter starts at zero as it always did.
+     */
+    const val STATIC_BASE_LIMIT = "staticBaseLimit"
+
+    /**
+     * Where the allocation counter starts: the smallest multiple of three at or above the
+     * compile-time high-water mark.
+     *
+     * A multiple of three, because the residue class *is* the memory kind -- `3k+0` heap, `3k+1`
+     * stack, `3k+2` address-taken (see [AllocaFunctionPass]) -- and seeding off-class would file
+     * every allocation under the wrong one. At or above the mark, because `alloca` shares the
+     * `3k+1` class with the frontend's static bases: from zero, the first stack object took base 4,
+     * which the second global already owned.
+     */
+    private fun XcfaBuilder.allocationSeed(): Int {
+      val limit = (metaData[STATIC_BASE_LIMIT] as? Int) ?: 0
+      return ((limit + 2) / 3) * 3
+    }
+
+    /**
      * The allocation counter. [AllocaFunctionPass] hands out addresses from the *same* counter, so
      * that a heap block and a stack block can never be given the same base.
      */
@@ -57,12 +80,13 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexType) {
       val mallocVar = mallocVar(parseContext)
       if (getVars().any { it.wrappedVar == mallocVar }) return
-      addVar(XcfaGlobalVar(mallocVar, retType.nullValue))
+      val seed = retType.getValue(allocationSeed().toString())
+      addVar(XcfaGlobalVar(mallocVar, seed))
       val initProc = getInitProcedures().map { it.first }
       check(initProc.size == 1) { "Multiple start procedure are not handled well" }
       initProc.forEach { proc ->
         val initAssign =
-          StmtLabel(Assign(cast(mallocVar, mallocVar.type), cast(retType.nullValue, mallocVar.type)))
+          StmtLabel(Assign(cast(mallocVar, mallocVar.type), cast(seed, mallocVar.type)))
         val oldEdges = proc.initLoc.outgoingEdges.toList()
         val newEdges =
           oldEdges.map {

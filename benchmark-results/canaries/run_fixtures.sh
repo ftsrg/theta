@@ -12,6 +12,14 @@
 #   PARSE-OK       the frontend built the XCFA ("ParsingResult Success")
 #   FRONTEND-FAIL  the frontend rejected it (a documented, not-yet-supported feature)
 #
+# A fixture may instead expect a *verdict*, which runs the real verifier
+# (`--portfolio STABLE`) rather than the frontend:
+#   SAFE           the program is correct and must verify as such
+#   UNSAFE         the program has the bug it names and must be caught
+# Use these for fixes that change values rather than what parses -- a miswritten
+# memory cell parses perfectly and only shows up as a wrong verdict. Keep such a
+# fixture small enough to verify in a few seconds; this suite runs on every gate.
+#
 # Usage: ./run_fixtures.sh [THETA_DIR]
 # Exit nonzero if any fixture's outcome differs from its expectation.
 set -uo pipefail
@@ -22,6 +30,7 @@ THETA_DIR="${1:-$REPO_ROOT/subprojects/xcfa/xcfa-cli/build/distributions/Theta-s
 TSV="$SCRIPT_DIR/fixtures/fixtures.tsv"
 PROP="${PROP:-$(cd "$REPO_ROOT/../sv-benchmarks" 2>/dev/null && pwd)/c/properties/unreach-call.prp}"
 TIMEOUT="${FIXTURE_TIMEOUT:-90}"
+VERDICT_TIMEOUT="${FIXTURE_VERDICT_TIMEOUT:-180}"
 
 if [[ ! -x "$THETA_DIR/theta-start.sh" ]]; then
   zip="$(dirname "$THETA_DIR")/Theta-svcomp.zip"
@@ -34,12 +43,24 @@ pass=0 fail=0
 while IFS=$'\t' read -r fixture arithmetic architecture expect batch feature; do
   [[ "$fixture" == "fixture" || -z "$fixture" ]] && continue
   input="$SCRIPT_DIR/fixtures/$fixture"
-  out=$(cd "$THETA_DIR" && timeout "$TIMEOUT" ./theta-start.sh "$input" \
-    --svcomp --backend NONE --loglevel RESULT --property "$PROP" \
-    --architecture "$architecture" --arithmetic "$arithmetic" 2>&1)
-  if grep -q "ParsingResult Success" <<<"$out"; then actual="PARSE-OK"
-  elif grep -q "Frontend failed!" <<<"$out"; then actual="FRONTEND-FAIL"
-  else actual="OTHER"; fi
+  if [[ "$expect" == "SAFE" || "$expect" == "UNSAFE" ]]; then
+    # A verdict fixture: run the real verifier. `timeout` kills theta-start.sh but not
+    # the JVM it launched, which would keep the pipe open forever, so reap it by hand.
+    out=$(cd "$THETA_DIR" && timeout -k 5 "$VERDICT_TIMEOUT" ./theta-start.sh "$input" \
+      --svcomp --portfolio STABLE --loglevel RESULT --property "$PROP" \
+      --architecture "$architecture" --arithmetic "$arithmetic" 2>&1)
+    pkill -f "theta.jar.*$fixture" 2>/dev/null
+    if grep -q "(SafetyResult Safe)" <<<"$out"; then actual="SAFE"
+    elif grep -q "(SafetyResult Unsafe" <<<"$out"; then actual="UNSAFE"
+    else actual="OTHER"; fi
+  else
+    out=$(cd "$THETA_DIR" && timeout "$TIMEOUT" ./theta-start.sh "$input" \
+      --svcomp --backend NONE --loglevel RESULT --property "$PROP" \
+      --architecture "$architecture" --arithmetic "$arithmetic" 2>&1)
+    if grep -q "ParsingResult Success" <<<"$out"; then actual="PARSE-OK"
+    elif grep -q "Frontend failed!" <<<"$out"; then actual="FRONTEND-FAIL"
+    else actual="OTHER"; fi
+  fi
 
   if [[ "$actual" == "$expect" ]]; then
     printf 'PASS  %-26s [b%-9s] %s\n' "$fixture" "$batch" "$feature"; ((pass++))

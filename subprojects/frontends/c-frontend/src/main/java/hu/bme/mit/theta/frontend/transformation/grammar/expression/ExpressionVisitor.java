@@ -55,6 +55,7 @@ import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
@@ -3009,8 +3010,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
+        // Decoded from the *raw* text, not the lowercased one below: lowercasing is for the u/l/f
+        // suffixes of a numeric constant, and applying it to a character constant silently changed
+        // its value -- `'A'` was read as `'a'`, i.e. 97 instead of 65.
+        final Integer charLiteralValue = CLiterals.charValue(ctx.getText());
         String text = ctx.getText().toLowerCase();
-        boolean isCharLiteral = text.startsWith("'");
+        boolean isCharLiteral = charLiteralValue != null;
         boolean isLong = text.endsWith("l");
         if (isLong) text = text.substring(0, text.length() - 1);
         // hex literals use 'p' as exponent marker ('e' is a digit); char literals are never floats
@@ -3080,20 +3085,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             boolean isLongLong = longCount >= 2;
 
             BigInteger bigInteger;
-            if (text.startsWith("0x")) {
+            if (isCharLiteral) {
+                // Every character constant -- plain, escaped, hex, octal, multi-character -- goes
+                // through the same decoder the *string* literals use. The hand-rolled cases this
+                // replaced read `'\x41'` as octal and `'\101'` as decimal, and threw
+                // NumberFormatException ("For input string: n") out of the frontend for any
+                // single-letter escape, `'\n'` included.
+                bigInteger = BigInteger.valueOf(charLiteralValue);
+            } else if (text.startsWith("0x")) {
                 bigInteger = new BigInteger(text.substring(2), 16);
             } else if (text.startsWith("0b")) {
                 bigInteger = new BigInteger(text.substring(2), 2);
             } else if (text.startsWith("0") && text.length() > 1) {
                 bigInteger = new BigInteger(text.substring(1), 8);
-            } else if (text.startsWith("'\\x")) { // char c = '\x0'
-                bigInteger = new BigInteger(text.substring(3, text.length() - 1), 8);
-            } else if (text.startsWith("'\\")) { // char c = '\0'
-                bigInteger = new BigInteger(text.substring(2, text.length() - 1), 10);
-            } else if (text.startsWith("'")
-                    && text.endsWith("'")
-                    && text.length() == 3) { // char c = 'X'
-                bigInteger = BigInteger.valueOf((int) text.charAt(1));
             } else {
                 bigInteger = new BigInteger(text, 10);
                 negativeIsUnaryMinus = true; // -10 is -(10)

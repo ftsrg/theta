@@ -823,6 +823,77 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return (LitExpr<?>) ptrType.getValue(position.getValue().toString());
     }
 
+    /**
+     * The cell index a designator selects, as a plain int, or {@code fallback} when there is none.
+     * The int mirror of {@link #initPosition}, kept beside it so the two cannot drift.
+     */
+    private int designatedPosition(Optional<CStatement> designator, int fallback) {
+        if (designator.isEmpty()) {
+            return fallback;
+        }
+        return ((IntLitExpr) designator.get().getExpression()).getValue().intValueExact();
+    }
+
+    /**
+     * The declared type of cell {@code offset} of {@code type}, mirroring
+     * FrontendXcfaBuilder#cellTypeAt, which the same-shaped global initializer uses. Needed to give
+     * a zero-fill assignment the cell's own type.
+     */
+    private CComplexType cellTypeAt(CComplexType type, int offset) {
+        if (type instanceof CArray cArrayType) {
+            final CComplexType elem = cArrayType.getEmbeddedType();
+            final int stride = cellsOf(elem);
+            return cellTypeAt(elem, stride > 0 ? offset % stride : 0);
+        }
+        if (type instanceof CStruct cStructType && !cStructType.isUnion()) {
+            for (Tuple2<String, CComplexType> field : cStructType.getFields()) {
+                final int unit = cStructType.unitOffsetOf(field.get1());
+                if (offset >= unit && offset < unit + cellsOf(field.get2())) {
+                    return cellTypeAt(field.get2(), offset - unit);
+                }
+            }
+        }
+        return type;
+    }
+
+    /**
+     * Writes zero into every cell of {@code declaration}'s storage that {@code written} does not
+     * cover.
+     *
+     * <p>C11 6.7.9p21: when an aggregate has an initializer but fewer entries than it has members,
+     * the remainder is initialized as if it had static storage duration -- i.e. zero. The global
+     * path already does this; a *local* one wrote only the cells the braces mention and left the
+     * rest unconstrained, so `float a[4] = {0}` gave cells 1..3 arbitrary values and the solver was
+     * free to invent a counterexample out of them.
+     */
+    private void zeroFillRemainingCells(
+            CComplexType actualType,
+            Set<Integer> written,
+            CComplexType ptrType,
+            VarDecl<?> varDecl,
+            CCompound compound,
+            CParser.BodyDeclarationContext ctx) {
+        final int total = cellsOf(actualType);
+        for (int index = 0; index < total; index++) {
+            if (written.contains(index)) {
+                continue;
+            }
+            final CComplexType cellType = cellTypeAt(actualType, index);
+            final var offset = ptrType.getValue(String.valueOf(index));
+            final var deref =
+                    Exprs.Dereference(
+                            cast(varDecl.getRef(), offset.getType()),
+                            cast(offset, offset.getType()),
+                            cellType.getSmtType());
+            final CAssignment cAssignment =
+                    new CAssignment(
+                            deref, new CExpr(cellType.getNullValue(), parseContext), "=",
+                            parseContext);
+            recordMetadata(ctx, cAssignment);
+            compound.addCStatement(cAssignment);
+        }
+    }
+
     private void emitInitAssignment(
             CParser.BodyDeclarationContext ctx,
             CDeclaration declaration,
@@ -908,22 +979,61 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             CComplexType ptrType,
             CCompound compound,
             CParser.BodyDeclarationContext ctx) {
+        flattenInitializer(
+                value, elementType, baseOffset, varDecl, ptrType, compound, ctx, 0, null);
+    }
+
+    /**
+     * As above, but also records which cells the initializer actually writes. {@code baseIndex} is
+     * {@code baseOffset}'s numeric value, carried in parallel so the cell index never has to be
+     * decoded back out of a typed literal, and {@code written} collects them (null to not collect).
+     */
+    private void flattenInitializer(
+            CStatement value,
+            CComplexType elementType,
+            LitExpr<?> baseOffset,
+            VarDecl<?> varDecl,
+            CComplexType ptrType,
+            CCompound compound,
+            CParser.BodyDeclarationContext ctx,
+            int baseIndex,
+            Set<Integer> written) {
         if (value instanceof CInitializerList nestedList) {
             LitExpr<?> offset = ptrType.getNullValue();
+            int offsetIndex = 0;
             int index = 0;
             for (Tuple2<Optional<CStatement>, CStatement> entry : nestedList.getStatements()) {
+                final LitExpr<?> before = offset;
                 offset = initPosition(entry.get1(), ptrType, offset);
+                // A designator jumps the cursor; recover the jump as an int the same way the
+                // literal path does, so the parallel index stays in step with the literal offset.
+                if (offset != before && entry.get1().isPresent()) {
+                    offsetIndex = designatedPosition(entry.get1(), offsetIndex);
+                }
                 final CComplexType subType = subElementTypeOf(elementType, index);
                 final LitExpr<?> cellOffset =
                         (LitExpr<?>) Add(baseOffset, offset).eval(ImmutableValuation.empty());
-                flattenInitializer(entry.get2(), subType, cellOffset, varDecl, ptrType, compound, ctx);
+                flattenInitializer(
+                        entry.get2(),
+                        subType,
+                        cellOffset,
+                        varDecl,
+                        ptrType,
+                        compound,
+                        ctx,
+                        baseIndex + offsetIndex,
+                        written);
                 offset =
                         (LitExpr<?>)
                                 Add(offset, ptrType.getValue(String.valueOf(cellsOf(subType))))
                                         .eval(ImmutableValuation.empty());
+                offsetIndex += cellsOf(subType);
                 index++;
             }
         } else {
+            if (written != null) {
+                written.add(baseIndex);
+            }
             final var expr = value.getExpression();
             final var deref =
                     Exprs.Dereference(
@@ -1095,9 +1205,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                         ? cArrayType.getEmbeddedType()
                                         : declaration.getActualType();
                         LitExpr<?> currentValue = ptrType.getNullValue();
+                        final Set<Integer> written = new LinkedHashSet<>();
+                        int currentIndex = 0;
                         for (Tuple2<Optional<CStatement>, CStatement> statement :
                                 initializerList.getStatements()) {
                             currentValue = initPosition(statement.get1(), ptrType, currentValue);
+                            currentIndex = designatedPosition(statement.get1(), currentIndex);
                             flattenInitializer(
                                     statement.get2(),
                                     elementType,
@@ -1105,14 +1218,27 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                     varDecl,
                                     ptrType,
                                     compound,
-                                    ctx);
+                                    ctx,
+                                    currentIndex,
+                                    written);
                             currentValue =
                                     Add(
                                                     currentValue,
                                                     ptrType.getValue(
                                                             String.valueOf(cellsOf(elementType))))
                                             .eval(ImmutableValuation.empty());
+                            currentIndex += cellsOf(elementType);
                         }
+                        // C11 6.7.9p21: the members the braces do not reach are zero, exactly as
+                        // the global path already does. Emitted after the explicit writes and only
+                        // for the cells they missed, so a fully-specified initializer costs nothing.
+                        zeroFillRemainingCells(
+                                declaration.getActualType(),
+                                written,
+                                ptrType,
+                                varDecl,
+                                compound,
+                                ctx);
                     } else {
                         emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
                     }

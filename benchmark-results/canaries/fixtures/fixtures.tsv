@@ -23,3 +23,7 @@ byte_addressed_union.c	efficient	LP64	PARSE-OK	60	byte-addressed union (AD7, arr
 byte_addressed_union.c	bitvector	LP64	PARSE-OK	60	byte-addressed union, bitvector Concat/Extract
 deref_cast_lvalue.c	efficient	ILP32	PARSE-OK	62	assignment through a dereferenced cast lvalue (*(T*)p = v)
 funcptr_qualifier.c	efficient	ILP32	PARSE-OK	62	type qualifier on a function-pointer declarator (void (* _Atomic fp)(void))
+partial_init_zerofill.c	efficient	LP64	SAFE	82	local partial brace initializer zero-fills the remaining cells
+string_array_init.c	efficient	LP64	SAFE	82	char array initialised from a string literal gets its own object and the bytes
+alloca_static_base.c	efficient	LP64	SAFE	82	alloca bases start above the compile-time bases (no static/stack aliasing)
+char_literal_escapes.c	efficient	LP64	SAFE	82	character constant escapes, radixes and case
