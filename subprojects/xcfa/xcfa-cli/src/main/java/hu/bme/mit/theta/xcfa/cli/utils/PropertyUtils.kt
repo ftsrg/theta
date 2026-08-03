@@ -38,6 +38,7 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
         val propertyFile = config.inputConfig.propertyFile!!
         when {
           propertyFile.name.endsWith("unreach-call.prp") -> ERROR_LOCATION
+          propertyFile.name.endsWith("correct-tags.prp") -> ERROR_LOCATION
           propertyFile.name.endsWith("no-data-race.prp") -> DATA_RACE
           propertyFile.name.endsWith("no-overflow.prp") -> OVERFLOW
           propertyFile.name.endsWith("valid-memsafety.prp") -> MEMSAFETY
