@@ -202,6 +202,11 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visitSelectTrace(SvLibParser.SelectTraceContext ctx) {
+    return unsupported("command 'select-trace'");
+  }
+
   private void applyTaggedCheckTrueProperties(XcfaProcedureBuilder procedure) {
     if (checkTrueByTag.isEmpty()) {
       return;
