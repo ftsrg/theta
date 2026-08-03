@@ -78,6 +78,13 @@ archived at `results/Theta-svcomp-51-FAILED-abspath`.)
 
 ## Local verification loop
 
+⚠️ **`timeout N ./theta-start.sh …` does NOT kill the verifier.** The script `exec`s nothing — it
+launches a child JVM — so the timeout kills the *script* and leaves the JVM orphaned, still holding
+the pipe. Any caller reading that pipe (a `$(...)` capture, a `while read` loop) then hangs
+**forever**, long after the timeout should have fired, and the run looks stuck rather than timed out.
+Kill the JVM itself (`pkill -f 'theta.jar.*<input path>'`) to release it. This is why batched local
+suites appear to wedge on one task; it is not the task being slow.
+
 - Fat jar for fast iteration: `./gradlew :theta-xcfa-cli:shadowJar`
   → `subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-7.3.0-all.jar`.
 - Running the jar directly needs `LD_LIBRARY_PATH=<dist>/lib` (legacy Z3) and

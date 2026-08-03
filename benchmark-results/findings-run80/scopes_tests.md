@@ -478,3 +478,102 @@ cmp-freed-ptr  --backend CEGAR --domain EXPL -> (SafetyResult Safe)   (portfolio
 i.e. theta really does prove these safe, matching run 80. `scopes3` was not re-run (same
 model shape as scopes5/derefInLoop1, dump identical in the relevant respect); `sum_array-2`
 not re-run (unbounded loop over `M`, slow).
+
+---
+
+# RE-TEST AGAINST THE REBUILT DISTS
+
+Minimal repros live in
+`/tmp/claude-568/-home-coder-theta/9900e6ae-2a7e-4bd5-8035-b832459e61c7/scratchpad/repro/*.c`
+(each is a standalone ILP32 valid-memsafety task, all expected **Safe**).
+
+| cause | repro file | 13:24 dist (145bffaac0) | 15:56 dist (03ebee79c8) | status |
+|---|---|---|---|---|
+| A nested-struct initializer | `nested_init.c` | Unsafe | **Unsafe** | SURVIVES |
+| C `(*p).field` double deref | `star_dot.c` (+ `arrow.c` = control, Safe) | Unsafe | **Unsafe** | SURVIVES |
+| D split pointer stored to one cell | `store_split.c` | Unsafe | **Unsafe** | SURVIVES |
+| E array-of-struct sized in elements | `arr_of_struct.c` | Unsafe | **Safe** | **FIXED** by `03ebee79c8` |
+| F `memcpy` copies `n/4` cells | `memcpy_struct.c` | Unsafe | **Unsafe** | SURVIVES |
+| B2 flat-model base recovery | (real tasks) | fixed | fixed | **FIXED** by `145bffaac0` |
+
+Real tasks re-checked on the 13:24 dist:
+```
+nested_structure_noptr-1  (Property valid-deref) Unsafe   <- cause A, still wrong
+nested_structure_noptr-2  (Property valid-deref) Unsafe   <- cause A, still wrong
+test22-1                  (Property valid-deref) Unsafe   <- cause C, still wrong
+test26-1                  ...retrying with --memory-model flat; (SafetyResult Safe)   <- FIXED (B2)
+test30-1                  ...retrying with --memory-model flat; (SafetyResult Safe)   <- FIXED (B2)
+```
+Note `arrow.c` is deliberately shipped alongside `star_dot.c`: identical program, `p->a`
+instead of `(*p).a`, and it is Safe on every dist. As a canary pair it pins the bug to the
+spelling rather than to the surrounding model.
+
+---
+
+## CONFIRMED ROOT CAUSE F — `memcpy`/`memset` convert bytes to cells with a fixed 4-byte divisor
+Task: **test-bitfields-2-2**. Survives on the 15:56 dist.
+
+**Minimal repro (`repro/memcpy_struct.c`, 12 lines).** Expected Safe; theta reports
+`(Property valid-free) (SafetyResult Unsafe Trace length: 16)`.
+```c
+extern void *memcpy(void *, const void *, unsigned int);
+extern void *malloc(unsigned int);
+extern void free(void *);
+struct A { unsigned char a, b, c, e; };
+struct A d;
+int main(void) {
+  struct A *p = malloc(4);
+  d.a = 1; d.b = 2; d.c = 3; d.e = 5;
+  memcpy(p, &d, 4);
+  if (p->b != 2) { free(p); }   /* p->b is unconstrained -> this free is reachable */
+  free(p);                      /* ... so this one is a double free */
+}
+```
+
+**Root cause.** Memory is modelled as `arrays[base][cell]` with **one cell per struct field
+or array element, whatever its C width** — a `unsigned char` field is a whole cell, exactly
+like an `int` field. `MemoryFunctionsPass.copy` converts the byte count `n` into a cell
+count via `elementCount` (`MemoryFunctionsPass.kt:224-232`), which divides by
+`element.width() / 8`. Whatever the element resolves to for a `void *`/cast argument, that
+divisor is **4** under ILP32, so `memcpy` copies `n / 4` cells regardless of the object's
+real cell layout.
+
+Measured directly (count of `memassign (deref main::p …)` statements emitted):
+
+| repro | struct | `memcpy` bytes | cells the object has | cells copied |
+|---|---|---|---|---|
+| `memcpy_struct.c` | 4 × `unsigned char` | 4 | 4 | **1** |
+| `memcpy8.c` | 8 × `unsigned char` | 8 | 8 | **2** |
+| `memcpy_char.c` | 8 × `unsigned char`, `char *` prototype + casts | 8 | 8 | **2** |
+| `memcpy_int.c` | 4 × `int` | 16 | 4 | 4 (correct) |
+
+So the conversion is exactly `cells = n / 4`: right only when every cell happens to be 4
+bytes wide, and short by a factor of 4 for byte-wide fields. The uncopied destination cells
+keep their previous (unconstrained) values.
+
+**Why that is a false alarm in test-bitfields-2-2.** `p = malloc(4)` (`ptr_size[p] = 4`),
+then `memcpy(p, &d, 4)` emits the single statement
+```
+__loc_67 -> __loc_68 : memassign (deref main::p 0 Int) := (deref 2 0 Int)
+```
+so only `p->a` is copied. `p->b`, `p->c`, `p->d`, `p->e` are unconstrained, so
+`if (p->b != 2) free(p);` is reachable; `MemsafetyPass.annotateFree` then sets
+`ptr_size[p] := 0`, and the *next* field test `p->c` dereferences the freed block —
+reported as `(Property valid-deref) (SafetyResult Unsafe Trace length: 18)`, i.e. a
+use-after-free rather than the double free my repro produces, but from the same single
+missing-copy cause. (Bitfields are incidental: the same shape reproduces with plain
+`unsigned char` fields, as the repro shows.)
+
+**Note on the intended guard.** The pass *means* to refuse this: its own doc says
+"Same for a pointer to a struct, which has no single element type to copy in", and `giveUp`
+warns and leaves the call unmodelled. That guard does not trigger here — no WARNING is
+logged for the repro — so a wrong copy is emitted instead of a loud refusal.
+
+**Direction of unsoundness.** Both. Here it manufactures a false alarm; symmetrically, a
+program whose correctness depends on the copied bytes will be proved safe on stale data.
+
+**Could not determine:** exactly which `CComplexType` `elementOf` resolves the `void *`
+(or cast) argument to. `CPointer extends CInteger`, `CVoid` does not, and an explicit
+`(char *)` cast did *not* change the divisor — so the 4 does not come from the obvious
+place. The observable rule (`cells = n / 4` under ILP32) is measured, not inferred, so the
+fix must start by printing what `elementOf` actually returns for these arguments.

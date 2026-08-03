@@ -497,3 +497,144 @@ So family 1b (cType metadata destroyed by `changeComplexReferredVars` → **zero
 instrumentation in the procedure) is a genuinely distinct defect from the flat-fallback
 `MemsafetyPass` size mis-keying, and needs its own fix.
 
+---
+
+# FAMILY 1c — `dirname-1`: no-overflow FALSE ALARM caused by **string-literal contents being absent from the model**
+
+**SIZE** 1 named task, but the underlying defect (below) is generic and also explains why several
+other `busybox`/`coreutils` string tasks are fragile.
+**DIRECTION** false alarm (theta `false(no-overflow)`, expected `true`).
+**CONFIDENCE: high** — theta's own witness, a 1-line probe, the serialised model, and a native
+UBSan run all agree.
+
+## Which operation theta blames
+
+Run-80 log (`SV-COMP27_no-overflow.dirname-1.yml.log`): the winning config is
+`PRED_CART-BW_BIN_ITP-Z3`, `(SafetyResult Unsafe Trace length: 48)`. Reproduced locally exactly:
+`--backend CEGAR --domain PRED_CART --refinement BW_BIN_ITP --architecture LP64` → trace length 48.
+
+The witness's `target` waypoint is **`dirname-1.i` line 1213 col 7**:
+```c
+tmp_if_expr$5 = -tmp_statement_expression$3;      /* i.e.  -__result  */
+```
+and its nondet waypoints are: `a[i] = -128` (×10), `bb_errno_location = -2147483648`,
+`argc = 2`, `argv[i][j] = 0` (×20).
+
+`__result` is only ever assigned from
+```c
+__result = (signed int)((const char *)"--")[k] - (signed int)__s2[k];   /* k = 0..3 */
+```
+i.e. the difference of two **`char`** values. In C both are in `[-128,127]`, so
+`__result ∈ [-255,255]` and `-__result` can never overflow — for *any* input. The trace is
+therefore spurious by typing alone, no matter what the nondets do.
+
+## ROOT CAUSE: string literals have no contents, and their cells are unconstrained
+
+`__s2[k]` is `argv[1][k]`, written by `__VERIFIER_nondet_char()` — theta *does* range-constrain
+that (probe `p3.c`: `char c = __VERIFIER_nondet_char(); return -(int)c;` → **Safe**). The
+unconstrained operand is the **string literal** `"--"[k]`.
+
+Probes (`--architecture LP64`, current dist rebuilt 15:56):
+
+```c
+/* p1.c  no-overflow  */ int main(){ const char *s="--"; int r=(int)s[0]; return -r; }
+        -> (SafetyResult Unsafe Trace length: 3)        <-- -( "--"[0] ) "overflows"
+/* q2.c  unreach-call */ const char *s="-x"; int r=(int)s[0];
+                         if (r < -128 || r > 127) reach_error();
+        -> (SafetyResult Unsafe Trace length: 3)        <-- literal cell escapes even char range
+/* q3.c  unreach-call */ char g[8]="ab";
+                         if (g[0]!='a'||g[1]!='b'||g[2]!=0) reach_error();
+        -> (SafetyResult Unsafe Trace length: 3)        <-- literal contents simply are not there
+/* p3.c  no-overflow  */ char c=__VERIFIER_nondet_char(); return -(int)c;
+        -> (SafetyResult Safe)                          <-- control: nondet chars ARE constrained
+```
+
+So `(int)"--"[0]` may be `INT_MIN` in the model, making `__result == INT_MIN` and `-__result`
+a genuine-looking overflow. That is the whole false alarm.
+
+## NATIVE PROOF THE TRACE IS SPURIOUS
+
+Replaying theta's own witness values (argc=2, every `argv[i][j] == 0`, real `strlen("--") == 2`)
+through the exact arithmetic of `single_argv`, under UBSan:
+
+```
+$ gcc -O0 -fsanitize=signed-integer-overflow,undefined dn_native.c -o dn_native && ./dn_native
+s2_len=2 __result=45 -__result=-45
+exit=0
+```
+No sanitizer diagnostic: `"--"[0]` is `45`, `__result` is `45`, `-__result` is `-45`.
+(`…/scratchpad/work/r/dn_native.c`)
+
+## THE UNDERLYING DEFECT, from the serialised model (this is the corroboration requested)
+
+`lit.c` — five ways of getting at `"ab"`, one program, `--enable-c-serialization`:
+
+```c
+char gstr[8]   = "ab";          /* global, string-literal init */
+char gbrace[8] = {'a','b'};     /* global, brace init         */
+int main() {
+  char lstr[8]   = "ab";        /* local,  string-literal init */
+  char lbrace[8] = {'a','b'};   /* local,  brace init          */
+  const char *plit = "ab";      /* bare literal                */
+  int t = gstr[0] + gbrace[0] + lstr[0] + lbrace[0] + plit[0];
+  ...
+}
+```
+model (verbatim):
+```
+1[0] = 0; 1[1] = 0; 1[2] = 0; 1[3] = 0; 1[4] = 0; 1[5] = 0; 1[6] = 0; 1[7] = 0;
+4[0] = 97; 4[1] = 98; 4[2] = 0; 4[3] = 0; 4[4] = 0; 4[5] = 0; 4[6] = 0; 4[7] = 0;
+__malloc = (__malloc + 3); __malloc = (__malloc + 3);
+call_alloca_ret1 = (__malloc + 1);
+main__lbrace = (+ call_alloca_ret1);
+main::lbrace[0] = 97;
+main::lbrace[1] = 98;
+main__t = (1[0] + 4[0] + 1[0] + main::lbrace[0] + 1[0]);
+```
+
+Read off, four separate facts:
+
+1. **`char gstr[8] = "ab"` (global) is zero-filled and the characters are never written.**
+   Object `1` gets eight `0`s; `97`/`98` never appear for it. **Confirmed: string-literal
+   initialiser contents are simply absent from the model.**
+2. `char gbrace[8] = {'a','b'}` (global, brace) is **correct**: `97, 98, 0, 0, 0, 0, 0, 0`.
+   So the defect is specific to the *string-literal* initialiser form, not to aggregates.
+3. `char lbrace[8] = {'a','b'}` (local, brace) writes only cells 0 and 1 — **cells 2..7 are not
+   zero-filled**, although C requires it. This independently confirms the coordinator's
+   "local partial brace initializer is still not zero-filled".
+4. **Aliasing bug, previously unreported as far as I can tell:** `lstr` gets **no allocation and
+   no initialiser at all**, and in the expression `lstr[0]` compiles to `1[0]` — *the same object
+   as the global `gstr`* — as does the bare literal `plit[0]`. So a local array initialised from a
+   string literal, an unrelated global array initialised from an equal string literal, and the
+   literal itself **all collapse onto one shared object**. In C these are three distinct objects,
+   two of them mutable; a write through any one would corrupt the others. That is a wrong-value
+   bug independent of the missing contents, and it also means "fix the contents" must not stop at
+   filling one shared object.
+
+## SUGGESTED FIX
+
+Frontend, the initialiser/string-literal path (the same area as `CInitializerList` handling in
+`subprojects/frontends/c-frontend/.../ExpressionVisitor.java` and the declaration lowering that
+emits the per-cell initialiser assignments):
+
+1. Emit the literal's bytes as cell initialisers for the literal's own object, and make an
+   uninitialised-but-referenced literal object still get its bytes (the `dirname-1` case has no
+   array declaration at all, only `"--"`, so nothing currently writes those cells).
+2. Give `char a[N] = "lit"` its **own** object, initialised with the literal bytes and zero-filled
+   to `N` — do not alias it to the literal or to another array with an equal literal.
+3. Zero-fill the tail of a local partial brace initialiser (item 3 above).
+
+**Risk.** All three changes replace unconstrained cells with concrete values, so they *remove*
+nondeterminism: the direction of change is `false(...)` → `true`, i.e. fewer false alarms. The
+exposure is (a) more initialiser statements at entry, which lengthens every `main_init` edge and
+costs a little in every string-heavy task, and (b) programs that were "accidentally safe" because a
+literal cell could be anything may now expose real bugs (that is a *good* flip but it will move
+verdicts). The aliasing fix (2) increases the number of distinct memory objects, which interacts
+with object-id budgets and with `MemsafetyPass` size bookkeeping — worth its own canary pass.
+
+**Belt-and-braces, independent of the above:** a `char`-typed memory read should be constrained to
+`[-128,127]` (and `unsigned char` to `[0,255]`) wherever the cell is unconstrained. Probe `q2.c`
+shows it currently is not, and that alone would have prevented this false alarm even with the
+literal contents still missing. `HavocPromotionAndRange` does this for *variables* but not for
+memory cells.
+

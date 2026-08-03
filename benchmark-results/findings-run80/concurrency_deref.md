@@ -833,3 +833,143 @@ negative results:
 
 Earlier (round 1) the same thing killed the real `ticketlock` CEGAR run: it returned `RC=1` with no
 verdict line, i.e. killed by its own `timeout` while queued — again not a result.
+
+---
+# ROUND 3 (against commit 03ebee79c8, dist rebuilt 15:56)
+
+## The three zero-init controls came back — 3/3 as predicted (on the PRE-03ebee79c8 jar)
+
+| control | shape | predicted | actual |
+|---|---|---|---|
+| `zi_scalar.c`   `int arr[3]; arr[2] != 0`            | 1 cell/elem, no nested split | Safe | **Safe** |
+| `zi_first.c`    `struct Item arr[3]; arr[0].a != 0`  | reads element 0's base id as data | Unsafe | **Unsafe** |
+| `zi_plainstruct.c` `struct Item s; s.b != 0`         | plain struct, no array | Safe | **Safe** |
+
+`zi_plainstruct` being Safe is the useful extra: the value bug was specific to **array** nesting
+(`giveStructObjectStorage`'s CStruct recursion handles a plain struct correctly); a struct on its own
+was never affected. That bounds the blast radius of the item-4 bug to aggregates *inside arrays*.
+
+Also: the round-2 `mcslock` CEGAR run reported `mcslock-flockrc=1` — **starved on the lock, not a
+result**, as flagged.
+
+## Pre-fix baseline for the two tasks I could not dump in round 2
+
+`dump_cna` (cnalock, flat, pre-fix): `write __theta_ptr_size 262144 5`, `851968 5`
+`dump_bmp` (bounded_mpmc, flat, pre-fix): `(array (524288 1) (65536 4) (131072 6) …)`,
+`write __theta_ptr_size 2031616 4`, `262144 2`
+
+## ITEM 1 (round 3) — subgroup B sizes VERIFIED CORRECT on the real tasks
+
+Post-fix dumps (03ebee79c8 jar, `--backend NONE --memory-model flat --property valid-memsafety`),
+compared against the pre-fix dumps of the same tasks:
+
+| task | object | element type | pre-fix size | **post-fix size** | needed | verdict |
+|---|---|---|---|---|---|---|
+| mcslock | `655360` = `nodes[3]` | `mcs_node_s`, 2 units | 3 | **6** | 6 | FIXED |
+| elimination_backoff_stack | `458752` = `threads[4]` | `ThreadInfo`, 3 units | 4 | **12** | 12 | FIXED |
+| cnalock | `851968` | 5 elems x 3 units | 5 | **15** | 15 | FIXED |
+
+Every prediction I made in round 2 landed exactly. The per-element nested objects are still emitted
+(`(deref 0 (+ 655360 k))` -> 2, etc.) — dead bookkeeping now that the parent's size is right — so
+there is a small follow-up available (dropping them) but nothing incorrect about it.
+
+### safestack_relacy (the struct-MEMBER array case) — also FIXED
+```
+pre-fix : (write (array (1 3) (4 3) …) (deref 4 0 Int) 3)   # stack.array object -> 3
+post-fix: (write (array (1 3) (4 3) …) (deref 4 0 Int) 6)   # -> 6, and guards use offsets 0..5
+```
+All its guards now compare offsets 0..5 against 6 and pass. The dead per-element bookkeeping
+(`(deref (deref 4 0) k) -> 2`) has also disappeared from the post-fix model — so the member-array
+site was fixed as well, and the redundant nested objects with it.
+
+### CORRECTION: `bounded_mpmc_check_full` was never a subgroup-B case
+Its sizes are **identical pre- and post-fix**: `(array (524288 1) (65536 4) (131072 6) …)`,
+`2031616 -> 4`, `262144 -> 2`. Every one of its arrays holds pointers or scalars (1 flat cell per
+element), so nothing was ever under-sized. My round-2 table listed it as "expected wrong (dump not
+taken)" — **that expectation was wrong**. Its `false(valid-deref)` was pure subgroup A and should
+already have been cleared by 145bffaac0.
+
+Revised: of the six, subgroup B affected **mcslock, cnalock, elimination_backoff_stack and
+safestack_relacy** (4), while **ticketlock and bounded_mpmc_check_full** were subgroup A only.
+
+## ITEM 1 (round 3) — repro regression suite on the 03ebee79c8 jar
+
+`--backend CEGAR --domain PRED_CART --property valid-memsafety --architecture ILP32` (default multi):
+| repro | before | after |
+|---|---|---|
+| `globalarr.c` global `struct Item arr[3]` | Unsafe | **Safe** |
+| `ga2d.c` global `int arr[3][2]` | Unsafe | **Safe** |
+| `localarr.c` local `struct Item arr[3]` | Unsafe | **Safe** |
+| `la2d.c` local `int arr[3][2]` | Unsafe | **Safe** |
+| `nested2.c` struct-member array of structs | Unsafe | **Safe** |
+| `nested3.c` struct-member array of scalars (control) | Safe | **Safe** |
+| `outerarr.c` local `struct Outer arr[3]`, `Outer{Inner in; int y;}` | Unsafe (fast) | **NO VERDICT — see item 3** |
+
+## ITEM 3 — POSSIBLE REGRESSION: `outerarr.c` no longer terminates
+
+`repro/outerarr.c` is 3 lines:
+```c
+struct Inner { int x; };
+struct Outer { struct Inner in; int y; };
+int main(void) { struct Outer arr[3]; arr[2].y = 1; return arr[2].y; }
+```
+Before 03ebee79c8 it returned `Unsafe` almost immediately (the bogus tautology was found at once).
+On the new jar it has been spinning for >49 s on this 3-line program and produced no verdict inside
+180 s. Every other repro in the suite got faster or stayed instant, so this is specific to the
+**array whose element contains a nested aggregate** — the one shape where `allocateArrayElements`
+still mints per-element subobjects *and* the array is now correctly sized. Investigating whether the
+frontend or the checker is the slow half.
+
+### `outerarr.c` regression — harness note
+
+The suite appeared to hang on `outerarr` because `timeout 180` kills `theta-start.sh` but the JVM it
+spawned is orphaned and keeps the pipe open, so the shell's `grep` never returns. Killing the JVM
+by hand released it and the suite moved on. Worth knowing for anyone scripting theta runs:
+**`timeout N theta-start.sh …` does not reliably kill the JVM** — use `timeout --kill-after` or match
+on the input path when cleaning up.
+
+The underlying fact stands: `outerarr.c` produced no verdict in 180 s where it previously answered
+(wrongly) in about a second. Diagnosis (frontend-only vs checker) queued.
+
+## ROUND 3 FINAL STATUS
+
+### Item 1 — DONE. Sizes verified correct on every affected real task
+| task | object | pre | post | needed | |
+|---|---|---|---|---|---|
+| mcslock | `nodes[3]`, 2-unit elems | 3 | **6** | 6 | FIXED |
+| elimination_backoff_stack | `threads[4]`, 3-unit elems | 4 | **12** | 12 | FIXED |
+| cnalock | 5 x 3-unit elems | 5 | **15** | 15 | FIXED |
+| safestack_relacy | `stack.array` (struct MEMBER) | 3 | **6** | 6 | FIXED |
+| bounded_mpmc_check_full | all arrays 1 cell/elem | 4/2/6 | unchanged | — | never affected |
+| ticketlock | no multi-cell array | — | — | — | never affected |
+
+Repro suite on the new jar, all previously-Unsafe now **Safe**: `globalarr`, `ga2d`, `localarr`,
+`la2d`, `nested2`; control `nested3` still Safe.
+
+### Item 3 — ONE REGRESSION FOUND: `outerarr.c` stops terminating
+The only repro that got *worse*. 3 lines, local array whose element contains a nested aggregate:
+```c
+struct Inner { int x; };
+struct Outer { struct Inner in; int y; };
+int main(void) { struct Outer arr[3]; arr[2].y = 1; return arr[2].y; }
+```
+was an instant (wrong) `Unsafe`; now **no verdict in 180 s**. This is the one shape where
+`allocateArrayElements` still mints per-element subobjects *and* the array is now correctly sized, so
+the checker has to reason about both representations at once. Note the *other* affected tasks
+(safestack) had their dead nested bookkeeping removed by the fix — this local nested-aggregate case
+apparently did not. Whether it is the frontend or the checker was queued but starved (below).
+Recommended: make this file a canary; it is 3 lines and it is the shape most likely to regress.
+
+### Item 2 — deliberately NOT attempted
+Per instruction ("only if it is cheap"). It is not: it needs a full concurrent no-data-race run plus
+witness extraction, and the round-2 static analysis already shows the `__sp` scaling cannot be the
+cause (slots are plain `void *`). Still recorded as NOT fixed by 145bffaac0/03ebee79c8.
+
+### Real-task verdicts — inconclusive locally (self-inflicted serialisation, not other agents)
+The box was quiet this round; the queue was **my own** jobs serialising on the shared lock.
+`ticketlock` ran past its 400 s local budget without a verdict and the remaining five never started.
+That is not a result. What it weakly suggests: pre-fix ticketlock returned its (wrong) `Unsafe` in
+275 s on the benchmark machine; it no longer finds that counterexample, consistent with the false
+alarm being gone and the verdict now being true-or-unknown. **Only the benchmark can settle whether
+these flip to `true` or to `unknown`** — the model-level evidence (all guards sound, all sizes
+correct) is the part I can vouch for.
