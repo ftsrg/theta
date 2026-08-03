@@ -379,7 +379,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             case "extern":
                 return Extern();
             case "static":
-                return null;
+                // Recorded rather than dropped. On a *local* declaration it is the difference
+                // between an object that survives across calls and one that does not: dropping it
+                // made every `static int count = 0;` re-initialise on entry, so a counter never
+                // counted and a one-shot guard fired every time.
+                return Static();
             case "auto":
             case "register":
             case "_Thread_local":

@@ -30,6 +30,7 @@ public abstract class CSimpleType {
     private boolean bool = false;
     private boolean atomic = false;
     private boolean extern = false;
+    private boolean staticStorage = false;
     private boolean typedef = false;
     private boolean isVolatile = false;
     private boolean isShort = false;
@@ -171,6 +172,18 @@ public abstract class CSimpleType {
         return extern;
     }
 
+    /**
+     * Whether the declaration carried {@code static}. Only consulted for a *local* declaration,
+     * which it gives static storage duration; at file scope the specifier only affects linkage.
+     */
+    public boolean isStaticStorage() {
+        return staticStorage;
+    }
+
+    public void setStaticStorage(boolean staticStorage) {
+        this.staticStorage = staticStorage;
+    }
+
     public void setExtern(boolean extern) {
         this.extern = extern;
     }
@@ -275,6 +288,7 @@ public abstract class CSimpleType {
     protected void setUpCopy(CSimpleType copy) {
         copy.setAtomic(this.isAtomic());
         copy.setExtern(this.isExtern());
+        copy.setStaticStorage(this.isStaticStorage());
         copy.setTypedef(this.isTypedef());
         copy.setVolatile(this.isVolatile());
         copy.setSigned(this.isSigned());

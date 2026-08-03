@@ -229,6 +229,7 @@ public class NamedType extends CSimpleType {
         NamedType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
         namedType.setAtomic(this.isAtomic());
         namedType.setExtern(this.isExtern());
+        namedType.setStaticStorage(this.isStaticStorage());
         namedType.setTypedef(this.isTypedef());
         namedType.setVolatile(this.isVolatile());
         namedType.setSigned(this.isSigned());

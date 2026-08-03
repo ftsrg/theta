@@ -43,6 +43,10 @@ public class CSimpleTypeFactory {
         return Extern.instance;
     }
 
+    public static Static Static() {
+        return Static.instance;
+    }
+
     public static Typedef Typedef() {
         return Typedef.instance;
     }

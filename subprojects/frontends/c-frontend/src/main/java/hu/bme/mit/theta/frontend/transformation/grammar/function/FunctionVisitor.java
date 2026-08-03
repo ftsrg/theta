@@ -87,6 +87,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
+        staticLocals.clear();
         currentStatementContext.clear();
     }
 
@@ -142,6 +143,36 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     private void createVars(String name, CDeclaration declaration, CComplexType type) {
+        createVars(name, declaration, type, true);
+    }
+
+    /**
+     * The declarations of {@code static} locals, in source order, to be appended to the program's
+     * globals: a static local *is* a global, only one whose name is not visible outside its
+     * function.
+     */
+    private final List<Tuple2<CDeclaration, VarDecl<?>>> staticLocals = new ArrayList<>();
+
+    /**
+     * Gives a {@code static} local the static storage duration it asks for, by declaring it as a
+     * global instead of a procedure variable.
+     *
+     * <p>The specifier used to be dropped outright, which made the object an ordinary local: freshly
+     * declared on every entry, and re-run through its initializer each time. A `static int count =
+     * 0;` therefore never counted past one, and a `static int done = 0;` one-shot guard fired on
+     * every call. Registering it in the current scope (but not among the procedure's variables)
+     * keeps uses inside the function resolving to it, while the initializer runs once, in the init
+     * procedure, like any other global's.
+     */
+    private void promoteStaticLocal(CDeclaration declaration) {
+        createVars(declaration.getName(), declaration, designatorType(declaration), false);
+        for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+            staticLocals.add(Tuple2.of(declaration, varDecl));
+        }
+    }
+
+    private void createVars(
+            String name, CDeclaration declaration, CComplexType type, boolean procedureLocal) {
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
@@ -150,7 +181,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             varDecl = peek.get2().get(name);
         }
         peek.get2().put(name, varDecl);
-        flatVariables.add(varDecl);
+        // A static local is registered in the scope so uses resolve to it, but it is not one of the
+        // procedure's variables -- it is declared among the globals instead.
+        if (procedureLocal) {
+            flatVariables.add(varDecl);
+        }
         // The variable is atomic when its own type is -- `int * _Atomic p`, not `_Atomic int *p`,
         // where it is what p points at that is atomic and p itself an ordinary variable.
         if (type.isAtomic()) {
@@ -300,6 +335,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 program.getGlobalDeclarations().addAll(((CDecls) accept).getcDeclarations());
             }
         }
+        // Collected while the function bodies were visited; appended last so a static local is
+        // initialised after the file-scope globals, exactly as C orders them.
+        program.getGlobalDeclarations().addAll(staticLocals);
         recordMetadata(ctx, program);
         return program;
     }
@@ -1058,6 +1096,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         compound.setPreStatements(preCompound);
         compound.setPostStatements(postCompound);
         for (CDeclaration declaration : declarations) {
+            if (declaration.getType().isStaticStorage()) {
+                promoteStaticLocal(declaration);
+                continue;
+            }
             createVars(declaration);
             if (declaration.getActualType() instanceof CArray cArray) {
                 // A stack array is an `alloca`, not a `malloc`+`free`. Both give it a fresh runtime

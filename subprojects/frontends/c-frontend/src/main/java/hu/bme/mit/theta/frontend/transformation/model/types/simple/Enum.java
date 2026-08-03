@@ -67,6 +67,7 @@ public class Enum extends CSimpleType {
         Enum anEnum = new Enum(id, fields);
         anEnum.setAtomic(this.isAtomic());
         anEnum.setExtern(this.isExtern());
+        anEnum.setStaticStorage(this.isStaticStorage());
         anEnum.setTypedef(this.isTypedef());
         anEnum.setVolatile(this.isVolatile());
         return anEnum;
