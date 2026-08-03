@@ -16,6 +16,9 @@
 # (`--portfolio STABLE`) rather than the frontend:
 #   SAFE           the program is correct and must verify as such
 #   UNSAFE         the program has the bug it names and must be caught
+# Either may name the property to check after a colon (`UNSAFE:no-overflow`); the
+# default is unreach-call. Instrumentation-shaped fixes need this -- overflow checks
+# are only emitted at all when no-overflow is the property being verified.
 # Use these for fixes that change values rather than what parses -- a miswritten
 # memory cell parses perfectly and only shows up as a wrong verdict. Keep such a
 # fixture small enough to verify in a few seconds; this suite runs on every gate.
@@ -43,16 +46,20 @@ pass=0 fail=0
 while IFS=$'\t' read -r fixture arithmetic architecture expect batch feature; do
   [[ "$fixture" == "fixture" || -z "$fixture" ]] && continue
   input="$SCRIPT_DIR/fixtures/$fixture"
-  if [[ "$expect" == "SAFE" || "$expect" == "UNSAFE" ]]; then
+  verdict="${expect%%:*}"
+  if [[ "$verdict" == "SAFE" || "$verdict" == "UNSAFE" ]]; then
+    prop="$PROP"
+    [[ "$expect" == *:* ]] && prop="$(dirname "$PROP")/${expect#*:}.prp"
     # A verdict fixture: run the real verifier. `timeout` kills theta-start.sh but not
     # the JVM it launched, which would keep the pipe open forever, so reap it by hand.
     out=$(cd "$THETA_DIR" && timeout -k 5 "$VERDICT_TIMEOUT" ./theta-start.sh "$input" \
-      --svcomp --portfolio STABLE --loglevel RESULT --property "$PROP" \
+      --svcomp --portfolio STABLE --loglevel RESULT --property "$prop" \
       --architecture "$architecture" --arithmetic "$arithmetic" 2>&1)
     pkill -f "theta.jar.*$fixture" 2>/dev/null
     if grep -q "(SafetyResult Safe)" <<<"$out"; then actual="SAFE"
     elif grep -q "(SafetyResult Unsafe" <<<"$out"; then actual="UNSAFE"
     else actual="OTHER"; fi
+    [[ "$actual" == "$verdict" ]] && actual="$expect"
   else
     out=$(cd "$THETA_DIR" && timeout "$TIMEOUT" ./theta-start.sh "$input" \
       --svcomp --backend NONE --loglevel RESULT --property "$PROP" \

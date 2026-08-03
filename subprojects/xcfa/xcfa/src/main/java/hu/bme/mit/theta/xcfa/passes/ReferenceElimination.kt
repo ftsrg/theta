@@ -1141,8 +1141,33 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     return false
   }
 
-  @Suppress("UNCHECKED_CAST")
+  /**
+   * Rewrites this expression for the split variables, carrying its C type onto the rebuilt node.
+   *
+   * `FrontendMetadata` is keyed by object *identity*, so a rebuilt expression -- even a structurally
+   * identical one -- arrives with no `cType` at all. That matters far beyond this pass: once a
+   * procedure has any split variable, [runComplexReferenceElimination] rewrites **every** edge in
+   * it, so every arithmetic node in the procedure lost its type, and [OverflowDetectionPass], which
+   * only instruments nodes whose `cType` is a signed integer, then silently emitted **no checks at
+   * all** -- `no-overflow` became vacuously true for the whole procedure, with no warning. A single
+   * `int *pa = &p->a;` was enough (ldv-regression/test22-2, add_last-alloca-1, the stroeder pair:
+   * four missed bugs). The *simple* reference-elimination path in this same file has always
+   * propagated the metadata; the complex one never did.
+   */
   private fun <T : Type> Expr<T>.changeComplexReferredVars(
+    splitVars: Map<VarDecl<*>, SplitVarPair>
+  ): Expr<T> {
+    val rewritten = rewriteComplexReferredVars(splitVars)
+    if (
+      rewritten !== this && parseContext.metadata.getMetadataValue(this, "cType").isPresent
+    ) {
+      parseContext.metadata.create(rewritten, "cType", CComplexType.getType(this, parseContext))
+    }
+    return rewritten
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T : Type> Expr<T>.rewriteComplexReferredVars(
     splitVars: Map<VarDecl<*>, SplitVarPair>
   ): Expr<T> {
     decomposeScalarPointerOp(splitVars)?.let {

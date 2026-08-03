@@ -23,6 +23,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
 enum class HeaderFile(val filename: String, val content: String) {
+  ALLOCA_H("alloca.h", alloca_h),
   ASSERT_H("assert.h", assert_h),
   CTYPE_H("ctype.h", ctype_h),
   ERRNO_H("errno.h", errno_h),

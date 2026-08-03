@@ -31,3 +31,5 @@ static_local_storage.c	efficient	LP64	SAFE	82	static locals keep their value acr
 nested_aggregate_init.c	efficient	LP64	SAFE	82	nested-struct initializer follows the subobject, and untouched members are zero
 array_member_init.c	efficient	LP64	SAFE	82	array member is its own object; array elements and rows stay inline
 deref_dot_member.c	efficient	LP64	SAFE	82	(*p).field is one dereference, like p->field and p[0].field
+overflow_after_split.c	efficient	ILP32	UNSAFE:no-overflow	82	overflow checks survive the base/offset split (cType kept across the rebuild)
+alloca_declared.c	efficient	ILP32	SAFE	82	alloca is declared by stdlib.h
