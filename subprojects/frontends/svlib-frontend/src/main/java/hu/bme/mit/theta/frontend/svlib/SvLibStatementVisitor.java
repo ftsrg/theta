@@ -213,6 +213,36 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
     }
 
     @Override
+    public XcfaLocation visitCallStatement(SvLibParser.CallStatementContext ctx) {
+        return unsupportedStatement("call");
+    }
+
+    @Override
+    public XcfaLocation visitLabelStatement(SvLibParser.LabelStatementContext ctx) {
+        return unsupportedStatement("label");
+    }
+
+    @Override
+    public XcfaLocation visitGotoStatement(SvLibParser.GotoStatementContext ctx) {
+        return unsupportedStatement("goto");
+    }
+
+    @Override
+    public XcfaLocation visitBreakStatement(SvLibParser.BreakStatementContext ctx) {
+        return unsupportedStatement("break");
+    }
+
+    @Override
+    public XcfaLocation visitContinueStatement(SvLibParser.ContinueStatementContext ctx) {
+        return unsupportedStatement("continue");
+    }
+
+    @Override
+    public XcfaLocation visitChoiceStatement(SvLibParser.ChoiceStatementContext ctx) {
+        return unsupportedStatement("choice");
+    }
+
+    @Override
     public XcfaLocation visitReturnStatement(SvLibParser.ReturnStatementContext ctx) {
         builder.addEdge(
             new XcfaEdge(
@@ -222,6 +252,10 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
                 EmptyMetaData.INSTANCE));
         terminalLocations.add(currentEntry);
         return currentEntry;
+    }
+
+    private XcfaLocation unsupportedStatement(String statementName) {
+        return unsupported("statement '" + statementName + "'");
     }
 
     private XcfaLocation addLabel(XcfaLocation from, XcfaLabel label) {
