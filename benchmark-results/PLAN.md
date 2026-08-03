@@ -4498,3 +4498,60 @@ Canaries added for both shapes (`mcslock`, `safestack_relacy`), bringing the set
 3. scopes causes A/C/D/E; aws Bug A/B/C + 8 negated harnesses; no-overflow additive chains;
    `test22-2`'s deleted overflow instrumentation; `memleaks_*`; `2SB`/`4SB`.
 4. Fold literal `div`/`mod` in `SimplifyExprsPass` to recover the per-deref guard cost.
+
+---
+
+## Batch 82 — seven wrong-value bugs, all in how a variable gets the value it starts with
+
+Worked directly (no investigators) from the banked write-ups in `findings-run80/`. Four commits on
+`svcomp27-fixes`: `dea85df263`, `2ff05ca895`, `8e08530615`.
+
+Every one of these is a *wrong-`false`* class defect: the model let the solver read something the C
+program never put there. None of them needs a pointer or a memory-safety property to bite.
+
+| # | Bug | Was |
+|---|-----|-----|
+| 1 | local aggregate with a partial brace initializer not zero-filled | `float w[N]={0}` arbitrary from cell 1 on — every NN weight table |
+| 2 | `char s[N] = "lit"` wrote **nothing**; emitted `s = 1`, clobbering the array's base | local, an unrelated global with an equal literal, and the bare literal all collapsed onto object id 1 |
+| 3 | `alloca` bases collided with compile-time global bases | 2 globals + 1 local array was enough: initialising the local overwrote the global |
+| 4 | character constants decoded by hand | `'\x41'` read as octal, `'\101'` as decimal, `'A'` as 97 (text lowercased), and `'\n'` threw NumberFormatException *out of the frontend* |
+| 5 | `static` storage class returned `null` from the type visitor | every static local re-initialised on entry (`filter2_alt`'s filter state, one-shot guards, counters) |
+| 6 | local aggregate initializer wrote flat cell offsets (scopes cause **A**) | `struct Outer o={{1,2},3}` destroyed the nested object's base and collided the last two writes on one cell |
+| 7 | `(*p).f` double-dereferenced (scopes cause **C**) | `ldv-regression/test22-1`, expected `true`, was a wrong `false`; now Safe |
+
+**#3 is the one worth remembering.** Pointer bases are partitioned by residue mod 3 — `3k+0` heap,
+`3k+1` stack, `3k+2` address-taken — and `alloca` shares the `3k+1` class with the frontend's
+*compile-time* bases (`ptrCnt`, also `3k+1`). The runtime counter started at zero, so the first
+stack object took base 4, which the second compile-time object already owned. The frontend now
+publishes its high-water mark on `XcfaBuilder.metaData` and `MallocFunctionPass.ensureMallocVar`
+seeds the counter at or above it, still on a multiple of three so the residue classes keep meaning
+what they mean. **`ReferenceElimination` has the same shape of hazard and was NOT audited**: its
+`__sp` starts at a compile-time id from the *same* `cnt` counter it later hands out ids from, so a
+runtime `__sp` step can land on an id given to a different address-taken object. Worth a repro.
+
+**The canary harness grew verdict fixtures.** All seven bugs parse perfectly — a miswritten memory
+cell is not a parse error — so `run_fixtures.sh` now accepts `SAFE`/`UNSAFE` as an `expect` value
+and runs the real portfolio for those rows. Eight new fixtures (32 total); keep them small, they
+run on every gate.
+
+Gate for all four commits: 262/262 parse, 32/32 fixtures, the array/string verdict subset 29/30
+(1 timeout), guard set unchanged (its only failures are its own `kind=wrong` rows; every `neighbor`
+passes), c2xcfa/xcfa/c-frontend unit tests green.
+
+### Remaining, in order
+1. scopes cause **F** — `memcpy`/`memset` convert bytes to cells with a fixed 4-byte divisor.
+   ⚠️ `memset(p, 0, sizeof *p)` on an aggregate is everywhere in the benchmark set; fixing it moves
+   many verdicts at once, so it wants **its own benchmark run**, not a ride-along.
+2. scopes cause **D**/B1 — storing a base/offset-split pointer writes both halves to the same cell.
+   Needs a design decision, not a patch; findings recommend throwing `UnsupportedPointerSplitException`
+   so the CLI rebuilds under `--memory-model flat`, which represents a mid-object pointer natively.
+   Wide blast radius — price it with a full run.
+3. scopes causes **G**/**H**/**I**/**J** — objects never die (block scope, `alloca` at return), freed
+   addresses never reused, no VLA length check. These are the 7 *missed bugs* in the family.
+4. aws Bugs A/B/C + the 8 negated harnesses (`findings-run80/aws.md`).
+5. no-overflow: additive chains (`Stockholm-2`, `dijkstra6-both-nt`), and `test22-2` where
+   `ReferenceElimination` silently deletes ALL overflow instrumentation from a procedure.
+6. `memleaks_*`, `dirname-1`, `2SB`/`4SB`. `dirname-1` needs the *bare* string literal to become a
+   real object with its bytes — item 2 above only covers the `char a[N] = "lit"` declaration form.
+7. Cleanups: drop `allocateArrayElements`' now-redundant per-element subobjects (`outerarr`
+   slowness); fold literal div/mod in `SimplifyExprsPass` to shrink the per-deref guard.
