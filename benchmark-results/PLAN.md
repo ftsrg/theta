@@ -4555,3 +4555,17 @@ passes), c2xcfa/xcfa/c-frontend unit tests green.
    real object with its bytes — item 2 above only covers the `char a[N] = "lit"` declaration form.
 7. Cleanups: drop `allocateArrayElements`' now-redundant per-element subobjects (`outerarr`
    slowness); fold literal div/mod in `SimplifyExprsPass` to shrink the per-deref guard.
+
+### Run 82 launched 2026-08-03 22:04 (benchcloud)
+
+`Theta-svcomp-82` = `d8f0a698c2`, `xmls/theta27-long900.xml` (900 s), `--vcloudCPUModel Skylake
+--vcloudClientHeap 8192`, screen session `theta-bench-82`, log
+`~/bench-theta27-82-20260803-2204.log`, results under
+`~/results/Theta-svcomp-82/theta27-long900.xml/2026-08-03_22:04:16/`.
+
+**Baseline for the diff is run 80** — same XML, same host, same CPU model
+(`~/results/Theta-svcomp-80/theta27-long900.xml/2026-07-28_22:15:48/`). Run 81 is *not* comparable:
+it used `theta27-hardness900.xml`.
+
+Sanity checks before trusting progress: `grep -c "Cannot start process"` must be 0; `writeRunResult`
+counts submissions, not completions; done = all `.xml.bz2` present **and** the screen session gone.
