@@ -973,3 +973,149 @@ That is not a result. What it weakly suggests: pre-fix ticketlock returned its (
 alarm being gone and the verdict now being true-or-unknown. **Only the benchmark can settle whether
 these flip to `true` or to `unknown`** — the model-level evidence (all guards sound, all sizes
 correct) is the part I can vouch for.
+
+---
+# ROUND 4 — I DISAGREE ON `outerarr`: the double representation is UNSOUND, not merely slow
+
+Decisive evidence: `repro/gnested.c` (a **global** version of the same shape, so the checker
+terminates), dumped with `--backend NONE` into `scratchpad/dump_gn/xcfa.dot`.
+```c
+struct Inner { int x; };
+struct Outer { struct Inner in; int y; };
+struct Outer arr[3];
+int main(void) { arr[2].in.x = 1; return arr[2].in.x; }
+```
+Array object base 1, size **6** — correctly sized by 03ebee79c8. Now compare what the
+initialisation writes with what the access reads:
+
+**Base-id stores (nested view) go to array cells 0, 1, 2:**
+```
+(memassign (deref 1 0 Int) 4)                  # arr cell 0 := elem0 object base
+(memassign (deref (deref 1 0 Int) 0 Int) 7)    # elem0 cell 0 := in-object base 7
+(memassign (deref (deref 1 0 Int) 0 Int) 10)   # ... then OVERWRITTEN by base 10 (7 is leaked)
+(memassign (deref 1 1 Int) 13)  ... 16, then 19
+(memassign (deref 1 2 Int) 22)  ... 25, then 28
+```
+**Zero-fill also goes through the nested view, three levels deep:**
+```
+(memassign (deref (deref (deref 1 k Int) 0 Int) 0 Int) 0)   # arr[k].in.x := 0
+(memassign (deref (deref 1 k Int) 1 Int) 0)                 # arr[k].y   := 0
+```
+**But the actual access uses the FLAT view:**
+```
+(memassign (deref (deref 1 4 Int) 0 Int) 1)     # arr[2].in.x = 1  ->  flat cell 4 = 2*2+0
+```
+**Flat cell 4 is never written by anything.** The base ids went to cells 0/1/2; the access reads
+cell 4 and dereferences it as a base. `(deref 1 4)` is therefore the array's default **0**, so the
+guard's `Leq(base, 0)` disjunct is TRUE — a tautological `__THETA_bad_deref` again — and in the value
+domain it is a dereference of NULL.
+
+## Why this is not covered by the item-4 fix
+`FrontendXcfaBuilder.kt:758-778` routes an uninitialised array through the flat path only when
+```kotlin
+(flatElement is CArray || (flatElement is CStruct && isFlatScalarStruct(flatElement)))
+```
+`isFlatScalarStruct` requires every field to be non-aggregate. `struct Outer` has a `struct Inner`
+field, so it is **not** a flat scalar struct and still takes the per-element path. That is the exact
+residual hole: the fix covers arrays of *scalar-field* structs (my `zeroinit.c`, which went Safe) and
+multi-dimensional arrays, but not **arrays whose element contains a nested aggregate**.
+
+## Why `outerarr.c` did not show it as a wrong answer
+`outerarr.c` touches `arr[2].y` — a *scalar* field, flat cell 5 — not `arr[2].in.x`. Scalar fields
+live inline in the flat cells, so that access is consistent and merely expensive. Change the touched
+field to the nested one and the same shape produces a wrong answer instead of a slow one.
+
+**So my recommendation differs from the wrong->unknown call**: `outerarr` itself is indeed only slow
+and its −16 → 0 is a genuine gain, but it is the *canary for a shape that is still unsound*. Treating
+it as "no action" leaves `gnested`-shaped programs answering wrongly. Verifying by run now.
+
+## ITEM 1 ANSWERED: the per-element subobjects are dead weight AND actively harmful
+From the same dump, for a nested-aggregate element they are:
+1. **allocated twice** — bases 7 *and* 10 for `arr[0].in`, 16/19, 25/28; the first of each pair is
+   minted, sized, and then orphaned by the second store (two different passes both mint one);
+2. **written by the zero-fill**, which is why the flat cells stay uninitialised;
+3. **never read by any access**, because every ordinary `arr[i].in.x` uses the flat cell.
+So dropping them *and* flat-initialising is not just an optimisation for `outerarr`'s slowness — it
+is what makes this shape correct. They are the mechanism of the bug, not a bystander.
+
+## WORSE THAN "disagree": the two representations OVERLAP and corrupt each other
+
+Full list of direct writes to the array object's own cells in `dump_gn` — `(deref 1 k)`:
+```
+(memassign (deref 1 0 Int) 4)     # cell 0 := element 0's base id
+(memassign (deref 1 1 Int) 13)    # cell 1 := element 1's base id
+(memassign (deref 1 2 Int) 22)    # cell 2 := element 2's base id
+```
+cells **3, 4, 5 are never written**. But under the flat layout that every access uses,
+`arr[i].in` is cell `i*2+0` and `arr[i].y` is cell `i*2+1`, i.e. cells 0..5. So:
+
+| flat cell | what the access thinks it is | what the model actually stores |
+|---|---|---|
+| 0 | `arr[0].in` (a base id) | element 0's base id — *accidentally* plausible |
+| 1 | `arr[0].y` (an int) | **element 1's base id (13)** — reads a pointer as data |
+| 2 | `arr[1].in` (a base id) | element 2's base id — wrong element |
+| 3 | `arr[1].y` | never written |
+| 4 | `arr[2].in` (a base id) | never written -> **0 -> NULL deref** |
+| 5 | `arr[2].y` | never written |
+
+The nested per-element base ids are laid out one-per-element (cells 0,1,2) while the flat accesses
+address `i*unitCount + f` (cells 0..5). They are not two disjoint views — they **share the same
+cells and disagree about what each holds**. `arr[0].y` returns a base id; `arr[2].in` is NULL.
+
+That is a wrong-value / wrong-verdict bug, not a performance characteristic. It cannot be reached by
+`outerarr.c` only because that file touches `arr[2].y` = cell 5, which is merely uninitialised.
+
+Also visible: each `in` subobject is minted **twice** (bases 7 then 10, 16/19, 25/28), the first of
+each pair orphaned — two passes both allocate one.
+
+## ITEM 2 — canary repro for this shape (plus a harness gap you should know about)
+
+The canary must be the **global** variant, because it terminates and answers *wrongly*; the local
+variant (`outerarr.c`) only stalls, so it cannot assert anything.
+
+`benchmark-results/canaries/fixtures/nested_aggregate_array.c` (5 lines, ILP32, expected **true**):
+```c
+struct Inner { int x; };
+struct Outer { struct Inner in; int y; };
+struct Outer arr[3];
+int main(void) { arr[2].in.x = 1; return arr[2].in.x; }
+```
+* property `valid-memsafety`, expected verdict **true**. Today: `false(valid-deref)` (predicted;
+  run pending, see below).
+* a second, value-level assertion for the same shape (property `unreach-call`, expected **true**):
+  `if (arr[0].y != 0) reach_error();` — flat cell 1 holds element 1's *base id*, so this reaches
+  `reach_error`.
+
+**Harness gap:** neither existing canary runner can host this as-is.
+* `run_fixtures.sh` is **frontend-only** (`--backend NONE`, outcomes `PARSE-OK` / `FRONTEND-FAIL`)
+  and `fixtures.tsv` has no property/expected-verdict columns — it cannot assert Safe vs Unsafe.
+* `run_canaries.sh` *does* check verdicts in `full` mode, but resolves `input_file_relpath` under
+  `SV_BENCHMARKS_ROOT`, so it can only run tasks that live in the sv-benchmarks checkout — not a
+  synthetic fixture in this repo.
+So landing this canary needs a small harness addition: either give `fixtures.tsv` `property` +
+`expected` columns and a verdict mode, or let a canaries TSV row carry a repo-relative input path.
+I flag it rather than hand over a file that would sit there unchecked.
+
+Both facts above are shape facts read off the model, so they hold regardless of which runner hosts
+them.
+
+## CONFIRMED BY RUN — the nested-aggregate-element shape is UNSOUND on the current jar
+
+```
+gnested.c  (valid-memsafety, default multi, PRED_CART, ILP32)
+  -> (Property valid-deref) (SafetyResult Unsafe Trace length: 19)
+```
+**Expected `true`.** This is a live `false(valid-deref)` on a 4-line program against the
+03ebee79c8 jar. The prediction from the dump — flat cell 4 is never written, so `(deref 1 4)` is 0
+and the guard's `Leq(base,0)` fires — is exactly what happened.
+
+So my answer to the open question is: **I disagree that this shape needs no action.**
+* `outerarr.c` itself: your call is right — it touches only `arr[2].y`, so it went from an instant
+  *wrong* Unsafe to no verdict, and −16 → 0 is a gain.
+* But `outerarr.c` was a *proxy*. The shape it stands for still answers **wrongly** whenever the
+  nested field is the one touched (`gnested.c`), and still returns *pointer values as data* whenever
+  the colliding scalar cell is read (`arr[0].y` == element 1's base id). Those are −16s that are
+  still on the board, not converted to 0.
+The distinction that matters: the double representation is not a slow-but-correct redundancy, it is
+an aliasing bug between two layouts that share cells. Item 1's answer ("drop the per-element
+subobjects and flat-initialise") is therefore a **correctness** fix, not a performance one.

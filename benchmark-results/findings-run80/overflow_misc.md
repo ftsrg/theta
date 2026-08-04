@@ -638,3 +638,22 @@ shows it currently is not, and that alone would have prevented this false alarm 
 literal contents still missing. `HavocPromotionAndRange` does this for *variables* but not for
 memory cells.
 
+---
+
+## Citable one-liner on string-literal initialisers (requested by coordinator)
+
+> **In theta's model, `char s[8] = "ab"` contributes no cell writes at all — neither the literal's
+> characters nor a zero fill — and the array is not even given its own object: `s[0]` compiles to a
+> read of the *shared* string-literal object (id `1` in the repro), the same object the bare literal
+> `"ab"` and an unrelated global `char g[8] = "ab"` both resolve to.**
+
+Corroborating detail from the same serialised model (`lit.c`, `--enable-c-serialization`, dist of
+15:56): a **global** `char g[8] = "ab"` does get eight cell writes, but they are all `0` — the
+characters `97`/`98` are never written for it — whereas the brace form `char g[8] = {'a','b'}`
+is emitted correctly as `97, 98, 0, 0, 0, 0, 0, 0`. And the **local** brace form
+`char l[8] = {'a','b'}` writes only cells 0 and 1, leaving cells 2..7 unwritten — which is the
+local partial-initializer zero-fill gap currently being implemented, independently confirmed here.
+
+So the defect splits cleanly in two: the *brace* forms need the tail zero-filled (local only); the
+*string-literal* form needs everything — its own object, the literal's bytes, and the zero fill.
+

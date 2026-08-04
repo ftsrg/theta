@@ -577,3 +577,207 @@ program whose correctness depends on the copied bytes will be proved safe on sta
 `(char *)` cast did *not* change the divisor — so the 4 does not come from the obvious
 place. The observable rule (`cells = n / 4` under ILP32) is measured, not inferred, so the
 fix must start by printing what `elementOf` actually returns for these arguments.
+
+---
+
+# SUGGESTED FIXES (file, change, risk)
+
+Only the causes that still reproduce on the 15:56 dist (`03ebee79c8`) are listed.
+B2 and E are fixed and are omitted.
+
+## F — `memcpy`/`memset` byte→cell conversion
+**File:** `subprojects/xcfa/xcfa/src/main/java/hu/bme/mit/theta/xcfa/passes/MemoryFunctionsPass.kt`
+(`copy` at :105, `fill` at :127, `elementOf` at :212, `elementCount` at :224).
+
+**Change.** The conversion must be driven by the *pointee object's cell layout*, not by a
+scalar element width:
+1. Make `elementOf` resolve the pointee through the argument's real C type. When it is a
+   struct/union/array (directly, or behind a `void *`/cast whose operand's type is known),
+   do **not** fall through to a 4-byte scalar — either
+   (a) emit `cellsOf(pointee)` cell-copies when `n == sizeof(pointee)` (the
+       `memcpy(p, q, sizeof *p)` idiom, which is what these tasks use), reusing
+       `FrontendXcfaBuilder.cellsOf` / `flatArraySize` so the count matches the layout the
+       access path uses, or
+   (b) call `giveUp`, which is what the pass's own doc already claims it does.
+2. Add an assertion (or at least the existing `giveUp` warning) on the path that currently
+   emits `n / 4` silently, so the case cannot regress unnoticed. **The first diagnostic step
+   is to print what `elementOf` returns for a `void *` argument** — I could not pin that
+   down statically, and the whole fix depends on it.
+
+**Risk.** (a) is the safer of the two and fixes the tasks; it changes behaviour only where a
+copy is currently *wrong*, so nothing that passes today should flip. (b) is strictly safer
+for soundness but converts these tasks from wrong-false into errors/unknowns, which is a
+score loss unless the accompanying frontend work lands too. The real hazard for both is
+`memset(p, 0, sizeof *p)` on aggregates, which is extremely common in the benchmark set: it
+currently zeroes `n/4` cells and would start zeroing all of them — that is *more* correct,
+but it will change many verdicts at once, so it wants its own benchmark run rather than
+riding along with an unrelated batch.
+
+## A — nested-struct initializer flattened onto the outer object
+**File:** `subprojects/frontends/c-frontend/src/main/java/hu/bme/mit/theta/frontend/transformation/grammar/function/FunctionVisitor.java`
+(`flattenInitializer` at :903, `cellsOf` at :855, callers at :988 and :1063).
+
+**Change.** `flattenInitializer` addresses every scalar leaf as
+`Dereference(varDecl, flatCellOffset)`, i.e. it numbers cells as if nested aggregates were
+laid out inline. The object model does the opposite: `allocateStackStruct` /
+`giveStructObjectStorage` give a nested struct field its **own object** and store only its
+base id in the parent's cell. The recursion must follow that indirection — when the
+sub-element at this nesting level is a non-union struct (or an array of them), descend as
+`Dereference(Dereference(parent, fieldCell), subOffset)` and restart the offset at 0 inside
+the sub-object, instead of accumulating a flat offset in the parent.
+
+**Risk.** Low-to-moderate and well-contained: it only touches *initializer lists on
+aggregates with a nested aggregate member*. Flat cases (`int a[3] = {1,2,3}`, a struct of
+scalars) must keep their current lowering exactly — they are the common case and are
+correct today. The one thing to watch is unions, which deliberately keep one cell and are
+already special-cased in `cellsOf`/`subElementTypeOf`; the descent must not apply to them.
+Fixing this also removes a *silent* soundness bug (the nested sub-object pointer is
+currently overwritten with initializer data), so some currently-safe verdicts may legitimately
+change.
+
+## C — `(*p).field` double dereference
+**File:** `subprojects/frontends/c-frontend/src/main/java/hu/bme/mit/theta/frontend/transformation/grammar/expression/ExpressionVisitor.java`,
+`visitUnaryExpressionCast`, `case "*"` (:1200-1238).
+
+**Change.** Add the pointer-to-struct/union case next to the existing pointer-to-array one:
+when `type` is `CPointer` whose `embeddedType` is a `CStruct`, `*p` denotes the pointee
+object, whose identity *is* the pointer value — return `Pos(originalOperand)` re-typed to
+the struct, exactly as the `CArray` branch above it does and exactly as the subscript path
+already does at :3250 for `p[0]`.
+
+**Risk.** Very low. It is a three-line addition mirroring two rules that already exist in
+the same file, and it can only affect expressions spelled `*p` where `p` points at a struct
+— which are wrong today. Keep `arrow.c` alongside `star_dot.c` as the canary pair so the
+two spellings are pinned to the same verdict.
+
+## D — storing a base/offset-split pointer writes both halves to the same cell
+**File:** `subprojects/xcfa/xcfa/src/main/java/hu/bme/mit/theta/xcfa/passes/ReferenceElimination.kt`,
+`Stmt.changeComplexReferredVars`, the `is MemoryAssignStmt` branch (:821-859).
+
+**This is the one that needs a design decision, not a patch.** The invariant it gets wrong:
+*a pointer value stored into memory occupies exactly one cell, so it must be stored as one
+value.* The current code tries to store a `(base, offset)` pair into "two channels" that do
+not exist — `multi` has a single memory array and a single `__theta_ptr_size`. When the
+address is an ordinary cell both derefs are identical and the second write clobbers the
+first (test27-1, `store_split.c`); when the address is itself split, the second write goes to
+whatever object id the *offset* happens to equal, which is worse.
+
+Two coherent designs:
+1. **Refuse.** Throw `UnsupportedPointerSplitException` when a split pointer would be stored
+   to memory. The CLI already rebuilds under `--memory-model flat` on that exception, and
+   flat represents a mid-object pointer as one scalar natively — which is precisely the
+   shape that cannot be expressed here. Smallest change, uses machinery that already exists,
+   and (now that B2 is fixed) flat's valid-deref check is correct.
+2. **Fold on store.** Store the single scalar `base + offset` and re-split on load. This is
+   flat's representation applied locally, so it needs flat's stride discipline to keep bases
+   recoverable — effectively reimplementing flat inside multi.
+
+**Risk.** Option 1 moves an unknown number of tasks onto the flat model wholesale; that is a
+behaviour change far wider than this family, so it needs a full benchmark run to price. It
+is nevertheless strictly better than today, where the model silently computes with a
+corrupted pointer. Option 2 is a deep change to `multi` and I would not attempt it for this
+family alone.
+
+## B1 — pointer arithmetic that escapes as a bare scalar (`return arr + 1`)
+**File:** same as D — the split machinery in `ReferenceElimination.kt`.
+`scopes4-1` still reproduces on the current dist (`(Property valid-deref) Unsafe`, trace 4).
+
+`foo2_ret := (foo2::arr + 1) mod 2^32` is never split, so `ptr_size[arr+1] == 0`. The
+`seedSplitParams` doc already concedes the limitation ("the model cannot carry a mid-object
+pointer across a call"). This is the same invariant as D — a mid-object pointer in a scalar
+context — so it should be decided together with D, and option 1 above covers it.
+
+## G + H — objects never die (block/loop-iteration scope, and `alloca` at return)
+**Files:** `FunctionVisitor.visitBodyDeclaration` (:961-975) emits the `alloca`;
+`AllocaFunctionPass.kt` (:106) lowers it; `PtrSize.kt` already provides `deallocate`.
+
+**Change.** Emit `builder.parent.deallocate(parseContext, base)` at the points where the
+object's lifetime ends: (i) at the end of the compound statement that declared it, and
+(ii) at every return edge of the declaring procedure for `alloca`'d storage. The check side
+needs **no change at all** — `annotateDeref` already reports `ptr_size[base] <= offset`, so
+a deallocated block is caught by the existing guard. `derefInLoop1`'s dump proves the
+prerequisite is in place: each unrolled iteration already gets a *distinct* base, so a
+per-iteration deallocation is enough to catch it.
+
+**Risk.** Moderate, and this is the highest-yield item in the missed-bug half (4 of 7 tasks,
+plus H's 1). Two hazards: (a) placement must follow *every* exit from the block, including
+`goto`/`break`/`return` out of it, or a live object gets marked dead and a false alarm
+appears — the failure mode is the expensive direction; (b) the `alloca` hoisting seen in the
+dumps (block-local arrays are allocated on the procedure's `main_init` edge, not where the
+block starts) means allocation and deallocation would sit at different scopes, so the
+allocation should move to the block entry at the same time. Worth doing behind its own
+benchmark run.
+
+**Side fix, independent and cheap:** `alloca(n)` records `ptr_size = n` where `n` is a
+*byte* count (`getNumbers1-1`: `alloca(10*sizeof(int))` → size 40 for a 10-cell object), so
+bounds through alloca'd blocks are 4× too loose. Tightening it to the cell count can only
+find more bugs, never invent one — but it will expose real out-of-bounds accesses that are
+currently hidden, so expect verdict churn.
+
+## I — freed allocation addresses are never reused
+**File:** `AllocaFunctionPass.kt` (:87, the `__malloc += 3` counter) and `PtrSize.kt`
+`deallocate`.
+
+**Change.** For `cmp-freed-ptr` to be provable, a fresh `malloc` must be allowed to return a
+base that is not *currently* live, including one previously freed: mint the base
+nondeterministically within its residue class and `assume ptr_size[base] == 0`, rather than
+taking the next counter value.
+
+**Risk.** High, and I would not recommend it for one task. A nondeterministic base destroys
+the syntactic disjointness of object ids that the rest of the model leans on (the mod-3
+partition, constant-folded bases like `2`/`5`/`8`, the memtrack scan over `3*__ptr`), and it
+would add a case split to every allocation. The honest answer is that `cmp-freed-ptr` is
+priced out unless address reuse is wanted for its own sake.
+
+## J — no check that a VLA length is > 0
+**File:** `FunctionVisitor.visitBodyDeclaration` (:961-975), where the array `alloca` is
+emitted.
+
+**Change.** When the array dimension is not a compile-time constant, emit the check that
+the dimension is `> 0` on the same edge as the `alloca`, routed to the memsafety error
+location (the same target `annotateDeref` uses).
+
+**Risk.** Low mechanically, but it must be gated on `MemsafetyPass.enabled` so it does not
+manufacture errors under other properties, and it flips seven `loops/` tasks at once —
+verify against the whole `loops/` set, not just `sum_array-2`. Also note my confidence on
+the *ground truth* here is medium (see cause J), so confirm the classification before
+building on it.
+
+---
+
+# test25-2 RE-DIAGNOSED after the E fix: it is cause B1, not (only) E
+
+On the 15:56 dist test25-2 is **still wrong**:
+`(Property valid-deref) (SafetyResult Unsafe Trace length: 27)`, `success-result:
+PRED_CART-BW_BIN_ITP-Z3-true`.
+
+The E half is genuinely fixed — the array is now sized by flat cells:
+```
+write __theta_ptr_size call_alloca_ret1 20      # was 10; struct dummy array[10] = 20 cells
+```
+and the ten unrolled `array[j].a/.b` guards now run to offset 19 without firing.
+
+What remains is **cause B1**. `cont.array = &array[i]` stores the mid-object address as a
+bare scalar into a single memory cell:
+```
+memassign (deref main::cont* 0 Int) := (mod (+ main::array (* 2 (mod main::i 4294967296))) 4294967296)
+```
+and every later use of that cell as a base reads `__theta_ptr_size` at `array + 2*i`:
+```
+assign __theta_ref_tmp_0_base := (deref main::cont* 0 Int)      # pa = &cont.array[0].b
+bad_deref: (<= (deref main::cont* 0 Int) 0)
+        || (<= ptr_size[(deref main::cont* 0 Int)] 1)           # ptr_size[array+2i] == 0 for i >= 1
+```
+
+Note this is **B1, not D**: no base/offset split happens at all here. `cont.array` is a
+memory *cell*, not a variable, so `discoverSplitVars` never considers it, and
+`containsSplitRefs` returns false for a `Reference(Dereference(...))` RHS — so the
+MemoryAssignStmt channel-splitting branch is not even entered. The address is simply folded
+to `base + offset` and stored as one integer, which is exactly B1's shape (a mid-object
+pointer surviving in a scalar context) reached by a different route than `return arr + 1`.
+
+**Consequence for sequencing:** B1 now covers `scopes4-1` *and* `test25-2`, and it is the
+same invariant as D. Whatever design is chosen for D (see SUGGESTED FIXES) should be chosen
+with these two in mind — option 1 there (refuse and fall back to flat) would cover all
+three tasks in one move, since flat represents a mid-object pointer as a single scalar
+natively and its valid-deref check is now correct after `145bffaac0`.
