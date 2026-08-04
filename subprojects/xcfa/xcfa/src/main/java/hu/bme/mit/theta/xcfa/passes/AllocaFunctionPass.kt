@@ -15,11 +15,18 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.ensureMallocVar
 import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.firstAllocationRetType
@@ -103,7 +110,12 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               )
             val labels =
               if (MemsafetyPass.enabled) {
-                listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))
+                listOfNotNull(
+                  bump,
+                  assignRet,
+                  builder.parent.allocate(parseContext, ret, arg),
+                  probeFirstCell(builder, ret, arg, retType),
+                )
               } else {
                 listOf(bump, assignRet)
               }
@@ -116,6 +128,51 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     }
     return builder
   }
+
+  /**
+   * Reads the first cell of a *runtime-sized* stack object, so that the existing valid-deref guard
+   * sees a zero-length one.
+   *
+   * C11 6.7.6.2p5: a variably-modified type's size "shall evaluate to a value greater than zero",
+   * so `unsigned n = __VERIFIER_nondet_uint(); int a[n];` is undefined for `n == 0`, and
+   * sv-benchmarks files that under `valid-deref`. Nothing could see it: with `n == 0` the object is
+   * given size 0, every `for (i = 0; i < n; i++)` runs zero times, so **no dereference happens at
+   * all** and no access guard can fire. Seven `loops/` tasks -- `sum_array-1`/`-2`, `matrix-2`,
+   * `insertion_sort-1`/`-2`, `invert_string-2`, `bubble_sort-1` -- are exactly this shape and
+   * nothing else, and theta proved every one of them safe.
+   *
+   * Stated as a *read of cell 0* rather than as an error edge of its own, because
+   * [MemsafetyPass.annotateDeref] already draws precisely the right conclusion from one: its guard
+   * is `ptr_size[base] <= index`, which at index 0 is `size <= 0` -- true exactly when the
+   * declaration was undefined, and false for every `n >= 1`. Emitting the error edge here instead
+   * does not work: [MemsafetyPass.breakUpErrors] runs ten pass-groups later and begins by
+   * redirecting *every* incoming edge of the error location to the final location (that is how
+   * `reach_error()` is disabled under memsafety), so the check was silently neutralised.
+   *
+   * Only for a size that is not a literal, so a declared `int a[10]` and the constant-sized
+   * subobject allocations cost nothing; and only under memsafety, so no other property sees a read
+   * the program never performed.
+   */
+  private fun probeFirstCell(
+    builder: XcfaProcedureBuilder,
+    ret: Expr<*>,
+    size: Expr<*>,
+    retType: CComplexType,
+  ): XcfaLabel? {
+    if (ExprUtils.simplify(size) is LitExpr<*>) return null
+    val element = (retType as? CPointer)?.embeddedType ?: return null
+    val probe = Var("__theta_vla_probe_${probeCnt++}", element.smtType)
+    builder.addVar(probe)
+    parseContext.metadata.create(probe.ref, "cType", element)
+    val offset = CComplexType.getUnsignedLong(parseContext).nullValue
+    @Suppress("UNCHECKED_CAST")
+    val cell =
+      Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
+    parseContext.metadata.create(cell, "cType", element)
+    return AssignStmtLabel(probe, cast(cell, probe.type), probe.type)
+  }
+
+  private var probeCnt = 0
 
   private fun predicate(it: XcfaLabel): Boolean {
     return it is InvokeLabel && it.name == "alloca"
