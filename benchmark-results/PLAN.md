@@ -4695,3 +4695,30 @@ not be counted as a win without checking the 79 status was TIMEOUT rather than a
 
 Benchcloud's run 82 was left queued rather than killed: if that host ever comes back it produces a
 clean batch-82-only measurement, which is strictly useful.
+
+### Backwards pointer steps lost their sign under integer arithmetic (`7cbb2fba3d`)
+
+Started as item 3 (triage `openbsd_cmemrchr-alloca-2`, the wrong `false` found while measuring
+cause J). It is not one task: **every backwards walk over a buffer was a false valid-deref alarm** —
+the `cmemrchr`/`memrchr` idiom and any `while (n--) *--p;`.
+
+A pointer step is counted in the pointer-sized *unsigned* type, so `p--` reaches
+`ReferenceElimination` as `&*(p + 4294967295)` (ILP32). Under **bitvector** arithmetic that is
+exactly `p - 1` — the addition wraps by construction. Under **integer** arithmetic nothing wraps, so
+one `p--` left the address 2^32 too large and `ptr_size[base] <= offset` fired on the next read.
+The tell: the sibling `n--` in the same loop was always correct, because the frontend wraps *its*
+unsigned arithmetic. What was lost is the wrapping of the **reconstructed** address, in both places
+the pass rebuilds one from `Reference(Dereference(base, off))` — the split path and the flat path.
+
+**Re-sign the step literal (`+4294967295` → `+ -1`), do not wrap the sum.** Both are correct;
+wrapping costs a `Mod` on *every* pointer step and was measured to turn a 3-second forward-scan
+proof into a timeout. The literal has to be read through `ExprUtils.simplify` — it arrives inside
+the frontend's casts, not as a bare `IntLitExpr` (matching on the bare literal silently does
+nothing, which cost a build cycle to notice).
+
+Bisection that got there, worth keeping: forward scan Safe / backwards Unsafe isolated it to the
+*direction*, not to the one-past-the-end pointer or the function call; then a fully **concrete**
+repro (`alloca(3)`, `cp = a+2`, walk down) still failing proved it was a modelling bug rather than a
+precision one; then `--arithmetic bitvector` → Unknown vs `integer` → Unsafe pinned the arithmetic
+mode. `openbsd_cmemrchr-alloca-2` itself is now a timeout rather than a wrong `false` (0 instead of
+−16) and may resolve at 900 s.
