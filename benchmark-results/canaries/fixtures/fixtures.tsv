@@ -36,3 +36,4 @@ alloca_declared.c	efficient	ILP32	SAFE	82	alloca is declared by stdlib.h
 memcpy_struct_cells.c	efficient	ILP32	SAFE	83	memcpy/memset on a struct pointee copy every cell, not n/4 of them
 vla_zero_length.c	efficient	ILP32	UNSAFE:valid-memsafety	83	a VLA sized from an unconstrained nondet may be zero-length (C11 6.7.6.2p5)
 vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	83	a VLA with a known-positive length is not flagged, and a fixed array costs nothing
+pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	83	p-- keeps its sign under integer arithmetic (backwards buffer walk)

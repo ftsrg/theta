@@ -62,6 +62,10 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import java.math.BigInteger
 
 /**
@@ -493,7 +497,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       val innerDeref = this.expr as Dereference<*, *, *>
       val base = innerDeref.array.flattenReferences()
       val off = innerDeref.offset.flattenReferences()
-      cast(Add(cast(base, base.type), cast(off, base.type)), this.type) as Expr<T>
+      cast(Add(cast(base, base.type), cast(signedStep(off), base.type)), this.type) as Expr<T>
     } else {
       withOps(ops.map { it.flattenReferences() })
     }
@@ -945,7 +949,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           AssignStmt.of(
             cast(split.offset, split.offset.type),
             cast(
-              Add(cast(src.offset.ref, split.offset.type), cast(offsetExpr, split.offset.type)),
+              Add(
+                cast(src.offset.ref, split.offset.type),
+                cast(signedStep(offsetExpr), split.offset.type),
+              ),
               split.offset.type,
             ),
           ),
@@ -1001,6 +1008,38 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
     val rewrittenRhs = rhs.changeComplexReferredVars(splitVars)
     return listOf(AssignStmt.of(cast(lhs, lhs.type), cast(rewrittenRhs, lhs.type)))
+  }
+
+  /**
+   * Re-signs a pointer step that was encoded as a large *unsigned* literal.
+   *
+   * Offsets are counted in the pointer-sized unsigned type, so `p--` reaches the pass as
+   * `&*(p + 4294967295)` under ILP32. Under **bitvector** arithmetic that is exactly `p - 1`,
+   * because the addition wraps by construction. Under **integer** arithmetic the operands are
+   * unbounded, so nothing wraps and the address ends up 2^32 too large: `MemsafetyPass` then
+   * recovers a nonsense object from it and reports a false invalid dereference on the very next
+   * read. Every backwards walk over a buffer was a false `valid-deref` alarm
+   * (`array-memsafety/openbsd_cmemrchr-alloca-2`, and the `cmemrchr` idiom generally), while the
+   * sibling `n--` in the same loop stayed correct -- the frontend had wrapped *that* one.
+   *
+   * Re-signing the literal rather than wrapping the sum in a modulo is deliberate. Both are
+   * correct; the modulo costs a `Mod` on **every** pointer step, which is enough to turn a
+   * three-second forward-scan proof into a timeout. `p + (-1)` stays linear and the solver keeps
+   * its cheap arithmetic.
+   *
+   * Only literals are re-signed. A symbolic offset is left alone: its value is an index, which is
+   * non-negative in every shape this reconstructs, and guessing otherwise would cost the modulo
+   * again for no gain.
+   */
+  private fun signedStep(offset: Expr<*>): Expr<*> {
+    if (offset.type !is IntType) return offset // bitvector: the addition already wraps
+    // Through the simplifier: the step arrives wrapped in the frontend's casts (a `Pos`, or the
+    // modulo of a fold), not as a bare literal.
+    val literal = ExprUtils.simplify(offset) as? IntLitExpr ?: return offset
+    val width = CComplexType.getUnsignedLong(parseContext).width()
+    val modulus = BigInteger.TWO.pow(width)
+    val half = BigInteger.TWO.pow(width - 1)
+    return if (literal.value >= half) IntExprs.Int(literal.value.subtract(modulus)) else offset
   }
 
   private fun Expr<*>.splitPairOf(splitVars: Map<VarDecl<*>, SplitVarPair>): SplitVarPair? {
