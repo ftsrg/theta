@@ -4722,3 +4722,32 @@ repro (`alloca(3)`, `cp = a+2`, walk down) still failing proved it was a modelli
 precision one; then `--arithmetic bitvector` → Unknown vs `integer` → Unsafe pinned the arithmetic
 mode. `openbsd_cmemrchr-alloca-2` itself is now a timeout rather than a wrong `false` (0 instead of
 −16) and may resolve at 900 s.
+
+### scopes cause D — storing a mid-object pointer is now refused (`25086001fe`)
+
+A pointer value occupies one memory cell, so it must be stored as one value; a `(base, offset)` pair
+is two. The pass emitted two `MemoryAssignStmt`s "one per channel" — but `multi` has one memory
+array and one `__theta_ptr_size`, so for the common `struct { T *p; }` field both dereferences are
+*identical* and the second store clobbered the first, leaving the cell holding the bare offset with
+the base lost. Eight lines reproduce it (`struct C { int *p; } c; c.p = &a[1]; return *c.p;` →
+`(Property valid-deref) Unsafe`); `test27-1` has the shape twice.
+
+Took the findings' **option 1**: throw `UnsupportedPointerSplitException` so the CLI rebuilds under
+`--memory-model flat`, where a mid-object pointer is a single scalar address. Flat is a better
+destination than when the finding was written, because this batch fixed its pointer arithmetic
+(`7cbb2fba3d`).
+
+**The width was measured, not assumed.** A 62-task sweep of the two families most likely to switch
+model (`ldv-regression` + `memsafety-ext3`, valid-memsafety), run with and without the change, is
+**identical task for task**: 39 PASS / 12 TIMEOUT / 6 ERROR / 5 FAIL both ways. Keep that method for
+model-level changes — the guard set alone (30 tasks) would not have caught a regression here.
+
+Two things that sweep incidentally pinned down, both pre-existing and both still open:
+- the 5 FAILs (`derefInLoop1`, `getNumbers1-1`, `scopes1`, `scopes3`, `scopes5`, all
+  expected `false` / got `true`) are exactly the missed-bug set of causes **G/H/I** — item 2;
+- the 6 ERRORs (`test24-1`, the four `test_union_cast*`, `naturalNumbers1`) are a **byte-addressed
+  union with a floating-point member**, refused by the frontend
+  (`ExpressionVisitor#unsupportedByteLaidOutMember`). Unrelated to pointers, not yet on the list.
+
+`test27-1`/`test25-2` show no movement at 75 s — earlier fixes in this batch had already taken them
+off their wrong `false` and onto timeouts.
