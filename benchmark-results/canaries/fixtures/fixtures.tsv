@@ -37,3 +37,4 @@ memcpy_struct_cells.c	efficient	ILP32	SAFE	83	memcpy/memset on a struct pointee 
 vla_zero_length.c	efficient	ILP32	UNSAFE:valid-memsafety	83	a VLA sized from an unconstrained nondet may be zero-length (C11 6.7.6.2p5)
 vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	83	a VLA with a known-positive length is not flagged, and a fixed array costs nothing
 pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	83	p-- keeps its sign under integer arithmetic (backwards buffer walk)
+store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	83	storing a mid-object pointer is refused, not clobbered onto one cell

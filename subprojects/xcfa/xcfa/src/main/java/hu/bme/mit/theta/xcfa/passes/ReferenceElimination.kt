@@ -852,25 +852,24 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         val hasSplitRefs = expr.containsSplitRefs(splitVars)
 
         if (hasSplitRefs) {
-          val baseDeref =
-            deref
-              .replaceSplitRefs(splitVars, SplitChannel.BASE)
-              .changeComplexReferredVars(splitVars) as Dereference<*, *, *>
-          val baseExpr =
-            expr.replaceSplitRefs(splitVars, SplitChannel.BASE).changeComplexReferredVars(splitVars)
-
-          val offsetDeref =
-            deref
-              .replaceSplitRefs(splitVars, SplitChannel.OFFSET)
-              .changeComplexReferredVars(splitVars) as Dereference<*, *, *>
-          val offsetExpr =
-            expr
-              .replaceSplitRefs(splitVars, SplitChannel.OFFSET)
-              .changeComplexReferredVars(splitVars)
-
-          listOf(
-            MemoryAssignStmt.create(baseDeref, baseExpr),
-            MemoryAssignStmt.create(offsetDeref, offsetExpr),
+          // A pointer value occupies exactly one memory cell, so it has to be stored as one value
+          // -- and a `(base, offset)` pair is two. There is no second channel to put the offset
+          // in: `multi` has one memory array and one `__theta_ptr_size`.
+          //
+          // This used to emit two `MemoryAssignStmt`s, one per channel, on the claim that they were
+          // separate channels. They are not. When the address is an ordinary cell -- the common
+          // `struct { T *p; }` field -- both dereferences are *identical*, so the second store
+          // clobbers the first and the cell ends up holding the bare offset with the base lost:
+          // `ptr_size[1] == 0` and the next read through it is reported as an invalid dereference.
+          // Eight lines were enough (`struct C { int *p; } c; c.p = &a[1]; return *c.p;`), and
+          // `memsafety-ext3/test27-1` has the shape twice. When the address *is* split it is worse:
+          // the second store goes to whatever object id the offset happens to equal.
+          //
+          // Refusing hands the program to `--memory-model flat`, where a mid-object pointer is a
+          // single scalar address and needs no channels at all -- which is precisely the shape that
+          // cannot be expressed here. The CLI rebuilds on this exception (see ExecuteConfig).
+          throw UnsupportedPointerSplitException(
+            "Unsupported pointer arithmetic: storing a mid-object pointer into memory"
           )
         } else {
           listOf(
