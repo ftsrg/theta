@@ -4616,7 +4616,7 @@ first result **40 seconds** after that same line. So this is the cluster, not th
 Skylake pool is busy/unavailable or a LOW-priority job is sitting behind others. Not acted on: the
 CPU pin is unconditional (see memory) and raising priority on a shared cluster is not ours to do.
 
-### Cause J (zero-length VLA) — ATTEMPTED, reverted. Read this before trying again.
+### Cause J (zero-length VLA) — SHIPPED in `323c583fc7`. The note below is the failed first attempt.
 
 **Ground truth confirmed** (the investigator's own confidence was only medium, so I checked): all
 seven `loops/` tasks — `sum_array-1`, `sum_array-2`, `matrix-2`, `insertion_sort-1`,
@@ -4649,3 +4649,23 @@ survive LBE/simplify); or a list of size expressions recorded by `AllocaFunction
 Also worth knowing before starting: `invert_string-2` additionally does `str1[MAX-1]` → `str1[-1]`
 when `MAX == 0`, so it has a second, independent violation the existing negative-index guard should
 already catch once the object exists.
+
+**Second attempt, shipped.** The way past the `breakUpErrors` problem is not to emit an error edge
+at all: `AllocaFunctionPass` now appends a **read of cell 0** to a runtime-sized stack allocation,
+and `MemsafetyPass.annotateDeref` turns it into exactly the right check by itself — its guard is
+`ptr_size[base] <= index`, which at index 0 *is* `size <= 0`. Smaller than the plumbing it replaces,
+and immune to pass ordering because it is an ordinary dereference.
+
+Confined to non-literal sizes (so `int a[10]` and the constant-sized subobject allocations cost
+nothing) and to memsafety only (so `no-data-race` never sees a read the program did not perform).
+
+**All seven `loops/` tasks recovered** — `sum_array-1`/`-2`, `matrix-2`, `insertion_sort-1`/`-2`,
+`invert_string-2`, `bubble_sort-1` now report the expected `false`.
+
+The exposure worth measuring was that the probe also covers explicit `alloca(n)`, and 45 of the
+`array-memsafety/*-alloca-*` tasks expect `true`. Measured over all 52 tasks of both families:
+one FAIL (`openbsd_cmemrchr-alloca-2`) and 44 timeouts at 90 s — **all pre-existing**, confirmed by
+re-running them with the probe disabled, where they behave identically. `openbsd_cmemrchr-alloca-2`
+clamps `n` to `[1, MAX]` before the `alloca`, so the probe cannot fire on it; it is an independent
+wrong result and is *not* yet triaged. The 44 timeouts are that family's ordinary slowness (the
+guard set has always had `cstrncpy-alloca-2` timing out).
