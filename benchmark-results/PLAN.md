@@ -4569,3 +4569,49 @@ it used `theta27-hardness900.xml`.
 
 Sanity checks before trusting progress: `grep -c "Cannot start process"` must be 0; `writeRunResult`
 counts submissions, not completions; done = all `.xml.bz2` present **and** the screen session gone.
+
+---
+
+## Batch 83
+
+### scopes cause F — `memcpy`/`memset` copied `n / 4` cells (`4521d52f7e`)
+
+`MemoryFunctionsPass` turned a byte count into a cell count by dividing by an element width, and the
+guard that was supposed to refuse a struct pointee never fired: **`CStruct`, `CArray` and `CPointer`
+all extend `CInteger`**, so `embedded is CInteger` is true for a struct. `memcpy(p, &d, 4)` on a
+four-`unsigned char` struct resolved its element to the *struct* (`width()` 32) and copied one cell,
+leaving three of four holding whatever they held before — silently. A struct pointee now takes a
+whole-object copy driven by the **cell layout** (a cell is one member, whatever its C width),
+restricted to objects whose every cell is a scalar and to a byte count equal to the object's size.
+`memset` likewise, zero fill only. Findings' repro: `(Property valid-free) Unsafe` → Safe.
+
+⚠️ This moves many verdicts at once and wants its own run — do not read a mixed run as a measurement
+of it.
+
+### Item 7 (`ReferenceElimination.__sp`) — CLEARED, no bug. Do not re-investigate.
+
+I flagged this in batch 82 as possibly the same shape as the alloca/static base collision. It is
+not, and the reason is worth recording so nobody spends the time again.
+
+`cnt` (companion object, `3k+2`) has exactly two consumers: the compile-time bases for address-taken
+**globals** (`globalReferredVars`, :172) and the one-off seed of `__sp` (:259), which then steps at
+*runtime* for address-taken **locals**. `globalReferredVars` is `computeIfAbsent("references")` over
+*all* procedures and is called at `run()`:116 for **every** procedure — so every compile-time id is
+handed out in one shot on the first procedure, before any `__sp` seed, and nothing reads `cnt`
+afterwards. `__sp` therefore always starts above every compile-time id.
+
+Measured (`scratchpad/w/sp2.c`: three address-taken globals + one split + three address-taken
+locals): globals get **2, 5, 8**; `__sp` is seeded at **11** and steps 14, 17, 20. No overlap.
+
+Residual, unrelated and low priority: `cnt` is static for the JVM's lifetime, so repeated in-process
+XCFA rebuilds keep climbing. Harmless today (the portfolio forks a subprocess per configuration),
+but under flat addressing ids are `× 65536` and a 32-bit pointer only has 65536 slices.
+
+### Run 82 is STALLED in the vcloud queue — not a theta problem
+
+As of 02:26 (4 h 22 min after launch): submission accepted ("Waiting for 36602 run results"),
+client alive, connection ESTABLISHED, `Cannot start process` = 0, and **0 of 36602 results**.
+Run 80 — identical flags, same host, `--vcloudPriority LOW`, `--vcloudCPUModel Skylake` — wrote its
+first result **40 seconds** after that same line. So this is the cluster, not the launch: either the
+Skylake pool is busy/unavailable or a LOW-priority job is sitting behind others. Not acted on: the
+CPU pin is unconditional (see memory) and raising priority on a shared cluster is not ours to do.
