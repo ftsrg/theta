@@ -33,6 +33,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
@@ -57,8 +59,14 @@ import java.math.BigInteger
  * It also means the count has to be *known*. A symbolic one wants a loop, and a loop wants the
  * element size to divide a bound we cannot see -- so it is not attempted, and such a call is left
  * exactly as it was: it will still fail, loudly, which is the same as before and better than a copy
- * that quietly moves the wrong number of bytes. Same for a pointer to a struct, which has no single
- * element type to copy in.
+ * that quietly moves the wrong number of bytes.
+ *
+ * A pointer to a **struct** has no single element type, so it takes the other route: a whole-object
+ * copy, driven by the object's cell layout rather than by any element width. That is the only
+ * correct reading, because a cell is one *member*, whatever its C width -- a struct of four
+ * `unsigned char` is four cells in four bytes. Restricted to objects whose every cell is a scalar:
+ * a nested aggregate member's cell holds the *base id* of a separate object, and copying that cell
+ * would make the two objects share storage instead of copying it.
  */
 class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogger: Logger) :
   ProcedurePass {
@@ -108,6 +116,26 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     if (invoke.params.size < 4) return null
     val dst = invoke.params[1]
     val src = invoke.params[2]
+
+    // A whole-object copy (`memcpy(p, q, sizeof *p)`, which is what these calls almost always are)
+    // has to be driven by the object's *cell layout*, not by an element width: cells are one per
+    // scalar member whatever its C width, so a struct of four `unsigned char` is four cells in four
+    // bytes, not one.
+    aggregateOf(dst)?.let { (pointee, cells, bytes) ->
+      if (literalValue(invoke.params[3]) != bytes) return giveUp(invoke)
+      val stmts =
+        (0 until cells).map { i ->
+          val cellType = cellTypeAt(pointee, i)
+          MemoryAssignStmt.create(
+            deref(dst, indexOf(i, dst), cellType),
+            cast(deref(src, indexOf(i, src), cellType), cellType.smtType),
+          )
+        }
+      return SequenceLabel(
+        stmts.map { StmtLabel(it, metadata = invoke.metadata) } + returns(invoke, dst)
+      )
+    }
+
     val element = elementOf(dst) ?: elementOf(src) ?: return giveUp(invoke)
     val count = elementCount(invoke.params[3], element) ?: return giveUp(invoke)
 
@@ -129,6 +157,26 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     if (invoke.params.size < 4) return null
     val dst = invoke.params[1]
     val value = invoke.params[2]
+
+    // `memset(p, 0, sizeof *p)` on an aggregate, by cells rather than by element width -- see the
+    // matching branch in [copy]. Only the zero fill is claimed: a non-zero byte means something
+    // different in every cell whose width is not one byte, and there is no honest cell value for it.
+    aggregateOf(dst)?.let { (pointee, cells, bytes) ->
+      if (literalValue(value) != BigInteger.ZERO) return giveUp(invoke)
+      if (literalValue(invoke.params[3]) != bytes) return giveUp(invoke)
+      val stmts =
+        (0 until cells).map { i ->
+          val cellType = cellTypeAt(pointee, i)
+          MemoryAssignStmt.create(
+            deref(dst, indexOf(i, dst), cellType),
+            cast(cellType.nullValue, cellType.smtType),
+          )
+        }
+      return SequenceLabel(
+        stmts.map { StmtLabel(it, metadata = invoke.metadata) } + returns(invoke, dst)
+      )
+    }
+
     val element = elementOf(dst) ?: return giveUp(invoke)
     val count = elementCount(invoke.params[3], element) ?: return giveUp(invoke)
 
@@ -213,16 +261,86 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     return null
   }
 
-  /** The type the pointer points at -- scalars only; a struct has no single element to copy. */
+  /**
+   * The type the argument points at, whatever it is.
+   *
+   * A struct-typed argument denotes the object itself, not a value: a struct's value in this model
+   * *is* its base id, so `memcpy(&s, ...)` arrives typed `CStruct`, not `CPointer` to one -- and C
+   * gives no other way for a struct to reach a `void *` parameter.
+   */
+  private fun pointeeOf(pointer: Expr<*>): CComplexType? =
+    when (val type = CComplexType.getType(pointer, parseContext)) {
+      is CStruct -> type
+      is CArray -> type.embeddedType // CArray, CPointer and CStruct are all CIntegers here,
+      is CPointer -> type.embeddedType // so the branches have to be spelled out in this order
+      else -> null
+    }
+
+  /**
+   * The type the pointer points at, for the *element-wise* copy -- scalars only, since a compound
+   * has no single element type to copy in.
+   *
+   * ⚠️ `CStruct`, `CArray` and `CPointer` all extend `CInteger` in this type hierarchy, so the
+   * `embedded is CInteger` test this used to end with was true for a struct as well. The pass's own
+   * doc has always claimed a pointer to a struct is refused; in fact `memcpy(p, &d, 4)` on a
+   * four-`unsigned char` struct silently resolved its element to the *struct*, whose `width()` is
+   * 32, and copied `4 / 4 = 1` cell -- leaving three of the destination's four cells holding
+   * whatever they held before, with no warning. A pointer element is a genuine one-cell scalar and
+   * stays here; struct and array pointees go to [aggregateOf] instead.
+   */
   private fun elementOf(pointer: Expr<*>): CComplexType? {
-    val embedded =
-      when (val type = CComplexType.getType(pointer, parseContext)) {
-        is CPointer -> type.embeddedType
-        is CArray -> type.embeddedType
-        else -> null
-      } ?: return null
+    val embedded = pointeeOf(pointer) ?: return null
+    if (embedded is CStruct || embedded is CArray) return null
     return if (embedded is CInteger || embedded is CReal) embedded else null
   }
+
+  /**
+   * The pointee of [pointer] when it is an aggregate whose every cell is a scalar, along with that
+   * cell count and its byte size -- null when the pointee is not an aggregate, or is one this
+   * cannot state exactly.
+   *
+   * A nested aggregate member disqualifies the whole object: its parent cell holds the *base id* of
+   * a separate object, so copying that cell would make the two objects share storage rather than
+   * copy it. A union likewise, whose cells mean different things to different members.
+   */
+  private fun aggregateOf(pointer: Expr<*>): Triple<CComplexType, Int, BigInteger>? {
+    val pointee = pointeeOf(pointer) ?: return null
+    if (pointee !is CStruct && pointee !is CArray) return null
+    val cells = flatCells(pointee) ?: return null
+    val bits = ObjectLayout.of(pointee, parseContext.architecture).bitSize()
+    if (bits <= 0 || bits % 8 != 0) return null
+    return Triple(pointee, cells, BigInteger.valueOf((bits / 8).toLong()))
+  }
+
+  /** How many cells [type] occupies when all of them are scalars; null if any is not. */
+  private fun flatCells(type: CComplexType): Int? =
+    when {
+      type is CArray -> {
+        val dimension = ObjectLayout.constantDimension(type)
+        val element = flatCells(type.embeddedType)
+        if (dimension == null || element == null) null else dimension * element
+      }
+
+      type is CStruct ->
+        if (type.isUnion || type.fields.any { it.get2() is CStruct || it.get2() is CArray }) null
+        else type.unitCount
+
+      else -> 1
+    }
+
+  /** The type of cell [index] of a flat aggregate. */
+  private fun cellTypeAt(type: CComplexType, index: Int): CComplexType =
+    when {
+      type is CArray -> {
+        val stride = flatCells(type.embeddedType) ?: 1
+        cellTypeAt(type.embeddedType, if (stride > 0) index % stride else 0)
+      }
+
+      type is CStruct ->
+        type.fields.firstOrNull { type.unitOffsetOf(it.get1()) == index }?.get2() ?: type
+
+      else -> type
+    }
 
   /** How many elements `n` bytes are, or null if that is not a whole, known number of them. */
   private fun elementCount(bytes: Expr<*>, element: CComplexType): Int? {
