@@ -4615,3 +4615,37 @@ Run 80 — identical flags, same host, `--vcloudPriority LOW`, `--vcloudCPUModel
 first result **40 seconds** after that same line. So this is the cluster, not the launch: either the
 Skylake pool is busy/unavailable or a LOW-priority job is sitting behind others. Not acted on: the
 CPU pin is unconditional (see memory) and raising priority on a shared cluster is not ours to do.
+
+### Cause J (zero-length VLA) — ATTEMPTED, reverted. Read this before trying again.
+
+**Ground truth confirmed** (the investigator's own confidence was only medium, so I checked): all
+seven `loops/` tasks — `sum_array-1`, `sum_array-2`, `matrix-2`, `insertion_sort-1`,
+`insertion_sort-2`, `invert_string-2`, `bubble_sort-1` — carry
+`expected_verdict: false` **and** `subproperty: valid-deref`, and each sizes a VLA from an
+unconstrained nondet with no positivity assume. C11 6.7.6.2p5 makes `n == 0` undefined, and the
+model cannot see it: the object simply gets size 0, every `for (i=0;i<n;i++)` runs zero times, so no
+dereference happens and no access guard can fire.
+
+**The obvious placement does not work.** I emitted the `size <= 0` edge to `errorLoc` from
+`AllocaFunctionPass` (pass group 2), guarded on `MemsafetyPass.enabled` and on the size not being a
+literal. It compiles, it is emitted — and it is silently **neutralised**:
+`MemsafetyPass.breakUpErrors` (pass group 12) begins by redirecting *every* incoming edge of
+`errorLoc` to `finalLoc`, which is how `reach_error()` is disabled under memsafety. Measured:
+`int A[M];` with unconstrained `M` still came back **Safe**. Reverted rather than left as dead code.
+
+Nor can the check be parked on a location of its own for MemsafetyPass to wire up later —
+`RemoveDeadEnds` (group 8) runs in between and deletes a location with no outgoing edge.
+
+**So the check has to be emitted from inside `MemsafetyPass`, after `breakUpErrors`** — i.e. a new
+`annotateEmptyAlloca` alongside `annotateDeref`. The hard part is telling an `alloca`-recorded size
+from a `malloc`-recorded one there, because the invoke is long gone by then and **`malloc(0)` is
+perfectly legal C** — it must not be flagged. Candidate discriminators, in order of robustness:
+the base's residue class (`3k+1` stack vs `3k+0` heap, which `annotateFree` already tests with
+`Rem(argument, 3)`); the `__malloc + 1` fingerprint that `StackArrayAllocaTest` keys on (may not
+survive LBE/simplify); or a list of size expressions recorded by `AllocaFunctionPass` on
+`builder.metaData` and matched *structurally* (not by identity — see the `cType` trap in
+`4521d52f7e`'s sibling commit).
+
+Also worth knowing before starting: `invert_string-2` additionally does `str1[MAX-1]` → `str1[-1]`
+when `MAX == 0`, so it has a second, independent violation the existing negative-index guard should
+already catch once the object exists.
