@@ -4669,3 +4669,29 @@ re-running them with the probe disabled, where they behave identically. `openbsd
 clamps `n` to `[1, MAX]` before the `alloca`, so the probe cannot fire on it; it is an independent
 wrong result and is *not* yet triaged. The 44 timeouts are that family's ordinary slowness (the
 guard set has always had `cstrncpy-alloca-2` timing out).
+
+### Run 84 launched 2026-08-04 09:40 (sosy) — benchcloud went offline
+
+Run 82 on benchcloud never started (0 of 36602 results in 11.5 h; the host is down). Resubmitted on
+sosy at **HEAD `323c583fc7`**, so run 84 measures batches 82 **and** 83 together — the isolation
+that "cause F wants its own run" asked for is gone, and that is a deliberate trade: one measured run
+beats none. Attribute F/J movement with care.
+
+- tool dir `Theta-svcomp-84` (relative — an absolute path makes every run die as
+  `Cannot start process` while looking like a completed benchmark)
+- `xmls/theta27-long900.xml`, **created on sosy for this run** by taking `theta27-short.xml` and
+  raising `timelimit` 5→15 min and `hardtimelimit` 6→16 min; identical in every other respect
+  (verified by diff). sosy had no 900 s XML.
+- `--vcloudCPUModel 5750G --vcloudClientHeap 8192`, tmux session `theta-bench-84`, log
+  `/data/scratch/bajczi/bench-theta27-84-20260804-0940.log`, results under
+  `results/Theta-svcomp-84/theta27-long900.xml/2026-08-04_09:40:17/`.
+
+**Baseline is run 79** (`results/Theta-svcomp-79/theta27-short.xml/2026-07-28_13:13:07/`) — same
+host, same XML content, same `5750G` pin, same client heap. The one difference is the time limit,
+300 s vs 900 s, and it is asymmetric in a way that suits this batch: a longer limit can turn a
+TIMEOUT into a result but can never turn a correct result into a wrong one. So **"correct in 79,
+wrong in 84" is a real regression**; "newly solved in 84" is confounded by the extra time and must
+not be counted as a win without checking the 79 status was TIMEOUT rather than a wrong verdict.
+
+Benchcloud's run 82 was left queued rather than killed: if that host ever comes back it produces a
+clean batch-82-only measurement, which is strictly useful.
