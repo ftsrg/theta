@@ -4875,3 +4875,31 @@ Two ways to unblock, for whoever picks this up:
 **Erroring is worth 0; a wrong answer is worth −32. When the model is known to be unsound for a
 shape, a loud failure is better than a confident answer** — that is why this is parked rather than
 merged.
+
+### C99 hex float constants were refused, killing the frontend on 134 files (`eab619083c`)
+
+`0x1.4p+4` threw "Hexadecimal FP constants are not yet supported", which takes down the whole
+frontend, not just the expression. **134 benchmark files contain one** — 104 in `coreutils-v8.31`,
+the rest in `floats-cbmc-regression`, `ldv-regression`, `floats-esbmc-regression`.
+
+A/B on the 30 non-coreutils files, built both ways: **0/30 parsed before, 16/30 after**. The other
+14 fail for unrelated reasons. `ldv-regression/test_union_cast.i` and `test_union_cast-2.i` went
+from crash to the expected `true`.
+
+Java's literal syntax is C99's and `Double.parseDouble` reads it exactly — a hex literal names a
+binary value directly, so nothing rounds. The fixture pins values, not just the parse. `long double`
+keeps the refusal (wider significand than a `double`, so the round-trip could silently round).
+
+### Item 3 was three unrelated causes, not one
+
+The 6 "ERROR rc=210" tasks from the cause-D A/B split into:
+1. `test_union_cast.i`, `test_union_cast-2.i` — **hex float constants**. Fixed above.
+2. `naturalNumbers1` — **dimensionless local array** (`char a[] = {…}`) NPE. Fix written and
+   **parked** — see the section above; it is net −32 until the cell/byte gap closes.
+3. `test_union_cast-1.i`, `test_union_cast.c_1.i` — the genuine **byte-addressed union with a
+   floating-point member** refusal (`ExpressionVisitor#unsupportedByteLaidOutMember`). Still open.
+   Note what these tasks actually need: the `double` member is only ever *written*
+   (`var.z = 0x1.4p+4; var.y = 10u; assert(var.y == 10u)`), never read. So a **constant** float
+   store could write its exact IEEE-754 bytes at compile time — no `fpToIEEEBV`, no NaN round-trip,
+   which is what the refusal exists to prevent. Reads stay refused. That looks like the cheap,
+   sound way in; it was not attempted this firing.
