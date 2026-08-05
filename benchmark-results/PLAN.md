@@ -4751,3 +4751,46 @@ Two things that sweep incidentally pinned down, both pre-existing and both still
 
 `test27-1`/`test25-2` show no movement at 75 s — earlier fixes in this batch had already taken them
 off their wrong `false` and onto timeouts.
+
+### scopes cause H — stack objects now die at function return (`0ecbd6b1d6`)
+
+`AllocaFunctionPass` has always *asserted* in its own doc that alloca memory "is released when the
+function returns"; nothing ever emitted the release, so `__theta_ptr_size[base]` was written once at
+the allocation and cleared only by an explicit `free`. **Any use-after-return of alloca memory was
+accepted** — `memsafety-ext3/getNumbers1-1` (`return array;` then the caller reads through it) now
+reports the expected `false`.
+
+No new checking machinery was needed: `annotateDeref` already reports `ptr_size[base] <= index`, so
+zeroing the size on the return edges makes the existing guard fire unchanged. Only the *last* base a
+repeated allocation produced is released (a variable holds one value); releasing too few objects can
+leave a bug unfound but never invent one.
+
+Measured on the surface it most exposes — the 45 `array-memsafety/*-alloca-*` tasks all expect
+`true`, so an early release would show as wrong `false`: **0 FAIL** over the 52-task alloca/VLA
+sweep (45 TIMEOUT, 7 PASS).
+
+### scopes cause G — still open. Read this before attempting it.
+
+The remaining four missed bugs of the family: `scopes1`, `scopes3`, `scopes5`, `derefInLoop1`.
+Same missing mechanism as H, one scope level down — an object's lifetime ends at **block** exit —
+but it does *not* reduce to the same fix, for two reasons.
+
+**1. It cannot be done in a pass.** Block-local allocas are hoisted out of their block (the findings
+show `scopes5`'s array allocated in `main_init`), so by pass time there is no block boundary left to
+attach a release to. It needs the frontend, where `FunctionVisitor` still has the structure — but
+the scope stack is pushed/popped at **nine** sites (`visitBlockItemList`, `if`, `for`, `while`,
+`dowhile`, `switch`, …), and each would need the release appended to *its* block's `CCompound`, plus
+a marker invoke for a pass to turn into `deallocate`. That is a design addition, not a patch.
+
+**2. `scopes1` is not an alloca at all.** Its `{ int myNumberA = 7; myPointerA = &myNumberA; }` is an
+address-taken *scalar*, which `ReferenceElimination` gives a **compile-time** `3k+2` base allocated
+once at procedure entry. Releasing it at block exit needs a separate mechanism from the alloca one.
+So even a complete block-scope release for allocas gets 3 of the 4.
+
+⚠️ **The cheap shortcut is unsound — do not take it.** "Release the old object when the same variable
+is re-alloca'd" fixes `scopes3` and `derefInLoop1` for about five lines, and is wrong for explicit
+`alloca()`: C keeps *that* memory alive until the **function** returns, not until the next iteration,
+so a loop doing `p = alloca(n)` and keeping the old pointer would get a false `valid-deref` alarm —
+a wrong `false`, the worst direction. Distinguishing declaration allocas from explicit ones by the
+target variable's name is a naming heuristic and too fragile to rest a memory-safety verdict on.
+(This is the same declaration-vs-explicit `alloca` distinction cause J ran into.)
