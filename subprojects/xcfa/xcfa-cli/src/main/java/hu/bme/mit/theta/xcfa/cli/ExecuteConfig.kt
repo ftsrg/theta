@@ -265,6 +265,12 @@ private fun buildFrontend(
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
     parseContext.memoryModel = cConfig.effectiveMemoryModel
+    // Mirrors `MemsafetyPass.enabled` on the frontend side, from the same property: the c-frontend
+    // module cannot see the pass. Anything the frontend emits solely for the memory-safety checks
+    // is gated on this, so the XCFA for every other property is byte-for-byte what it was.
+    parseContext.isCheckMemsafety =
+      config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
+        config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger, allowFlatFallback)

@@ -36,6 +36,17 @@ public class ParseContext {
     private Boolean signedWraparound = false;
     private MemoryModelType memoryModel = MemoryModelType.multi;
 
+    /**
+     * Whether the property being verified is a memory-safety one.
+     *
+     * The frontend emits object-lifetime bookkeeping (see {@code FunctionVisitor}'s scope-end
+     * releases) that only the memory-safety checks read. Under any other property that bookkeeping
+     * would be pure cost -- and worse, an observable change to a model nothing asks a question of --
+     * so it is gated on this. The c-frontend module cannot see {@code MemsafetyPass.enabled}, which
+     * is where the same decision is recorded on the pass side; both are set from the same property.
+     */
+    private boolean checkMemsafety = false;
+
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
     // --
@@ -55,6 +66,14 @@ public class ParseContext {
     // dereference yields the subobject's base. This maps (parent base, field offset) -> subobject
     // base so the race check can follow that chain to the object the atomicity is recorded against.
     private final Map<BigInteger, Map<Integer, BigInteger>> subObjectCells = new LinkedHashMap<>();
+
+    public boolean isCheckMemsafety() {
+        return checkMemsafety;
+    }
+
+    public void setCheckMemsafety(boolean checkMemsafety) {
+        this.checkMemsafety = checkMemsafety;
+    }
 
     public ParseContext() {
         metadata = new FrontendMetadata();

@@ -129,7 +129,38 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       }
     }
     releaseAtReturn(builder, allocated)
+    lowerScopeEnds(builder)
     return builder
+  }
+
+  /**
+   * Turns the frontend's scope-end markers into the release they stand for.
+   *
+   * An object's storage dies when its *block* is left. Nothing said so: `__theta_ptr_size[base]`
+   * was written once at the allocation and cleared only by an explicit `free`, so
+   * `{ int a[10]; p = a; }` followed by `p[0] = 1` was accepted, and so was the next iteration of
+   * `for (...) { int a[10]; ... }` writing through the previous iteration's array
+   * (`memsafety-ext3/scopes3`, `scopes5`, `derefInLoop1` -- and `derefInLoop1` is the proof the
+   * *check* was always fine: the model already gives each unrolled iteration its own base, it just
+   * never retired the old one).
+   *
+   * The marker is only ever emitted under a memory-safety property (see
+   * `FunctionVisitor#withScopeReleases`), so no other property's model is touched. It is dropped
+   * rather than left as an unresolved call, which would bring the analysis down.
+   */
+  private fun lowerScopeEnds(builder: XcfaProcedureBuilder) {
+    for (edge in ArrayList(builder.getEdges())) {
+      val labels = edge.getFlatLabels()
+      if (labels.none { it is InvokeLabel && it.name == SCOPE_END }) continue
+      val lowered =
+        labels.mapNotNull { label ->
+          if (label !is InvokeLabel || label.name != SCOPE_END) label
+          else if (!MemsafetyPass.enabled) null
+          else builder.parent.deallocate(parseContext, label.params[1])
+        }
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(SequenceLabel(lowered, edge.label.metadata)))
+    }
   }
 
   /**
@@ -207,5 +238,10 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   private fun predicate(it: XcfaLabel): Boolean {
     return it is InvokeLabel && it.name == "alloca"
+  }
+
+  private companion object {
+    /** Must match `FunctionVisitor.SCOPE_END`. */
+    const val SCOPE_END = "__theta_scope_end"
   }
 }

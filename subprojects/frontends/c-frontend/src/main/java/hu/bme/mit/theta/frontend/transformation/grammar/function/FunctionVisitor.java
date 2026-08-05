@@ -84,6 +84,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     public void clear() {
         variables.clear();
+        scopedAllocas.clear();
         atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
@@ -129,6 +130,87 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
         return varDecl;
     }
+
+    /**
+     * The stack objects declared in each open scope, innermost last -- kept in lockstep with
+     * {@link #variables} by {@link #pushScope}/{@link #popScope}.
+     *
+     * Only populated when a memory-safety property is being verified; see {@link #registerScoped}.
+     */
+    private final Deque<List<VarDecl<?>>> scopedAllocas = new ArrayDeque<>();
+
+    private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
+        variables.push(scope);
+        scopedAllocas.push(new ArrayList<>());
+    }
+
+    private void popScope() {
+        variables.pop();
+        scopedAllocas.pop();
+    }
+
+    /**
+     * Records that {@code varDecl} names a stack object whose lifetime ends with the current scope.
+     */
+    private void registerScoped(VarDecl<?> varDecl) {
+        if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
+            scopedAllocas.peek().add(varDecl);
+        }
+    }
+
+    /**
+     * Appends a lifetime-end marker for every stack object the current scope declared at or after
+     * {@code mark}, so that the memory-safety checks see the object die where C says it does.
+     *
+     * <p>An object's storage is released when its *block* is left, and nothing ever said so:
+     * `__theta_ptr_size[base]` was written once and cleared only by an explicit `free`, so
+     * `{ int a[10]; p = a; }` followed by `p[0] = 1` was accepted, as was the next iteration of
+     * `for (...) { int a[10]; ... }` writing through the previous one's array
+     * (`memsafety-ext3/scopes3`, `scopes5`, `derefInLoop1`). The marker becomes a `deallocate` in
+     * {@link hu.bme.mit.theta.xcfa.passes.AllocaFunctionPass}, after which the existing
+     * `ptr_size[base] <= index` guard catches the stale access unchanged.
+     *
+     * <p>Emitted only under a memory-safety property, so the model every other property sees is
+     * exactly what it was. Emitted at the end of the block, so a `break`, `goto` or `return` that
+     * leaves early simply skips it -- releasing fewer objects can leave a bug unfound, never invent
+     * one (and `return` is covered one level up, by the release at procedure exit).
+     */
+    private CStatement withScopeReleases(CStatement body, int mark) {
+        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        if (!parseContext.isCheckMemsafety() || scoped == null || scoped.size() <= mark) {
+            return body;
+        }
+        final CCompound wrapper = new CCompound(parseContext);
+        wrapper.addCStatement(body);
+        for (VarDecl<?> varDecl : scoped.subList(mark, scoped.size())) {
+            wrapper.addCStatement(
+                    new CCall(SCOPE_END, List.of(new CExpr(varDecl.getRef(), parseContext)),
+                            parseContext));
+        }
+        return wrapper;
+    }
+
+    /** Appends the current scope's lifetime-end markers directly to an existing compound. */
+    private void releaseScopedInto(CCompound compound, int mark) {
+        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        if (!parseContext.isCheckMemsafety() || scoped == null) {
+            return;
+        }
+        for (VarDecl<?> varDecl : scoped.subList(mark, scoped.size())) {
+            compound.addCStatement(
+                    new CCall(SCOPE_END, List.of(new CExpr(varDecl.getRef(), parseContext)),
+                            parseContext));
+        }
+    }
+
+    /** How many stack objects the current scope has declared so far. */
+    private int scopeMark() {
+        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        return scoped == null ? 0 : scoped.size();
+    }
+
+    /** Marks the end of a stack object's lifetime; lowered by AllocaFunctionPass. */
+    public static final String SCOPE_END = "__theta_scope_end";
 
     private String getName(final String name) {
         final StringJoiner sj = new StringJoiner("::");
@@ -207,7 +289,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         this.typedefVisitor = declarationVisitor.getTypedefVisitor();
         this.typeVisitor = declarationVisitor.getTypeVisitor();
         variables = new ArrayDeque<>();
-        variables.push(Tuple2.of("", new LinkedHashMap<>()));
+        pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables = new ArrayList<>();
         functions = new LinkedHashMap<>();
         this.parseContext = parseContext;
@@ -258,8 +340,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     @Override
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
+        scopedAllocas.clear();
         atomicVariables.clear();
-        variables.push(Tuple2.of("", new LinkedHashMap<>()));
+        pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
         declareMallocReturnsPointer();
@@ -470,7 +553,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
             functions.put(varDecl, funcDecl);
         }
-        variables.push(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
             if (functionParam.getName() != null) createVars(functionParam);
@@ -478,7 +561,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
         if (blockItemListContext != null) {
             CStatement accept = blockItemListContext.accept(this);
-            variables.pop();
+            popScope();
             CFunction cFunction =
                     new CFunction(
                             funcDecl,
@@ -489,7 +572,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             recordMetadata(ctx, cFunction);
             return cFunction;
         }
-        variables.pop();
+        popScope();
         CCompound cCompound = new CCompound(parseContext);
         CFunction cFunction =
                 new CFunction(
@@ -507,14 +590,16 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitBlockItemList(CParser.BlockItemListContext ctx) {
         CCompound compound = new CCompound(parseContext);
         if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
-            variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
+            pushScope(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
         for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
             currentStatementContext.push(Tuple2.of(blockItemContext, Optional.of(compound)));
             compound.addCStatement(blockItemContext.accept(this));
             currentStatementContext.pop();
         }
-        if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
-            variables.pop();
+        if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext) {
+            releaseScopedInto(compound, 0);
+            popScope();
+        }
         recordMetadata(ctx, compound);
         return compound;
     }
@@ -582,7 +667,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     @Override
     public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
         parseContext.getCStmtCounter().incrementBranches();
-        variables.push(Tuple2.of("if" + anonCnt++, new LinkedHashMap<>()));
+        pushScope(Tuple2.of("if" + anonCnt++, new LinkedHashMap<>()));
         CStatement condition = ctx.expression().accept(this);
         // Each arm is a scope of its own. A brace-enclosed arm does not open one itself --
         // `visitBlockItemList` only does that for a block nested directly in another block -- so
@@ -598,7 +683,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 ctx.statement().size() > 1 ? inOwnScope("else", ctx.statement(1)) : null;
         CIf cIf = new CIf(condition, thenArm, elseArm, parseContext);
         recordMetadata(ctx, cIf);
-        variables.pop();
+        popScope();
         return cIf;
     }
 
@@ -607,52 +692,58 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * sibling's.
      */
     private CStatement inOwnScope(String kind, CParser.StatementContext statement) {
-        variables.push(Tuple2.of(kind + anonCnt++, new LinkedHashMap<>()));
+        pushScope(Tuple2.of(kind + anonCnt++, new LinkedHashMap<>()));
         try {
-            return statement.accept(this);
+            return withScopeReleases(statement.accept(this), 0);
         } finally {
-            variables.pop();
+            popScope();
         }
     }
 
     @Override
     public CStatement visitSwitchStatement(CParser.SwitchStatementContext ctx) {
-        variables.push(Tuple2.of("switch" + anonCnt++, new LinkedHashMap<>()));
+        pushScope(Tuple2.of("switch" + anonCnt++, new LinkedHashMap<>()));
         CSwitch cSwitch =
                 new CSwitch(
                         ctx.expression().accept(this), ctx.statement().accept(this), parseContext);
         recordMetadata(ctx, cSwitch);
-        variables.pop();
+        popScope();
         return cSwitch;
     }
 
     @Override
     public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
         parseContext.getCStmtCounter().incrementWhileLoops();
-        variables.push(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
+        pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
+        final int whileMark = scopeMark();
         CWhile cWhile =
                 new CWhile(
-                        ctx.statement().accept(this), ctx.expression().accept(this), parseContext);
+                        withScopeReleases(ctx.statement().accept(this), whileMark),
+                        ctx.expression().accept(this),
+                        parseContext);
         recordMetadata(ctx, cWhile);
-        variables.pop();
+        popScope();
         return cWhile;
     }
 
     @Override
     public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
-        variables.push(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
+        pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
+        final int doWhileMark = scopeMark();
         CDoWhile cDoWhile =
                 new CDoWhile(
-                        ctx.statement().accept(this), ctx.expression().accept(this), parseContext);
+                        withScopeReleases(ctx.statement().accept(this), doWhileMark),
+                        ctx.expression().accept(this),
+                        parseContext);
         recordMetadata(ctx, cDoWhile);
-        variables.pop();
+        popScope();
         return cDoWhile;
     }
 
     @Override
     public CStatement visitForStatement(CParser.ForStatementContext ctx) {
         parseContext.getCStmtCounter().incrementForLoops();
-        variables.push(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
+        pushScope(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
         CStatement init = ctx.forCondition().forInit().accept(this);
         CStatement test = ctx.forCondition().forTest().accept(this);
         if (test == null) {
@@ -672,9 +763,16 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             recordMetadata(ctx.forCondition(), test);
         }
         CStatement incr = ctx.forCondition().forIncr().accept(this);
-        CFor cFor = new CFor(ctx.statement().accept(this), init, test, incr, parseContext);
+        final int forMark = scopeMark();
+        CFor cFor =
+                new CFor(
+                        withScopeReleases(ctx.statement().accept(this), forMark),
+                        init,
+                        test,
+                        incr,
+                        parseContext);
         recordMetadata(ctx, cFor);
-        variables.pop();
+        popScope();
         return cFor;
     }
 
@@ -1230,6 +1328,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 parseContext);
                 recordMetadata(ctx, cAssignment);
                 compound.addCStatement(cAssignment);
+                registerScoped(declaration.getVarDecls().get(0));
             }
             if (declaration.getInitExpr() != null) {
                 if (declaration.getActualType() instanceof CStruct) {

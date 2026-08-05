@@ -40,3 +40,6 @@ pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	83	p-- keeps its s
 store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	83	storing a mid-object pointer is refused, not clobbered onto one cell
 alloca_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	83	alloca memory is released at function return (use-after-return is caught)
 alloca_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	83	a stack block used within its own function is not released early
+scope_end_release.c	efficient	ILP32	UNSAFE:valid-memsafety	83	a block-local object dies at block exit (use-after-scope is caught)
+scope_end_loop_iteration.c	efficient	ILP32	UNSAFE:valid-memsafety	83	a loop body releases its object each iteration
+scope_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	83	block-local objects used within their own block are not released early
