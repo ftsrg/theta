@@ -4794,3 +4794,43 @@ so a loop doing `p = alloca(n)` and keeping the old pointer would get a false `v
 a wrong `false`, the worst direction. Distinguishing declaration allocas from explicit ones by the
 target variable's name is a naming heuristic and too fragile to rest a memory-safety verdict on.
 (This is the same declaration-vs-explicit `alloca` distinction cause J ran into.)
+
+### scopes cause G — block-scope lifetimes (`e56f8ab698`). 3 of 4; `scopes1` still open.
+
+`FunctionVisitor` now keeps a stack of scope-bound objects in lockstep with its scope stack and
+emits a `__theta_scope_end` marker at block exit; `AllocaFunctionPass` lowers it to the `deallocate`
+that already existed. No new checking machinery — `derefInLoop1` proves the check was always right
+(the model already gave each unrolled iteration its own base, it just never retired the old one).
+
+Two things that were not obvious going in:
+- **Loops need the release on the *body*, not the loop.** A loop's own scope spans the whole
+  statement, so releasing there frees once instead of once per iteration. Taken from a high-water
+  mark, so an object declared in a `for` init — which outlives the body — is not released with it.
+- **Early exits are fine.** `break`/`goto`/`return` skip the release; releasing fewer objects can
+  leave a bug unfound but never invent one, and `return` is covered by cause H.
+
+**Property gating (user requirement: under anything but memory safety the XCFA must be unchanged).**
+The c-frontend module cannot see `MemsafetyPass`, so the decision travels on a new
+`ParseContext.checkMemsafety`, set in `ExecuteConfig` from the same `MEMSAFETY || MEMCLEANUP` test
+that sets `MemsafetyPass.enabled`. With it false the frontend registers nothing and emits no marker,
+so nothing needs stripping downstream. **Verified by diffing the serialised XCFA** for a program with
+block-scoped arrays in a bare block, a `for` body, a `while` body and an `if` arm under
+`unreach-call`, built both ways: byte-for-byte identical. Use that method for any future
+memory-safety-only frontend work.
+
+A/B over the 62-task `ldv-regression` + `memsafety-ext3` sweep: exactly three tasks move, all
+FAIL → PASS (`derefInLoop1`, `scopes3`, `scopes5`); 11 TIMEOUT and 6 ERROR identical.
+
+**`scopes1` needs a second mechanism** and is the last of the family: its
+`{ int myNumberA = 7; myPointerA = &myNumberA; }` is an address-taken *scalar*, which
+`ReferenceElimination` gives a compile-time `3k+2` base allocated once at procedure entry. There is
+no `alloca` to scope, so the release has to come from wherever those bases are minted.
+
+### ⚠️ Guard-set blind spot found: `scopes4-1`
+
+It expects `true` and returns **Unsafe at 300 s** — a wrong `false` — but *times out* at the guard
+set's 120 s, so the gate reports it as TIMEOUT and never as a failure. Confirmed pre-existing by
+building without cause G and re-running (Unsafe either way); it is cause **B1**, a mid-object
+pointer escaping into a scalar context. Two lessons: cause B1 is still live and unfixed, and a
+guard-set TIMEOUT is not evidence of absence — check the slow rows with a longer budget before
+trusting them.
