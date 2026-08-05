@@ -4903,3 +4903,76 @@ The 6 "ERROR rc=210" tasks from the cause-D A/B split into:
    store could write its exact IEEE-754 bytes at compile time — no `fpToIEEEBV`, no NaN round-trip,
    which is what the refusal exists to prevent. Reads stay refused. That looks like the cheap,
    sound way in; it was not attempted this firing.
+
+---
+
+## RUN 84 LANDED — first real measurement of batches 82/83
+
+Finished 2026-08-05 18:47, all 36602 runs, 55 `.xml.bz2`, no `Cannot start process`, no OOM.
+Results pulled to `benchmark-results/results-2026-08-04_09-40-run84/`; comparison script kept at
+`scratchpad/cmp84.py` (reads both dirs, prints category totals, per-task moves and the SV-COMP score).
+
+**Run 84 = `323c583fc7`** (batch 82 + causes F and J). Everything from `7cbb2fba3d` on — backwards
+pointer steps, cause D, cause H, cause G, hex float constants — is **not** in it.
+
+Baseline is run 79 (same host, same XML content, same `5750G` pin; 300 s vs 900 s).
+
+| | run 79 | run 84 | delta |
+|---|---|---|---|
+| correct | 10860 | 12765 | **+1905** |
+| error | 25239 | 22953 | **−2286** |
+| unknown | 350 | 731 | +381 |
+| wrong | 82 | 82 | **0** |
+| **SV-COMP score** | **16490** | **19437** | **+2947** |
+| correct true / false | 7310 / 3550 | 8320 / 4445 | +1010 / +895 |
+| wrong true / false | 23 / 59 | 21 / 61 | −2 / +2 |
+
+⚠️ **Do not read +2947 as the fixes' doing.** Run 84 had 3× the time budget, so most of the newly
+correct results are the extra time. What the time limit *cannot* explain is the direction that
+matters: **the wrong count did not move** (82 → 82) even with 3× the budget to reach more verdicts,
+and wrong-*true* (the −32 class) went **down**. That is the real signal.
+
+### The 3 genuine regressions (correct in 79 → wrong in 84)
+
+More time cannot turn a correct answer wrong, so these are the model changing.
+
+1. `termination-memory-alloca/openbsd_cstrncmp-alloca-1` [no-overflow] `true` → `false`.
+   **Root-caused, see below.** Reproduces at HEAD.
+2. `ldv-races/race-2_2-container_of` [valid-memsafety] `true` → `false(valid-deref)`
+3. `ldv-races/race-3_2-container_of-global` [valid-memsafety] `true` → `false(valid-deref)`
+   — both time out locally at 200 s, so not yet reproduced; they only answer at ~900 s.
+
+27 more went from **non-answer to wrong**. Those are mostly 300 s timeouts that now get far enough
+to be wrong — pre-existing wrongness becoming visible, not new. The exception worth noting: 8 entries
+(4 `uthash-2.0.2` tasks × 2 properties) went from *frontend crash* to `false(valid-deref)`, i.e. a
+batch-82 frontend fix unlocked them into a wrong answer — the same trap that got the
+dimensionless-array fix parked.
+
+## ROOT CAUSE: a narrow-typed memory cell is not range-constrained (integer arithmetic only)
+
+Four probes, `--property no-overflow`:
+
+| probe | verdict |
+|---|---|
+| `int r = a[0] - a[1]; return -r;` with `unsigned char *a = alloca(2)` **uninitialised** | **Unsafe** ← false alarm |
+| same, but cells first written with `__VERIFIER_nondet_uchar()` | Safe |
+| same arithmetic through plain `unsigned char` **variables** | Safe |
+| the uninitialised version under `--arithmetic bitvector` | Safe |
+
+So the gap is exactly: **an unwritten memory cell under integer arithmetic**. `HavocPromotionAndRange`
+constrains *variables* to their C type's range; nothing constrains a *cell*, and under integer
+arithmetic the array's default value is an unbounded Int. Under bitvector the cell's SMT type is
+already narrow, and a written cell carries the cast its write applied — which is why only this one
+combination misbehaves.
+
+The difference of two `unsigned char`s is in [−255, 255], so `-r` cannot overflow *by typing alone*;
+the reported trace is spurious. This is precisely the "belt-and-braces" note in
+findings-run80/overflow_misc.md, and it explains **five** no-overflow false alarms at once:
+the regression above, three of the 27 (`openbsd_cstrcmp-alloca-1`, `openbsd_cstrncmp-alloca-2`,
+`openbsd_cstrcmp-alloca-2`), and `dirname-1` from work item 6.
+
+**Suggested fix:** make a read of a narrow-typed cell yield the C type's range — i.e. wrap the
+`Dereference` in `cType.castTo(...)` at the *read* site (never on an lvalue). Under integer
+arithmetic that inserts the modulo/two's-complement wrap already used everywhere else, so the value
+lands in [0,255] / [−128,127] by construction. Cost is a `Mod` per narrow memory read; gate it to
+integer arithmetic, since bitvector needs nothing. Repros kept at `scratchpad/w/charcell*.c`.
