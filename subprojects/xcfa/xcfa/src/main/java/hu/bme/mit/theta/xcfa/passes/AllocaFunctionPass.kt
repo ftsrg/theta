@@ -67,6 +67,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
+    val allocated = mutableListOf<Expr<*>>()
     checkNotNull(builder.metaData["deterministic"])
     // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
     // snapshot's init-procedure edges (see [ensureMallocVar]).
@@ -120,13 +121,43 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 listOf(bump, assignRet)
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
+            allocated.add(ret)
           } else {
             builder.addEdge(e)
           }
         }
       }
     }
+    releaseAtReturn(builder, allocated)
     return builder
+  }
+
+  /**
+   * Ends the lifetime of this procedure's stack objects where the procedure returns.
+   *
+   * `alloca` memory is released when the enclosing function returns -- this file has always said
+   * so, and nothing ever emitted the release. `__theta_ptr_size[base]` was written once at the
+   * allocation and only ever cleared by an explicit `free`, so a block stayed live for the rest of
+   * the program and a **use-after-return was accepted**: `int *a = alloca(n); ... return a;` and
+   * the caller then reads through it (`memsafety-ext3/getNumbers1-1`, a missed bug).
+   *
+   * Nothing else is needed: `MemsafetyPass.annotateDeref` already reports `ptr_size[base] <= index`,
+   * so once the size is zeroed the existing guard catches the stale access unchanged.
+   *
+   * Only the *last* base a repeated allocation produced is released -- a variable holds one value,
+   * and an `alloca` in a loop overwrites it. That direction is safe: releasing too few objects can
+   * only leave a bug unfound, never invent one.
+   */
+  private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<Expr<*>>) {
+    if (!MemsafetyPass.enabled || allocated.isEmpty()) return
+    val finalLoc = builder.finalLoc.orElse(null) ?: return
+    val releases = allocated.map { builder.parent.deallocate(parseContext, it) }
+    LinkedHashSet(finalLoc.incomingEdges).forEach { edge ->
+      builder.removeEdge(edge)
+      builder.addEdge(
+        edge.withLabel(SequenceLabel(edge.label.getFlatLabels() + releases, edge.label.metadata))
+      )
+    }
   }
 
   /**
