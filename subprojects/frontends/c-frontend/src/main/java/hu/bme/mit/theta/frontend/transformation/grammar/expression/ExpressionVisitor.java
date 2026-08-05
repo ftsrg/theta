@@ -3058,8 +3058,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
             BigFloat bigFloat;
             if (text.startsWith("0x")) {
-                throw new UnsupportedFrontendElementException(
-                        "Hexadecimal FP constants are not yet supported!");
+                // A C99 hexadecimal floating constant (`0x1.4p+4`). Java's own literal syntax is
+                // the same, and `Double.parseDouble` reads it exactly -- a hex literal names a
+                // binary value directly, so there is no decimal rounding to worry about. Refusing
+                // these outright killed the whole frontend on the file that used one
+                // (ldv-regression/test_union_cast), and they are ordinary in float benchmarks.
+                //
+                // `long double` keeps the refusal: its significand is wider than a `double`'s, so
+                // routing the literal through one could silently round a value the source stated
+                // exactly, and a quietly wrong constant is worse than a loud refusal.
+                if (isLong) {
+                    throw new UnsupportedFrontendElementException(
+                            "Hexadecimal long double constants are not yet supported!");
+                }
+                bigFloat =
+                        new BigFloat(
+                                Double.parseDouble(text),
+                                new BinaryMathContext(significand - 1, exponent));
             } else if (text.startsWith("0b")) {
                 throw new UnsupportedFrontendElementException(
                         "Binary FP constants are not yet supported!");
