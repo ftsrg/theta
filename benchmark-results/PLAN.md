@@ -4834,3 +4834,44 @@ building without cause G and re-running (Unsafe either way); it is cause **B1**,
 pointer escaping into a scalar context. Two lessons: cause B1 is still live and unfixed, and a
 guard-set TIMEOUT is not evidence of absence — check the slow rows with a longer budget before
 trusting them.
+
+### `T a[] = {…}` as a *local* crashes the frontend — fix written, NOT shipped, parked in a stash
+
+`char numbers[] = {0,1,…,9};` takes its extent from the initializer, so the declarator carries no
+dimension; `FunctionVisitor.visitBodyDeclaration` read it straight through into
+`List.of(allocaSize)` and died with a bare **NullPointerException**. The *global* path has always
+inferred the extent (`FrontendXcfaBuilder#getArraySize`); only the local one did not. A crude grep
+finds the shape in **31** benchmark files across 8 families (eca-rers2018, ldv-linux-3.4-simple,
+memsafety-cve, floats-esbmc-regression, sqlite, float-benchs, memsafety-ext3, libvsync).
+
+The fix (infer the element count from the initializer, designators included, and let the existing
+cell scaling convert it) is ~30 lines and works. **It is parked in `git stash` — do not ship it as
+is.** Measured on those 31 files, before/after, with a build of each:
+
+| | before | after |
+|---|---|---|
+| parse | 8 / 31 | 15 / 31 |
+
+Seven newly parse — and **six of them time out** (`interpolation`, `interpolation2`, `nearbyint.i`,
+`rint.i`, `zchunk.i`, `zchunkFixed.i`; still timing out at 320 s, not just 100 s). Crash → timeout
+is 0 → 0. The only one that *resolves* is `memsafety-ext3/naturalNumbers1`, and it resolves
+**wrongly**: `Safe` against an expected `false`, i.e. **−32**. So the whole measured effect of a
+correct fix is −32.
+
+Why `naturalNumbers1` is wrong is not the NPE's fault and cannot be fixed here: it declares
+`char numbers[10]`, casts to `int *`, and reads `numbers[i]` — 40 bytes out of a 10-byte object. In
+the **cell** model each cell is one element, so `ptr_size = 10` and reading cells 0..9 is in bounds.
+Seeing that violation needs byte-granular memory. This is the same cell-vs-byte confusion recorded
+as cause H's side finding (`alloca(40)` records 40 *cells*).
+
+Two ways to unblock, for whoever picks this up:
+1. Land the **bytes** memory model, after which this fix is straightforwardly positive — revisit then.
+2. Refuse the shape instead of answering it: a cast from a `char` array to a *wider* pointer type is
+   a reinterpretation the cell model cannot represent, so throwing `UnsupportedFrontendElementException`
+   there would keep `naturalNumbers1` at 0 while the other six get their chance. Principled (it is the
+   same discipline as the byte-union float refusal and `MemoryFunctionsPass#giveUp`) but unmeasured —
+   it could turn currently-correct answers into 0, so price it before shipping.
+
+**Erroring is worth 0; a wrong answer is worth −32. When the model is known to be unsound for a
+shape, a loud failure is better than a confident answer** — that is why this is parked rather than
+merged.
