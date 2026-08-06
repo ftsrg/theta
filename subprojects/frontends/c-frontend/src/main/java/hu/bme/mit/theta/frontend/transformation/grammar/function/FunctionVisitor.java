@@ -99,8 +99,41 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private final Map<VarDecl<?>, CDeclaration> functions;
 
     private void createVars(CDeclaration declaration) {
+        // Idempotent: the declaration may already have been registered before its own initializer
+        // was evaluated (see #declareBeforeInitializer). Registering twice would append a second,
+        // identical VarDecl and break the `getVarDecls().size() == 1` expectations downstream.
+        if (!declaration.getVarDecls().isEmpty()) {
+            return;
+        }
         String name = declaration.getName();
         createVars(name, declaration, designatorType(declaration));
+    }
+
+    /**
+     * Brings a declarator into scope *before* its own initializer is evaluated.
+     *
+     * <p>C says the declarator is complete at the `=`, so the name being declared is already in
+     * scope inside its initializer. Two extremely common shapes rely on it:
+     *
+     * <pre>
+     *   struct node *p = malloc(sizeof *p);          // the size mentions p
+     *   static struct mutex m = { ... &m.wait_list ... };   // a self-linked initializer
+     * </pre>
+     *
+     * The name used to be registered only *after* the initializer had been visited, so both died
+     * with "No such variable or macro" -- and that message is **59% of all
+     * before-parsing frontend failures** in run 84 (101 of a 171-file sample), because the
+     * self-linked form is how the Linux kernel writes every statically initialised lock and list
+     * head.
+     */
+    public void declareBeforeInitializer(CDeclaration declaration) {
+        if (declaration.getName() == null
+                || declaration.isFunc()
+                || declaration.getType() == null
+                || declaration.getType().isTypedef()) {
+            return;
+        }
+        createVars(declaration);
     }
 
     /**

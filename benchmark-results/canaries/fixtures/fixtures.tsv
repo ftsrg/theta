@@ -44,3 +44,4 @@ scope_end_release.c	efficient	ILP32	UNSAFE:valid-memsafety	83	a block-local obje
 scope_end_loop_iteration.c	efficient	ILP32	UNSAFE:valid-memsafety	83	a loop body releases its object each iteration
 scope_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	83	block-local objects used within their own block are not released early
 hex_float_constant.c	efficient	ILP32	SAFE	83	C99 hex float constants parse, with exact values
+self_referential_initializer.c	efficient	ILP32	SAFE	84	the declared name is in scope inside its own initializer

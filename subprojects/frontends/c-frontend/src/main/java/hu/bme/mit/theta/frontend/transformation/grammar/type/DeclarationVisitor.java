@@ -110,6 +110,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 declaration.setType(cSimpleType);
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
+                    // The name is in scope inside its own initializer (C: the declarator is
+                    // complete at the `=`), so bring it into scope before visiting one.
+                    if (functionVisitor != null) {
+                        functionVisitor.declareBeforeInitializer(declaration);
+                    }
                     if (context.initializer().bracedPrimaryExpression() != null) {
                         // `= { }` (GNU / C23 empty initializer) has no initializerList at all.
                         final CParser.InitializerListContext initializerList =
