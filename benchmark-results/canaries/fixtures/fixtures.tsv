@@ -46,3 +46,4 @@ scope_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	83	block-local objects 
 hex_float_constant.c	efficient	ILP32	SAFE	83	C99 hex float constants parse, with exact values
 self_referential_initializer.c	efficient	ILP32	SAFE	84	the declared name is in scope inside its own initializer
 storage_class_register.c	efficient	ILP32	SAFE	84	register/auto storage classes are accepted (including on parameters)
+narrow_cell_range.c	efficient	ILP32	SAFE:no-overflow	84	a narrow memory cell reads back inside its C type range

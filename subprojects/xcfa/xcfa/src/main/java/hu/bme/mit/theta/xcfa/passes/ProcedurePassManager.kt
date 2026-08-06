@@ -102,6 +102,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(StaticCoiPass()),
     listOf(
+      // Constrain narrow cell reads before the memsafety/overflow guards are built, so those
+      // guards see a `char` cell that can only hold char values.
+      NarrowCellRangePass(parseContext),
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
