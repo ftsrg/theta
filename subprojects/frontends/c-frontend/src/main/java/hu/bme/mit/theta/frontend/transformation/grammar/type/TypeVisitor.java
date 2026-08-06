@@ -386,7 +386,19 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 return Static();
             case "auto":
             case "register":
+                // Neither carries semantics this model represents. `auto` is the default storage
+                // class for a block-scope object and says nothing extra (before C23's type
+                // inference, which the grammar here does not accept anyway); `register` is a
+                // placement hint whose only observable effect is that `&x` is ill-formed -- and
+                // ignoring that is the safe direction, since it only lets *more* programs through
+                // rather than changing the meaning of any that compile.
+                //
+                // Refusing them killed the whole frontend on files that merely used the keyword:
+                // `register` alone accounts for ~52 of run 84's before-parsing failures.
+                return null;
             case "_Thread_local":
+                // Genuinely different: thread-local storage gives every thread its own copy, which
+                // the model does not represent. Refused rather than silently shared.
                 throw new UnsupportedFrontendElementException(
                         "Not yet implemented (" + ctx.getText() + ")");
         }
