@@ -4995,3 +4995,53 @@ way until a host is available; keep gating locally with the canaries and per-tas
 stale run-82 job queued there could not be cleaned up. If that host returns, note that a 36602-run
 job pinned to the old `Theta-svcomp-82` archive may still be sitting in its queue — decide then
 whether to let it produce its (still-useful, batch-82-only) measurement or kill it.
+
+### Run 84 vs run 80 — the comparison that matters most
+
+Run 80 (benchcloud, Skylake, `theta27-long900.xml`, **same 900 s limit**) is a better yardstick than
+run 79 for everything except host, because the time limit matches. All three, 36531 runs each:
+
+| | run 79 (sosy, 300 s) | run 80 (benchcloud, 900 s) | run 84 (sosy, 900 s) |
+|---|---|---|---|
+| correct true | 7310 | 8157 | 8320 |
+| correct false | 3550 | 4362 | 4445 |
+| **WRONG true** | 23 | 35 | **21** |
+| **WRONG false** | 59 | **358** | **61** |
+| non-answer | 25589 | 23619 | 23684 |
+| **SCORE** | 16490 | 13828 | **19437** |
+
+**vs run 80: +5609, and wrong answers 393 → 82.** Nearly all of that is `WRONG false` collapsing
+from 358 to 61 — the valid-deref overapproximation fix (the flat-model false-deref flood). That is
+the single biggest result of this work so far, and unlike the run-79 delta it is *not* explained by
+the time limit.
+
+⚠️ There is **no full master baseline** — master was only ever run on the concurrency/userprop
+subset (`baseline-master-22ab2b88de-oc-userprop`, 4 result files). Any "vs master" claim would have
+to be made up. Run one if a real comparison is wanted.
+
+### Run 84 non-answer breakdown (23684 total)
+
+| status | run 79 | run 80 | run 84 |
+|---|---|---|---|
+| TIMEOUT | 16574 | 12326 | 12700 |
+| **OUT OF MEMORY** | 2502 | 6497 | **6489** |
+| ERROR (frontend failed, before parsing) | 3261 | 2348 | 2302 |
+| ERROR (frontend failed, after parsing) | 1437 | 1603 | 1238 |
+| `false(valid-free)` (scored as neither) | 0 | 362 | 362 |
+| unknown | 341 | 379 | 357 |
+| **ERROR (solver error)** | 53 | 66 | **198** |
+
+Three things worth acting on:
+1. **OOM is the second-largest bucket at 6489** — ~6.5k tasks scoring 0 on a 7 GB limit. It tracks
+   the *time* limit, not this work (run 80 had 6497 at 900 s vs run 79's 2502 at 300 s): longer runs
+   simply reach bigger states. Concentrated in `Juliet_Test` (2576), `hardness` (690),
+   `eca-rers2012` (615), `neural-networks` (548). Probably the largest single lever left.
+2. **Solver errors tripled** (53 → 198), concentrated in `uthash-2.0.2` (72) and `aws-c-common` (42).
+   run 80 had 66, so this is new. The uthash tasks are the same ones a batch-82 frontend fix
+   unlocked — worth checking whether unlocking them just moved the failure downstream.
+3. **Frontend failures total 3540** (down from 4698 in run 79), concentrated in `intel-tdx-module`
+   (727 across both phases), `ldv-linux-4.2-rc1` (353), `float-newlib` (265), `ldv-linux-3.14` (255),
+   `goblint-regression` (302, all after parsing).
+
+Scripts: `benchmark-results/compare_runs.py` (per-task moves + score);
+`scratchpad/summary84.py`, `scratchpad/errfam.py` (headline table, status and family breakdowns).
