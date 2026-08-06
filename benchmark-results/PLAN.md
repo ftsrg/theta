@@ -5045,3 +5045,60 @@ Three things worth acting on:
 
 Scripts: `benchmark-results/compare_runs.py` (per-task moves + score);
 `scratchpad/summary84.py`, `scratchpad/errfam.py` (headline table, status and family breakdowns).
+
+---
+
+## Frontend failure triage (run 84: 3540 task-runs, 2243 distinct files)
+
+Split by phase — benchexec's tool-info decides on whether `ParsingResult Success` was printed:
+
+| | task-runs | distinct .yml | distinct .c/.i |
+|---|---|---|---|
+| **before** parsing (the C frontend threw while parsing) | 2302 | 2091 | 1747 |
+| **after** parsing (parsing succeeded, a later pass threw) | 1238 | 909 | 496 |
+
+Disjoint — no task appears in both.
+
+⚠️ **The `--backend NONE` probe cannot see after-parsing failures.** All 163 sampled "after" files
+report `ParsingResult Success`, which is a tautology, not a result. That population needs a probe
+with a real backend; the number below covers *before*-parsing only.
+
+### Ranked causes, from a stratified 307-file sample (≥8 per family, 47 families)
+
+| cause | files | % | est. task-runs |
+|---|---|---|---|
+| **`No such variable/macro` — ordinary identifier (self/forward-referencing initializer)** | 142 | **46.3%** | ~1065 |
+| `No such variable/macro` — undeclared library/builtin fn (`memcpy`, `malloc`, `__builtin_*`) | 32 | 10.4% | ~240 |
+| byte-addressed union (float member / multi-byte address) | 22 | 7.2% | ~165 |
+| NullPointerException (various) | 21 | 6.8% | ~157 |
+| `Field [x] not found, available fields are: []` — struct has **no** fields (opaque/unresolved) | 16 | 5.2% | ~120 |
+| `Only variable-backed functions are callable` | 15 | 4.9% | ~112 |
+| `typeof` over an unsupported expression | 12 | 3.9% | ~90 |
+| PARSES-NOW — already fixed by the 5 commits after run 84 | 10 | 3.3% | ~75 |
+| `Only structs expected here` | 9 | 2.9% | ~67 |
+| `__builtin_va_arg` type resolution | 8 | 2.6% | ~60 |
+| `Field not found` (struct *has* fields) | 8 | 2.6% | ~60 |
+| `Not yet implemented (register)` | 7 | 2.3% | ~52 |
+| `Non-array expression used as array!` | 4 | 1.3% | ~30 |
+
+**#1 is fixed** (`54cb7bcfa5`): parse OK on that sample went **10 → 92 (+82), 0 regressions**.
+
+Note when re-measuring: other causes *rise* after a fix, because a file that used to die at its
+first unsupported construct now reaches the next one. Only "parses / does not parse" is a clean
+metric; per-cause counts are not comparable across builds.
+
+### Next, in value order
+1. **Undeclared library/builtin functions** (~240). LDV preprocessing strips the glibc declarations,
+   so `memcpy(...)` has no declarator at all — and `MemoryFunctionsPass` already models memcpy, the
+   frontend just throws first. ⚠️ Must be the narrow "synthesize a declaration for a *known* library
+   function on undeclared use". A blanket function pre-registration was tried earlier, broke 3 LDV
+   canaries and converted 0/20, and was reverted.
+2. **Byte-union float member** (~165) — design settled: a *constant* float store can have its exact
+   IEEE-754 bytes computed at compile time (no `fpToIEEEBV`, no NaN round-trip). Reads stay refused.
+3. **`register` storage class** (~52) — same one-line shape as the `static` fix in batch 82.
+4. **`available fields are: []`** (~120) — an opaque/forward-declared struct losing its definition;
+   likely one bug behind all 16 files, worth diagnosing before assuming.
+5. Re-probe the **after-parsing** 496 files properly, with a backend.
+
+Scripts: `scratchpad/probe.sh` (parse-only, records the failure signature per file),
+`scratchpad/fefiles.py` (extract failing files from a results dir).
