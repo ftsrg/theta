@@ -4976,3 +4976,16 @@ the regression above, three of the 27 (`openbsd_cstrcmp-alloca-1`, `openbsd_cstr
 arithmetic that inserts the modulo/two's-complement wrap already used everywhere else, so the value
 lands in [0,255] / [−128,127] by construction. Cost is a `Mod` per narrow memory read; gate it to
 integer arithmetic, since bitvector needs nothing. Repros kept at `scratchpad/w/charcell*.c`.
+
+### 🚫 sosy: no benchmarks until further notice (2026-08-06)
+
+An admin asked the user to stop their processes on sosy. Checked at the time: **nothing of theirs was
+running** — run 84 had already finished at 18:47 the previous day and its tmux session was gone; zero
+java/python/vcloud/benchexec/theta/gradle processes, 6 idle processes total (`systemd --user`, and an
+idle tmux "0" + bash created Jul 25 that predates this work). Neither was killed: both are at 0% CPU
+and the tmux may hold the user's own work.
+
+**Do not launch anything on sosy until the user says otherwise.** benchcloud is also off the table —
+it was offline on 2026-08-04 and its run 82 never started. So the commits after `323c583fc7`
+(backwards pointer steps, causes D/H/G, hex float constants) are **unmeasured** and will stay that
+way until a host is available; keep gating locally with the canaries and per-task A/B sweeps.
