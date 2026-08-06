@@ -4982,10 +4982,16 @@ integer arithmetic, since bitvector needs nothing. Repros kept at `scratchpad/w/
 An admin asked the user to stop their processes on sosy. Checked at the time: **nothing of theirs was
 running** — run 84 had already finished at 18:47 the previous day and its tmux session was gone; zero
 java/python/vcloud/benchexec/theta/gradle processes, 6 idle processes total (`systemd --user`, and an
-idle tmux "0" + bash created Jul 25 that predates this work). Neither was killed: both are at 0% CPU
-and the tmux may hold the user's own work.
+idle tmux "0" + bash created Jul 25 that predates this work). `systemd --user` was left alone (login
+infrastructure, recreated at next login); **the tmux server was killed at the user's request**, so
+session "0" and its bash are gone. Nothing of the user's now runs on sosy except `systemd --user`.
 
 **Do not launch anything on sosy until the user says otherwise.** benchcloud is also off the table —
 it was offline on 2026-08-04 and its run 82 never started. So the commits after `323c583fc7`
 (backwards pointer steps, causes D/H/G, hex float constants) are **unmeasured** and will stay that
 way until a host is available; keep gating locally with the canaries and per-task A/B sweeps.
+
+**benchcloud is still unreachable** (connection to port 2222 times out, checked 2026-08-06), so the
+stale run-82 job queued there could not be cleaned up. If that host returns, note that a 36602-run
+job pinned to the old `Theta-svcomp-82` archive may still be sitting in its queue — decide then
+whether to let it produce its (still-useful, batch-82-only) measurement or kill it.
