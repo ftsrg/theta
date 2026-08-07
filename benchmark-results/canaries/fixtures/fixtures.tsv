@@ -47,3 +47,5 @@ hex_float_constant.c	efficient	ILP32	SAFE	83	C99 hex float constants parse, with
 self_referential_initializer.c	efficient	ILP32	SAFE	84	the declared name is in scope inside its own initializer
 storage_class_register.c	efficient	ILP32	SAFE	84	register/auto storage classes are accepted (including on parameters)
 narrow_cell_range.c	efficient	ILP32	SAFE:no-overflow	84	a narrow memory cell reads back inside its C type range
+undeclared_memory_functions.c	efficient	ILP32	SAFE	84	undeclared malloc/free/memcpy/memset are routed to the modeled ones
+own_memory_function_wins.c	efficient	ILP32	SAFE	84	a program-supplied memcpy definition wins over the model

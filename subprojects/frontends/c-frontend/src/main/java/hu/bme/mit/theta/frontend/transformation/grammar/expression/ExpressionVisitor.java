@@ -1669,6 +1669,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (atomic != null) {
             return atomic;
         }
+        // A call to a standard memory function the program never declares. Preprocessed benchmark
+        // sources -- the LDV `.i` files above all -- have had the glibc headers stripped, so
+        // `memcpy(dst, src, n)` arrives with no declarator at all: the *callee identifier* fails to
+        // resolve ("No such variable or macro: memcpy") long before the pass that already models
+        // the call ever sees it. Emit the call for the names the passes do model.
+        //
+        // Guarded on the name being genuinely undeclared. A program that supplies its own `malloc`
+        // or `memcpy` -- LDV stubs routinely do -- must keep its own definition, and that
+        // distinction is exactly what makes this safe where a blanket pre-registration of every
+        // function was not (that broke three LDV canaries and converted nothing).
+        if (MODELED_MEMORY_FUNCTIONS.contains(name) && getVar(name) == null) {
+            return callModeledLibraryFunction(
+                    name, args, RETURNS_FIRST_ARGUMENT_TYPE.contains(name));
+        }
         switch (name) {
             case "__builtin_expect", "__builtin_expect_with_probability" -> {
                 if (args.isEmpty()) {
@@ -1761,6 +1775,29 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
         }
     }
+
+    /**
+     * Standard memory functions the XCFA passes model by *name* -- `malloc` ({@code
+     * MallocFunctionPass}), `free` ({@code MemsafetyPass#annotateFree}), `realloc` ({@code
+     * ReallocFunctionPass}) and the `mem*` trio ({@code MemoryFunctionsPass}). A call to one of
+     * these can be emitted with no declaration in sight, because the pass supplies the semantics.
+     *
+     * <p>`alloca` is deliberately absent: its return type is not carried in metadata the way
+     * `malloc`'s is (see {@code FunctionVisitor#declareMallocReturnsPointer}), so a synthesized call
+     * would default to an `int` return and truncate the pointer under LP64. It is declared in our
+     * `<stdlib.h>` model instead, and `__builtin_alloca` is handled above.
+     */
+    private static final Set<String> MODELED_MEMORY_FUNCTIONS =
+            Set.of("malloc", "free", "realloc", "memcpy", "memmove", "memset");
+
+    /**
+     * Of those, the ones returning their first argument (`void *` aliasing the destination, or the
+     * reallocated block), so the synthesized call's return variable gets a pointer type instead of
+     * the default `int`. `malloc`'s pointer return is already recorded as metadata and `free`
+     * returns `void`, so neither is listed.
+     */
+    private static final Set<String> RETURNS_FIRST_ARGUMENT_TYPE =
+            Set.of("realloc", "memcpy", "memmove", "memset");
 
     /**
      * Int-returning library classification/comparison functions that {@code FpFunctionsToExprsPass}
