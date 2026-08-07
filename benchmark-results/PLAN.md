@@ -5173,3 +5173,52 @@ Analysis script: `benchmark-results/parse_summary.py <results-dir> [--by-family]
 
 A full verification run follows only if this one looks clean — it is the cheaper way to find out
 whether HEAD regressed the frontend anywhere.
+
+### Re-ranking the frontend causes against HEAD (117 files, throw sites captured)
+
+The run-84 ranking was measured at `323c583fc7`; four fixes have landed since, so I re-probed the
+same stratified sample against HEAD. This time the probe captured the **throw site**, not just the
+exception class — the earlier `NullPointerException` bucket had no message and collapsed 21 files
+into one uninformative row.
+
+Sample counts are **not** proportional (the sample is 8 files per family, so small families are
+over-represented); the `weighted est.` column scales each bucket by its family's true size. Treat
+these as directional only — batch 85's parse-only run replaces them with exact counts.
+
+| bucket | sample | weighted est. files |
+|---|---|---|
+| byte-addressed union with a floating-point member | 17 | ~298 |
+| `Field [x] not found, available fields are: []` (opaque struct) | 4 | ~67 |
+| `__builtin_va_arg` over an unresolvable `typeof` | 8 | ~41 |
+| function-pointer call ("Only variable-backed functions are callable") | 7 | ~38 |
+| `&malloc` / attribute-in-parens declarator (goblint-coreutils) | 8 | ~24 |
+| `__builtin_inff` / `huge_val` | 6 | ~20 |
+| dimensionless array `T a[] = {…}` NPE | 10 | ~18 |
+| `__builtin_popcountl` | 2 | ~9 |
+| `__builtin_prefetch` | 3 | ~8 |
+
+**Two conclusions overturn earlier ones, and one confirms an earlier call.**
+
+1. **The NPE bucket is a single site** — `FunctionVisitor.java:1354`, `List.of(allocaSize)` with a
+   null dimension, i.e. the dimensionless array `T a[] = {…}`. That is the fix already sitting in
+   `stash@{0}`, measured at **net −32** and parked. So the largest NPE bucket is a known, priced,
+   deliberately-deferred item rather than a new bug. Left parked; batch 85 will say what it is worth.
+
+2. **The union/float bucket is ~298 files, not the 2 tasks I priced it at.** My earlier estimate came
+   from the run-84 *wrong-result* triage, which only ever saw the two tasks that got far enough to
+   answer; it could not see the hundreds that die in the frontend. The estimate was wrong by two
+   orders of magnitude and the decision deserved re-opening.
+
+   **The decision does not change, and the reason is worth stating.** The files are
+   `inv_sqrt_Quake`, `cast_float_union`, `float-newlib/*` — float↔int *type punning*, which needs
+   exactly the `fpToIEEEBV` round-trip that batch 59 closed as unsound. It is not an incidental
+   refusal that a small patch removes; it is the byte-granular memory model. And the scoring makes
+   guessing actively dangerous: 298 files currently score **0** as errors, whereas an unsound
+   round-trip that answers confidently costs −16/−32 each. This bucket is now the single strongest
+   argument for the byte-granular memory model, and it should be sized against that project rather
+   than patched.
+
+3. `&malloc` in goblint-coreutils is **not** a gap in the undeclared-memory-function fix — those
+   files take the *address* of `malloc` (`(void *(*)(size_t))(& malloc)`) and additionally spell its
+   declarator as `void *(__attribute__((...)) malloc)(size_t)`. Same family as the function-pointer
+   bucket, out of that fix's scope by design.
