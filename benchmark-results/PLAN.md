@@ -5497,3 +5497,36 @@ Two candidate fixes, in preference order:
 
 Do NOT start by writing a bitfield read-modify-write — it already exists, and rewriting it would
 duplicate working code while leaving the actual defect in place.
+
+### Item 3 (byte-union float member): premise confirmed, and the one hazard to design around
+
+Both tasks are exactly as described — the float member is written with a **compile-time constant**
+and never read:
+
+```c
+union X { int y; double z; };
+var.z = 0x1.4p+4;                  /* constant; the only use of z */
+var.y = 10u;                       /* overwrites the same storage */
+__VERIFIER_assert(var.y == 10u);   /* only y is ever read */
+```
+
+So the exact IEEE-754 bytes are computable at parse time and no `fpToIEEEBV` round-trip is needed.
+Worth +4 (2 tasks).
+
+**The write machinery already exists.** `FrontendXcfaBuilder` handles byte-union member stores via
+`ByteUnionSlice.BASE` metadata — "the right-hand side is split into its own one-byte cells and each
+is written outright". A float member is refused earlier, at *access* time in
+`byteLaidOutMemberAccess`, because a **read** would need the round-trip.
+
+⚠️ **The hazard, which is why this is not a five-minute change.** Access is one call serving both
+reads and writes. Returning a marker for the float member so the store path can see it means the
+same marker is returned when the member is used as an *rvalue*, and it would then silently evaluate
+to a wrong value — in the very path gated for NaN soundness. A silent wrong read is worth −32 where
+the current refusal is worth 0, so the naive version is a bad trade even though it "works" on these
+two tasks.
+
+Any implementation must make a read of that marker **fail loudly**, not merely be discouraged. Two
+shapes worth considering: intercept at the *assignment* level in `FunctionVisitor` so no marker ever
+escapes into an expression; or return a marker that carries no usable value and have every rvalue
+consumer throw on it. Do not ship the version that only special-cases the store and leaves reads
+returning the marker.
