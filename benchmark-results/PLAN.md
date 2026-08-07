@@ -5462,3 +5462,38 @@ present.
 
 Worth doing next: it is the top after-parsing cause, it is one well-understood mechanism rather than
 a family of special cases, and `intel-tdx-module` alone has 407 after-parsing files.
+
+#### …and the bitfield store is not missing — its metadata is lost
+
+Reading further: `FrontendXcfaBuilder` **already implements** the read-modify-write store
+(`BitfieldSlice.write`, line ~1299). It finds the target by looking up `BitfieldSlice.CELL`
+metadata on `lValue`:
+
+```kotlin
+val bitfieldCell =
+  parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
+    as? Dereference<*, *, *>
+```
+
+`FrontendMetadata` is **identity-keyed**. The read path stamps CELL/OFFSET/WIDTH on the object it
+returns — `declaredType.castTo(BitfieldSlice.read(cell, ...))` — but the left-hand side that
+reaches the builder has been wrapped further:
+
+```
+bv_zero_extend( bvpos( bv_zero_extend( extract(deref(...), 5, 6), Bv 8)), Bv 32)
+                 ^^^^^  ^^^^^^^^^^^^^^ extra wrapping around the stamped object
+```
+
+so it is a *different object*, the lookup returns null, and it falls through to the error. **The
+feature works; the metadata does not survive re-wrapping.** Same identity-keyed-metadata trap that
+loses `cType` on rebuilt expressions.
+
+Two candidate fixes, in preference order:
+1. Find what wraps the lvalue after the member access and stop it wrapping the *assignment target*
+   (the conversion is meaningful for an rvalue read, not for a store target). Narrowest, but needs
+   the wrap site identified.
+2. Failing that, unwrap benign wrappers (`BvZExtExpr`/`BvSExtExpr`/`bvpos`) in the builder before
+   the CELL lookup and retry. Broader, and risks accepting an lvalue that genuinely *was* converted.
+
+Do NOT start by writing a bitfield read-modify-write — it already exists, and rewriting it would
+duplicate working code while leaving the actual defect in place.
