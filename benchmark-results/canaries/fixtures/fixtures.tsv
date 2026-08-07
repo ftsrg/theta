@@ -49,3 +49,6 @@ storage_class_register.c	efficient	ILP32	SAFE	84	register/auto storage classes a
 narrow_cell_range.c	efficient	ILP32	SAFE:no-overflow	84	a narrow memory cell reads back inside its C type range
 undeclared_memory_functions.c	efficient	ILP32	SAFE	84	undeclared malloc/free/memcpy/memset are routed to the modeled ones
 own_memory_function_wins.c	efficient	ILP32	SAFE	84	a program-supplied memcpy definition wins over the model
+builtin_infinity.c	efficient	ILP32	SAFE	85	GCC infinity builtins are exact (__builtin_inf/inff/infl, huge_val*)
+builtin_prefetch.c	efficient	ILP32	SAFE	85	__builtin_prefetch is dropped but its operands are still evaluated
+builtin_nan_compare.c	efficient	ILP32	SAFE	85	GCC NaN builtin + NaN-safe comparison builtins alias to the modeled ones

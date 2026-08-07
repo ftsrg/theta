@@ -5222,3 +5222,83 @@ these as directional only — batch 85's parse-only run replaces them with exact
    files take the *address* of `malloc` (`(void *(*)(size_t))(& malloc)`) and additionally spell its
    declarator as `void *(__attribute__((...)) malloc)(size_t)`. Same family as the function-pointer
    bucket, out of that fix's scope by design.
+
+### GCC builtins with no declaration (batch 85)
+
+`__builtin_*` names have no declarator in a preprocessed source, so the *callee identifier* fails to
+resolve ("No such variable or macro: __builtin_inff") and the whole file dies in the frontend before
+anything else runs. `handleBuiltinCall` already had the dispatch point; these names simply were not
+in it. Added, all with exact semantics:
+
+| builtin | model |
+|---|---|
+| `__builtin_inf` / `inff` / `infl`, `__builtin_huge_val*` | `+inf` literal of that width |
+| `__builtin_nan` / `nanf` / `nanl` | quiet NaN of that width (payload string ignored) |
+| `__builtin_isgreater(equal)`, `isless(equal)`, `islessgreater`, `isunordered` | alias to the plain names `FpFunctionsToExprsPass` already models |
+| `__builtin_isnan`, `__builtin_isfinite`, `__builtin_finite` | alias to `isnan` / `isfinite` |
+| `__builtin_prefetch` | dropped; operands still evaluated |
+
+Nothing here is an approximation: infinity and NaN are exact values, the comparisons already had
+exact models under their plain spelling, and `__builtin_prefetch` genuinely has no semantics. The
+NaN *payload* is the one thing discarded, and it is unobservable — reading it needs the bytes of a
+floating-point union member, which is refused outright.
+
+Two traps worth recording:
+
+- **`__builtin_inf` ends in `f` but is the `double` one.** Deriving the width from the name's last
+  character — which reads as the obvious implementation — silently returns a `float` infinity for it.
+  The names are spelled out instead, and the fixture checks `__builtin_inf` against a value only a
+  double infinity exceeds.
+- **`__builtin_prefetch`'s operands are still evaluated.** The hint has no effect, but
+  `__builtin_prefetch(&a[i++])` must still increment `i`. Dropping the whole call, which is the
+  tempting one-liner, would silently discard the side effect; the fixture pins it — **and caught a
+  real bug in the first version of this fix.** I copied the `__builtin_va_start` case, which
+  evaluates operands via `arg.accept(functionVisitor)`; that parses the operand but drops its side
+  effect, so `i` stayed 0 and the fixture went UNSAFE. Operands must go through
+  `arg.accept(this)` — the *expression* visitor is what emits side-effect statements — which is what
+  `__builtin_expect` next to it already did. The `va_start` case has the same latent flaw but is
+  harmless there: C requires those operands to be an lvalue and a parameter name, so they cannot
+  carry side effects. Left alone rather than widened.
+
+**Measured.** Of the 1747 before-parsing failures, 272 files (15.6%) use one of these builtins. On a
+30-file random sample of those, **6 now parse (20%)** and — the part that matters — **zero remain
+blocked on any `__builtin_` name**; the other 24 fail for unrelated reasons that were always behind
+the builtin. The docstring claimed `isnan`/`isfinite` were already aliased when only `isinf` and
+`isnormal` actually were, so that gap is closed too.
+
+Fixtures: `builtin_infinity.c`, `builtin_nan_compare.c`, `builtin_prefetch.c`.
+
+### Next target: the opaque-struct bucket, narrowed to one struct
+
+Of the remaining `Field [x] not found, available fields are: []` failures, **12 of 13 are the same
+field, `driver_data`**, and the accessed struct is `struct device_private`. In
+`…vmxnet3.cil.i` the ordering is: forward declaration at char 23805 → `struct device` (which holds
+`struct device_private *p`) at 27076 → the real definition of `device_private` at 180856 → the use
+`(dev->p)->driver_data` at 496895. So the tag is completed long before it is used, and
+`visitCompoundDefinition` already has the "complete a field-less forward declaration rather than
+replacing it" path that this should exercise.
+
+**Three minimal repros of that shape all parse fine**, so none of my theories is the bug:
+
+1. plain forward declaration completed later — parses;
+2. plus a *self-referential* `struct device` (`struct device *parent`), to force
+   `Struct.getActualType`'s `currentlyBeingBuilt` → "self-embedded structs! Using long as a
+   placeholder" path — parses;
+3. plus `sizeof(struct device)` before the completion, to force the field list to be expanded and
+   **cached** (`cachedActualFields`) while `device_private` was still empty — parses.
+
+Theory 3 is worth restating even though it failed, because it is still the only mechanism that
+explains an *empty* struct rather than an int placeholder: `cachedActualFields` is invalidated by
+`addField` only on the struct whose own fields changed, so a struct that expanded a
+still-incomplete member type would keep that empty expansion forever. It simply is not what these
+files trigger — `sizeof` did not force it.
+
+Confirmed from the real file (INFO log): the self-embedded placeholder path *does* fire (once), and
+the failing access is `(dev->p)->driver_data`, with `struct device_private` defined at char 180856,
+long before the use at 496895.
+
+**The next step is a diagnostic, not another guess.** The message names the field but not the
+struct, so it cannot distinguish "resolved the wrong struct" from "right struct, no fields". Add the
+tag to `structMemberAccess`'s exception (CStruct has no tag accessor today — `getTypeName()` returns
+the storage type), rebuild, re-run the real file. Three failed repros say the real shape is subtler
+than the source reads, and more guessing costs more than the diagnostic does.

@@ -1642,7 +1642,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * Also aliases the {@code __builtin_}-prefixed floating-point classification builtins that have
      * no declaration to the plain library names that {@code FpFunctionsToExprsPass} already models
      * exactly ({@code isnan}, {@code isinf}, {@code isfinite}, {@code isnormal}), by emitting a
-     * call to the plain name.
+     * call to the plain name; supplies the infinity builtins ({@code __builtin_inf*},
+     * {@code __builtin_huge_val*}) as exact literals; and drops {@code __builtin_prefetch}, which is
+     * a hint with no semantics.
      *
      * <p>Returns {@code null} when {@code ctx} is not such a call, so normal handling proceeds.
      */
@@ -1701,6 +1703,55 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
             case "__builtin_isnormal" -> {
                 return callModeledLibraryFunction("isnormal", args, false);
+            }
+            case "__builtin_inf",
+                    "__builtin_inff",
+                    "__builtin_infl",
+                    "__builtin_huge_val",
+                    "__builtin_huge_valf",
+                    "__builtin_huge_vall" -> {
+                return infinityConstant(name);
+            }
+            case "__builtin_nan", "__builtin_nanf", "__builtin_nanl" -> {
+                return nanConstant(name);
+            }
+            case "__builtin_isnan" -> {
+                return callModeledLibraryFunction("isnan", args, false);
+            }
+            case "__builtin_isfinite", "__builtin_finite" -> {
+                return callModeledLibraryFunction("isfinite", args, false);
+            }
+            case "__builtin_isgreater",
+                    "__builtin_isgreaterequal",
+                    "__builtin_isless",
+                    "__builtin_islessequal",
+                    "__builtin_islessgreater",
+                    "__builtin_isunordered" -> {
+                // The NaN-safe comparison macros. FpFunctionsToExprsPass already models each under
+                // its plain name, so the `__builtin_` spelling only needs aliasing -- exactly as
+                // isinf/isnormal above.
+                return callModeledLibraryFunction(
+                        name.substring("__builtin_".length()), args, false);
+            }
+            case "__builtin_prefetch" -> {
+                // A cache hint with no semantic effect whatsoever: the C contract is explicitly that
+                // it does *not* dereference and is safe on any address, valid or not. Its operands
+                // are still ordinary expressions and are evaluated (`__builtin_prefetch(p->next)`
+                // really does read `p->next`), so they go through the visitor for their side
+                // effects and only the hint itself is dropped.
+                //
+                // Evaluated through `this`, the way `__builtin_expect` above does it, NOT through
+                // `functionVisitor`: it is this visitor that emits an operand's side-effect
+                // statements. Handing the context to the function visitor instead parses it and
+                // drops the effect on the floor -- `__builtin_prefetch(&a[i++])` left `i` at 0,
+                // which is what the fixture caught.
+                for (AssignmentExpressionContext arg : args) {
+                    arg.accept(this);
+                }
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> unused = signedInt.getNullValue();
+                parseContext.getMetadata().create(unused, "cType", signedInt);
+                return unused;
             }
             case "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
@@ -2333,6 +2384,66 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             throw unsupportedByteLaidOutMember(memberName, "it has no static size");
         }
         return byteScalarRead(base, byteOffset, widthBytes, embeddedType);
+    }
+
+    /**
+     * The GCC infinity builtins, as an exact {@code +inf} literal of the right width.
+     *
+     * <p>These have no declaration to resolve, so a file using one died as "No such variable or
+     * macro: __builtin_inff" before anything else could happen -- and they are ordinary in float
+     * benchmarks, where {@code isgreater(__builtin_inff(), 1.0)} is exactly the sort of thing being
+     * tested.
+     *
+     * <p>The name decides the width, and it is spelled out rather than sniffed from the last
+     * character: {@code __builtin_inf} itself *ends in* {@code f} but is the {@code double} one, so
+     * a suffix test would silently hand back a {@code float} infinity for it. Unlike the hex-literal
+     * path, {@code long double} needs no exception here -- infinity carries no significand to round.
+     */
+    private Expr<?> infinityConstant(String name) {
+        final String kind =
+                switch (name) {
+                    case "__builtin_inff", "__builtin_huge_valf" -> "float";
+                    case "__builtin_infl", "__builtin_huge_vall" -> "longdouble";
+                    default -> "double";
+                };
+        return floatConstant(kind, true);
+    }
+
+    /**
+     * The GCC NaN builtins, as a quiet NaN of the right width.
+     *
+     * <p>The argument is a string naming the NaN's *payload* ({@code __builtin_nanf("0x1")}). It is
+     * deliberately ignored: the payload is unobservable except by inspecting the value's bytes, and
+     * that path -- a floating-point member of a byte-addressed union -- is refused outright, so no
+     * program that gets this far can tell one payload from another. The argument is a string
+     * literal, so dropping it evaluates nothing away.
+     */
+    private Expr<?> nanConstant(String name) {
+        final String kind =
+                switch (name) {
+                    case "__builtin_nanf" -> "float";
+                    case "__builtin_nanl" -> "longdouble";
+                    default -> "double";
+                };
+        return floatConstant(kind, false);
+    }
+
+    /** A width-correct {@code +inf} or quiet NaN literal, carrying the matching C type. */
+    private Expr<?> floatConstant(String kind, boolean infinite) {
+        final int exponent = parseContext.getArchitecture().getBitWidth(kind + "_e");
+        final int significand = parseContext.getArchitecture().getBitWidth(kind + "_s");
+        final CComplexType type =
+                switch (kind) {
+                    case "float" -> CComplexType.getFloat(parseContext);
+                    case "longdouble" -> CComplexType.getLongDouble(parseContext);
+                    default -> CComplexType.getDouble(parseContext);
+                };
+        final BigFloat value =
+                infinite ? BigFloat.positiveInfinity(significand) : BigFloat.NaN(significand);
+        final FpLitExpr literal =
+                FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
+        parseContext.getMetadata().create(literal, "cType", type);
+        return literal;
     }
 
     private static UnsupportedFrontendElementException unsupportedByteLaidOutMember(
