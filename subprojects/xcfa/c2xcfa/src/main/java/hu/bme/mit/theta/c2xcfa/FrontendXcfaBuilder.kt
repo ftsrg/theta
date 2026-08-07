@@ -116,6 +116,16 @@ class FrontendXcfaBuilder(
     return getLoc(builder, "__loc_" + XcfaLocation.uniqueCounter(), metadata)
   }
 
+  /**
+   * Why an assignment's left-hand side could not be lowered, naming the shape rather than the
+   * object. The old message interpolated the CAssignment, whose toString is `CAssignment@4f8b199b` --
+   * it identifies the failure but not the C construct behind it, so a whole family of failures
+   * collapses into one unclassifiable bucket.
+   */
+  private fun unhandledLhs(lValue: Expr<*>, rExpression: Expr<*>): String =
+    "Could not handle left-hand side of assignment: lhs is a ${lValue.javaClass.simpleName}" +
+      " [$lValue] of type ${lValue.type}, rhs type ${rExpression.type}"
+
   private fun getMetadata(source: CStatement): MetaData =
     CMetaData(
       lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
@@ -1408,12 +1418,12 @@ class FrontendXcfaBuilder(
                 metadata = getMetadata(statement),
               )
             } else {
-              error("Could not handle left-hand side of assignment $statement")
+              error(unhandledLhs(lValue, rExpression))
             }
           }
 
           else -> {
-            error("Could not handle left-hand side of assignment $statement")
+            error(unhandledLhs(lValue, rExpression))
           }
         }
 

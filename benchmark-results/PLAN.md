@@ -5422,3 +5422,43 @@ Three things this overturns:
 
 Next targets, in this order: `intel-tdx-module` (one family, 1,634 runs, cause unknown),
 `goblint-regression` (507, one cause worth identifying), then the parse-time OOM/TIMEOUT families.
+
+### Two methodology bugs found while acting on the batch-85 ranking
+
+**1. My yml→input-file extractor silently dropped whole families.** It matched
+`input_files:\s*'([^']+)'` — requiring single quotes. `intel-tdx-module`'s ymls write
+`input_files: name.i` bare, so **the single largest failing family was absent from every local
+sample I ever built**, which is why it never appeared in any ranking before the benchmark produced
+one. Accept quoted *or* bare.
+
+**2. "--backend NONE cannot see after-parsing failures" was wrong.** I stated this as the
+justification for the parse-only run. Probing 8 intel-tdx after-parsing files locally with
+`--backend NONE` reproduces **8 of 8** — theta prints `ParsingResult Success`, then fails building
+the XCFA, and exits 210. What actually hid them was the probe's success criterion (marker string
+instead of exit code), the same flaw that inflated the "parses now" counts. The parse-only run was
+still the right call — it gives complete, correctly weighted counts over 72k runs rather than a
+skewed sample — but not for the reason given.
+
+### Top after-parsing cause: bitfield assignment (`FrontendXcfaBuilder`)
+
+`Could not handle left-hand side of assignment` is the largest single after-parsing cause found so
+far: 6 of 8 in the intel-tdx sample, 6 of 13 in the opaque-struct files, 10 of 14 combined.
+
+The old message interpolated the `CAssignment`, whose `toString` is `CAssignment@4f8b199b` — it
+names the failure but not the construct, collapsing an entire family into an unclassifiable bucket.
+Naming the shape instead identified it immediately:
+
+```
+lhs is a BvZExtExpr
+  [ bv_zero_extend(bvpos(bv_zero_extend(extract(deref(error_code, …, Bv 8), 5, 6), Bv 8)), Bv 32) ]
+  of type (Bv 32), rhs type (Bv 32)
+```
+
+An `extract(…, 5, 6)` over a dereferenced byte: a **bitfield store**. The read path builds
+`extract`, and the write path then has an `extract` — not a location — on the left. A bitfield write
+needs read-modify-write: read the containing byte, clear the bit range, or in the shifted value,
+write the byte back. Reads already work, so the layout information needed (offset, width) is
+present.
+
+Worth doing next: it is the top after-parsing cause, it is one well-understood mechanism rather than
+a family of special cases, and `intel-tdx-module` alone has 407 after-parsing files.
