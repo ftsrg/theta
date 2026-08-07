@@ -5102,3 +5102,41 @@ metric; per-cause counts are not comparable across builds.
 
 Scripts: `scratchpad/probe.sh` (parse-only, records the failure signature per file),
 `scratchpad/fefiles.py` (extract failing files from a results dir).
+
+### Undeclared modeled memory functions (`03e48ca3f8`)
+
+`memcpy`/`malloc`/`memset`/`free` used with **no declarator** (LDV `.i` files have the glibc headers
+stripped) failed at the *callee identifier* — "No such variable or macro: memcpy" — taking the whole
+frontend down long before `MemoryFunctionsPass`/`MallocFunctionPass`, which model those calls
+exactly, ever saw them. ~10% of before-parsing failures (32 of the 307-file sample, ~240 task-runs).
+
+Routed only for names a pass models *by name*: `malloc`, `free`, `realloc`, `memcpy`, `memmove`,
+`memset`. **`alloca` excluded on purpose** — its return type is not carried in metadata the way
+`malloc`'s is (`declareMallocReturnsPointer`), so a synthesized call would default to an `int`
+return and truncate the pointer under LP64; it is declared in our `<stdlib.h>` model instead.
+
+⚠️ **The guard is the whole point: `getVar(name) == null`.** A program supplying its own `malloc` or
+`memcpy` — LDV stubs routinely do — must keep it. That is what makes this safe where the earlier
+blanket function pre-registration was not (it broke 3 LDV canaries, converted 0/20, was reverted).
+Both directions have fixtures.
+
+Method note worth keeping: my first "own definition wins" fixture leaned on pointer identity with a
+global array and came back **Unsafe with *and* without** the change — a pre-existing modelling limit,
+not a regression. A/B-ing it before believing it is what stopped a false alarm being shipped as a
+fixture. Replaced with a call-counter form.
+
+### Batch 84 running total (all local A/B, none benchmarked yet)
+
+| fix | commit | measured |
+|---|---|---|
+| self/forward-referencing initializers | `54cb7bcfa5` | parse 10 → 92 of 307 (+82), 0 regressions; 46% of before-parsing failures |
+| `register` / `auto` storage classes | `07f4cf2857` | 8 of 10 affected files parse |
+| narrow memory cell reads | `c44d7b2f36` | run-84 regression `openbsd_cstrncmp-alloca-1` Unsafe → Safe; guard set 2 FAIL → 1 FAIL |
+| undeclared modeled memory functions | `03e48ca3f8` | frontend crash → Safe; own-definition case unaffected |
+
+### Still open from the run-84 triage
+- `ldv-races/race-2_2-container_of` and `race-3_2-container_of-global` — the other two genuine
+  regressions. **Still not reproduced**: two attempts at 200 s and 600 s both timed out (the 600 s
+  attempt was killed by a host restart). They only answer near 900 s. Their `main` is a plain
+  block-local `struct my_data data;` — no VLA and no symbolic alloca — so cause J's probe is ruled
+  out; cause F (memcpy cells) or a batch-82 change remains the candidate.
