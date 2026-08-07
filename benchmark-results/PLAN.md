@@ -5140,3 +5140,36 @@ fixture. Replaced with a call-counter form.
   attempt was killed by a host restart). They only answer near 900 s. Their `main` is a plain
   block-local `struct my_data data;` — no VLA and no symbolic alloca — so cause J's probe is ruled
   out; cause F (memcpy cells) or a batch-82 change remains the candidate.
+
+## Batch 85 — parse-only benchmark on benchcloud (launched 2026-08-07 13:14 CEST)
+
+benchcloud came back; sosy remains off-limits. Launched a **parse-only** run first, as directed,
+before spending a full verification run.
+
+- tool dir `Theta-svcomp-85` (= HEAD `6bc3648656`), XML `xmls/theta27-parse.xml`
+- output `results/Theta-svcomp-85/theta27-parse.xml/2026-08-07_13:14:33/`, screen `theta-parse85`
+- `--vcloudPriority IDLE` (as directed), `--vcloudCPUModel Skylake` (run 80's hardware),
+  `--vcloudClientHeap 8192`
+- gated first: canaries `parse` all green, fixtures 50 PASS / 0 FAIL
+
+`xmls/theta27-parse.xml` is `theta27-short.xml` with `--portfolio STABLE` swapped for
+`--backend NONE`; every other limit and all 8 rundefinitions are unchanged, which matters because
+the recent frontend fixes are **gated on the memory-safety properties** and would be invisible in a
+single-property run.
+
+**Why this run is worth a slot.** With no backend the tool-info's exit-code mapping turns every task
+into a pure frontend verdict — exit 0 → `unknown` (parsed), exit 210 → `ERROR (frontend failed,
+before|after parsing finished)`. Two things follow:
+
+1. It measures the frontend over all 36,602 task-runs instead of a 307-file sample, so the cause
+   ranking stops being an extrapolation.
+2. **It sees the `after parsing` failures, which a local `--backend NONE` probe structurally cannot.**
+   That was the flaw in my earlier probe: with the backend off, an after-parsing failure never gets
+   the chance to happen, so all 163 sampled files trivially reported "parses now". The 496
+   after-parsing files have therefore never been measured. In the *benchmark* the pass pipeline does
+   run, so exit 210 with `after` is reported honestly.
+
+Analysis script: `benchmark-results/parse_summary.py <results-dir> [--by-family] [--files <substr>]`.
+
+A full verification run follows only if this one looks clean — it is the cheaper way to find out
+whether HEAD regressed the frontend anywhere.
