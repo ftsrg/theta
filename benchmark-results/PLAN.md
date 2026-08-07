@@ -5260,10 +5260,17 @@ Two traps worth recording:
   harmless there: C requires those operands to be an lvalue and a parameter name, so they cannot
   carry side effects. Left alone rather than widened.
 
-**Measured.** Of the 1747 before-parsing failures, 272 files (15.6%) use one of these builtins. On a
-30-file random sample of those, **6 now parse (20%)** and — the part that matters — **zero remain
-blocked on any `__builtin_` name**; the other 24 fail for unrelated reasons that were always behind
-the builtin. The docstring claimed `isnan`/`isfinite` were already aliased when only `isinf` and
+**Measured — and then corrected.** Of the 1747 before-parsing failures, 272 files (15.6%) use one of
+these builtins. My first number, "6 of 30 now parse", was **wrong**: the probe called a file parsed
+whenever `ParsingResult Success` appeared in the output, but theta prints that marker and can still
+fail in a later stage and exit 210. Re-measured with the **exit code** — which is what benchexec's
+tool-info actually keys on — it is **2 of 30** that fully succeed.
+
+What does hold, and is the point of the fix: **zero files remain blocked on any `__builtin_` name**.
+The other 28 fail on causes that were always sitting behind the builtin.
+
+⚠️ **Every "parses now" figure in this file measured before 2026-08-07 has the same flaw** and is an
+over-count. Use `scratchpad/probe_rc.sh` (exit-code based) for anything new. The docstring claimed `isnan`/`isfinite` were already aliased when only `isinf` and
 `isnormal` actually were, so that gap is closed too.
 
 Fixtures: `builtin_infinity.c`, `builtin_nan_compare.c`, `builtin_prefetch.c`.
@@ -5297,8 +5304,121 @@ Confirmed from the real file (INFO log): the self-embedded placeholder path *doe
 the failing access is `(dev->p)->driver_data`, with `struct device_private` defined at char 180856,
 long before the use at 496895.
 
-**The next step is a diagnostic, not another guess.** The message names the field but not the
-struct, so it cannot distinguish "resolved the wrong struct" from "right struct, no fields". Add the
-tag to `structMemberAccess`'s exception (CStruct has no tag accessor today — `getTypeName()` returns
-the storage type), rebuild, re-run the real file. Three failed repros say the real shape is subtler
-than the source reads, and more guessing costs more than the diagnostic does.
+**ROOT CAUSE FOUND — by instrumentation, after four failed repros.**
+
+The diagnostic (tag added to the message) first ruled out half the space: the real file reports
+`Field [driver_data] of struct device_private not found, available fields are: []` — the *right*
+struct, genuinely empty. A fourth repro (by-value embedding, which the real file does at
+139307–145981, before the completion at 180856) still parsed, so I stopped writing repros and traced
+`Struct.addField` / `getActualType` on the real file instead:
+
+```
+getActualType device_private  canonical=950689790  fields=[]           cached=null   <- expanded EMPTY
+getActualType device_private  canonical=950689790  fields=[]           cached=0      <- reuses the empty expansion
+getActualType device_private  canonical=950689790  fields=[]           cached=0
+getActualType device_private  canonical=950689790  fields=[]           cached=0
+addField      device_private.driver_data on 950689790                                <- definition finally arrives
+getActualType device_private  canonical=950689790  fields=[driver_data] cached=null
+```
+
+`device_private` is expanded into an **empty `CStruct` four times before its definition arrives**.
+`addField` correctly invalidates its *own* cache (the last line shows `cached=null`), but the empty
+`CStruct` objects handed out by those four expansions were already embedded in **enclosing** structs'
+`cachedActualFields`, and nothing invalidates those. So `struct device`'s field `p` stays a pointer
+to a field-less struct for the rest of the parse. This is theory 3 after all — the repros failed only
+because in each of them the *enclosing* expansion happened after completion, never before.
+
+Confirms it is **one bug**, matching the bucket's homogeneity (12 of 13 failures are the same field).
+
+**Fix, and the trap in it.** The obvious fix — a global generation counter bumped by every `addField`,
+with caches valid only for the current generation — is correct but risks re-introducing exactly what
+the cache was added to prevent: during the declaration phase every `addField` would invalidate every
+cache, and the comment on `cachedActualFields` records that unbounded re-expansion is *exponential in
+nesting depth* and "large LDV kernel headers ran out of heap inside it". The safer shape is to **not
+cache an expansion that contained an incomplete (field-less) named struct**, leaving it to be
+recomputed once the tag is complete; complete expansions still cache, so the steady state keeps
+today's performance. Before implementing, check whether `CDeclaration.getActualType` also memoises
+the stale type — invalidating only `Struct`'s cache is not enough if it does. Needs the full canary
+gate plus a timing check on a large LDV file, since the failure mode of getting it wrong is a heap
+blowup rather than a wrong answer.
+
+**Second, distinct bug found in the same family** (`Only structs expected here, got …complex.integer…`,
+forester-heap + 3 LDV files): `getActualType`'s self-embedded guard returns `signedInt` wrapped in
+the field's pointer levels, so `struct device *parent` resolves to **`int*` rather than
+`struct device*`**. A pointer to a struct under construction needs no recursion at all — a pointer is
+a scalar of known size — so the placeholder fires far too eagerly. Only genuine *by-value*
+self-embedding is illegal in C and needs the placeholder.
+
+
+### Struct cache fix — measured honestly (batch 85)
+
+The `cachedActualFields` fix (see the root-cause section above) works: across the 13 known
+opaque-struct files the `Field [x] … available fields are: []` error class is **gone entirely**. But
+the benchmark value is far smaller than the bucket size suggested — re-measured by exit code:
+
+| outcome with the fix | files |
+|---|---|
+| fully succeeds (exit 0) | **1** |
+| `Could not handle left-hand side of assignment` (FrontendXcfaBuilder:1416) | 6 |
+| `ClassCastException` (bv_zero / deref typing) | 4 |
+| timeout at 150s | 2 |
+
+All 13 scored 0 before as frontend errors, and 12 still score 0 as *different* frontend errors. So
+this is worth ~1 file today. It is still worth shipping: an empty struct type is silently **wrong
+modelling**, not merely a refusal, and wrong types are exactly the thing that produces wrong verdicts
+rather than honest errors. But it should be booked as unblocking, not as points — and
+`Could not handle left-hand side of assignment` is now the top blocker in this family, having been
+hidden behind the struct bug in 6 of 13 files.
+
+**No canary guards it.** Both real files I added were rejected by the suite and removed:
+`vmxnet3` does not fully parse even with the fix (it advances to the left-hand-side error), and
+`pktcdvd` is OOM-killed under `theta-start.sh`'s hardcoded `-Xmx14210m` in this host's 8 GB cgroup —
+and running two files that heavy 4-way parallel also OOM-killed an unrelated canary
+(`cartpole_0_safe`), which is a good reminder that a heavy canary damages its neighbours. Five
+minimal repros all parse identically with and without the fix, so the fix is validated only by the
+direct A/B recorded above (`THETA_NO_DEPINVAL`, both files flipping cleanly at `-Xmx4g`).
+
+## Batch 85 RESULTS — the parse-only run (complete, 72,103 task-runs)
+
+Finished 2026-08-07 ~14:30 CEST. This is the first measurement of the frontend over the *whole*
+benchmark rather than a sample, and the first that can see after-parsing failures at all.
+
+| status | runs | share |
+|---|---|---|
+| `unknown` (parsed, XCFA built) | 62,049 | **86.1%** |
+| ERROR (frontend failed, **before** parsing) | 3,753 | 5.2% |
+| OUT OF MEMORY | 2,603 | 3.6% |
+| ERROR (frontend failed, **after** parsing) | 2,502 | 3.5% |
+| TIMEOUT | 1,186 | 1.6% |
+
+**13.9% of the benchmark cannot even be handed to a backend**, and a third of that is resource
+exhaustion *while parsing* — 2,603 OOM and 1,186 timeouts with no verification work being done at
+all. That bucket was completely invisible before this run.
+
+### The ranking this produces — it is not the one I was working from
+
+| family | non-parsing runs | kind |
+|---|---|---|
+| **intel-tdx-module** | **1,634** | 688 before + 814 after + 132 OOM |
+| eca-rers2012 | 852 | 800 **OOM** |
+| hardware-verification-bv | 780 | 704 **TIMEOUT** |
+| ldv-linux-4.2-rc1 | 764 | mixed |
+| ldv-linux-3.14 | 638 | mixed |
+| float-newlib | 530 | the union/float-punning wall |
+| goblint-regression | 507 | **all after-parsing** |
+
+Three things this overturns:
+
+1. **`intel-tdx-module` is the single largest frontend blocker by a wide margin, and I have never
+   looked at it** — it did not stand out in the stratified sample because that sample took 8 files
+   per family regardless of family size. It is both the largest before-parsing *and* the largest
+   after-parsing family.
+2. **`goblint-regression` (507) is entirely after-parsing**, so no local `--backend NONE` probe could
+   ever have seen it. Same for most of `pthread-*`.
+3. **`eca-rers2012` OOM (800) and `hardware-verification-bv` TIMEOUT (704) are resource problems, not
+   missing features.** No amount of grammar work touches them; they need the frontend to be cheaper.
+   Worth noting next to the struct-cache work: that cache exists precisely because this expansion is
+   exponential, and 2,603 parse-time OOMs say the cost problem is real and unsolved elsewhere too.
+
+Next targets, in this order: `intel-tdx-module` (one family, 1,634 runs, cause unknown),
+`goblint-regression` (507, one cause worth identifying), then the parse-time OOM/TIMEOUT families.

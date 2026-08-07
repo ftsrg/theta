@@ -1913,8 +1913,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
         }
         throw new UnsupportedFrontendElementException(
-                "Field [%s] not found, available fields are: %s"
-                        .formatted(memberName, structType.getFieldsAsMap().keySet()));
+                "Field [%s] of %s not found, available fields are: %s"
+                        .formatted(memberName, tagOf(structType), structType.getFieldsAsMap().keySet()));
+    }
+
+    /** The struct's tag as written, or its type name where the origin is not a tagged struct. */
+    private static String tagOf(CStruct structType) {
+        return structType.getOrigin()
+                        instanceof
+                        hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct s
+                ? s.getTagName()
+                : "<untagged struct>";
     }
 
     /**

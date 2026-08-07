@@ -74,6 +74,35 @@ public class Struct extends NamedType {
      */
     private List<Tuple2<String, CComplexType>> cachedActualFields;
 
+    /**
+     * The tags expanded while still field-less during the expansion currently in progress, one set
+     * per nesting level (see {@link #getActualType()}). A level's set is merged into its parent's
+     * when it finishes, so an enclosing struct learns about incomplete tags found anywhere beneath
+     * it, not just among its own immediate members.
+     */
+    private static final java.util.Deque<java.util.Set<String>> expansionFrames =
+            new java.util.ArrayDeque<>();
+
+    /**
+     * Tag → the canonical structs whose cached expansion baked in that tag while it was still
+     * field-less. {@link #addField} clears exactly these when the tag is finally defined.
+     *
+     * <p>This exists because {@code addField} invalidating only its *own* cache is not enough: in a
+     * CIL-preprocessed kernel source `struct device` expands `struct device_private *p` hundreds of
+     * thousands of characters before that tag is defined, so `struct device` keeps a pointer to a
+     * field-less struct forever and every `(dev->p)->driver_data` fails with "available fields are:
+     * []".
+     *
+     * <p>Targeted invalidation, rather than the two blunter options, both of which were measured:
+     * declining to cache an incomplete expansion at all sounds narrow ("incomplete tags are rare")
+     * but is not -- forward declarations are pervasive in these sources, so nearly nothing cached
+     * and three LDV files went from ~19s to `OutOfMemoryError`, the expansion being exponential in
+     * nesting depth. A global generation counter invalidating every cache per `addField` fails the
+     * same way for the whole declaration phase.
+     */
+    private static final Map<String, java.util.Set<Struct>> incompleteDependents =
+            new LinkedHashMap<>();
+
     /** Unnamed bitfields, in declaration order; see {@link #addPadding}. */
     private final List<CStruct.Padding> paddings = new ArrayList<>();
 
@@ -144,10 +173,30 @@ public class Struct extends NamedType {
         return !canonical().fields.isEmpty();
     }
 
+    /**
+     * The tag as written (`struct device_private`), for diagnostics. An unresolved member access
+     * reports only the field name, which cannot tell "resolved the wrong struct" apart from "right
+     * struct, no fields" -- and that distinction is what a field-less struct error hinges on.
+     */
+    public String getTagName() {
+        return (union ? "union " : "struct ") + (name == null ? "<anonymous>" : name);
+    }
+
     public void addField(CDeclaration decl) {
         fields.put(checkNotNull(decl.getName()), checkNotNull(decl));
         cachedActualFields = null;
         canonical().cachedActualFields = null;
+        // Anything that cached an expansion containing this tag while it was still field-less is
+        // now stale. The entry is kept rather than removed: fields arrive one at a time, and a
+        // dependent could re-cache between two of them.
+        if (name != null) {
+            final java.util.Set<Struct> dependents = incompleteDependents.get(tagOf(name, union));
+            if (dependents != null) {
+                for (Struct dependent : dependents) {
+                    dependent.cachedActualFields = null;
+                }
+            }
+        }
     }
 
     /**
@@ -178,14 +227,35 @@ public class Struct extends NamedType {
         }
         currentlyBeingBuilt = true;
         final Struct canonical = canonical();
+        // Expanding a tag with no body yet yields an empty CStruct -- unavoidable, the definition
+        // has not been parsed. Report it to the expansion in progress so that whatever caches this
+        // result can be invalidated when the tag is finally defined.
+        if (name != null && canonical.fields.isEmpty() && !expansionFrames.isEmpty()) {
+            expansionFrames.peek().add(tagOf(name, union));
+        }
         List<Tuple2<String, CComplexType>> actualFields = canonical.cachedActualFields;
         if (actualFields == null) {
+            final java.util.Set<String> frame = new java.util.LinkedHashSet<>();
+            expansionFrames.push(frame);
             final List<Tuple2<String, CComplexType>> expanded = new ArrayList<>();
-            resolvedFields()
-                    .forEach(
-                            (s, cDeclaration) ->
-                                    expanded.add(Tuple2.of(s, cDeclaration.getActualType())));
+            try {
+                resolvedFields()
+                        .forEach(
+                                (s, cDeclaration) ->
+                                        expanded.add(Tuple2.of(s, cDeclaration.getActualType())));
+            } finally {
+                expansionFrames.pop();
+            }
             canonical.cachedActualFields = expanded;
+            for (String tag : frame) {
+                incompleteDependents
+                        .computeIfAbsent(tag, k -> new java.util.LinkedHashSet<>())
+                        .add(canonical);
+            }
+            // Ancestors depend on these tags too: their own expansion contains this one.
+            if (!expansionFrames.isEmpty()) {
+                expansionFrames.peek().addAll(frame);
+            }
             actualFields = expanded;
         }
         currentlyBeingBuilt = false;
