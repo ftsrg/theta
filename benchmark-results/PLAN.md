@@ -5530,3 +5530,34 @@ shapes worth considering: intercept at the *assignment* level in `FunctionVisito
 escapes into an expression; or return a marker that carries no usable value and have every rvalue
 consumer throw on it. Do not ship the version that only special-cases the store and leaves reads
 returning the marker.
+
+#### Bitfield store: the metadata is gone entirely, not merely wrapped — tried and reverted
+
+Traced the real failure (`intel-tdx-module/tdh_mng_init__…_havoc_object.i`) with a temporary probe in
+the builder's fallthrough:
+
+```
+TRACE lhs=BvZExtExpr CELL=ABSENT OFFSET=ABSENT cellExpr=null
+```
+
+**`BitfieldSlice.CELL` is absent on the lvalue**, so the earlier reading — "the stamp is on an inner
+node under an integer promotion" — is wrong. I implemented that fix anyway (`sliceCarrier`, peeling
+single-operand wrappers and retrying the lookup): the intel-tdx file **still failed identically**,
+so nothing on the ancestor chain carries the metadata either. The expression is rebuilt wholesale
+somewhere between the member access and the assignment, and identity-keyed metadata does not survive
+a rebuild. Reverted — it was unvalidated code with no measured effect. A plain pointer-to-bitfield
+store (`p->f = 1`) parses fine both before and after, so the simple path was never broken.
+
+**The promising direction is structural, not metadata-based.** The left-hand side is
+
+```
+bv_zero_extend( bvpos( bv_zero_extend( extract(deref(cell…), 5, 6), Bv 8)), Bv 32)
+```
+
+and an `extract` *carries its own offset and width* (5, 6) with the cell as its operand. So the
+builder can recognise the shape directly — peel the extends, match `BvExtractExpr` over a
+(possibly `Pos`-wrapped) `Dereference`, and reconstruct the read-modify-write from the extract's own
+bounds — with no reliance on metadata surviving. Needs care over signedness and the cell's C type,
+and must not intercept a genuine rvalue extract.
+
+Do not retry the metadata-lookup variants: the stamp is not there to be found.
