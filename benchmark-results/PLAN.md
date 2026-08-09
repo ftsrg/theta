@@ -5857,3 +5857,41 @@ attempts.
 further local patching, and work in this area will keep hitting the same wall. That is a stronger
 case for the bytes model than either bucket made on its own — and the whole-cell address-of fix
 above is worth re-applying *once the bytes model lands*, since it will be a genuine unblocker then.
+
+### goblint-regression (507 after-parsing runs): pthread handles passed by pointer
+
+Cause identified, and it is **not** a parsing problem — all of it is `CLibraryFunctionsPass`
+refusing the mutex handle. Sample of 10 files (103 distinct files behind the 507 runs):
+
+| message | files |
+|---|---|
+| `Unsupported library parameter: expected reference base` | 4 |
+| `Local mutex handles are not supported: <name>` | 4 |
+| `Non-static mutex handles (multiple writes)` | 1 |
+| `Unsupported library parameter: non-constant dereference` | 1 |
+
+The name is misleading: these are not locally *declared* mutexes. The shape is a handle reached
+through a **pointer parameter**:
+
+```c
+void munge(pthread_mutex_t *m, int *v) { pthread_mutex_lock(m); ... }
+void *t1_fun(void *a) { munge(&mutex1, &global1); }
+void *t2_fun(void *a) { munge(&mutex2, &global1); }
+```
+
+`checkMutexDecl` requires the handle to be a global `VarDecl`, because a pthread handle is an
+**identity key** — the analysis maps the decl to a mutex identity. Here it resolves to the local
+parameter `munge::m` instead of the global it points at, and refuses.
+
+⚠️ **Do not "fix" this by collapsing the local to one identity.** Two different globals reach that
+parameter, and the task is called `ptrmunge_racing` precisely because the verdict depends on telling
+`mutex1` from `mutex2`. Merging them would invent or hide races — a wrong answer where there is
+currently an honest error.
+
+**The tractable design** (this is task "use candidate sets for pthread handles", still open): after
+inlining, each copy of `munge` has its own `m` written exactly **once**, with `&mutex1` in one copy
+and `&mutex2` in the other. So a local handle whose *single* definition is the address of a global
+mutex can be resolved to that global soundly, and the two copies stay distinct. The pass already
+counts writes for its "multiple writes" check, so the machinery to identify the single-write case is
+there. Verify first that inlining really does run before `CLibraryFunctionsPass`; if it does not,
+this design does not hold and per-call-site specialisation is needed instead.
