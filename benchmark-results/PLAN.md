@@ -5604,3 +5604,38 @@ handing a now-parsing task to a backend that then gets it wrong:
 
 The `test-021x` / `list-ext-properties` group is the obvious first target: 7 tasks, one property,
 one transition, and they only started answering because the frontend stopped refusing them.
+
+### ROOT CAUSE of the run-86 `test-021x` newly-wrong family: arrays declared through a typedef
+
+The 7 newly-wrong `memsafety/test-0214,-0217,-0218,-0232-2` + `list-ext-properties/test-0214_1,
+-0217_1,-0232_1-2` tasks are **not** a shape-analysis limitation. `test-0214` reproduces locally in
+**4.6 seconds with `Trace length: 7`** — far too short for a doubly-linked-list precision problem —
+and bisects to a four-line repro:
+
+| declaration | valid-memsafety verdict |
+|---|---|
+| `int arr[2];` | Safe |
+| `void *arr[2];` | Safe |
+| `static int arr[2];` | Safe |
+| **`typedef int arr_t[2]; arr_t a;`** | **Unsafe (valid-deref)** |
+| **`typedef void *p_t[2]; p_t a;`** | **Unsafe (valid-deref)** |
+| **`typedef void *p_t[2];` … local `p_t a;`** | **Unsafe (valid-deref)** |
+
+**Any array declared through a typedef loses its extent**, so the very first element read fails the
+`ptr_size` bound check. Element type and storage duration are irrelevant; only the typedef matters.
+Every one of these 7 tasks declares its list as `typedef ... list_t[2]; list_t list;`.
+
+Not a decay-to-pointer: `sizeof(typedef array) == sizeof(plain array)` verifies Safe, so the type
+really is a `CArray` with its dimension intact. The alloca emission in
+`FunctionVisitor#visitBodyDeclaration` is gated on `declaration.getActualType() instanceof CArray`,
+which a typedef'd array *does* satisfy — so the loss is somewhere after that, and the next step is
+to **diff the serialized XCFA** (`--enable-c-serialization`, unreach-call only) between the typedef
+and non-typedef locals rather than reason about it further.
+
+Note `CDeclaration.getArrayDimensions()` (the *declarator's* `[2]`) is empty for `p_t a;` while the
+*type's* dimension is present — a likely shape for the bug, and worth checking first.
+
+**Value:** −112 points today (7 tasks × −16), and these tasks only began answering because the
+frontend stopped refusing them, so this is the direct cost of the frontend fixes landing. Likely
+affects more than the 7, since typedef'd arrays are a common idiom. Fixing it should convert them to
+correct `true` rather than merely back to errors.
