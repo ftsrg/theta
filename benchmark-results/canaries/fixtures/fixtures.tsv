@@ -52,3 +52,4 @@ own_memory_function_wins.c	efficient	ILP32	SAFE	84	a program-supplied memcpy def
 builtin_infinity.c	efficient	ILP32	SAFE	85	GCC infinity builtins are exact (__builtin_inf/inff/infl, huge_val*)
 builtin_prefetch.c	efficient	ILP32	SAFE	85	__builtin_prefetch is dropped but its operands are still evaluated
 builtin_nan_compare.c	efficient	ILP32	SAFE	85	GCC NaN builtin + NaN-safe comparison builtins alias to the modeled ones
+typedef_array_extent.c	efficient	ILP32	SAFE:valid-memsafety	87	an array declared through a typedef keeps its extent (and its dimension order)

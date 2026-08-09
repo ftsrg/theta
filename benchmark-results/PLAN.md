@@ -5679,3 +5679,35 @@ shape for `typedef int (*handler)(int)`: it copies declarator-level function-poi
 
 Gate on the four-line repros above (plain/static/typedef × global/local, all must be Safe), the 7
 run-86 tasks, and a fixture pinning both the extent *and* the dimension order for `A x[3]`.
+
+#### Fix shipped — and what it actually bought (measured, not predicted)
+
+Implemented as designed: dimensions carried on `CSimpleType` (and through `copyOf()`, which the
+typedef resolution relies on), a `markArrayTypedefs` pass beside `markFunctionPointerTypedefs` at
+both call sites, and inheritance appended **after** the declarator's own dimensions.
+
+Repro level — all pass, control unchanged:
+
+| shape | before | after |
+|---|---|---|
+| `typedef int[2]` global / `void*[2]` global / `void*[2]` local | Unsafe (valid-deref) | **Safe** |
+| plain `int[2]`, `void*[2]`, `static int[2]` (controls) | Safe | Safe |
+| `typedef int A[2]; A x[3]` — `sizeof(x[0]) == sizeof(plain[0])` | — | **Safe** |
+
+⚠️ **The 7 tasks it was supposed to fix are NOT fixed. My prediction above was wrong.**
+
+| task | before (run 86) | after (local, 400 s) |
+|---|---|---|
+| `test-0214`, `-0217`, `-0218`, `test-0214_1`, `-0217_1` | `false(valid-deref)` | **no answer (timeout)** |
+| `test-0232-2`, `test-0232_1-2` | `false(valid-deref)` | **still `false(valid-deref)`** |
+
+**0 of 7 correct.** What the fix actually did for five of them is remove an *immediate* spurious
+counterexample, so they now have to do real verification work — which does not finish in 400 s
+locally. Whether they finish inside the benchmark's 900 s is unknown from here; locally it is 0
+instead of −16 each, and would be +2 each only if they complete. Do not book either number without a
+run. The two `test-0232*` tasks are unchanged and need a **separate root cause**.
+
+Shipped anyway on correctness grounds, not on those tasks: a typedef'd array silently becoming a
+scalar with no object at all is wrong *modelling*, which is the class of defect that yields wrong
+verdicts rather than honest errors, and it is guarded by a fixture A/B'd to fail without the fix
+(`Safe` with, `Unsafe (valid-deref)` without).

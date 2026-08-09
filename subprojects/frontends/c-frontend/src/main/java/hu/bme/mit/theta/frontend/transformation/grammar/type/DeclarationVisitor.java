@@ -82,6 +82,23 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * @param initDeclContext initialization list context
      * @return the corresponding CDeclarations
      */
+    /**
+     * Gives a declaration the array dimensions its typedef'd specifier carries
+     * (`typedef int arr_t[2]; arr_t a;`), which no declarator of its own ever wrote.
+     *
+     * <p>Appended *after* the declarator's own, because that is the order C reads them in:
+     * `typedef int A[2]; A x[3];` makes `x` an `int[3][2]`, so the declarator's `[3]` is the
+     * outermost dimension and the typedef's `[2]` the inner one. Getting this backwards still
+     * produces an array of the right total size, so only a multi-dimensional case can catch it --
+     * which is what the fixture pins.
+     */
+    private static void inheritTypedefArrayDimensions(
+            CDeclaration declaration, CSimpleType cSimpleType) {
+        for (CStatement dimension : cSimpleType.getTypedefArrayDimensions()) {
+            declaration.addArrayDimension(dimension);
+        }
+    }
+
     public List<CDeclaration> getDeclarations(
             CParser.DeclarationSpecifiersContext declSpecContext,
             CParser.InitDeclaratorListContext initDeclContext,
@@ -91,6 +108,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (cSimpleType.getAssociatedName() != null) {
             CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
             cDeclaration.setType(cSimpleType);
+            inheritTypedefArrayDimensions(cDeclaration, cSimpleType);
             cDeclaration.incDerefCounter(cSimpleType.getPointerLevel());
             ret.add(cDeclaration);
         }
@@ -108,6 +126,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 // aggregate (the Intel TDX-Module lookup tables). setType now so getActualType sees
                 // the specifier.
                 declaration.setType(cSimpleType);
+                inheritTypedefArrayDimensions(declaration, cSimpleType);
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
                     // The name is in scope inside its own initializer (C: the declarator is

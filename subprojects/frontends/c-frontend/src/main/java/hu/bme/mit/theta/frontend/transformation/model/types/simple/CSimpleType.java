@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,30 @@ public abstract class CSimpleType {
 
     public void setFunctionPointer(boolean functionPointer) {
         this.functionPointer = functionPointer;
+    }
+
+    /**
+     * The array dimensions a `typedef` wrote in its own declarator (`typedef int arr_t[2]`).
+     *
+     * <p>Dimensions normally live on the *declarator*
+     * ({@link hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration#getArrayDimensions}),
+     * not on the type -- but a typedef's declarator belongs to the typedef, and every later
+     * `arr_t a;` has a declarator of its own with no brackets in it. Without carrying them here the
+     * array-ness was simply lost: the variable was created as a scalar and no `alloca` was emitted
+     * for it, so the object had no size and the very first element read failed the valid-deref
+     * bound check (the run-86 `memsafety/test-021x` + `list-ext-properties` family).
+     *
+     * <p>Carried on the type for the same reason {@link #functionPointer} is -- see
+     * {@code TypedefVisitor#markArrayTypedefs}.
+     */
+    private List<CStatement> typedefArrayDimensions = new ArrayList<>();
+
+    public List<CStatement> getTypedefArrayDimensions() {
+        return typedefArrayDimensions;
+    }
+
+    public void setTypedefArrayDimensions(List<CStatement> dimensions) {
+        this.typedefArrayDimensions = new ArrayList<>(dimensions);
     }
 
     /**
@@ -305,5 +330,7 @@ public abstract class CSimpleType {
         }
         copy.starPointers = this.starPointers; // a copy inherits what the original inherited
         copy.setFunctionPointer(this.isFunctionPointer());
+        // resolveTypedefName hands users a copyOf(), so a typedef's dimensions must survive it.
+        copy.setTypedefArrayDimensions(this.getTypedefArrayDimensions());
     }
 }
