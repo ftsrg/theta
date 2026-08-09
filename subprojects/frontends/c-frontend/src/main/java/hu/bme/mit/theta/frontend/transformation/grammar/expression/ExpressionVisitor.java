@@ -1192,7 +1192,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 checkState(
                         originalOperand instanceof RefExpr<?>
                                 || originalOperand instanceof Dereference<?, ?, ?>,
-                        "Referencing non-lvalue expressions is not allowed!");
+                        "Referencing non-lvalue expressions is not allowed! Got a %s [%s] of type"
+                                + " %s",
+                        originalOperand.getClass().getSimpleName(),
+                        originalOperand,
+                        ampType);
                 return reference(originalOperand);
             case "*":
                 // `*f` on a function (pointer) is the function itself: (*fp)(x) == fp(x).

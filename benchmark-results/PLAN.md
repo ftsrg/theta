@@ -5824,3 +5824,36 @@ The evidence standing in for a guard is the per-file A/B above, reproducible wit
 **Why minimal repros keep failing here** (third time this session, after the struct cache): these
 bugs live in composite frontend paths — byte-laid-out unions, concat-assembled units — that
 hand-written C does not reach. The real shape only ever came out of tracing the actual input.
+
+### intel-tdx-module before-parsing (344 files): blocked on the bytes memory model
+
+Two causes in the 8-file sample: 5 × "Taking the address of a multi-byte member of a byte-addressed
+union", 3 × "Referencing non-lvalue expressions is not allowed!".
+
+The second was diagnosable once the message named the operand — it is `&` applied to
+`bvpos(bvpos(zext(extract(deref(...), 0, 64))))`, a **full-width** extract, i.e. an expression that
+does denote storage even though it is not syntactically an lvalue. I implemented the corresponding
+fix (`&` of a whole-cell extract = the cell's address, restricted to full width so a genuine
+bitfield — whose address C forbids — still refuses). **It worked**: all 3 files moved past the
+check. They then land on the *first* cause, so the sample is now 8/8 on that one refusal.
+
+**And that refusal is a model limitation, not an oversight.** Its own comment:
+
+> the resulting pointer would have to know it reads several byte-cells as one value, which no
+> pointer in this model can express. […] **Under the bytes memory model this restriction does not
+> apply**: every object is a run of byte cells and a pointer is a plain byte address.
+
+There is no standalone win either: `&u.raw` on a single 64-bit union member fails **identically with
+and without** the change, because in a byte-laid-out union a cell *is* a byte, so any 64-bit member
+spans eight of them. So the whole-cell fix converts one error into another and nothing more.
+
+**Reverted the logic; kept only the improved diagnostic** (which is what made this diagnosable and
+costs nothing). No measured benefit does not ship — the same rule applied to both earlier bitfield
+attempts.
+
+⚠️ **Strategic: two of the largest frontend buckets now converge on the same project.** This one
+(344 before-parsing files) and the float↔int union-punning wall (~298 files) are both waiting on the
+**byte-granular memory model**, already the designated next big task. Neither is reachable by
+further local patching, and work in this area will keep hitting the same wall. That is a stronger
+case for the bytes model than either bucket made on its own — and the whole-cell address-of fix
+above is worth re-applying *once the bytes model lands*, since it will be a genuine unblocker then.
