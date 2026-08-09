@@ -5639,3 +5639,43 @@ Note `CDeclaration.getArrayDimensions()` (the *declarator's* `[2]`) is empty for
 frontend stopped refusing them, so this is the direct cost of the frontend fixes landing. Likely
 affects more than the 7, since typedef'd arrays are a common idiom. Fixing it should convert them to
 correct `true` rather than merely back to errors.
+
+#### Mechanism and fix design (typedef'd arrays)
+
+Serialized-XCFA diff between `int a[2]` and `typedef int arr_t[2]; arr_t a` inside `main`
+(`--enable-c-serialization`, unreach-call):
+
+```
+  plain                                   typedef
+  int_arr main__a;                        long main__a;          <- a SCALAR, not an array
+  long call_alloca_ret0;                  (absent)
+  __malloc = 3;                           (absent)
+  call_alloca_ret0 = (__malloc + 1);      (absent)
+  main__a = (+ call_alloca_ret0);         (absent)               <- no object, so no extent
+```
+
+The variable is not created as an array and **no `alloca` is emitted at all**, so the object has no
+`ptr_size` entry and the first element read fails the bound check. `sizeof` is nevertheless correct
+because it is computed from the type independently.
+
+**Why:** an array's dimensions live on the **declarator** (`CDeclaration.arrayDimensions`), not on
+the type. `typedef int arr_t[2]` therefore records `[2]` on the *typedef's own CDeclaration*, while
+`TypedefVisitor.getSimpleType(id)` — what `TypeVisitor#resolveTypedefName` hands to a later
+declaration — returns `CDeclaration::getType()`, the `CSimpleType`, which never carried it. So
+`arr_t a;` sees a plain scalar type. (`getType(id)`, returning `getActualType()`, *does* carry it —
+which is why `sizeof` is right and the `instanceof CArray` gate looked satisfied.)
+
+**Fix — follow the existing precedent.** `markFunctionPointerTypedefs` already solves exactly this
+shape for `typedef int (*handler)(int)`: it copies declarator-level function-pointer-ness onto
+`declaration.getType()` so later users inherit it. Do the same for dimensions:
+
+1. `CSimpleType`: hold the typedef's array dimensions (alongside `functionPointer`); include them in
+   `copyOf()`, which `resolveTypedefName` relies on.
+2. `TypedefVisitor`: a `markArrayTypedefs` pass beside `markFunctionPointerTypedefs`, copying a
+   typedef declaration's `getArrayDimensions()` onto its type.
+3. Where a declaration is built from a resolved typedef, append the typedef's dimensions **after**
+   the declarator's own. Order matters and is easy to get backwards: in C,
+   `typedef int A[2]; A x[3];` makes `x` an `int[3][2]`, i.e. the declarator's `[3]` is outermost.
+
+Gate on the four-line repros above (plain/static/typedef × global/local, all must be Safe), the 7
+run-86 tasks, and a fixture pinning both the extent *and* the dimension order for `A x[3]`.
