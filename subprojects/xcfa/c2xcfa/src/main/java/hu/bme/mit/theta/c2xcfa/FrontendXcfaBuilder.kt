@@ -40,6 +40,12 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr
+import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs
@@ -122,6 +128,84 @@ class FrontendXcfaBuilder(
    * it identifies the failure but not the C construct behind it, so a whole family of failures
    * collapses into one unclassifiable bucket.
    */
+  /** One storage cell a bitfield store has to touch, and where the field sits inside it. */
+  private data class BitfieldCellWrite(
+    val cell: Dereference<*, *, *>,
+    /** bit offset of the written slice within this cell */
+    val cellOffset: Int,
+    /** bit offset of the written slice within the field's value */
+    val valueOffset: Int,
+    val width: Int,
+  )
+
+  /**
+   * The cells a bitfield store must write, recovered from the left-hand side's *shape*.
+   *
+   * [BitfieldSlice.read] builds `SignChange(ZExt|SExt(Extract(unit, off, off + width)))`, and an
+   * lvalue picks up C's integer promotion on top, so the `Extract` carries the field's bounds. The
+   * `unit` is a bare dereference for a field inside one cell, and a **`Concat` of byte cells** when
+   * the declared unit is assembled from several -- intel-tdx-module's fields are 52 bits wide over
+   * seven byte dereferences, which is why every single-cell design refused them.
+   *
+   * The concat's operand list *is* the address mapping, and it was built by the read path, which is
+   * correct. Taking each operand's own bit range from it means the store never has to reason about
+   * byte addresses or endianness independently -- the one way this could silently write the right
+   * bits to the wrong byte.
+   *
+   * Only cells the field actually overlaps are returned, so neighbouring bytes are not rewritten
+   * (a spurious write would also invent a data race). Null when the field overlaps anything that is
+   * not a dereference -- concat padding is not storage -- rather than dropping those bits.
+   */
+  private fun structuralBitfieldWrites(lValue: Expr<*>): List<BitfieldCellWrite>? {
+    val extract = peelWidthWrappers(lValue) as? BvExtractExpr ?: return null
+    val from = extract.from.value.toInt()
+    val until = extract.until.value.toInt()
+    if (until <= from) return null
+    val unit = peelWidthWrappers(extract.bitvec)
+    if (unit is Dereference<*, *, *>) {
+      return listOf(BitfieldCellWrite(unit, from, 0, until - from))
+    }
+    if (unit !is BvConcatExpr) return null
+    val writes = mutableListOf<BitfieldCellWrite>()
+    // Concat's FIRST operand holds the HIGH bits, so walk the operands from the last one up.
+    var low = 0
+    for (part in unit.ops.reversed()) {
+      val partWidth = (part.type as? BvType)?.size ?: return null
+      val overlapLow = maxOf(from, low)
+      val overlapHigh = minOf(until, low + partWidth)
+      if (overlapLow < overlapHigh) {
+        val cell = peelWidthWrappers(part) as? Dereference<*, *, *> ?: return null
+        writes.add(
+          BitfieldCellWrite(
+            cell = cell,
+            cellOffset = overlapLow - low,
+            valueOffset = overlapLow - from,
+            width = overlapHigh - overlapLow,
+          )
+        )
+      }
+      low += partWidth
+    }
+    return writes.ifEmpty { null }
+  }
+
+  /** Peels the width/signedness wrappers a bitfield read and an integer promotion leave behind. */
+  private fun peelWidthWrappers(expr: Expr<*>): Expr<*> {
+    var current: Expr<*> = expr
+    var depth = 0
+    while (depth++ < 8) {
+      current =
+        when (current) {
+          is BvZExtExpr -> current.ops[0]
+          is BvSExtExpr -> current.ops[0]
+          // BvSignChangeExpr is a PosExpr, as is the `+` a cast can leave on an operand.
+          is PosExpr<*> -> current.ops[0]
+          else -> return current
+        }
+    }
+    return current
+  }
+
   private fun unhandledLhs(lValue: Expr<*>, rExpression: Expr<*>): String =
     "Could not handle left-hand side of assignment: lhs is a ${lValue.javaClass.simpleName}" +
       " [$lValue] of type ${lValue.type}, rhs type ${rExpression.type}"
@@ -1227,6 +1311,10 @@ class FrontendXcfaBuilder(
     val bitfieldCell =
       parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
         as? Dereference<*, *, *>
+    // The metadata is identity-keyed and does not survive the lvalue being rebuilt, which is what
+    // happens to every bitfield store in the intel-tdx-module sources. Recover the cells from the
+    // expression's shape instead; see [structuralBitfieldWrites].
+    val structuralWrites = if (bitfieldCell == null) structuralBitfieldWrites(lValue) else null
     // Assigning to a byte-laid-out union member (AD7, the intractable half -- see
     // ExpressionVisitor#byteScalarRead): unlike a bitfield there is no single cell to
     // read-modify-write, so the right-hand side is split into its own one-byte cells and each is
@@ -1261,6 +1349,34 @@ class FrontendXcfaBuilder(
             val deref = Dereference(op, cast(off, op.type), cellCType.smtType)
             parseContext.metadata.create(deref, "cType", CPointer(null, cellCType, parseContext))
             StmtLabel(MemoryAssignStmt.create(deref, cast(byteValues[j], deref.type)))
+          }
+        SequenceLabel(writes, metadata = getMetadata(statement))
+      } else if (structuralWrites != null) {
+        val memberType = CComplexType.getType(lValue, parseContext)
+        val fieldValue = memberType.castTo(rExpression)
+        val writes =
+          structuralWrites.map { w ->
+            val cellType = CComplexType.getType(w.cell, parseContext)
+            val cellBv = cellType.smtType as BvType
+            @Suppress("UNCHECKED_CAST")
+            val valueBv = fieldValue as Expr<BvType>
+            // The slice of the stored value that lands in this cell, moved into the cell's low
+            // bits so that BitfieldSlice.write can place it at the cell's own offset.
+            val slice =
+              BvExprs.ZExt(
+                BvExprs.Extract(
+                  valueBv,
+                  IntExprs.Int(w.valueOffset),
+                  IntExprs.Int(w.valueOffset + w.width),
+                ),
+                cellBv,
+              )
+            val newCell = BitfieldSlice.write(w.cell, slice, w.cellOffset, w.width)
+            val op = cast(w.cell.array, w.cell.array.type)
+            val offset = cast(w.cell.offset, op.type)
+            val deref = Dereference(op, offset, cellBv)
+            parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+            StmtLabel(MemoryAssignStmt.create(deref, cast(newCell, deref.type)))
           }
         SequenceLabel(writes, metadata = getMetadata(statement))
       } else if (bitfieldCell != null) {

@@ -5785,3 +5785,42 @@ writes the right bits to the wrong bytes — a silently wrong value, not a refus
 intel-tdx-module files. That is the −32-per-task failure mode the batch exists to avoid, so this
 needs a fixture pinning the byte order (write one field, read back a *neighbouring* one) before any
 of it ships.
+
+### Bitfield store, attempt 3: multi-cell — SHIPPED
+
+The shape (established by tracing, see above) is a field wider than one cell whose storage unit is
+assembled by `Concat` from several byte dereferences. The store now splices the value across every
+cell the field overlaps and writes those cells back.
+
+**The byte-order hazard is avoided rather than reasoned about.** Instead of deriving byte addresses,
+the writer takes the mapping straight from the `Concat` that the *read* path built — each operand is
+a cell at a known bit range, and the read path is correct — so endianness is inherited, never
+recomputed. Only overlapped cells are written, so untouched neighbours are not rewritten (a spurious
+write would also invent a data race under no-data-race).
+
+**Measured, per file, on the intel-tdx after-parsing sample:**
+
+| outcome | before | after |
+|---|---|---|
+| `Could not handle left-hand side` | 6 | **2** |
+| fully succeeds (exit 0) | 0 | **2** |
+| advanced to a later error (ClassCastException) | 1 | 3 |
+
+Four files changed, **none regressed**.
+
+⚠️ **No canary guards this, after five attempts — and that is a real gap, recorded deliberately.**
+
+- Four minimal fixtures (local wide bitfield; pointer-to-global; `p->` access; a union mirroring
+  `pa_t`). The first three parse **identically with and without** the fix and would have guarded
+  nothing. The union one fails **both** ways — so there is at least one further bitfield-store
+  sub-shape this fix does *not* cover, and the 407-file bucket is not fully closed.
+- Two real files (~160 KB) as canaries: they pass, but they OOM-killed a neighbouring canary
+  (`cartpole_0_safe`, exit 137) in the 4-way parallel sweep, while passing in isolation. Removed —
+  a gate that flakes costs more than one missing guard. Same call as the LDV canaries earlier.
+
+The evidence standing in for a guard is the per-file A/B above, reproducible with
+`scratchpad/probe_rc.sh` over `scratchpad/tdx_after.txt`.
+
+**Why minimal repros keep failing here** (third time this session, after the struct cache): these
+bugs live in composite frontend paths — byte-laid-out unions, concat-assembled units — that
+hand-written C does not reach. The real shape only ever came out of tracing the actual input.
