@@ -5888,10 +5888,20 @@ parameter, and the task is called `ptrmunge_racing` precisely because the verdic
 `mutex1` from `mutex2`. Merging them would invent or hide races — a wrong answer where there is
 currently an honest error.
 
-**The tractable design** (this is task "use candidate sets for pthread handles", still open): after
-inlining, each copy of `munge` has its own `m` written exactly **once**, with `&mutex1` in one copy
-and `&mutex2` in the other. So a local handle whose *single* definition is the address of a global
-mutex can be resolved to that global soundly, and the two copies stay distinct. The pass already
-counts writes for its "multiple writes" check, so the machinery to identify the single-write case is
-there. Verify first that inlining really does run before `CLibraryFunctionsPass`; if it does not,
-this design does not hold and per-call-site specialisation is needed instead.
+**The obvious design does NOT work — checked, not assumed.** It would be: after inlining, each copy
+of `munge` has its own `m` written exactly once (`&mutex1` in one, `&mutex2` in the other), so a
+local handle with a single definition naming a global mutex resolves soundly while the copies stay
+distinct. But `ProcedurePassManager` runs **`CLibraryFunctionsPass` (line 55) before
+`InlineProceduresPass` (line 79)**, so at the time the handle is read there is exactly one `munge`
+with one parameter `m` and no definition at all — the design's premise is false.
+
+That leaves three routes, none of them small:
+1. **Move `CLibraryFunctionsPass` after inlining.** Cheapest to try, but the ordering is deliberate:
+   the comment above it requires an array element index to be constant *before* the pass reads the
+   handle, so moving it needs that constraint re-checked.
+2. **Interprocedural candidate sets** — resolve the parameter to the set of globals reaching it, and
+   keep them distinct (the actual "candidate sets for pthread handles" task).
+3. **Per-call-site specialisation** of procedures that take a handle parameter.
+
+Whichever is chosen, the soundness bar is unchanged: `mutex1` and `mutex2` must stay separate
+identities, or the racing tasks get wrong answers instead of honest errors.
