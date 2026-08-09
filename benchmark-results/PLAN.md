@@ -5749,3 +5749,39 @@ its fast wrong answer (it now needs real work and does not finish in 250 s local
 their extent, and this — presented as `false(valid-deref)` on heap-manipulating list benchmarks that
 look like hard shape-analysis targets, and both had **6–7 step counterexamples**. Trace length is a
 cheap first discriminator: a short trace on a "hard" program means a modelling bug, not imprecision.
+
+### Bitfield store, attempt 2: structural recognition — also reverted, and now the shape is known
+
+The structural fix the plan called for was implemented (peel the width/signedness wrappers, match
+`BvExtractExpr`, take the cell and the bounds from the extract itself) and **measured at zero
+effect**: the intel-tdx after-parsing sample is byte-for-byte identical before and after (6/8 still
+`Could not handle left-hand side`). Reverted, like the metadata attempt before it — unvalidated code
+that changes nothing does not ship.
+
+Tracing the real lvalue shows why, and it is the useful result:
+
+```
+TRACE lhs=BvPosExpr peeled=BvExtractExpr from=0 until=52 src=BvConcatExpr srcWidth=64
+      parts=[BvLitExpr:8, Dereference:8, Dereference:8, Dereference:8,
+             Dereference:8, Dereference:8, Dereference:8, Dereference:8]
+```
+
+**These are not single-cell bitfields.** The field is **52 bits wide**, and its storage unit is a
+64-bit value *assembled by concatenation* from **seven separate byte dereferences** plus a padding
+literal. Both earlier designs assumed one cell:
+
+- metadata lookup (attempt 1): CELL absent everywhere — the expression is rebuilt;
+- structural single-cell match (attempt 2): correctly refuses, because the field spans 7 cells.
+
+**What it actually needs** is a multi-cell read-modify-write: splice the value across every byte
+cell the field covers and write each one back, leaving the untouched bytes alone. The machinery
+exists next door — the `ByteUnionSlice.BASE` branch already splits a right-hand side into byte
+values and writes each cell — so this is a generalisation of that, not new ground.
+
+⚠️ **The hazard that decides whether it is worth doing.** The mapping from concat position to byte
+*address* must be exactly right: `Concat`'s first operand is the HIGH bits, and the derefs are at
+increasing addresses, so the order is reversed relative to the operand list. Getting it backwards
+writes the right bits to the wrong bytes — a silently wrong value, not a refusal, on 407
+intel-tdx-module files. That is the −32-per-task failure mode the batch exists to avoid, so this
+needs a fixture pinning the byte order (write one field, read back a *neighbouring* one) before any
+of it ships.
