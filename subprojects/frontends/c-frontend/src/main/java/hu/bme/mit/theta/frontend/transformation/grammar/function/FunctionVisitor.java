@@ -157,6 +157,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
      * where a value has to be captured before a later statement can invalidate it.
      */
+    /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
+    private static boolean containsDereference(Expr<?> expr) {
+        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+            return true;
+        }
+        for (Expr<?> op : expr.getOps()) {
+            if (containsDereference(op)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
@@ -1671,6 +1684,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             Expr<?> lhs = ifTrue == null ? expr : ifTrue.getExpression();
             Expr<?> rhs = ifFalse.getExpression();
 
+            CComplexType smallestCommonType =
+                    CComplexType.getSmallestCommonType(
+                            List.of(
+                                    CComplexType.getType(lhs, parseContext),
+                                    CComplexType.getType(rhs, parseContext)),
+                            parseContext);
+
             CCompound guardCompound = new CCompound(parseContext);
             guardCompound.addCStatement(new CExpr(expr, parseContext));
             guardCompound.setPostStatements(new CNullStatement(parseContext));
@@ -1700,7 +1720,41 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             ifFalsePost.setPostStatements(new CNullStatement(parseContext));
             ifFalsePost.setPreStatements(new CNullStatement(parseContext));
 
-            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
+            // `p ? p->f : 0` must not dereference `p` when the guard is false. The branches'
+            // *statements* are already guarded by the CIf below, but the branch *values* end up
+            // inside a single Ite, so a dereference in one of them becomes an unconditional memory
+            // access -- and the memsafety instrumentation then checks an access C never performs.
+            // That is a false `valid-deref` alarm on an extremely common idiom (it is what
+            // `memsafety/test-0232*` trips on).
+            //
+            // Lower such a conditional the way the equivalent if/else is already lowered, which
+            // does not misreport: assign each branch's value to a temporary *inside* the guarded
+            // branch, and let the conditional's value be that temporary.
+            //
+            // Gated on memory-safety verification: for any other property the Ite is fine (it
+            // selects the right branch, and reading the unselected one has no observable effect),
+            // so the XCFA is left byte-for-byte unchanged there.
+            final boolean guardsDereference =
+                    parseContext.isCheckMemsafety()
+                            && (containsDereference(lhs) || containsDereference(rhs));
+            VarDecl<?> conditionalTmp = null;
+            if (guardsDereference) {
+                conditionalTmp = createTempVar(smallestCommonType, "ternary");
+                parseContext.getMetadata().create(conditionalTmp.getRef(), "cType", smallestCommonType);
+                ifTruePre.addCStatement(
+                        new CAssignment(
+                                conditionalTmp.getRef(),
+                                new CExpr(smallestCommonType.castTo(lhs), parseContext),
+                                "=",
+                                parseContext));
+                ifFalsePre.addCStatement(
+                        new CAssignment(
+                                conditionalTmp.getRef(),
+                                new CExpr(smallestCommonType.castTo(rhs), parseContext),
+                                "=",
+                                parseContext));
+            }
+            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsDereference) {
                 CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
                 recordMetadata(ctx, preIf);
                 preStatements.addCStatement(preIf);
@@ -1711,12 +1765,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 postStatements.addCStatement(postIf);
             }
 
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(
-                            List.of(
-                                    CComplexType.getType(lhs, parseContext),
-                                    CComplexType.getType(rhs, parseContext)),
-                            parseContext);
             IteExpr<?> ite =
                     Ite(
                             AbstractExprs.Neq(
@@ -1724,7 +1772,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             smallestCommonType.castTo(lhs),
                             smallestCommonType.castTo(rhs));
             parseContext.getMetadata().create(ite, "cType", smallestCommonType);
-            iteExpr = ite;
+            iteExpr = conditionalTmp == null ? ite : conditionalTmp.getRef();
         } else {
             iteExpr = ctx.logicalOrExpression().accept(expressionVisitor);
         }

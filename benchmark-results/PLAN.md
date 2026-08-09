@@ -5711,3 +5711,41 @@ Shipped anyway on correctness grounds, not on those tasks: a typedef'd array sil
 scalar with no object at all is wrong *modelling*, which is the class of defect that yields wrong
 verdicts rather than honest errors, and it is guarded by a fixture A/B'd to fail without the fix
 (`Safe` with, `Unsafe (valid-deref)` without).
+
+### The `test-0232*` cause: a ternary does not short-circuit its dereference
+
+The two tasks the typedef fix did not touch have their own bug, and it is a general one.
+
+`test-0232-2` reproduces with **`Trace length: 6`** — again far too short for a shape-analysis
+limit — on this line of `append`:
+
+```c
+item->data = (item->next) ? item->next->data : malloc(sizeof *item);
+```
+
+where `item->next` is legitimately NULL on the first append. Isolated:
+
+| guard form | verdict |
+|---|---|
+| `(p->next) ? p->next->v : 42` | **Unsafe (valid-deref)** ← false alarm |
+| `if (p->next) x = p->next->v; else x = 42;` | Unknown (no alarm) |
+
+`visitConditionalExpression` already guards each branch's *statements* behind a `CIf`, but the
+branch **values** both go into one `Ite`, so a dereference in the untaken branch is an
+unconditional memory access and the memsafety instrumentation checks an access C never performs.
+The equivalent if/else never misreported, which both proves the bug and dictates the fix: assign
+each branch's value to a temporary *inside* the guarded branch and let the conditional's value be
+that temporary. Afterwards the ternary and if/else forms agree exactly.
+
+**Gated on `parseContext.isCheckMemsafety()`** — under any other property the `Ite` is left exactly
+as it was (it selects the right branch, and reading the other is unobservable), so the XCFA is
+unchanged there, per the standing instruction.
+
+Measured: the repro goes Unsafe → Unknown (matching its if/else control), and `test-0232-2` loses
+its fast wrong answer (it now needs real work and does not finish in 250 s locally). Fixture
+`ternary_guarded_deref.c` A/B'd: Safe with the fix, `Unsafe (valid-deref)` without.
+
+**Triage lesson worth reusing:** both false-alarm classes found today — typedef'd arrays losing
+their extent, and this — presented as `false(valid-deref)` on heap-manipulating list benchmarks that
+look like hard shape-analysis targets, and both had **6–7 step counterexamples**. Trace length is a
+cheap first discriminator: a short trace on a "hard" program means a modelling bug, not imprecision.
