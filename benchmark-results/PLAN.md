@@ -5561,3 +5561,46 @@ bounds — with no reliance on metadata surviving. Needs care over signedness an
 and must not intercept a genuine rvalue extract.
 
 Do not retry the metadata-lookup variants: the stamp is not there to be found.
+
+## Batch 86 RESULTS — full run at HEAD (finished 2026-08-08 14:36 CEST)
+
+`results-run86/`, launched at IDLE priority on benchcloud with `theta27-long900.xml`, CPU pinned to
+Skylake — deliberately the same host, XML and CPU model as **run 80**, so the comparison is not
+confounded by hardware or time limit. Tool dir `Theta-svcomp-86` = `03b1089b94`.
+
+| | run 80 | run 86 | delta |
+|---|---|---|---|
+| SV-COMP score | 13,828 | **19,516** | **+5,688** |
+| correct | 12,519 | 12,815 | +296 |
+| error | 22,869 | 23,314 | +445 |
+| unknown | 750 | 337 | −413 |
+| **wrong** | **393** | **65** | **−328** |
+| correct true / false | 8,157 / 4,362 | 8,061 / 4,754 | −96 / +392 |
+| wrong true / false | 35 / 358 | 20 / 45 | −15 / −313 |
+
+**Zero regressions** (nothing correct in run 80 became wrong). The gain is almost entirely
+**wrong-false collapsing 358 → 45**, i.e. the valid-memsafety false-deref flood is gone — that
+family was the batch-63 blocker and it is now closed at scale. Unlike run 84, none of this is a
+time-limit artefact: run 80 was already at 900 s.
+
+For reference against run 84 (sosy, 5750G): score 19,437 → 19,516 and wrong 82 → 65. Directionally
+positive but **not a clean comparison** — different host and CPU model — which is exactly why run 86
+was pinned to run 80's hardware instead.
+
+### The one thing to triage: 20 newly-wrong-from-non-answer
+
+No task regressed from correct, but 20 went from error/timeout to a *wrong* answer, which costs
+points where an error cost nothing (−16/−32 vs 0). Most are frontend fixes doing their job and
+handing a now-parsing task to a backend that then gets it wrong:
+
+- `memsafety/test-0214,-0217,-0218,-0232-2`, `list-ext-properties/test-0214_1,-0217_1,-0232_1-2`:
+  `frontend failed, before parsing` → **`false(valid-deref)`**. One family, one likely cause.
+- `uthash-2.0.2/uthash_JEN_nondet_test2-2`, `-test4-3` (both memcleanup and memsafety):
+  `frontend failed, after parsing` → `false(valid-deref)`.
+- `ldv-memsafety/ArraysOfVariableLength{,2}`, `pthread-complex/workstealqueue_mutex-2`: TIMEOUT →
+  `false(valid-deref)`.
+- `floats-cbmc-regression/float-rounding1`, `float-to-double2`: frontend → `false(unreach-call)`.
+- `aws-c-common/aws_linked_list_{node_reset,remove}_harness`: OOM → `false(unreach-call)`.
+
+The `test-021x` / `list-ext-properties` group is the obvious first target: 7 tasks, one property,
+one transition, and they only started answering because the frontend stopped refusing them.
