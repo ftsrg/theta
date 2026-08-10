@@ -6058,3 +6058,30 @@ The long trace also puts this *outside* the class the trace-length heuristic ide
 false-alarm bugs fixed this session had 6–7 step counterexamples, while 1152 steps on a 17-line
 program suggests the analysis is walking the 1024-element static array itself. Next step is
 instrumentation of where the deref bound check fails, not another hypothesis.
+
+### scopes4-1 (cause B1): reproduced, but not bisectable by simplification
+
+State with **all 7 of this session's fixes**: `Unsafe (valid-deref)`, **trace 1152**, expected `true`.
+A genuine wrong `false` — the highest-priority class.
+
+Two hypotheses already killed:
+- *static-local name collision* (`foo2` has `static int arr[1024]`, `foo` has `static int arr[123]`):
+  `promoteStaticLocal` registers into each function's **own** scope via `variables.peek()`, and the
+  run emits **zero** "Variable already exists" warnings.
+- *the trace-length heuristic doesn't apply here*: 1152 steps is nothing like the 6–7 step
+  counterexamples of the false-alarm bugs fixed this session. It most likely reflects walking the
+  1024-element static array.
+
+⚠️ **Simplified variants cannot be used to bisect it.** Cut-down versions
+(`static int arr[16]; arr[3]=13; return arr+1;` etc.) do not answer at all — the portfolio picks a
+BOUNDED/`KIND-Z3` config on them and the checker subprocess dies with
+`ErrorCodeException(2147483646)`. Not memory: it reproduces at `-Xmx2g` as well as `-Xmx4g`, and a
+control file passes on the same dist. That is a separate defect (an ERROR, score 0, so lower
+priority than the wrong answer), but it means **bisection by simplification is unavailable** for this
+task — the next step must be instrumenting `MemsafetyPass`'s deref bound check on the real file.
+
+⚠️ **Local-run trap worth remembering:** building the archive for a benchmark upload does
+`rm -rf …/Theta-svcomp` and only produces the zip. Local runs then fail with
+`NoSuchFileException: …/Theta-svcomp/solvers` — which looks like "no answer" if only the verdict is
+parsed. Four bisect runs were scored as no-answer before this was spotted. **Re-extract the zip
+after building it for upload.**
