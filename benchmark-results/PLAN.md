@@ -6085,3 +6085,43 @@ task — the next step must be instrumenting `MemsafetyPass`'s deref bound check
 `NoSuchFileException: …/Theta-svcomp/solvers` — which looks like "no answer" if only the verdict is
 parsed. Four bisect runs were scored as no-answer before this was spotted. **Re-extract the zip
 after building it for upload.**
+
+### no-overflow additive chains: minimal repro found, and the cause is NOT the frontend
+
+All three tasks confirmed as **wrong `true` (−32 each)** with all seven of this session's fixes in
+place: `Stockholm-2`, `dijkstra6-both-nt` (both expect `false`), and a **4-line repro**:
+
+```c
+extern int __VERIFIER_nondet_int(void);
+int main(){ int x=__VERIFIER_nondet_int(), a=__VERIFIER_nondet_int(), b=__VERIFIER_nondet_int();
+  if (a == b) { while (x >= 0) { x = x + a - b - 1; } } return 0; }   /* answers Safe; is not */
+```
+
+The overflow is the **intermediate** `x + a` (take `x = a = b = INT_MAX`); with `a == b` the whole
+chain is worth `x - 1`, so the value is in range while a sub-expression is not.
+
+**Narrowed by variants — it needs the guard AND the chain together:**
+
+| variant | verdict |
+|---|---|
+| straight-line `int y = x + a - b - 1;` under `if (a==b)` | Unsafe ✓ |
+| loop, full chain, **no** `a==b` guard | Unsafe ✓ |
+| loop, `x = x + a`, with guard | Unsafe ✓ |
+| loop, `x = x + a`, no guard | Unsafe ✓ |
+| **loop + guard + full chain** | **Safe ✗** |
+
+**Two hypotheses tested and killed:**
+1. *"intermediates are not checked"* — a straight-line version of the same chain is correctly
+   Unsafe, as is a bare `x + a`.
+2. *"`SimplifyExprsPass` collapses `x+a-b-1` to `x-1` before the checks are inserted"* — plausible
+   because `OverflowDetectionPass` sits at `ProcedurePassManager` line 130, *after* SimplifyExprs
+   (68/98/126), LoopUnroll (69) and Lbe (111/123). **Refuted by tracing:** SimplifyExprs correctly
+   skips while `verifiedProperty == OVERFLOW`, the overflow pass then inserts its checks (6 edges in
+   the failing case vs 4 in the passing one), and simplification only runs afterwards, when the
+   checks are already explicit error edges.
+
+**So the checks are emitted and the wrong answer comes from downstream — the analysis proves the
+error edge unreachable when it is not.** That makes this an abstraction/CEGAR soundness issue, not a
+frontend one, and it is the most expensive class in the batch (−32). Next step: run the 4-line repro
+under the individual portfolio configurations to find which one returns Safe, rather than through
+`--portfolio STABLE`, then look at that config's abstraction.
