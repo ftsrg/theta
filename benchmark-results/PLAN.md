@@ -5905,3 +5905,43 @@ That leaves three routes, none of them small:
 
 Whichever is chosen, the soundness bar is unchanged: `mutex1` and `mutex2` must stay separate
 identities, or the racing tasks get wrong answers instead of honest errors.
+
+### Float literals were built one bit short — SHIPPED (a wrong-value bug, not a refusal)
+
+`ExpressionVisitor`'s FP literal path built `new BigFloat(text, new BinaryMathContext(significand - 1,
+exponent))` — 23 bits for `float`, 52 for `double` — and then stored the result in a full-width
+`FpType(exponent, significand)`. MPFR's precision counts the significand **including** the implicit
+leading bit (24 / 53), which is exactly what `FpUtils#bigFloatToFpLitExpr`, `FpType` and the core
+test (`BinaryMathContext(24, 8)` for FLOAT) all use. So every literal was rounded one bit short.
+
+Visible effect: `1 + 2^-23` is a tie at 23-bit precision and rounds to exactly `1.0f`, so a
+program's own `1.0000001f > 1.0f` read as **false** and safe float programs were reported **Unsafe**.
+Ground truth taken from gcc, not from my own FP reasoning: all the fixture's comparisons are true,
+and `1.0000001f` has exactly the bits `0x1.000002p+0`.
+
+**Pre-existing, but I propagated it.** The `- 1` was already there before `eab619083c` (hex float
+constants); that commit copied the same context into the new hex branch. It also means the earlier
+"hex floats unlocked 16 of 30" figure measured *parse success* while the values were subtly wrong.
+
+**How it was found — the diagnosis path is worth keeping.** Two hypotheses died cheaply before the
+real one:
+1. "`float-rounding1` fails because theta ignores `fesetround`" — refuted by the **trace length of 3**:
+   it failed on the *first* check, which uses the default rounding mode.
+2. "my hex-float commit is wrong" — refuted by a **decimal control**, `1.0000001f > 1.0f`, failing
+   identically.
+
+**Measured.** Six probes wrong → correct. A 40-task sample across floats-cbmc-regression,
+floats-esbmc-regression and float-benchs, run **both ways on the same tasks**: 15 correct / 1 wrong /
+24 no-answer, *identical* before and after, no per-task change.
+
+That flat result is deliberately not read as "no effect". Unlike the three fixes reverted this
+session — which produced byte-identical *error signatures*, i.e. the code path never engaged — here
+the mechanism provably fires on every float literal. For a global value change the sample's job is
+**regression detection**, and it found none; whether other tasks flip is a question only a full run
+answers. Shipped on the demonstrated wrong answer, with the fixture A/B'd (Safe with, Unsafe
+without) — not on sample movement.
+
+**Residue, now a queue item:** the sample's one wrong is `float-rounding1`, which after this fix
+fails on its *second* check — `fesetround(0x400)` (FE_DOWNWARD). Theta models no dynamic rounding
+mode and silently ignores `fesetround`, then answers confidently. By the batch's own rule that is
+backwards: it should **refuse** a non-default `fesetround` (0 rather than −16). Small and principled.

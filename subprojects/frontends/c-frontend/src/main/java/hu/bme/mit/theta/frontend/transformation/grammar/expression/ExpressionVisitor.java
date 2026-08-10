@@ -3232,15 +3232,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     throw new UnsupportedFrontendElementException(
                             "Hexadecimal long double constants are not yet supported!");
                 }
+                // Precision is the significand width *including* the implicit leading bit -- 24
+                // for float, 53 for double -- which is what MPFR means by precision and what
+                // FpUtils#bigFloatToFpLitExpr and FpType are given everywhere else. Passing
+                // `significand - 1` rounded every literal one bit short and then stored it in a
+                // full-width type, so `1.0000001f` (and `0x1.000002p+0f`, the same value) came out
+                // as a tie at 23 bits and rounded to exactly `1.0f`: the program's own
+                // `1.0000001f > 1.0f` then read as false and safe float programs were reported
+                // Unsafe.
                 bigFloat =
                         new BigFloat(
                                 Double.parseDouble(text),
-                                new BinaryMathContext(significand - 1, exponent));
+                                new BinaryMathContext(significand, exponent));
             } else if (text.startsWith("0b")) {
                 throw new UnsupportedFrontendElementException(
                         "Binary FP constants are not yet supported!");
             } else {
-                bigFloat = new BigFloat(text, new BinaryMathContext(significand - 1, exponent));
+                bigFloat = new BigFloat(text, new BinaryMathContext(significand, exponent));
             }
             FpLitExpr fpLitExpr =
                     FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));

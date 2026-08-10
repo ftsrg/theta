@@ -54,3 +54,4 @@ builtin_prefetch.c	efficient	ILP32	SAFE	85	__builtin_prefetch is dropped but its
 builtin_nan_compare.c	efficient	ILP32	SAFE	85	GCC NaN builtin + NaN-safe comparison builtins alias to the modeled ones
 typedef_array_extent.c	efficient	ILP32	SAFE:valid-memsafety	87	an array declared through a typedef keeps its extent (and its dimension order)
 ternary_guarded_deref.c	efficient	ILP32	SAFE:valid-memsafety	87	a ?: guard must not dereference in the branch it does not take
+float_literal_precision.c	efficient	ILP32	SAFE	88	float/double literals keep their full significand (implicit bit included)
