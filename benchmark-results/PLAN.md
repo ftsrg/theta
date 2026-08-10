@@ -5984,7 +5984,21 @@ gradle from the repo root and then `./run_canaries.sh` from there, which does no
 (`GATE_EXIT=127`). Only the exit code exposed it. Always check `GATE_EXIT` and the `Fixtures:` line,
 never a bare FAIL count.
 
-## ⚠️ Where run 86 actually loses: 55.6% is resource exhaustion, not frontend errors
+## Resource exhaustion — MEASURED, BUT EXPLICITLY NOT A TARGET (user decision, 2026-08-10)
+
+⚠️ **Do not work on timeouts/OOM.** They are expected behaviour for this tool on these benchmarks.
+The measurement below is kept as context — it explains why answered-rate is what it is, and it is a
+design input for the bytes model (which would *add* cost) — but it is **not** a work item and must
+not be proposed as one again.
+
+**Priority order set by the user (2026-08-10):**
+1. **Correctness / soundness — highest, and urgent once run 87 lands.** For each wrong answer:
+   fix it if possible; if not, find exactly what is under-implemented and **throw there**, so the
+   task fails loudly (0) instead of answering wrongly (−16/−32).
+2. goblint-regression (pthread handles through pointer parameters).
+3. intel-tdx-module.
+
+## Context only: where run 86's non-answers sit
 
 Measured over all 72,103 task-runs of run 86:
 
