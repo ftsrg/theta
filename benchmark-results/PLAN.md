@@ -5983,3 +5983,32 @@ locally**, so they cannot be triaged on this host — they need the benchmark's 
 gradle from the repo root and then `./run_canaries.sh` from there, which does not exist
 (`GATE_EXIT=127`). Only the exit code exposed it. Always check `GATE_EXIT` and the `Fixtures:` line,
 never a bare FAIL count.
+
+## ⚠️ Where run 86 actually loses: 55.6% is resource exhaustion, not frontend errors
+
+Measured over all 72,103 task-runs of run 86:
+
+| bucket | runs | share |
+|---|---|---|
+| **TIMEOUT** | 26,816 | **37.2%** |
+| answered (true / false / unknown) | 25,728 | 35.7% |
+| **OUT OF MEMORY** | 13,249 | **18.4%** |
+| ERROR (frontend, solver, other) | 6,310 | 8.8% |
+
+**~40,000 runs — 55.6% — score 0 because the analysis runs out of time or memory.** Every frontend
+error bucket *combined* is 6,310, and the ones triaged in detail this batch are far smaller than
+that: intel-tdx before-parsing 344 files, goblint 507 runs, the whole bitfield-store family 407.
+
+This does not invalidate the frontend work — wrong answers cost −16/−32 and fixing them is worth
+more per task than a timeout is — but it does say the **largest remaining pool of points is
+resource-bound, not correctness-bound**, and that no amount of grammar or modelling work touches it.
+A timeout and an OOM both score 0, exactly like an error, so converting even a few percent of 40,000
+runs outweighs closing any single frontend bucket.
+
+Worth noting alongside the byte-granular finding: the bytes model would *add* cost to an analysis
+already losing over half its runs to cost. Both facts should inform that project's design, not just
+its priority.
+
+Concrete resource-side items already on the list (PLAN.md "Cleanups"): drop
+`allocateArrayElements`' redundant per-element subobjects (the `outerarr` slowness), and fold
+literal div/mod in `SimplifyExprsPass`. Neither has been measured for effect yet.
