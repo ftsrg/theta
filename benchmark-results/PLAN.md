@@ -6012,3 +6012,35 @@ its priority.
 Concrete resource-side items already on the list (PLAN.md "Cleanups"): drop
 `allocateArrayElements`' redundant per-element subobjects (the `outerarr` slowness), and fold
 literal div/mod in `SimplifyExprsPass`. Neither has been measured for effect yet.
+
+### Housekeeping from the 2026-08-10 pass
+
+**Both "Cleanups" items are stale — removed from the queue, not reimplemented.**
+- *Fold literal div/mod in SimplifyExprsPass*: core's `ExprSimplifier` already folds literal
+  `IntDivExpr`, `IntModExpr` **and** `IntRemExpr` (lines ~885–940). The pass delegates to
+  `ExprUtils.simplify`, so there is nothing to add. (Where an unfolded `(mod 4 4294967296)` shows up,
+  as `CLibraryFunctionsPass` documents, the cause is simplify not being *applied* at that point, not
+  a missing rule.)
+- *`allocateArrayElements` redundant per-element subobjects*: already guarded —
+  `if (aggregateFields.isEmpty()) return`, added in `575da57eae`, with the comment "the whole array
+  costs zero allocations however long it is".
+
+**Float-precision regression check, on the right population this time.** The 40-task sample used to
+clear `2a7e482564` drew from floats-cbmc-regression / floats-esbmc-regression / float-benchs — but
+the family most exposed to a change in every float literal is `hardness` (float-heavy, 15% of the
+benchmark, 11,546 resource-bound runs). Re-checked against 10 `hardness` tasks that answered `true`
+in run 86: **10/10 still correct**, all within the local limit. No regression.
+
+**`scopes4-1` (scopes cause B1) reproduced, hypothesis killed.** Unsafe (valid-deref) at 500 s
+locally, **trace length 1152**, and **zero** "Variable already exists" warnings.
+
+The tempting hypothesis was a static-local name collision: `foo2` has `static int arr[1024]`
+(written at index 194) and `foo` has `static int arr[123]`, so collapsing them would make `arr[194]`
+look out of bounds. It is wrong twice over — `promoteStaticLocal` registers into each function's own
+scope via `variables.peek()`, so the two never meet, and the run emits no collision warning at all.
+Checked before building on it.
+
+The long trace also puts this *outside* the class the trace-length heuristic identifies: the
+false-alarm bugs fixed this session had 6–7 step counterexamples, while 1152 steps on a 17-line
+program suggests the analysis is walking the 1024-element static array itself. Next step is
+instrumentation of where the deref bound check fails, not another hypothesis.
