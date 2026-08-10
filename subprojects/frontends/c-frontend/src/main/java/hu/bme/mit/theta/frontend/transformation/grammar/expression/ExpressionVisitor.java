@@ -1696,6 +1696,34 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 return args.get(0).accept(this);
             }
+            case "fesetround" -> {
+                // theta models one rounding mode: round-to-nearest-even, the C default. Setting
+                // that is a no-op and `fesetround` returns 0 for success. Setting any *other* mode
+                // silently would leave every later FP operation rounding the wrong way and the
+                // answer confidently wrong -- `floats-cbmc-regression/float-rounding1` asserts a
+                // sum under FE_DOWNWARD and was reported Unsafe though it is safe. An honest
+                // refusal scores 0; a wrong answer scores -16.
+                //
+                // A non-constant argument is refused too: it cannot be shown to be the default.
+                final Expr<?> mode = args.size() == 1 ? args.get(0).accept(this) : null;
+                if (mode == null || !isLiteralZero(ExprUtils.simplify(mode))) {
+                    throw new UnsupportedFrontendElementException(
+                            "fesetround with a non-default rounding mode is not supported: theta"
+                                + " models only round-to-nearest-even.");
+                }
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> success = signedInt.getNullValue();
+                parseContext.getMetadata().create(success, "cType", signedInt);
+                return success;
+            }
+            case "fegetround" -> {
+                // Always the default mode, which is the only one that can be in effect: any
+                // fesetround that changed it was refused above. FE_TONEAREST is 0.
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> toNearest = signedInt.getNullValue();
+                parseContext.getMetadata().create(toNearest, "cType", signedInt);
+                return toNearest;
+            }
             case "__builtin_constant_p" -> {
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 LitExpr<?> zero = signedInt.getNullValue();

@@ -5945,3 +5945,41 @@ without) — not on sample movement.
 fails on its *second* check — `fesetround(0x400)` (FE_DOWNWARD). Theta models no dynamic rounding
 mode and silently ignores `fesetround`, then answers confidently. By the batch's own rule that is
 backwards: it should **refuse** a non-default `fesetround` (0 rather than −16). Small and principled.
+
+### fesetround: refuse a rounding mode theta does not model — SHIPPED
+
+theta models one rounding mode, round-to-nearest-even (the C default). `fesetround` was silently
+ignored, so a program selecting FE_DOWNWARD carried on being evaluated to-nearest and answered
+confidently wrong — `floats-cbmc-regression/float-rounding1` asserts a sum under downward rounding
+and was reported Unsafe though it is safe. By the batch's own scoring rule that is backwards: an
+honest refusal is 0, that wrong answer is −16.
+
+Now: `fesetround(0)` (FE_TONEAREST) is a no-op returning 0; any other constant, **or a non-constant
+argument**, is refused; `fegetround()` returns 0, which is sound precisely because anything that
+would have changed the mode was refused. Measured: FE_DOWNWARD → refused, `fesetround(0)` → still
+Safe, `float-rounding1` → refused instead of wrong `false` (**+16**). Fixtures both ways
+(`fesetround_nondefault.c` FRONTEND-FAIL, `fesetround_default.c` SAFE).
+
+### aws_linked_list_node_reset_harness — a FOURTH bucket on the byte-granular memory model
+
+Reproduces locally: Unsafe, **trace 10**. The harness is
+
+```c
+memset(node, 0, sizeof(*node));                             /* cell-granular write */
+__VERIFIER_assert(aws_is_mem_zeroed(node, sizeof(*node)));  /* reads byte-by-byte via uint8_t* */
+```
+
+`aws_is_mem_zeroed` walks the object as `const uint8_t *`. Under a cell-per-value model those byte
+reads do not correspond to the cell writes `memset` made, so the check fails on a safe program.
+
+**Four independent buckets now converge on the bytes model**: intel-tdx before-parsing (344 files),
+float↔int union punning (~298), this aws family, and `float-to-double2`. None is reachable by local
+patching. That is the clearest prioritisation signal this batch has produced.
+
+`uthash_JEN_nondet_test2-2` and `ldv-memsafety/ArraysOfVariableLength` give **no answer even at 900 s
+locally**, so they cannot be triaged on this host — they need the benchmark's hardware.
+
+⚠️ **Process note:** one gate run reported `FAIL/ERROR: 0` from an *empty* file — the command ran
+gradle from the repo root and then `./run_canaries.sh` from there, which does not exist
+(`GATE_EXIT=127`). Only the exit code exposed it. Always check `GATE_EXIT` and the `Fixtures:` line,
+never a bare FAIL count.

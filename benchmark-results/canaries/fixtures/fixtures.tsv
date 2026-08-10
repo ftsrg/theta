@@ -55,3 +55,5 @@ builtin_nan_compare.c	efficient	ILP32	SAFE	85	GCC NaN builtin + NaN-safe compari
 typedef_array_extent.c	efficient	ILP32	SAFE:valid-memsafety	87	an array declared through a typedef keeps its extent (and its dimension order)
 ternary_guarded_deref.c	efficient	ILP32	SAFE:valid-memsafety	87	a ?: guard must not dereference in the branch it does not take
 float_literal_precision.c	efficient	ILP32	SAFE	88	float/double literals keep their full significand (implicit bit included)
+fesetround_nondefault.c	efficient	ILP32	FRONTEND-FAIL	88	a non-default fesetround is refused, not silently ignored
+fesetround_default.c	efficient	ILP32	SAFE	88	fesetround(FE_TONEAREST)/fegetround still work (the mode theta models)
