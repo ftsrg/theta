@@ -6125,3 +6125,41 @@ error edge unreachable when it is not.** That makes this an abstraction/CEGAR so
 frontend one, and it is the most expensive class in the batch (−32). Next step: run the 4-line repro
 under the individual portfolio configurations to find which one returns Safe, rather than through
 `--portfolio STABLE`, then look at that config's abstraction.
+
+#### ROOT CAUSE: additive chains are flattened to n-ary Add, so C's intermediates cannot be checked
+
+Traced `OverflowDetectionPass`'s candidate expressions on the failing and passing repros. **Both
+produce exactly the same arithmetic**:
+
+```
+TRACE arith exprs=3 withCType=1 :: (- main::b) | (- 1) | (+ main::x main::a (- main::b) (- 1))
+```
+
+`x + a - b - 1` is **one flattened n-ary `AddExpr`**. C evaluates it left to right as
+`((x + a) - b) - 1`, and it is the *intermediate* `x + a` that overflows — but that sub-expression
+does not exist in the IR, so the pass can only range-check the **final sum**. Everything follows:
+
+| case | final sum | verdict |
+|---|---|---|
+| loop, no `a==b` | `x+a-b-1`, unconstrained → can overflow | Unsafe ✓ |
+| straight-line, `a==b` | `x-1`, `x` unconstrained → `INT_MIN-1` underflows | Unsafe ✓ (a *different*, real overflow) |
+| **loop + `a==b`** | `x-1` with `x >= 0` → always in range | **Safe ✗** (misses `x+a`) |
+
+**Two earlier conclusions were wrong and are corrected here:**
+1. *"`SimplifyExprsPass` erases the chain before the checks"* — refuted by tracing: it correctly
+   skips while `verifiedProperty == OVERFLOW`.
+2. *"`PRED_CART` is unsound"* — it returns Safe, but so does **BMC** on the same model. Both are
+   correctly proving a model that has no reachable overflow edge. The defect is the model, not the
+   abstraction. (Filing an unsound-abstraction bug here would have been wrong.)
+
+**Fix directions**, in preference order:
+1. In `OverflowDetectionPass`, expand an n-ary additive chain into its **binary prefixes**
+   (`x+a`, `(x+a)-b`, …) and range-check each. Purely local to the pass; no IR change; the operand
+   order in the flattened node is the C evaluation order, so the prefixes are recoverable.
+2. Stop flattening additive chains in the frontend when the property is no-overflow — bigger blast
+   radius, and it would pessimise every other property.
+
+⚠️ Note the second filter condition: candidates must carry **`cType` metadata**, and only 1 of the 3
+expressions above has it. `FrontendMetadata` is identity-keyed, the same trap that defeated the
+bitfield store, so any prefix synthesised in fix 1 must be given its `cType` explicitly or it will
+be silently filtered out.
