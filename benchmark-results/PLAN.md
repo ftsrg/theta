@@ -6193,3 +6193,14 @@ each. Sampling the exposed population found none.
 Fixture `overflow_chain_intermediate.c` (UNSAFE:no-overflow). Its A/B is real but asymmetric in
 time: with the fix it answers Unsafe in <200 s; without it the identical program does not answer at
 200 s and answered `Safe` at 900 s.
+
+**Confirmed on the real tasks at the full 900 s budget:**
+
+| task | before | after | expected |
+|---|---|---|---|
+| `termination-crafted/Stockholm-2` | `true` (−32) | **`false`** ✓ | false |
+| `termination-nla/dijkstra6-both-nt` | `true` (−32) | **`false`** ✓ | false |
+| `termination-crafted/Stockholm-1` (control) | `true` ✓ | `true` ✓ | true |
+
+A **+66 swing** on these two alone (−32 each → +1 each), with the safe control unchanged and no
+false alarms in the 14-task sample. The `no-overflow additive chains` item is closed.
