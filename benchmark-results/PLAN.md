@@ -6204,3 +6204,45 @@ time: with the fix it answers Unsafe in <200 s; without it the identical program
 
 A **+66 swing** on these two alone (−32 each → +1 each), with the safe control unchanged and no
 false alarms in the 14-task sample. The `no-overflow additive chains` item is closed.
+
+### scopes cause G (`scopes1`): address-taken scalars are never released — design verified, not yet implemented
+
+`scopes1` expects **false** and answers **`true`** (−32, the expensive class). It is a plain
+use-after-scope on a *scalar*:
+
+```c
+int *pA = 0;
+{ int a = 7; pA = &a; }        /* a's storage dies here */
+int b = 3; int *pB = &b;
+int sum = *pA + *pB;           /* use-after-scope; must be reported */
+```
+
+The rest of the family is already correct (`scopes2/3/4-2/5` all answer `false(valid-deref)`), so the
+scope-release machinery works — it just never covers this case.
+
+**Why.** `registerScoped` has exactly **one** caller (`FunctionVisitor` line 1377), the *alloca*
+path for block-local arrays. An address-taken **scalar** never goes through it: `ReferenceElimination`
+gives it a compile-time `3k+2` base at procedure entry instead, so no `__theta_scope_end` marker is
+emitted and `__theta_ptr_size[base]` is never cleared. The deref after the block is then accepted.
+
+**The lowering already exists and would work unchanged.** `AllocaFunctionPass#lowerScopeEnds` turns
+`InvokeLabel(SCOPE_END, params)` into `deallocate(parseContext, params[1])`, gated on
+`MemsafetyPass.enabled`. So the whole fix is on the emitting side.
+
+**Design:**
+1. In `ExpressionVisitor`'s `&` case, tell the function visitor which `VarDecl` had its address
+   taken.
+2. In `FunctionVisitor`, register that decl with the *current* scope, exactly as `registerScoped`
+   does for allocas — but **only** when it is block-local and **not** `static` (a static local
+   outlives the block and must never be released; parameters are fine, their block is the body).
+3. At scope end (`withScopeReleases`), emit `SCOPE_END` for it.
+
+⚠️ **The one refactor this needs:** `scopedAllocas` currently holds `VarDecl<?>`, and the marker's
+`params[1]` is the *variable's ref*, which for an alloca'd array already holds the base. A scalar's
+variable holds its **value**, not a base — the thing to release is `&var` (a `Reference` expr, which
+`ReferenceElimination` later folds to the `3k+2` literal). So the scope list has to carry the
+*expression to release* rather than the decl. That touches `scopedAllocas`, `registerScoped`,
+`releaseScopedInto` and `scopeMark`.
+
+Everything above is verified against the code, not assumed; only the refactor remains. Keep the
+memsafety gate: no other property's XCFA should change.
