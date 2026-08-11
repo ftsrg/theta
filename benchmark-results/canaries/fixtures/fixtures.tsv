@@ -58,3 +58,4 @@ float_literal_precision.c	efficient	ILP32	SAFE	88	float/double literals keep the
 fesetround_nondefault.c	efficient	ILP32	FRONTEND-FAIL	88	a non-default fesetround is refused, not silently ignored
 fesetround_default.c	efficient	ILP32	SAFE	88	fesetround(FE_TONEAREST)/fegetround still work (the mode theta models)
 overflow_chain_intermediate.c	efficient	LP64	UNSAFE:no-overflow	88	an intermediate of a flattened additive chain is range-checked
+scope_end_scalar.c	efficient	ILP32	SAFE:valid-memsafety	88	address-taken scalars die with their own block, not an inner one (and statics/globals never)

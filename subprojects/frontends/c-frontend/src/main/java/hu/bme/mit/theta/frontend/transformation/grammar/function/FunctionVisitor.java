@@ -85,6 +85,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public void clear() {
         variables.clear();
         scopedAllocas.clear();
+        scopedRegistered.clear();
         atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
@@ -183,16 +184,25 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      *
      * Only populated when a memory-safety property is being verified; see {@link #registerScoped}.
      */
-    private final Deque<List<VarDecl<?>>> scopedAllocas = new ArrayDeque<>();
+    private final Deque<List<Expr<?>>> scopedAllocas = new ArrayDeque<>();
+
+    /**
+     * The declarations already registered in each scope, so that an object taken by address more
+     * than once (`&a` twice, or `&a` in two nested blocks) is released exactly once. Releasing the
+     * same base twice would look like a double free.
+     */
+    private final Deque<Set<VarDecl<?>>> scopedRegistered = new ArrayDeque<>();
 
     private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
         variables.push(scope);
         scopedAllocas.push(new ArrayList<>());
+        scopedRegistered.push(new LinkedHashSet<>());
     }
 
     private void popScope() {
         variables.pop();
         scopedAllocas.pop();
+        scopedRegistered.pop();
     }
 
     /**
@@ -200,7 +210,53 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     private void registerScoped(VarDecl<?> varDecl) {
         if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
-            scopedAllocas.peek().add(varDecl);
+            if (scopedRegistered.peek().add(varDecl)) {
+                // An alloca'd object's variable *holds* its base, so the variable is what to release.
+                scopedAllocas.peek().add(varDecl.getRef());
+            }
+        }
+    }
+
+    /**
+     * Registers an address-taken *scalar* for release at the end of the block that declared it.
+     *
+     * `{ int a = 7; p = &a; } ... *p` is a use-after-scope, but such a scalar never went through
+     * {@link #registerScoped}: it is not an alloca -- ReferenceElimination gives it a compile-time
+     * `3k+2` base at procedure entry -- so no lifetime-end marker was emitted, its
+     * `__theta_ptr_size` entry was never cleared, and the dereference after the block was accepted
+     * (`memsafety-ext3/scopes1`, answered `true` against an expected `false`).
+     *
+     * <p>The object is released where it was **declared**, not where the `&` appears: `&a` inside a
+     * nested block must not end `a`'s lifetime at that inner block's end, which would release it
+     * early and report a violation in a correct program. Globals and static locals are skipped
+     * outright -- they outlive every block.
+     *
+     * @param address the reference expression, which ReferenceElimination later folds to the base
+     */
+    public void registerScopedAddress(VarDecl<?> varDecl, Expr<?> address) {
+        if (!parseContext.isCheckMemsafety()) {
+            return;
+        }
+        for (Tuple2<CDeclaration, VarDecl<?>> staticLocal : staticLocals) {
+            if (staticLocal.get2().equals(varDecl)) {
+                return; // a static local outlives its block
+            }
+        }
+        final List<Tuple2<String, Map<String, VarDecl<?>>>> scopes = new ArrayList<>(variables);
+        final List<List<Expr<?>>> releases = new ArrayList<>(scopedAllocas);
+        final List<Set<VarDecl<?>>> registered = new ArrayList<>(scopedRegistered);
+        final int count = Math.min(scopes.size(), Math.min(releases.size(), registered.size()));
+        for (int i = 0; i < count; i++) {
+            if (!scopes.get(i).get2().containsValue(varDecl)) {
+                continue;
+            }
+            if (i == scopes.size() - 1) {
+                return; // the outermost scope is the globals; they are never released
+            }
+            if (registered.get(i).add(varDecl)) {
+                releases.get(i).add(address);
+            }
+            return;
         }
     }
 
@@ -222,36 +278,34 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * one (and `return` is covered one level up, by the release at procedure exit).
      */
     private CStatement withScopeReleases(CStatement body, int mark) {
-        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        final List<Expr<?>> scoped = scopedAllocas.peek();
         if (!parseContext.isCheckMemsafety() || scoped == null || scoped.size() <= mark) {
             return body;
         }
         final CCompound wrapper = new CCompound(parseContext);
         wrapper.addCStatement(body);
-        for (VarDecl<?> varDecl : scoped.subList(mark, scoped.size())) {
+        for (Expr<?> release : scoped.subList(mark, scoped.size())) {
             wrapper.addCStatement(
-                    new CCall(SCOPE_END, List.of(new CExpr(varDecl.getRef(), parseContext)),
-                            parseContext));
+                    new CCall(SCOPE_END, List.of(new CExpr(release, parseContext)), parseContext));
         }
         return wrapper;
     }
 
     /** Appends the current scope's lifetime-end markers directly to an existing compound. */
     private void releaseScopedInto(CCompound compound, int mark) {
-        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        final List<Expr<?>> scoped = scopedAllocas.peek();
         if (!parseContext.isCheckMemsafety() || scoped == null) {
             return;
         }
-        for (VarDecl<?> varDecl : scoped.subList(mark, scoped.size())) {
+        for (Expr<?> release : scoped.subList(mark, scoped.size())) {
             compound.addCStatement(
-                    new CCall(SCOPE_END, List.of(new CExpr(varDecl.getRef(), parseContext)),
-                            parseContext));
+                    new CCall(SCOPE_END, List.of(new CExpr(release, parseContext)), parseContext));
         }
     }
 
     /** How many stack objects the current scope has declared so far. */
     private int scopeMark() {
-        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        final List<Expr<?>> scoped = scopedAllocas.peek();
         return scoped == null ? 0 : scoped.size();
     }
 
@@ -387,6 +441,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
         scopedAllocas.clear();
+        scopedRegistered.clear();
         atomicVariables.clear();
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();

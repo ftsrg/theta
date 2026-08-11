@@ -6246,3 +6246,42 @@ variable holds its **value**, not a base — the thing to release is `&var` (a `
 
 Everything above is verified against the code, not assumed; only the refactor remains. Keep the
 memsafety gate: no other property's XCFA should change.
+
+#### FIX SHIPPED: address-taken scalars are released at the end of their own block
+
+`memsafety-ext3/scopes1` answered **`true`** against an expected `false` — a use-after-scope missed
+outright (−32). The rest of the family (`scopes2/3/4-2/5`) was already correct, so the machinery
+worked; it simply never covered scalars.
+
+The refactor the design called for is done: the scope stack now holds the **release expression**
+instead of the `VarDecl`. An alloca'd array's variable already *holds* its base, so releasing
+`varDecl.getRef()` was right for it; a scalar's variable holds its **value**, and the thing to
+release is `&a` (a `Reference`, which `ReferenceElimination` folds to the `3k+2` base).
+
+**Three ways this could have broken programs that already worked, and how each is handled:**
+- *releasing too early* — registration walks the scope stack to the block that **declared** the
+  variable, not the one where `&` appears, so `{ p = &a; }` inside `a`'s block does not end `a`'s
+  life at the inner brace;
+- *double release* — a per-scope `Set<VarDecl>` dedups, so `&a` twice releases once (a second
+  release would read as a double free);
+- *objects that outlive every block* — static locals are skipped via `staticLocals`, and the
+  outermost scope (globals) is skipped outright.
+
+**Measured:**
+
+| case | before | after |
+|---|---|---|
+| `scopes1` | `true` (−32) | **`false`** ✓ |
+| `&a` in a nested block, `a` declared outside | Safe | Safe ✓ |
+| address taken twice | Safe | Safe ✓ |
+| static local's address | Safe | Safe ✓ |
+| global's address | Safe | Safe ✓ |
+
+Gate: 60/60 fixtures — including every pre-existing alloca/scope fixture
+(`scope_end_release`, `scope_end_loop_iteration`, `scope_lifetime_ok`, `alloca_use_after_return`,
+`alloca_lifetime_ok`), which are exactly the previously-supported behaviour this refactor put at
+risk. New fixture `scope_end_scalar.c` covers the scalar direction and all three regression shapes.
+
+Still open in this family: **`scopes4-1`** (cause B1) — expects `true`, answers `false(valid-deref)`,
+trace 1152, and is **not bisectable by simplification** (cut-down variants crash the bounded
+backend; see above).
