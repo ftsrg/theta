@@ -6285,3 +6285,49 @@ risk. New fixture `scope_end_scalar.c` covers the scalar direction and all three
 Still open in this family: **`scopes4-1`** (cause B1) — expects `true`, answers `false(valid-deref)`,
 trace 1152, and is **not bisectable by simplification** (cut-down variants crash the bounded
 backend; see above).
+
+## Batch 87 RESULTS — measuring this session's fixes (finished 2026-08-11 19:16 CEST)
+
+`results-run87/`, IDLE on benchcloud, `theta27-long900.xml`, Skylake-pinned — same host/XML/CPU as
+runs 80 and 86. Tool dir = `db8aecc4a1`, i.e. it measures: GCC builtins, struct-cache invalidation,
+typedef'd array extents, ternary short-circuit, multi-cell bitfield store, **float-literal
+precision**, and the `fesetround` refusal. (The later overflow-chain and scope-scalar fixes are
+**not** in it.)
+
+| | run 86 | run 87 | delta |
+|---|---|---|---|
+| SV-COMP score | 19,516 | **19,705** | **+189** |
+| correct | 12,815 | 12,825 | +10 |
+| **wrong** | **65** | **55** | **−10** |
+| wrong true (−32) | 20 | 19 | −1 |
+| wrong false (−16) | 45 | 36 | −9 |
+| error | 23,314 | 23,313 | −1 |
+
+vs run 80 the arc is now 13,828 → 19,705 (**+5,877**) and wrong 393 → 55.
+
+### ⚠️ One regression, and it is mine: `floats-cbmc-regression/float-no-simp7`
+
+`true` → `false(unreach-call)`; expected `true`. Caused by the float-literal precision fix
+(`2a7e482564`) — the only change that moves float values.
+
+```c
+float f = 0x1.9e0c22p-101f, g = -0x1.3c9014p-50f, target = -0x1p-149f;
+if (!(f * g == target)) reach_error();     /* gcc: the equality HOLDS */
+```
+
+gcc confirms the program is safe and that the literals are exactly as written — `0x1.9e0c22` needs a
+full 24-bit significand, which is precisely the bit the fix restored. So **theta used to have wrong
+literals and get the right answer; it now has right literals and gets a wrong one.** The exposed
+defect is in **subnormal (gradual-underflow) rounding**: `-101 + -50 = -151`, so the product lands
+below the smallest normal and near the tie between `0` and `2^-149`, where the old one-bit literal
+error happened to compensate.
+
+Probed and ruled out: it is **not** flush-to-zero — the subnormal literal is non-zero, the subnormal
+product is non-zero, and a normal-range control is fine. theta simply computes a different subnormal.
+
+**Do not revert the precision fix over this.** It is gcc-verified, it corrects *every* float and
+double literal in the benchmark, and run 87 is +189 with wrong down 10 overall; this single task is
+−16 against that. The right follow-up is the subnormal rounding path itself.
+
+Also newly wrong from a non-answer: `heap-manipulation/bubble_sort_linux-1` (TIMEOUT → `false`),
+which is a task that merely started answering, not a regression.
