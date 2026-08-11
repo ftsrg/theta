@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr
@@ -121,6 +122,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                   .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
                   .orElse(false)
             }
+            .flatMap { listOf(it) + evaluationPrefixesOf(it) }
             .mapNotNull {
               if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
                 // A bitvector operation has already wrapped, so range-checking its result would
@@ -226,6 +228,42 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
 
     return SimplifyExprsPass(parseContext, property).run(builder)
   }
+
+  /**
+   * The intermediate results C actually computes for a flattened arithmetic chain.
+   *
+   * `x + a - b - 1` reaches this pass as a single n-ary node, `(+ x a (- b) (- 1))`, but C evaluates
+   * it left to right as `((x + a) - b) - 1`. Only the *final* value was range-checked, so an
+   * overflow in an intermediate was invisible: with `a == b` and `x >= 0` the whole chain is worth
+   * `x - 1` and never overflows, while `x + a` overflows at `x = a = INT_MAX`. That is
+   * `termination-crafted/Stockholm-2` and `termination-nla/dijkstra6-both-nt`, both answered `true`
+   * against an expected `false`.
+   *
+   * Operands are already in evaluation order, so each proper prefix (two operands, then three, ...)
+   * is exactly one intermediate. The full-length prefix is left out because the caller already
+   * checks the original node.
+   *
+   * Each prefix is stamped with the chain's own `cType`: the candidate filter requires that
+   * metadata and `FrontendMetadata` is identity-keyed, so a freshly built expression carries none
+   * and would be silently dropped.
+   */
+  private fun evaluationPrefixesOf(expr: Expr<*>): List<Expr<*>> {
+    if (expr !is AddExpr<*> && expr !is MulExpr<*>) return listOf()
+    val ops = expr.ops
+    if (ops.size <= 2) return listOf()
+    val cType = parseContext.metadata.getMetadataValue(expr, "cType").orElse(null) ?: return listOf()
+    val prefixes = mutableListOf<Expr<*>>()
+    var acc: Expr<*> = ops[0]
+    for (index in 1 until ops.size - 1) {
+      acc =
+        if (expr is AddExpr<*>) AbstractExprs.Add(acc, ops[index])
+        else AbstractExprs.Mul(acc, ops[index])
+      parseContext.metadata.create(acc, "cType", cType)
+      prefixes.add(acc)
+    }
+    return prefixes
+  }
+
 }
 
 private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {

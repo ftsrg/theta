@@ -57,3 +57,4 @@ ternary_guarded_deref.c	efficient	ILP32	SAFE:valid-memsafety	87	a ?: guard must 
 float_literal_precision.c	efficient	ILP32	SAFE	88	float/double literals keep their full significand (implicit bit included)
 fesetround_nondefault.c	efficient	ILP32	FRONTEND-FAIL	88	a non-default fesetround is refused, not silently ignored
 fesetround_default.c	efficient	ILP32	SAFE	88	fesetround(FE_TONEAREST)/fegetround still work (the mode theta models)
+overflow_chain_intermediate.c	efficient	LP64	UNSAFE:no-overflow	88	an intermediate of a flattened additive chain is range-checked

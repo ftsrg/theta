@@ -6163,3 +6163,33 @@ does not exist in the IR, so the pass can only range-check the **final sum**. Ev
 expressions above has it. `FrontendMetadata` is identity-keyed, the same trap that defeated the
 bitfield store, so any prefix synthesised in fix 1 must be given its `cType` explicitly or it will
 be silently filtered out.
+
+#### FIX SHIPPED: range-check the intermediates of a flattened chain
+
+`OverflowDetectionPass` now expands an n-ary `AddExpr`/`MulExpr` into the intermediates C actually
+computes (`x+a`, then `(x+a)-b`, …) and range-checks each, instead of only the final value. Operands
+are already in evaluation order, so each proper prefix is exactly one intermediate; the full-length
+one is skipped because the original node is already checked.
+
+⚠️ Every synthesised prefix is stamped with the chain's own `cType`. The candidate filter requires
+that metadata and `FrontendMetadata` is **identity-keyed**, so a freshly built expression carries
+none and would be silently filtered out — the fix would have been a no-op. Same trap that defeated
+the bitfield store's first two designs.
+
+**Measured both directions:**
+
+| | before | after |
+|---|---|---|
+| loop + `a==b` + full chain (the `Stockholm-2` shape) | Safe ✗ | **Unsafe ✓** |
+| loop, no guard / simple body (3 controls) | Unsafe | Unsafe ✓ |
+| **14 no-overflow tasks that expect `true` and answered `true` in run 86** | true | **12 Safe, 2 timeout, 0 false alarms** |
+
+That last row is the one that mattered: the change adds checks to *every* additive and
+multiplicative chain in the benchmark, and is sound only because the flattened operand order is C's
+evaluation order. Had anything reordered operands (a normaliser doing so on commutativity would be
+natural), the prefixes would be wrong intermediates and safe programs would report `false` at −16
+each. Sampling the exposed population found none.
+
+Fixture `overflow_chain_intermediate.c` (UNSAFE:no-overflow). Its A/B is real but asymmetric in
+time: with the fix it answers Unsafe in <200 s; without it the identical program does not answer at
+200 s and answered `Safe` at 900 s.
