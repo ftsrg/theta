@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.defaultValue
@@ -181,6 +182,27 @@ internal fun inlineCallSite(
           )
         )
       }
+  }
+
+  // The call site and the callee must agree on arity, and when they do not, indexing
+  // `invokeLabel.params` by the callee's parameter position walks off the end: the whole file died
+  // with a bare `IndexOutOfBoundsException` naming neither the procedure nor the counts
+  // (`ddv-machzwd/ddv_machzwd_*`, uncovered once the dimensionless-array fix let them get this
+  // far).
+  //
+  // ⚠️ The mismatch seen there is *internal*, not a defect in the C: `void outb(unsigned char,
+  // unsigned int)` is declared with two parameters and every call passes two, yet the callee
+  // arrives with three -- an only-declared `void` function gets a synthetic return slot its call
+  // sites do not supply. So this refusal deliberately does NOT blame the source; it reports the
+  // disagreement and stops. An honest refusal and an unexplained crash both score 0, but only one
+  // of them can be acted on.
+  if (invokeLabel.params.size != calleeParams.size) {
+    throw UnsupportedFrontendElementException(
+      "Inlining '${invokeLabel.name}': the call site supplies ${invokeLabel.params.size}" +
+        " argument(s) but the procedure has ${calleeParams.size} parameter(s). This is an internal" +
+        " disagreement (an only-declared void function gains a synthetic return slot that its call" +
+        " sites do not pass), not necessarily a fault in the input."
+    )
   }
 
   for ((i, param) in calleeParams.withIndex()) {

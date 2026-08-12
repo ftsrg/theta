@@ -6440,3 +6440,36 @@ callee and both arities, instead of an `IndexOutOfBoundsException`.
 **Also corrected:** the earlier justification for keeping the float-literal precision fix leaned on
 net points. The right justification is that the fix is gcc-verified correct and the subnormal-rounding
 defect it exposed is a real bug that had to be found regardless.
+
+### Inlining arity mismatch: crash → named refusal, and the mismatch is OURS
+
+`ProcedureInlining.kt:192` indexes `invokeLabel.params[i]` by the *callee's* parameter position, so
+any arity disagreement walks off the end. 8 `ddv-machzwd` files died with a bare
+`IndexOutOfBoundsException: Index 2 out of bounds for length 2` — naming neither the procedure nor
+the counts. (Uncovered by restoring the dimensionless-array fix, which let those files get this far.)
+
+⚠️ **My first guard blamed the input, and that was wrong.** Its message said "a call through a
+declaration whose parameter list disagrees with the definition". The source says otherwise:
+
+```c
+void outb(unsigned char byte, unsigned int);   /* declared with 2 params, never defined */
+outb(0x12, 0x218);                             /* every call passes 2 */
+```
+
+Yet the callee arrives with **3** parameters. The disagreement is **internal** — an only-declared
+`void` function gains a synthetic return slot that its call sites do not supply. Shipping the first
+message would have pinned theta's own defect on the benchmark.
+
+The refusal now reports both counts and says explicitly that it is an internal disagreement, "not
+necessarily a fault in the input". 8 files move from an opaque crash to a named refusal: same score,
+but actionable.
+
+**The real fix is upstream and still open:** either the stub built for an only-declared `void`
+function should not carry a return slot, or its call sites should pass one. Confirm which side is
+wrong before changing either.
+
+⚠️ **Tooling trap (second variant).** A gate run was reported as *failed, exit 1* while being fully
+green: the command chain ended in `grep -c "^(FAIL|ERROR)"`, and grep exits 1 when it matches
+nothing. The earlier variant was the mirror image — a *false green* from grepping an empty file after
+`run_canaries.sh` was invoked from the wrong directory. **Read the `Fixtures:`/`RESULT:` lines; never
+trust the pipeline's exit status alone.**
