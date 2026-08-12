@@ -6367,3 +6367,40 @@ held because index 0 carries the terminator. Distinct from the already-fixed all
 (`openbsd_cstrncmp-alloca-*`, handled by `NarrowCellRangePass`) and from the `pointer_backwards_walk`
 fixture, which only pinned that `p--` keeps its sign. Classification (modelling bug vs precision)
 pending on trace length.
+
+#### ROOT CAUSE (termination-15, 13 tasks): a mid-object pointer loses its bounds when passed to a function
+
+Classified by trace length first: `cstrchr_reverse_alloca` fails at **trace 6**, `cstrcmp_mixed_alloca`
+at **trace 9** — far too short for loop-invariant reasoning, so a modelling bug, not precision.
+
+**Minimal repro (9 lines, trace 6), and the backwards walk is NOT needed:**
+
+```c
+char peek(const char *s){ return *s; }
+int main(){ int n = __VERIFIER_nondet_int(); if (n < 1) n = 1;
+  char *p = (char*) alloca(n * sizeof(char));
+  p[0] = '\0';
+  p += n - 1;                       /* mid-object pointer, still in bounds */
+  if (peek(p) == 'x') reach_error();/* Unsafe -- FALSE ALARM */ }
+```
+
+**Bisected:**
+
+| variant | verdict |
+|---|---|
+| `alloca(n*sizeof(char))`, `p += n-1`, read `*p` **in main** | Safe ✓ |
+| `alloca(n)`, `p += n-1`, read in main | Safe ✓ |
+| `alloca(10)`, `p += 9`, read in main (constant size) | Safe ✓ |
+| **same, but the pointer is passed to a function and read there** | **Unsafe ✗** |
+| same, with the backwards-walk loop in the callee | Unsafe ✗ (identical trace 6) |
+
+So it is neither the symbolic size, nor the pointer arithmetic, nor the loop: **a pointer of the form
+`base + offset` loses its bounds across a call**, and the first dereference in the callee is reported
+invalid. The parameter assignment is a *store* of a split pointer — the same shape cause D refuses
+outright (`UnsupportedPointerSplitException`, fixture `store_split_pointer.c`) — but here it does not
+refuse, it silently drops the offset (or base) and the check then fails. A silent wrong answer where
+the sibling path takes a loud refusal.
+
+Worth **−416** as a class (26 wrong runs, 13 tasks) and the largest group in run 87. Next step: trace
+what the callee's parameter holds — base only, offset lost, or a base that is no longer the object's
+— rather than guessing which of the three it is.
