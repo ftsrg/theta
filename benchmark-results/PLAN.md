@@ -6331,3 +6331,39 @@ double literal in the benchmark, and run 87 is +189 with wrong down 10 overall; 
 
 Also newly wrong from a non-answer: `heap-manipulation/bubble_sort_linux-1` (TIMEOUT → `false`),
 which is a task that merely started answering, not a regression.
+
+### Run 87 wrong-set triage (authoritative benchexec categories)
+
+⚠️ **Count correction.** A YAML-derived script of mine reported 188 wrong task-runs; that was wrong —
+it misclassified `combinations` (88 entries, all actually correct). benchexec's own `category`
+column gives **102 wrong runs** across all 72,103, ≈51 distinct tasks (each appears twice).
+`compare_runs.py`'s 55 is the same data restricted to the 36,531-run common subset. **Use the
+`category` column, not re-derived expectations.**
+
+| wrong runs | family | verdict given |
+|---|---|---|
+| **26** | **termination-15** | `false(valid-deref)` ← largest group, −16 each |
+| 8 + 6 | aws-c-common | `false(unreach-call)` / `true` |
+| 6 | pthread-race-challenges | **`true`** (missed race, −32) |
+| 6 | ldv-memsafety | `false(valid-deref)` |
+| 4 | memory-model (`2SB`, `4SB`) | **`true`** (−32) |
+| 4 each | floats-cbmc-regression, uthash-2.0.2, list-ext-properties, memsafety | mixed |
+| 3 | goblint-regression | **`true`** (−32) |
+| 2 each | libvsync, termination-crafted, termination-nla, ldv-regression, heap-manipulation, ldv-linux-4.0-rc1-mav, termination-memory-alloca | mixed |
+
+(`termination-crafted`/`termination-nla` = Stockholm-2 + dijkstra6-both-nt, already fixed after this
+run's archive was built; likewise `memsafety-ext3/scopes1`.)
+
+**Next target: `termination-15`, 13 distinct tasks, all `*_reverse_alloca` / `*_mixed_alloca`.**
+A backwards buffer walk:
+
+```c
+char *s = alloca(length);  s[0] = '\0';  s += length - 1;
+while (*s != '\0' && *s != c) s--;        /* stops at index 0, which holds '\0' */
+```
+
+Expected `true`; theta reports `false(valid-deref)`. Safety depends on the invariant `s >= base`,
+held because index 0 carries the terminator. Distinct from the already-fixed alloca-string cases
+(`openbsd_cstrncmp-alloca-*`, handled by `NarrowCellRangePass`) and from the `pointer_backwards_walk`
+fixture, which only pinned that `p--` keeps its sign. Classification (modelling bug vs precision)
+pending on trace length.
