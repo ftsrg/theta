@@ -6404,3 +6404,39 @@ the sibling path takes a loud refusal.
 Worth **−416** as a class (26 wrong runs, 13 tasks) and the largest group in run 87. Next step: trace
 what the callee's parameter holds — base only, offset lost, or a base that is no longer the object's
 — rather than guessing which of the three it is.
+
+## Re-evaluation of every reverted/parked fix (user direction, 2026-08-11)
+
+⚠️ **Criterion changed: keep a fix if it is genuinely correct, regardless of its point effect.**
+Turning an error into a timeout/OOM, or uncovering a further bug, counts as progress. A correct
+parsing/modelling fix that exposes a latent defect elsewhere stays in — the latent defect is then the
+next thing to debug, not a reason to revert.
+
+| item | verdict | why |
+|---|---|---|
+| **dimensionless arrays** (`stash@{0}`) | **RESTORED** | valid C, and it removes a real asymmetry — the *global* path already infers the extent from the initializer (`FrontendXcfaBuilder#getArraySize`); only the local path did not. Parked before only because it measured net −32. |
+| **whole-cell address-of** | **RESTORED** | `&` on a full-width `extract` does name storage, so refusing it as "not an lvalue" was simply wrong. |
+| `sliceCarrier` (bitfield metadata peeling) | stays out | **not a fix at all**: tracing proved `BitfieldSlice.CELL` is absent on the lvalue *and every ancestor*, so the peeling can never find anything. Inert code. |
+| structural single-cell bitfield match | already shipped | subsumed by the multi-cell store (`if (unit is Dereference) …`). |
+
+**Measured effects (both are "progress without points", exactly as intended):**
+
+- *dimensionless arrays*, on its 10-file bucket: all 10 now get past the NPE — 1 succeeds outright,
+  1 reaches the `fesetround` refusal, and **8 expose a new bug**.
+- *whole-cell address-of*, on the intel-tdx before-parsing sample: **3 files** move from an internal
+  `IllegalStateException: Referencing non-lvalue expressions is not allowed!` to the documented
+  byte-union multi-cell refusal. They still do not verify (that needs the bytes model), but a
+  limitation-crash became an honest, documented failure.
+
+### NEW BUG uncovered by the dimensionless-array restore
+
+`ProcedureInliningKt.inlineCallSite(ProcedureInlining.kt:192)` —
+`IndexOutOfBoundsException: Index 2 out of bounds for length 2`, on 8 of the 10 files
+(`ddv-machzwd/ddv_machzwd_*`). An argument/parameter count mismatch while inlining a call: the call
+site supplies more arguments than the callee has parameters (or the reverse). Previously hidden
+behind the NPE. Worth handling properly — at minimum it should refuse with a message naming the
+callee and both arities, instead of an `IndexOutOfBoundsException`.
+
+**Also corrected:** the earlier justification for keeping the float-literal precision fix leaned on
+net points. The right justification is that the fix is gcc-verified correct and the subnormal-rounding
+defect it exposed is a real bug that had to be found regardless.

@@ -1198,6 +1198,24 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
                     return address;
                 }
+                // `&u.member` where the member covers its whole storage cell. A byte-laid-out
+                // union reads such a member as `extract(cell, 0, width)` -- the identity on that
+                // cell -- under the usual width/signedness casts, so the operand is not
+                // syntactically an lvalue even though it names exactly that cell's storage. Its
+                // address is the cell's address.
+                //
+                // Restricted to a *full-width* extract deliberately: a narrower one is a genuine
+                // bitfield, whose address C does not allow taking and which has no address of its
+                // own to give.
+                //
+                // This does not by itself make the intel-tdx-module files verify -- they go on to
+                // hit the byte-union multi-cell refusal, which only the bytes memory model lifts.
+                // It is kept because it is correct: it removes an internal "not an lvalue"
+                // limitation and lets the program reach the honest, documented refusal instead.
+                final Expr<?> wholeCell = wholeCellOf(originalOperand);
+                if (wholeCell != null) {
+                    return reference(wholeCell);
+                }
                 checkState(
                         originalOperand instanceof RefExpr<?>
                                 || originalOperand instanceof Dereference<?, ?, ?>,
@@ -2494,6 +2512,60 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
         parseContext.getMetadata().create(literal, "cType", type);
         return literal;
+    }
+
+    /**
+     * The storage cell an operand names in full, or null if it does not name one exactly.
+     *
+     * A member of a byte-laid-out union reads as `extract(cell, 0, cellWidth)` under the usual width
+     * and signedness wrappers. That extract is the identity, so the expression denotes the cell
+     * itself and `&` on it is the cell's address. A narrower extract is a real bitfield and returns
+     * null -- C forbids taking a bitfield's address, and there is none to give.
+     */
+    private static Expr<?> wholeCellOf(Expr<?> operand) {
+        Expr<?> current = operand;
+        for (int depth = 0; depth < 8; depth++) {
+            if (current instanceof hu.bme.mit.theta.core.type.bvtype.BvExtractExpr extract) {
+                final Expr<?> inner = peelCasts(extract.getBitvec());
+                if (!(inner instanceof Dereference<?, ?, ?>)) {
+                    return null;
+                }
+                if (!(inner.getType() instanceof BvType bv)) {
+                    return null;
+                }
+                final int from = extract.getFrom().getValue().intValue();
+                final int until = extract.getUntil().getValue().intValue();
+                return from == 0 && until == bv.getSize() ? inner : null;
+            }
+            final Expr<?> next = peelOnce(current);
+            if (next == current) {
+                return null;
+            }
+            current = next;
+        }
+        return null;
+    }
+
+    private static Expr<?> peelCasts(Expr<?> expr) {
+        Expr<?> current = expr;
+        for (int depth = 0; depth < 8; depth++) {
+            final Expr<?> next = peelOnce(current);
+            if (next == current) {
+                return current;
+            }
+            current = next;
+        }
+        return current;
+    }
+
+    /** Strips one width/signedness wrapper, or returns the expression unchanged. */
+    private static Expr<?> peelOnce(Expr<?> expr) {
+        if (expr instanceof hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
+                || expr instanceof hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
+                || expr instanceof PosExpr<?>) {
+            return expr.getOps().get(0);
+        }
+        return expr;
     }
 
     private static UnsupportedFrontendElementException unsupportedByteLaidOutMember(

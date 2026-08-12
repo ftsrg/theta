@@ -303,6 +303,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
     }
 
+    /**
+     * How many elements an initializer gives an array declared without a dimension
+     * (`char a[] = {0,1,2}`). Designators count: `{[4] = 1}` makes the array five elements long.
+     */
+    private int initializerElements(CStatement initExpr) {
+        if (!(initExpr instanceof CInitializerList list)) {
+            return 1;
+        }
+        int next = 0;
+        int elements = 0;
+        for (Tuple2<Optional<CStatement>, CStatement> entry : list.getStatements()) {
+            final int position = designatedPosition(entry.get1(), next);
+            next = position + 1;
+            elements = Math.max(elements, position + 1);
+        }
+        return Math.max(elements, 1);
+    }
+
     /** How many stack objects the current scope has declared so far. */
     private int scopeMark() {
         final List<Expr<?>> scoped = scopedAllocas.peek();
@@ -1409,6 +1427,21 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // runtime value, so the scale factor is multiplied in rather than computed here.
                 final int elementCells = cellsOf(cArray.getEmbeddedType());
                 CStatement allocaSize = cArray.getArrayDimension();
+                if (allocaSize == null) {
+                    // `char a[] = {0,1,2};` takes its extent from the initializer, so the declarator
+                    // carries no dimension at all. Reading it straight through left `List.of(null)`
+                    // and the frontend died with a bare NullPointerException
+                    // (`memsafety-ext3/naturalNumbers1`); the *global* path has always inferred the
+                    // extent (FrontendXcfaBuilder#getArraySize) and only the local one did not.
+                    // An element *count*, so the scaling below converts it to cells like any other.
+                    final CComplexType countType = CComplexType.getUnsignedLong(parseContext);
+                    allocaSize =
+                            new CExpr(
+                                    countType.getValue(
+                                            String.valueOf(
+                                                    initializerElements(declaration.getInitExpr()))),
+                                    parseContext);
+                }
                 if (elementCells != 1) {
                     final var dimExpr = allocaSize.getExpression();
                     final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
