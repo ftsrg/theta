@@ -6842,3 +6842,20 @@ Where to implement: the verdict is produced downstream of `frontend()`, so the f
 XCFA came from the flat fallback" (set where `cConfig.memoryModel` is pinned to `flat` in the catch) —
 consult it where the memsafety result is finalised. Needs the canary gate **and** a portfolio-config
 check, since run 87 is the shipped configuration and these numbers are from `pred_int`.
+
+⚠️ **Correction on that gate run — it was load-contaminated, my fault.** The same log also shows
+`Fixtures: 43 PASS, 19 FAIL`, every failure `actual=OTHER` (no verdict produced at all) on fixtures
+that have nothing to do with the change: `hex_float_constant`, `storage_class_register`,
+`builtin_infinity`, `builtin_prefetch`, `undeclared_memory_functions`, … Cause: I ran
+`buildArchiveTheta-svcomp`, `shadowJar` and `:theta-xcfa-cli:test` in the foreground **while the
+sweep was running**, against the documented rule (8 GB cgroup — one theta at a time, never during a
+canary sweep). The verdict fixtures simply ran out of time. The identical fixture set was
+**62 PASS / 0 FAIL** on this very code earlier in the session.
+
+The two *canary* FAILs above are still genuine: `Frontend failed!` is a deterministic outcome, not a
+timeout, and both are memsafety/memcleanup — precisely the properties the change disabled the
+fallback for. So the revert decision stands; only the fixture numbers in that run are noise.
+
+Lesson for the next gate: do not start any gradle build while `run_canaries.sh` is live, and read
+`Fixtures:`/`RESULT:` lines rather than the harness exit status (a trailing `echo` in the launching
+command masked the nonzero exit here, exactly the failure mode already recorded for `grep -c`).
