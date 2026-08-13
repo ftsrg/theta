@@ -6769,3 +6769,38 @@ back-transformation`, exit **202 (server error)**. Same family as the `bit2bool`
 `646ac3b51c`. Z3 introduces `array-ext` (the array extensionality witness) when reasoning about array
 equality, so any model containing one is unrecoverable. Plausibly a real contributor to the
 **4,449 server errors** in `pred_int`; worth checking against that bucket before fixing.
+
+### MEASURED: the silent multi→flat fallback causes 18 of `pred_int`'s 32 wrong answers
+
+Ran the frontend (`--backend NONE`, so it is fast and exact) over all 32 `pred_int` wrong runs and
+counted which ones print `retrying with --memory-model flat`:
+
+**fallback = 18, no fallback = 14, not found = 0.**
+
+The 18 are the whole alloca-string family (`cstr{chr,cmp,cpy,cspn,len,ncpy,pbrk,spn}_{mixed,reverse}_alloca`,
+`openbsd_cmemrchr-alloca-1` — 15 runs), the DLL pair `test-0504` / `test-0504_1`, `960521-1_1-2`, and
+`aws_linked_list_init_harness`. **17 of the 18 are `valid-memsafety`**; only the aws one is unreach-call.
+
+So: multi refuses these programs (a pointer-splitting limitation — loudly and correctly), the CLI
+silently retries under flat, and flat is exactly the model with the known run-62 false-`valid-deref`
+flood on this family. The fallback converts an honest refusal (score 0) into a confident wrong answer
+(−16). That is the single largest wrong-answer source in this config, worth ~**+272** to remove.
+
+**Do not "fix" this by chasing the flat bug first.** The specific flat mechanism is still unproven —
+see the stride hypothesis above; every attempt to isolate it hit a *different* bug, which is itself
+worth knowing about this family:
+
+| config on `cstrchr_reverse_alloca` | outcome |
+|---|---|
+| efficient, unbounded (as shipped) | `false(valid-deref)` trace 7 — the wrong answer |
+| efficient, `length` bounded ≤100 | `Unsupported function 'array-ext'` NPE, exit **202** |
+| efficient, constant `alloca(100)` | `UnknownSolverStatusException`, exit **221** |
+| efficient, `FLAT_STRIDE = 2^40` | no answer in 420 s |
+| bitvector, unbounded | JVM **SIGSEGV** (exit 139, legacy Z3 native) |
+| bitvector, bounded ≤100 | `Z3Exception: theory not supported`, exit **221** |
+
+**Proposed fix (not yet implemented, needs the cost side measured first):** do not fall back to flat
+for `valid-memsafety`/`valid-memcleanup`, where flat is known-unsound on this shape; let the multi
+refusal stand instead. Before shipping, measure what the fallback currently *earns* on memsafety
+properties — how many currently-**correct** memsafety runs also take it — because those would become
+errors. Gate on that number, not on the +272.
