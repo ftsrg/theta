@@ -6571,3 +6571,31 @@ Zero solver errors under MathSAT. So `predcart_bv`'s 1,389 → 700 collapse is *
 being unviable — it is the wrong solver for that refinement. A `predcart_bv_ms` run (identical task
 set, MathSAT) is in flight to quantify it; the three runs form a chain with one variable each step:
 efficient/Z3 → bitvector/Z3 → bitvector/MathSAT.
+
+#### The other exit-202 cause: unmodelled math functions, misreported as "server error"
+
+With `bit2bool` fixed, the remaining server errors in the bitvector sample resolve to:
+
+```
+java.lang.IllegalStateException: No such method logf.
+   at XcfaAnalysisKt#getCoreXcfaLts$lambda$0:142
+```
+
+`neural-networks/*` call `logf` (and siblings). `FpFunctionsToExprsPass` models a good set of math
+functions — `sqrt`, `fabs`, `floor`, `ceil`, `round`, `trunc`, `fmin/fmax`, `fmod`, the `is*`
+classifiers — but **not** `logf`/`log`/`exp*`/`pow*`/trig. A call to one reaches the analysis as an
+`InvokeLabel` naming a procedure that does not exist, and dies deep in the LTS with a bare
+`IllegalStateException` that the tool-info maps to **exit 202, "server error"**.
+
+That label is actively misleading: nothing about the server is wrong. It is an unsupported library
+function, and it should say so — the same treatment given to the inlining arity mismatch
+(`7976b40d75`): name the function, classify it as unsupported (exit 209/210), and let the score be
+an honest 0 instead of an infrastructure-looking failure that invites the wrong investigation.
+
+Two possible follow-ups, in order:
+1. **Refuse clearly** where the missing procedure is detected — cheap, and stops mislabelling.
+2. **Model the missing functions** where sound (`log`, `exp`, `pow` have no exact bitvector/integer
+   semantics, so they would need an uninterpreted-function treatment with the usual caveats, not a
+   made-up value).
+
+⚠️ Do NOT invent values for these. An unsound `logf` would turn a 0 into a possible −16/−32.
