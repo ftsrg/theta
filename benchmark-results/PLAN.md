@@ -6515,3 +6515,59 @@ set at 5 min. The value of these runs is the per-config profile, not the totals.
 
 Still running: `predcart`, `predcart_bv` (identical task set to `predcart`, `--arithmetic bitvector`
 — a controlled encoding comparison), `ic3`, `liveness`.
+
+### Bitvector encoding: `bit2bool` back-transformation — SHIPPED, and the real story is the solver
+
+The batch-88 exploratory run gave `predcart_bv` (PRED_CART/BW_BIN_ITP + `--arithmetic bitvector`)
+**2,946 server errors** across **1,473 distinct tasks** in a dozen unrelated families
+(product-lines 532, neural-networks 354, seq-mthreaded 530, nla-digbench 250, array-* 400+ …). Every
+one reproduces as:
+
+```
+java.lang.NullPointerException: Unsupported function 'bit2bool' in Z3 back-transformation.
+```
+
+Z3 emits `(_ bit2bool k) x` when reasoning about individual bits; theta's `(name, arity)` dispatch
+had no entry, so it fell through to `toFuncLitExpr`, which requires a model and NPE'd without one.
+Handler added to **both** Z3 transformers (current + legacy), reading the index from the term text
+the way the neighbouring `extract` case does, lowering to `extract(op, k, k+1) == 1`.
+
+⚠️ **I had seen this error and dismissed it.** It appeared during the pre-submission smoke test on
+`bitvector/byte_add-1.c` and I called it "task-specific, like OC's calloc". It was the single
+largest failure mode of the encoding I was about to submit. The per-config split is what exposed the
+scale — a portfolio run would have hidden it behind a fallback.
+
+**Correctness established, not assumed.** The fix's only effect on real tasks is crash → *timeout*,
+which proves nothing about the lowering, so three bit-level probes were run to a verdict:
+
+| probe | expected | got |
+|---|---|---|
+| `(x&1)==1` then `(x&1)==0` | Safe | Safe ✓ |
+| bit 3 set, `8 <= x < 16` | **Unsafe** | Unsafe ✓ |
+| `y = x \| 1` vs an even constant | Safe | Safe ✓ |
+
+The UNSAFE case is what makes the set discriminating: an inverted comparison or off-by-one index
+cannot pass all three. Fixture `bitvector_bit2bool.c`.
+
+**Limits, stated plainly:**
+- Worth **no points**: sampled tasks go from server error to timeout, not to answers.
+- **Not the only 202 cause** — `neural-networks/log_4_safe` still server-errors, so at least one more
+  back-transformation gap sits behind that 2,946.
+- **Z3-path only.** MathSAT has its own transformer and never touches this code.
+
+### The bitvector collapse is a SOLVER limitation, not the encoding
+
+Behind the `bit2bool` crash sits `Z3Exception: theory not supported by interpolation` (exit 221):
+legacy Z3 cannot interpolate over bitvectors, which `BW_BIN_ITP` requires. Same domain, refinement
+and encoding under **MathSAT 5.6.12** instead:
+
+| task | Z3 + bitvector | MathSAT + bitvector |
+|---|---|---|
+| `bitvector/byte_add-1` (expects **false**) | solver error 221 | **Unsafe = false, CORRECT** |
+| `bitvector-loops/overflow_1-2` | solver error 221 | timeout |
+| `loop-acceleration/array_1-1` | server error → timeout | timeout |
+
+Zero solver errors under MathSAT. So `predcart_bv`'s 1,389 → 700 collapse is **not** the encoding
+being unviable — it is the wrong solver for that refinement. A `predcart_bv_ms` run (identical task
+set, MathSAT) is in flight to quantify it; the three runs form a chain with one variable each step:
+efficient/Z3 → bitvector/Z3 → bitvector/MathSAT.

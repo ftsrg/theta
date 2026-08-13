@@ -280,6 +280,31 @@ final class Z3TermTransformer {
                         throw new com.microsoft.z3.Z3Exception("Not supported: " + term);
                     }
                 });
+        // Z3 introduces `(_ bit2bool k) x` when it reasons about individual bits of a bitvector:
+        // the term is true exactly when bit k of x is set. It has no counterpart in theta's
+        // expression language, so back-transformation fell through to toFuncLitExpr, which needs a
+        // model and threw `NullPointerException: Unsupported function 'bit2bool'` when there was
+        // none. That was the single largest failure of the bitvector encoding in the batch-88
+        // exploratory run -- 2,946 runs across 1,473 tasks in a dozen unrelated families.
+        //
+        // The bit index is read from the term's own text, the way the `extract` case above does it.
+        this.environment.put(
+                Tuple2.of("bit2bool", 1),
+                (term, model, vars) -> {
+                    Pattern pattern = Pattern.compile("bit2bool ([0-9]+)");
+                    Matcher match = pattern.matcher(term.toString());
+                    if (match.find()) {
+                        int index = Integer.parseInt(match.group(1));
+                        Expr<BvType> op =
+                                (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+                        return AbstractExprs.Eq(
+                                BvExtractExpr.of(
+                                        op, IntExprs.Int(index), IntExprs.Int(index + 1)),
+                                BvUtils.bigIntegerToNeutralBvLitExpr(java.math.BigInteger.ONE, 1));
+                    } else {
+                        throw new com.microsoft.z3.Z3Exception("Not supported: " + term);
+                    }
+                });
         this.environment.put(
                 Tuple2.of("zero_extend", 1),
                 (term, model, vars) -> {
