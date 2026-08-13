@@ -6599,3 +6599,47 @@ Two possible follow-ups, in order:
    made-up value).
 
 ⚠️ Do NOT invent values for these. An unsound `logf` would turn a 0 into a possible −16/−32.
+
+## ROOT CAUSE: subnormal float literals are encoded as normals (core FP bug)
+
+Chased from the run-87 regression `floats-cbmc-regression/float-no-simp7` and the bitvector-unique
+wrongs (9 of 10 of which are float tasks). **Encoding-independent** — `--arithmetic efficient` and
+`--arithmetic bitvector` are both wrong, `integer` honestly refuses floats:
+
+| probe | expected | got |
+|---|---|---|
+| `2^-149 != 2^-126` | Safe | Safe ✓ |
+| `2^-149 != 2^-148` | Safe | Safe ✓ |
+| `2^-149 > 0` | Safe | Safe ✓ |
+| `2^-100 < 2^-50` (normals, control) | Safe | Safe ✓ |
+| **`2^-149 < 2^-126`** | Safe | **Unsafe ✗** |
+| **`2^-149 > 2^-126`** | Unsafe | **Safe ✗** |
+
+So subnormals are *distinct* and *positive*, and normal-range ordering is fine — but a subnormal is
+placed **above** the smallest normal. They are being encoded too large.
+
+**Mechanism**, in `FpUtils.bigFloatToFpLitExpr` (`common/core`):
+
+```java
+final var minExponent = -(1L << (type.getExponent() - 1)) + 2;      // float: -126
+final var exponent = BigInteger.valueOf(round.exponent(minExponent, maxExponent))
+                               .add(BigInteger.valueOf(maxExponent));
+final var significand = round.significand(minExponent, maxExponent);
+```
+
+`2^-149`'s true exponent (−149) is below `minExponent` (−126), so it clamps to −126 and the biased
+field becomes `-126 + 127 = 1`. **IEEE-754 requires a biased exponent field of 0 for subnormals**,
+with the significand shifted right by `(minExponent − trueExponent)` and no implicit leading 1.
+Writing field=1 reinterprets the value as a normal, which lands above `2^-126`.
+
+**Fix sketch:** when `trueExponent < minExponent`, emit exponent field `0` and significand
+`round >> (minExponent - trueExponent)` (with the implicit bit materialised before shifting), and
+flush to zero when the shift exceeds the significand width. `bigFloat.round(...)` also uses a math
+context carrying only precision, so MPFR never subnormalises the value first — worth checking
+whether `BinaryMathContext` should be given the exponent range instead.
+
+⚠️ This is in **`common/core`** and touches every FP literal in every configuration, so it needs the
+same treatment as the significand fix: probes in both directions (a subnormal that must be *less*
+than the smallest normal, and one that must round to zero), the full canary gate, and a float-family
+regression sample before shipping. Related: the significand off-by-one fix `2a7e482564`, which made
+literals exact enough for this to become visible.
