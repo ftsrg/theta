@@ -1,17 +1,21 @@
 package hu.bme.mit.theta.xcfa.cli.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
+import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.svlib.SvLibMetadata;
@@ -171,31 +175,58 @@ public final class SvLibWitnessWriter implements XcfaWitnessWriter {
 
         private String toTerm(final Expr<BoolType> expr) {
             registerVariables(expr);
-            final Expr<BoolType> printableExpr = replaceVariablesWithConstants(expr);
-            registerConstants(printableExpr);
+            final Expr<BoolType> printableExpr = ExprUtils.changeDecls(expr, variableConstants);
             return transformationManager.toTerm(printableExpr);
         }
 
         private void registerVariables(final Expr<?> expr) {
             for (final VarDecl<?> varDecl : ExprUtils.getVars(expr)) {
-                variableConstants.computeIfAbsent(
-                        varDecl, var -> Decls.Const(var.getName(), var.getType()));
+                if (variableConstants.containsKey(varDecl))
+                  continue;
+                ConstDecl<?> constDecl = Decls.Const(varDecl.getName(), varDecl.getType());
+                transformConst(constDecl);
+                variableConstants.putIfAbsent(varDecl, constDecl);
             }
         }
 
-        @SuppressWarnings("unchecked")
-        private Expr<BoolType> replaceVariablesWithConstants(final Expr<BoolType> expr) {
-            final Map<Decl<?>, Decl<?>> decls = new LinkedHashMap<>(variableConstants);
-            return (Expr<BoolType>) ExprUtils.changeDecls(expr, decls);
+        private void transformConst(final ConstDecl<?> decl) {
+            final Type type = decl.getType();
+
+            final Tuple2<List<Type>, Type> extractedTypes = extractTypes(type);
+            final List<Type> paramTypes = extractedTypes.get1();
+            final Type returnType = extractedTypes.get2();
+
+            final String returnSort = transformationManager.toSort(returnType);
+            final String[] paramSorts =
+                paramTypes.stream().map(transformationManager::toSort).toArray(String[]::new);
+
+            final String symbolName = decl.getName();
+            final String symbolDeclaration =
+                String.format(
+                    "(declare-fun %s (%s) %s)",
+                    symbolName, String.join(" ", paramSorts), returnSort);
+            symbolTable.put(decl, symbolName, symbolDeclaration);
         }
 
-        private void registerConstants(final Expr<?> expr) {
-            final List<ConstDecl<?>> constants = new ArrayList<>();
-            ExprUtils.collectConstants(expr, constants);
-            for (final ConstDecl<?> decl : constants) {
-                if (!symbolTable.definesConst(decl)) {
-                    symbolTable.put(decl, encodeSymbol(decl.getName()), "");
-                }
+        private Tuple2<List<Type>, Type> extractTypes(final Type type) {
+            if (type instanceof FuncType<?, ?>) {
+                final FuncType<?, ?> funcType = (FuncType<?, ?>) type;
+
+                final Type paramType = funcType.getParamType();
+                final Type resultType = funcType.getResultType();
+
+                checkArgument(!(paramType instanceof FuncType));
+
+                final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
+                final List<Type> paramTypes = subResult.get1();
+                final Type newResultType = subResult.get2();
+                final List<Type> newParamTypes =
+                    ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
+                final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
+
+                return result;
+            } else {
+                return Tuple2.of(ImmutableList.of(), type);
             }
         }
     }
