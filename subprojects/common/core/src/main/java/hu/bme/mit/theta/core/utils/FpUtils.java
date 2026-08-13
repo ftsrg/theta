@@ -46,12 +46,30 @@ public final class FpUtils {
         } else {
             final var maxExponent = (1L << (expr.getType().getExponent() - 1)) - 1;
 
+            final var exponentField = BvUtils.neutralBvLitExprToBigInteger(expr.getExponent());
+            final var significandField = BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand());
+
+            // An all-zero exponent field marks a SUBNORMAL, and IEEE-754 encodes those differently
+            // in two ways at once: there is no implicit leading 1, and the exponent is the smallest
+            // *normal* one (1 - maxExponent) rather than the -maxExponent the field literally reads
+            // as. Decoding them as normals -- adding the hidden bit and taking the exponent a step
+            // too low -- turned every subnormal into a value just ABOVE the smallest normal:
+            // 2^-149 came back as 2^-126*(1+2^-23) instead of 1.4e-45. Since this function backs
+            // every comparison and every arithmetic fold on FpLitExpr, `x < FLT_MIN` was then false
+            // for every subnormal x, and theta answered the gradual-underflow tests wrongly rather
+            // than imprecisely (`floats-cbmc-regression/float-no-simp7`).
+            // Zeroes never reach here -- they are handled above -- but sign*0 would decode
+            // correctly anyway, the significand field being 0.
+            final var subnormal = exponentField.signum() == 0;
             final var exponent =
-                    BvUtils.neutralBvLitExprToBigInteger(expr.getExponent())
-                            .subtract(BigInteger.valueOf(maxExponent));
+                    subnormal
+                            ? BigInteger.valueOf(1 - maxExponent)
+                            : exponentField.subtract(BigInteger.valueOf(maxExponent));
             final var significand =
-                    BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand())
-                            .add(BigInteger.TWO.pow(expr.getType().getSignificand() - 1));
+                    subnormal
+                            ? significandField
+                            : significandField.add(
+                                    BigInteger.TWO.pow(expr.getType().getSignificand() - 1));
 
             return new BigFloat(
                     expr.getHidden(),

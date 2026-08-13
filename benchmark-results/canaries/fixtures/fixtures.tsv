@@ -60,3 +60,4 @@ fesetround_default.c	efficient	ILP32	SAFE	88	fesetround(FE_TONEAREST)/fegetround
 overflow_chain_intermediate.c	efficient	LP64	UNSAFE:no-overflow	88	an intermediate of a flattened additive chain is range-checked
 scope_end_scalar.c	efficient	ILP32	SAFE:valid-memsafety	88	address-taken scalars die with their own block, not an inner one (and statics/globals never)
 bitvector_bit2bool.c	bitvector	ILP32	SAFE	88	Z3 bit2bool back-transformation (bitvector encoding)
+float_subnormal_order.c	efficient	ILP32	SAFE	88	subnormal floats decode below the smallest normal (no implicit bit, exponent 1-maxExponent)

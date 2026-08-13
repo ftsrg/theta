@@ -6618,28 +6618,94 @@ wrongs (9 of 10 of which are float tasks). **Encoding-independent** — `--arith
 So subnormals are *distinct* and *positive*, and normal-range ordering is fine — but a subnormal is
 placed **above** the smallest normal. They are being encoded too large.
 
-**Mechanism**, in `FpUtils.bigFloatToFpLitExpr` (`common/core`):
+**Mechanism — CORRECTED.** My first write-up above blamed the ENCODE side
+(`bigFloatToFpLitExpr`) and sketched a fix for it. **That was wrong**, and the sketch would have
+broken working code. Instrumenting MPFR directly (`scratchpad/FpProbe.java`) shows the encoder is
+already correct: `0x1p-149` encodes to biased exponent **0**, significand 1 — bit-identical to
+`Float.floatToRawIntBits`. MPFR's `exponent(minExp,maxExp)` returns `minExp-1` for subnormals
+(the `Math.getExponent` convention), so the `+maxExponent` bias lands on 0 by itself.
+
+The bug is the **DECODE**, `FpUtils.fpLitExprToBigFloat`:
 
 ```java
-final var minExponent = -(1L << (type.getExponent() - 1)) + 2;      // float: -126
-final var exponent = BigInteger.valueOf(round.exponent(minExponent, maxExponent))
-                               .add(BigInteger.valueOf(maxExponent));
-final var significand = round.significand(minExponent, maxExponent);
+final var exponent = neutralBvLitExprToBigInteger(expr.getExponent())
+                        .subtract(BigInteger.valueOf(maxExponent));          // 0 - 127 = -127
+final var significand = neutralBvLitExprToBigInteger(expr.getSignificand())
+                        .add(BigInteger.TWO.pow(type.getSignificand() - 1)); // ALWAYS +2^23
 ```
 
-`2^-149`'s true exponent (−149) is below `minExponent` (−126), so it clamps to −126 and the biased
-field becomes `-126 + 127 = 1`. **IEEE-754 requires a biased exponent field of 0 for subnormals**,
-with the significand shifted right by `(minExponent − trueExponent)` and no implicit leading 1.
-Writing field=1 reinterprets the value as a normal, which lands above `2^-126`.
+Both halves are wrong for a subnormal, and they compound:
+- the implicit leading 1 is added unconditionally, but subnormals do not have one;
+- exponent field 0 means `1 - maxExponent` (−126), not the `-maxExponent` (−127) it reads as.
 
-**Fix sketch:** when `trueExponent < minExponent`, emit exponent field `0` and significand
-`round >> (minExponent - trueExponent)` (with the implicit bit materialised before shifting), and
-flush to zero when the shift exceeds the significand width. `bigFloat.round(...)` also uses a math
-context carrying only precision, so MPFR never subnormalises the value first — worth checking
-whether `BinaryMathContext` should be given the exponent range instead.
+Round-tripping through theta (`scratchpad/FpRt.java`) before the fix:
 
-⚠️ This is in **`common/core`** and touches every FP literal in every configuration, so it needs the
-same treatment as the significand fix: probes in both directions (a subnormal that must be *less*
-than the smallest normal, and one that must round to zero), the full canary gate, and a float-family
-regression sample before shipping. Related: the significand off-by-one fix `2a7e482564`, which made
-literals exact enough for this to become visible.
+| literal | true value | theta decoded |
+|---|---|---|
+| `0x1p-149` | 1.4e-45 | **1.17549449e-38** |
+| `0x1p-127` | 5.88e-39 | **1.76324153e-38** |
+| `0x1p-126` | 1.1754944e-38 | 1.17549435e-38 ✓ |
+
+Every subnormal came back as ≈`2^-126*(1+f)` — i.e. just ABOVE the smallest normal, which is
+exactly the observed `2^-149 > 2^-126` = Safe. Doubles are hit identically: `Double.MIN_VALUE`
+(4.9e-324) decoded as 2.225e-308, i.e. `DBL_MIN`.
+
+**FIXED** — decode keys off a zero exponent field: no hidden bit, exponent `1 - maxExponent`. The
+existing `BinaryMathContext(p, e)` represents the result exactly; no context widening was needed.
+Since `fpLitExprToBigFloat` backs every comparison, add/sub/mul/div, rem, sqrt, min/max and
+round-to-integral on `FpLitExpr`, this corrects subnormal handling across all FP folding, not just
+literals.
+
+Gated: `FpSubnormalTest` (new, JVM `Float`/`Double` as an independent oracle) + fixture
+`float_subnormal_order.c`. **A/B verified** — with the fix reverted all 4 tests fail with exactly the
+values above and `2^-149 < 2^-126` evaluates to `false`; 679 core tests pass with it.
+
+⚠️ Remaining, NOT fixed: MPFR has no gradual underflow, so *arithmetic* that underflows below
+`2^-149` yields a smaller BigFloat instead of flushing to zero, and only the re-encode rounds it.
+That is a precision gap on the arithmetic path, not the ordering soundness bug fixed here.
+Related: the significand off-by-one fix `2a7e482564`, which made literals exact enough for this to
+become visible.
+
+## Batch 89 — integer vs bitvector encoding, full suite (user request 2026-08-12)
+
+Four full-suite runs at 5 min / 7 GB, Skylake-pinned, `Theta-svcomp-88`, benchcloud IDLE:
+`pred_int`, `pred_bvms`, `kind_int`, `kind_bvms` (bitvector runs use **MathSAT**).
+
+⚠️ **IDLE + four concurrent collections serialises them.** The vcloud scheduler fills machines in
+submission order, so `pred_int` ran alone (3 h 07 m, done), `pred_bvms` is draining next
+(14.5k/36.6k after 7.5 h → ~19 h), and both `kind` collections sat at **3 results each for 6+ hours**.
+That is queue starvation, not a stall: all three clients are alive and healthy, and another user's
+`cpachecker-por` job also outranks IDLE. Do not "fix" it by relaunching. Budget ~2 days wall-clock
+for all four, or submit them one at a time.
+
+### `pred_int` (PRED_CART / BW_BIN_ITP / `--arithmetic integer`) — COMPLETE
+
+36,602 runs, score **8,856**: correct 6,122 (3,310 true / 2,812 false), wrong 32, error 30,132,
+unknown 316.
+
+**The integer encoding's real limit is the FRONTEND, not the solver.** Error profile vs run 87
+(portfolio, `efficient`) on the identical task set:
+
+| status | `pred_int` | run 87 |
+|---|---|---|
+| frontend failed, **before** parsing | **15,683** | 1,609 |
+| server error | 4,449 | 0 |
+| generic error | 1,996 | 5 |
+| solver error | 1,773 | 199 |
+| verification stuck | 448 | 0 |
+
+**14,080 tasks parse under `efficient` but not under `integer`** — bitwise-heavy families:
+`hardness` 6,343, `btor2c` 1,224, Juliet `CWE190`/`CWE191` 1,717, `linux` 655, `tdh` 492, `aws` 260.
+Run 87 *solved* 3,427 of those 14,080 (2,478 true, 765 `false(no-overflow)`, 184 `false(unreach-call)`),
+so this is lost coverage, not tasks that were hopeless anyway. Integer arithmetic is therefore not a
+viable standalone config for the suite; its value is as a portfolio member on tasks it can express.
+
+The 32 wrongs are all **known** families, no new class: `cstr*`/`openbsd*` alloca-string
+`false(valid-deref)` 15 (the termination-15 bounds-across-call root cause above), `aws_linked_list_*` 3,
+`2SB`/`4SB` wrong-`true`, `09-regions_*` wrong-`true` races 2, plus `scopes4-1`,
+`ArraysOfVariableLength{,2}`, `memleaks_test11`, `test25-2`, `960521-1_1-2`, `test-0504{,_1}`,
+`lockfree-3.0`, `rec_strcopy_malloc`.
+
+Integer-encoding-specific error buckets worth a look **only if integer is kept in the portfolio**
+(they do not affect the shipped `efficient` config): `server error` is 3,151/4,449 Juliet CWE190+191;
+`generic error` is `minepump` 325, `email` 168, `pals` 131, `elevator` 90.
