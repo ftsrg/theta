@@ -6473,3 +6473,45 @@ green: the command chain ended in `grep -c "^(FAIL|ERROR)"`, and grep exits 1 wh
 nothing. The earlier variant was the mirror image — a *false green* from grepping an empty file after
 `run_canaries.sh` was invoked from the wrong directory. **Read the `Fixtures:`/`RESULT:` lines; never
 trust the pipeline's exit status alone.**
+
+## Exploratory per-config runs (batch 88) — 6 of 10 in
+
+Each config run **standalone** (not through the portfolio), 5 min / 7 GB / 2 cores, IDLE,
+Skylake-pinned, HEAD build `7976b40d75` = `Theta-svcomp-88`. Subsets chosen per config rather than
+running everything everywhere: the general backends on 11 sequential unreach-call groups, MDD on the
+control-heavy three (ECA / ControlFlow / ProductLines), OC on Concurrency only, LIVENESS_CEGAR on
+termination only.
+
+| config | runs | correct | % | wrong | timeout | oom | stuck | srv-err |
+|---|---|---|---|---|---|---|---|---|
+| CEGAR EXPL/NWT_IT_WP | 11,412 | 2,046 | **17.9%** | 10 | 2,374 | 2,366 | 1,832 | 1,792 |
+| KIND | 11,412 | 1,522 | 13.3% | 10 | 5,504 | 2,120 | 0 | 0 |
+| BMC | 11,412 | 1,446 | 12.7% | 10 | 5,846 | 2,136 | 0 | 0 |
+| IMC | 11,412 | 928 | 8.1% | 8 | 4,184 | 3,396 | 0 | 98 |
+| **MDD** | 3,870 | **0** | **0.0%** | 4 | 412 | 1,274 | **2,064** | 0 |
+| OC | 1,030 | 561 | **54.5%** | 3 | 184 | 19 | 0 | 32 |
+
+### Findings
+
+**1. Standalone MDD solves nothing on the sets picked to suit it.** 0 correct in 3,870 runs; its
+only 4 answers were `true` and *all four were wrong*. 53% end as "verification stuck" (exit 220),
+33% OOM, 11% timeout. Caveat before acting: this is `--backend MDD` alone at 5 min — the portfolio
+may give it different settings or budget — but on ECA/ControlFlow/ProductLines it contributed
+nothing here and was actively harmful the few times it answered.
+
+**2. OC is far and away the most productive per task** (54.5% correct) on Concurrency, its home
+ground, and barely uses memory (19 OOM in 1,030). Its main loss is **223 `frontend failed, after
+parsing`** — a fifth of the concurrency set never reaches the checker, which is a frontend problem,
+not an OC one.
+
+**3. "verification stuck" and "server error" are not resource exhaustion** and are worth separating
+from the timeout/OOM pool that is off the work list. They concentrate in exactly two configs:
+EXPL (1,832 stuck + 1,792 server errors) and MDD (2,064 stuck). BMC/KIND have **zero** of both —
+they fail cleanly by timeout instead. Whatever "stuck" and "server error" are, they are specific to
+those two analyses rather than general.
+
+**4. Nothing here beats the portfolio**, as expected — EXPL alone tops out at 17.9% of the sequential
+set at 5 min. The value of these runs is the per-config profile, not the totals.
+
+Still running: `predcart`, `predcart_bv` (identical task set to `predcart`, `--arithmetic bitvector`
+— a controlled encoding comparison), `ic3`, `liveness`.
