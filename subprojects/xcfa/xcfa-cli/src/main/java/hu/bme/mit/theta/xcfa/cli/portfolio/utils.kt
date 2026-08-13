@@ -480,9 +480,9 @@ fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
     chcOutputConfig = portfolioConfig.outputConfig.chcOutputConfig,
     witnessConfig =
       WitnessConfig(
-        enabled = WitnessLevel.SVCOMP,
-        concretizerSolver = "Z3",
-        validateConcretizerSolver = false,
+        enabled = portfolioConfig.outputConfig.witnessConfig.enabled,
+        concretizerSolver = portfolioConfig.outputConfig.witnessConfig.concretizerSolver,
+        validateConcretizerSolver = portfolioConfig.outputConfig.witnessConfig.validateConcretizerSolver,
         inputFileForWitness =
           portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
             ?: portfolioConfig.inputConfig.input,
