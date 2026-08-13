@@ -6804,3 +6804,41 @@ for `valid-memsafety`/`valid-memcleanup`, where flat is known-unsound on this sh
 refusal stand instead. Before shipping, measure what the fallback currently *earns* on memsafety
 properties — how many currently-**correct** memsafety runs also take it — because those would become
 errors. Gate on that number, not on the +272.
+
+### ATTEMPTED AND REVERTED: banning the multi→flat fallback under memory-safety properties
+
+Implemented `mayFallBackToFlat && !checksMemorySafety` in `ExecuteConfig.frontend`
+(`inputProperty == MEMSAFETY || MEMCLEANUP`), built, and verified it does exactly what was intended:
+
+| task | property | before | after |
+|---|---|---|---|
+| `cstrchr_reverse_alloca` | valid-memsafety | fallback → `false(valid-deref)` (**wrong**, −16) | no fallback, **exit 210** frontend failed (0) |
+| `test-0504` | valid-memsafety | fallback → wrong | no fallback, exit 210 |
+| `aws_linked_list_init_harness` | unreach-call | fallback → builds | **unchanged**, still falls back, rc 0 |
+
+**The canary gate went red: 260 PASS / 2 FAIL** (baseline for this build is 262/0):
+
+- `c/libvsync/mcslock.yml` [valid-memsafety] → `Frontend failed!`
+- `c/uthash-2.0.2/uthash_JEN_test5-1.yml` [valid-memcleanup] → `Frontend failed!`
+
+Both are permanent zeros — `mcslock` TIMEOUTs on every property in *both* `pred_int` and run 87;
+`uthash_JEN_test5-1` frontend-fails in `pred_int` and TIMEOUTs/OOMs in run 87 — so **no correct answer
+is lost**, consistent with the 0/60 sample. But the change still removes frontend coverage: programs
+that used to build no longer build, which is precisely what the canary suite exists to catch, and
+there is no exclusion mechanism in the harness (the `recursified_geo1-u` precedent was a plain row
+deletion). **Reverted rather than hand-edit the gate to suit the change** — a gate you edit to make
+your own patch pass is not a gate.
+
+**The measurement stands and the better design is now clear.** Do not re-attempt the ban. Instead
+keep the fallback — so these programs still *build* — and make the unsound part of the answer honest:
+under a flat-**fallback** run with a memory-safety property, a `false(valid-*)` verdict is exactly the
+class flat is known to get wrong (run-62: incorrect-false 18→107), so downgrade it to
+unknown/error rather than reporting it. That kills the 17 wrong answers, keeps every currently-correct
+answer, and leaves both canaries green because the frontend still succeeds. A `true` verdict can stay:
+the observed flat memsafety failure mode is false alarms, not missed bugs (the flat *unsoundness*
+sightings in run 62 were `no-data-race`, a different property).
+
+Where to implement: the verdict is produced downstream of `frontend()`, so the flag to thread is "this
+XCFA came from the flat fallback" (set where `cConfig.memoryModel` is pinned to `flat` in the catch) —
+consult it where the memsafety result is finalised. Needs the canary gate **and** a portfolio-config
+check, since run 87 is the shipped configuration and these numbers are from `pred_int`.
