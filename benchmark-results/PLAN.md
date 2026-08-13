@@ -6709,3 +6709,63 @@ The 32 wrongs are all **known** families, no new class: `cstr*`/`openbsd*` alloc
 Integer-encoding-specific error buckets worth a look **only if integer is kept in the portfolio**
 (they do not affect the shipped `efficient` config): `server error` is 3,151/4,449 Juliet CWE190+191;
 `generic error` is `minepump` 325, `email` 168, `pals` 131, `elevator` 90.
+
+## ⚠️ RETRACTION: "termination-15 = a mid-object pointer loses its bounds across a call" is REFUTED
+
+The root cause recorded earlier in this file (and its 9-line repro, `scratchpad/r4.c`) is **wrong**.
+Instrumenting instead of extending the repro (`--output ALL`, reading the emitted `xcfa.c`) showed it
+at once. Do not build on it.
+
+**The repro was invalid.** It reads an *uninitialized* alloca cell:
+
+```c
+char *p = alloca(n); p[0] = '\0'; p += n - 1;   /* for n>1, p now points at an UNWRITTEN cell */
+if (peek(p) == 'x') reach_error();              /* 'x' is a legitimate value -> Unsafe is CORRECT */
+```
+
+The bisect table claimed "read `*p` **in main** → Safe ✓, passed to a function → Unsafe ✗", and that
+asymmetry was the whole basis of the conclusion. It does not exist: **both are Unsafe**, and the
+in-main variant does not even use the pass that was blamed. Re-running a genuinely safe shape
+(constant size, every cell written before the mid-object read) gives **Safe both in main and across a
+call**, so a mid-object pointer survives a call fine. `seedSplitParams` is not implicated — its
+premise ("passing a bare split variable is rejected outright") *holds*: multi refuses these programs.
+
+**What actually happens on the real tasks.** `termination-15/cstrchr_reverse_alloca.i`
+(valid-memsafety, expected `true`) reproduces as `false(valid-deref)` trace 7, and the log says:
+
+```
+note: frontend build failed due to a pointer-splitting limitation under --memory-model multi;
+      retrying with --memory-model flat
+```
+
+So multi **refuses** (loudly, correctly), the CLI **silently falls back to flat**, and the wrong answer
+is produced by *flat*. This is the same family as the run-62 "F1 flood" (81 valid-memsafety
+false-derefs on the alloca/malloc string family under flat) — it is reaching us through the fallback
+even though multi is the default.
+
+**Leading hypothesis, NOT yet proven.** `FlatMemoryPass` documents its own soundness precondition:
+each object owns `[id*STRIDE, id*STRIDE+STRIDE)` and addresses never collide *"as long as no object is
+larger than FLAT_STRIDE cells"* (`FLAT_STRIDE = 1 shl 16 = 65536`). `alloca(length)` with symbolic
+`length` up to `INT_MAX` violates it, and **nothing enforces or checks it**; `MemsafetyPass` then
+recovers the base as `(addr / STRIDE) * STRIDE`, which for an in-object offset ≥ STRIDE truncates to a
+*different* object's base, whose recorded size is 0 — making the `size <= offset` guard a tautology and
+the bad-deref edge always enabled.
+
+Evidence is suggestive but incomplete: a constant-size `alloca(100000)` (> stride) variant of the task
+reproduces the false `Unsafe` (trace 5), but **both under-stride controls errored instead of proving
+Safe** (`UnknownSolverStatusException` exit 221, and `alloca(100)+bound` hit the array-ext bug below),
+so the stride link is not yet demonstrated by a clean A/B. Next step: get the actual counterexample
+*values* out of the real task (higher log level / trace dump) and read the chosen `length` — do not
+write more variants, that is what produced the retracted conclusion.
+
+If the stride limit is confirmed, the honest fix is to **refuse** under flat when an object's size is
+not provably < FLAT_STRIDE (error 0 beats wrong −16), and/or to stop the silent multi→flat fallback
+from selecting a model that is unsound for the program in hand.
+
+### NEW BUG: `array-ext` missing from the Z3 back-transformation
+
+`Z3TermTransformer.toFuncLitExpr:373` — `NullPointerException: Unsupported function 'array-ext' in Z3
+back-transformation`, exit **202 (server error)**. Same family as the `bit2bool` gap fixed in
+`646ac3b51c`. Z3 introduces `array-ext` (the array extensionality witness) when reasoning about array
+equality, so any model containing one is unrecoverable. Plausibly a real contributor to the
+**4,449 server errors** in `pred_int`; worth checking against that bucket before fixing.
