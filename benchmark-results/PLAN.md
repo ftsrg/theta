@@ -6918,3 +6918,52 @@ than picking one — but bitvector's 60 new wrongs, especially the 4 missed `aws
 triaged before leaning on it further.
 
 ⚠️ Still pending: the KIND half. `kind_int` is running (22.5k/36.6k); `kind_bvms` still starved at 3.
+
+### ROOT CAUSE (bitvector `chl-*.wvr`, 14 wrong): a mixed-width guard comparison is mis-encoded
+
+The largest bitvector-only wrong family. **Not a regression from `c22f2d1988`** — run 87
+(portfolio/`efficient`, which contains that fix) answers these **18 correct / 0 wrong**; only
+`--arithmetic bitvector` gets them wrong. Encoding-specific.
+
+Instrumented rather than guessed: the violation witness points at **`chl-collitem-subst.wvr.c:109`,
+`return a - b;`** — the *guarded* subtraction inside `minus()`, not the guards themselves:
+
+```c
+int minus(int a, int b) {
+  assume_abort_if_not(b <= 0 || a >= b - 2147483648);   /* RHS only when b > 0 */
+  assume_abort_if_not(b >= 0 || a <= b + 2147483647);   /* RHS only when b < 0 */
+  return a - b;                                          /* provably cannot overflow */
+}
+```
+
+Those two guards are exactly sufficient (b>0 ⟹ a-b ≥ −2³¹; b<0 ⟹ a-b ≤ INT_MAX; b=0 trivial), so an
+overflow report at line 109 means the guard constraints are not holding in the encoding.
+
+**Minimal case — `scratchpad/guard_minus.c`, 10 lines, reproduces at trace 5:**
+
+```c
+int a = __VERIFIER_nondet_int(), b = __VERIFIER_nondet_int();
+if (!(b <= 0 || a >= b - 2147483648)) return 0;
+if (!(b >= 0 || a <= b + 2147483647)) return 0;
+return a - b;                       /* bitvector: Unsafe(no-overflow) -- WRONG; efficient: Safe */
+```
+
+Trace **5** on a guarded subtraction ⇒ modelling bug, not imprecision.
+
+**Mechanism:** under ILP32 the literal `2147483648` fits neither `int` nor `long`, so C types it
+`long long`; `b - 2147483648` is 64-bit and the comparison `a >= (b - 2147483648)` must be evaluated
+at 64-bit width after promoting `a`. Under bitvector it evidently is not — a 32-bit evaluation makes
+the guard admit `a` values for which `a - b` really does overflow, and the subsequent overflow check
+fires legitimately on a state the guard should have excluded.
+
+**Two hypotheses were tested and REFUTED first** (do not retry them):
+- literal typing alone — `long long g = b - 2147483648;` under `b > 0` is **Safe** in both encodings,
+  so the literal is not being wrapped to `INT_MIN`;
+- short-circuit handling — `(b >= 0) || (b + 2147483647 >= 0)` under `b > 0` is **Safe** in both, so
+  the `||` short-circuit *is* honoured by the overflow instrumentation.
+
+It is specifically the **mixed-width comparison** that breaks. Next step: dump the comparison's
+encoded form under bitvector and check the promotion of the `int` operand against the 64-bit RHS —
+suspect a `BvType` width unification that truncates to the narrower operand instead of promoting to
+the wider. Fixing it should recover 14 wrong → correct in the bitvector configuration, and the same
+guard idiom is used throughout `c/weaver/`, so the real reach is likely larger than 14.
