@@ -7002,3 +7002,31 @@ been verified, and the next attempt should pin the solver explicitly on both sid
 conclusion. Sequence for the next session: reproduce `guard_minus.c` under MathSAT, then diff the
 encoded query against the `efficient` one, rather than reducing the program further (reduction is
 what hit the segfault).
+
+### Batch 89 — `kind_int` (KIND / `--arithmetic integer`) COMPLETE
+
+36,602 runs, score **8,273**: correct 5,496, wrong 30, error 30,757, unknown 319.
+
+Against `pred_int` (same encoding, same task set — so this isolates the **backend**):
+
+| | PRED_CART | KIND |
+|---|---|---|
+| score | 8,856 | 8,273 |
+| correct | 6,122 | 5,496 |
+| wrong | 32 | 30 |
+
+| transition | runs |
+|---|---|
+| correct → error | **2,213** |
+| error → correct | **1,587** |
+
+KIND scores lower overall but is strongly **complementary, not dominated**: it solves 1,587 tasks
+PRED_CART cannot, while losing 2,213 it can. That is a real argument for keeping both in the
+portfolio — the headline score difference (−583) badly understates KIND's contribution, because
+~29% of what it answers correctly is outside PRED_CART's reach entirely.
+
+Its wrong set is also the *smallest* of the three completed runs (30 vs 32 vs 76), so KIND is not a
+soundness liability.
+
+Remaining: `kind_bvms` (10.2k/36.6k, last one running) completes the 2×2 and gives the KIND half of
+the integer-vs-bitvector question.
