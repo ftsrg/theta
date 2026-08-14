@@ -7082,3 +7082,32 @@ edit): the reference term becomes `bvadd (sext a) (bvneg (sext b))` where before
 interpolant it previously found. Worth checking first whether the *encoding* is now correct but the
 *analysis* diverges — e.g. run the same query with `--backend BMC` or a bounded check, which does not
 refine, to separate "formula wrong" from "CEGAR cannot refine it".
+
+### RESOLVED: the fix is CORRECT — the hang is CEGAR refinement, not the formula
+
+Supersedes "First fix attempt FAILED" above. Ran the fixed encoding under the **non-refining**
+backends, exactly as that entry proposed, and the split is clean:
+
+| `negmin.c`, bitvector | without fix | with fix |
+|---|---|---|
+| CEGAR / PRED_CART | `Unsafe` (**wrong**) | hangs (timeout) |
+| **BMC** | — | **Safe** ✓ |
+| **KIND** | `Unsafe` trace 4 (**wrong**) | **Safe** ✓ |
+
+So `widenOperand` produces a *correct* formula; PRED_CART's predicate refinement simply fails to
+converge on it. Clean A/B on the **same** backend (KIND, bitvector): without the fix `negmin.c` and
+`guard_minus.c` both answer `Unsafe`; with it both answer `Safe`.
+
+**Kept, per the standing rule** that a genuine fix stays even when it does not by itself produce an
+answer — it converts a **wrong** answer (−16) into a timeout (0) under PRED_CART, and into a
+**correct** answer under BMC/KIND, which are portfolio members. The remaining PRED_CART divergence is
+a separate, now-isolated problem (interpolation over `bvneg` of a sign-extended operand), not a reason
+to keep an unsound overflow check.
+
+Guarded by fixture `bv_sub_intmin.c` (`SAFE:no-overflow`, `bitvector`, batch 89) — carries both the
+minimal witness and the real `minus()` shape. The portfolio answers it `Safe` in well under the
+fixture timeout, verified before the row was added.
+
+Note the real `chl-collitem-subst` task still times out under KIND (3 threads); the fix removes the
+*wrong answer*, and whether those 14 runs become correct in the portfolio is for the next benchmark
+to say — do not assume +14.
