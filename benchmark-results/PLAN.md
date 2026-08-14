@@ -7160,3 +7160,47 @@ did not show up earlier). Next target.
 
 Other KIND-bv wrong-`true`: `popl20-*` (3, weaver concurrency), `2SB`/`4SB` (known memory-model),
 `09-regions_03-list2_rc` (known race), `cmp-freed-ptr`, `naturalNumbers1`.
+
+### NEXT TARGET — 4 aws `*_negated` missed bugs (−32 each, both bitvector backends)
+
+Reproduced locally on `aws_byte_buf_init_harness_negated.i` (LP64, bitvector, expected `false`):
+**both** `CEGAR/PRED_CART` and `KIND` answer `Safe`. A missed bug, not a false alarm — the worst
+failure mode, and consistent across backends, so it is a *modelling* problem rather than a search one.
+(Under `--arithmetic integer` these tasks fail at the frontend instead, which is why they surfaced
+only in the bitvector runs.)
+
+**What must be reachable.** The harness body is:
+
+```c
+struct aws_byte_buf buf = {nondet_ulong(), 0, nondet_ulong(), 0};
+struct aws_allocator *allocator = can_fail_allocator();   /* defined, returns &static */
+size_t capacity = nondet_size_t();
+if (aws_byte_buf_init(&buf, allocator, capacity) == 0) { ...negated asserts... }
+```
+
+and `aws_byte_buf_init` (defined at :7098, prototype at :4118 — normal order, so **not** the known
+"prototype after definition wiped the body" bug) already contains a negated assertion of its own
+before returning:
+
+```c
+buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
+if (capacity != 0 && buf->buffer == NULL) return -1;
+buf->len = 0; buf->capacity = capacity; buf->allocator = allocator;
+__VERIFIER_assert(!(aws_byte_buf_is_valid(buf)));      /* <-- must fire */
+return 0;
+```
+
+So there is a **very short** unsafe path: `capacity == 0` ⇒ `buffer = NULL` ⇒ the `if` guard is false
+(`capacity != 0` fails) ⇒ control falls straight into the inner assertion, with no allocation
+involved at all. `__VERIFIER_assert` is defined here as `if(!cond){reach_error();abort();}`, so this
+is plain reachability. Theta proving it `Safe` means it believes that path infeasible.
+
+Given the path needs no allocator success and no heap reasoning, the suspects are, in order:
+1. `aws_byte_buf_is_valid(buf)` evaluating to something that makes `!(valid)` true (check it directly
+   — it is a small predicate over `len`/`capacity`/`buffer`);
+2. the `assume_abort_if_not((buf))` / `assume_abort_if_not((allocator))` prologue killing the path;
+3. the `?:` on `capacity == 0` being mis-folded (note `ca34ff467e` already fixed one ternary
+   short-circuit defect — check whether this is a second shape rather than assuming it is not).
+
+Start by dumping the XCFA for the harness and checking whether the `capacity == 0` branch and the
+inner assert edge survive at all — do not write a hypothesis repro first.
