@@ -6859,3 +6859,62 @@ fallback for. So the revert decision stands; only the fixture numbers in that ru
 Lesson for the next gate: do not start any gradle build while `run_canaries.sh` is live, and read
 `Fixtures:`/`RESULT:` lines rather than the harness exit status (a trailing `echo` in the launching
 command masked the nonzero exit here, exactly the failure mode already recorded for `grep -c`).
+
+## Batch 89 RESULT — PRED_CART: integer vs bitvector(MathSAT), full suite
+
+Both runs 36,602 tasks, 5 min / 7 GB, Skylake, `Theta-svcomp-88`, identical task set.
+
+| | `--arithmetic integer` | `--arithmetic bitvector` (MathSAT) |
+|---|---|---|
+| score | 8,856 | **10,383** |
+| correct | 6,122 | **7,270** |
+| wrong | **32** | 76 |
+| error | 30,132 | 28,820 |
+| unknown | 316 | 436 |
+
+**Bitvector wins overall (+1,527) but is not a strict improvement.** The transition matrix matters more
+than the totals:
+
+| transition | runs |
+|---|---|
+| error → correct | **2,724** (the win) |
+| correct → error | **1,566** (the hidden cost) |
+| error → wrong | 58 |
+| wrong → error | 15 |
+
+The 1,566 `correct → error` are not noise: 699 solver error, 562 TIMEOUT, 258 verification stuck,
+28 OOM — and by property 905 valid-memsafety, 505 unreach-call. So bitvector buys ~2.7k answers the
+integer encoding could not express and pays back ~1.6k that it could, mostly to solver cost.
+
+### Where bitvector is newly WRONG — 60 runs, the thing to fix
+
+By family: `chl-*.wvr` **14**, `uthash` 12, `aws` 6, `relu`/`count` 3 each, `float`/`inv`/`sqrt` 2 each.
+By verdict: `false(valid-deref)` 21, `false(no-overflow)` 18, `false(unreach-call)` 14, `true` 5.
+
+Two groups deserve attention:
+
+1. **`chl-*.wvr` — 14 new `false(no-overflow)` false alarms** where integer merely TIMEOUTs. A single
+   coherent family, so likely one bitvector-specific overflow-guard defect. **Highest-value bitvector
+   follow-up.**
+2. **9 wrong-`true` (−32 each), 4 of them `aws_*_negated` harnesses** — `aws_byte_buf_init_harness_negated`,
+   `aws_byte_buf_init_copy_from_cursor_harness_negated`, `aws_linked_list_init_harness_negated`,
+   `aws_string_new_from_array_harness_negated`. A `_negated` harness exists to *be* unsafe, so these are
+   **missed bugs**, the worst failure mode. Also `2SB`/`4SB` and the two `09-regions` races (already known).
+
+### Where integer is wrong and bitvector is not — 16 runs, and it is instructive
+
+12 of the 16 are the `cstr*`/`openbsd*` alloca-string family: integer answers `false(valid-deref)`
+(**wrong**, −16) while bitvector reports **`ERROR (solver error)`** (0). That is exactly the
+wrong→error trade the reverted fallback ban tried to engineer, arriving here by accident — further
+evidence that this family's wrong answers come from an unsound *model*, not from the property being
+genuinely violated. `scopes4-1` (TIMEOUT) and `960521-1_1-2` (verification stuck) behave the same way.
+
+### Reading
+
+Neither encoding dominates. Integer's ceiling is the **frontend** (14,080 tasks it cannot parse at all,
+see the `pred_int` entry above); bitvector's ceiling is the **solver** (699 solver errors + 562 timeouts
+on tasks integer solved). They are complementary, which argues for keeping both in the portfolio rather
+than picking one — but bitvector's 60 new wrongs, especially the 4 missed `aws_*_negated` bugs, must be
+triaged before leaning on it further.
+
+⚠️ Still pending: the KIND half. `kind_int` is running (22.5k/36.6k); `kind_bvms` still starved at 3.
