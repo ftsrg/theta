@@ -7030,3 +7030,55 @@ soundness liability.
 
 Remaining: `kind_bvms` (10.2k/36.6k, last one running) completes the 2×2 and gives the KIND half of
 the integer-vs-bitvector question.
+
+## ROOT CAUSE CONFIRMED (bitvector `chl-*.wvr`): `a - b` widens the negation AFTER it wraps
+
+Supersedes the two earlier explanations in this file (both disproven — mixed-width comparison, and
+before that literal wrapping / short-circuit). This one is confirmed by a concrete witness.
+
+**Solver dimension controlled and eliminated** — same program, same solver, different encoding:
+
+| encoding | solver | verdict |
+|---|---|---|
+| bitvector | Z3 (default) | `Unsafe` trace 5 — **wrong** |
+| bitvector | **MathSAT 5.6.10** | `Unsafe` trace 5 — **wrong** |
+| efficient | **MathSAT 5.6.10** | `Safe` — correct |
+
+So it is the encoding, not the solver. (The 14 benchmark wrongs came from MathSAT; every local repro
+had used Z3 — that gap is now closed.)
+
+**Mechanism.** `BvOverflow.bvOverflowCondition` detects overflow by redoing the operation one bit
+wider and checking the two agree. C spells `a - b` as an n-ary **`(+ a (- b))`**, so the subtrahend
+arrives at `foldChecks` as a `NegExpr` and is widened with `widen(op, w)` = `SExt(bvneg b)` — the
+negation is performed at the **narrow** width, where it wraps. `bvneg INT_MIN == INT_MIN`, so for
+`b == INT_MIN` the "exact" reference value is `a - 2^31` instead of `a + 2^31`, the two sides differ,
+and a spurious overflow fires. The emitted SMT shows it plainly:
+
+```smt
+(= ((_ sign_extend 1) (bvadd a (bvneg b)))
+   (bvadd ((_ sign_extend 1) a) ((_ sign_extend 1) (bvneg b))))   ; <-- neg BEFORE widening
+```
+
+Note the real `SubExpr` branch (line ~102) is already correct — it widens both operands *then*
+subtracts. Only the `Add`-of-`Neg` spelling, which is what C actually produces, is affected.
+
+**Minimal witness — `scratchpad/negmin.c`, trace 5:** `a == -1`, `b == INT_MIN`;
+`a - b == 2147483647` is in range, yet bitvector reports `Unsafe(no-overflow)` while `efficient`
+reports `Safe`. `chl-*`'s `minus()` guards `a - b` and is called with unconstrained ints, so
+`b == INT_MIN` is reachable — hence the whole family.
+
+### ⚠️ First fix attempt FAILED — reverted, do not repeat it as-is
+
+Added `widenOperand(e, to) = if (e is NegExpr) BvExprs.Neg(widenOperand(e.op, to)) else widen(e, to)`
+and routed the reference side of `foldChecks`/`Sub`/`ShiftLeft` through it, deliberately leaving the
+**narrow** side on `widen` (the wrapped value must keep wrapping). It compiles and is arguably the
+right shape, but **`negmin.c` — three lines — then times out at 200 s** (rc 124) instead of answering,
+and so do `guard_minus.c` and the real `chl` task. Trading a wrong answer for a non-terminating run is
+not an improvement, so it was reverted; the tree is clean.
+
+Why it hangs is the open question, and is the next thing to establish (do **not** just retry the
+edit): the reference term becomes `bvadd (sext a) (bvneg (sext b))` where before it was
+`bvadd (sext a) (sext (bvneg b))`. Suspect the predicate-abstraction refinement no longer finds an
+interpolant it previously found. Worth checking first whether the *encoding* is now correct but the
+*analysis* diverges — e.g. run the same query with `--backend BMC` or a bounded check, which does not
+refine, to separate "formula wrong" from "CEGAR cannot refine it".
