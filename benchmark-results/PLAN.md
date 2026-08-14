@@ -7111,3 +7111,52 @@ fixture timeout, verified before the row was added.
 Note the real `chl-collitem-subst` task still times out under KIND (3 threads); the fix removes the
 *wrong answer*, and whether those 14 runs become correct in the portfolio is for the next benchmark
 to say — do not assume +14.
+
+## Batch 89 COMPLETE — the 2×2: {PRED_CART, KIND} × {integer, bitvector+MathSAT}
+
+All four full-suite runs done, 36,602 tasks each, 5 min / 7 GB, Skylake, `Theta-svcomp-88`.
+
+| config | score | correct | wrong | wrong-`true` (−32) |
+|---|---|---|---|---|
+| PRED_CART integer | 8,856 | 6,122 | 32 | 4 |
+| PRED_CART bv+MathSAT | 10,383 | **7,270** | 76 | 9 |
+| KIND integer | 8,273 | 5,496 | 30 | 4 |
+| **KIND bv+MathSAT** | **10,629** | 6,876 | **29** | 12 |
+
+**KIND+bitvector is the best configuration on both axes that matter** — highest score *and* the
+fewest wrong answers (29 vs PRED+bitvector's 76), despite solving ~400 fewer tasks. That was not
+visible from the partial data: on the integer side KIND looks strictly worse than PRED_CART
+(8,273 vs 8,856), and the ordering reverses under bitvector.
+
+Bitvector helps both backends, and helps KIND more cleanly:
+
+| int → bv | error→correct | correct→error |
+|---|---|---|
+| PRED_CART | 2,724 | 1,566 |
+| KIND | 2,500 | **1,119** |
+
+### The wrong sets barely overlap — 22 of 83
+
+`PRED-bv wrong = 76`, `KIND-bv wrong = 29`, **both = 22**, PRED-only = 54, KIND-only = 7. So most of
+PRED+bitvector's extra wrongs are *backend*-specific, not encoding-specific, and KIND does not
+inherit them. Combined with the near-identical wrong counts under integer (32 vs 30), the story is:
+**bitvector is what unlocks tasks; PRED_CART is what turns some of them into wrong answers.**
+
+### What the shipped `65e6119b87` should move
+
+`chl-*` is **11 of KIND-bv's 29 wrongs** and 14 of PRED-bv's 76 — the largest single family in *both*
+bitvector configurations, and the one the INT_MIN negation fix addresses. It is therefore the biggest
+available win in the best-scoring config. (Still not to be assumed as +14/+11 — the fix removes the
+wrong answer; whether each task then answers or times out is for the next benchmark.)
+
+### Highest-severity remaining: 4 missed bugs, both bitvector configs
+
+`aws_byte_buf_init_harness_negated`, `aws_byte_buf_init_copy_from_cursor_harness_negated`,
+`aws_linked_list_init_harness_negated`, `aws_string_new_from_array_harness_negated` — all answered
+`true` where the expected verdict is `false`. A `_negated` harness exists precisely to *be* unsafe, so
+these are **missed bugs at −32 each**, the worst failure mode, and they are consistent across both
+backends under bitvector (under integer these tasks fail at the frontend instead, which is why they
+did not show up earlier). Next target.
+
+Other KIND-bv wrong-`true`: `popl20-*` (3, weaver concurrency), `2SB`/`4SB` (known memory-model),
+`09-regions_03-list2_rc` (known race), `cmp-freed-ptr`, `naturalNumbers1`.
