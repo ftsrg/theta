@@ -6967,3 +6967,38 @@ encoded form under bitvector and check the promotion of the `int` operand agains
 suspect a `BvType` width unification that truncates to the narrower operand instead of promoting to
 the wider. Fixing it should recover 14 wrong → correct in the bitvector configuration, and the same
 guard idiom is used throughout `c/weaver/`, so the real reach is likely larger than 14.
+
+#### ⚠️ CORRECTION to the entry above: the "mixed-width comparison" mechanism is DISPROVEN
+
+Dumping the encoded form (`--output ALL`, `xcfa-main.smt2`) shows the 64-bit guard is encoded
+**correctly**:
+
+```smt
+(bvsge ((_ sign_extend 32) |main::a|)
+       (bvadd ((_ sign_extend 32) |main::b|) #xFFFFFFFF80000000))
+```
+
+`a` is promoted with a proper `sign_extend` and the literal is a 64-bit `-2^31`. The second guard is
+32-bit `(bvsle a (bvadd b #x7FFFFFFF))`, which is also right — `b + 2147483647` genuinely *is* `int`
+arithmetic in C. So the promotion is fine and my stated mechanism was wrong. The **observations**
+in that entry still hold (bitvector wrong / `efficient` correct; witness at line 109 `return a - b`;
+`guard_minus.c` reproduces at trace 5); only the explanation was premature. Do not build on it.
+
+Also refuted, in addition to the two dead ends already listed: literal wrapping, `||` short-circuit
+handling, and now operand promotion. Three mechanisms eliminated.
+
+**Blocking obstacle for the next attempt:** narrowing to a single guard hits a **native crash**.
+`g1.c` (guard 1 only, `b>0` forced — 8 lines) under `--arithmetic bitvector` with the default
+**legacy Z3** dies with **SIGSEGV, exit 139**, "the monitored command dumped core", after the
+frontend completes. Same crash seen earlier on `cstrchr_reverse_alloca` under bitvector. Both
+single-guard reductions (`g1.c`, `g2.c`) are unusable for this reason, while `efficient` answers both
+**Safe** in seconds. That native crash is a genuine bug in its own right and probably blocks other
+bitvector triage.
+
+⚠️ **Solver dimension not yet controlled.** The 14 benchmark wrongs came from `pred_bvms`, which uses
+**MathSAT**; every local reproduction here used the **default legacy Z3**. Both produce a false
+`Unsafe` on `chl-collitem-subst`, so the defect is unlikely to be solver-specific — but that has not
+been verified, and the next attempt should pin the solver explicitly on both sides before drawing any
+conclusion. Sequence for the next session: reproduce `guard_minus.c` under MathSAT, then diff the
+encoded query against the `efficient` one, rather than reducing the program further (reduction is
+what hit the segfault).
