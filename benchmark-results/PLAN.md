@@ -7562,3 +7562,42 @@ that rather than assume it: the honest comparison is against today's baseline of
 Also worth doing at the same time and cheap: make the remaining `giveUp` cases say so. Reporting
 "No such method memset" for a call the pass deliberately declined is the same diagnosability defect
 just fixed for the bare `IllegalStateException`s.
+
+### ✅ IMPLEMENTED: symbolic-count `memset` emits a loop
+
+Supersedes the "NEXT" design entry above. `MemoryFunctionsPass` now lowers a `memset` whose byte
+count is not known at build time into a real loop over the elements it covers:
+
+```
+i = 0;  while (i < n / sizeof *dst) { dst[i] = c; i = i + 1; }
+```
+
+The byte count needs only to be *translated* into an element count — an ordinary division — so
+nothing has to be known statically and the byte-granular memory model is **not** required (my earlier
+claim that it was is withdrawn). A partial fill of an array falls out of the same bound.
+
+Verified both directions (the check that separates a real fill from an unreachable path):
+
+| program, symbolic `n`, count `n * sizeof(int)` | expected | got |
+|---|---|---|
+| `memset(p,0,n*4)` then assert `p[0]==0` | Safe | **Safe** ✓ |
+| same, but `if (p[0]==0) reach_error()` | Unsafe | **Unsafe** trace 10 ✓ |
+
+Both were `exit 202, No such method memset` before. Gate: 262 canaries / 65 fixtures / 0 FAIL,
+fixture `memset_symbolic.c`.
+
+**The straddled tail is havoc'd**, guarded on `count * w == n` so the exact case keeps its precision —
+leaving it with its stale value would be a specific wrong value, not a safe over-approximation.
+
+**Two things learned building it:**
+- Every edge label must be a `SequenceLabel`. Bare `StmtLabel`s on the assume edges made
+  `UnresolvedInvokeToHavocPass` → `splitIf` fail its `check(label is SequenceLabel)` — surfacing as
+  `IllegalStateException: Check failed`, exit 210.
+- **CEGAR/PRED_CART times out** on the symbolic case: the pass sits at position 133, after
+  `LoopUnrollPass` (69), so this loop is never unrolled and CEGAR must invent an invariant for it.
+  KIND/BMC/IMC answer it. Against a baseline of an outright error (0) that is not a regression, but
+  the win is backend-dependent and the portfolio must reach a loop-capable config.
+
+⚠️ **`--backend NONE` runs the full pass pipeline**, so parse-only runs *do* exercise all of this —
+they are not "frontend only" in the sense of skipping passes. Run 91 was launched before this landed
+and was therefore stopped and relaunched rather than kept.
