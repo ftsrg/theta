@@ -7601,3 +7601,58 @@ leaving it with its stale value would be a specific wrong value, not a safe over
 ⚠️ **`--backend NONE` runs the full pass pipeline**, so parse-only runs *do* exercise all of this —
 they are not "frontend only" in the sense of skipping passes. Run 91 was launched before this landed
 and was therefore stopped and relaunched rather than kept.
+
+## Batch 91 — the run-91 parse regression, and three of the four error families
+
+### ⚠️ Run 85 was DOUBLE-COUNTED in my first comparison (user caught it)
+
+My run-85 figures came from an inline script that globbed **all 55** `*.xml.bz2`, with none of the
+runset/block-level dedup `psum.py` does — counting most runs twice (72,103). Deduped it is **36,602**,
+the *same task set* as run 91, so the two are directly comparable after all and my "different task
+sets, not comparable" was wrong.
+
+| status | run 85 | run 91 | Δ |
+|---|---|---|---|
+| built OK | 31,472 | 30,744 | **−728** |
+| frontend failed, before parsing | 1,878 | 1,565 | −313 ✓ |
+| frontend failed, **after** parsing | 1,352 | 2,260 | **+908** ✗ |
+
+Per-task diff: **920 regressed** (built → failed), 193 improved.
+
+### ROOT CAUSE of the regression: my own arity guard was too broad
+
+`7976b40d75` refused **any** arity difference. But the loop walks `calleeParams` and indexes
+`invokeLabel.params[i]`, so only a callee with **more** parameters than the call site supplies can run
+off the end. A call site supplying *extra* arguments is every variadic call — `printk(fmt, ...)`,
+`dev_err`, `__dynamic_dev_dbg` — which indexes safely and ignores the surplus, exactly as it did
+before the guard existed. Refusing those cost **713 runs** (printk 476, dev_err 158,
+__dynamic_dev_dbg 79), the bulk of the 839 after-parsing regressions, concentrated in LDV drivers.
+
+Narrowed to `calleeParams.size > invokeLabel.params.size`. Verified: a regressed
+`205_9a…cdc_eem.ko` task returns `ParsingResult Success`. **Same mistake as the reverted flat-fallback
+ban** — a guard written for one observed shape and applied wider than the evidence supported. No
+canary covers a variadic call into an undefined callee, which is why the gate stayed green.
+
+### The other families
+
+| family | count | status |
+|---|---|---|
+| inlining arity | 713 | **FIXED** (above) |
+| `lhs is a BvPosExpr / BvSignChangeExpr` | 325 | **FIXED** — a promotion/signedness wrapper on the *lvalue* names the same storage as the variable underneath, so the assignment is built against the peeled variable with the value converted to *its* type. Verified: the probe task moves past it to an unrelated `typeof` limitation. |
+| `__VERIFIER_nondet_memory with arguments` | 167 | **FIXED** — a pass-ordering bug. `NondetFunctionPass` (80) demands exactly one parameter and rejected it before `MemoryFunctionsPass` (133) could act; and `nondetFill` bailed out unless the *bytes* model was on. It now fills element cells under the typed-cell models too (byte count ÷ element width, the same translation `fill` does), and `NondetFunctionPass` defers in every memory model. |
+| `non-constant dereference offset` | 213 | **NOT fixed, deliberately** — see below |
+
+**Why the non-constant offset is left alone.** It is already a *documented refusal*, not a crash. The
+offsets are pthread array handles indexed by a loop variable that `PthreadArrayHandleUnrollPass` did
+not unroll: `(mod main::forN::i N)` 306, `(mod main::i N)` 28, `(mod t_fun::i N)` 22. Resolving them
+would mean giving `&t[i]` a thread identity for symbolic `i`; mapping them all to the base variable
+would **merge distinct threads**, which is exactly what makes racing tasks answer wrongly (the
+`mutex1`/`mutex2` constraint). That is a real analysis feature, not a pass tweak, and a wrong answer
+is worse than the honest refusal already in place.
+
+### Host note
+The machine was wiped mid-session again: **no JDK, gcc, python3, unzip, bzip2 or jq**, and `/tmp`
+(scratchpad, generated TSVs) gone. `./gradlew` fails with "JAVA_HOME is not set" — and a build whose
+output is grepped only for `^e:` will look like it *succeeded*. Reinstall with
+`sudo apt-get install -y openjdk-21-jdk-headless gcc python3 unzip bzip2 jq`. The repo,
+`benchmark-results/` and `sv-benchmarks` survive.
