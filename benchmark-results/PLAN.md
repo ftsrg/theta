@@ -7251,3 +7251,42 @@ bitvector pointer triage; PRED_CART cannot refine these at all. This is the thir
 bitvector solver-infrastructure failure recorded (with the `array-ext` back-transformation NPE and
 the native SIGSEGV) and is worth treating as its own work item — it likely accounts for a share of
 `pred_bvms`'s 699 solver errors.
+
+#### `aws_linked_list_init_harness_negated` — eliminations so far (NOT yet root-caused)
+
+Confirmed reproduction: integer `Unsafe` **trace 9** (correct), bitvector `Safe` (**missed bug**,
+−32), both backends, LP64, unreach-call.
+
+The unsafe path requires `aws_linked_list_is_valid_deep` to set `head_reaches_tail`, which turns on
+`temp == &list->tail` where `temp` was loaded back from `head.next`. If that comparison fails the
+walk falls out with the flag clear, `is_valid` returns 0, `!(is_valid)` holds, and the negated
+assertion passes — which is exactly the `Safe` bitvector reports. That is the shape to explain.
+
+**Eliminated (do not retry):**
+
+| hypothesis | test | result |
+|---|---|---|
+| offset-0 pointer tests as NULL under bv | `scratchpad/ptr0.c` | **Safe under both** — fine |
+| mid-object pointer store + compare-back loses offset | `scratchpad/midcmp.c` (exact `head.next=&tail; temp==&tail` shape) | **Safe under both** — fine |
+| the two encodings pick different memory models | both print `retrying with --memory-model flat` | **same model** — not it |
+| structural difference in the built XCFA | `xcfa.dot` 50 lines for both | **identical size** — not it |
+
+So the CFG and the memory model agree; the divergence is in *values*. From the emitted model
+(`scratchpad/aws_integer/xcfa.c`) the relevant encoding is:
+
+```
+aws_linked_list_init_harness__list_ = 65536 * (__malloc + 1);   /* object base */
+0[(+ list* 0)] = 65536 * (__malloc + 1);   /* head is its OWN sub-object, reached via a pointer cell */
+0[(+ list* 1)] = 65536 * (__malloc + 1);   /* tail likewise */
+0[(+ (deref 0 (+ init::list 0) Int) 0)] = init::list + 1;      /* head.next = &tail  ==  list + 1 */
+```
+
+i.e. `&list->tail` is `list + 1` (a *cell index*, not a byte offset), while `head`/`tail` themselves
+are separate sub-objects behind pointer cells. The next step is to compare the **bitvector** model's
+values for these same four assignments against the integer one — `xcfa.c` is not emitted under
+bitvector, so read `xcfa.json`/`xcfa.dot` in `scratchpad/aws_bitvector/`. Suspect the interaction of
+`65536 * (__malloc+1)` with the `+1` cell offsets once everything is Bv64 rather than unbounded Int.
+
+⚠️ Use **KIND** for any bitvector experiment here: PRED_CART + bitvector on pointer/struct programs
+cannot interpolate at all (`Z3Exception: theory not supported by interpolation`, exit 221) — it fails
+even on the 12-line `ptr0.c`.
