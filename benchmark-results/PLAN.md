@@ -7411,3 +7411,70 @@ memset".
 
 (`bit2bool` appears 3,182 times in run 87 and is already fixed in `646ac3b51c`, which post-dates that
 run — a useful confirmation that this grep does surface real, fixable causes.)
+
+## Batch 90 — diagnostics + libc audit (user request 2026-08-15)
+
+### Q: what ARE the 8,117 `UnsupportedFrontendElementException`s?
+
+**Essentially all of them are floating-point types under integer arithmetic** — not a defect:
+
+| count | message |
+|---|---|
+| 4,198 | `Not (yet) implemented (CFloat …)` |
+| 3,789 | `Not (yet) implemented (CDouble …)` |
+| 130 | `Not (yet) implemented (CLongDouble …)` |
+
+Everything else is in the tens: struct field not found 28, `typeof` over an undetermined type 25,
+the inlining-arity refusal from `7976b40d75` (22 `printk`, 14 `dev_err`, …), byte-union float member
+6, `fesetround` 3. So this bucket is the integer encoding declining floats, exactly as designed, and
+is **not** an actionable error family.
+
+### ✅ `array-ext`: clean refusal (both Z3 transformers)
+
+The old `checkNotNull(model, "Unsupported function '…'")` reported a **NullPointerException** whose
+message named the symbol — but the condition that actually failed was `model == null`, not the symbol
+being unsupported, so the message was misleading as well as ugly. Replaced with an explicit
+`UnsupportedOperationException` naming symbol **and arity** and saying why: no theta expression
+corresponds to it and there is no model to interpret it against.
+
+Deliberately **not** "fixed" by inventing an index: `array-ext(a,b)` is Z3's Skolem witness for array
+extensionality (`a≠b → select(a,ext) ≠ select(b,ext)`), and substituting a fresh variable for a
+Skolem changes what an interpolant means — trading a crash for a possible wrong answer.
+
+### ✅ Bare `IllegalStateException`s now carry messages
+
+Measured first: **4,728 of the 4,752** came from **one** site, `ExpressionVisitor#visitShiftExpression`,
+and 24 from `CAssignment#getrExpression`. Both are `checkState(x instanceof BvType)` with no message,
+and both fire for the same reason — **shifts and compound bitwise assignments are modelled only over
+bitvectors**, so under `--arithmetic integer` the operands are unbounded `Int`s. All six call sites
+now say that, and name the offending type and the flag to change.
+
+### ❌ `calloc`: attempted, does NOT work, reverted
+
+`calloc` is genuinely unmodelled (`malloc`/`realloc`/`memcpy`/`memset` all have passes; it does not).
+Lowered it as `calloc(n,s)` → `malloc(n*s)` + `memset(p,0,n*s)` in a new `CallocFunctionPass` placed
+before both — reusing tested machinery rather than open-coding, and inheriting `memset`'s
+known-count restriction.
+
+**It does not help.** `MemoryFunctionsPass.fill` needs the *pointee* type (`elementOf(dst)`), and
+`calloc` returns `void*` — there is no element type at the call, so the fill gives up and the task
+now fails with "No such method **memset**" instead of "No such method **calloc**". Verified on a
+4-element `calloc` test: exit 202 either way. Reverted; the pass file is deleted and unwired.
+
+**Why this is the byte-granular blocker again, not a missing pass:** memory is modelled as
+`arrays[base][index]` over *typed* cells, so "zero N bytes" is only expressible once the element type
+is known. `memcpy`/`memset` work because their destination is a typed pointer at the call site;
+`calloc`'s is `void*` by its C signature. A correct `calloc` therefore needs either the byte-granular
+model or the pointee type recovered from the *use* of the result — the same structural item already
+recorded for intel-tdx and union punning. Do **not** re-attempt the malloc+memset lowering.
+
+⚠️ Do not "fix" it by lowering `calloc` to plain `malloc`: freshly allocated cells are unconstrained,
+so a program that relies on `calloc` zeroing would get a **wrong answer** instead of an error.
+
+### The other unmodelled libc functions
+
+`fscanf`, `fgets`, `fopen`, `_setjmp`, and the math family (`tanhf`, `expf`, `sin`) remain unmodelled.
+These are **not** cheap to add soundly: `fgets`/`fscanf` write nondeterministic bytes *into a caller
+buffer* (the same typed-cell problem as `calloc`), and `_setjmp` is non-local control flow. Modelling
+any of them as a plain nondet return would be unsound — it would drop their memory side effects.
+They are correctly failing loudly today; sizing before attempting is the right order.
