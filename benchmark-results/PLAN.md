@@ -7516,3 +7516,49 @@ handing back a block that is silently not zeroed would be a wrong answer, not a 
 reaching it with a usable destination. The remaining unmodelled names (`fscanf`, `fgets`, `fopen`,
 `_setjmp`, math) are still open and are a different problem — they write nondeterministic data into
 caller buffers or move control non-locally.
+
+## NEXT: `memset`/`memcpy` with a SYMBOLIC count — emit a loop instead of giving up
+
+User direction (2026-08-15): stop `giveUp`ing on a symbolic byte count; emit a loop over the
+elements of the pointee, sized by translating the byte count into an element count. Correct — and it
+does **not** need the byte-granular model, which is what I wrongly implied when I called this
+blocked.
+
+**Why it currently fails.** `MemoryFunctionsPass` has implemented `memset` since batch ~60, but
+`elementCount` (line ~346) requires `literalValue(bytes)`, so a symbolic `n` returns null and
+`giveUp` leaves the `InvokeLabel` in place. The analysis then reports **"No such method memset"** —
+a misleading message, since the pass *saw* the call and declined it. 1,373 runs in `pred_int`;
+82,623 message occurrences in run 87 (that second figure is sub-config noise, not runs — see the
+caveat above).
+
+**Design.**
+
+```
+i = 0
+while (i < n / w) { dst[i] = filler; i = i + 1 }     // w = sizeof(element), integer division
+```
+
+- `n / w` is computable symbolically — `Div` on the count expression — so nothing needs to be known
+  at build time. Partial fills of an array (`memset(arr, 0, k)` with `k < sizeof arr`) fall out
+  naturally: the bound is just smaller.
+- Needs new locations + edges inside the pass. Precedent: `MemsafetyPass` (`XcfaLocation(...)` at
+  :108/:192/:294/:334) already builds branch structure this way.
+- Keep the existing constant-count path: it emits straight-line assignments, which the analyses
+  handle far better than a loop. The loop is the fallback, not the replacement.
+
+**⚠️ Soundness subtlety not to skip — the partial tail.** When `n % w != 0` the last element is only
+*partly* covered. Filling `floor(n/w)` elements leaves that element holding its **old** value, but a
+real `memset` overwrote some of its bytes — so the model would carry a specific *wrong* value, which
+can both miss a bug and invent one. The tail element must therefore be **havoc'd**, not left alone:
+unconstrained is an over-approximation and safe, the stale value is not. (This is the one place the
+byte model would do better — it would fill exactly.)
+
+**⚠️ Pass-order consequence.** `MemoryFunctionsPass` runs at position 133, *after* `LoopUnrollPass`
+(69), so a loop introduced here is **never unrolled** — it reaches the analyses as a real loop. Fine
+for KIND/BMC/IMC; CEGAR must then find an invariant for a fill loop it previously never saw. Measure
+that rather than assume it: the honest comparison is against today's baseline of an outright error
+(score 0), so even a timeout is not a regression, but a *new* class of CEGAR divergence would be.
+
+Also worth doing at the same time and cheap: make the remaining `giveUp` cases say so. Reporting
+"No such method memset" for a call the pass deliberately declined is the same diagnosability defect
+just fixed for the bare `IllegalStateException`s.
