@@ -459,17 +459,34 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     public Expr<?> visitShiftExpression(CParser.ShiftExpressionContext ctx) {
         if (ctx.additiveExpression().size() > 1) {
             Expr<?> accept = ctx.additiveExpression(0).accept(this);
-            checkState(accept.getType() instanceof BvType);
+            // Shifts are modelled only over bitvectors. Under `--arithmetic integer` an operand is
+            // an unbounded Int, so this fires -- and used to do so as a bare `IllegalStateException`
+            // with no message at all, which made it the single largest undiagnosable failure in the
+            // integer configuration (4,728 runs in the batch-89 `pred_int` run). Say what happened.
+            checkState(
+                    accept.getType() instanceof BvType,
+                    "Shift expressions are only modelled over bitvectors, but the left operand has"
+                        + " type %s. This is expected under --arithmetic integer, which has no bit"
+                        + " representation to shift; use --arithmetic bitvector or efficient.",
+                    accept.getType());
             //noinspection unchecked
             Expr<BvType> expr = (Expr<BvType>) accept;
             CComplexType smallestCommonType =
                     getSmallestCommonType(
                             List.of(CComplexType.getType(accept, parseContext)), parseContext);
-            checkState(smallestCommonType.getSmtType() instanceof BvType);
+            checkState(
+                    smallestCommonType.getSmtType() instanceof BvType,
+                    "Shift expressions are only modelled over bitvectors, but the operands' common"
+                        + " type is %s (see --arithmetic).",
+                    smallestCommonType.getSmtType());
             for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
                 Expr<BvType> rightOp;
                 accept = ctx.additiveExpression(i).accept(this);
-                checkState(accept.getType() instanceof BvType);
+                checkState(
+                        accept.getType() instanceof BvType,
+                        "Shift expressions are only modelled over bitvectors, but the shift amount"
+                            + " has type %s (see --arithmetic).",
+                        accept.getType());
                 //noinspection unchecked
                 rightOp = (Expr<BvType>) accept;
                 Expr<BvType> leftExpr =

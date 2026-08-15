@@ -101,7 +101,14 @@ public class CAssignment extends CStatement {
             case "^=":
                 checkState(
                         lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
+                                && rExpression.getType() instanceof BvType,
+                        "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
+                            + " the operands have types %s and %s. This is expected under"
+                            + " --arithmetic integer, which has no bit representation; use"
+                            + " --arithmetic bitvector or efficient.",
+                        "^=",
+                        lValue.getType(),
+                        rExpression.getType());
                 ret =
                         BvExprs.Xor(
                                 List.of(
@@ -111,7 +118,14 @@ public class CAssignment extends CStatement {
             case "&=":
                 checkState(
                         lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
+                                && rExpression.getType() instanceof BvType,
+                        "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
+                            + " the operands have types %s and %s. This is expected under"
+                            + " --arithmetic integer, which has no bit representation; use"
+                            + " --arithmetic bitvector or efficient.",
+                        "&=",
+                        lValue.getType(),
+                        rExpression.getType());
                 ret =
                         BvExprs.And(
                                 List.of(
@@ -121,7 +135,14 @@ public class CAssignment extends CStatement {
             case "|=":
                 checkState(
                         lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
+                                && rExpression.getType() instanceof BvType,
+                        "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
+                            + " the operands have types %s and %s. This is expected under"
+                            + " --arithmetic integer, which has no bit representation; use"
+                            + " --arithmetic bitvector or efficient.",
+                        "|=",
+                        lValue.getType(),
+                        rExpression.getType());
                 ret =
                         BvExprs.Or(
                                 List.of(

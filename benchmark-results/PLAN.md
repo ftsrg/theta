@@ -7478,3 +7478,41 @@ These are **not** cheap to add soundly: `fgets`/`fscanf` write nondeterministic 
 buffer* (the same typed-cell problem as `calloc`), and `_setjmp` is non-local control flow. Modelling
 any of them as a plain nondet return would be unsound — it would drop their memory side effects.
 They are correctly failing loudly today; sizing before attempting is the right order.
+
+### ✅ CORRECTION: `calloc` IS implementable — the earlier "reverted" entry above is superseded
+
+I gave up on this too early. The types *are* available from metadata; the mistake was looking for them
+in the wrong place, and then in the wrong scope.
+
+**Two things had to be right:**
+
+1. **Where the fill goes.** `calloc` returns `void *`, so at the call itself `pointeeOf` sees no
+   element type and `MemoryFunctionsPass.fill` gives up. But the result is bound to a properly typed
+   pointer (`int *p = (int *) calloc(...)`), and *that* expression carries the real `cType`. Emit the
+   `memset` against the **binding**, not the call.
+2. **Where to look for that binding.** It is on a **later edge**, not in the call's own label list —
+   which is why the first two attempts still reported "No such method calloc". The pass now works in
+   two phases over the whole procedure: replace each `calloc` with `malloc`, then scan for the
+   assignment that references the result and insert the fill after it.
+
+Also note the binding is `p = (T *) tmp`, a *cast*, not a bare `p = tmp`, so the match is on the
+right-hand side **referencing** the result rather than being it.
+
+**Verified in both directions** — this is the check that distinguishes a real fill from a vacuously
+infeasible path:
+
+| program | expected | got |
+|---|---|---|
+| `calloc(4,sizeof(int))`, assert `p[0]==0 && p[3]==0`, write/read `p[2]` | Safe | **Safe** ✓ |
+| same, but `if (p[1] == 0) reach_error();` | Unsafe (calloc *does* zero) | **Unsafe** trace 6 ✓ |
+
+Before the pass both were `exit 202, No such method calloc`.
+
+Guarded by fixture `calloc_zeroes.c` (batch 90). Restriction retained deliberately: a statically
+unknown count, or a result never bound to a typed pointer, is left alone and still fails loudly —
+handing back a block that is silently not zeroed would be a wrong answer, not a missing feature.
+
+`memset` itself was already implemented (`MemoryFunctionsPass`); what was missing was `calloc`
+reaching it with a usable destination. The remaining unmodelled names (`fscanf`, `fgets`, `fopen`,
+`_setjmp`, math) are still open and are a different problem — they write nondeterministic data into
+caller buffers or move control non-locally.

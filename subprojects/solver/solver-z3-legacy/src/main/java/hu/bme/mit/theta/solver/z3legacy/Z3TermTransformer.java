@@ -370,9 +370,27 @@ final class Z3TermTransformer {
 
     public Expr<?> toFuncLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
-        checkNotNull(
-                model,
-                "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
+        // A symbol with no handler in `environment` lands here. When there is no model to
+        // interpret it against, the old `checkNotNull` reported it as a bare NullPointerException
+        // whose message named the symbol -- which read like a crash rather than a limitation, and
+        // hid *which* condition actually failed (the null model, not the symbol as such).
+        //
+        // The symbol that reaches this in practice is Z3's `array-ext`: the Skolem witness for
+        // array extensionality, i.e. an index at which two arrays differ
+        // (`a != b -> select(a, array-ext(a,b)) != select(b, array-ext(a,b))`). It is Z3-internal,
+        // not SMT-LIB, and it leaks out of interpolants over quantified array reasoning. Theta has
+        // no expression for an existential witness, and inventing a fresh index variable would
+        // change what an interpolant means -- turning a crash into a possible wrong answer. So it
+        // is refused, deliberately and by name.
+        if (model == null) {
+            throw new UnsupportedOperationException(
+                    "Unsupported function '"
+                            + funcDecl.getName()
+                            + "'/"
+                            + funcDecl.getArity()
+                            + " in Z3 back-transformation: no theta expression corresponds to it,"
+                            + " and there is no model to interpret it against.");
+        }
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
         if (funcInterp == null) {
             return null;
