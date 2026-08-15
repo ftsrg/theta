@@ -7328,3 +7328,38 @@ MathSAT runs, so that bucket needs its own look either way.)
 **4. UNAFFECTED: the `aws_linked_list_init_harness_negated` missed bug is real.** Re-run under
 PRED_CART + **MathSAT**: still `Safe` where integer says `Unsafe` (trace 9). The four eliminated
 hypotheses recorded above stand.
+
+### Retry of the two remaining "bitvector infrastructure" findings under MathSAT — verdicts
+
+| finding | under Z3 (as first seen) | under MathSAT | verdict |
+|---|---|---|---|
+| native SIGSEGV, `g1.c` | exit 139, dumped core | **`Safe`** | **NOT a bug** — misconfiguration. Struck. |
+| `array-ext` NPE, `bounded.c` | exit 202 | see below | **REAL** — see below |
+
+**`array-ext` is a genuine defect and it is NOT bitvector-specific.** It reproduces under
+`--arithmetic efficient` (which picks integer arithmetic here) with the **default Z3**, a
+configuration where Z3 interpolation is fully supported — so the MathSAT correction does not excuse
+it. That is also the configuration the shipped portfolio uses.
+
+| config on `scratchpad/bounded.c` | outcome |
+|---|---|
+| efficient + default Z3 | `NullPointerException: Unsupported function 'array-ext'`, exit **202** |
+| efficient + MathSAT | timeout (no error) |
+| bitvector + MathSAT | `SmtLibSolverException`, exit 221 |
+
+`array-ext` is Z3's array-extensionality skolem — the index witnessing that two arrays differ. It
+appears in models whenever array equality/disequality is reasoned about, and
+`Z3TermTransformer.toFuncLitExpr:373` has no handler, so it dies with a bare NPE. Exactly the same
+shape as the `bit2bool` gap fixed in `646ac3b51c`.
+
+Fixing it properly means back-transforming a skolem witness, which is not straightforward — a
+reconstructed index must not silently claim a wrong value. The cheap, honest step is to replace the
+bare NPE with a documented refusal naming the function (score is 0 either way, but the failure stops
+looking like a crash). Sizing it first would be sensible: the `pred_int` server-error bucket is 4,449
+runs and is dominated by Juliet CWE190/CWE191, so `array-ext`'s real share is unmeasured — the
+per-run logs are zipped on benchcloud, so measuring it means pulling
+`*.logfiles.zip` and grepping, not guessing.
+
+**Also confirmed:** `cstrchr_reverse_alloca` is `Unsafe` trace 7 under **bitvector + MathSAT** too, so
+that family's false `valid-deref` is encoding-independent — consistent with the multi→flat fallback
+root cause recorded earlier, not with anything solver-specific.
