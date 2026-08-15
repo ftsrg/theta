@@ -7363,3 +7363,51 @@ per-run logs are zipped on benchcloud, so measuring it means pulling
 **Also confirmed:** `cstrchr_reverse_alloca` is `Unsafe` trace 7 under **bitvector + MathSAT** too, so
 that family's false `valid-deref` is encoding-independent — consistent with the multi→flat fallback
 root cause recorded earlier, not with anything solver-specific.
+
+## MEASURED: what the error buckets actually contain (from the zipped per-run logs)
+
+Pulled by grepping `*.logfiles.zip` **remotely** on benchcloud (35 MB for `pred_int`, no transfer).
+
+### `pred_int` (single config — counts ≈ runs)
+
+| count | error |
+|---|---|
+| 8,117 | `UnsupportedFrontendElementException` |
+| **4,752** | `IllegalStateException` **with no message at all** |
+| 1,871 | `IllegalStateException: Non-bitvector type found!` |
+| 1,589 | `UnknownSolverStatusException` |
+| **3,788** | `No such method` — `memset` 1,373, `fscanf` 1,290, `fgets` 719, `calloc` 372, `_setjmp` 34 |
+| **558** | **`array-ext`** back-transformation NPE |
+| 624 | `No such variable or macro` (`SHAREX_*` 560, `malloc` 64) |
+| 450 | `NotSolvableException` |
+
+So **`array-ext` is sized: 558 runs** in this config — real and worth fixing, and it is the third
+largest *fixable* single cause here.
+
+Two larger items surface alongside it:
+- **`No such method <libc>`, 3,788 runs.** `memset`/`calloc` are memory functions theta ought to
+  model. Note the fixture `undeclared_memory_functions.c` already covers *undeclared*
+  malloc/free/memcpy/memset being routed to the modelled ones — so this is a **different path**
+  (declared-but-not-defined), not a gap in that feature. Worth checking why the routing does not
+  apply.
+- **4,752 bare `IllegalStateException` with an empty message** — the second largest bucket and
+  completely undiagnosable as logged. Making these name their cause is cheap and would likely split
+  this bucket into several actionable families.
+
+### ⚠️ run 87 (shipped portfolio) — the same grep, but the counts mean something DIFFERENT
+
+`fscanf` 109,445 · `calloc` 90,050 · `memset` 82,623 · `fgets` 62,660 · `_setjmp` 9,526 · `fopen`
+7,239 · `tanhf` 3,479 · `memcpy` 3,326 · `expf` 2,484 · `sin` 2,344, plus 391,769
+`ErrorCodeException` and 39,438 `UnsupportedOperationException`.
+
+**Do not read these as run outcomes.** The portfolio tries config after config and each failing
+sub-config logs its own error, so one task contributes many messages. The proof is in the XML:
+run 87 has only ~**3,100** runs whose *final* status is an error (1,609 frontend-before, 1,322
+frontend-after, 199 solver, 5 generic) out of 23,381 category=`error` — the rest are TIMEOUT/OOM.
+So unmodelled libc functions mostly cost the portfolio **time** (each sub-config dies and the next is
+tried) rather than directly costing score. That may still convert would-be answers into timeouts,
+which is worth quantifying, but the headline counts must not be quoted as "82,623 tasks fail on
+memset".
+
+(`bit2bool` appears 3,182 times in run 87 and is already fixed in `646ac3b51c`, which post-dates that
+run — a useful confirmation that this grep does surface real, fixable causes.)
