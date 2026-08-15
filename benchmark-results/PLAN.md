@@ -7290,3 +7290,41 @@ bitvector, so read `xcfa.json`/`xcfa.dot` in `scratchpad/aws_bitvector/`. Suspec
 ⚠️ Use **KIND** for any bitvector experiment here: PRED_CART + bitvector on pointer/struct programs
 cannot interpolate at all (`Z3Exception: theory not supported by interpolation`, exit 221) — it fails
 even on the 12-line `ptr0.c`.
+
+## ⚠️ CORRECTION (user, 2026-08-15): **bitvector + interpolation REQUIRES MathSAT**
+
+Z3-legacy cannot interpolate bitvector theories. Every local CEGAR/bitvector experiment in the
+sections above used the **default Z3** and is therefore invalid wherever interpolation was involved.
+Always pass `--abstraction-solver mathsat:5.6.10 --refinement-solver mathsat:5.6.10` with
+`--arithmetic bitvector` and a `*_ITP` refinement. (The batch-89 `pred_bvms`/`kind_bvms` runs already
+did this — only the local reproductions were misconfigured.)
+
+### What this changes
+
+**1. `65e6119b87` is BETTER than its commit message says.** That message states CEGAR/PRED_CART "no
+longer converges and times out" with the fix. **Wrong** — that was Z3 failing to interpolate, not
+divergence. With MathSAT, PRED_CART answers **`Safe`** on both `negmin.c` and `guard_minus.c`. So the
+fix is **wrong → correct** under the configuration the benchmark actually uses, not wrong → timeout.
+The reasoning for keeping it stands; only the stated downside was imaginary.
+
+The real `chl-collitem-subst` still **times out** at 280 s under PRED_CART+MathSAT with the fix
+(it answered `Unsafe` — wrongly — before). So for that task the trade really is wrong → timeout; for
+the minimal shapes it is wrong → correct. Whether the 14 benchmark runs land as correct or timeout at
+300 s is still for the next benchmark to say.
+
+**2. The "PRED_CART+bitvector cannot interpolate pointer programs" blocker was MY misconfiguration,
+not a theta bug.** With MathSAT, `ptr0.c` returns a clean `NotSolvableException` ("Task is not
+solvable with this configuration", exit **220**) instead of `Z3Exception: theory not supported by
+interpolation`. Strike that item from the bitvector-infrastructure list.
+
+**3. Re-check the other two "bitvector solver-infrastructure" findings before treating them as bugs** —
+both were observed under Z3 with bitvector and may be the same misconfiguration:
+- native **SIGSEGV** (exit 139) on `g1.c`/`cstrchr_reverse_alloca`;
+- **`array-ext`** back-transformation NPE (exit 202) in `Z3TermTransformer`.
+Neither has been retried with MathSAT. Do that before filing them as defects. (The `array-ext` NPE
+may still be real for *non*-interpolating uses of Z3, and `pred_bvms`'s 699 solver errors came from
+MathSAT runs, so that bucket needs its own look either way.)
+
+**4. UNAFFECTED: the `aws_linked_list_init_harness_negated` missed bug is real.** Re-run under
+PRED_CART + **MathSAT**: still `Safe` where integer says `Unsafe` (trace 9). The four eliminated
+hypotheses recorded above stand.
