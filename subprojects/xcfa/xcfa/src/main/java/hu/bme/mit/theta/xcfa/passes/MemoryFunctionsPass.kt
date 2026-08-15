@@ -234,16 +234,25 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * over-large size is likewise left unmodelled rather than havocing the wrong number of bytes.
    */
   private fun nondetFill(invoke: InvokeLabel, builder: XcfaProcedureBuilder): XcfaLabel? {
-    if (!parseContext.memoryModel.byteAddressed()) return null
     // The last two arguments are `mem` and `size`, whether or not a (void) return slot precedes them.
     if (invoke.params.size < 2) return null
     val mem = invoke.params[invoke.params.size - 2]
     val size = literalValue(invoke.params[invoke.params.size - 1]) ?: return giveUp(invoke)
     if (size.signum() < 0 || size > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
 
-    val byteType = CUnsignedChar(null, parseContext)
+    // Under the bytes model a cell IS a byte, so `size` cells are written. Under the typed-cell
+    // models a cell is one element of the pointee type, so the byte count has to be divided by the
+    // element width -- the same translation `fill` does. This used to bail out entirely unless the
+    // bytes model was on, which left the call in place for `NondetFunctionPass` to reject it for
+    // "having arguments" (167 runs in the run-91 parse sweep).
+    val byteAddressed = parseContext.memoryModel.byteAddressed()
+    val cellType = if (byteAddressed) CUnsignedChar(null, parseContext) else elementOf(mem)
+    if (cellType == null) return giveUp(invoke)
+    val cells = if (byteAddressed) size.toInt() else (elementCount(invoke.params[invoke.params.size - 1], cellType) ?: return giveUp(invoke))
+
+    val byteType = cellType
     val stmts =
-      (0 until size.toInt()).flatMap { i ->
+      (0 until cells).flatMap { i ->
         val fresh = Var("__nondet_mem_${nondetMemCounter++}", byteType.smtType)
         builder.addVar(fresh)
         val cell = deref(mem, indexOf(i, mem), byteType)

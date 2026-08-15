@@ -1538,6 +1538,27 @@ class FrontendXcfaBuilder(
             }
           }
 
+          // `(bvpos x) = v`. An integer promotion or a signedness change can leave a width/sign
+          // wrapper on the LVALUE, not just on a read: `BvPosExpr` and `BvSignChangeExpr` (itself a
+          // PosExpr) both arrive here. The wrapper does not name different storage -- it is still
+          // `x` -- so the assignment is built against the variable underneath, with the value
+          // converted to *its* type rather than the wrapper's. Refusing these cost 325 runs in the
+          // run-91 parse sweep (`BvSignChangeExpr` 132, `BvPosExpr` 193), mostly LDV drivers
+          // assigning through promoted `unsigned`/`signed` members.
+          is PosExpr<*> -> {
+            val inner = peelWidthWrappers(lValue)
+            if (inner is RefExpr<*>) {
+              val innerType = CComplexType.getType(inner, parseContext)
+              AssignStmtLabel(
+                inner,
+                cast(innerType.castTo(rExpression), inner.type),
+                metadata = getMetadata(statement),
+              )
+            } else {
+              error(unhandledLhs(lValue, rExpression))
+            }
+          }
+
           else -> {
             error(unhandledLhs(lValue, rExpression))
           }

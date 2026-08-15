@@ -77,8 +77,10 @@ class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       it.name.startsWith("__VERIFIER_nondet") &&
       it.name !in definedProcedures &&
       // `__VERIFIER_nondet_memory(mem, size)` is not a value-returning nondet whose effect is its
-      // havoced return -- it writes `size` bytes at `mem`. Under the bytes model MemoryFunctionsPass
-      // spells that out; leave it for that pass rather than refusing it here for "having arguments".
-      !(parseContext.memoryModel.byteAddressed() && it.name == "__VERIFIER_nondet_memory")
+      // havoced return -- it writes `size` bytes at `mem`. MemoryFunctionsPass spells that out, in
+      // byte cells under the bytes model and in element cells otherwise, so it is left for that pass
+      // in EVERY memory model rather than being refused here for "having arguments". Gating this on
+      // the bytes model meant the default models refused it outright (167 runs, run-91 parse sweep).
+      it.name != "__VERIFIER_nondet_memory"
   }
 }

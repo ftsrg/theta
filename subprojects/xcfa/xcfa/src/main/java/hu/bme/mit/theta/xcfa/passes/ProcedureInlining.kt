@@ -196,7 +196,14 @@ internal fun inlineCallSite(
   // sites do not supply. So this refusal deliberately does NOT blame the source; it reports the
   // disagreement and stops. An honest refusal and an unexplained crash both score 0, but only one
   // of them can be acted on.
-  if (invokeLabel.params.size != calleeParams.size) {
+  //
+  // ⚠️ Only a callee with MORE parameters than the call site supplies is a problem. The loop below
+  // walks `calleeParams` and indexes `invokeLabel.params[i]`, so that is the direction that runs off
+  // the end. A call site supplying *extra* arguments -- which is every variadic call, `printk(fmt,
+  // ...)` and friends -- indexes safely and simply ignores the surplus, exactly as it did before
+  // this guard existed. Refusing those too cost 713 LDV driver runs that used to build (`printk`
+  // 476, `dev_err` 158, `__dynamic_dev_dbg` 79), the bulk of the run-91 parse regression.
+  if (calleeParams.size > invokeLabel.params.size) {
     throw UnsupportedFrontendElementException(
       "Inlining '${invokeLabel.name}': the call site supplies ${invokeLabel.params.size}" +
         " argument(s) but the procedure has ${calleeParams.size} parameter(s). This is an internal" +
