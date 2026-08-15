@@ -7204,3 +7204,50 @@ Given the path needs no allocator success and no heap reasoning, the suspects ar
 
 Start by dumping the XCFA for the harness and checking whether the `capacity == 0` branch and the
 inner assert edge survive at all — do not write a hypothesis repro first.
+
+## Debugging bitvector where integer is CORRECT (user request 2026-08-15)
+
+The strict regression set — same task, `correct` under integer, `wrong` under bitvector — is **tiny**:
+
+| task | property | integer | bitvector | backends |
+|---|---|---|---|---|
+| `aws_linked_list_init_harness_negated` | unreach-call | `false(unreach-call)` ✓ | **`true`** ✗ | **both** |
+| `rule60_list2` | unreach-call | `true` ✓ | `false(unreach-call)` ✗ | PRED only |
+| `linear_interpolation_2` | no-overflow | `true` ✓ | `false(no-overflow)` ✗ | KIND only |
+
+Union of 3, one in both backends. So bitvector is **not** broadly less sound than integer — its extra
+76/29 wrongs are overwhelmingly on tasks integer could not answer at all, not regressions.
+
+### ✅ `linear_interpolation_2` is ALREADY FIXED by `65e6119b87`
+
+Re-run locally after the INT_MIN negation fix: **both** encodings now answer `Safe` (it was
+`false(no-overflow)` under bitvector in the batch-89 run). Independent confirmation that the fix
+generalises beyond the `c/weaver/chl-*` family it was found on.
+
+### `aws_linked_list_init_harness_negated` — reproduced, partially narrowed
+
+Integer: `Unsafe` **trace 9** (correct). Bitvector: `Safe` (missed bug, −32). The harness is 3 lines:
+
+```c
+struct aws_linked_list list;
+aws_linked_list_init(&list);                        /* head.next=&tail, head.prev=0,
+                                                       tail.prev=&head, tail.next=0 */
+__VERIFIER_assert(!(aws_linked_list_is_valid(&list)));
+```
+
+and `is_valid` returns `is_valid_deep(list)` only if
+`list && head.next && head.prev==NULL && tail.prev && tail.next==NULL` — all of which hold after
+`init`. Bitvector answering `Safe` means it evaluates that guard (or `is_valid_deep`) to false.
+
+**Refuted:** that a pointer to **offset 0** (`tail.prev = &head`) tests as NULL under bitvector —
+`scratchpad/ptr0.c` builds exactly that shape and is **Safe under both** encodings (KIND). So
+offset-0 truthiness is fine; suspicion moves to `aws_linked_list_is_valid_deep` (a loop walking the
+list) and to how the two encodings differ on the *empty-list* traversal.
+
+⚠️ **New blocker for this family:** PRED_CART + bitvector on pointer/struct programs dies with
+`Z3Exception: theory not supported by interpolation or bad proof`
+(`Z3ItpSolver.getInterpolant:108`, exit **221**) — even on the 12-line `ptr0.c`. Use **KIND** for
+bitvector pointer triage; PRED_CART cannot refine these at all. This is the third distinct
+bitvector solver-infrastructure failure recorded (with the `array-ext` back-transformation NPE and
+the native SIGSEGV) and is worth treating as its own work item — it likely accounts for a share of
+`pred_bvms`'s 699 solver errors.
