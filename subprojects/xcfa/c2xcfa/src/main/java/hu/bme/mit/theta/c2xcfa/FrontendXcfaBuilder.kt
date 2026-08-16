@@ -1271,7 +1271,9 @@ class FrontendXcfaBuilder(
           ?.plus(1) ?: 0
       } else {
         throw UnsupportedFrontendElementException(
-          "Array with unspecified size must have initializer list."
+          "Array with unspecified size must have initializer list: the extent of this ${type} can" +
+            " be inferred only from a brace initializer, and the declaration has" +
+            " ${if (initExpr == null) "none" else "a ${initExpr.javaClass.simpleName} instead"}."
         )
       }
     }
@@ -1539,23 +1541,39 @@ class FrontendXcfaBuilder(
           }
 
           // `(bvpos x) = v`. An integer promotion or a signedness change can leave a width/sign
-          // wrapper on the LVALUE, not just on a read: `BvPosExpr` and `BvSignChangeExpr` (itself a
-          // PosExpr) both arrive here. The wrapper does not name different storage -- it is still
-          // `x` -- so the assignment is built against the variable underneath, with the value
-          // converted to *its* type rather than the wrapper's. Refusing these cost 325 runs in the
-          // run-91 parse sweep (`BvSignChangeExpr` 132, `BvPosExpr` 193), mostly LDV drivers
-          // assigning through promoted `unsigned`/`signed` members.
+          // wrapper on the LVALUE, not just on a read: `BvPosExpr` and `BvSignChangeExpr` (both
+          // `PosExpr`) arrive here. The wrapper names the same storage as whatever is underneath, so
+          // the assignment is built against the peeled form -- a variable or a dereference alike --
+          // with the value converted to *its* type.
+          //
+          // It is peeled HERE and not at `lValue`'s binding: the bitfield-write path above inspects
+          // the unpeeled left-hand side, and peeling it there broke the byte-addressed union and
+          // bitfield lowering (4 c2xcfa tests).
           is PosExpr<*> -> {
-            val inner = peelWidthWrappers(lValue)
-            if (inner is RefExpr<*>) {
-              val innerType = CComplexType.getType(inner, parseContext)
-              AssignStmtLabel(
-                inner,
-                cast(innerType.castTo(rExpression), inner.type),
-                metadata = getMetadata(statement),
-              )
-            } else {
-              error(unhandledLhs(lValue, rExpression))
+            when (val inner = peelWidthWrappers(lValue)) {
+              is RefExpr<*> -> {
+                val innerType = CComplexType.getType(inner, parseContext)
+                AssignStmtLabel(
+                  inner,
+                  cast(innerType.castTo(rExpression), inner.type),
+                  metadata = getMetadata(statement),
+                )
+              }
+
+              is Dereference<*, *, *> -> {
+                val op = cast(inner.array, inner.array.type)
+                val offset = cast(inner.offset, op.type)
+                val castRExpression = CComplexType.getType(inner, parseContext).castTo(rExpression)
+                val cellType = CComplexType.getType(castRExpression, parseContext)
+                val deref = Dereference(op, offset, cellType.smtType)
+                parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+                StmtLabel(
+                  MemoryAssignStmt.create(deref, castRExpression),
+                  metadata = getMetadata(statement),
+                )
+              }
+
+              else -> error(unhandledLhs(lValue, rExpression))
             }
           }
 

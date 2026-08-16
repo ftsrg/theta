@@ -149,6 +149,46 @@ public class CAssignment extends CStatement {
                                         (Expr<BvType>) type.castTo(lValue),
                                         (Expr<BvType>) type.castTo(rExpression)));
                 break;
+            case ">>=":
+                {
+                    checkState(
+                            lValue.getType() instanceof BvType
+                                    && rExpression.getType() instanceof BvType,
+                            "The compound shift assignment `%s` is only modelled over bitvectors,"
+                                + " but the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                            ">>=",
+                            lValue.getType(),
+                            rExpression.getType());
+                    final Expr<BvType> left = (Expr<BvType>) type.castTo(lValue);
+                    final Expr<BvType> right = (Expr<BvType>) type.castTo(rExpression);
+                    // Right shift is arithmetic on a signed left operand and logical on an unsigned
+                    // one -- the same split `visitShiftExpression` makes for the non-assigning `>>`.
+                    ret =
+                            left.getType().getSigned()
+                                    ? BvExprs.ArithShiftRight(left, right)
+                                    : BvExprs.LogicShiftRight(left, right);
+                }
+                break;
+            case "<<=":
+                {
+                    checkState(
+                            lValue.getType() instanceof BvType
+                                    && rExpression.getType() instanceof BvType,
+                            "The compound shift assignment `%s` is only modelled over bitvectors,"
+                                + " but the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                            "<<=",
+                            lValue.getType(),
+                            rExpression.getType());
+                    ret =
+                            BvExprs.ShiftLeft(
+                                    (Expr<BvType>) type.castTo(lValue),
+                                    (Expr<BvType>) type.castTo(rExpression));
+                }
+                break;
             default:
                 throw new UnsupportedFrontendElementException("Unsupported operator: " + operator);
         }

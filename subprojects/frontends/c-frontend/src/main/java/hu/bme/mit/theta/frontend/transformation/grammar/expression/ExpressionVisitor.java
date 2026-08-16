@@ -3301,7 +3301,21 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(litExpr, "cType", signedInt);
                 return litExpr;
             }
-            throw new RuntimeException("No such variable or macro: " + name);
+            // Reaching here means `name` was used as a VALUE and resolved to nothing -- not a
+            // variable, not a modelled macro, not an enum constant. In practice it is a library
+            // function used as a function designator rather than called (`= malloc`,
+            // `= __VERIFIER_nondet_int`): only functions defined in this translation unit get an id
+            // that can be taken as a value, so an undefined one has nothing to refer to. Say that,
+            // rather than leaving a bare name (64 `malloc` + 32 `__VERIFIER_nondet_int` in the
+            // run-91b parse sweep looked like a lookup bug).
+            throw new RuntimeException(
+                    "No such variable or macro: "
+                            + name
+                            + ". It is not a declared variable, a modelled macro, or an enum"
+                            + " constant. If it is a function, note that using one as a *value*"
+                            + " (taking its address, assigning it to a function pointer) is only"
+                            + " modelled for functions defined in this translation unit -- an"
+                            + " undefined library function has no id to refer to.");
         } else {
             return variable.getRef();
         }
@@ -3608,7 +3622,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return indirectCall(ctx, expr);
                 }
                 checkState(
-                        expr instanceof RefExpr<?>, "Only variable-backed functions are callable.");
+                        expr instanceof RefExpr<?>,
+                        "Only variable-backed functions are callable, but the callee is a %s whose C"
+                            + " type is %s (recognized as a function pointer: %s). A call through a"
+                            + " function POINTER is dispatched over the candidate set instead; this"
+                            + " fires when the pointer-ness was lost from the type.",
+                        expr.getClass().getSimpleName(),
+                        CComplexType.getType(expr, parseContext),
+                        isCallableFunctionPointer(expr));
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;
                 if (exprList == null) arguments = List.of();
@@ -3661,7 +3682,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         type instanceof CPointer
                                 ? ((CPointer) type).getEmbeddedType()
                                 : ((CArray) type).getEmbeddedType();
-                checkState(structTypeErased instanceof CStruct, "Only structs expected here");
+                checkState(
+                        structTypeErased instanceof CStruct,
+                        "Only structs expected here, got %s (%s) accessing ->%s of %s",
+                        structTypeErased,
+                        structTypeErased == null
+                                ? "null"
+                                : structTypeErased.getClass().getSimpleName(),
+                        ctx.Identifier().getText(),
+                        type);
                 return structMemberAccess(
                         primary, (CStruct) structTypeErased, ctx.Identifier().getText());
             };
