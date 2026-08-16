@@ -935,15 +935,33 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CParser.PrimaryExpressionBuiltinVaArgContext ctx) {
         ctx.unaryExpression().accept(this); // the va_list operand, for any side effects it has
         String typeName = ctx.typeName().getText();
-        CComplexType type =
-                typedefVisitor
-                        .getType(typeName)
-                        .or(() -> Optional.ofNullable(CComplexType.getType(typeName, parseContext)))
-                        .orElseThrow(
-                                () ->
-                                        new UnsupportedFrontendElementException(
-                                                "Cannot resolve the type read by __builtin_va_arg: "
-                                                        + typeName));
+        // Resolve through the TYPE VISITOR, not by name. The name lookups below only ever see the
+        // raw text, so anything that is not a plain identifier fails -- and the single shape that
+        // actually occurs is `__builtin_va_arg(ap, __typeof__(p->field))`, which the type visitor
+        // already knows how to resolve (it is the same machinery `container_of` needs). All 49
+        // failures in the run-91b parse sweep were literally the same expression,
+        // `__typeof__(on_off->optarg)`.
+        CComplexType type = null;
+        try {
+            type = ctx.typeName().specifierQualifierList().accept(typeVisitor).getActualType();
+        } catch (Exception e) {
+            // fall through to the name-based lookups below
+        }
+        if (type == null) {
+            type =
+                    typedefVisitor
+                            .getType(typeName)
+                            .or(
+                                    () ->
+                                            Optional.ofNullable(
+                                                    CComplexType.getType(typeName, parseContext)))
+                            .orElseThrow(
+                                    () ->
+                                            new UnsupportedFrontendElementException(
+                                                    "Cannot resolve the type read by"
+                                                        + " __builtin_va_arg: "
+                                                            + typeName));
+        }
         uniqueWarningLogger.write(
                 Level.INFO,
                 "WARNING: __builtin_va_arg yields a nondeterministic value; the variadic argument"
