@@ -177,6 +177,13 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
+  @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
+  var useCir2c: Boolean = false,
+  @Parameter(
+    names = ["--cir2c-dir", "--cir2c-directory"],
+    description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
+  )
+  var cir2cDir: File = File("./cir2c"),
 ) : SpecFrontendConfig
 
 /** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
@@ -554,6 +561,27 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--oc-unroll-start"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStart: Int = 2,
+  @Parameter(
+    names = ["--oc-unroll-end"],
+    description = "Upper force loop unrolling bound for OC checker (-1 for no limit)",
+  )
+  var forceUnrollBoundEnd: Int = -1,
+  @Parameter(
+    names = ["--oc-unroll-step"],
+    description = "Step size for force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-witness-optimizations"],
+    description =
+      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
+  )
+  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

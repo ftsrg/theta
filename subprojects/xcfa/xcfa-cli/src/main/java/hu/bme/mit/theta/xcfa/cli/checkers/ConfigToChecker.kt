@@ -53,7 +53,7 @@ fun getSafetyChecker(
       Backend.KINDIMC,
       Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config, logger)
       Backend.PATH_ENUMERATION -> getPathEnumerationChecker(xcfa, parseContext, config, logger)
-      Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
+      Backend.OC -> getOcChecker(xcfa, parseContext, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)

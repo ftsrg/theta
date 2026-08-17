@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -105,6 +105,8 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                 externalDeclarationContext.accept(this);
             } catch (Throwable e) {
                 // we don't do anything, we'll throw an error later if something's missing
+                // Important: When looking for the source of frontend issues, break on this catch:
+                // failures here are tolerated on purpose, so they are otherwise invisible.
             }
         }
         return null;

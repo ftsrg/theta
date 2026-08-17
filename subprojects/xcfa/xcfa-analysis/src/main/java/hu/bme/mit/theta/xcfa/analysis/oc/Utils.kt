@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.WitnessOptimizer
 
 internal typealias E = XcfaEvent
 
@@ -59,8 +64,10 @@ internal data class Violation(
   val lastEvents: List<XcfaEvent>,
 )
 
-internal data class Thread(
-  val pid: Int = uniqueId(),
+@ConsistentCopyVisibility
+internal data class Thread
+private constructor(
+  val pid: Int,
   val procedure: XcfaProcedure,
   val guard: Set<Expr<BoolType>> = setOf(),
   val pidVar: VarDecl<*>? = null,
@@ -77,6 +84,25 @@ internal data class Thread(
     private var cnt: Int = 0
 
     fun uniqueId(): Int = cnt++
+
+    fun of(
+      procedure: XcfaProcedure,
+      parseContext: ParseContext,
+      params: List<Expr<*>> = listOf(),
+      pid: Int = uniqueId(),
+      guard: Set<Expr<BoolType>> = setOf(),
+      pidVar: VarDecl<*>? = null,
+      startEvent: XcfaEvent? = null,
+      startHistory: List<String> = listOf(),
+      lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
+    ): Thread {
+      val passManager =
+        ProcedurePassManager(
+          listOf(WitnessOptimizer(params, parseContext), AtomicReadsOneWritePass())
+        )
+      val p = procedure.optimizeFurther(passManager, "${procedure.name}[$pid]", pid.toString())
+      return Thread(pid, p, guard, pidVar, startEvent, startHistory, lastWrites)
+    }
   }
 }
 
@@ -89,9 +115,4 @@ internal data class SearchItem(val loc: XcfaLocation) {
     mutableListOf()
   val atomics: MutableList<Int?> = mutableListOf()
   var incoming: Int = 0
-}
-
-internal data class StackItem(val event: XcfaEvent) {
-
-  var eventsToVisit: MutableList<XcfaEvent>? = null
 }
