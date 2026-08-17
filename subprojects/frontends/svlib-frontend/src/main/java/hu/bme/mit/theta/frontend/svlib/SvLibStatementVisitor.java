@@ -41,6 +41,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,7 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
     private final Map<String, VarDecl<?>> declarations;
     private final BiFunction<String, Boolean, XcfaLocation> nextLoc;
     private final Set<XcfaLocation> terminalLocations = new HashSet<>();
+    private final Deque<XcfaLocation> loopExitLocations = new ArrayDeque<>();
     private XcfaLocation currentEntry;
 
     SvLibStatementVisitor(
@@ -190,16 +193,25 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
     @Override
     public XcfaLocation visitWhileStatement(SvLibParser.WhileStatementContext ctx) {
         XcfaLocation head = currentEntry;
+        XcfaLocation exitLoc = nextLoc.apply("while-exit", false);
 
         Expr<BoolType> condition = boolExpr(ctx.term(), builder, declarations);
         XcfaLocation bodyEntry = addLabel(head, new StmtLabel(AssumeStmt.of(condition)));
-        XcfaLocation exit = visit(ctx.statement(), bodyEntry);
+        builder.addEdge(
+            new XcfaEdge(
+                head,
+                exitLoc,
+                new StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))),
+                EmptyMetaData.INSTANCE));
 
+        loopExitLocations.push(exitLoc);
+        XcfaLocation exit = visit(ctx.statement(), bodyEntry);
+        loopExitLocations.pop();
         if (!terminalLocations.contains(exit)) {
             builder.addEdge(new XcfaEdge(exit, head, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
         }
 
-        return addLabel(head, new StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))));
+        return exitLoc;
     }
 
     @Override
@@ -229,7 +241,18 @@ final class SvLibStatementVisitor extends SvLibBaseVisitor<XcfaLocation> {
 
     @Override
     public XcfaLocation visitBreakStatement(SvLibParser.BreakStatementContext ctx) {
-        return unsupportedStatement("break");
+        if (loopExitLocations.isEmpty()) {
+            return unsupportedStatement("break outside while");
+        }
+
+        builder.addEdge(
+            new XcfaEdge(
+                currentEntry,
+                loopExitLocations.peek(),
+                NopLabel.INSTANCE,
+                EmptyMetaData.INSTANCE));
+        terminalLocations.add(currentEntry);
+        return currentEntry;
     }
 
     @Override
