@@ -23,6 +23,7 @@ The full publication list is at [theta.mit.bme.hu/publications](https://theta.mi
 * [Applying Incremental, Inductive Model Checking to Software](https://theta.mit.bme.hu/publications/tegzestBsc2018.pdf) (BSc, 2018) — IC3 on software, via a transformation to a symbolic transition system.
 * [EmergenTheta: Variations on Symbolic Transition Systems](https://theta.mit.bme.hu/publications/tacas2025emergentheta.pdf) (SV-COMP 2025) — the monolithic-expression encodings shared by BMC/k-induction/IMC, IC3 and MDD.
 * [EmergenTheta: Experimental Analyses within the Theta Framework](https://doi.org/10.1007/978-3-032-22749-2_25) (SV-COMP 2026) — combined predicate-explicit domain, on-the-fly reachability and counterexample generation for generalized saturation, and an IC3 backend.
+* [Saturation Enhanced with Conditional Locality: Application to Petri Nets](https://link.springer.com/chapter/10.1007/978-3-030-21571-2_19) (PETRI NETS 2019) — explains saturation, which has been generalized from just Petri nets in Theta. 
 
 **Liveness / LTL** (`algorithm/loopchecker`, `multi/`)
 
