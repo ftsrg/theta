@@ -23,22 +23,12 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.utils.DereferenceAccessMap
-import hu.bme.mit.theta.xcfa.utils.READ
-import hu.bme.mit.theta.xcfa.utils.VarAccessMap
-import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.getPotentialRacingVars
-import hu.bme.mit.theta.xcfa.utils.isRead
-import hu.bme.mit.theta.xcfa.utils.isWritten
+import hu.bme.mit.theta.xcfa.utils.*
 
 /**
  * Reduces data race checking to reachability checking by adding write access flags for each global
@@ -217,15 +207,17 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
     val unsetLabels = mutableListOf<XcfaLabel>()
     vars.forEach { (v, access) ->
       if (access.isWritten) {
-        setLabels.add(AssignStmtLabel(v.writeFlag, Int(1)))
-        unsetLabels.add(AssignStmtLabel(v.writeFlag, Int(0)))
+        setLabels.add(AssignStmtLabel(v.writeFlag, Add(v.writeFlag.ref, Int(1))))
+        unsetLabels.add(AssignStmtLabel(v.writeFlag, Sub(v.writeFlag.ref, Int(1))))
       }
       if (access.isRead) {
-        setLabels.add(AssignStmtLabel(v.readFlag, Int(1)))
-        unsetLabels.add(AssignStmtLabel(v.readFlag, Int(0)))
+        setLabels.add(AssignStmtLabel(v.readFlag, Add(v.readFlag.ref, Int(1))))
+        unsetLabels.add(AssignStmtLabel(v.readFlag, Sub(v.readFlag.ref, Int(1))))
       }
     }
     dereferences.forEach { (deref, access) ->
+      // TODO this does not work if one of the conflict accesses is in an atomic block and there is
+      // another deref before the conflicting access in the same atomic block
       if (access.isWritten) {
         setLabels.add(AssignStmtLabel(deref.array.derefArrayWriteFlag, deref.array))
         setLabels.add(AssignStmtLabel(deref.offset.derefOffsetWriteFlag, deref.offset))
