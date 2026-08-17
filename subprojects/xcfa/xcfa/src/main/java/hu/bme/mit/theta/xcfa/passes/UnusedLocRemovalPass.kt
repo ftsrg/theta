@@ -21,7 +21,19 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 class UnusedLocRemovalPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    builder.removeLocs { !it.final && !it.error && !it.initial && it.incomingEdges.isEmpty() }
+    val reachable = mutableSetOf(builder.initLoc)
+    val stack = mutableListOf(builder.initLoc)
+    while (stack.isNotEmpty()) {
+      stack.removeLast().outgoingEdges.forEach {
+        if (reachable.add(it.target)) stack.add(it.target)
+      }
+    }
+    // Reachability from the entry, not merely "has no incoming edge": loop unrolling leaves behind
+    // whole *cycles* of copies past the unroll bound, and every location in such a cycle has an
+    // incoming edge from within the cycle, so a predecessor-count test keeps it alive forever. The
+    // edges out of that dead cycle then land on live merge points, where the OC checker waits for
+    // predecessors that can never execute and gives up on the task with "loops".
+    builder.removeLocs { !it.final && !it.error && !it.initial && it !in reachable }
     return builder
   }
 }

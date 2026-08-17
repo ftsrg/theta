@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,25 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
-/** Transforms all procedure calls into havocs. Requires the ProcedureBuilder be `deterministic`. */
-class NondetFunctionPass : ProcedurePass {
+/**
+ * Transforms calls to the `__VERIFIER_nondet*` intrinsics into havocs. Requires the
+ * ProcedureBuilder be `deterministic`.
+ *
+ * Only calls that do NOT resolve to a procedure defined in the XCFA are havoced: a program may
+ * define its own function whose name happens to start with `__VERIFIER_nondet` (SV-COMP's
+ * memory-model benchmarks do), and havocing such a call would silently discard its body -- an
+ * under-approximation that can prove an unsafe program safe.
+ */
+class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
+
+  private var definedProcedures: Set<String> = emptySet()
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
+    definedProcedures = builder.parent.getProcedures().map { it.name }.toSet()
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
       if (
@@ -35,7 +47,14 @@ class NondetFunctionPass : ProcedurePass {
         edges.forEach {
           if (predicate((it.label as SequenceLabel).labels[0])) {
             val invokeLabel = it.label.labels[0] as InvokeLabel
-            val havoc = HavocStmt.of((invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
+            check(invokeLabel.params.size == 1) {
+              "Nondet function ${invokeLabel.name} with arguments is not supported: " +
+                "havocing the return value would silently drop the effect on the arguments."
+            }
+            val slot = invokeLabel.params[0] as RefExpr<*>
+            val havoc = HavocStmt.of(slot.decl as VarDecl<*>)
+            // No range annotation here: HavocPromotionAndRange, which runs after this, bounds every
+            // havoc that needs it. Adding it here as well only emitted the same assume twice.
             builder.addEdge(
               XcfaEdge(
                 it.source,
@@ -54,6 +73,14 @@ class NondetFunctionPass : ProcedurePass {
   }
 
   private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name.startsWith("__VERIFIER_nondet")
+    return it is InvokeLabel &&
+      it.name.startsWith("__VERIFIER_nondet") &&
+      it.name !in definedProcedures &&
+      // `__VERIFIER_nondet_memory(mem, size)` is not a value-returning nondet whose effect is its
+      // havoced return -- it writes `size` bytes at `mem`. Under the bytes model
+      // MemoryFunctionsPass
+      // spells that out; leave it for that pass rather than refusing it here for "having
+      // arguments".
+      !(parseContext.memoryModel.byteAddressed() && it.name == "__VERIFIER_nondet_memory")
   }
 }

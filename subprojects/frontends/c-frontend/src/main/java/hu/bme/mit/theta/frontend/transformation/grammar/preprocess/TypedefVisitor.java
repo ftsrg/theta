@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,11 +47,31 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                 .findFirst();
     }
 
+    /** The names this translation unit typedefs, for the parser to recognize as type names. */
+    public Set<String> getTypedefNames() {
+        return declarations.stream()
+                .map(CDeclaration::getName)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+    }
+
     public Optional<CSimpleType> getSimpleType(String id) {
         return declarations.stream()
                 .filter(cDeclaration -> cDeclaration.getName().equals(id))
                 .map(CDeclaration::getType)
                 .findFirst();
+    }
+
+    /**
+     * `typedef int (*handler)(int)` -- carries the function-pointer-ness on the TYPE, so that
+     * variables later declared with the typedef name are recognized as callable function pointers.
+     */
+    private static void markFunctionPointerTypedefs(List<CDeclaration> declarations) {
+        for (CDeclaration declaration : declarations) {
+            if (declaration.isFuncPointer()) {
+                declaration.getType().setFunctionPointer(true);
+            }
+        }
     }
 
     @Override
@@ -61,6 +81,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
             List<CDeclaration> declarations =
                     declarationVisitor.getDeclarations(
                             ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+            markFunctionPointerTypedefs(declarations);
             this.declarations.addAll(declarations);
             ret.addAll(declarations);
             return ret;
@@ -105,6 +126,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                     declarationVisitor.getDeclarations(
                             ctx.declaration().declarationSpecifiers(),
                             ctx.declaration().initDeclaratorList());
+            markFunctionPointerTypedefs(declarations);
             ret.addAll(declarations);
             this.declarations.addAll(declarations);
             return ret;

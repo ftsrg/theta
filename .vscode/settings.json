@@ -1,0 +1,7 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "./gradlew": true,
+        "gcc": true,
+        "exit": true
+    }
+}

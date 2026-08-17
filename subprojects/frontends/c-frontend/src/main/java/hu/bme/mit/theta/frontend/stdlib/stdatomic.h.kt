@@ -15,88 +15,43 @@
  */
 package hu.bme.mit.theta.frontend.stdlib
 
+/**
+ * C11 `<stdatomic.h>`: the names, not the operations.
+ *
+ * The atomic types are ordinary `_Atomic` types and are declared as such -- that is the whole of
+ * what they are. The *operations* (`atomic_load`, `atomic_fetch_add`, ...) are type-generic, which
+ * C expresses with macros and this grammar cannot express at all, so they are not declared here:
+ * `ExpressionVisitor` recognises them by name and builds the load, the store or the read-modify-
+ * write directly, exactly as it does for the `__atomic_*` builtins they compile down to.
+ *
+ * `memory_order` is an ordinary int, and its constants are given values by `MacroExprs`. The order
+ * itself constrains only what may be *reordered* around an access, and the analysis is sequentially
+ * consistent -- it never reorders -- so honouring it would rule out nothing that is not ruled out
+ * already.
+ */
 internal val stdatomic_h =
   """
-typedef enum {
-  memory_order_relaxed,
-  memory_order_consume,
-  memory_order_acquire,
-  memory_order_release,
-  memory_order_acq_rel,
-  memory_order_seq_cst
-} memory_order;
+typedef _Atomic _Bool atomic_bool;
+typedef _Atomic char atomic_char;
+typedef _Atomic signed char atomic_schar;
+typedef _Atomic unsigned char atomic_uchar;
+typedef _Atomic short atomic_short;
+typedef _Atomic unsigned short atomic_ushort;
+typedef _Atomic int atomic_int;
+typedef _Atomic unsigned int atomic_uint;
+typedef _Atomic long atomic_long;
+typedef _Atomic unsigned long atomic_ulong;
+typedef _Atomic long long atomic_llong;
+typedef _Atomic unsigned long long atomic_ullong;
+typedef _Atomic unsigned long atomic_size_t;
+typedef _Atomic long atomic_ptrdiff_t;
+typedef _Atomic long atomic_intptr_t;
+typedef _Atomic unsigned long atomic_uintptr_t;
+typedef _Atomic long atomic_intmax_t;
+typedef _Atomic unsigned long atomic_uintmax_t;
 
-typedef _Bool atomic_bool;
-typedef char atomic_char;
-typedef signed char atomic_schar;
-typedef unsigned char atomic_uchar;
-typedef short atomic_short;
-typedef unsigned short atomic_ushort;
-typedef int atomic_int;
-typedef unsigned int atomic_uint;
-typedef long atomic_long;
-typedef unsigned long atomic_ulong;
-typedef long long atomic_llong;
-typedef unsigned long long atomic_ullong;
-typedef long atomic_intptr_t;
-typedef unsigned long atomic_uintptr_t;
-typedef unsigned long atomic_size_t;
-typedef long atomic_ptrdiff_t;
-typedef long atomic_intmax_t;
-typedef unsigned long atomic_uintmax_t;
+typedef int memory_order;
 
-typedef struct {
-  int __flag;
-} atomic_flag;
-
-#define ATOMIC_FLAG_INIT \
-  { 0 }
-#define ATOMIC_VAR_INIT(value) (value)
-
-#define atomic_init(obj, value) (*(obj) = (value))
-#define atomic_is_lock_free(obj) 1
-
-#define atomic_load_explicit(obj, order) __atomic_load_n(obj, order)
-#define atomic_load(obj) atomic_load_explicit(obj, memory_order_seq_cst)
-
-#define atomic_store_explicit(obj, value, order) __atomic_store_n(obj, value, order)
-#define atomic_store(obj, value) atomic_store_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_exchange_explicit(obj, value, order) __atomic_exchange_n(obj, value, order)
-#define atomic_exchange(obj, value) atomic_exchange_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_fetch_add_explicit(obj, value, order) __atomic_fetch_add(obj, value, order)
-#define atomic_fetch_add(obj, value) atomic_fetch_add_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_fetch_sub_explicit(obj, value, order) __atomic_fetch_sub(obj, value, order)
-#define atomic_fetch_sub(obj, value) atomic_fetch_sub_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_fetch_or_explicit(obj, value, order) __atomic_fetch_or(obj, value, order)
-#define atomic_fetch_or(obj, value) atomic_fetch_or_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_fetch_xor_explicit(obj, value, order) __atomic_fetch_xor(obj, value, order)
-#define atomic_fetch_xor(obj, value) atomic_fetch_xor_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_fetch_and_explicit(obj, value, order) __atomic_fetch_and(obj, value, order)
-#define atomic_fetch_and(obj, value) atomic_fetch_and_explicit(obj, value, memory_order_seq_cst)
-
-#define atomic_compare_exchange_strong_explicit(obj, expected, desired, success, failure) \
-  __atomic_compare_exchange_n(obj, expected, desired, 0, success, failure)
-#define atomic_compare_exchange_strong(obj, expected, desired) \
-  atomic_compare_exchange_strong_explicit(obj, expected, desired, memory_order_seq_cst, memory_order_seq_cst)
-
-#define atomic_compare_exchange_weak_explicit(obj, expected, desired, success, failure) \
-  __atomic_compare_exchange_n(obj, expected, desired, 1, success, failure)
-#define atomic_compare_exchange_weak(obj, expected, desired) \
-  atomic_compare_exchange_weak_explicit(obj, expected, desired, memory_order_seq_cst, memory_order_seq_cst)
-
-#define atomic_flag_test_and_set_explicit(obj, order) __atomic_test_and_set(&(obj)->__flag, order)
-#define atomic_flag_test_and_set(obj) atomic_flag_test_and_set_explicit(obj, memory_order_seq_cst)
-
-#define atomic_flag_clear_explicit(obj, order) __atomic_clear(&(obj)->__flag, order)
-#define atomic_flag_clear(obj) atomic_flag_clear_explicit(obj, memory_order_seq_cst)
-
-#define atomic_thread_fence(order) __atomic_thread_fence(order)
-#define atomic_signal_fence(order) __atomic_signal_fence(order)
+typedef struct atomic_flag { _Atomic _Bool _Value; } atomic_flag;
 """
     .trimIndent()

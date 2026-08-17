@@ -70,7 +70,7 @@ class XcfaMultiThreadToMonolithicAdapter(
         EliminateSelfLoops(),
         RemoveAbortBranchesPass(),
         if (property.verifiedProperty == ErrorDetection.DATA_RACE)
-          DataRaceToReachabilityPass(property, true)
+          DataRaceToReachabilityPass(property, parseContext, enabled = true)
         else null,
         LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true),
         RemoveUnnecessaryAtomicBlocksPass(),

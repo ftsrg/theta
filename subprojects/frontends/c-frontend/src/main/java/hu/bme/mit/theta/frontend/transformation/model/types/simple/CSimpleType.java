@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,6 +30,7 @@ public abstract class CSimpleType {
     private boolean bool = false;
     private boolean atomic = false;
     private boolean extern = false;
+    private boolean staticStorage = false;
     private boolean typedef = false;
     private boolean isVolatile = false;
     private boolean isShort = false;
@@ -47,8 +49,92 @@ public abstract class CSimpleType {
         return pointerLevel;
     }
 
+    private boolean functionPointer = false;
+
+    /** True when this type is a pointer to a function (e.g. a `typedef int (*h)(int)`). */
+    public boolean isFunctionPointer() {
+        return functionPointer;
+    }
+
+    public void setFunctionPointer(boolean functionPointer) {
+        this.functionPointer = functionPointer;
+    }
+
+    /**
+     * Which pointer levels are atomic, innermost first -- one entry per `*`. `_Atomic` attaches to
+     * a *level* of a type, not to a declaration, and the level is what decides what may be raced
+     * on: an access *through* `p` touches what `p` points at, so `_Atomic int *p` makes `p[i]`
+     * race-free while leaving `p` an ordinary variable, and `int * _Atomic p` is the exact
+     * opposite. One boolean per declaration cannot tell those apart.
+     */
+    private final List<Boolean> atomicPointers = new ArrayList<>();
+
+    /**
+     * How many of the pointer levels came from a `*` written in *this* declaration, as opposed to
+     * being inherited from the type the specifiers name (a typedef of a pointer, say).
+     *
+     * <p>The grammar folds the `*` of `int *p` into the declaration specifiers, so by the time a
+     * qualifier is applied the type already has a pointer and there is otherwise no way to tell
+     * `_Atomic int *p` (the `*` is this declaration's, so `_Atomic` reached only the `int`) from
+     * `int_ptr _Atomic p` (the pointer came with the typedef, so `_Atomic` qualifies *it*).
+     */
+    private int starPointers = 0;
+
     public void incrementPointer() {
         ++pointerLevel;
+        atomicPointers.add(false);
+        ++starPointers;
+    }
+
+    /** Whether the pointer at this level -- 0 being the innermost -- is itself atomic. */
+    public boolean isAtomicPointer(int level) {
+        return level < atomicPointers.size() && atomicPointers.get(level);
+    }
+
+    /** `int * _Atomic p`: the `_Atomic` sits after a star, so it is that pointer that is atomic. */
+    public void markLastPointerAtomic() {
+        if (!atomicPointers.isEmpty()) {
+            atomicPointers.set(atomicPointers.size() - 1, true);
+        } else {
+            atomic = true;
+        }
+    }
+
+    /** `_Atomic(T)`: the whole of T is atomic -- its outermost level, whatever that is. */
+    public void markOutermostAtomic() {
+        if (pointerLevel > 0) {
+            atomicPointers.set(pointerLevel - 1, true);
+        } else {
+            atomic = true;
+        }
+        // What `_Atomic(T)` yields is a type in its own right. Any `*` after it belongs to the
+        // declarator and wraps *around* it, so nothing here is a star of this declaration's.
+        starPointers = 0;
+    }
+
+    /**
+     * `_Atomic` written among the declaration specifiers, which qualifies the type they name.
+     *
+     * <p>That type is the base -- what is written before this declaration's own `*`s -- so for
+     * `_Atomic int *p` it is the `int`, and for `int_ptr _Atomic p` (a typedef of `int *`) it is
+     * the pointer the typedef brought with it.
+     */
+    public void applyAtomicQualifier() {
+        int inheritedPointers = pointerLevel - starPointers;
+        if (inheritedPointers > 0) {
+            atomicPointers.set(inheritedPointers - 1, true);
+        } else {
+            atomic = true;
+        }
+    }
+
+    /**
+     * The pointers this type already has came *with* it -- it was named by a typedef -- so none of
+     * them is a star of the declaration now being read, and a `_Atomic` there qualifies the
+     * outermost of them rather than reaching past them to the scalar underneath.
+     */
+    public void markPointersInherited() {
+        starPointers = 0;
     }
 
     public CSimpleType apply(List<CSimpleType> newCtypes) {
@@ -84,6 +170,18 @@ public abstract class CSimpleType {
 
     public boolean isExtern() {
         return extern;
+    }
+
+    /**
+     * Whether the declaration carried {@code static}. Only consulted for a *local* declaration,
+     * which it gives static storage duration; at file scope the specifier only affects linkage.
+     */
+    public boolean isStaticStorage() {
+        return staticStorage;
+    }
+
+    public void setStaticStorage(boolean staticStorage) {
+        this.staticStorage = staticStorage;
     }
 
     public void setExtern(boolean extern) {
@@ -190,6 +288,7 @@ public abstract class CSimpleType {
     protected void setUpCopy(CSimpleType copy) {
         copy.setAtomic(this.isAtomic());
         copy.setExtern(this.isExtern());
+        copy.setStaticStorage(this.isStaticStorage());
         copy.setTypedef(this.isTypedef());
         copy.setVolatile(this.isVolatile());
         copy.setSigned(this.isSigned());
@@ -200,6 +299,11 @@ public abstract class CSimpleType {
         copy.set128(this.is128());
         for (int i = 0; i < this.getPointerLevel(); i++) {
             copy.incrementPointer();
+            if (this.isAtomicPointer(i)) {
+                copy.markLastPointerAtomic();
+            }
         }
+        copy.starPointers = this.starPointers; // a copy inherits what the original inherited
+        copy.setFunctionPointer(this.isFunctionPointer());
     }
 }

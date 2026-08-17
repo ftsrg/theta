@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,7 +33,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -116,10 +119,34 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             val argument = invokeLabel.params[1]
             val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
-              Or(
-                Lt(argument, pointerType.nullValue), // uninit ptr
-                // freed/not big enough ptr
-                Lt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), pointerType.nullValue),
+              And(
+                // "If ptr is a null pointer, no action occurs" -- C17 7.22.3.3. `free(NULL)` is not
+                // merely tolerated, it is the idiom every cleanup path is written around, and it
+                // was
+                // being reported as an invalid free: a null pointer has no recorded size, so the
+                // bound below took it for one that was never allocated.
+                Neq(argument, pointerType.nullValue),
+                Or(
+                  Lt(argument, pointerType.nullValue), // uninit ptr
+                  // Already freed, or never allocated: both leave size 0 (see deallocate). The
+                  // bound
+                  // is Fitsall-typed like the sizes the array holds -- a pointer-typed zero would
+                  // be
+                  // a different, narrower type under bitvector arithmetic.
+                  Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
+                  // Only the heap may be freed. Pointer bases are partitioned by residue mod 3 --
+                  // `3k+0` malloc, `3k+1` alloca, `3k+2` an address-taken local -- and only the
+                  // first came from an allocator. The size check above cannot catch the others: an
+                  // alloca'd block records a *real* size (it has to, or reads through it would look
+                  // out of bounds), so `free(alloca(n))` sailed through as a perfectly good free.
+                  // `Rem`, not `Mod`: pointer types are unsigned bitvectors and Theta's `Mod` is
+                  // signed-only ("Unsigned BvType cannot be used here"). The two agree on the
+                  // non-negative values an address can take. This only ever surfaced once the flat
+                  // model started being reached for these tasks -- under flat the residue class
+                  // still identifies the allocator, since a base is `id * 65536` and 65536 = 1 mod
+                  // 3.
+                  Neq(Rem(argument, pointerType.getValue("3")), pointerType.nullValue),
+                ),
               )
 
             builder.addEdge(
@@ -145,14 +172,18 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.metadata,
               )
             )
-            builder.addEdge(
-              XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), it.metadata)
-            )
           } else {
             builder.addEdge(it)
           }
         }
       }
+    }
+    // A single shared exit edge: one per check would pile up parallel label-less edges on
+    // `invalidFree`, which the OC backend rejects as a branching location without assumes.
+    if (invalidFree.incomingEdges.isNotEmpty()) {
+      builder.addEdge(
+        XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData)
+      )
     }
   }
 
@@ -177,15 +208,45 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
               Or(
                 it.label.labels[0].derefsWithShortCircuitCond.map { (deref, shortCircuitConds) ->
                   val sizeVar = builder.parent.getPtrSizeVar()
+                  // Which address the object's size is filed under, and where inside the object
+                  // this access lands.
+                  //
+                  // The `array` slot is an object *base* under the multi model, but NOT under flat:
+                  // there `runFlatReferenceElimination` collapses `&(deref B O)` to the single
+                  // scalar `B + O`, so a legitimate mid-object address appears in that slot. The
+                  // size array only ever has an entry at `B`, so reading it at `B + O` returned 0
+                  // and `size <= offset` became a *tautology* -- the edge to __THETA_bad_deref was
+                  // enabled on every path, a guaranteed false valid-deref for any access through an
+                  // address with a nonzero offset (`&s.b`, `&a[2]`, `&l->owner`, ...). Recover the
+                  // base by truncating to the object's stride slice, and fold the truncated part
+                  // back into the index so the bound still covers the whole access.
+                  val flat = parseContext.memoryModel.flatAddressing()
+                  val strideLit = pointerType.getValue(FlatMemoryPass.FLAT_STRIDE.toString())
+                  val sizeKey =
+                    if (flat) Mul(Div(deref.array, strideLit), strideLit) else deref.array
+                  val indexInObject =
+                    if (flat) {
+                      // `addr - base`, not `addr mod stride`: pointer types are *unsigned*
+                      // bitvectors and Theta's `Mod` is signed-only ("Unsigned BvType cannot be
+                      // used here"). Subtracting the truncated base is the same value here and one
+                      // operation cheaper, which matters because this guard is emitted per
+                      // dereference.
+                      Add(Sub(deref.array, sizeKey).toFitsall(), deref.offset.toFitsall())
+                    } else {
+                      deref.offset.toFitsall()
+                    }
                   And(
                     And(shortCircuitConds),
                     Or(
-                      Leq(deref.array, pointerType.nullValue), // uninit ptr
+                      Leq(sizeKey, pointerType.nullValue), // uninit ptr
+                      // Sizes are Fitsall-typed, offsets are pointer-typed: the offset has to be
+                      // widened to compare against a size (they are the same unbounded Int under
+                      // integer arithmetic, but different bitvector widths otherwise).
                       Leq(
-                        ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
-                        deref.offset,
+                        ArrayReadExpr.create<Type, Type>(sizeVar.ref, sizeKey),
+                        indexInObject,
                       ), // freed/not big enough ptr
-                      Lt(deref.offset, fitsall.nullValue), // negative index
+                      Lt(indexInObject, fitsall.nullValue), // negative index
                     ),
                   )
                 }
@@ -210,16 +271,21 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.metadata,
               )
             )
-            builder.addEdge(
-              XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), it.metadata)
-            )
           } else {
             builder.addEdge(it)
           }
         }
       }
     }
+    // A single shared exit edge: one per check would pile up parallel label-less edges on
+    // `badDeref`, which the OC backend rejects as a branching location without assumes.
+    if (badDeref.incomingEdges.isNotEmpty()) {
+      builder.addEdge(XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
+    }
   }
+
+  private fun Expr<*>.toFitsall(): Expr<*> =
+    if (fitsall.smtType is IntType) this else fitsall.castTo(this)
 
   fun annotateLost(builder: XcfaProcedureBuilder) {
     val errorLoc =
@@ -235,11 +301,35 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
           .also { builder.parent.addVar(it) }
           .wrappedVar
-    val remained = // 3k+0: malloc
-      Gt(
-        ArrayReadExpr.create<Type, Type>(sizeVar.ref, Mul(anyBase.ref, pointerType.getValue("3"))),
-        fitsall.nullValue,
-      )
+    val mallocBase = Mul(anyBase.ref, pointerType.getValue("3")) // 3k+0: malloc
+    val stillAllocated =
+      Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
+
+    // valid-memtrack is "pointed to OR deallocated" -- Valgrind's *definitely* lost -- so a block a
+    // live pointer still names is tracked, freed or not. Checking only whether everything was freed
+    // reported a leak for the ordinary `char *v; v = malloc(1);` shape, where the global keeps
+    // pointing at the block for the whole run and nothing is ever lost (sv-benchmarks `singleton`
+    // and friends expect `true` there). Locals are gone by the final location, so the pointers that
+    // can still name a block are the global ones; a block reachable only *through* another heap
+    // block is not covered, which keeps this on the safe side -- it can only report a leak that is
+    // not one, never miss one.
+    // ...but only for valid-memtrack. `valid-memcleanup` is the stricter property: *all* memory
+    // must be released before the program exits, and whether something still points at a block is
+    // beside the point -- `CWE401_Memory_Leak`, a global holding a never-freed malloc, is a
+    // violation of memcleanup and not of memtrack. Applying the exemption to both turned 32 of
+    // those from correct into missed leaks.
+    val trackedIfPointedTo = property.inputProperty != ErrorDetection.MEMCLEANUP
+    val globalPointers =
+      if (!trackedIfPointedTo) emptyList()
+      else
+        builder.parent
+          .getVars()
+          .map { it.wrappedVar }
+          .filter { it != anyBase && it != sizeVar }
+          .filter { CComplexType.getType(it.ref, parseContext) is CPointer }
+    val pointedTo = globalPointers.map { Eq(cast(it.ref, mallocBase.type), mallocBase) }
+    val remained =
+      if (pointedTo.isEmpty()) stillAllocated else And(stillAllocated, Not(Or(pointedTo)))
 
     val preFinalHavoc = XcfaLocation("_pre_final_havoc", metadata = EmptyMetaData)
     val preFinal = XcfaLocation("_pre_final", metadata = EmptyMetaData)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibDereferenceDecls;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
@@ -142,6 +143,10 @@ public class SmtLibSolver implements UCSolver, Solver {
                 ExprUtils.getConstants(assertion).stream()
                         .filter(symbolTable::definesConst)
                         .collect(Collectors.toSet());
+        // `deref` is an uninterpreted function whose declaration has no ConstDecl in the assertion;
+        // the term transformation registered one per signature, so declare it like any other
+        // constant.
+        consts.addAll(SmtLibDereferenceDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
@@ -168,6 +173,7 @@ public class SmtLibSolver implements UCSolver, Solver {
     @Override
     public void track(Expr<BoolType> assertion) {
         final var consts = ExprUtils.getConstants(assertion);
+        consts.addAll(SmtLibDereferenceDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
