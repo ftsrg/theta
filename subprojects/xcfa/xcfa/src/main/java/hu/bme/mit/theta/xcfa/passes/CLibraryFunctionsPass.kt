@@ -61,6 +61,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       "printf",
       "scanf",
       "pthread_join",
+      "pthread_detach",
       "pthread_create",
       "pthread_mutex_lock",
       "pthread_mutex_unlock",
@@ -211,6 +212,13 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata))
                 }
 
+                // Detaching only makes a thread unjoinable; it neither starts nor stops it, so it
+                // has no effect on what may race. Left unmodelled it survived as a call to a
+                // procedure that does not exist and brought down the race analysis' own procedure
+                // classifier ("Unknown procedure: pthread_detach", DataRaceUtils#
+                // getMultipleThreadsPerProcedure) -- which is reached only on the
+                // datarace-to-reachability path, so it never showed up in ordinary runs.
+                "pthread_detach",
                 "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
                 "pthread_cond_signal", // No need for special handling due to spurious wakeup
                 "pthread_mutex_init",
