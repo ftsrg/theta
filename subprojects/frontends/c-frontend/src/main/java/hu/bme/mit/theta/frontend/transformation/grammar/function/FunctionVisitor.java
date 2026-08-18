@@ -208,6 +208,26 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /**
      * Records that {@code varDecl} names a stack object whose lifetime ends with the current scope.
      */
+    /**
+     * Set while the arguments of a `pthread_*` call are visited. The address of a handle passed
+     * there belongs to the thread runtime for as long as the thread or lock lives, and theta models
+     * such a handle as an identity rather than storage that is read -- so releasing it at the end of
+     * its block is meaningless, and actively harmful for a handle declared inside a loop.
+     *
+     * <p>It lives HERE and not on ExpressionVisitor: call arguments are visited through the shared
+     * function visitor, which builds its own expression visitors, so a flag on one of those would
+     * never be seen by the nested visit that actually handles the `&`.
+     */
+    private boolean suppressScopedRelease = false;
+
+    public void setSuppressScopedRelease(boolean value) {
+        this.suppressScopedRelease = value;
+    }
+
+    public boolean isSuppressingScopedRelease() {
+        return suppressScopedRelease;
+    }
+
     private void registerScoped(VarDecl<?> varDecl) {
         if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
             if (scopedRegistered.peek().add(varDecl)) {
@@ -234,7 +254,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * @param address the reference expression, which ReferenceElimination later folds to the base
      */
     public void registerScopedAddress(VarDecl<?> varDecl, Expr<?> address) {
-        if (!parseContext.isCheckMemsafety()) {
+        if (!parseContext.isCheckMemsafety() || suppressScopedRelease) {
             return;
         }
         for (Tuple2<CDeclaration, VarDecl<?>> staticLocal : staticLocals) {

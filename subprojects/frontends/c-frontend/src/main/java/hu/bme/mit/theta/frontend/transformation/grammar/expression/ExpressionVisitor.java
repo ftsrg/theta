@@ -95,11 +95,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
 
-    /**
-     * Set while the arguments of a `pthread_*` call are visited: the address of a handle passed
-     * there is owned by the thread runtime and must not be released at the end of its block.
-     */
-    private boolean suppressScopedRelease = false;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
     private final PostfixVisitor postfixVisitor;
@@ -1236,9 +1231,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // visitor, which releases it at the end of the block that DECLARED it.
                 if (functionVisitor != null && originalOperand instanceof RefExpr<?> ref) {
                     final Expr<?> address = reference(originalOperand);
-                    if (!suppressScopedRelease) {
-                        functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
-                    }
+                    functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
                     return address;
                 }
                 // `&u.member` where the member covers its whole storage cell. A byte-laid-out
@@ -3667,8 +3660,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // access reported a false `valid-deref` (`pthread-theta/unwind3-100` and
                 // `unwind3-nondet` regressed from correct to wrong in run 93 for exactly this).
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
-                final boolean wasSuppressing = suppressScopedRelease;
-                if (calleeName.startsWith("pthread_")) suppressScopedRelease = true;
+                final boolean wasSuppressing =
+                        functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
+                if (calleeName.startsWith("pthread_") && functionVisitor != null)
+                    functionVisitor.setSuppressScopedRelease(true);
                 try {
                 if (exprList == null) arguments = List.of();
                 else {
@@ -3684,7 +3679,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     arguments = list;
                 }
                 } finally {
-                    suppressScopedRelease = wasSuppressing;
+                    if (functionVisitor != null)
+                        functionVisitor.setSuppressScopedRelease(wasSuppressing);
                 }
                 CCall cCall =
                         new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
