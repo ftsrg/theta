@@ -94,6 +94,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     protected final Map<VarDecl<?>, CDeclaration> functions;
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
+
+    /**
+     * Set while the arguments of a `pthread_*` call are visited: the address of a handle passed
+     * there is owned by the thread runtime and must not be released at the end of its block.
+     */
+    private boolean suppressScopedRelease = false;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
     private final PostfixVisitor postfixVisitor;
@@ -1230,7 +1236,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // visitor, which releases it at the end of the block that DECLARED it.
                 if (functionVisitor != null && originalOperand instanceof RefExpr<?> ref) {
                     final Expr<?> address = reference(originalOperand);
-                    functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
+                    if (!suppressScopedRelease) {
+                        functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
+                    }
                     return address;
                 }
                 // `&u.member` where the member covers its whole storage cell. A byte-laid-out
@@ -3650,6 +3658,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         isCallableFunctionPointer(expr));
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;
+                // `pthread_create(&t, ...)`, `pthread_mutex_lock(&m)`: the address of a *handle*
+                // goes to the thread runtime, which owns it for as long as the thread or lock
+                // lives -- and theta models such a handle as a thread id or mutex identity, not as
+                // storage that is read. Releasing it at the end of the block that declared it is
+                // therefore both meaningless and harmful: `for (...) { pthread_t t;
+                // pthread_create(&t, ...); }` had its handle freed on every iteration and the next
+                // access reported a false `valid-deref` (`pthread-theta/unwind3-100` and
+                // `unwind3-nondet` regressed from correct to wrong in run 93 for exactly this).
+                final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
+                final boolean wasSuppressing = suppressScopedRelease;
+                if (calleeName.startsWith("pthread_")) suppressScopedRelease = true;
+                try {
                 if (exprList == null) arguments = List.of();
                 else {
                     List<CStatement> list = new ArrayList<>();
@@ -3662,6 +3682,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         list.add(accept);
                     }
                     arguments = list;
+                }
+                } finally {
+                    suppressScopedRelease = wasSuppressing;
                 }
                 CCall cCall =
                         new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
