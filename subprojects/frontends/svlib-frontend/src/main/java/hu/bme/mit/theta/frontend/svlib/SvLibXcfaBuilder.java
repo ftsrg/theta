@@ -13,6 +13,7 @@ import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
 import java.util.*;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -304,6 +305,15 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
       return switch (simpleSort.identifier().getText()) {
         case "Int" -> Int();
         case "Bool" -> Bool();
+        default -> unsupported("sort '" + sort.getText() + "'");
+      };
+    } else if (sort instanceof SvLibParser.ParametricSortContext parametricSort) {
+      return switch (parametricSort.identifier().getText()) {
+        case "Array" -> {
+          Type indexType = sortOf(parametricSort.sort(0));
+          Type elementType = sortOf(parametricSort.sort(1));
+          yield Array(indexType, elementType);
+        }
         default -> unsupported("sort '" + sort.getText() + "'");
       };
     }
