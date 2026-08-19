@@ -206,9 +206,13 @@ class FrontendXcfaBuilder(
     return current
   }
 
-  private fun unhandledLhs(lValue: Expr<*>, rExpression: Expr<*>): String =
+  private fun unhandledLhs(lValue: Expr<*>, target: Expr<*>, rExpression: Expr<*>): String =
     "Could not handle left-hand side of assignment: lhs is a ${lValue.javaClass.simpleName}" +
-      " [$lValue] of type ${lValue.type}, rhs type ${rExpression.type}"
+      " [$lValue] of type ${lValue.type}" +
+      (if (target !== lValue)
+        ", which peels to a ${target.javaClass.simpleName} of type ${target.type}"
+      else "") +
+      ", rhs type ${rExpression.type}"
 
   private fun getMetadata(source: CStatement): MetaData =
     CMetaData(
@@ -1424,11 +1428,23 @@ class FrontendXcfaBuilder(
           metadata = getMetadata(statement),
         )
       } else
-        when (lValue) {
+        // Dispatch on the lvalue with its width/sign wrappers PEELED. An integer promotion or a
+        // signedness change can leave a `BvPosExpr`/`BvSignChangeExpr` (both `PosExpr`), or a
+        // `BvZExt`/`BvSExt`, sitting on the left-hand side; none of them names different storage,
+        // so the assignment belongs to whatever is underneath. Peeling here rather than at
+        // `lValue`'s binding is deliberate: the bitfield-write path ABOVE inspects the unpeeled
+        // left-hand side, and peeling it there broke the byte-addressed-union and bitfield
+        // lowering (4 c2xcfa tests caught it).
+        //
+        // Dispatching the whole `when` on the peeled form -- rather than handling a couple of
+        // shapes in a `PosExpr` branch -- routes a wrapped dereference, a wrapped struct-array
+        // element (`AddExpr`) and a wrapped variable each to the branch that already knows how to
+        // assign to it.
+        when (val target = peelWidthWrappers(lValue)) {
           is Dereference<*, *, *> -> {
-            val op = cast(lValue.array, lValue.array.type)
-            val offset = cast(lValue.offset, op.type)
-            val castRExpression = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+            val op = cast(target.array, target.array.type)
+            val offset = cast(target.offset, op.type)
+            val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
             val type = CComplexType.getType(castRExpression, parseContext)
 
             val deref = Dereference(op, offset, type.smtType)
@@ -1440,7 +1456,7 @@ class FrontendXcfaBuilder(
           }
 
           is RefExpr<*> -> {
-            val lhsType = CComplexType.getType(lValue, parseContext)
+            val lhsType = CComplexType.getType(target, parseContext)
             if (lhsType.isCopiedStruct(rExpression)) {
               // Checked before the pointer-arithmetic rewrite below, because `t = a[i]` on an array
               // of structs satisfies both: the element is now an offset into the array (`a + i*k`),
@@ -1449,7 +1465,7 @@ class FrontendXcfaBuilder(
               // alias of the element -- and left it a split variable, which then failed outright on
               // the next bare use of `t`.
               SequenceLabel(
-                structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+                structCopy(target, rExpression, lhsType as CStruct, getMetadata(statement)),
                 metadata = getMetadata(statement),
               )
             } else if (
@@ -1487,13 +1503,13 @@ class FrontendXcfaBuilder(
                 // fine once the address is one scalar). This is what unblocks the pointer arithmetic
                 // the intel-tdx-module firmware does that the 2-D model cannot split.
                 AssignStmtLabel(
-                  lValue,
-                  cast(lhsType.castTo(rExpression), lValue.type),
+                  target,
+                  cast(lhsType.castTo(rExpression), target.type),
                   metadata = getMetadata(statement),
                 )
               } else {
                 AssignStmtLabel(
-                  lValue,
+                  target,
                   cast(
                     asReference
                       // A *multi-model-only* limitation, not a limitation of the program: the
@@ -1505,9 +1521,9 @@ class FrontendXcfaBuilder(
                       // exception in the cause chain), which is what already happens for the other
                       // shapes the base/offset split cannot represent.
                       ?: throw UnsupportedPointerSplitException(
-                        "Pointer arithmetic not supported: $lValue = $rExpression"
+                        "Pointer arithmetic not supported: $target = $rExpression"
                       ),
-                    lValue.type,
+                    target.type,
                   ),
                   metadata = getMetadata(statement),
                 )
@@ -1515,8 +1531,8 @@ class FrontendXcfaBuilder(
             } else {
               // TODO: check if assignment to arrays (stack AND heap) are value- or pointer-based
               AssignStmtLabel(
-                lValue,
-                cast(lhsType.castTo(rExpression), lValue.type),
+                target,
+                cast(lhsType.castTo(rExpression), target.type),
                 metadata = getMetadata(statement),
               )
             }
@@ -1529,56 +1545,19 @@ class FrontendXcfaBuilder(
           // the
           // sum back into base and offset for each field.
           is AddExpr<*> -> {
-            val lhsType = CComplexType.getType(lValue, parseContext)
+            val lhsType = CComplexType.getType(target, parseContext)
             if (lhsType.isCopiedStruct(rExpression)) {
               SequenceLabel(
-                structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+                structCopy(target, rExpression, lhsType as CStruct, getMetadata(statement)),
                 metadata = getMetadata(statement),
               )
             } else {
-              error(unhandledLhs(lValue, rExpression))
-            }
-          }
-
-          // `(bvpos x) = v`. An integer promotion or a signedness change can leave a width/sign
-          // wrapper on the LVALUE, not just on a read: `BvPosExpr` and `BvSignChangeExpr` (both
-          // `PosExpr`) arrive here. The wrapper names the same storage as whatever is underneath, so
-          // the assignment is built against the peeled form -- a variable or a dereference alike --
-          // with the value converted to *its* type.
-          //
-          // It is peeled HERE and not at `lValue`'s binding: the bitfield-write path above inspects
-          // the unpeeled left-hand side, and peeling it there broke the byte-addressed union and
-          // bitfield lowering (4 c2xcfa tests).
-          is PosExpr<*> -> {
-            when (val inner = peelWidthWrappers(lValue)) {
-              is RefExpr<*> -> {
-                val innerType = CComplexType.getType(inner, parseContext)
-                AssignStmtLabel(
-                  inner,
-                  cast(innerType.castTo(rExpression), inner.type),
-                  metadata = getMetadata(statement),
-                )
-              }
-
-              is Dereference<*, *, *> -> {
-                val op = cast(inner.array, inner.array.type)
-                val offset = cast(inner.offset, op.type)
-                val castRExpression = CComplexType.getType(inner, parseContext).castTo(rExpression)
-                val cellType = CComplexType.getType(castRExpression, parseContext)
-                val deref = Dereference(op, offset, cellType.smtType)
-                parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
-                StmtLabel(
-                  MemoryAssignStmt.create(deref, castRExpression),
-                  metadata = getMetadata(statement),
-                )
-              }
-
-              else -> error(unhandledLhs(lValue, rExpression))
+              error(unhandledLhs(lValue, target, rExpression))
             }
           }
 
           else -> {
-            error(unhandledLhs(lValue, rExpression))
+            error(unhandledLhs(lValue, target, rExpression))
           }
         }
 
