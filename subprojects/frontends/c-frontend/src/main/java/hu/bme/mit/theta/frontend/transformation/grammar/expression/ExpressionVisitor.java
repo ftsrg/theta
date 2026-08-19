@@ -3620,7 +3620,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else {
-                    throw new RuntimeException("Non-array expression used as array!");
+                    // Say WHAT was indexed. Subscripting dispatches on the operand's C type --
+                    // CArray or CPointer -- so reaching here means the type is neither, which in
+                    // practice means the pointee-ness was lost upstream rather than that the
+                    // program indexed a scalar. Naming the type and the expression is the whole
+                    // difference between a triageable family and 18 identical lines in a log.
+                    throw new RuntimeException(
+                            "Non-array expression used as array: the indexed operand has C type "
+                                    + arrayType
+                                    + " ("
+                                    + (arrayType == null
+                                            ? "null"
+                                            : arrayType.getClass().getSimpleName())
+                                    + "), which is neither an array nor a pointer. Operand: "
+                                    + primary);
                 }
             };
         }
