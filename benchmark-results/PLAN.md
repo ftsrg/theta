@@ -7669,7 +7669,7 @@ Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
 
 | # | item | why it is here | status |
 |---|---|---|---|
-| 1 | **[TODO]** print the offending TYPE in `Non-array expression used as array!` (was Q2) | the message names nothing, so the family cannot be triaged at all | |
+| 1 | **[DONE]** print the offending TYPE in `Non-array expression used as array!` (was Q2) | the message names nothing, so the family cannot be triaged at all | |
 | 2 | **[TODO] [subagent]** struct field collection stops at the first FUNCTION-POINTER member (was Q3) | `cert_st` defines `key, valid, mask, export_mask, rsa_tmp, rsa_tmp_cb, dh_tmp, dh_tmp_cb, pkeys[5], references`; theta collected exactly `[valid, export_mask, key, mask, rsa_tmp]` and dropped everything from `rsa_tmp_cb` on. 28 runs directly, and very likely the SAME root cause as item 3 below | |
 | 3 | **[TODO] [same subagent as 2]** fn-pointer through a `Dereference` is not callable (was Q8) | `isCallableFunctionPointer` gates on the TYPE, not the shape -- candidate sets could dispatch any expression. These 79 are a `Dereference` whose cType lost its function-pointer-ness, i.e. probably item 2's bug. **Re-measure after item 2 before doing any work** | |
 | 4 | **[TODO]** peel `BvPosExpr`/`BvSignChangeExpr` in the remaining lvalue shapes (was Q7) | the branch peels to `RefExpr`/`Dereference`; 94 runs peel to something else. Item 1's type printing should reveal what | |
