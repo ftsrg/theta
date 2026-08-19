@@ -66,6 +66,19 @@ public class Struct extends NamedType {
     private boolean currentlyBeingBuilt;
 
     /**
+     * Set while this tag's `{ ... }` body is being read, i.e. between the first member and the last
+     * (see {@link #beginDefinition()}). A tag in that state is just as incomplete as one with no
+     * body at all: expanding it yields whatever members have been seen so far, and the rest arrive
+     * afterwards. It matters because a member can pull the *enclosing* tag back in mid-definition
+     * -- `struct cert_st { ...; RSA *(*cb)(SSL *ssl, int, int); ...; CERT_PKEY pkeys[5]; }`
+     * resolves the typedef `SSL` while reading that parameter, and `struct ssl_st` has a `struct
+     * cert_st *cert` member, so `cert_st` is expanded (and cached into `ssl_st`) with only its
+     * first five members. Without this flag that half-expansion is treated as complete and never
+     * invalidated, so `(s->cert)->pkeys` fails with "field not found" for the rest of the run.
+     */
+    private boolean definitionInProgress;
+
+    /**
      * The expanded field list of the *canonical* definition, shared by every copy. A nested struct
      * type re-expands its whole subtree on each use; without this cache the expansion is
      * exponential in nesting depth (large LDV kernel headers ran out of heap inside it).
@@ -182,6 +195,19 @@ public class Struct extends NamedType {
         return (union ? "union " : "struct ") + (name == null ? "<anonymous>" : name);
     }
 
+    /**
+     * Mark the start of this tag's member list; see {@link #definitionInProgress}. Paired with
+     * {@link #endDefinition()}.
+     */
+    public void beginDefinition() {
+        canonical().definitionInProgress = true;
+    }
+
+    /** Mark the member list finished; see {@link #definitionInProgress}. */
+    public void endDefinition() {
+        canonical().definitionInProgress = false;
+    }
+
     public void addField(CDeclaration decl) {
         fields.put(checkNotNull(decl.getName()), checkNotNull(decl));
         cachedActualFields = null;
@@ -227,10 +253,14 @@ public class Struct extends NamedType {
         }
         currentlyBeingBuilt = true;
         final Struct canonical = canonical();
-        // Expanding a tag with no body yet yields an empty CStruct -- unavoidable, the definition
-        // has not been parsed. Report it to the expansion in progress so that whatever caches this
-        // result can be invalidated when the tag is finally defined.
-        if (name != null && canonical.fields.isEmpty() && !expansionFrames.isEmpty()) {
+        // Expanding a tag whose body is not (fully) parsed yet yields a CStruct missing members --
+        // unavoidable, they have not been read. Report it to the expansion in progress so that
+        // whatever caches this result can be invalidated when the remaining members arrive. Both an
+        // undefined tag and one whose `{ ... }` is still being read count (see
+        // #definitionInProgress).
+        if (name != null
+                && (canonical.fields.isEmpty() || canonical.definitionInProgress)
+                && !expansionFrames.isEmpty()) {
             expansionFrames.peek().add(tagOf(name, union));
         }
         List<Tuple2<String, CComplexType>> actualFields = canonical.cachedActualFields;
