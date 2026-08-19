@@ -7678,7 +7678,48 @@ Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
 | 7 | **[DONE]** switch to the bitvector encoding when a bitwise op needs it (was Q1). The fallback already existed at `XcfaParser.kt:267` and was DEAD: `FunctionVisitor` resolves `efficient` into integer/bitvector *before* the parse can fail, so the retry's `== efficient` guard was never true. Root cause underneath it: `BitwiseChecker` had no `visitAssignmentExpression` at all -- the grammar routes `x |= y` through `assignmentOperator`, not `inclusiveOrExpression` -- so a program whose only bit manipulation is compound looked purely arithmetic, integer was chosen, and `CAssignment` then refused the first `|=` under an encoding the frontend itself had picked. Also fixed: the four bitwise visitors descended into operand 0 only, leaving later operands unanalysed | `|=`, `>>=`, `<<=` and friends are only modelled over bitvectors; under `--arithmetic integer` there is no bit representation. Rather than refuse, fall back to bitvector for that task | |
 | 8 | **[DONE]** `Array with unspecified size must have initializer list` (was Q5). All 112 runs are `extern T a[];` -- a DECLARATION, not a definition (C17 6.9.2p2), whose extent lives in another TU and is unknowable here; 73 such declarations over 11 names across the 56 tasks, 100% extern, none defined in-file. Fix: give the object its base, invent no extent, skip the initializer sweep, and register a FLAT_STRIDE memsafety bound (an unregistered base reads back as size 0, which makes every access an invalid deref). ⚠️ The bound is deliberately the PERMISSIVE direction -- it can miss a real OOB on such an array, but the alternative invents an extent and produces wrong `false(valid-deref)`. Tentative definitions and flexible array members still refused, now by name | could not reproduce from logs -- the message truncates on `CArray.toString()`. Reproduce locally first, then decide the correct behaviour | |
 | 9 | **[TODO] [subagent]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9) | 149 runs, 62% intel-tdx. Likely the wrong *expectation* rather than a real mismatch -- find the call site that imposes Bv32 and either cast semantically or fix the expected type | |
-| 10 | **[TODO]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10) | ⚠️ **CORRECTION: the bytes model IS implemented and on this branch** -- e9258f9c29 (scalars/arrays/ptr-arith), 4d294d52b8 (struct members), f8be59a025 (bitfields+unions), 8db5623a3a (tests), 85e0a4fb7f (complex27 portfolio, BMC-MathSAT first). My repeated "structurally blocked on the bytes model" was WRONG. The 691 byte-union errors persist only because STABLE does not use it. Mirror the existing multi->flat fallback in `ExecuteConfig.frontend`. Note bytes REQUIRES `--arithmetic bitvector`, and per the notes only *pure*-BMC-MathSAT performs well | |
+| 10 | **[DONE -- implemented, measured, and DELIBERATELY NOT SHIPPED]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10). The fallback works (guards correct, 3 float-newlib tasks 210->0), but the model it falls back INTO is unsound for the very pattern that triggers it, so shipping it would convert ~554 score-0 ERRORs into wrong `false` verdicts at -16 each. Reverted; repro kept at `canaries/fixtures/union_double_punning_bytes_UNSOUND.c` | ⚠️ the bytes model IS implemented on this branch; the fallback is a ~40-line mirror of multi->flat. The blocker is soundness, not wiring | |
+
+### Item 10: why the bytes fallback is not shipped (measured 2026-08-19)
+
+**The fallback itself was built and works.** `RequiresByteAddressedMemoryException` raised at the two
+union refusal sites (`ExpressionVisitor:1208` address-of-multi-byte-member, `:2607`
+byte-laid-out-member), an escape hatch in `getXcfa` beside the existing `rethrowPointerSplitLimitation`
+(needed because `getXcfa` catches `Exception` and calls `exitProcess`, so a caller cannot simply wrap
+it in a `try` -- that is why the first attempt silently did nothing), and a retry in
+`ExecuteConfig.frontend` pinning `memoryModel = bytes` + `arithmetic = bitvector`. Measured:
+
+| | exit |
+|---|---|
+| `float-newlib/double_req_bl_{0210,0220a,0240a}` before | 210, `byte-addressed union` |
+| same, with the fallback | **0** |
+| explicit `--memory-model multi` / `flat` / `--arithmetic integer` | 210, no fallback (user choice respected) |
+
+**Why it was reverted.** The bytes model gives WRONG ANSWERS on double/bytes punning -- the exact
+pattern that triggers the fallback:
+
+    u.value = 1.0;
+    if (u.parts.msw != 0x3FF00000u) reach_error();   // gcc: unreachable. theta: SafetyResult Unsafe
+
+That is with `--memory-model bytes --arithmetic bitvector` passed *explicitly*, no fallback involved,
+so the unsoundness is pre-existing in the model and not something the fallback introduces. The union's
+own layout is fine (`u.words[1] == u.parts.msw` verifies Safe); it is specifically the bits of a
+double **written as a double** that come back unconstrained, which yields spurious counterexamples.
+
+The connection is not incidental: the cell models refuse this program *because* the fp<->bits round
+trip is unsound (the batch-59 NaN gate on `fpToIEEEBV`). The byte-addressed model does not fix that
+round trip, it merely does not check. So the refusal I was converting into a fallback trigger is a
+load-bearing refusal.
+
+**Scale of the averted damage:** the two union messages are the largest frontend error family in run
+94 (1,448 runs: 852 address-of, 596 member-access). The half that the fallback actually rescues is
+float-newlib 530 + float-benchs 24, all of which are this punning pattern. Turning ~554 ERRORs
+(score 0) into wrong `false` verdicts costs -16 apiece. The intel-tdx half (688 runs) falls back but
+then dies on a later unrelated limitation, so it gains nothing either.
+
+**To make this shippable:** fix the fp<->bytes encoding under the byte-addressed model, then re-apply
+the fallback -- the wiring is straightforward and is described above. Until then a loud ERROR is the
+correct behaviour.
 
 ### Follow-up found while doing item 7 (NOT in the 10-item plan)
 
