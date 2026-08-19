@@ -58,6 +58,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
+import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration
 import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -265,6 +266,7 @@ class FrontendXcfaBuilder(
         // is an atomic variable; `_Atomic int *p` is a plain variable that happens to point at
         // atomic memory, and it is the memory, not `p`, that then cannot be raced on.
         globalDeclaration.get1().actualType.isAtomic,
+        globalDeclaration.get1(),
       )
     }
     // Every compile-time base has now been handed out (only globals take one), so publish the
@@ -836,6 +838,7 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     initExpr: CStatement? = null,
     isAtomic: Boolean = false,
+    declaration: CDeclaration? = null,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
     if (type is CVoid) {
@@ -874,6 +877,17 @@ class FrontendXcfaBuilder(
         )
       )
       recordObjectAtomicity(objectBase, type)
+      // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
+      // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
+      // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
+      // translation unit, which is not part of this task, so the extent is not merely missing here,
+      // it is unknowable. Every use the standard permits on an incomplete array (`&a`, `a` decaying
+      // to `T *`, `a[i]`) needs only the *element* type; the ones that need the extent (`sizeof a`)
+      // are constraint violations a compiler rejects. Demanding one therefore refused valid C: 112
+      // runs of the run-94 parse sweep, all LDV, every one of them this shape (`extern unsigned
+      // char const _ctype[];`, `extern u32 const cx88_user_ctrls[];`, ...).
+      val extentUnknown =
+        declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
       if (MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
@@ -886,11 +900,30 @@ class FrontendXcfaBuilder(
         // range, so the valid-deref bound `size <= offset` was satisfiable for perfectly good
         // accesses to later elements -- `struct Item arr[3]` recorded 3 for a 6-cell object, and
         // every `arr[2].b` was reported as an invalid dereference.
-        val elementCells = cellsOf(type.embeddedType)
-        val bounds =
-          CComplexType.getUnsignedLong(parseContext)
-            .getValue((getArraySize(type, initExpr).toLong() * elementCells).toString())
+        //
+        // An object of unknown extent gets its whole slice of the address line instead. It has to
+        // get *something*: an unregistered base reads back as size 0 (the size array's default,
+        // which is also how a freed block is marked), and `size <= offset` is then a tautology --
+        // every access to it would be reported as an invalid dereference. Any concrete bound would
+        // be invented, and inventing a small one is how a wrong `false(valid-deref)` gets produced:
+        // `_ctype[c]` indexes a 256-entry table this file never sees the definition of. The slice
+        // width is the largest bound that cannot collide with the next object (bases are spaced by
+        // FLAT_STRIDE), and it says the only true thing this unit knows -- it cannot bound an index
+        // into an object it does not define.
+        val cells =
+          if (extentUnknown) FlatMemoryPass.FLAT_STRIDE
+          else getArraySize(type, initExpr, declaration).toLong() * cellsOf(type.embeddedType)
+        val bounds = CComplexType.getUnsignedLong(parseContext).getValue(cells.toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
+      }
+      if (extentUnknown) {
+        // No initialization sweep, for want of anything true to write: the cells belong to the
+        // defining unit, so C says nothing about their values here -- not even zero, which is what
+        // a *definition* with static storage duration would get (6.7.10p10). Leaving them unwritten
+        // is the honest encoding and the safe one: an unwritten cell is unconstrained, so a read of
+        // it over-approximates whatever the real definition holds, where a zero would have been a
+        // claim this file has no basis for.
+        return
       }
       val flatElement = type.embeddedType
       if (
@@ -939,7 +972,7 @@ class FrontendXcfaBuilder(
       }
       initializeCompound(
         builder,
-        getArraySize(type, initExpr),
+        getArraySize(type, initExpr, declaration),
         { type.embeddedType },
         initExpr,
         initStmtList,
@@ -1283,7 +1316,16 @@ class FrontendXcfaBuilder(
   private fun designatedIndex(designator: java.util.Optional<CStatement>): Int? =
     designator.map { (it.expression as IntLitExpr).value.toInt() }.orElse(null)
 
-  private fun getArraySize(type: CArray, initExpr: CStatement?): Int {
+  /**
+   * Whether [declaration] only *declares* its object, leaving the definition -- and anything the
+   * definition alone fixes, such as an array's extent -- to another translation unit. That is
+   * `extern` with no initializer, and nothing else: `extern T a[] = {...}` at file scope *is* the
+   * definition (C17 6.9.2p1), and a bare `T a[];` is a tentative definition this file completes.
+   */
+  private fun declaredElsewhere(declaration: CDeclaration?): Boolean =
+    declaration?.type?.isExtern == true && declaration.initExpr == null
+
+  private fun getArraySize(type: CArray, initExpr: CStatement?, declaration: CDeclaration?): Int {
     if (type.arrayDimension == null) {
       if (initExpr is CInitializerList) {
         // `[9] = x` extends the array: the size is the highest written position + 1.
@@ -1292,8 +1334,15 @@ class FrontendXcfaBuilder(
           .maxOrNull()
           ?.plus(1) ?: 0
       } else {
+        // Name the declaration. `CArray` has no toString of its own, so this used to print
+        // `...compound.CArray@1f9ba906`, which says nothing about which declaration is at fault --
+        // and, being long, was what the benchmark's status column truncated on, which is how a
+        // 112-run family stayed untriaged. The declaration's own type and name are the C text.
+        val what =
+          declaration?.let { "`${it.type} ${it.name}[]`" }
+            ?: "this array of ${type.embeddedType.javaClass.simpleName}"
         throw UnsupportedFrontendElementException(
-          "Array with unspecified size must have initializer list: the extent of this ${type} can" +
+          "Array with unspecified size must have initializer list: the extent of $what can" +
             " be inferred only from a brace initializer, and the declaration has" +
             " ${if (initExpr == null) "none" else "a ${initExpr.javaClass.simpleName} instead"}."
         )
