@@ -264,7 +264,18 @@ private fun parseC(
       val stream = FileInputStream(input)
       getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
     } catch (e: Throwable) {
-      if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+      // The retry used to require `efficient`, which it never saw: FunctionVisitor resolves
+      // `efficient` into integer or bitvector before the parse gets far enough to fail, so by the
+      // time an exception arrives the arithmetic always reads as an explicit choice. The fallback
+      // was therefore dead for exactly the programs it was written for -- one whose bit
+      // manipulation the checker missed would fail with "only modelled over bitvectors" and never
+      // be retried. An automatically chosen encoding may be revised; an explicitly requested one
+      // may not.
+      val revisable =
+        parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient ||
+          (parseContext.isArithmeticAutoSelected &&
+            parseContext.arithmetic != ArchitectureConfig.ArithmeticType.bitvector)
+      if (revisable) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)

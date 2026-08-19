@@ -7675,9 +7675,27 @@ Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
 | 4 | **[DONE]** peel `BvPosExpr`/`BvSignChangeExpr` in the remaining lvalue shapes (was Q7). Residue is a DIFFERENT bug: they peel to `BvExtractExpr (Bv 1)` = single-bit bitfield writes, all intel-tdx -- likely dissolves under item 10 | the branch peels to `RefExpr`/`Dereference`; 94 runs peel to something else. Item 1's type printing should reveal what | |
 | 5 | **[DONE]** give every DECLARED-but-not-defined function a referencable id (was Q6). Cause was the name PRE-PASS only walking definitions + reordered global decls; also closed a soundness hole where the id var was left unconstrained | only *defined* functions get an id, so `= malloc` / `= __VERIFIER_nondet_int` resolve to nothing (96 runs). Must work when a function is declared MORE THAN ONCE | |
 | 6 | **[DONE]** inline a void call that does not pass the synthetic return slot (was Q4). Fixed in the INLINER, not by removing the slot -- the pipeline assumes a ret var exists | `void outb(unsigned char, unsigned int);` is declared with 2 params and every call passes 2, yet the callee arrives with 3 -- the arity guard then refuses (30 runs). The C is consistent; the mismatch is ours | |
-| 7 | **[TODO]** switch to the bitvector encoding when a bitwise op needs it (was Q1) | `|=`, `>>=`, `<<=` and friends are only modelled over bitvectors; under `--arithmetic integer` there is no bit representation. Rather than refuse, fall back to bitvector for that task | |
+| 7 | **[DONE]** switch to the bitvector encoding when a bitwise op needs it (was Q1). The fallback already existed at `XcfaParser.kt:267` and was DEAD: `FunctionVisitor` resolves `efficient` into integer/bitvector *before* the parse can fail, so the retry's `== efficient` guard was never true. Root cause underneath it: `BitwiseChecker` had no `visitAssignmentExpression` at all -- the grammar routes `x |= y` through `assignmentOperator`, not `inclusiveOrExpression` -- so a program whose only bit manipulation is compound looked purely arithmetic, integer was chosen, and `CAssignment` then refused the first `|=` under an encoding the frontend itself had picked. Also fixed: the four bitwise visitors descended into operand 0 only, leaving later operands unanalysed | `|=`, `>>=`, `<<=` and friends are only modelled over bitvectors; under `--arithmetic integer` there is no bit representation. Rather than refuse, fall back to bitvector for that task | |
 | 8 | **[TODO] [subagent]** `Array with unspecified size must have initializer list` (was Q5) | could not reproduce from logs -- the message truncates on `CArray.toString()`. Reproduce locally first, then decide the correct behaviour | |
 | 9 | **[TODO] [subagent]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9) | 149 runs, 62% intel-tdx. Likely the wrong *expectation* rather than a real mismatch -- find the call site that imposes Bv32 and either cast semantically or fix the expected type | |
 | 10 | **[TODO]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10) | ⚠️ **CORRECTION: the bytes model IS implemented and on this branch** -- e9258f9c29 (scalars/arrays/ptr-arith), 4d294d52b8 (struct members), f8be59a025 (bitfields+unions), 8db5623a3a (tests), 85e0a4fb7f (complex27 portfolio, BMC-MathSAT first). My repeated "structurally blocked on the bytes model" was WRONG. The 691 byte-union errors persist only because STABLE does not use it. Mirror the existing multi->flat fallback in `ExecuteConfig.frontend`. Note bytes REQUIRES `--arithmetic bitvector`, and per the notes only *pure*-BMC-MathSAT performs well | |
+
+### Follow-up found while doing item 7 (NOT in the 10-item plan)
+
+**Two of three arguments are dropped before inlining.** With the encoding fixed, the three
+`coreutils-v9.5-units/relpath_*` tasks get past `|=` and now fail later:
+
+    Inlining 'buffer_or_output': the call site supplies 2 argument(s) [(Bv 1), (Bv 32)]
+    but the procedure has 4 parameter(s) [(buffer_or_output_ret, OUT), (::str, IN), (::pbuf, IN), (::plen, IN)]
+
+The C is `static _Bool buffer_or_output (char const *str, char **pbuf, size_t *plen)` and every one
+of its six call sites passes three arguments (`buffer_or_output ("..", &buf, &len)`). The `(Bv 1)` is
+the `_Bool` return slot, so the call arrives with the slot plus exactly ONE real argument: two are
+lost somewhere between the call expression and the inliner. This is NOT the item-6 shape (that is a
+*void* callee with one slot too many, and the guard correctly declines to drop a non-void one), and
+it is not caused by the encoding change -- it was merely hidden behind the `|=` failure. The two
+survivors/casualties still need identifying; the `&buf`/`&len` address-of arguments are the
+suspects, being the ones that differ from the surviving string literal.
+
 
 **Then:** parse-only benchmark; if significantly better than run 94, a full portfolio run.

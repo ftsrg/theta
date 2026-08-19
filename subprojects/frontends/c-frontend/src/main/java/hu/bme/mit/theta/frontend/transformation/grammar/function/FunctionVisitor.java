@@ -503,6 +503,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                     || arithmeticTraits.contains(ArithmeticTrait.FLOAT)
                             ? ArithmeticType.bitvector
                             : ArithmeticType.integer);
+            // Remembered so a later failure can still fall back to bitvectors: once `efficient` is
+            // resolved here, nothing downstream could tell an automatic choice apart from one the
+            // user made explicitly, and the fallback in XcfaParser refused to revise either.
+            parseContext.setArithmeticAutoSelected(true);
         }
 
         Set<CDeclaration> typedefs = ctx.accept(typedefVisitor);

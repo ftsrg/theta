@@ -64,3 +64,4 @@ float_subnormal_order.c	efficient	ILP32	SAFE	88	subnormal floats decode below th
 bv_sub_intmin.c	bitvector	ILP32	SAFE:no-overflow	89	subtracting INT_MIN: the negation is widened before it wraps (bitvector overflow check)
 calloc_zeroes.c	efficient	LP64	SAFE	90	calloc is lowered to malloc+memset, with the fill placed at the typed binding
 memset_symbolic.c	efficient	LP64	SAFE	90	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
+compound_bitwise_encoding.c	efficient	ILP32	SAFE	94	compound bitwise assignment selects the bitvector encoding
