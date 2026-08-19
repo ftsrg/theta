@@ -203,16 +203,35 @@ internal fun inlineCallSite(
   // ...)` and friends -- indexes safely and simply ignores the surplus, exactly as it did before
   // this guard existed. Refusing those too cost 713 LDV driver runs that used to build (`printk`
   // 476, `dev_err` 158, `__dynamic_dev_dbg` 79), the bulk of the run-91 parse regression.
-  if (calleeParams.size > invokeLabel.params.size) {
+  // A `void` procedure carries a SYNTHETIC return slot -- FrontendXcfaBuilder mints
+  // `<name>_ret` for every procedure, void included, because the rest of the pipeline assumes a
+  // return variable exists. A call site that discards the (nonexistent) result does not pass one,
+  // so the callee has exactly one parameter more than the call supplies and the two disagree by
+  // that slot alone. `void outb(unsigned char, unsigned int)` is declared with two parameters and
+  // every call passes two, yet the callee arrives with three:
+  //   call   [(Bv 1), (Bv 32)]
+  //   callee [(outb_ret, OUT), (outb::byte, IN), (outb::port, IN)]
+  // Refusing that is refusing our own bookkeeping. Bind the callee's real parameters to the
+  // arguments and drop the return slot: a void function has no result for anyone to read, so
+  // nothing is lost. Anything OTHER than this exact shape is still refused.
+  val voidReturnSlotUnpassed =
+    calleeParams.size == invokeLabel.params.size + 1 &&
+      calleeParams.isNotEmpty() &&
+      calleeParams[0].second == ParamDirection.OUT &&
+      calleeParams[0].first.name == "${invokeLabel.name}_ret"
+  @Suppress("NAME_SHADOWING")
+  val effectiveParams = if (voidReturnSlotUnpassed) calleeParams.drop(1) else calleeParams
+
+  if (effectiveParams.size > invokeLabel.params.size) {
     throw UnsupportedFrontendElementException(
       "Inlining '${invokeLabel.name}': the call site supplies ${invokeLabel.params.size}" +
-        " argument(s) but the procedure has ${calleeParams.size} parameter(s). This is an internal" +
-        " disagreement (an only-declared void function gains a synthetic return slot that its call" +
-        " sites do not pass), not necessarily a fault in the input."
+        " argument(s) ${invokeLabel.params.map { it.type }} but the procedure has" +
+        " ${effectiveParams.size} parameter(s) ${effectiveParams.map { it.first.name to it.second }}." +
+        " This is an internal disagreement, not necessarily a fault in the input."
     )
   }
 
-  for ((i, param) in calleeParams.withIndex()) {
+  for ((i, param) in effectiveParams.withIndex()) {
     if (param.second != ParamDirection.OUT) {
       val stmt =
         AssignStmt.of(
