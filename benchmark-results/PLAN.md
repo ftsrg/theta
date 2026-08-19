@@ -7656,3 +7656,28 @@ The machine was wiped mid-session again: **no JDK, gcc, python3, unzip, bzip2 or
 output is grepped only for `^e:` will look like it *succeeded*. Reinstall with
 `sudo apt-get install -y openjdk-21-jdk-headless gcc python3 unzip bzip2 jq`. The repo,
 `benchmark-results/` and `sv-benchmarks` survive.
+
+## Batch 92 — the 10-item frontend plan (user-sequenced 2026-08-19)
+
+Worked ONE AT A TIME, each gated on `run_canaries.sh "" parse` (262 canaries + 65 fixtures) AND the
+per-module unit tests, then committed before the next is started. Cron `288bf05b` re-enters this every
+5 h so an interrupted session resumes here. Items marked **[subagent]** are to be delegated with fresh
+context, per the user; gate and commit their work in the main session.
+
+Baselines to beat: run 94 parse-only = **31,984 built OK**, 1,492 frontend-before, 850 frontend-after.
+Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
+
+| # | item | why it is here | status |
+|---|---|---|---|
+| 1 | **[TODO]** print the offending TYPE in `Non-array expression used as array!` (was Q2) | the message names nothing, so the family cannot be triaged at all | |
+| 2 | **[TODO] [subagent]** struct field collection stops at the first FUNCTION-POINTER member (was Q3) | `cert_st` defines `key, valid, mask, export_mask, rsa_tmp, rsa_tmp_cb, dh_tmp, dh_tmp_cb, pkeys[5], references`; theta collected exactly `[valid, export_mask, key, mask, rsa_tmp]` and dropped everything from `rsa_tmp_cb` on. 28 runs directly, and very likely the SAME root cause as item 3 below | |
+| 3 | **[TODO] [same subagent as 2]** fn-pointer through a `Dereference` is not callable (was Q8) | `isCallableFunctionPointer` gates on the TYPE, not the shape -- candidate sets could dispatch any expression. These 79 are a `Dereference` whose cType lost its function-pointer-ness, i.e. probably item 2's bug. **Re-measure after item 2 before doing any work** | |
+| 4 | **[TODO]** peel `BvPosExpr`/`BvSignChangeExpr` in the remaining lvalue shapes (was Q7) | the branch peels to `RefExpr`/`Dereference`; 94 runs peel to something else. Item 1's type printing should reveal what | |
+| 5 | **[TODO] [subagent]** give every DECLARED-but-not-defined function a referencable id (was Q6) | only *defined* functions get an id, so `= malloc` / `= __VERIFIER_nondet_int` resolve to nothing (96 runs). Must work when a function is declared MORE THAN ONCE | |
+| 6 | **[TODO]** stop minting a synthetic return slot for an only-declared `void` function (was Q4) | `void outb(unsigned char, unsigned int);` is declared with 2 params and every call passes 2, yet the callee arrives with 3 -- the arity guard then refuses (30 runs). The C is consistent; the mismatch is ours | |
+| 7 | **[TODO]** switch to the bitvector encoding when a bitwise op needs it (was Q1) | `|=`, `>>=`, `<<=` and friends are only modelled over bitvectors; under `--arithmetic integer` there is no bit representation. Rather than refuse, fall back to bitvector for that task | |
+| 8 | **[TODO] [subagent]** `Array with unspecified size must have initializer list` (was Q5) | could not reproduce from logs -- the message truncates on `CArray.toString()`. Reproduce locally first, then decide the correct behaviour | |
+| 9 | **[TODO] [subagent]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9) | 149 runs, 62% intel-tdx. Likely the wrong *expectation* rather than a real mismatch -- find the call site that imposes Bv32 and either cast semantically or fix the expected type | |
+| 10 | **[TODO]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10) | ⚠️ **CORRECTION: the bytes model IS implemented and on this branch** -- e9258f9c29 (scalars/arrays/ptr-arith), 4d294d52b8 (struct members), f8be59a025 (bitfields+unions), 8db5623a3a (tests), 85e0a4fb7f (complex27 portfolio, BMC-MathSAT first). My repeated "structurally blocked on the bytes model" was WRONG. The 691 byte-union errors persist only because STABLE does not use it. Mirror the existing multi->flat fallback in `ExecuteConfig.frontend`. Note bytes REQUIRES `--arithmetic bitvector`, and per the notes only *pure*-BMC-MathSAT performs well | |
+
+**Then:** parse-only benchmark; if significantly better than run 94, a full portfolio run.
