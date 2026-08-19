@@ -545,6 +545,62 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         functions.put(varDecl, funcDecl);
                     }
                 }
+            } else if (externalDeclarationContext
+                    instanceof CParser.GlobalDeclarationContext globalDeclCtx) {
+                // The same hazard, for a function this file only *declares*. Its address can be
+                // taken exactly like a defined function's -- `struct allocator a = { &malloc };` is
+                // how preprocessed coreutils/ldv sources write it -- and that initializer is
+                // evaluated at the position of the object's *tentative* declaration, which comes
+                // before the prototype it names. Without a name here the use died as "No such
+                // variable or macro: malloc" (64 `malloc` + 32 `__VERIFIER_nondet_int` runs in the
+                // run-94 parse sweep). Registering it up front costs nothing for the same reason as
+                // above: the declaration is visited below anyway and finds its name already there.
+                //
+                // The initializer expressions are deliberately not built here (getInitExpr =
+                // false): only the declared names are wanted, and the declaration below builds them
+                // once, in the right place.
+                //
+                // A declaration this pass cannot read is simply left un-introduced rather than
+                // reported from here: the very same context is visited again below, unguarded, so a
+                // genuinely broken declaration still fails -- with its own message, raised at its
+                // own position. Without this, a file that today dies inside some *earlier*
+                // function's body would instead die on a later declaration, changing the reported
+                // cause of a failure this pass has no business touching.
+                List<CDeclaration> declarations;
+                try {
+                    declarations =
+                            declarationVisitor.getDeclarations(
+                                    globalDeclCtx.declaration().declarationSpecifiers(),
+                                    globalDeclCtx.declaration().initDeclaratorList(),
+                                    false);
+                } catch (OutOfMemoryError e) {
+                    // Never swallowed: continuing after an OOM leaves the JVM in a state where the
+                    // downstream failure has nothing to do with the real cause.
+                    throw e;
+                } catch (Throwable t) {
+                    continue;
+                }
+                for (CDeclaration declaration : declarations) {
+                    // Only functions: an ordinary global must keep being declared in source order,
+                    // where its initializer runs.
+                    if (declaration.getName() == null
+                            || !declaration.isFunc()
+                            || declaration.getType() == null
+                            || declaration.getType().isTypedef()
+                            || variables.peek().get2().containsKey(declaration.getName())) {
+                        continue;
+                    }
+                    parseContext
+                            .getMetadata()
+                            .create(
+                                    declaration.getName(),
+                                    "cType",
+                                    declaration.getType().getActualType());
+                    createVars(declaration);
+                    for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+                        functions.put(varDecl, declaration);
+                    }
+                }
             }
         }
 
@@ -560,8 +616,29 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         // Collected while the function bodies were visited; appended last so a static local is
         // initialised after the file-scope globals, exactly as C orders them.
         program.getGlobalDeclarations().addAll(staticLocals);
+        collectFunctionDeclarations(program);
         recordMetadata(ctx, program);
         return program;
+    }
+
+    /**
+     * Publishes the functions that are declared here but never defined, so that the variable
+     * standing for each one's address can be initialised to its id.
+     *
+     * <p>A prototype and its later definition share one variable (see {@link
+     * #visitFunctionDefinition}), so "declared but not defined" is exactly "in {@code functions},
+     * but not among any {@link CFunction}'s variables".
+     */
+    private void collectFunctionDeclarations(CProgram program) {
+        Set<VarDecl<?>> defined = new LinkedHashSet<>();
+        for (CFunction function : program.getFunctions()) {
+            defined.addAll(function.getFuncDecl().getVarDecls());
+        }
+        for (Map.Entry<VarDecl<?>, CDeclaration> entry : functions.entrySet()) {
+            if (!defined.contains(entry.getKey())) {
+                program.getFunctionDeclarations().add(Tuple2.of(entry.getValue(), entry.getKey()));
+            }
+        }
     }
 
     public void recordMetadataCommon(ParserRuleContext ctx, CStatement statement) {

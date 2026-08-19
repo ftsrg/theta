@@ -281,9 +281,27 @@ class FrontendXcfaBuilder(
     // only needed when the program actually calls through a function pointer -- taking a function's
     // address merely to pass it to pthread_create resolves it by name -- so programs without
     // indirect calls are left completely unchanged.
-    for (function in if (FunctionIds.hasIndirectCall()) cProgram.functions else listOf()) {
-      val id = FunctionIds.getId(function.funcDecl.name) ?: continue
-      for (varDecl in function.funcDecl.varDecls) {
+    if (FunctionIds.hasIndirectCall()) {
+      // Keyed by variable so that a name reached through both lists (or declared twice) is
+      // initialised exactly once -- adding the same global twice is not idempotent.
+      val idVars = LinkedHashMap<VarDecl<*>, Int>()
+      for (function in cProgram.functions) {
+        val id = FunctionIds.getId(function.funcDecl.name) ?: continue
+        for (varDecl in function.funcDecl.varDecls) idVars.putIfAbsent(varDecl, id)
+      }
+      // A function that is only declared here has no body to dispatch into, but its address is a
+      // perfectly ordinary value that a function pointer can hold and be compared against. Its
+      // variable must therefore carry the same id its references were registered under; leaving it
+      // unconstrained would let a pointer holding it satisfy *another* candidate's guard
+      // `fp == id(g)` and dispatch into g. It is never itself a candidate: FunctionPointerCallsPass
+      // keeps only names that exist as procedures in this XCFA, so a call through a pointer that
+      // holds one falls into that pass's catch-all branch and havocs the return value -- the same
+      // over-approximation a *direct* call to the same undefined function gets.
+      for ((declaration, varDecl) in cProgram.functionDeclarations) {
+        val id = FunctionIds.getId(declaration.name) ?: continue
+        idVars.putIfAbsent(varDecl, id)
+      }
+      for ((varDecl, id) in idVars) {
         val idLit = functionIdLiteral(id, varDecl.type)
         builder.addVar(XcfaGlobalVar(varDecl, idLit))
         initStmtList.add(
