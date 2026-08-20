@@ -7732,6 +7732,37 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## `Could not handle left-hand side of assignment` -- debugged 2026-08-20 (commit 1b22c445da)
+
+One message, **two unrelated bugs**, 224 runs in run 96. The type printing added by item 1 is what
+separated them; the message now also names the C types of both sides, and names a struct by its
+FIELDS (two different structs otherwise both print as `CStruct`, which was itself misleading).
+
+| shape | runs | cause | status |
+|---|---|---|---|
+| `ctls.some_bit = ...` (intel-tdx) | ~144 | `structuralBitfieldWrites` looked ONE level down, expecting the 1-bit extract to sit on a dereference/concat. Reading a bitfield out of a 64-bit cell narrows to 32 bits first, so the operand is another extract | **FIXED** -- fold the narrowing chain, `extract(extract(X,a,b),c,d)` = bits [a+c, a+d) of X, guarded against reaching past the inner extract or past the cell |
+| `*(list+i) = *(list+j)` (ldv-linux-*) | ~72 | the struct-copy guard demanded the lvalue's cType BE a struct; dereferencing a struct pointer yields the element's address, whose cType is the POINTER's | **FIXED** -- accept the pointee, only when the rhs is that same struct |
+| `Toc->TrackData[0] = Toc->TrackData[i]` (ntdrivers) | 8 | the RIGHT-hand element address loses its struct cType (identity-keyed metadata); `getType` then derives `CUnsignedInt` from the (Bv 32) sort, so the sides disagree | **NOT FIXED** |
+
+A/B, rebuilt each way: `tdh_mng_key_config__invalid_input_tdr_hkid` and `module_get_put-drivers-atm-eni`
+both 210 -> 0.
+
+⚠️ **The attempted fix for the last 8 was reverted, and the reason is worth keeping.** C requires a
+struct lvalue's rhs to be that same struct (6.5.16.1), so "accept an address-shaped rhs whose type did
+not survive" looked safe. It is not: a *derived* type cannot be told apart from a real one, so the
+rule also swallowed `CPointer` right-hand sides into `structCopy` (ClassCastException) and regressed
+tasks that had begun building. The fix belongs where that element address is built, by keeping the
+struct type on it.
+
+⚠️ **Latent, found on the way and NOT chased:** `CComplexType.getType` returned different answers for
+the same expression on successive calls (`CUnsignedInt` then `CStruct`). That instability is why an
+earlier guard appeared to contradict itself, and it likely explains other identity-keyed metadata
+surprises. Worth its own investigation.
+
+⚠️ **Yield could not be measured locally.** This host had ~9 GB of 62 free; 18 of the 24 *smallest*
+files in the family were SIGKILLed and 21 of 30 in the first sample. Of the 6 that did complete, none
+still failed on this message. The real number needs a benchmark run.
+
 ## Local parse-only check of the byte-addressed union family (2026-08-20, build e07b3354df)
 
 User asked whether that family is "mostly handled" now that the fallback ships. **It is not.**
