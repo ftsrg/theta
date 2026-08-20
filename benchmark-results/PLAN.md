@@ -7732,6 +7732,40 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Run 96 (parse-only) RESULT -- finished 2026-08-20, vs run 94
+
+Both runs re-counted locally with one script so the comparison is like-for-like (the older
+"31,984 built OK" figure in this file is in a different unit -- it is roughly half of the run count).
+72,103 runs and 30,412 distinct tasks in each.
+
+| | run 94 | run 96 | delta |
+|---|---|---|---|
+| built OK (`unknown`) | 63,055 | **63,385** | **+330** |
+| error (total) | 9,048 | 8,718 | -330 |
+| ERROR frontend, before parsing | 2,982 | 2,850 | -132 |
+| ERROR frontend, after parsing | 1,518 | **1,070** | **-448** |
+| OUT OF MEMORY | 3,358 | 3,572 | **+214** |
+| TIMEOUT | 1,190 | 1,226 | +36 |
+
+Frontend errors fell by **580**; ~250 of that is given back as OOM/TIMEOUT, netting +330 built OK.
+The OOM rise is consistent with tasks now getting *further* before failing (a parse that used to die
+early now proceeds and runs out of memory) but that is an interpretation, not a measurement. Neither
+OOM nor ERROR scores anything, so no verdict was lost either way.
+
+**Per-family, the targeted fixes landed exactly where they were aimed:**
+
+| family | run 94 | run 96 | |
+|---|---|---|---|
+| item 7 compound bitwise `\|=` | 40 | **0** | gone |
+| item 8 `Array with unspecified size` | 112 | **0** | gone |
+| item 9 `ClassCastException` | 298 | **73** | -225; the residue advances to other failures |
+| item 6 inlining arity | 172 | 112 | -60 |
+| item 4/10 `Could not handle left-hand side` | 202 | **224** | **+22 -- newly EXPOSED**, not caused: tasks that used to die earlier now reach it |
+| byte-addressed union (both messages) | 1,448 | 1,448 | unchanged **as expected** -- run 96 is the build BEFORE the fallback (`08b9ce772c`); this family is what run 98 tests |
+
+The unchanged 1,448 is the useful control: it confirms the family is untouched by items 1-10 and is
+entirely down to the fallback, which only run 98 carries.
+
 ## Runs 96 (parse, LOW) and 97 (portfolio, IDLE) -- launched 2026-08-20 09:55, benchcloud
 
 Both from the SAME build: tool dir `Theta-svcomp-96` = HEAD `08b9ce772c` (batch-92 items 1-10 plus
