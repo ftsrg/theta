@@ -160,11 +160,31 @@ class FrontendXcfaBuilder(
    */
   private fun structuralBitfieldWrites(lValue: Expr<*>): List<BitfieldCellWrite>? {
     val extract = peelWidthWrappers(lValue) as? BvExtractExpr ?: return null
-    val from = extract.from.value.toInt()
-    val until = extract.until.value.toInt()
+    var from = extract.from.value.toInt()
+    var until = extract.until.value.toInt()
     if (until <= from) return null
-    val unit = peelWidthWrappers(extract.bitvec)
+    var unit = peelWidthWrappers(extract.bitvec)
+    // The cell is often reached through further NARROWINGS, not directly: reading a bitfield out
+    // of a 64-bit cell slices the cell to 32 bits first, and the field is then extracted from
+    // that. `extract(extract(X, a, b), c, d)` is just bits [a+c, a+d) of X, so fold the chain down
+    // to the cell rather than giving up on it. Without this every `ctls.some_bit = ...` in the
+    // intel-tdx-module sources was refused -- ~144 runs of the batch-94 parse sweep -- because the
+    // operand was an extract where this expected a dereference.
+    var depth = 0
+    while (unit is BvExtractExpr && depth++ < 8) {
+      val innerFrom = unit.from.value.toInt()
+      val innerUntil = unit.until.value.toInt()
+      // The inner extract only exposes bits [innerFrom, innerUntil); a field reaching past that
+      // is not a narrowing of one cell and must not be folded into one.
+      if (innerFrom + until > innerUntil) return null
+      from += innerFrom
+      until += innerFrom
+      unit = peelWidthWrappers(unit.bitvec)
+    }
     if (unit is Dereference<*, *, *>) {
+      // Never write past the end of the cell the chain landed on.
+      val cellWidth = (unit.type as? BvType)?.size ?: return null
+      if (until > cellWidth) return null
       return listOf(BitfieldCellWrite(unit, from, 0, until - from))
     }
     if (unit !is BvConcatExpr) return null
@@ -238,13 +258,40 @@ class FrontendXcfaBuilder(
     return current
   }
 
+  /**
+   * The SMT sorts alone do not say what the program meant: every aggregate reports the same
+   * pointer-width sort, so `(Bv 32) = (Bv 32)` covers a struct copy, a bitfield splice and a plain
+   * store alike. The C types are what separate them -- the pointer-to-struct lvalue this branch
+   * used to refuse was indistinguishable from a scalar store without them -- so name both.
+   */
   private fun unhandledLhs(lValue: Expr<*>, target: Expr<*>, rExpression: Expr<*>): String =
     "Could not handle left-hand side of assignment: lhs is a ${lValue.javaClass.simpleName}" +
-      " [$lValue] of type ${lValue.type}" +
+      " [$lValue] of type ${lValue.type} (C type ${cTypeName(target)})" +
       (if (target !== lValue)
         ", which peels to a ${target.javaClass.simpleName} of type ${target.type}"
       else "") +
-      ", rhs type ${rExpression.type}"
+      ", rhs type ${rExpression.type} (C type ${cTypeName(rExpression)})"
+
+  /**
+   * The C type of [expr] as a readable name, or `unknown` when the metadata did not survive.
+   *
+   * A struct is named by its FIELDS, not just as `CStruct`: two different structs print the same
+   * class name, and "both sides are CStruct" was exactly the misleading reading that hid the
+   * `Toc->TrackData[0] = Toc->TrackData[i]` case -- the two sides were the outer struct and the
+   * element struct, which are not the same type at all.
+   */
+  private fun cTypeName(expr: Expr<*>): String =
+    runCatching { describe(CComplexType.getType(expr, parseContext)) }.getOrElse { "unknown" }
+
+  private fun describe(t: CComplexType): String =
+    when (t) {
+      is CStruct ->
+        (if (t.isUnion) "union" else "struct") +
+          t.fields.joinToString(",", "{", "}") { it.get1() }
+      is CPointer -> "ptr -> " + describe(t.embeddedType)
+      is CArray -> "array of " + describe(t.embeddedType)
+      else -> t.javaClass.simpleName
+    }
 
   private fun getMetadata(source: CStatement): MetaData =
     CMetaData(
@@ -752,7 +799,43 @@ class FrontendXcfaBuilder(
    * layout -- the same reason [giveStructObjectStorage] does not walk into them.
    */
   private fun CComplexType.isCopiedStruct(rExpression: Expr<*>): Boolean =
-    this is CStruct && !this.isUnion && this == CComplexType.getType(rExpression, parseContext)
+    copiedStructOrNull(rExpression) != null
+
+  /**
+   * The struct being copied by `<this-typed lvalue> = rExpression`, or null if this is not a struct
+   * copy.
+   *
+   * The lvalue's own type is usually the struct itself. It is a **pointer to** the struct when the
+   * assignment writes through a dereference -- `*(p + i) = s`, which is how CIL spells a struct
+   * element copy and how the `ldv-linux-*` and `ntdrivers` sources all write one. A struct-shaped
+   * region has no value distinct from its address (`&a == a == &a[0]`), so dereferencing a struct
+   * pointer yields the element's *address*, and the cType riding on that address expression is the
+   * pointer's rather than the pointee's. Reading only the outer type therefore saw `CPointer` where
+   * the program meant `struct eni_free`, decided this was not a copy, and the whole file was
+   * refused with "Could not handle left-hand side of assignment" -- 80 runs of the batch-94 parse
+   * sweep, `*(list + index) = *(list + len)` in `eni_alloc_mem` being the archetype.
+   *
+   * The pointee is only accepted when the right-hand side is that same struct, so `p = q` between
+   * two struct pointers is still an ordinary pointer assignment and not a copy.
+   */
+  private fun CComplexType.copiedStructOrNull(rExpression: Expr<*>): CStruct? {
+    val candidate =
+      when (this) {
+        is CStruct -> this
+        is CPointer -> this.embeddedType as? CStruct
+        else -> null
+      } ?: return null
+    if (candidate.isUnion) return null
+    // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
+    // (ntdrivers cdaudio/diskperf, 8 runs) fails here because the rhs element address loses its
+    // struct cType -- FrontendMetadata is identity-keyed -- and the frontend then derives
+    // `CUnsignedInt` from the (Bv 32) sort. Accepting "the lvalue is a struct, so C says the rhs
+    // must be too" was tried and reverted: a derived type is indistinguishable from a real one, so
+    // the rule also swallowed pointer assignments and sent them into structCopy, which threw
+    // ClassCastException -- and it regressed tasks that had started building. The real fix is to
+    // keep the struct type on the rebuilt element address; until then this stays a loud refusal.
+    return candidate.takeIf { it == CComplexType.getType(rExpression, parseContext) }
+  }
 
   /**
    * Copies a struct object's contents into another, field by field.
@@ -1644,10 +1727,11 @@ class FrontendXcfaBuilder(
           // the
           // sum back into base and offset for each field.
           is AddExpr<*> -> {
-            val lhsType = CComplexType.getType(target, parseContext)
-            if (lhsType.isCopiedStruct(rExpression)) {
+            val copied =
+              CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
+            if (copied != null) {
               SequenceLabel(
-                structCopy(target, rExpression, lhsType as CStruct, getMetadata(statement)),
+                structCopy(target, rExpression, copied, getMetadata(statement)),
                 metadata = getMetadata(statement),
               )
             } else {
