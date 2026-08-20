@@ -2823,7 +2823,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort
                             .CUnsignedShort(null, parseContext);
             case 32 -> CComplexType.getUnsignedInt(parseContext);
-            default -> CComplexType.getUnsignedLong(parseContext);
+            // `unsigned long` is 64 bits only under LP64; under ILP32 it is 32, so a 64-bit cell
+            // came back HALF its width and the union's own layout then addressed past its end:
+            // `union { LONGLONG QuadPart; struct { ULONG LowPart; LONG HighPart; }; }` put
+            // `HighPart` at bit 32 of a 32-bit cell, and the read-modify-write spliced a 64-bit
+            // value into it (ntdrivers, ldv-linux-*, all ILP32). `unsigned long long` is 64 under
+            // both data models, so fall through to it only where `unsigned long` is too narrow --
+            // LP64 keeps the type it already chose.
+            default ->
+                    CComplexType.getUnsignedLong(parseContext).width() >= bits
+                            ? CComplexType.getUnsignedLong(parseContext)
+                            : CComplexType.getUnsignedLongLong(parseContext);
         };
     }
 

@@ -66,3 +66,5 @@ calloc_zeroes.c	efficient	LP64	SAFE	90	calloc is lowered to malloc+memset, with 
 memset_symbolic.c	efficient	LP64	SAFE	90	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
 compound_bitwise_encoding.c	efficient	ILP32	SAFE	94	compound bitwise assignment selects the bitvector encoding
 extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	94	extern array of unspecified extent is a declaration, not a sizing failure
+union_wide_cell_halves.c	efficient	ILP32	SAFE	94	a 64-bit union cell is read at its full width under ILP32 (unsigned long is 32 there)
+union_bitfield_overlay_write.c	efficient	LP64	PARSE-OK	94	a bitfield write to a union splices at the cell width, not the aggregate placeholder

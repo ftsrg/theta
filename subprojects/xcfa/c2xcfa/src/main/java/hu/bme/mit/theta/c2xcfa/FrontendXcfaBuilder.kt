@@ -71,6 +71,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -188,6 +189,36 @@ class FrontendXcfaBuilder(
       low += partWidth
     }
     return writes.ifEmpty { null }
+  }
+
+  /**
+   * The C type to splice a value into [cell] at: the type of the cell's own storage.
+   *
+   * That is not always the type [recorded] on the cell. A union member that is one packed word of
+   * bitfields is stamped with the *struct's* C type, so that `u.parts.f` can resolve `f` as a
+   * field at all (see `ExpressionVisitor#directMemberAccess`), and every aggregate type reports
+   * the same pointer-width placeholder as its `smtType` rather than the cell's storage width.
+   * Casting the right-hand side to that hands a 64-bit value to a 32-bit cell -- intel-tdx-module's
+   * `keyid_ctrl.command = 1` on `union { struct { uint32_t command:8, ...; }; uint32_t raw; }`
+   * under LP64, and every ILP32 `_LARGE_INTEGER` write once the cell is read at its true width.
+   *
+   * When the recorded type does not have the cell's own sort, splice at the unsigned integer type
+   * that does: only the low `width` bits of the value are ever stored, so signedness cannot change
+   * what is written. If no C type has that width, keep the recorded one and let the mismatch be
+   * reported rather than guessing.
+   */
+  private fun cellSpliceType(cell: Expr<*>, recorded: CComplexType): CComplexType {
+    if (recorded.smtType == cell.type) return recorded
+    val bits = (cell.type as? BvType)?.size ?: return recorded
+    return listOf(
+        CUnsignedChar(null, parseContext),
+        CUnsignedShort(null, parseContext),
+        CComplexType.getUnsignedInt(parseContext),
+        CComplexType.getUnsignedLong(parseContext),
+        CComplexType.getUnsignedLongLong(parseContext),
+        CComplexType.getUnsigned128(parseContext),
+      )
+      .firstOrNull { it.width() == bits } ?: recorded
   }
 
   /** Peels the width/signedness wrappers a bitfield read and an integer promotion leave behind. */
@@ -1429,7 +1460,7 @@ class FrontendXcfaBuilder(
         val fieldValue = memberType.castTo(rExpression)
         val writes =
           structuralWrites.map { w ->
-            val cellType = CComplexType.getType(w.cell, parseContext)
+            val cellType = cellSpliceType(w.cell, CComplexType.getType(w.cell, parseContext))
             val cellBv = cellType.smtType as BvType
             @Suppress("UNCHECKED_CAST")
             val valueBv = fieldValue as Expr<BvType>
@@ -1461,7 +1492,8 @@ class FrontendXcfaBuilder(
           (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.WIDTH).orElseThrow()
               as Number)
             .toInt()
-        val cellType = CComplexType.getType(bitfieldCell, parseContext)
+        val cellType =
+          cellSpliceType(bitfieldCell, CComplexType.getType(bitfieldCell, parseContext))
         // A floating-point union member: the value spliced in is the right-hand side's raw IEEE
         // bit pattern, not an integer cast of it. Everything else is identical -- for a full-width
         // float, offset 0 and width == cell width, so the splice replaces the whole cell.
