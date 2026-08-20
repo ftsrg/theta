@@ -7740,7 +7740,15 @@ the fp<->bits round-trip fix `f470a74ddf`). Gated 262 canaries / 69 fixtures / 0
 | run | XML | priority | screen | outdir |
 |---|---|---|---|---|
 | 96 parse-only | `xmls/theta27-parse.xml` | **LOW** | `theta-parse96` | `results/Theta-svcomp-96/theta27-parse.xml/2026-08-20_09:55:21/` |
-| 97 portfolio | `xmls/theta27-long900.xml` | **IDLE** | `theta-portfolio97` | `results/Theta-svcomp-96/theta27-long900.xml/2026-08-20_09:55:26/` |
+| ~~97 portfolio~~ | `xmls/theta27-long900.xml` | IDLE | ~~`theta-portfolio97`~~ | **STOPPED 11:30 after 1h35m with 0 results** (IDLE, and parse96 at LOW held the queue) -- nothing lost |
+| **98 portfolio** | `xmls/theta27-long900.xml` | **IDLE** | `theta-portfolio98` | `results/Theta-svcomp-98/theta27-long900.xml/2026-08-20_11:32:07/` |
+
+Run 97 was replaced by **run 98** on a newer build, at the user's direction: tool dir
+`Theta-svcomp-98` = HEAD `e07b3354df`, which adds the bytes-memory-model fallback with floats
+refused loudly under it (`ByteMemoryPass`). The **parse run 96 was deliberately left running on the
+older build** (`Theta-svcomp-96` = `08b9ce772c`), so its comparison against run 94 measures items
+1-10 only, without the fallback. Run 98's tool dir is separate precisely so run 96's files are not
+disturbed mid-flight. Launch checks on 98: 0 `Cannot start process`, 0 `OutOfMemoryError`.
 
 Both pinned `--vcloudCPUModel Skylake --vcloudClientHeap 8192`. Launch sanity checks passed on both:
 0 `Cannot start process`, 0 `OutOfMemoryError`, results accumulating, screens alive.
