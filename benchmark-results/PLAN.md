@@ -7680,6 +7680,31 @@ Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
 | 9 | **[DONE]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9). TWO width bugs, one per data model. (a) `unsigned long` is 64-bit only under LP64, so "the unsigned type of width n" returned a type HALF the requested width under ILP32 and the union layout addressed past the cell (`_LARGE_INTEGER`, ldv drivers); now falls through to `unsigned long long` only where `unsigned long` is too narrow. (b) A union member that is a packed word of bitfields is stamped with the STRUCT's C type (so `.f` resolves as a field) and every aggregate reports a pointer-width placeholder as its SMT sort -> 64-bit value into a 32-bit cell (intel-tdx `keyid_ctrl.command = 1`); the splice now uses the unsigned type of the CELL's width, keeping the recorded type and still reporting when no C type matches. intel-tdx 210->0; ntdrivers advances to the separate `Could not handle left-hand side` family, so <298 runs are converted | 149 tasks x 2 configs, 62% intel-tdx. The archived XML truncates the message and no logfiles were kept, so it had to be reproduced locally | |
 | 10 | **[DONE -- implemented, measured, and DELIBERATELY NOT SHIPPED]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10). The fallback works (guards correct, 3 float-newlib tasks 210->0), but the model it falls back INTO is unsound for the very pattern that triggers it, so shipping it would convert ~554 score-0 ERRORs into wrong `false` verdicts at -16 each. Reverted; repro kept at `canaries/fixtures/union_double_punning_bytes_UNSOUND.c` | ⚠️ the bytes model IS implemented on this branch; the fallback is a ~40-line mirror of multi->flat. The blocker is soundness, not wiring | |
 
+### Item 10 follow-up: the fp<->bits round trip IS fixed (2026-08-20, commit f470a74ddf)
+
+User-directed: "attempt to fix the fp-bits roundtrip; if not possible, just fail on the fpToIeeeBv
+when bytes model is used." Both halves are now true.
+
+**The cause was not `fpToIEEEBV` being wrong.** `ByteMemoryPass.wide()` accepted only `BvType`, so a
+floating-point cell was left in an array of its own while everything else was split into byte cells.
+A `double` and the bytes overlapping it were therefore unrelated storage -- the bytes were never
+written at all, so a read of them was unconstrained. Extending the split to `FpType` (store
+`fpToIEEEBV(v)`, rebuild with `fpFromIEEEBV`, NaN pinned to the canonical quiet encoding that
+FrontendXcfaBuilder already used for the same reason, now shared via `FpUtils.canonicalNaNBits`)
+makes all four punning cases answer Safe where they answered Unsafe, and NaN survives the trip
+(`x != x` still holds, exponent still all ones). Every expectation came from gcc.
+
+**Where it cannot be done, it now fails loudly** -- the requested fallback. `fp.to_ieee_bv` is a Z3
+extension; checked directly against the shipped MathSAT binary, it is an "unknown symbol" there,
+while the from-bits direction `((_ to_fp eb sb) bv)` IS standard and accepted. GenericSmtLibExprTransformer
+already throws `UnsupportedOperationException` for the to-bits direction, which is the right outcome.
+
+**The automatic fallback still does NOT ship.** Re-applied and re-measured after the round-trip fix:
+float-newlib tasks build (210 -> 0) but then die in the backend on that same unsupported operation,
+because complex27 runs BMC-MathSAT first for byte-addressed memory. Score 0 either way, so there is
+no gain to bank -- and `bytes` remains opt-in, so nothing changes by default. Making it pay off needs
+a to-bits encoding MathSAT can solve, which is the open piece.
+
 ### Item 10: why the bytes fallback is not shipped (measured 2026-08-19)
 
 **The fallback itself was built and works.** `RequiresByteAddressedMemoryException` raised at the two
