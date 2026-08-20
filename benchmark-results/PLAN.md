@@ -7692,9 +7692,27 @@ or could produce wrong verdicts. **It can produce wrong verdicts.** Measured, no
 gcc: SAFE. theta under `--memory-model bytes`: **`SafetyResult Unsafe`** -- a spurious
 counterexample, i.e. a wrong `false` (-16), not an ERROR (0).
 
-Cause: `fpToIEEEBV` is unspecified for NaN, so ByteMemoryPass pins NaN to the canonical quiet
-encoding on the way in. That is what keeps a NaN from becoming a normal number, but it destroys the
-payload.
+Cause -- **corrected 2026-08-20 after checking the primary sources**, an earlier note here blamed
+the canonicalization and that was wrong. The payload cannot survive a float round trip at all,
+canonicalization or not, because SMT-LIB's FloatingPoint sort has **one** NaN element. Measured
+against z3 4.12.6:
+
+| query | result | meaning |
+|---|---|---|
+| `fp.isNaN x` and `fp.to_ieee_bv x != #x7FF8...0` | **sat** | the bits of a NaN are NOT pinned to the canonical pattern; the solver may choose |
+| two distinct NaNs whose `fp.to_ieee_bv` differ | **unsat** | it IS a function -- every NaN maps to the same bits, so payloads collapse |
+| `fp.to_ieee_bv((_ to_fp 11 53) #x7FF8...2A) != #x7FF8...2A` | **sat** | a payload round trip MAY lose the payload ... |
+| the same, asserted equal | **sat** | ... and may keep it. Purely the solver's choice |
+
+So in a verification query the solver is free to pick the representative that falsifies the property,
+and it will. Our `Ite(IsNan, canonicalNaNBits, ToIeeeBv)` only makes that choice *deterministic*
+(and consistent across solvers); the verdict on the repro is Unsafe with or without it. The
+regression is caused by floats now travelling through IEEE bits at all, not by the guard.
+
+Z3's own header (`z3_fpa.h`, `Z3_mk_fpa_to_ieee_bv`) reads: "IEEE 754-2008 allows multiple different
+representations of NaN. This conversion knows only one NaN and it will always produce the same
+bit-vector representation of that NaN." That is consistent with the table -- "one NaN" is the single
+NaN *element of the sort* (row 2), not a bit pattern fixed by the theory (row 1).
 
 ⚠️ **This is a REGRESSION from f470a74ddf, and was verified as one** by rebuilding the parent commit:
 before the fix this program verified **Safe**, because a float write did not touch the byte cells at
