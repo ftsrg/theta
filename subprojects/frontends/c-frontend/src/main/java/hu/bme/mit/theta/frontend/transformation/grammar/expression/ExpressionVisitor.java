@@ -53,6 +53,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
@@ -1205,7 +1206,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     // is just the address of the first of the member's cells and a read through it
                     // recombines the cells it spans. It is only the cell-per-value models that
                     // cannot express a pointer knowing it covers several cells.
-                    throw new UnsupportedFrontendElementException(
+                    throw new RequiresByteAddressedMemoryException(
                             "Taking the address of a multi-byte member of a byte-addressed union is"
                                     + " not supported.");
                 }
@@ -2462,8 +2463,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // The batch-59 NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable
             // path: a floating-point member is refused rather than reopening the unsound
             // round-trip.
-            throw unsupportedByteLaidOutMember(
-                    memberName, "a floating-point member is not supported");
+            // Deliberately NOT the recoverable exception: the byte-addressed model refuses floats
+            // as well (ByteMemoryPass), because splitting one needs an IEEE bit reinterpretation
+            // that SMT-LIB leaves underspecified for NaN. Retrying there would trade one refusal
+            // for another after a second full frontend build.
+            throw new UnsupportedFrontendElementException(
+                    "Accessing member [%s] of a byte-addressed union is not supported: a"
+                            .formatted(memberName)
+                            + " floating-point member is not supported.");
         }
         if (embeddedType instanceof CStruct) {
             // A nested struct or union member: return a marker carrying the union's own base and
@@ -2604,11 +2611,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return expr;
     }
 
-    private static UnsupportedFrontendElementException unsupportedByteLaidOutMember(
+    private UnsupportedFrontendElementException unsupportedByteLaidOutMember(
             String memberName, String reason) {
-        return new UnsupportedFrontendElementException(
+        final String message =
                 "Accessing member [%s] of a byte-addressed union is not supported: %s."
-                        .formatted(memberName, reason));
+                        .formatted(memberName, reason);
+        // These refusals are limits of laying a union out as cells by hand: a nested aggregate, or
+        // anything whose bytes would have to be recombined, has no single cell to be read from.
+        // Under the byte-addressed model there is nothing to lay out -- the object already IS its
+        // bytes -- so the caller is told the input needs that model rather than that it is
+        // unsupported. When it is already in force the limit is real. (The floating-point member
+        // does NOT come through here; bytes cannot help it either.)
+        return byteAddressed()
+                ? new UnsupportedFrontendElementException(message)
+                : new RequiresByteAddressedMemoryException(message);
     }
 
     /** Whether [memberName] of [structType] was declared as a bitfield (a non-whole-byte width). */

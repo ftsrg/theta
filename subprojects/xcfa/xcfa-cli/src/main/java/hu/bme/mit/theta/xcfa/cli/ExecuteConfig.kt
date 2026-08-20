@@ -36,6 +36,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -209,9 +210,19 @@ private fun parseInputFiles(
  * a single scalar address), so the very same program builds there; when the model was left at its
  * default we therefore rebuild the whole frontend under `flat` rather than failing.
  *
- * The fallback is deliberately restricted to the *default* model: an explicit `--memory-model` is
- * the user's decision, and is never overridden -- not even when it names the same `multi` we would
- * otherwise have replaced.
+ * A union punned through members of different widths is the mirror image: the cell models must lay
+ * it out as bytes by hand and run out of room (a pointer cannot cover several cells, a member whose
+ * bytes must be recombined has no cell to read from), which is
+ * [RequiresByteAddressedMemoryException]. `bytes` gives every object a run of byte cells and has
+ * none of those limits, so that failure is retried there. Between its two messages it is the
+ * largest frontend error family in the run-94 parse sweep. `bytes` is only defined over bitvectors,
+ * so the arithmetic moves with it. A *floating-point* member is excluded at the raise site: the
+ * byte-addressed model refuses floats too, so retrying would only swap one refusal for another.
+ *
+ * Both fallbacks are deliberately restricted to the *default* model: an explicit `--memory-model`
+ * is the user's decision, and is never overridden -- not even when it names the same `multi` we
+ * would otherwise have replaced. Likewise an explicit `--arithmetic integer` blocks the bytes retry
+ * rather than being overridden, because the model it would land in cannot be built over integers.
  */
 private fun frontend(
   config: XcfaConfig<*, *>,
@@ -226,8 +237,35 @@ private fun frontend(
   val mayFallBackToFlat =
     config.frontendConfig.inputType == InputType.C && cConfig != null && cConfig.memoryModel == null
 
+  val mayFallBackToBytes =
+    config.frontendConfig.inputType == InputType.C &&
+      cConfig != null &&
+      cConfig.memoryModel == null &&
+      cConfig.arithmetic != ArchitectureConfig.ArithmeticType.integer
+
   return try {
-    buildFrontend(config, logger, uniqueLogger, mayFallBackToFlat)
+    buildFrontend(config, logger, uniqueLogger, mayFallBackToFlat, mayFallBackToBytes)
+  } catch (e: RequiresByteAddressedMemoryException) {
+    logger.write(
+      Logger.Level.RESULT,
+      "%s%n",
+      "note: frontend build failed on a construct the cell-per-value models cannot express under" +
+        " --memory-model ${cConfig!!.effectiveMemoryModel}; retrying with --memory-model bytes",
+    )
+    logger.info("%s", "Byte-granularity limitation was: ${e.message}")
+    // Pinned for everything downstream, exactly as the flat fallback pins its model: the portfolio
+    // re-runs the frontend once per configuration it tries, and they must all agree with the XCFA
+    // returned here. The arithmetic is pinned with it because `bytes` has no integer encoding.
+    cConfig.memoryModel = ArchitectureConfig.MemoryModelType.bytes
+    cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+    // No fallback left to offer: whatever this attempt throws is reported as a real failure.
+    buildFrontend(
+      config,
+      logger,
+      uniqueLogger,
+      allowFlatFallback = false,
+      allowBytesFallback = false,
+    )
   } catch (e: UnsupportedPointerSplitException) {
     logger.write(
       Logger.Level.RESULT,
@@ -241,7 +279,13 @@ private fun frontend(
     // agree with the XCFA we return here.
     cConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
     // No fallback left to offer: whatever this attempt throws is reported as a real failure.
-    buildFrontend(config, logger, uniqueLogger, allowFlatFallback = false)
+    buildFrontend(
+      config,
+      logger,
+      uniqueLogger,
+      allowFlatFallback = false,
+      allowBytesFallback = false,
+    )
   }
 }
 
@@ -250,6 +294,7 @@ private fun buildFrontend(
   logger: Logger,
   uniqueLogger: Logger,
   allowFlatFallback: Boolean,
+  allowBytesFallback: Boolean,
 ): Triple<XCFA, MCM, ParseContext> {
   val stopwatch = Stopwatch.createStarted()
 
@@ -273,7 +318,8 @@ private fun buildFrontend(
         config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
   }
 
-  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger, allowFlatFallback)
+  val xcfa =
+    getXcfa(config, parseContext, logger, uniqueLogger, allowFlatFallback, allowBytesFallback)
   val mcm =
     if (config.inputConfig.catFile != null) {
       CatDslManager.createMCM(config.inputConfig.catFile!!)
