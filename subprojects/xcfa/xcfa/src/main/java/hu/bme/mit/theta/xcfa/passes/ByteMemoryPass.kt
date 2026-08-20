@@ -22,8 +22,12 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs
+import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
@@ -46,11 +50,22 @@ import java.math.BigInteger
  * (an address-taken local, a folded flat address) are byte-split here too, uniformly with the
  * frontend's own.
  *
- * A cell whose element type is not a bitvector wider than one byte is left untouched: a byte
- * (`Bv8`) is already a single cell, and a floating-point cell keeps its own array (byte-splitting a
- * float would need the `fpToIEEEBV` round-trip that is gated off for its NaN unsoundness). Byte
- * splitting is a bitvector operation, so the model presumes bitvector arithmetic; an `IntType` cell
- * (integer arithmetic) has no fixed width and is likewise left alone.
+ * A **floating-point** cell is split too, through its IEEE-754 encoding: a write stores
+ * `fpToIEEEBV(v)` across the bytes and a read rebuilds the value with `fpFromIEEEBV`. It used to be
+ * left in an array of its own, which quietly made a `double` and the bytes overlapping it two
+ * unrelated pieces of storage -- `u.value = 1.0; u.parts.msw` read cells nothing had ever written,
+ * so an unconstrained value came back and a program checking those bits got a spurious
+ * counterexample. That is the newlib idiom, so it is not a corner case.
+ *
+ * `fpToIEEEBV` is *unspecified for NaN*, which is why the round-trip was avoided: the solver could
+ * hand back any of the many NaN encodings, so a NaN written and read back could become a different
+ * NaN, or a normal number. A NaN is therefore pinned to one canonical encoding on the way out (see
+ * [FpUtils.canonicalNaNBits]), exactly as the frontend already does when it splices a float into a
+ * byte-laid-out union; the from-bits direction is total and needs no guard.
+ *
+ * A cell whose element type is neither of those is left untouched: a byte (`Bv8`) is already a
+ * single cell. Byte splitting is a bitvector operation, so the model presumes bitvector arithmetic;
+ * an `IntType` cell (integer arithmetic) has no fixed width and is likewise left alone.
  */
 class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -67,8 +82,39 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
-  /** Whether [type] is a bitvector strictly wider than one byte and a whole number of bytes. */
-  private fun wide(type: Type): Boolean = type is BvType && type.size > 8 && type.size % 8 == 0
+  /** The width in bytes of a cell this pass splits, or null if it leaves the cell alone. */
+  private fun byteWidth(type: Type): Int? {
+    val bits =
+      when (type) {
+        is BvType -> type.size
+        // A float's storage width is its encoding: sign + exponent + significand.
+        is FpType -> type.exponent + type.significand
+        else -> return null
+      }
+    return if (bits > 8 && bits % 8 == 0) bits / 8 else null
+  }
+
+  /** Whether [type] occupies more than one byte and is a whole number of them. */
+  private fun wide(type: Type): Boolean = byteWidth(type) != null
+
+  /**
+   * The bits of [value] as they are stored, so that byte cells hold one representation regardless
+   * of the type they were written through. A float becomes its IEEE-754 encoding, with NaN pinned
+   * to a canonical one because `fpToIEEEBV` does not specify which encoding a NaN yields.
+   */
+  @Suppress("UNCHECKED_CAST")
+  private fun storedBits(value: Expr<*>): Expr<*> =
+    if (value.type is FpType) {
+      val fp = value as Expr<FpType>
+      IteExpr.of(FpExprs.IsNan(fp), FpUtils.canonicalNaNBits(fp.type), FpExprs.ToIeeeBv(fp))
+    } else {
+      value
+    }
+
+  /** The inverse of [storedBits]: the value a cell of [type] holds, given its stored bits. */
+  @Suppress("UNCHECKED_CAST")
+  private fun fromStoredBits(bits: Expr<*>, type: Type): Expr<*> =
+    if (type is FpType) FpExprs.FromIeeeBv(bits as Expr<BvType>, type) else bits
 
   private fun XcfaLabel.bytify(): XcfaLabel =
     when (this) {
@@ -113,8 +159,8 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     val base = deref.array.expandReads()
     val offset = deref.offset.expandReads()
     val rhs = stmt.expr.expandReads()
-    val n = (deref.type as BvType).size / 8
-    val byteValues = ByteUnionSlice.toBytes(rhs, n)
+    val n = byteWidth(deref.type)!!
+    val byteValues = ByteUnionSlice.toBytes(storedBits(rhs), n)
     val writes =
       (0 until n).map { j ->
         val cell = byteCell(base, offset, j)
@@ -140,9 +186,11 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     if (this is Dereference<*, *, *> && wide(type)) {
       val base = array.expandReads()
       val offset = offset.expandReads()
-      val n = (type as BvType).size / 8
+      val n = byteWidth(type)!!
       val cells = (0 until n).map { j -> byteCell(base, offset, j) as Expr<*> }
-      cast(ByteUnionSlice.read(cells, (type as BvType).signed), type) as Expr<T>
+      // `signed` only affects the Int-typed reconstruction; a float is rebuilt from its bits.
+      val joined = ByteUnionSlice.read(cells, (type as? BvType)?.signed ?: false)
+      cast(fromStoredBits(joined, type), type) as Expr<T>
     } else {
       withOps(ops.map { it.expandReads() }) as Expr<T>
     }

@@ -19,6 +19,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.NaN;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.NegativeInfinity;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveInfinity;
 
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -140,6 +141,30 @@ public final class FpUtils {
                 new BigFloat(
                         value, new BinaryMathContext(type.getSignificand(), type.getExponent())),
                 type);
+    }
+
+    /**
+     * The canonical quiet-NaN bit pattern for {@code type}: sign 0, exponent all ones, and the
+     * mantissa's top bit set -- {@code 0x7FC00000} for a 32-bit float, {@code 0x7FF8000000000000}
+     * for a 64-bit double.
+     *
+     * <p>Needed because {@code fpToIEEEBV} is *unspecified for NaN*: a solver is free to give a
+     * NaN's bits as any of the 2^(significand-1)-1 encodings that mean NaN, so a value written as a
+     * float and read back through its bytes could come out a different NaN, or -- once those bits
+     * are compared -- a normal number, breaking the pervasive {@code x != x} NaN test. Pinning one
+     * encoding makes the to-bits direction a function. The from-bits direction is total and needs
+     * no such guard, and these bits still classify as NaN in a program's own bit inspection.
+     */
+    public static BvLitExpr canonicalNaNBits(final FpType type) {
+        final int width = type.getExponent() + type.getSignificand();
+        final int mantissaBits = type.getSignificand() - 1;
+        final BigInteger exponentAllOnes =
+                BigInteger.ONE.shiftLeft(type.getExponent()).subtract(BigInteger.ONE);
+        final BigInteger pattern =
+                exponentAllOnes
+                        .shiftLeft(mantissaBits)
+                        .or(BigInteger.ONE.shiftLeft(mantissaBits - 1));
+        return BvUtils.bigIntegerToUnsignedBvLitExpr(pattern, width);
     }
 
     public static BigInteger round(final BigFloat value, final FpRoundingMode roundingMode) {
