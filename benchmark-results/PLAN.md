@@ -7680,6 +7680,31 @@ Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
 | 9 | **[DONE]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9). TWO width bugs, one per data model. (a) `unsigned long` is 64-bit only under LP64, so "the unsigned type of width n" returned a type HALF the requested width under ILP32 and the union layout addressed past the cell (`_LARGE_INTEGER`, ldv drivers); now falls through to `unsigned long long` only where `unsigned long` is too narrow. (b) A union member that is a packed word of bitfields is stamped with the STRUCT's C type (so `.f` resolves as a field) and every aggregate reports a pointer-width placeholder as its SMT sort -> 64-bit value into a 32-bit cell (intel-tdx `keyid_ctrl.command = 1`); the splice now uses the unsigned type of the CELL's width, keeping the recorded type and still reporting when no C type matches. intel-tdx 210->0; ntdrivers advances to the separate `Could not handle left-hand side` family, so <298 runs are converted | 149 tasks x 2 configs, 62% intel-tdx. The archived XML truncates the message and no logfiles were kept, so it had to be reproduced locally | |
 | 10 | **[DONE -- implemented, measured, and DELIBERATELY NOT SHIPPED]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10). The fallback works (guards correct, 3 float-newlib tasks 210->0), but the model it falls back INTO is unsound for the very pattern that triggers it, so shipping it would convert ~554 score-0 ERRORs into wrong `false` verdicts at -16 each. Reverted; repro kept at `canaries/fixtures/union_double_punning_bytes_UNSOUND.c` | ⚠️ the bytes model IS implemented on this branch; the fallback is a ~40-line mirror of multi->flat. The blocker is soundness, not wiring | |
 
+## Runs 96 (parse, LOW) and 97 (portfolio, IDLE) -- launched 2026-08-20 09:55, benchcloud
+
+Both from the SAME build: tool dir `Theta-svcomp-96` = HEAD `08b9ce772c` (batch-92 items 1-10 plus
+the fp<->bits round-trip fix `f470a74ddf`). Gated 262 canaries / 69 fixtures / 0 FAIL before upload.
+
+| run | XML | priority | screen | outdir |
+|---|---|---|---|---|
+| 96 parse-only | `xmls/theta27-parse.xml` | **LOW** | `theta-parse96` | `results/Theta-svcomp-96/theta27-parse.xml/2026-08-20_09:55:21/` |
+| 97 portfolio | `xmls/theta27-long900.xml` | **IDLE** | `theta-portfolio97` | `results/Theta-svcomp-96/theta27-long900.xml/2026-08-20_09:55:26/` |
+
+Both pinned `--vcloudCPUModel Skylake --vcloudClientHeap 8192`. Launch sanity checks passed on both:
+0 `Cannot start process`, 0 `OutOfMemoryError`, results accumulating, screens alive.
+
+⚠️ **PORTFOLIO CHANGED, and it confounds the run-93 comparison.** `xmls/theta27-long900.xml` passed
+`--portfolio STABLE`, and `STABLE` maps to **complex26** (`ConfigToPortfolio.kt`), not complex27 --
+so every previous "SV-COMP 27" portfolio run, run 93 included, was actually run on the 2026
+portfolio. It now passes `--portfolio COMPLEX27` (backup at `xmls/theta27-long900.xml.stable-bak`).
+COMPLEX27 is also the only portfolio aware of the byte-addressed memory model. Smoke-tested on three
+canary tasks with known verdicts before launch; COMPLEX27 and STABLE agreed on all three.
+
+Consequence for triage: a verdict that differs from run 93 is **portfolio AND fixes**, not fixes
+alone. To attribute a regression to this batch's code, re-run that task under both portfolios rather
+than assuming. Baselines: run 94 parse = 31,984 built OK / 1,492 frontend-before / 850
+frontend-after; run 93 portfolio = score 19,804, 57 wrong, 18 missed bugs (on complex26).
+
 ### Item 10 follow-up: the fp<->bits round trip IS fixed (2026-08-20, commit f470a74ddf)
 
 User-directed: "attempt to fix the fp-bits roundtrip; if not possible, just fail on the fpToIeeeBv
