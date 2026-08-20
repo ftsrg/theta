@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -43,7 +42,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDo
 public class NamedType extends CSimpleType {
     protected final ParseContext parseContext;
 
-    private final String namedType;
+    private String namedType;
     private final Logger uniqueWarningLogger;
 
     NamedType(ParseContext parseContext, final String namedType, Logger uniqueWarningLogger) {
@@ -108,17 +107,35 @@ public class NamedType extends CSimpleType {
             default:
                 {
                     uniqueWarningLogger.write(
-                            Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
-                    type = new CVoid(this, parseContext);
+                            Level.INFO,
+                            "WARNING: Unknown simple type " + namedType.replace("%", "%%") + "\n");
+                    if (namedType.startsWith("enum ")) {
+                        // An enum whose definition was never seen is still an int in C. The CVoid
+                        // fallback gave such variables a unit-sized SMT sort, so any assignment
+                        // to them died casting a full-width value into it.
+                        type = new CSignedInt(this, parseContext);
+                    } else {
+                        type = new CVoid(this, parseContext);
+                    }
                     break;
                 }
         }
         if (isThreadLocal()) {
             type.setThreadLocal();
         }
+        // Atomicity belongs to a *level* of the type, so it is put on the level it was written at:
+        // the base for `_Atomic int`, a particular pointer for `int * _Atomic`. Until now
+        // `CComplexType.setAtomic` was never called at all, and a dereference had no atomicity to
+        // read -- which is what made every access through an `_Atomic int *` look like a race.
+        if (isAtomic()) {
+            type.setAtomic();
+        }
 
         for (int i = 0; i < getPointerLevel(); i++) {
             type = new CPointer(this, type, parseContext);
+            if (isAtomicPointer(i)) {
+                type.setAtomic();
+            }
         }
         return type;
     }
@@ -145,8 +162,12 @@ public class NamedType extends CSimpleType {
         return namedType;
     }
 
+    private void setNamedType(String newNamedType) {
+        namedType = newNamedType;
+    }
+
     @Override
-    protected void patch(CSimpleType cSimpleType) {
+    protected CSimpleType patch(CSimpleType cSimpleType) {
         for (int i = 0; i < getPointerLevel(); i++) {
             cSimpleType.incrementPointer();
         }
@@ -170,16 +191,37 @@ public class NamedType extends CSimpleType {
                 break;
             case "int":
                 break;
+            case "char":
+                break;
             case "":
                 break;
+            case "struct":
+                if (cSimpleType instanceof Struct otherStruct) {
+                    // we might be a tyepedef, do nothing
+                    break;
+                } else {
+                    // we cannot patch structness onto another csimpletype, so we reverse the
+                    // patching
+                    return cSimpleType.patch(this.copyOf());
+                }
+            case "void":
+                if (cSimpleType instanceof NamedType named && named.namedType.isEmpty()) {
+                    named.setNamedType(namedType);
+                    break;
+                }
+            // deliberately not breaking, let it throw an error (must be above default branch)
             default:
                 if (!cSimpleType.isTypedef()) {
-                    throw new UnsupportedFrontendElementException(
-                            "namedType should be short or long or type specifier, instead it is "
-                                    + namedType);
+                    uniqueWarningLogger.write(
+                            Level.INFO,
+                            "WARNING: namedType should be short or long or type specifier, instead"
+                                    + " it is "
+                                    + namedType.replace("%", "%%")
+                                    + "; ignoring it\n");
                 }
                 break;
         }
+        return cSimpleType;
     }
 
     @Override

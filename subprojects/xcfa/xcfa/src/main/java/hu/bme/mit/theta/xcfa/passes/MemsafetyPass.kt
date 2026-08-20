@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
@@ -116,10 +117,28 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             val argument = invokeLabel.params[1]
             val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
-              Or(
-                Lt(argument, pointerType.nullValue), // uninit ptr
-                // freed/not big enough ptr
-                Lt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), pointerType.nullValue),
+              And(
+                // "If ptr is a null pointer, no action occurs" -- C17 7.22.3.3. `free(NULL)` is not
+                // merely tolerated, it is the idiom every cleanup path is written around, and it
+                // was
+                // being reported as an invalid free: a null pointer has no recorded size, so the
+                // bound below took it for one that was never allocated.
+                Neq(argument, pointerType.nullValue),
+                Or(
+                  Lt(argument, pointerType.nullValue), // uninit ptr
+                  // Already freed, or never allocated: both leave size 0 (see deallocate). The
+                  // bound
+                  // is Fitsall-typed like the sizes the array holds -- a pointer-typed zero would
+                  // be
+                  // a different, narrower type under bitvector arithmetic.
+                  Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
+                  // Only the heap may be freed. Pointer bases are partitioned by residue mod 3 --
+                  // `3k+0` malloc, `3k+1` alloca, `3k+2` an address-taken local -- and only the
+                  // first came from an allocator. The size check above cannot catch the others: an
+                  // alloca'd block records a *real* size (it has to, or reads through it would look
+                  // out of bounds), so `free(alloca(n))` sailed through as a perfectly good free.
+                  Neq(Mod(argument, pointerType.getValue("3")), pointerType.nullValue),
+                ),
               )
 
             builder.addEdge(
@@ -145,14 +164,18 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.metadata,
               )
             )
-            builder.addEdge(
-              XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), it.metadata)
-            )
           } else {
             builder.addEdge(it)
           }
         }
       }
+    }
+    // A single shared exit edge: one per check would pile up parallel label-less edges on
+    // `invalidFree`, which the OC backend rejects as a branching location without assumes.
+    if (invalidFree.incomingEdges.isNotEmpty()) {
+      builder.addEdge(
+        XcfaEdge(invalidFree, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData)
+      )
     }
   }
 
@@ -181,11 +204,14 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                     And(shortCircuitConds),
                     Or(
                       Leq(deref.array, pointerType.nullValue), // uninit ptr
+                      // Sizes are Fitsall-typed, offsets are pointer-typed: the offset has to be
+                      // widened to compare against a size (they are the same unbounded Int under
+                      // integer arithmetic, but different bitvector widths otherwise).
                       Leq(
                         ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
-                        deref.offset,
+                        deref.offset.toFitsall(),
                       ), // freed/not big enough ptr
-                      Lt(deref.offset, fitsall.nullValue), // negative index
+                      Lt(deref.offset.toFitsall(), fitsall.nullValue), // negative index
                     ),
                   )
                 }
@@ -210,16 +236,21 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.metadata,
               )
             )
-            builder.addEdge(
-              XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), it.metadata)
-            )
           } else {
             builder.addEdge(it)
           }
         }
       }
     }
+    // A single shared exit edge: one per check would pile up parallel label-less edges on
+    // `badDeref`, which the OC backend rejects as a branching location without assumes.
+    if (badDeref.incomingEdges.isNotEmpty()) {
+      builder.addEdge(XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
+    }
   }
+
+  private fun Expr<*>.toFitsall(): Expr<*> =
+    if (fitsall.smtType is IntType) this else fitsall.castTo(this)
 
   fun annotateLost(builder: XcfaProcedureBuilder) {
     val errorLoc =

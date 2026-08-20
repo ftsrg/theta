@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.sts.aiger.utils;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.elements.AigerWire;
@@ -41,7 +41,7 @@ public final class AigerCoi {
     }
 
     private static Set<AigerNode> getReachableNodes(final AigerSystem system) {
-        final Set<AigerNode> reached = Containers.createSet();
+        final Set<AigerNode> reached = CollectionUtil.createSet();
         final Queue<AigerNode> queue = new ArrayDeque<>();
         queue.add(system.getOutput());
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.StrengtheningOperator;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
@@ -47,7 +47,7 @@ public final class Prod2ExplPredStrengtheningOperator
             Collection<Prod2State<ExplState, PredState>> prod2States,
             Prod2Prec<ExplPrec, PredPrec> prec) {
 
-        Set<Prod2State<ExplState, PredState>> validStates = Containers.createSet();
+        Set<Prod2State<ExplState, PredState>> validStates = CollectionUtil.createSet();
 
         for (Prod2State<ExplState, PredState> prod2State : prod2States) {
 
@@ -61,7 +61,7 @@ public final class Prod2ExplPredStrengtheningOperator
             }
         }
         if (validStates.size() < prod2States.size()) {
-            var removed = Containers.createSet();
+            var removed = CollectionUtil.createSet();
             for (var state : prod2States) {
                 if (!validStates.contains(state)) {
                     removed.add(state);

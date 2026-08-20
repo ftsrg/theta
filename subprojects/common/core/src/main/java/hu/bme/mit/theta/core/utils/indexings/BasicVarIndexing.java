@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import static java.lang.Math.max;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -165,12 +165,12 @@ public class BasicVarIndexing implements VarIndexing {
         private BasicVarIndexingBuilder(final int defaultIndex) {
             checkArgument(defaultIndex >= 0, "Negative default index");
             this.defaultIndex = defaultIndex;
-            varToOffset = Containers.createMap();
+            varToOffset = CollectionUtil.createMap();
         }
 
         private BasicVarIndexingBuilder(final BasicVarIndexing indexing) {
             this.defaultIndex = indexing.defaultIndex;
-            this.varToOffset = Containers.createMap(indexing.varToOffset);
+            this.varToOffset = CollectionUtil.createMap(indexing.varToOffset);
         }
 
         public BasicVarIndexingBuilder inc(final VarDecl<?> varDecl, final int n) {
@@ -219,7 +219,7 @@ public class BasicVarIndexing implements VarIndexing {
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
-            final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
+            final Map<VarDecl<?>, Integer> newVarToOffset = CollectionUtil.createMap();
 
             final Set<VarDecl<?>> varDecls =
                     Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
@@ -250,7 +250,7 @@ public class BasicVarIndexing implements VarIndexing {
 
             final int newDefaultIndex = this.defaultIndex - that.defaultIndex;
             checkArgument(newDefaultIndex >= 0, "Negative default index");
-            final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
+            final Map<VarDecl<?>, Integer> newVarToOffset = CollectionUtil.createMap();
 
             final Set<VarDecl<?>> varDecls =
                     Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
@@ -280,7 +280,7 @@ public class BasicVarIndexing implements VarIndexing {
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
-            final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
+            final Map<VarDecl<?>, Integer> newVarToOffset = CollectionUtil.createMap();
 
             final Set<VarDecl<?>> varDecls =
                     Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());

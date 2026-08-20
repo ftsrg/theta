@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ public class Atomic extends CSimpleType {
     }
 
     @Override
-    protected void patch(CSimpleType cSimpleType) {
-        cSimpleType.setAtomic(true);
+    protected CSimpleType patch(CSimpleType cSimpleType) {
+        cSimpleType.applyAtomicQualifier();
+        return cSimpleType;
     }
 }

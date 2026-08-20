@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Substitution;
@@ -42,7 +42,7 @@ public final class ParamBinding implements Substitution {
         checkArgument(params.size() == args.size());
 
         this.params = ImmutableList.copyOf(params);
-        this.paramToArg = Containers.createMap();
+        this.paramToArg = CollectionUtil.createMap();
 
         for (int i = 0; i < params.size(); i++) {
             final ParamDecl<?> param = params.get(i);

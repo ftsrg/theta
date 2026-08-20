@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,18 +34,33 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
   check(label is SequenceLabel)
   val newLabels = ArrayList<SequenceLabel>()
   var current = ArrayList<XcfaLabel>()
+
+  val singleMetadata = {
+    var metadata: MetaData = EmptyMetaData
+    current.forEach { c ->
+      if (c.metadata != EmptyMetaData) {
+        if (metadata != EmptyMetaData && metadata != c.metadata) {
+          metadata = EmptyMetaData
+          return@forEach
+        }
+        metadata = c.metadata
+      }
+    }
+    metadata
+  }
+
   for (label in label.labels) {
     if (function(label)) {
       if (current.isNotEmpty()) {
-        newLabels.add(SequenceLabel(current))
+        newLabels.add(SequenceLabel(current, singleMetadata()))
         current = ArrayList()
       }
-      newLabels.add(SequenceLabel(listOf(label)))
+      newLabels.add(SequenceLabel(listOf(label), label.metadata))
     } else {
       current.add(label)
     }
   }
-  if (current.isNotEmpty()) newLabels.add(SequenceLabel(current))
+  if (current.isNotEmpty()) newLabels.add(SequenceLabel(current, singleMetadata()))
 
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)

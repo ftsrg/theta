@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -89,7 +89,8 @@ fun getCegarChecker(
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
     if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
     else getStackPartialOrder(globalStatePartialOrd)
-  val errorDetector = getXcfaErrorDetector(config.inputConfig.property.verifiedProperty)
+  val errorDetector =
+    getXcfaErrorDetector(config.inputConfig.property.verifiedProperty, parseContext)
   val abstractor: ArgAbstractor<ExprState, ExprAction, Prec> =
     cegarConfig.abstractorConfig.domain.abstractor(
       xcfa,

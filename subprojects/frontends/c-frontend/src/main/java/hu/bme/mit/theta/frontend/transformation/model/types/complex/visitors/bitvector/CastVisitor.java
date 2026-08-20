@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -67,6 +68,14 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
         }
+        if (that instanceof CVoid) {
+            // A void expression has no value, and C forbids reading one -- but one still reaches
+            // here through the standard assert expansion `cond ? (void)0 : fail()`, whose two arms
+            // are both void, so the frontend unifies them into a common type. Since the value can
+            // never be read, any value of the target type will do. (Under integer arithmetic this
+            // never surfaced: there the conversion ignores the source type entirely.)
+            return type.getNullValue();
+        }
         if (that instanceof CReal) {
             //noinspection unchecked
             return FpExprs.ToBv(
@@ -91,7 +100,13 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), true));
                 } else {
-                    return param;
+                    // Nothing to convert -- but the *caller* records the target C type on whatever
+                    // comes back, and types are keyed by the expression itself. Handing back
+                    // `param`
+                    // therefore rewrites the operand's own type: `a[j]` used to make `j` an array.
+                    // So the no-op gets a wrapper of its own to carry the new type, exactly as the
+                    // integer cast visitor already does.
+                    return Pos(param);
                 }
             }
         } else {
@@ -104,6 +119,14 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
+        }
+        if (that instanceof CVoid) {
+            // A void expression has no value, and C forbids reading one -- but one still reaches
+            // here through the standard assert expansion `cond ? (void)0 : fail()`, whose two arms
+            // are both void, so the frontend unifies them into a common type. Since the value can
+            // never be read, any value of the target type will do. (Under integer arithmetic this
+            // never surfaced: there the conversion ignores the source type entirely.)
+            return type.getNullValue();
         }
         if (that instanceof CReal) {
             //noinspection unchecked
@@ -129,7 +152,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
-                    return param;
+                    return Pos(param); // see above: the no-op needs its own expression to be typed
                 }
             }
         } else {
@@ -173,7 +196,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(Fitsall type, Expr<?> param) {
-        return handleSignedConversion(type, param);
+        // Fitsall is unsigned -- that is what its SMT type and its literals are built from -- so a
+        // cast *to* it must produce an unsigned-typed expression. Sign-extending here instead left
+        // the result signed, contradicting the type it was cast to; comparing it against anything
+        // genuinely unsigned then unified a signed with an unsigned bitvector, which yields a
+        // signedness-less ("neutral") type that cannot be compared at all.
+        return handleUnsignedConversion(type, param);
     }
 
     @Override

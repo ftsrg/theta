@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.getStatistics
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
+import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
@@ -51,11 +52,7 @@ fun getXcfaFromC(
   logger: Logger = warningLogger,
 ): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
   val input = CharStreams.fromStream(stream)
-  val lexer = CLexer(input)
-  val tokens = CommonTokenStream(lexer)
-  val parser = CParser(tokens)
-  parser.errorHandler = BailErrorStrategy()
-  val context = parser.compilationUnit()
+  val context = parseTypeAware(input)
 
   val program = context.accept(FunctionVisitor(parseContext, warningLogger))
   check(program is CProgram)

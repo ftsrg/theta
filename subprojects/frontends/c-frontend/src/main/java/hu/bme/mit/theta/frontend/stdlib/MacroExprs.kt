@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,18 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   PTHREAD_MUTEX_ERRORCHECK("PTHREAD_MUTEX_ERRORCHECK", { UnsupportedInitializer() }),
   PTHREAD_RWLOCK_INITIALIZER("PTHREAD_RWLOCK_INITIALIZER", { UnsupportedInitializer() }),
   NULL("NULL", { CComplexType.getSignedInt(it).nullValue }),
+  NULLPTR("nullptr", { CComplexType.getSignedInt(it).nullValue }),
+
+  // <stdatomic.h> memory orders. They constrain what may be *reordered* around an access; the
+  // analysis is sequentially consistent, so their values are never inspected -- only their names
+  // have to resolve. The numbering is the one every compiler uses.
+  MEMORY_ORDER_RELAXED("memory_order_relaxed", { CComplexType.getSignedInt(it).getValue("0") }),
+  MEMORY_ORDER_CONSUME("memory_order_consume", { CComplexType.getSignedInt(it).getValue("1") }),
+  MEMORY_ORDER_ACQUIRE("memory_order_acquire", { CComplexType.getSignedInt(it).getValue("2") }),
+  MEMORY_ORDER_RELEASE("memory_order_release", { CComplexType.getSignedInt(it).getValue("3") }),
+  MEMORY_ORDER_ACQ_REL("memory_order_acq_rel", { CComplexType.getSignedInt(it).getValue("4") }),
+  MEMORY_ORDER_SEQ_CST("memory_order_seq_cst", { CComplexType.getSignedInt(it).getValue("5") }),
+  ATOMIC_FLAG_INIT("ATOMIC_FLAG_INIT", { CComplexType.getSignedInt(it).nullValue }),
 
   // Integer characteristics
   CHAR_BIT("CHAR_BIT", { CComplexType.getSignedInt(it).getValue("8") }),

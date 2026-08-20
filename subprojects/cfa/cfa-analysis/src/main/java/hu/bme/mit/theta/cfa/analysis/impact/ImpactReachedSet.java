@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +38,7 @@ public final class ImpactReachedSet<S extends State, A extends Action, K>
 
     private ImpactReachedSet(final Function<? super S, ? extends K> partitioning) {
         this.partitioning = checkNotNull(partitioning);
-        partitions = Containers.createMap();
+        partitions = CollectionUtil.createMap();
     }
 
     public static <S extends State, A extends Action, K> ImpactReachedSet<S, A, K> create(

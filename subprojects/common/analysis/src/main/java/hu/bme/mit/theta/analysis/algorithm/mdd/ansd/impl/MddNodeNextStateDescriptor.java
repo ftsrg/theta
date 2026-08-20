@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
@@ -88,12 +89,13 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        final MddNode constraint = localStateSpace.toStructuralRepresentation();
+        final RecursiveIntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
         return new ConstrainedIntObjMapView<>(
                 new IntObjMapViews.Transforming<>(
                         node,
                         (n, key) -> {
-                            if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
+                            if (key == null || n == null)
+                                return AbstractNextStateDescriptor.terminalEmpty();
                             else
                                 return MddNodeNextStateDescriptor.of(
                                         n.get(key),
@@ -109,22 +111,24 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
-        final MddNode constraint = localStateSpace.toStructuralRepresentation();
+        final RecursiveIntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
         return new IntObjMapViews.Transforming<>(
                 node,
                 outerNode ->
-                        new ConstrainedIntObjMapView<>(
-                                new IntObjMapViews.Transforming<>(
-                                        outerNode,
-                                        mddNode ->
-                                                MddNodeNextStateDescriptor.of(
-                                                        mddNode,
-                                                        variableHandle
-                                                                .getLower()
-                                                                .orElseThrow()
-                                                                .getLower()
-                                                                .orElseThrow())),
-                                constraint));
+                        outerNode == null
+                                ? IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty())
+                                : new ConstrainedIntObjMapView<>(
+                                        new IntObjMapViews.Transforming<>(
+                                                outerNode,
+                                                mddNode ->
+                                                        MddNodeNextStateDescriptor.of(
+                                                                mddNode,
+                                                                variableHandle
+                                                                        .getLower()
+                                                                        .orElseThrow()
+                                                                        .getLower()
+                                                                        .orElseThrow())),
+                                        constraint));
     }
 
     @Override
@@ -187,7 +191,6 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         @Override
         public AbstractNextStateDescriptor.Cursor valueCursor(
                 int from, StateSpaceInfo localStateSpace) {
-            final MddNode constraint = localStateSpace.toStructuralRepresentation();
             // TODO the valueCursor call of the wrapped cursor has to propagate the constraint
             var fromCursor = wrapped.valueCursor();
             if (fromCursor.moveTo(from)) {

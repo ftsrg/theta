@@ -41,3 +41,11 @@ tasks {
         arguments.addAll(listOf("-package", packageName, "-Werror", "-visitor"))
     }
 }
+
+pluginManager.withPlugin("com.diffplug.spotless") {
+    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+        java {
+            targetExclude("**/build/generated-src/**/*.java")
+        }
+    }
+}

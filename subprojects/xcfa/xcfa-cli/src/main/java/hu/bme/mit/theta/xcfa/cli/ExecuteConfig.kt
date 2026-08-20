@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
@@ -97,6 +98,13 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
   }
+  if (config.backendConfig.backend == Backend.PATH_ENUMERATION) {
+    val pathEnumerationConfig = config.backendConfig.specConfig
+    pathEnumerationConfig as PathEnumerationConfig
+    val random = Random(pathEnumerationConfig.porRandomSeed)
+    XcfaSporLts.random = random
+    XcfaDporLts.random = random
+  }
   if (
     config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
       config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
@@ -113,7 +121,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   }
 
   LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
-  LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
+  LoopUnrollPass.FORCE_UNROLL_LIMIT =
+    if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
@@ -129,9 +138,19 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
+  rule("NoDataRaceWithPathEnumeration") {
+    config.backendConfig.backend == Backend.PATH_ENUMERATION &&
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+    // technically only when pointers are present, but we don't know that yet
+  }
   rule("NoAaporWhenDataRace") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+  }
+  rule("NoAaporOrDporPathEnumeration") {
+    (config.backendConfig.specConfig as? PathEnumerationConfig)?.porLevel.let {
+      it != null && (it.isAbstractionAware || it.isDynamic)
+    }
   }
   rule("DPORWithoutDFS") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&
@@ -149,6 +168,11 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
       (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure ==
         OcDecisionProcedureType.PROPAGATOR &&
       (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:new"
+  }
+  rule("NoSignedWraparoundWithOverflowCheck") {
+    // Modeling signed overflow as wraparound makes overflow detection vacuous.
+    (config.frontendConfig.specConfig as? CFrontendConfig)?.enableSignedWraparound == true &&
+      config.inputConfig.property.inputProperty == ErrorDetection.OVERFLOW
   }
   rule("SensibleOutputOptions", false) {
     config.outputConfig.enabled == NONE &&
@@ -187,7 +211,7 @@ private fun frontend(
   val stopwatch = Stopwatch.createStarted()
 
   val input = config.inputConfig.input!!
-  logger.info("Parsing the input $input as ${config.frontendConfig.inputType}")
+  logger.info("%s", "Parsing the input $input as ${config.frontendConfig.inputType}")
 
   val parseContext = ParseContext()
 
@@ -196,6 +220,8 @@ private fun frontend(
     cConfig as CFrontendConfig
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
+    parseContext.signedWraparound = cConfig.enableSignedWraparound
+    parseContext.memoryModel = cConfig.memoryModel
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
@@ -218,12 +244,14 @@ private fun frontend(
   }
 
   logger.benchmark(
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)"
+    "%s",
+    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)",
   )
 
   logger.benchmark("ParsingResult Success")
   logger.benchmark(
-    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}"
+    "%s",
+    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}",
   )
 
   return Triple(xcfa, mcm, parseContext)
@@ -247,6 +275,10 @@ private fun backend(
     } else if (config.backendConfig.backend == Backend.TRACEGEN) {
       tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
     } else {
+      logger.info(
+        "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
+      )
+
       // we would not do post analysis logging if running in a portfolio otherwise
       if (
         config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
@@ -272,11 +304,13 @@ private fun backend(
         val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
 
         logger.info(
-          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
+          "%s",
+          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
         )
 
         logger.info(
-          "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}"
+          "%s",
+          "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}",
         )
 
         val result =
@@ -289,7 +323,7 @@ private fun backend(
                   (xcfa?.unsafeUnrollUsed ?: false) &&
                   !config.outputConfig.acceptUnreliableSafe -> {
                   // cannot report safe if force unroll was used
-                  logger.benchmark("Analysis result: $result")
+                  logger.benchmark("%s", "Analysis result: $result")
                   logger.benchmark("Incomplete loop unroll used: safe result is unreliable.")
                   if (config.outputConfig.acceptUnreliableSafe)
                     result // for comparison with BMC tools
@@ -304,7 +338,7 @@ private fun backend(
                         result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
                       )
                     } catch (e: UnknownResultException) {
-                      logger.result("Property couldn't be determined: ${e.message}")
+                      logger.result("%s", "Property couldn't be determined: ${e.message}")
                       return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                     }
                   if (!portfolioRun) {
@@ -317,12 +351,12 @@ private fun backend(
               }
             }
 
-        logger.info("Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
+        logger.info("%s", "Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
         result
       }
     }
   if (!portfolioRun) {
-    logger.result(result.toString())
+    logger.result("%s", result.toString())
   }
   return result
 }
@@ -345,9 +379,10 @@ private fun tracegenBackend(
       checker.check(XcfaPrec(PtrPrec(ExplPrec.of(xcfa!!.collectVars()), emptySet())))
     }
   logger.info(
+    "%s",
     "Backend finished (in ${
       stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n"
+    } ms)\n",
   )
 
   return result
@@ -395,11 +430,23 @@ internal fun concretizeTrace(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
 ): Trace<XcfaState<ExplState>, XcfaAction> =
-  XcfaTraceConcretizer.concretize(
-    trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-    getSolver(
-      config.outputConfig.witnessConfig.concretizerSolver,
-      config.outputConfig.witnessConfig.validateConcretizerSolver,
-    ),
-    parseContext,
-  )
+  if (config.frontendConfig.inputType == InputType.BTOR2) {
+    Btor2XcfaTraceConcretizer.concretize(
+      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+      getSolver(
+        config.outputConfig.witnessConfig.concretizerSolver,
+        config.outputConfig.witnessConfig.validateConcretizerSolver,
+      ),
+      parseContext,
+    )
+  } else {
+    XcfaTraceConcretizer.concretize(
+      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+      getSolver(
+        config.outputConfig.witnessConfig.concretizerSolver,
+        config.outputConfig.witnessConfig.validateConcretizerSolver,
+      ),
+      parseContext,
+      wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property, parseContext),
+    )
+  }

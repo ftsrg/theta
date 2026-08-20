@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,11 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   companion object {
     private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
-    private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
+    /**
+     * The allocation counter. [AllocaFunctionPass] hands out addresses from the *same* counter, so
+     * that a heap block and a stack block can never be given the same base.
+     */
+    fun XcfaBuilder.mallocVar(parseContext: ParseContext): VarDecl<*> =
       mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
   }
 
@@ -94,7 +98,18 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 ret.type,
                 EmptyMetaData,
               )
-            val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
+            val assign2 =
+              AssignStmtLabel(
+                ret,
+                cast(
+                  FlatMemoryPass.flatBaseExpr(
+                    mallocVar.ref,
+                    CComplexType.getType(ret, parseContext),
+                    parseContext,
+                  ),
+                  ret.type,
+                ),
+              )
             val labels =
               if (MemsafetyPass.enabled) {
                 val assign3 = builder.parent.allocate(parseContext, ret, arg)

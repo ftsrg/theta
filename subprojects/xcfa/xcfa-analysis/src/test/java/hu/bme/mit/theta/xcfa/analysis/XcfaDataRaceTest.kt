@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,13 +47,18 @@ import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
+import hu.bme.mit.theta.xcfa.model.JoinLabel
+import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class XcfaDataRaceTest {
+
+  private val parseContext = ParseContext()
 
   companion object {
 
@@ -66,6 +71,57 @@ class XcfaDataRaceTest {
         arrayOf("/07mutex.c", true, SafetyResult<*, *>::isSafe),
       )
     }
+
+    @JvmStatic
+    fun atomicData(): Collection<Array<Any>> {
+      return listOf(
+        arrayOf("/09atomicfield_norace.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/10plainfield_race.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/11atomicarray_norace.c", SafetyResult<*, *>::isSafe),
+      )
+    }
+  }
+
+  /**
+   * Threads created and joined through an array of handles -- `pthread_t t[N]; for (i)
+   * pthread_create(&t[i], …)` -- must each become a distinct thread, which the pidVar identifies.
+   * The loops are unrolled and the index folded ([PthreadArrayHandleUnrollPass]), then each `&t[i]`
+   * / `t[i]` keys its own handle ([CLibraryFunctionsPass]); conflating them would spawn just one
+   * thread and hide every race the array's threads have. Checked structurally, so it does not
+   * depend on any one engine finding the race.
+   */
+  @org.junit.jupiter.api.Test
+  fun pthreadArrayHandlesAreDistinctThreads() {
+    val stream = javaClass.getResourceAsStream("/12pthread_array_race.c")
+    val xcfa =
+      getXcfaFromC(
+          stream!!,
+          ParseContext(),
+          false,
+          XcfaProperty(ErrorDetection.DATA_RACE),
+          NullLogger.getInstance(),
+        )
+        .first
+    val startPidVars =
+      xcfa.procedures
+        .flatMap { it.edges }
+        .flatMap { it.label.getFlatLabels() }
+        .filterIsInstance<StartLabel>()
+        .map { it.pidVar }
+    Assertions.assertEquals(2, startPidVars.size, "both array elements spawn a thread")
+    Assertions.assertEquals(2, startPidVars.toSet().size, "with distinct handles")
+    val joinPidVars =
+      xcfa.procedures
+        .flatMap { it.edges }
+        .flatMap { it.label.getFlatLabels() }
+        .filterIsInstance<JoinLabel>()
+        .map { it.pidVar }
+        .toSet()
+    Assertions.assertEquals(
+      startPidVars.toSet(),
+      joinPidVars,
+      "each thread is joined on its handle",
+    )
   }
 
   @ParameterizedTest
@@ -92,10 +148,31 @@ class XcfaDataRaceTest {
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")
+    Assertions.assertTrue(verdict(checkWithCegar(program)))
+  }
+
+  /**
+   * `_Atomic` is a property of the accessed cell, not of the pointer expression that reaches it. A
+   * struct field, array element, whole struct, nested field or pointee declared `_Atomic` is
+   * reached through a `(base, offset)` dereference whose C type is gone by analysis time, so its
+   * atomicity is resolved from the object's base id. These pin that the race check excludes such
+   * accesses -- and, via the plain-field control, that it still reports races on non-atomic cells
+   * of the same object.
+   */
+  @ParameterizedTest
+  @MethodSource("atomicData")
+  fun testAtomicCellDataRace(program: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing $program for atomic-cell data race...")
+    Assertions.assertTrue(verdict(checkWithCegar(program)), program)
+  }
+
+  private fun checkWithCegar(program: String): SafetyResult<*, *> {
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+    // One parse context throughout: the atomic-cell facts recorded while building the XCFA are read
+    // back by the error detector below, so it must be the same instance, not a fresh empty one.
+    val parseContext = ParseContext()
+    val xcfa = getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
 
     val analysis =
       ExplXcfaAnalysis(
@@ -108,7 +185,7 @@ class XcfaDataRaceTest {
 
     val lts = XcfaSporLts(xcfa)
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -140,8 +217,7 @@ class XcfaDataRaceTest {
       ) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
     val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
-    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
-    Assertions.assertTrue(verdict(safetyResult))
+    return cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
   }
 
   @ParameterizedTest
@@ -156,14 +232,15 @@ class XcfaDataRaceTest {
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+    val parseContext = ParseContext()
+    val xcfa = getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
     DataRaceToReachabilityPass.enabled = false
 
     val ocChecker =
       XcfaOcChecker(
         xcfa = xcfa,
-        property = property.verifiedProperty,
+        property = property,
+        parseContext = parseContext,
         decisionProcedure = OcDecisionProcedureType.BASIC,
         smtSolver = "Z3:4.13",
         logger = NullLogger.getInstance(),

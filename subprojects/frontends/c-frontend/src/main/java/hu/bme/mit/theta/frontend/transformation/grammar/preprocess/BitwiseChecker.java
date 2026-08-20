@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,6 +55,19 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
     }
 
     @Override
+    public Void visitTypeSpecifierSimple(CParser.TypeSpecifierSimpleContext ctx) {
+        // `__float128` is modeled as a floating-point type, so it forces float arithmetic exactly
+        // as
+        // `double` and `float` do; without this a program whose only real type is `__float128`
+        // would
+        // be analysed with integer arithmetic and hit the unimplemented float path.
+        if ("__float128".equals(ctx.getText())) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT);
+        }
+        return super.visitTypeSpecifierSimple(ctx);
+    }
+
+    @Override
     public Void visitDirectDeclaratorArray1(DirectDeclaratorArray1Context ctx) {
         parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
         return null;
@@ -86,6 +99,21 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
             return null;
         }
         return super.visitPrimaryExpressionConstant(ctx);
+    }
+
+    /**
+     * `__builtin_bswapN` reverses a value's bytes, which only means anything if the value *has*
+     * bytes -- so a program that calls it needs bitvectors, exactly as one that uses `&` or `<<`
+     * does. Without this the analysis could pick integer arithmetic and the builtin would have
+     * nothing to work on.
+     */
+    @Override
+    public Void visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
+        if (ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext id
+                && id.Identifier().getText().startsWith("__builtin_bswap")) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
+        }
+        return super.visitPostfixExpression(ctx);
     }
 
     @Override

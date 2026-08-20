@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,9 +47,15 @@ class PassTests {
     input: XcfaProcedureBuilderContext.() -> Unit,
     output: (XcfaProcedureBuilderContext.() -> Unit)?,
     val passes: List<ProcedurePass>,
+    /** Names of empty procedures to register alongside the tested one, e.g. thread entry points. */
+    siblingProcedures: List<String> = emptyList(),
   ) : Arguments {
 
-    private val builder = XcfaBuilder("").also { it.global(global) }
+    private val builder =
+      XcfaBuilder("").also {
+        it.global(global)
+        siblingProcedures.forEach { name -> it.procedure(name) {} }
+      }
     private val inputBuilder = builder.procedure("", input).builder
     private val outputBuilder = output?.let { builder.procedure("", it).builder }
 
@@ -63,6 +69,7 @@ class PassTests {
     private val fpParseContext =
       ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
     private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+    private val assertionProperty = XcfaProperty(ErrorDetection.NO_ASSERTION_VIOLATION)
 
     @JvmStatic
     val data: List<Arguments> =
@@ -150,6 +157,20 @@ class PassTests {
           passes = listOf(NormalizePass(), DeterministicPass(), ErrorLocationPass(property)),
           input = { (init to final) { "reach_error"() } },
           output = { (init to err) { skip() } },
+        ),
+        PassTestData(
+          global = { "x" type Int() init "0" },
+          passes =
+            listOf(
+              NormalizePass(),
+              DeterministicPass(),
+              AssertionToErrorLocationPass(assertionProperty),
+            ),
+          input = { (init to final) { "assert"("(> x 0)") } },
+          output = {
+            (init to err) { assume("(not (> x 0))") }
+            (init to final) { assume("(> x 0)") }
+          },
         ),
         PassTestData(
           global = {},
@@ -318,7 +339,8 @@ class PassTests {
             "pid" type Int() init "0"
             "thr1" type Int() init "0"
           },
-          passes = listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass()),
+          passes =
+            listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass(parseContext)),
           input = {
             (init to "L1") { "pthread_create"("ret", "pid", "0", "thr1", "0") }
             (init to "L2") { "pthread_join"("ret", "pid") }
@@ -349,6 +371,10 @@ class PassTests {
               havoc("y")
             }
           },
+          // `pthread_create`'s start routine must resolve to a real procedure:
+          // CLibraryFunctionsPass
+          // rejects a thread entry that names no procedure. `thr1` is registered as an (empty) one.
+          siblingProcedures = listOf("thr1"),
         ),
         PassTestData(
           global = {},
@@ -518,7 +544,7 @@ class PassTests {
             "x" type Int() init "0"
             "thr1" type Int() init "0"
           },
-          passes = listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass()),
+          passes = listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)),
           input = { (init to "L1") { "__VERIFIER_nondet_int"("x") } },
           output = { (init to "L1") { havoc("x") } },
         ),
@@ -542,7 +568,7 @@ class PassTests {
         PassTestData(
           global = {
             global(
-              "__arrays_Int_Int_Int_false",
+              "__arrays_Int_Int_Int",
               ArrayType.of(Int(), ArrayType.of(Int(), Int())),
               null,
               true,
@@ -555,19 +581,19 @@ class PassTests {
           },
           output = {
             (init to "L1") {
-              "__arrays_Int_Int_Int_false" assign
-                "(write __arrays_Int_Int_Int_false 1 (write (read __arrays_Int_Int_Int_false 1) 0 42))"
+              "__arrays_Int_Int_Int" assign
+                "(write __arrays_Int_Int_Int 1 (write (read __arrays_Int_Int_Int 1) 0 42))"
             }
-            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_false 1) 0) 42)") }
+            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int 1) 0) 42)") }
           },
         ),
         PassTestData(
           global = {
             "x" type Int() init "0"
             global(
-              "__arrays_Int_Int_Int_true",
+              "__arrays_Int_Int_Int",
               ArrayType.of(Int(), ArrayType.of(Int(), Int())),
-              "(array (default (array (default 0))))",
+              null,
               true,
             )
           },
@@ -580,10 +606,44 @@ class PassTests {
           output = {
             "y" type Int()
             (init to "L1") {
-              "__arrays_Int_Int_Int_true" assign
-                "(write __arrays_Int_Int_Int_true x (write (read __arrays_Int_Int_Int_true x) y 42))"
+              "__arrays_Int_Int_Int" assign
+                "(write __arrays_Int_Int_Int x (write (read __arrays_Int_Int_Int x) y 42))"
             }
-            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_true x) y) 42)") }
+            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int x) y) 42)") }
+          },
+        ),
+        PassTestData(
+          global = {},
+          passes = listOf(ReferenceElimination(parseContext)),
+          input = {
+            "B" type Int()
+            "O" type Int()
+            "x" type Int()
+            "y" type Int()
+            "z" type Int()
+            (init to "L1") { "x".assign("(ref (deref B O Int) Int)") }
+            ("L1" to "L2") { "y".assign("x") }
+            ("L2" to final) { "z".assign("(deref y 2 Int)") }
+          },
+          output = {
+            "B" type Int()
+            "O" type Int()
+            "x" type Int()
+            "y" type Int()
+            "z" type Int()
+            "x_base" type Int()
+            "x_offset" type Int()
+            "y_base" type Int()
+            "y_offset" type Int()
+            (init to "L1") {
+              "x_base".assign("B")
+              "x_offset".assign("O")
+            }
+            ("L1" to "L2") {
+              "y_base".assign("x_base")
+              "y_offset".assign("x_offset")
+            }
+            ("L2" to final) { "z".assign("(deref y_base (+ y_offset 2) Int)") }
           },
         ),
       )
