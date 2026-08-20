@@ -7680,6 +7680,40 @@ Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
 | 9 | **[DONE]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9). TWO width bugs, one per data model. (a) `unsigned long` is 64-bit only under LP64, so "the unsigned type of width n" returned a type HALF the requested width under ILP32 and the union layout addressed past the cell (`_LARGE_INTEGER`, ldv drivers); now falls through to `unsigned long long` only where `unsigned long` is too narrow. (b) A union member that is a packed word of bitfields is stamped with the STRUCT's C type (so `.f` resolves as a field) and every aggregate reports a pointer-width placeholder as its SMT sort -> 64-bit value into a 32-bit cell (intel-tdx `keyid_ctrl.command = 1`); the splice now uses the unsigned type of the CELL's width, keeping the recorded type and still reporting when no C type matches. intel-tdx 210->0; ntdrivers advances to the separate `Could not handle left-hand side` family, so <298 runs are converted | 149 tasks x 2 configs, 62% intel-tdx. The archived XML truncates the message and no logfiles were kept, so it had to be reproduced locally | |
 | 10 | **[DONE -- implemented, measured, and DELIBERATELY NOT SHIPPED]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10). The fallback works (guards correct, 3 float-newlib tasks 210->0), but the model it falls back INTO is unsound for the very pattern that triggers it, so shipping it would convert ~554 score-0 ERRORs into wrong `false` verdicts at -16 each. Reverted; repro kept at `canaries/fixtures/union_double_punning_bytes_UNSOUND.c` | ⚠️ the bytes model IS implemented on this branch; the fallback is a ~40-line mirror of multi->flat. The blocker is soundness, not wiring | |
 
+### The fp round-trip's cost: NaN payloads (measured 2026-08-20, AFTER f470a74ddf)
+
+Asked whether the unshipped bytes fallback would only ever produce ERRORs after the round-trip fix,
+or could produce wrong verdicts. **It can produce wrong verdicts.** Measured, not reasoned:
+
+    u.words[1] = 0x7FF80000u; u.words[0] = 0x2Au;  /* a NaN with payload 42 */
+    double d = u.value;  u.value = d;              /* out through the float view and back */
+    if (u.words[0] != 0x2Au) reach_error();
+
+gcc: SAFE. theta under `--memory-model bytes`: **`SafetyResult Unsafe`** -- a spurious
+counterexample, i.e. a wrong `false` (-16), not an ERROR (0).
+
+Cause: `fpToIEEEBV` is unspecified for NaN, so ByteMemoryPass pins NaN to the canonical quiet
+encoding on the way in. That is what keeps a NaN from becoming a normal number, but it destroys the
+payload.
+
+⚠️ **This is a REGRESSION from f470a74ddf, and was verified as one** by rebuilding the parent commit:
+before the fix this program verified **Safe**, because a float write did not touch the byte cells at
+all, so the payload written through the integer view survived. That was luck, not soundness -- the
+same non-aliasing is what made `u.value = 1.0; u.parts.msw` unconstrained and Unsafe. So the fix
+trades a broad wrong-answer class (all punning of ordinary values, the newlib idiom) for a narrow one
+(NaN payload preservation). Net positive, NOT strictly better, and worth saying out loud.
+
+No cheap repair: an exact to-bits direction is what is needed and SMT-LIB does not specify one.
+Peeling `ToIeeeBv(FromIeeeBv(b))` only catches a write whose right-hand side is syntactically the
+read; here the value passes through a local first.
+
+Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered on purpose.
+
+**Not reachable in anything shipped**, including runs 96/97: `bytes` needs an explicit
+`--memory-model`, and the automatic fallback to it stays unshipped. So the answer to "errors only?"
+is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
+round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
+
 ## Runs 96 (parse, LOW) and 97 (portfolio, IDLE) -- launched 2026-08-20 09:55, benchcloud
 
 Both from the SAME build: tool dir `Theta-svcomp-96` = HEAD `08b9ce772c` (batch-92 items 1-10 plus
