@@ -7732,6 +7732,32 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Local parse-only check of the byte-addressed union family (2026-08-20, build e07b3354df)
+
+User asked whether that family is "mostly handled" now that the fallback ships. **It is not.**
+Measured, stratified sample of **105** of the 724 distinct (file, property) pairs, run locally with
+`--backend NONE` on the build that has the fallback:
+
+| half of the family | n | built OK (exit 0) | fell back | outcome |
+|---|---|---|---|---|
+| `Accessing member [...]` (float member) | 45 | **0** | 2 | 43 refused as designed -- bytes cannot model a float either, so the fallback deliberately does not fire |
+| `Taking the address of a multi-byte member` | 60 | **8 (13%)** | 59 | the retry fires almost always, but the task then hits something else |
+| **total** | **105** | **8 (7.6%)** | 61 | |
+
+Where the 52 non-building addr-of tasks go: **28** `Could not handle left-hand side of assignment`
+(the item-4 residue), **11** `Unsupported initializer for ...`, **12 OUT OF MEMORY**, 1 timeout.
+
+⚠️ **The OOMs are real, not a local artifact.** They persist at `-Xmx14g`, so it is the container
+limit doing the killing -- and this host's cgroup is 8 GB while `theta27-parse.xml` sets
+`memlimit="7 GB"`, i.e. the benchmark is *tighter*. Byte-granular memory turns every wide access into
+8 cells plus a Concat, and on the large intel-tdx / ldv-linux files that does not fit. Expect run 98
+to show this family partly converting to OOM rather than to verdicts.
+
+**Extrapolated yield of the fallback: ~55 of 724 tasks (~8%)**, essentially all from the addr-of
+half. The fallback is correct and safe -- no wrong answers, floats refused loudly -- but it is not
+the 1,448-run win the raw error count suggested. What actually blocks that family is the
+`Could not handle left-hand side` work and the memory cost of the bytes model, in that order.
+
 ## Run 96 (parse-only) RESULT -- finished 2026-08-20, vs run 94
 
 Both runs re-counted locally with one script so the comparison is like-for-like (the older
