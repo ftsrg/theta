@@ -7732,6 +7732,33 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Run 100 (TARGETED Juliet, LOW) RESULT -- 2026-08-21, build 4f41483289
+
+912 tasks instead of 36,602, at the user's suggestion: re-run exactly the family that turned wrong
+rather than waiting on a full portfolio run to test a hypothesis about 456 tasks. Same options,
+limits and portfolio as `theta27-long900.xml`, so the verdicts compare directly to run 98.
+XML: `xmls/theta27-juliet.xml`; sets: `sv-benchmarks/c/juliet_offenders.set`, `juliet_controls.set`.
+
+| group | n | run 98 | run 100 |
+|---|---|---|---|
+| offenders (Juliet CWE190 `_good`, expected **true**) | 456 | **456 wrong** | **456 correct** |
+| controls (matching `_bad`, expected **false**) | 456 | 456 correct | **456 correct** |
+
+Every single offender flipped `wrong -> correct`, and **not one control regressed** -- the range
+bound removes the false alarms without suppressing the real overflows. That control group is the
+point of the run: the offenders alone could not distinguish "fixed" from "stopped detecting
+overflows", and a missed bug costs -32 where a false alarm costs -16.
+
+Family score: **-7,296 -> +912, a swing of +8,208.** That number is now MEASURED for this family
+rather than extrapolated from the 25-task sample. Run 99 (full portfolio, IDLE, same build) is still
+queued and will say whether the rest of the benchmark moves with it; run 98's 13,407 plus this
+family's swing would be ~21,615 against run 93's 19,835, but the rest of the run is not measured yet
+and that figure stays a projection until run 99 lands.
+
+⚠️ Still unexplained: WHY the bound changes these verdicts. Five minimal programs of the obvious
+shape verify Safe with and without it. The fix is protected only by this real-task evidence -- there
+is no fixture -- so a refactor could silently undo it.
+
 ## Run 99 (full portfolio, COMPLEX27) -- launched 2026-08-21 17:56, benchcloud
 
 Tool dir `Theta-svcomp-99` = HEAD `4f41483289`. Same XML, priority (IDLE), CPU model (Skylake) and
