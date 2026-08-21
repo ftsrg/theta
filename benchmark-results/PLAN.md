@@ -7732,6 +7732,29 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Run 99 (full portfolio, COMPLEX27) -- launched 2026-08-21 17:56, benchcloud
+
+Tool dir `Theta-svcomp-99` = HEAD `4f41483289`. Same XML, priority (IDLE), CPU model (Skylake) and
+client heap as run 98, so the two are directly comparable. Screen `theta-portfolio99`, outdir
+`results/Theta-svcomp-99/theta27-long900.xml/2026-08-21_17:56:56/`. Launch checks: 0
+`Cannot start process`, 0 `OutOfMemoryError`.
+
+On top of run 98's build:
+- the two `Could not handle left-hand side` fixes (`1b22c445da`) -- bitfield through a narrowing,
+  struct copied through a pointer (~216 of the 224 runs in that family)
+- the library-stub havoc bounded to the C type it writes (`4f41483289`)
+
+**What this run is measuring.** Run 98 scored 13,407 against run 93's 19,835, and 456 of its 476 new
+wrong verdicts were the Juliet CWE190 `_good` family answering `false(no-overflow)`. The stub fix
+turned 25 of 25 sampled tasks from that family correct, with all 8 sampled `_bad` counterparts still
+caught. **Do not quote a projected score from that sample** -- this run exists to replace the
+projection with a measurement. The arithmetic that the sample suggests (~+8,200 over run 98, i.e.
+comfortably past run 93) is a hypothesis for run 99 to confirm or refute, nothing more.
+
+Baselines: run 93 = 19,835 / 55 wrong (complex26); run 98 = 13,407 / 528 wrong (COMPLEX27).
+Note run 93 is still a complex26 baseline, so any difference against it other than the families
+named above confounds portfolio with fixes; run 98 is the clean like-for-like comparison.
+
 ## Run 98 (full portfolio, COMPLEX27) RESULT -- finished 2026-08-21
 
 | | run 93 (complex26) | run 98 (COMPLEX27) | delta |
