@@ -7732,6 +7732,51 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Run 98 (full portfolio, COMPLEX27) RESULT -- finished 2026-08-21
+
+| | run 93 (complex26) | run 98 (COMPLEX27) | delta |
+|---|---|---|---|
+| **score** | 19,835 | **13,407** | **-6,428** |
+| correct | 12,890 | **13,905** | +1,015 |
+| error | 23,173 | 21,684 | -1,489 |
+| **wrong** | 55 | **528** | **+473** |
+
+**The headline is misleading and the classification matters.** Of the 476 NEW wrong results, **475
+were ERRORs in run 93** (score 0) and exactly **one** was previously correct. This is latent
+unsoundness EXPOSED, not caused: tasks that used to fail now produce a verdict, and it is wrong.
+Direction: 467 wrong-`false` (-16), 9 wrong-`true` (-32).
+
+**It is not the portfolio.** Same build under `--portfolio STABLE` and `--portfolio COMPLEX27` gives
+the identical wrong verdict on these tasks, so the complex26 -> complex27 switch is exonerated; the
+cause is this batch's frontend work.
+
+**It is one family: `Juliet_Test` + `no-overflow`, 456 of the 476, costing -7,296.** All are
+`CWE190_Integer_Overflow__*_good` variants of the shape
+
+    data = 0; fscanf(stdin, "%ld", &data);
+    if (data < 0x7fffffffffffffffLL) { result = data + 1; }   /* provably safe */
+
+theta answers `false(no-overflow)`. Bisecting the REAL file: emptying `goodB2G` -> Safe; removing
+only the `fscanf` call -> Safe; removing only the `printLongLongLine` call -> still Unsafe. So the
+trigger is the `fscanf` stub introducing an unconstrained value, after which the guard fails to keep
+the addition safe. **The precise trigger is NOT yet isolated** -- minimal reproductions of that exact
+shape (both `long` and `long long`, both data models) all verify Safe, so something else in the real
+file participates. Three hypothesis repros failed; the next step is instrumenting the real input, not
+a fourth.
+
+**Mitigation, measured:** commenting the four `scanf`-family entries out of `LibraryStubsPass.STUBS`
+returns these tasks to `No such method fscanf`, i.e. ERROR / score 0 rather than -16.
+
+    run 98 as measured                                  13,407
+    run 98 with the Juliet/no-overflow wrongs as ERROR   20,703   (+868 vs run 93)
+
+So **the batch is net positive (+868) once this one family stops answering wrongly** -- the +1,015
+extra correct results are real. Two ways forward: fix the false alarm (better), or gate the
+scanf-family stubs off until it is fixed (cheap, recovers ~7,300 immediately). Not decided here.
+
+⚠️ Also note run 93 is a complex26 baseline; the portfolio differs. The A/B above shows the portfolio
+is not responsible for THIS family, but any other comparison against run 93 still confounds the two.
+
 ## `Could not handle left-hand side of assignment` -- debugged 2026-08-20 (commit 1b22c445da)
 
 One message, **two unrelated bugs**, 224 runs in run 96. The type printing added by item 1 is what
