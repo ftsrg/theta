@@ -162,6 +162,25 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
           Dereference.of(ptr as Expr<Type>, cast(index, ptr.type) as Expr<Type>, cell.smtType as Type)
         parseContext.metadata.create(deref, "cType", CPointer(null, cell, parseContext))
         out.add(StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata))
+        // Bound it to the cell's C type, exactly as a `__VERIFIER_nondet_<type>()` result is
+        // bounded. A bare havoc is unconstrained across its whole SMT sort, and under integer
+        // arithmetic that sort is the UNBOUNDED integers, so without this a stubbed read can hand
+        // back a value no object of that type could hold.
+        //
+        // MEASURED, on real inputs: this turns the whole Juliet CWE190 `_good` family from
+        // `false(no-overflow)` into correct `true` -- 25 of 25 sampled tasks that were wrong in
+        // run 98 -- while all 8 sampled `_bad` counterparts still report the real overflow, so the
+        // assume is not suppressing genuine bugs. What is NOT established is the precise chain
+        // from the missing bound to that verdict: five minimal programs of the obvious shape
+        // (one-sided guard over a stub-written value, both data models, both arithmetics) all
+        // verify Safe with and without this line, so something else in those files participates.
+        // Treat the mechanism as open; the evidence for the fix is the real-task measurement.
+        //
+        // Emitted here rather than left to [HavocPromotionAndRange], which adds exactly this assume
+        // but runs BEFORE this pass in the pipeline, so a havoc introduced here never reaches it --
+        // stamping `cType` on the variable to make that pass pick it up was tried and measured at
+        // zero effect for the same reason.
+        out.add(StmtLabel(cell.limit(fresh.ref), metadata = invoke.metadata))
         out.add(
           StmtLabel(
             MemoryAssignStmt.create(deref, cast(fresh.ref, cell.smtType)),
