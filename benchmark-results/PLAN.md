@@ -7732,6 +7732,37 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Run 99 (full portfolio, COMPLEX27 + fixes) RESULT -- finished 2026-08-22
+
+| | run 93 (complex26) | run 98 (COMPLEX27) | **run 99** |
+|---|---|---|---|
+| **score** | 19,835 | 13,407 | **21,605** |
+| correct | 12,890 | 13,905 | **14,349** |
+| wrong | 55 | 528 | **71** |
+| error | 23,173 | 21,684 | 21,697 |
+
+**+1,770 over the run-93 baseline, +8,198 over run 98.** The projection from run 100 was ~21,615
+against a measured 21,605 -- close, but the run is what settles it. 460 of run 98's wrong verdicts
+are gone and only 3 appeared.
+
+**The 21 results that are wrong in run 99 but were not wrong in run 93**, classified as required:
+- **20 were ERRORs in run 93** -- latent unsoundness exposed by tasks that now get far enough to
+  answer. 9 wrong-`true` (-32), 12 wrong-`false` (-16). Spread thin: memsafety 5, busybox 4,
+  aws-c-common 3, ldv-linux-4.0-rc1-mav 3, memsafety-bftpd 2, pthread-race-challenges 1.
+- **1 is a genuine regression**: `ldv-regression/rule60_list2.yml` (unreach-call, expected true) was
+  **correct in run 93** and answers `false(unreach-call)` in both run 98 and run 99. It is therefore
+  NOT caused by the run-99 fixes -- it entered with run 98's build (batch-92 items 1-10 or the union
+  cell-width fix) and is the one thing in this batch that took a working answer away. Worth chasing
+  next; -32 on its own, but it is the only case where the batch made a correct result wrong.
+
+5 verdicts that were wrong in run 93 are now correct.
+
+Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-range fixes:
+`aws-c-common/sliced_aws_array_eq_harness` (error -> wrong false), `ldv .../xen-blkfront`
+(error -> wrong true), and `pthread-race-challenges/thread-join-counter-inner-race-2` (error -> wrong,
+but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
+error-turned-wrong, both previously scoring 0.
+
 ## Run 100 (TARGETED Juliet, LOW) RESULT -- 2026-08-21, build 4f41483289
 
 912 tasks instead of 36,602, at the user's suggestion: re-run exactly the family that turned wrong
