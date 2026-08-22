@@ -3231,6 +3231,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         CStatement statement = ctx.accept(functionVisitor);
+        // Queue the statements unconditionally: they run for their side effects whether
+        // or not the block yields a value. Doing this only on the value-producing path
+        // silently dropped the whole block -- including any reach_error() call inside it
+        // -- which made the error location unreachable and reported unsafe tasks Safe.
+        // See analysis/hypotheses/statement-expression-drops-error-call.md in the
+        // cpa-theta-comparison repo; `({ if (x) reach_error(); })` is the 7-line case.
+        preStatements.add(statement);
         Expr<?> value;
         try {
             value = statement.getExpression();
@@ -3242,7 +3249,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     Level.INFO, "WARNING: statement expression yields no value\n");
             return null;
         }
-        preStatements.add(statement);
         return value;
     }
 
