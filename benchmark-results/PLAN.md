@@ -7732,6 +7732,53 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## Bisect of the one real regression: `ldv-regression/rule60_list2` (2026-08-22)
+
+`git bisect run` over the batch-92 range (good = `7dc13cc52d~1`, bad = `e07b3354df`, 4 steps):
+
+    c8cf3c3ba94ac135d947a2e6798a1aa121b7ea85 is the first bad commit
+    -- "select bitvectors for compound bitwise assignments, and let the fallback fire" (item 7)
+
+**But item 7 is not where the wrong answer lives.** On this task:
+
+| build / flag | verdict |
+|---|---|
+| `--arithmetic integer` (any build) | **Safe** -- correct |
+| `--arithmetic bitvector` (any build, INCLUDING pre-item-7) | **Unsafe** -- wrong |
+| `--arithmetic efficient`, pre-item-7 | Safe (it chose integer) |
+| `--arithmetic efficient`, at HEAD | Unsafe (it now lands on bitvector) |
+
+So the wrong answer is a **pre-existing bitvector-encoding defect that predates batch 92**; item 7
+only changed which encoding this task is given. Its widened fallback re-runs the task under bitvector
+after a POST-parse failure -- the log reads `ParsingResult Success` and then
+`Retrying parsing with bitvector arithmetic...`, one more case of that marker not meaning success.
+
+Same category as the other 20 wrongs in run 99 (latent unsoundness exposed), with the sting that this
+task was previously answered CORRECTLY under integer, so exposure cost a working result rather than
+an error. The file itself has no bitwise operator, no `~`, no float -- it is routed to bitvector by
+the retry, not by a trait.
+
+Two remedies, different in kind and NOT yet chosen:
+1. fix the bitvector defect that answers Unsafe on a safe program (right, unknown size); or
+2. narrow item 7's retry so a task whose integer parse SUCCEEDED is not relocated to bitvector by a
+   later failure (cheap, but hides the defect again).
+
+## Canary set enlarged: 262 -> 268 (2026-08-22)
+
+Six rows added to `canaries.tsv` to guard the stub-range fix, which has no fixture and was otherwise
+protected only by ad-hoc measurement:
+
+| | tasks |
+|---|---|
+| offenders (expected **true**) | `CWE190_..int64_t_fscanf_add_01_good`, `CWE191_..int_fscanf_predec_01_good`, `CWE190_..int_fscanf_postinc_01_good` |
+| controls (expected **false**) | the matching `_bad` variants |
+
+Chosen to span both CWE families (overflow and underflow), both widths (`int`, `int64_t`) and three
+operations, rather than six near-identical rows. All six verified correct on the current build, with
+measured `cputime` (~5.3-5.8 s each, so `build_guard_set.py`'s <60 s filter keeps them). In `parse`
+mode they guard that the family still builds; in `full` mode they guard the VERDICTS, which is the
+part that matters here. Gate after adding: **268 PASS / 0 FAIL**, 69 fixtures / 0 FAIL.
+
 ## Run 99 (full portfolio, COMPLEX27 + fixes) RESULT -- finished 2026-08-22
 
 | | run 93 (complex26) | run 98 (COMPLEX27) | **run 99** |
