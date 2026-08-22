@@ -22,7 +22,6 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import java.nio.file.Path;
 
 public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
@@ -46,7 +45,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
-        return new SmtLibSolver(
+        return new MathSATSmtLibSolver(
                 symbolTable, transformationManager, termTransformer, solverBinary, false);
     }
 
@@ -57,7 +56,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
-        return new SmtLibSolver(
+        return new MathSATSmtLibSolver(
                 symbolTable, transformationManager, termTransformer, solverBinary, true);
     }
 

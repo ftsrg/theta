@@ -18,12 +18,15 @@ package hu.bme.mit.theta.solver.smtlib.solver;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.AllSatSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
@@ -43,16 +46,19 @@ import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-public class SmtLibSolver implements UCSolver, Solver {
+public class SmtLibSolver implements UCSolver, Solver, AllSatSolver {
 
     private static final String ASSUMPTION_LABEL = "_LABEL_%d";
     protected final SmtLibSymbolTable symbolTable;
@@ -198,6 +204,97 @@ public class SmtLibSolver implements UCSolver, Solver {
 
         clearState();
     }
+
+    /**
+     * Solver specific: only backends whose SMT-LIB dialect has an all-sat command say yes. See
+     * {@link AllSatSolver}. Overridden by {@code MathSATSmtLibSolver}.
+     */
+    @Override
+    public boolean supportsAllSat() {
+        return false;
+    }
+
+    /**
+     * Issues MathSAT's {@code (check-allsat (...))} extension and collects one {@link Valuation}
+     * per model.
+     *
+     * <p>The reply is a sequence of parenthesised blocks, one per model, terminated by a bare
+     * status token:
+     *
+     * <pre>
+     *   ( (p1 false) (p2 false) )
+     *   ( (p1 true)  (p2 true)  )
+     *   sat
+     * </pre>
+     *
+     * <p>The binary's reader already frames each balanced s-expression as its own response, so the
+     * blocks arrive one {@code readResponse()} at a time and the loop simply stops at the status
+     * token. The blocks are parsed directly rather than through the general response grammar, which
+     * models {@code get-model} output ({@code define-fun} forms) and does not describe this shape.
+     */
+    @Override
+    public Collection<? extends Valuation> allSat(
+            final List<? extends ConstDecl<BoolType>> important) {
+        if (!supportsAllSat()) {
+            throw new UnsupportedOperationException(
+                    "This solver does not support all-sat; check supportsAllSat() first");
+        }
+        if (important.isEmpty()) {
+            // No variables to enumerate over: the answer is one empty model iff satisfiable.
+            return check().isSat() ? List.of(ImmutableValuation.builder().build()) : List.of();
+        }
+
+        final var symbols =
+                important.stream().map(symbolTable::getSymbol).collect(Collectors.joining(" "));
+        solverBinary.issueCommand("(check-allsat (" + symbols + "))");
+
+        final List<Valuation> models = new ArrayList<>();
+        while (true) {
+            final String response = solverBinary.readResponse().trim();
+            if (response.isEmpty()) {
+                continue;
+            }
+            if (!response.startsWith("(")) {
+                // status token closes the enumeration
+                if (response.startsWith("unsat")) {
+                    status = SolverStatus.UNSAT;
+                } else if (response.startsWith("sat")) {
+                    status = SolverStatus.SAT;
+                } else {
+                    throw new UnknownSolverStatusException();
+                }
+                break;
+            }
+            if (response.startsWith("(error")) {
+                throw new SmtLibSolverException(response);
+            }
+            models.add(parseAllSatModel(response));
+        }
+        return models;
+    }
+
+    /** Parses one {@code ( (sym value) ... )} block into a {@link Valuation}. */
+    private Valuation parseAllSatModel(final String block) {
+        final var builder = ImmutableValuation.builder();
+        final var matcher = ALLSAT_ASSIGNMENT.matcher(block);
+        while (matcher.find()) {
+            final String symbol = matcher.group(1);
+            final boolean value = Boolean.parseBoolean(matcher.group(2));
+            if (!symbolTable.definesSymbol(symbol)) {
+                continue; // not one of ours; MathSAT may name auxiliary literals
+            }
+            final ConstDecl<?> decl = symbolTable.getConst(symbol);
+            if (decl.getType() instanceof BoolType) {
+                @SuppressWarnings("unchecked")
+                final ConstDecl<BoolType> boolDecl = (ConstDecl<BoolType>) decl;
+                builder.put(boolDecl, value ? BoolExprs.True() : BoolExprs.False());
+            }
+        }
+        return builder.build();
+    }
+
+    private static final Pattern ALLSAT_ASSIGNMENT =
+            Pattern.compile("\\(\\s*([^()\\s]+)\\s+(true|false)\\s*\\)");
 
     @Override
     public SolverStatus check() {

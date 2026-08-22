@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.solver.AllSatSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.ArrayList;
@@ -150,6 +151,20 @@ public class PredAbstractors {
                                     actLits.get(i).getRef(),
                                     PathUtils.unfold(preds.get(i), precIndexing)));
                 }
+
+                // Boolean predicate abstraction *is* all-sat over the activation literals. When
+                // the solver can enumerate them itself we get the whole answer in one call; the
+                // loop below emulates the same thing with one solver round trip per model, which
+                // is all that portable SMT-LIB allows. Measured on systemc/pc_sfifo_1.cil-2:
+                // 1832 abstractions cost 5587 check-sat calls through the loop.
+                if (solver instanceof AllSatSolver allSatSolver && allSatSolver.supportsAllSat()) {
+                    final var actLitsForPreds = actLits.subList(0, preds.size());
+                    for (final Valuation model : allSatSolver.allSat(actLitsForPreds)) {
+                        states.add(PredState.of(statePredsOf(model, preds, prec)));
+                    }
+                    return collapse(states);
+                }
+
                 while (solver.check().isSat()) {
                     final Valuation model = solver.getModel();
                     final Set<Expr<BoolType>> newStatePreds = CollectionUtil.createSet();
@@ -173,6 +188,25 @@ public class PredAbstractors {
                     solver.add(Not(And(feedback)));
                 }
             }
+            return collapse(states);
+        }
+
+        /** Reads one model into the set of (possibly negated) predicates it satisfies. */
+        private Set<Expr<BoolType>> statePredsOf(
+                final Valuation model, final List<Expr<BoolType>> preds, final PredPrec prec) {
+            final Set<Expr<BoolType>> newStatePreds = CollectionUtil.createSet();
+            for (int i = 0; i < preds.size(); ++i) {
+                final Optional<LitExpr<BoolType>> eval = model.eval(actLits.get(i));
+                if (eval.isPresent()) {
+                    newStatePreds.add(
+                            eval.get().equals(True()) ? preds.get(i) : prec.negate(preds.get(i)));
+                }
+            }
+            return newStatePreds;
+        }
+
+        /** PRED_BOOL folds the cubes into one disjunctive state; PRED_SPLIT keeps them apart. */
+        private Collection<PredState> collapse(final List<PredState> states) {
             if (!split && states.size() > 1) {
                 final Expr<BoolType> pred =
                         Or(states.stream().map(PredState::toExpr).collect(Collectors.toList()));
