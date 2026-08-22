@@ -92,3 +92,56 @@ archivePackaging {
         scriptName = "chc"
     }
 }
+
+// The canary suite (benchmark-results/canaries) as a registered Gradle test task.
+//
+// It is NOT part of `test`: a parse-mode sweep is ~20 minutes and needs a built Theta-svcomp
+// distribution plus a local sv-benchmarks checkout, so putting it in the default task would make
+// every build depend on several gigabytes of benchmarks that a fresh clone does not have. As its own
+// task it is discoverable (`gradle tasks`), runnable in CI, and reports one JUnit result per canary
+// instead of a single opaque exit code. Where the prerequisites are missing the test skips itself
+// rather than failing -- see CanarySuiteTest.
+val canaryTest by
+    tasks.registering(Test::class) {
+        group = "verification"
+        description =
+            "Runs the canary suite (real SV-COMP tasks + feature-guard fixtures) against the built " +
+                "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
+                "than only that the frontend builds each task."
+
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        filter { includeTestsMatching("*CanarySuiteTest*") }
+
+        // The suite needs the packaged distribution, not just the classes. Referenced by name: the
+        // archive-packaging plugin registers its variants after this block is evaluated, so
+        // `tasks.named(...)` here would not find it yet.
+        dependsOn("buildArchiveTheta-svcomp")
+
+        systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
+        systemProperty(
+            "theta.canary.dist",
+            layout.buildDirectory.dir("distributions/Theta-svcomp").get().asFile.absolutePath,
+        )
+        systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
+        // The sweep runs PARALLEL_JOBS tasks at once (script default 4). On a memory-constrained or
+        // shared machine that is enough to get a large task OOM-killed -- it shows up as
+        // `nonzero exit 137` on one row and passes when re-run alone -- so the knob is exposed
+        // rather than hidden: -Ptheta.canary.jobs=2 trades wall time for headroom.
+        (project.findProperty("theta.canary.jobs"))?.let { environment("PARALLEL_JOBS", it.toString()) }
+        (project.findProperty("theta.canary.svBenchmarks"))?.let {
+            systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+
+        // The result depends on the benchmarks and the built archive, not only on this project's
+        // inputs, so caching a green run would hide a regression in either.
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events("failed", "skipped")
+            showStandardStreams = false
+        }
+    }
+
+// Keep the long sweep out of the ordinary test task.
+tasks.named<Test>("test") { filter { excludeTestsMatching("*CanarySuiteTest*") } }

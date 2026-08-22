@@ -7732,6 +7732,39 @@ Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered o
 is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
 round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
 
+## The canary suite is now a Gradle task (2026-08-22)
+
+`./gradlew :theta-xcfa-cli:canaryTest` -- registered in the `verification` group, reporting **one
+JUnit result per canary and per fixture** (337 = 268 + 69, verified) instead of a single exit code.
+
+Decisions worth keeping:
+- **It invokes `run_canaries.sh`, it does not reimplement it.** That script carries the traps learned
+  the hard way: a stale extracted distribution silently reused, the exec bit on `theta-start.sh`, and
+  `timeout` not killing the JVM the script spawns. A Kotlin rewrite would rediscover all of them.
+- **Skips when it cannot run, fails when it cannot be trusted.** No built distribution or no
+  sv-benchmarks checkout is an assumption failure (skip) -- neither exists on a fresh clone. But an
+  unparseable result set is a FAILURE, so a broken invocation cannot look like a clean sweep.
+- **Excluded from `test`** (verified: the normal task produces 7 result files, none of them the
+  canary class). A parse sweep is ~20 min and needs gigabytes of benchmarks.
+- `-Ptheta.canary.mode=full` checks verdicts rather than only that the frontend builds each task;
+  `-Ptheta.canary.jobs=N` lowers the sweep's parallelism.
+
+First run: 337 tests, 1 failure -- `neural-networks/cartpole_0_safe` with `nonzero exit 137`, the
+known OOM under the suite's 4-way parallelism that passes when re-run alone. **Deliberately not
+special-cased**: a test that swallows `exit 137` would also swallow a genuine memory regression. The
+knob is exposed and the flakiness documented in the test's own comment instead.
+
+## PR document drafted (2026-08-22)
+
+`benchmark-results/PR.md`, not opened. Leads with the score table INCLUDING run 98's -6,428 dip,
+because that dip is the branch's strongest evidence that an error-count improvement means nothing on
+its own. Carries a "Known limitations -- please read before merging" section with all seven open
+items: the one correct->wrong regression and its bisect, the 20 exposed-not-caused wrongs (9 of them
+in the expensive -32 direction), the stub-range fix that works without an explanation, the 8 still
+refused ntdrivers tasks, the `CComplexType.getType` instability, the deliberate float refusal under
+the byte-addressed model, and the pre-existing formatting violations this branch neither adds to nor
+fixes.
+
 ## Bisect of the one real regression: `ldv-regression/rule60_list2` (2026-08-22)
 
 `git bisect run` over the batch-92 range (good = `7dc13cc52d~1`, bad = `e07b3354df`, 4 steps):
