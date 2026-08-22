@@ -47,11 +47,15 @@ import org.junit.jupiter.api.fail
  * benchmarks. It is registered as its own task -- `./gradlew :theta-xcfa-cli:canaryTest` -- and
  * `test` explicitly excludes it.
  *
- * One row is known to be flaky on a memory-constrained machine: the suite runs four tasks at once,
- * and a large one (`neural-networks/cartpole_0_safe`) is occasionally OOM-killed, reported here as
- * `nonzero exit 137`. It passes when re-run alone. That is not special-cased -- a test that
- * swallows `exit 137` would also swallow a genuine memory regression -- so use
- * `-Ptheta.canary.jobs=2` where headroom is tight.
+ * One row is flaky on a memory-constrained machine: `neural-networks/cartpole_0_safe` is large
+ * enough to be OOM-killed, reported here as `nonzero exit 137`. Measured on a host with ~13 GB of
+ * 62 free (the rest in use by other tenants), it failed at the default parallelism and at
+ * `-Ptheta.canary.jobs=2`, and passed only at `PARALLEL_JOBS=1` -- and even alone it has failed
+ * before. So it is the machine's free memory that decides, not the parallelism; `theta.canary.jobs`
+ * lowers the pressure but is not a reliable remedy for it.
+ *
+ * It is deliberately NOT special-cased. A test that swallows `exit 137` would also swallow a genuine
+ * memory regression, which is exactly the kind of thing this suite exists to catch.
  */
 class CanarySuiteTest {
 

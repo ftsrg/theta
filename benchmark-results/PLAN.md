@@ -7749,10 +7749,13 @@ Decisions worth keeping:
 - `-Ptheta.canary.mode=full` checks verdicts rather than only that the frontend builds each task;
   `-Ptheta.canary.jobs=N` lowers the sweep's parallelism.
 
-First run: 337 tests, 1 failure -- `neural-networks/cartpole_0_safe` with `nonzero exit 137`, the
-known OOM under the suite's 4-way parallelism that passes when re-run alone. **Deliberately not
-special-cased**: a test that swallows `exit 137` would also swallow a genuine memory regression. The
-knob is exposed and the flakiness documented in the test's own comment instead.
+First run: 337 tests, 1 failure -- `neural-networks/cartpole_0_safe` with `nonzero exit 137`.
+⚠️ **Corrected after measuring:** this was first written up as an artefact of the suite's 4-way
+parallelism that passes when re-run alone. It is not. On a host with ~13 GB of 62 free it failed at
+4 jobs, failed again at `-Ptheta.canary.jobs=2`, and passed only at `PARALLEL_JOBS=1` -- and it has
+failed alone before too. The deciding factor is the machine's free memory, not the parallelism, so
+the knob is pressure relief rather than a remedy. **Deliberately not special-cased**: a test that
+swallows `exit 137` would also swallow a genuine memory regression.
 
 ## PR document drafted (2026-08-22)
 

@@ -124,10 +124,10 @@ val canaryTest by
             layout.buildDirectory.dir("distributions/Theta-svcomp").get().asFile.absolutePath,
         )
         systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
-        // The sweep runs PARALLEL_JOBS tasks at once (script default 4). On a memory-constrained or
-        // shared machine that is enough to get a large task OOM-killed -- it shows up as
-        // `nonzero exit 137` on one row and passes when re-run alone -- so the knob is exposed
-        // rather than hidden: -Ptheta.canary.jobs=2 trades wall time for headroom.
+        // The sweep runs PARALLEL_JOBS tasks at once (script default 4). Lowering it trades wall
+        // time for memory headroom, which helps on a shared machine -- but measured on one with
+        // ~13 GB of 62 free, the largest canary was OOM-killed at 4 jobs AND at 2, passing only at
+        // 1. Treat this as pressure relief, not a fix for an under-provisioned machine.
         (project.findProperty("theta.canary.jobs"))?.let { environment("PARALLEL_JOBS", it.toString()) }
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())
