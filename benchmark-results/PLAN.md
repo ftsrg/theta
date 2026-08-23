@@ -7846,6 +7846,35 @@ Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-ra
 but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
 error-turned-wrong, both previously scoring 0.
 
+## Runs 101 (benchcloud) and 102 (sosy) -- the same benchmark raced on two hosts, 2026-08-23
+
+User-directed: run the full portfolio at the real SV-COMP allocation on BOTH hosts and keep whichever
+finishes first. (This lifts the standing "never launch anything on sosy" rule, explicitly and for
+this task.)
+
+| | run 101 | run 102 |
+|---|---|---|
+| host | benchcloud | **sosy** (`/data/scratch/bajczi`, tmux `theta-bench-102`) |
+| XML | `xmls/theta27-long900-15g.xml` | `xmls/theta27-long900-15g.xml` (created there; the copy on sosy was still 7 GB + STABLE, backed up as `.bak-stable-7g`) |
+| limits | 15 min / **15 GB** / 2 cores | same |
+| portfolio | COMPLEX27 | COMPLEX27 |
+| CPU model | Skylake | **1230** (the usual sosy Xeons) |
+| client heap | 8192 | 8192 |
+| priority | IDLE | **LOW** -- `run-tool.sh` hardcodes it |
+| tool dir | `Theta-svcomp-99` | `Theta-svcomp-102` |
+
+Both tool dirs carry source identical to HEAD (`git diff` over `subprojects/` is empty back to
+`4f41483289`). Launch checks passed on both: 0 `Cannot start process`, 0 `OutOfMemoryError`, relative
+tool dir, exec bit set, `--version` clean.
+
+⚠️ **The race is not a fair comparison of the two hosts.** sosy runs at LOW and benchcloud at IDLE,
+because `run-tool.sh` hardcodes its priority; sosy should therefore be expected to win on queueing
+alone. The point is a result sooner, not a benchmark of the clusters -- and the two use different CPU
+models, so their *timings* are not comparable either. The verdicts should agree; if they do not, that
+is worth knowing on its own.
+
+Baselines for whichever lands: run 99 (same source, 7 GB) = 21,605 / 71 wrong; run 93 = 19,835 / 55.
+
 ## Run 100 (TARGETED Juliet, LOW) RESULT -- 2026-08-21, build 4f41483289
 
 912 tasks instead of 36,602, at the user's suggestion: re-run exactly the family that turned wrong
