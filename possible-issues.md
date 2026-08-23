@@ -164,6 +164,28 @@ Delete entries as they're resolved or judged intentional.
   hazardous in hash-based collections either way, and it also skips the family's
   `getHashSeed()`/`getOperatorLabel()` contract. At minimum deserves a documenting comment.
 
+## xcfa-cli (2026-08-23)
+
+- [ ] **`InProcessChecker` drops the outer JVM's system properties.** The child is launched
+  with only `-Xss120m` and `-Xmx`, so any `-Dfoo=bar` given to `java -jar theta.jar ...`
+  never reaches the process that runs the analysis. Anything configured that way is
+  silently ignored under `--in-process` (the default), which makes an A/B over such a flag
+  read as "no effect". Workaround is `JAVA_TOOL_OPTIONS`, which is inherited via the
+  environment. Forwarding `ProcessHandle.current().info()`'s `-D` arguments, or at least
+  logging that they were dropped, would remove a real footgun.
+  Also note `pb.environment().putAll(System.getenv())` runs *after* `pb.start()` in that
+  method, which looks like it cannot have the intended effect.
+
+## solver/solver-smtlib (2026-08-23)
+
+- [ ] **MathSAT's `(check-allsat ...)` can be pathologically slower than emulating it.**
+  Not a Theta bug, but it decides whether Theta should ever use it. On a Theta abstraction
+  query over real FP arithmetic (6 predicates, 16 cubes) `check-allsat` takes ~21 s where
+  `(check-sat)` on the identical assertion stack takes 14 ms; the blocking-clause loop in
+  `PredAbstractors` enumerates the same 16 cubes in milliseconds. Both `-theory.fp.mode`
+  values are affected. Hence `-Dtheta.allsat` defaults to off. Reproducer kept outside this
+  repo as `analysis/queries/allsat-slow-arctan_Pade.smt2` in the cpa-theta-comparison repo.
+
 ## Confirmed inconsistencies / traps (may be intentional — deserve a comment)
 
 - [ ] **Operator-label collisions** break toString/DSL round-trips:
