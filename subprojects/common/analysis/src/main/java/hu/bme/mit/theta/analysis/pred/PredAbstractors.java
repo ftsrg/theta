@@ -40,6 +40,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -112,6 +113,10 @@ public class PredAbstractors {
 
     private static final class BooleanAbstractor implements PredAbstractor {
 
+        /** Escape hatch: -Dtheta.allsat=false forces the portable blocking-clause loop. */
+        private static final boolean ALLSAT_ENABLED =
+                Boolean.parseBoolean(System.getProperty("theta.allsat", "true"));
+
         private final Solver solver;
         private final List<ConstDecl<BoolType>> actLits;
         private final String litPrefix;
@@ -157,10 +162,29 @@ public class PredAbstractors {
                 // loop below emulates the same thing with one solver round trip per model, which
                 // is all that portable SMT-LIB allows. Measured on systemc/pc_sfifo_1.cil-2:
                 // 1832 abstractions cost 5587 check-sat calls through the loop.
-                if (solver instanceof AllSatSolver allSatSolver && allSatSolver.supportsAllSat()) {
+                if (ALLSAT_ENABLED
+                        && solver instanceof AllSatSolver allSatSolver
+                        && allSatSolver.supportsAllSat()) {
                     final var actLitsForPreds = actLits.subList(0, preds.size());
-                    for (final Valuation model : allSatSolver.allSat(actLitsForPreds)) {
-                        states.add(PredState.of(statePredsOf(model, preds, prec)));
+                    // check-allsat leaves the enumerated models blocked in the current scope,
+                    // so give it its own push level rather than letting that leak into anything
+                    // that reuses this solver afterwards.
+                    try (WithPushPop allSatScope = new WithPushPop(solver)) {
+                        // Distinct-by-construction in MathSAT (its all-sat does not repeat a
+                        // cube unless -dpll.allsat_allow_duplicates is set), but the set is
+                        // kept: PRED_BOOL folds these cubes into a single disjunction, so a
+                        // repeated cube would silently enlarge every downstream expression.
+                        final Set<PredState> distinct = new LinkedHashSet<>();
+                        for (final Valuation model : allSatSolver.allSat(actLitsForPreds)) {
+                            distinct.add(PredState.of(statePredsOf(model, preds, prec)));
+                        }
+                        states.addAll(distinct);
+                    }
+                    // -Dtheta.allsat.verify=true recomputes the same abstraction with the
+                    // blocking-clause loop below and reports any disagreement. Diagnostic only,
+                    // and expensive -- it makes all-sat strictly slower than not using it.
+                    if (Boolean.getBoolean("theta.allsat.verify")) {
+                        verifyAgainstLoop(states, preds, prec);
                     }
                     return collapse(states);
                 }
@@ -189,6 +213,65 @@ public class PredAbstractors {
                 }
             }
             return collapse(states);
+        }
+
+        /** Diagnostic: recompute with the blocking-clause loop and report disagreement. */
+        private void verifyAgainstLoop(
+                final List<PredState> allSatStates,
+                final List<Expr<BoolType>> preds,
+                final PredPrec prec) {
+            final List<PredState> loopStates = new LinkedList<>();
+            try (WithPushPop inner = new WithPushPop(solver)) {
+                while (solver.check().isSat()) {
+                    final Valuation model = solver.getModel();
+                    final Set<Expr<BoolType>> sp = statePredsOf(model, preds, prec);
+                    loopStates.add(PredState.of(sp));
+                    final List<Expr<BoolType>> feedback = new LinkedList<>();
+                    feedback.add(True());
+                    int assigned = 0;
+                    for (int i = 0; i < preds.size(); ++i) {
+                        final Optional<LitExpr<BoolType>> e = model.eval(actLits.get(i));
+                        if (e.isPresent()) {
+                            assigned++;
+                            feedback.add(
+                                    e.get().equals(True())
+                                            ? actLits.get(i).getRef()
+                                            : Not(actLits.get(i).getRef()));
+                        }
+                    }
+                    // If the model leaves a literal unassigned, the blocking clause below
+                    // excludes every cube agreeing on the assigned literals -- not just the
+                    // one found -- so the loop would skip cubes it never examined.
+                    if (assigned < preds.size()) {
+                        System.err.println(
+                                "LOOP-PARTIAL-MODEL preds="
+                                        + preds.size()
+                                        + " assigned="
+                                        + assigned
+                                        + " (blocking clause over-blocks by 2^"
+                                        + (preds.size() - assigned)
+                                        + ")");
+                    }
+                    solver.add(Not(And(feedback)));
+                }
+            }
+            final var a = CollectionUtil.createSet();
+            a.addAll(allSatStates);
+            final var b = CollectionUtil.createSet();
+            b.addAll(loopStates);
+            if (!a.equals(b)) {
+                System.err.println(
+                        "ALLSAT-MISMATCH preds="
+                                + preds.size()
+                                + " allsat="
+                                + allSatStates.size()
+                                + " loop="
+                                + loopStates.size()
+                                + "\n  allsat: "
+                                + allSatStates
+                                + "\n  loop  : "
+                                + loopStates);
+            }
         }
 
         /** Reads one model into the set of (possibly negated) predicates it satisfies. */
