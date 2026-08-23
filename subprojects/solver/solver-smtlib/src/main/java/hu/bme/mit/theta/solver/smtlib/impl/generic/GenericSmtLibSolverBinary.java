@@ -186,7 +186,8 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         }
     }
 
-    private static final class ReadProcessor {
+    /** Package-private for {@code ReadProcessorTest}; otherwise an implementation detail. */
+    static final class ReadProcessor {
 
         private enum ReadStatus {
             INIT,
@@ -211,10 +212,17 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                         status = ReadProcessor.ReadStatus.PARENTHESES;
                     } else if (c == ';') {
                         status = ReadProcessor.ReadStatus.COMMENT;
-                    } else if (c != '\r') { // Windows compatibility
+                    } else if (!Character.isWhitespace(c)) { // also covers \r, for Windows
                         sb.append(c);
                         status = ReadProcessor.ReadStatus.LINE;
                     }
+                    // Whitespace between responses is skipped rather than started as a
+                    // LINE. A parenthesised response goes READY on its closing paren, so its
+                    // terminating newline is still unread; treating that newline as the first
+                    // character of the next response put the reader in LINE mode, and any
+                    // parenthesised response that followed was then delivered one *line* at a
+                    // time instead of as one term. Only commands that return several
+                    // parenthesised replies in a row hit this -- check-allsat is the first.
                     break;
                 case LINE:
                     if (c == '\n') {

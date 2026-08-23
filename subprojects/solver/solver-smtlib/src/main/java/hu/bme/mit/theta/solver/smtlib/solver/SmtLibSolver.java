@@ -227,10 +227,13 @@ public class SmtLibSolver implements UCSolver, Solver, AllSatSolver {
      *   sat
      * </pre>
      *
-     * <p>The binary's reader already frames each balanced s-expression as its own response, so the
-     * blocks arrive one {@code readResponse()} at a time and the loop simply stops at the status
-     * token. The blocks are parsed directly rather than through the general response grammar, which
-     * models {@code get-model} output ({@code define-fun} forms) and does not describe this shape.
+     * <p>Each block arrives as its own {@code readResponse()} and the loop simply stops at the
+     * status token. This is the only place where several parenthesised responses arrive in a row,
+     * so it is the only caller that depends on the response reader skipping the whitespace between
+     * them -- see {@code GenericSmtLibSolverBinary.ReadProcessor}, where getting that wrong
+     * delivered every block after the first one line at a time. The blocks are parsed directly
+     * rather than through the general response grammar, which models {@code get-model} output
+     * ({@code define-fun} forms) and does not describe this shape.
      */
     @Override
     public Collection<? extends Valuation> allSat(
