@@ -113,9 +113,17 @@ public class PredAbstractors {
 
     private static final class BooleanAbstractor implements PredAbstractor {
 
-        /** Escape hatch: -Dtheta.allsat=false forces the portable blocking-clause loop. */
+        /**
+         * Opt-in: -Dtheta.allsat=true replaces the blocking-clause loop below with the solver's own
+         * all-sat, where it has one. Off by default because the win is family-dependent: measured
+         * against the loop it is 10-22% faster on systemc and locks tasks, and 14x *slower* on
+         * float-benchs/arctan_Pade, where two of the run's nineteen abstractions cost MathSAT ~21 s
+         * each to enumerate while a plain check-sat on the same assertions takes 14 ms. That cost
+         * is inside the solver -- see analysis/queries/allsat-slow-arctan_Pade.smt2 in the
+         * comparison repo.
+         */
         private static final boolean ALLSAT_ENABLED =
-                Boolean.parseBoolean(System.getProperty("theta.allsat", "true"));
+                Boolean.parseBoolean(System.getProperty("theta.allsat", "false"));
 
         private final Solver solver;
         private final List<ConstDecl<BoolType>> actLits;
