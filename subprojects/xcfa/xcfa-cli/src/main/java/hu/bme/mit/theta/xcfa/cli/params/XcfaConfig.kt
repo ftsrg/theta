@@ -388,6 +388,12 @@ data class CegarAbstractorConfig(
   @Parameter(names = ["--domain"], description = "Abstraction domain")
   var domain: Domain = Domain.EXPL,
   @Parameter(
+    names = ["--allsat"],
+    description =
+      "Compute boolean predicate abstraction with the solver's own all-sat instead of a blocking-clause loop, where the solver has one (MathSAT). Fewer solver round trips, but the effect is task-dependent -- see PredAbstractors.allSatEnabled.",
+  )
+  var allSat: Boolean = false,
+  @Parameter(
     names = ["--maxenum"],
     description =
       "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",

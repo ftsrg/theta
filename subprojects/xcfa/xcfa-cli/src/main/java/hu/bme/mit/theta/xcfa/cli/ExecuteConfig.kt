@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTrace
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.pred.PredAbstractors
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
@@ -91,6 +92,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.backendConfig.backend == Backend.CEGAR) {
     val cegarConfig = config.backendConfig.specConfig
     cegarConfig as CegarConfig
+    PredAbstractors.allSatEnabled = cegarConfig.abstractorConfig.allSat
     val random = Random(cegarConfig.porSeed)
     XcfaSporLts.random = random
     XcfaDporLts.random = random

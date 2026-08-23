@@ -111,19 +111,20 @@ public class PredAbstractors {
         return new CartesianAbstractor(solver);
     }
 
-    private static final class BooleanAbstractor implements PredAbstractor {
+    /**
+     * Replace the blocking-clause loop in boolean abstraction with the solver's own all-sat, where
+     * it has one (see {@link hu.bme.mit.theta.solver.AllSatSolver}). Set from {@code --allsat}, or
+     * from {@code -Dtheta.allsat} when no CLI drives it.
+     *
+     * <p>Off by default because the win is family-dependent. Measured against the loop it is 8-14%
+     * faster on systemc and locks tasks, and <b>14x slower</b> on float-benchs/arctan_Pade, where
+     * two of that run's nineteen abstractions cost MathSAT ~21 s each to enumerate while a plain
+     * check-sat on the same assertions takes 14 ms. That cost is inside the solver, not here.
+     */
+    public static boolean allSatEnabled =
+            Boolean.parseBoolean(System.getProperty("theta.allsat", "false"));
 
-        /**
-         * Opt-in: -Dtheta.allsat=true replaces the blocking-clause loop below with the solver's own
-         * all-sat, where it has one. Off by default because the win is family-dependent: measured
-         * against the loop it is 10-22% faster on systemc and locks tasks, and 14x *slower* on
-         * float-benchs/arctan_Pade, where two of the run's nineteen abstractions cost MathSAT ~21 s
-         * each to enumerate while a plain check-sat on the same assertions takes 14 ms. That cost
-         * is inside the solver -- see analysis/queries/allsat-slow-arctan_Pade.smt2 in the
-         * comparison repo.
-         */
-        private static final boolean ALLSAT_ENABLED =
-                Boolean.parseBoolean(System.getProperty("theta.allsat", "false"));
+    private static final class BooleanAbstractor implements PredAbstractor {
 
         private final Solver solver;
         private final List<ConstDecl<BoolType>> actLits;
@@ -170,7 +171,7 @@ public class PredAbstractors {
                 // loop below emulates the same thing with one solver round trip per model, which
                 // is all that portable SMT-LIB allows. Measured on systemc/pc_sfifo_1.cil-2:
                 // 1832 abstractions cost 5587 check-sat calls through the loop.
-                if (ALLSAT_ENABLED
+                if (allSatEnabled
                         && solver instanceof AllSatSolver allSatSolver
                         && allSatSolver.supportsAllSat()) {
                     final var actLitsForPreds = actLits.subList(0, preds.size());
