@@ -7932,6 +7932,61 @@ delta and the wrong one for a master→branch claim. **There is no full-portfoli
 at all**; getting one would mean running master's build over `theta27-long900-15g.xml`, which has not
 been done.
 
+## `__VERIFIER_nondet_memory`: the stub exists, the cap was the problem -- 2026-08-24
+
+⚠️ **Correcting what I said after run 105.** I reported that theta "has no stub" for
+`__VERIFIER_nondet_memory` after grepping `LibraryStubsPass` and the c2xcfa sources. It is
+implemented, in `MemoryFunctionsPass` (`e7c792e20d`, `1b4dc0e523`) -- I grepped the wrong files.
+
+What actually happens: the lowering writes out one havoc-and-store pair per cell, so it is capped at
+`MAX_ELEMENTS = 4096` cells and declines a symbolic size outright. A declined call is left in place
+as an InvokeLabel to a procedure that does not exist, which is why it resurfaces as
+"No such method __VERIFIER_nondet_memory".
+
+The intel-tdx harness walks straight through that cap. Every call is
+`__VERIFIER_nondet_memory(obj, sizeof(*obj))` on a whole firmware object; `sizeof` measured with gcc
+off the real preprocessed source:
+
+| type | bytes | vs. the 4096-cell cap |
+|---|---:|---|
+| `tdx_module_local_t` | 3,998 | under |
+| `sysinfo_table_t`, `tdr_t` | 4,096 | at |
+| `tdcs_t` | 36,864 | **9x over** |
+| `tdvps_t` | 61,440 | **15x over** |
+| `tdx_module_global_t` | 81,920 | **20x over** |
+
+Written out, one call on the last of those is 163,840 statements -- which is why the cap exists, not
+an arbitrary limit. The `MAX_ELEMENTS` comment already said it: "past it, a loop would be the honest
+model."
+
+**Fix: lower to a loop** (`nondetFillLoop`), with the havoc INSIDE the body so every cell still gets
+its own independent unconstrained value -- the same model, not a weaker one. Four edges instead of
+163,840 statements. `ceil(n / w)` rather than a truncating divide, so a straddled tail cell is
+havoc'd rather than left holding a specific stale value. Also covers a **symbolic** size, which was
+declined for the same reason.
+
+Unchanged, deliberately: a pointer to a compound under the typed-cell models still refuses. That is
+a soundness decision documented on `nondetFill` -- a per-byte havoc of a `uchar` array is invisible
+to a sibling read of the same bytes at a wider type, which would be a silent under-approximation.
+
+Guards: two fixtures, **A/B'd against a build without the change** (both reported exactly
+`No such method __VERIFIER_nondet_memory` before, both correct after, 7-9 s each):
+- `nondet_memory_symbolic_size.c` (UNSAFE) -- the byte written must be unconstrained.
+- `nondet_memory_stays_in_region.c` (SAFE) -- a byte outside the region must NOT be.
+They take the symbolic route because a size big enough to trip the cap also needs 4097 loop
+iterations to observe, which nothing answers in a canary's 90 s. Same lowering either way.
+
+### tdx is still blocked, and now the blocker has a name
+
+With both fixes in, a real tdx task still dies locally -- `exit 137` after 14 s, during the
+**frontend build**, under the `bytes` memory model. The fallback is forced by one construct:
+
+> `RequiresByteAddressedMemoryException: Taking the address of a multi-byte member of a
+> byte-addressed union is not supported.`
+
+So tdx goes multi -> flat -> bytes, and 210 KB of firmware at one cell per byte does not fit in
+15 GB. **Supporting that address-of in the flat model is the next real tdx lead** -- not more stubs.
+
 ## Run 105 (intel-tdx only, COMPLEX27, 15 min / 15 GB) RESULT -- 2026-08-24
 
 Build `Theta-svcomp-104` = `ce78ed430b` (brace elision + union assignment), 836 runs, benchcloud.

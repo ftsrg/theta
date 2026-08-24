@@ -107,6 +107,17 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       if (idx >= 0) fillLoop(builder, edge, labels, idx, labels[idx] as InvokeLabel)
     }
 
+    // Same treatment for a nondet fill whose region is too large (or too unknown) to write out cell
+    // by cell. A fresh snapshot, because the loop above may have replaced the edge this one is on.
+    builder.getEdges().toList().forEach { edge ->
+      val labels = edge.label.getFlatLabels()
+      val idx =
+        labels.indexOfFirst {
+          it is InvokeLabel && it.name in NONDET_FILL && it.name !in defined && needsNondetLoop(it)
+        }
+      if (idx >= 0) nondetFillLoop(builder, edge, labels, idx, labels[idx] as InvokeLabel)
+    }
+
     builder.getEdges().toList().forEach { edge ->
       val labels = edge.label.getFlatLabels()
       if (
@@ -277,6 +288,125 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         metadata = invoke.metadata,
       )
     )
+  }
+
+  /**
+   * The cell a nondet fill of [mem] writes, or null if this pass cannot name one.
+   *
+   * Under the bytes model a cell IS a byte, so any region can be filled a byte at a time. Under the
+   * typed-cell models only a **scalar** pointee has a single cell type; a pointer to a compound is
+   * refused for the soundness reason spelled out on [nondetFill].
+   */
+  private fun nondetCellType(mem: Expr<*>): CComplexType? =
+    if (parseContext.memoryModel.byteAddressed()) CUnsignedChar(null, parseContext)
+    else elementOf(mem)
+
+  /**
+   * A nondet fill that can only be modelled as a loop: the region is a whole number of cells this
+   * pass can name, but writing them out one statement at a time is not on -- the size is symbolic,
+   * or it is simply too big.
+   */
+  private fun needsNondetLoop(invoke: InvokeLabel): Boolean {
+    if (invoke.params.size < 2) return false
+    val cell = nondetCellType(invoke.params[invoke.params.size - 2]) ?: return false
+    val width = cell.width()
+    if (width <= 0 || width % 8 != 0) return false
+    val n = literalValue(invoke.params[invoke.params.size - 1]) ?: return true
+    if (n.signum() < 0) return false // not a size; giveUp says so more clearly
+    return n > BigInteger.valueOf(MAX_ELEMENTS * (width / 8))
+  }
+
+  /**
+   * `__VERIFIER_nondet_memory(mem, size)` over a region too large or too unknown to write out,
+   * spelled as `for (i = 0; i < ceil(size / w); i++) { havoc v; mem[i] = v; }`.
+   *
+   * The straight-line lowering in [nondetFill] emits two statements per cell, so the 4096-cell cap
+   * on it is not arbitrary -- and the intel-tdx firmware walks straight through it: its harness
+   * calls this on whole objects, and `sizeof` is 36,864 for `tdcs_t`, 61,440 for `tdvps_t`, 81,920
+   * for `tdx_module_global_t`. Written out, one call to the last of those is 163,840 statements.
+   * As a loop it is four edges, and the havoc **inside the body** still gives each cell its own
+   * unconstrained value, which is what makes this the same model rather than a weaker one.
+   *
+   * ⚠️ **The straddled tail cell is included**, hence `ceil` rather than a truncating divide: a
+   * partially covered cell that kept its old value would hold one specific value the program never
+   * wrote, which can hide a bug as easily as invent one. Unconstrained over-approximates it.
+   *
+   * ⚠️ Runs after [LoopUnrollPass], so this reaches the analyses as a real loop and is never
+   * unrolled -- deliberate, since unrolling 81,920 iterations is not a better answer but no answer.
+   */
+  private fun nondetFillLoop(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    labels: List<XcfaLabel>,
+    idx: Int,
+    invoke: InvokeLabel,
+  ) {
+    val mem = invoke.params[invoke.params.size - 2]
+    val bytes = invoke.params[invoke.params.size - 1]
+    val cell = nondetCellType(mem) ?: return
+    val width = cell.width() / 8
+    if (width <= 0) return
+
+    val idxType = CComplexType.getUnsignedLong(parseContext)
+    val i = Var("__nondet_mem_i_" + nondetMemCounter++, idxType.smtType)
+    val v = Var("__nondet_mem_v_" + nondetMemCounter++, cell.smtType)
+    builder.addVar(i)
+    builder.addVar(v)
+
+    val nCast = idxType.castTo(bytes)
+    val w = idxType.getValue("$width")
+    // ceil(n / w) == (n + w - 1) / w, over unsigned. `w - 1` is 0 for byte cells, where the region
+    // is already a whole number of cells and this is just `n`.
+    val count =
+      Div(
+        cast(Add(cast(nCast, idxType.smtType), cast(idxType.getValue("${width - 1}"), idxType.smtType)), idxType.smtType),
+        cast(w, idxType.smtType),
+      )
+
+    val head = XcfaLocation("__nondet_mem_head_" + counter, metadata = EmptyMetaData)
+    val body = XcfaLocation("__nondet_mem_body_" + counter, metadata = EmptyMetaData)
+    val exit = XcfaLocation("__nondet_mem_exit_" + counter++, metadata = EmptyMetaData)
+    listOf(head, body, exit).forEach(builder::addLoc)
+
+    val before = labels.subList(0, idx) + AssignStmtLabel(i, idxType.getValue("0"), i.type)
+    val after = labels.subList(idx + 1, labels.size)
+
+    builder.removeEdge(edge)
+    builder.addEdge(XcfaEdge(edge.source, head, SequenceLabel(before), edge.metadata))
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        body,
+        SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Lt(i.ref, count))))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        exit,
+        SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Not(Lt(i.ref, count)))))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        body,
+        head,
+        SequenceLabel(
+          listOf(
+            StmtLabel(HavocStmt.of(v), metadata = invoke.metadata),
+            StmtLabel(
+              MemoryAssignStmt.create(deref(mem, i.ref, cell), cast(v.ref, cell.smtType)),
+              metadata = invoke.metadata,
+            ),
+            AssignStmtLabel(i, Add(i.ref, idxType.getValue("1")), i.type),
+          )
+        ),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(XcfaEdge(exit, edge.target, SequenceLabel(after), EmptyMetaData))
   }
 
   private fun giveUp(invoke: InvokeLabel): XcfaLabel? {

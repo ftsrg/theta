@@ -70,3 +70,5 @@ union_wide_cell_halves.c	efficient	ILP32	SAFE	94	a 64-bit union cell is read at 
 union_bitfield_overlay_write.c	efficient	LP64	PARSE-OK	94	a bitfield write to a union splices at the cell width, not the aggregate placeholder
 global_struct_brace_elision.c	efficient	LP64	SAFE	104	brace elision: { 0 } over an array of structs zero-initialises every member
 union_aggregate_assign.c	efficient	LP64	SAFE	104	a union is assigned by copying its storage, through both member views
+nondet_memory_symbolic_size.c	efficient	LP64	UNSAFE	105	__VERIFIER_nondet_memory with a symbolic size is lowered to a loop that havocs every cell
+nondet_memory_stays_in_region.c	efficient	LP64	SAFE	105	the nondet fill writes only the region it was given, not the whole object
