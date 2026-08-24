@@ -7932,6 +7932,30 @@ delta and the wrong one for a master→branch claim. **There is no full-portfoli
 at all**; getting one would mean running master's build over `theta27-long900-15g.xml`, which has not
 been done.
 
+## Run 103 (libvsync only, OC only, 60 min / 30 GB) RESULT -- 2026-08-24
+
+User-directed question: at 4x the time and 2x the memory, with just the OC checker, does anything in
+libvsync get solved?
+
+**No. Nothing.** 29 runs, zero verdicts:
+
+| rundefinition | runs | outcome |
+|---|---|---|
+| OC, `no-data-race` (with `--datarace-to-reachability`) | 17 | 16 TIMEOUT, 1 out of memory |
+| OC, `unreach-call` | 12 | 12 TIMEOUT |
+
+Compare run 102 (15 min / 15 GB, full portfolio): 51 timeouts, 1 wrong, 0 solved. Quadrupling the
+time budget and doubling the memory changed **nothing**.
+
+⚠️ **This falsifies the claim I had written on the deck** -- that libvsync, having zero frontend
+errors left, is "purely an analysis-capacity problem". It is not a budget problem: OC does not
+converge on these programs at any budget tried. The frontend work genuinely unblocked the family
+(52/52 refusals -> 0), but what stands behind it is algorithmic, not resource. Corrected on the
+slide.
+
+Also note the 1 out-of-memory at **30 GB**, which is a real signal on its own: one libvsync task
+grows past 30 GB rather than merely running long.
+
 ## Run 102 (sosy, 15 min / 15 GB / 2 cores, CPU 1230) RESULT -- finished 2026-08-24
 
 **sosy won the race** (it ran at LOW, benchcloud at IDLE, so this was expected); benchcloud's run 101
