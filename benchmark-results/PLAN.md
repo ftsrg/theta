@@ -7846,6 +7846,29 @@ Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-ra
 but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
 error-turned-wrong, both previously scoring 0.
 
+## Resource-out vs genuine error -- the split that changes the story (2026-08-24)
+
+Every "error" figure quoted until now was BenchExec's `error` CATEGORY, which lumps together "the
+tool failed" and "the tool ran out of time or memory". Split by status:
+
+| | correct | wrong | timeout | OOM | **tool error** | other |
+|---|---|---|---|---|---|---|
+| theta v7.3.1 (8 GB, STABLE) | 6,017 | 147 | 11,559 | 2,577 | **16,194** | 40 |
+| run 99 (7 GB, COMPLEX27) | 14,349 | 71 | 13,159 | 6,331 | **2,207** | 414 |
+| run 102 (15 GB, COMPLEX27) | 14,866 | 72 | 16,054 | 2,785 | **2,337** | 417 |
+
+**Genuine tool errors: 16,194 -> 2,337, down 86%.** That is the frontend work, and it is the number
+this branch should be judged on. Resource exhaustion went the other way (14,136 -> 18,839) for a good
+reason: tasks that used to be refused in seconds now run and burn their full 900 s.
+
+Memory redistributes within the resource bucket rather than shrinking it: 7 GB -> 15 GB moved OOM
+6,331 -> 2,785 and timeouts 13,159 -> 16,054, i.e. most rescued OOMs became timeouts rather than
+answers. That also explains why +931 score for +8 GB is a modest return.
+
+Implication worth carrying forward: the remaining headroom is now mostly **solver time**, not
+frontend coverage. 16,054 timeouts against 2,337 tool errors says further frontend fixes have far
+less left to win than analysis speed or better portfolio scheduling does.
+
 ## Comparison against the SHIPPED RELEASE theta v7.3.1 (downloaded 2026-08-24)
 
 Hosted full runs live at `share.mit.bme.hu/index.php/s/75kYtHnEWcks4a4` (a public Nextcloud share,

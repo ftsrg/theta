@@ -45,14 +45,27 @@ one was correct (limitation 1 below).
 `theta v7.3.1` (run 2026-07-16, published at share.mit.bme.hu) on the **same 36,531 tasks**, after
 normalising task paths:
 
-| | theta v7.3.1 | **run 102** |
+| | theta v7.3.1 (8 GB, STABLE) | **run 102 (15 GB, COMPLEX27)** |
 |---|---|---|
 | **score** | 8,071 | **22,536** |
-| correct | 6,016 | **14,866** |
+| correct | 6,017 | **14,866** |
 | **wrong** | 147 | **72** |
-| error | 30,328 | **21,176** |
+| **genuine tool errors** | **16,194** | **2,337** |
+| timeout | 11,559 | 16,054 |
+| out of memory | 2,577 | 2,785 |
+| other / unknown | 40 | 417 |
 
-**+14,465, with roughly half the wrong answers.** 144 of the release's 147 wrong verdicts are no
+**+14,465, with roughly half the wrong answers — and genuine tool errors down 86% (16,194 → 2,337).**
+
+That split is the substantive result, and it is easy to miss if "error" is read as one bucket.
+BenchExec's `error` category covers both "the tool failed" and "the tool ran out of time or memory".
+Separating them: the release's failures are mostly **the frontend refusing the program** (16,194),
+while this branch's are mostly **timeouts** (16,054) — tasks that now actually run and exhaust their
+900 s instead of failing in seconds. Resource exhaustion rose (14,136 → 18,839) precisely *because*
+far more tasks get far enough to consume resources.
+
+Memory moves the split within that bucket rather than the total: 7 GB → 15 GB took OOM from 6,331 to
+2,785 and timeouts from 13,159 to 16,054. 144 of the release's 147 wrong verdicts are no
 longer wrong; 3 remain. Of the 69 that are wrong here and not there, **68 were ERRORs in the release**
 — tasks that only now get far enough to answer — and exactly one was correct:
 `pthread-divine/tls_basic` (unreach-call), which the release answers `true` and this branch answers
