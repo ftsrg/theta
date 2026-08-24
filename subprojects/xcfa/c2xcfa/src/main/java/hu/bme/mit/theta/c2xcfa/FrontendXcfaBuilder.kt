@@ -230,15 +230,7 @@ class FrontendXcfaBuilder(
   private fun cellSpliceType(cell: Expr<*>, recorded: CComplexType): CComplexType {
     if (recorded.smtType == cell.type) return recorded
     val bits = (cell.type as? BvType)?.size ?: return recorded
-    return listOf(
-        CUnsignedChar(null, parseContext),
-        CUnsignedShort(null, parseContext),
-        CComplexType.getUnsignedInt(parseContext),
-        CComplexType.getUnsignedLong(parseContext),
-        CComplexType.getUnsignedLongLong(parseContext),
-        CComplexType.getUnsigned128(parseContext),
-      )
-      .firstOrNull { it.width() == bits } ?: recorded
+    return unsignedTypeOfWidth(bits) ?: recorded
   }
 
   /** Peels the width/signedness wrappers a bitfield read and an integer promotion leave behind. */
@@ -825,7 +817,6 @@ class FrontendXcfaBuilder(
         is CPointer -> this.embeddedType as? CStruct
         else -> null
       } ?: return null
-    if (candidate.isUnion) return null
     // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
     // (ntdrivers cdaudio/diskperf, 8 runs) fails here because the rhs element address loses its
     // struct cType -- FrontendMetadata is identity-keyed -- and the frontend then derives
@@ -856,6 +847,68 @@ class FrontendXcfaBuilder(
    * A flexible array member (no bound) has no element count to copy over, so it falls back to a
    * base assignment -- the pre-existing limitation for a member whose size the declaration omits.
    */
+  /** The unsigned integer C type whose storage is exactly [bits] wide, if there is one. */
+  private fun unsignedTypeOfWidth(bits: Int): CComplexType? =
+    listOf(
+        CUnsignedChar(null, parseContext),
+        CUnsignedShort(null, parseContext),
+        CComplexType.getUnsignedInt(parseContext),
+        CComplexType.getUnsignedLong(parseContext),
+        CComplexType.getUnsignedLongLong(parseContext),
+        CComplexType.getUnsigned128(parseContext),
+      )
+      .firstOrNull { it.width() == bits }
+
+  /**
+   * Copies a union by **re-initialising its storage** from the source's.
+   *
+   * A struct is copied member by member, but a union's members alias one region, so copying them
+   * one by one would write the same storage several times through different type views -- which is
+   * why unions were excluded from the copy path outright, and why
+   * `lookup_context->field_id = ...field_id` (a plain union assignment, `md_field_id_t` being a
+   * `uint64_t` overlaid with a bitfield struct) was refused as an unhandled left-hand side. It is
+   * ordinary C; only the representation makes it look odd, since an aggregate's value is its base
+   * address and so an aggregate lvalue arrives as `base + offset` rather than as a dereference.
+   *
+   * The cells copied here are exactly the ones `ExpressionVisitor` reads members out of:
+   * a word-sliceable union is ONE cell at offset 0, typed at the union's cell width (members are
+   * bit slices of it); a byte-laid-out one is its [unionCellCount] byte cells. Copying any other
+   * cell would write an array nothing reads -- a silent no-op rather than an error -- so this
+   * mirrors the reader rather than inventing a layout.
+   */
+  private fun unionCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel>? {
+    val width = type.unionCellWidth()
+    val cellType =
+      if (width != null) unsignedTypeOfWidth(width) ?: return null
+      else CUnsignedChar(null, parseContext)
+    val cells = if (width != null) 1 else unionCellCount(type)
+    return (0 until cells).map { i ->
+      val offset = offsetLiteral(i.toLong())
+      val to =
+        Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
+      val from =
+        Dereference(cast(source, source.type), cast(offset, source.type), cellType.smtType)
+      parseContext.metadata.create(to, "cType", cellType)
+      parseContext.metadata.create(from, "cType", cellType)
+      StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata)
+    }
+  }
+
+  /** Copies one aggregate object's contents into another: a union by storage, a struct by member. */
+  private fun aggregateCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel>? =
+    if (type.isUnion) unionCopy(target, source, type, metadata)
+    else structCopy(target, source, type, metadata)
+
   private fun structCopy(
     target: Expr<*>,
     source: Expr<*>,
@@ -902,6 +955,7 @@ class FrontendXcfaBuilder(
   ): List<XcfaLabel> =
     when {
       type is CStruct && !type.isUnion -> structCopy(to, from, type, metadata)
+      type is CStruct -> unionCopy(to, from, type, metadata) ?: copyScalar(to, from, metadata)
       type is CArray -> arrayCopy(to, from, type, metadata)
       else -> copyScalar(to, from, metadata)
     }
@@ -1102,21 +1156,32 @@ class FrontendXcfaBuilder(
       )
       recordObjectAtomicity(objectBase, type)
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
-      // An initializer list is what initializeCompound is for; asking it for a single
-      // `.expression` throws. Anything else that has one is genuinely unsupported here.
-      if (
-        initExpr != null &&
-          initExpr !is CInitializerList &&
-          initExpr.expression !is UnsupportedInitializer
-      ) {
-        error("Unsupported initializer for global struct variable $globalDeclaration.")
-      }
       // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
       // struct every member is its own unit, so this is the historical field-indexed iteration.
       val unitTypes =
         (0 until type.unitCount).map { unit ->
           type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
         }
+      // **Brace elision.** `const fms_info_t x[6] = { 0 };` gives the whole array a single
+      // initializer, so its first element -- a struct -- receives a bare scalar rather than a list.
+      // C 6.7.10p17 says that scalar initialises the first member (recursively, the first scalar
+      // leaf) and every other member is zero. This was refused outright, and it was the single
+      // remaining frontend blocker for the intel-tdx-module family: 166 runs.
+      //
+      // Routing the scalar to unit 0 and `null` to the rest gets the whole rule right by recursion:
+      // a nested struct or array at unit 0 applies the same elision one level down, and every other
+      // unit takes the `null` path, which assigns its zero value. Bitfields pack from bit 0, so a
+      // packed unit receiving the scalar sets the first member and zeroes the others -- the same
+      // rule again. An UnsupportedInitializer still falls through to the zero path below.
+      if (initExpr != null && initExpr !is CInitializerList) {
+        for (unit in 0 until type.unitCount) {
+          val et = unitTypes[unit]
+          val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), et.smtType)
+          parseContext.metadata.create(cell, "cType", et)
+          initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
+        }
+        return
+      }
       if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
         // A brace initializer names members, which no longer map one-to-one onto cells.
         initializePackedStruct(
@@ -1626,15 +1691,30 @@ class FrontendXcfaBuilder(
           is Dereference<*, *, *> -> {
             val op = cast(target.array, target.array.type)
             val offset = cast(target.offset, op.type)
-            val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
-            val type = CComplexType.getType(castRExpression, parseContext)
+            // An aggregate member is a COPY, not a base assignment. A struct- or union-typed
+            // member's cell holds the sub-object's own base id (see giveStructObjectStorage), so
+            // storing the right-hand side's base here would make the two names denote one object --
+            // `h.id = src` followed by a write to `src` was read back through `h.id`. Copy into the
+            // storage the cell already points at instead, leaving its base intact. The same check
+            // exists on the RefExpr branch below for `t = a[i]`; a member lvalue arrives here.
+            val memberType = CComplexType.getType(target, parseContext)
+            if (memberType is CStruct && memberType.isCopiedStruct(rExpression)) {
+              SequenceLabel(
+                aggregateCopy(target, rExpression, memberType, getMetadata(statement))
+                  ?: error(unhandledLhs(lValue, target, rExpression)),
+                metadata = getMetadata(statement),
+              )
+            } else {
+              val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
+              val type = CComplexType.getType(castRExpression, parseContext)
 
-            val deref = Dereference(op, offset, type.smtType)
+              val deref = Dereference(op, offset, type.smtType)
 
-            val memassign = MemoryAssignStmt.create(deref, castRExpression)
+              val memassign = MemoryAssignStmt.create(deref, castRExpression)
 
-            parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
-            StmtLabel(memassign, metadata = getMetadata(statement))
+              parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
+              StmtLabel(memassign, metadata = getMetadata(statement))
+            }
           }
 
           is RefExpr<*> -> {
@@ -1647,7 +1727,8 @@ class FrontendXcfaBuilder(
               // alias of the element -- and left it a split variable, which then failed outright on
               // the next bare use of `t`.
               SequenceLabel(
-                structCopy(target, rExpression, lhsType as CStruct, getMetadata(statement)),
+                aggregateCopy(target, rExpression, lhsType as CStruct, getMetadata(statement))
+                  ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
             } else if (
@@ -1731,7 +1812,8 @@ class FrontendXcfaBuilder(
               CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
             if (copied != null) {
               SequenceLabel(
-                structCopy(target, rExpression, copied, getMetadata(statement)),
+                aggregateCopy(target, rExpression, copied, getMetadata(statement))
+                  ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
             } else {
