@@ -7846,6 +7846,37 @@ Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-ra
 but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
 error-turned-wrong, both previously scoring 0.
 
+## What master data exists locally (checked 2026-08-24)
+
+Asked whether any benchmark results for **master** are available locally. One, and it is partial:
+
+`benchmark-results/baseline-master-22ab2b88de-oc-userprop/` -- master at the merge-base
+(`22ab2b88de`, 2026-07-06), run on sosy 2026-07-28. Scope: **Concurrency only**, ONE config
+(OC + `PROPAGATOR`, Z3), 4 properties, 3,176 runs. Its own README says it is not a valid baseline for
+the full portfolio, because master fails the frontend outright on the termination and product-lines
+families -- those tasks have no master verdict to regress from.
+
+All 3,176 of its tasks are also covered by run 102, so a direct comparison is possible on that
+subset:
+
+| on the shared 3,176 | master `22ab2b88de` | run 102 |
+|---|---|---|
+| score | 2,405 | **3,262** |
+| correct | 1,418 | **1,967** |
+| error | 1,751 | **1,197** |
+| wrong | 5 | 10 |
+
+**+857**, with errors down 554 and correct up 549. ⚠️ Confounded: master ran a single OC config while
+run 102 ran the whole COMPLEX27 portfolio, so part of the gap is the portfolio having more configs to
+try rather than this branch's fixes. Indicative, not controlled.
+
+⚠️ **This also exposed a mislabel in PR.md, now fixed.** Run 93 had been called "the baseline"
+throughout, which invites reading it as master. It is not: run 93's build is dated 2026-08-16, six
+weeks and dozens of branch commits after master's tip. It is the correct reference for *this batch's*
+delta and the wrong one for a master→branch claim. **There is no full-portfolio measurement of master
+at all**; getting one would mean running master's build over `theta27-long900-15g.xml`, which has not
+been done.
+
 ## Run 102 (sosy, 15 min / 15 GB / 2 cores, CPU 1230) RESULT -- finished 2026-08-24
 
 **sosy won the race** (it ran at LOW, benchcloud at IDLE, so this was expected); benchcloud's run 101

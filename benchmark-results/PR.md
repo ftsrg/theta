@@ -25,23 +25,44 @@ concentrated in the frontend and the XCFA construction:
 Full portfolio, 36,531 runs. Runs 93/98/99 are 7 GB; **run 102 is the competition's real
 allocation (15 min / 15 GB / 2 cores)** and is the number to quote:
 
-| | run 93 (baseline) | run 98 | run 99 | **run 102 (15 GB)** |
+| | run 93 (see below) | run 98 | run 99 | **run 102 (15 GB)** |
 |---|---|---|---|---|
 | **score** | 19,835 | 13,407 | 21,605 | **22,536** |
 | correct | 12,890 | 13,905 | 14,349 | **14,866** |
 | wrong | 55 | 528 | 71 | **72** |
 | error | 23,173 | 21,684 | 21,697 | **21,176** |
 
-**+2,701 over the baseline at the real allocation, +1,976 correct answers, with the wrong count up
+**+2,701 over run 93 at the real allocation, +1,976 correct answers, with the wrong count up
 by 17 (55 -> 72).** At an identical 7 GB budget the branch is +1,770 (run 99), so roughly a third of
 the headline gain is the memory budget rather than this work -- though run 102 also used a different
 host and CPU model, so memory and hardware are not separated.
 
-Of the 24 results wrong in run 102 that were not wrong in the baseline, **23 were ERRORs there** and
+Of the 24 results wrong in run 102 that were not wrong in run 93, **23 were ERRORs there** and
 one was correct (limitation 1 below).
 
+⚠️ **"Run 93" is not master.** It is a mid-branch state built 2026-08-16, six weeks and dozens of
+commits after master's tip (`22ab2b88de`, 2026-07-06). It is the right reference for *this batch's*
+delta, but it is NOT the master→branch delta, and nothing above should be read as one. There is no
+full-portfolio measurement of master, because master fails the frontend outright on whole families
+(termination, product-lines), so those tasks have no master verdict to compare against.
+
+The only master data available is a **Concurrency-only** run at the merge-base
+(`baseline-master-22ab2b88de-oc-userprop/`): one config, OC + Z3 propagator, 4 properties, 3,176
+tasks — all of which run 102 also covers:
+
+| on those 3,176 tasks | master `22ab2b88de` | run 102 |
+|---|---|---|
+| score | 2,405 | **3,262** |
+| correct | 1,418 | **1,967** |
+| error | 1,751 | **1,197** |
+| wrong | 5 | 10 |
+
+**+857 on the shared subset.** Read it with care: master ran a *single* OC config while run 102 ran
+the whole COMPLEX27 portfolio, so part of that gap is the portfolio having more configs to try, not
+this branch's fixes. It is indicative, not a controlled comparison.
+
 Run 98 is in the table deliberately: it is the same work *before* the last two fixes, and it scored
-6,428 **below** baseline. That dip was 456 Juliet
+6,428 **below** run 93. That dip was 456 Juliet
 tasks answering `false(no-overflow)` on correct programs, and it is the clearest evidence in this PR
 that error-count improvements mean nothing on their own — see "How this was validated".
 
@@ -95,7 +116,7 @@ zero effect; and a widened struct-copy guard that regressed working tasks. Each 
    `--arithmetic bitvector` answers `Unsafe` on this safe program while `integer` answers `Safe`.
    That commit only changed which encoding the task is routed to. A pre-existing bitvector defect,
    newly exposed. It is the only case in the whole branch where a working answer was taken away.
-2. **23 further results are wrong in run 102 that were not wrong in the baseline — all 23 were
+2. **23 further results are wrong in run 102 that were not wrong in run 93 — all 23 were
    ERRORs there.** Latent unsoundness exposed by tasks that now get far enough to answer, not caused.
    11 are wrong-`true` (−32 each), which is the expensive direction and worth triaging first. The
    wrong count rose 55 → 72 across the branch; that is the honest cost of answering 1,976 more tasks.
