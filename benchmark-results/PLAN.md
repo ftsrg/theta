@@ -7846,6 +7846,36 @@ Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-ra
 but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
 error-turned-wrong, both previously scoring 0.
 
+## Run 102 (sosy, 15 min / 15 GB / 2 cores, CPU 1230) RESULT -- finished 2026-08-24
+
+**sosy won the race** (it ran at LOW, benchcloud at IDLE, so this was expected); benchcloud's run 101
+was stopped at 24,025 submitted, as agreed. 55 xml.bz2, 36,602 results, 0 `Cannot start process`.
+
+| | run 93 (7 GB, complex26) | run 99 (7 GB, COMPLEX27) | **run 102 (15 GB)** |
+|---|---|---|---|
+| **score** | 19,835 | 21,605 | **22,536** |
+| correct | 12,890 | 14,349 | **14,866** |
+| wrong | 55 | 71 | **72** |
+| error | 23,173 | 21,697 | **21,176** |
+
+**+931 over run 99 and +2,701 over the baseline.** Run 99 is the same source at 7 GB, so the delta is
+the memory budget: ~521 fewer errors, ~517 more correct answers, and the wrong count essentially
+flat (71 -> 72). That is the shape you want from more memory -- it buys answers, not risk.
+
+⚠️ **The +931 is not purely memory.** Run 102 also ran on a different host and CPU model (1230 vs
+Skylake). Memory is the plausible driver, since the gain is entirely errors turning into correct
+answers while the wrong-set barely moves, but the two variables are not separated. Separating them
+would need a 7 GB run on sosy/1230, which was not done.
+
+**Wrong-set, classified:** 5 new against run 99, and **all 5 were ERRORs in both run 99 and run 93** --
+tasks that only now get far enough to answer. 3 wrong-`true` (-32), 2 wrong-`false` (-16). 4 of run
+99's wrongs are fixed. Against the run-93 baseline: 24 wrong that were not wrong there, of which
+**23 were errors** and **1 was correct** -- still `ldv-regression/rule60_list2`, the pre-existing
+bitvector defect bisected earlier, and still the only case in the whole branch where a working answer
+was taken away.
+
+Every full-allocation number in PR.md should come from this run, not from the 7 GB ones.
+
 ## Runs 101 (benchcloud) and 102 (sosy) -- the same benchmark raced on two hosts, 2026-08-23
 
 User-directed: run the full portfolio at the real SV-COMP allocation on BOTH hosts and keep whichever

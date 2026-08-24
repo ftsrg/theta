@@ -22,16 +22,23 @@ concentrated in the frontend and the XCFA construction:
 
 ## Measured impact
 
-Full portfolio, 36,531 runs, identical XML/priority/CPU pinning throughout:
+Full portfolio, 36,531 runs. Runs 93/98/99 are 7 GB; **run 102 is the competition's real
+allocation (15 min / 15 GB / 2 cores)** and is the number to quote:
 
-| | run 93 (baseline) | run 98 | **run 99** |
-|---|---|---|---|
-| **score** | 19,835 | 13,407 | **21,605** |
-| correct | 12,890 | 13,905 | **14,349** |
-| wrong | 55 | 528 | **71** |
-| error | 23,173 | 21,684 | 21,697 |
+| | run 93 (baseline) | run 98 | run 99 | **run 102 (15 GB)** |
+|---|---|---|---|---|
+| **score** | 19,835 | 13,407 | 21,605 | **22,536** |
+| correct | 12,890 | 13,905 | 14,349 | **14,866** |
+| wrong | 55 | 528 | 71 | **72** |
+| error | 23,173 | 21,684 | 21,697 | **21,176** |
 
-**+1,770 over the baseline, +1,459 correct answers.** Run 98 is included deliberately: it is the same
+**+2,701 over the baseline at the real allocation, +1,976 correct answers, with the wrong count up
+by 17 (55 -> 72).** At an identical 7 GB budget the branch is +1,770 (run 99), so roughly a third of
+the headline gain is the memory budget rather than this work -- though run 102 also used a different
+host and CPU model, so memory and hardware are not separated.
+
+Of the 24 results wrong in run 102 that were not wrong in the baseline, **23 were ERRORs there** and
+one was correct (limitation 1 below). Run 98 is included deliberately: it is the same
 work *before* the last two fixes, and it scored 6,428 **below** baseline. That dip was 456 Juliet
 tasks answering `false(no-overflow)` on correct programs, and it is the clearest evidence in this PR
 that error-count improvements mean nothing on their own — see "How this was validated".
