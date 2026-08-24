@@ -7932,6 +7932,67 @@ delta and the wrong one for a master→branch claim. **There is no full-portfoli
 at all**; getting one would mean running master's build over `theta27-long900-15g.xml`, which has not
 been done.
 
+## Run 105 (intel-tdx only, COMPLEX27, 15 min / 15 GB) RESULT -- 2026-08-24
+
+Build `Theta-svcomp-104` = `ce78ed430b` (brace elision + union assignment), 836 runs, benchcloud.
+Purpose: do the two new frontend features convert tdx tasks into answers?
+
+**No. 0 correct, 0 wrong, 836 unknown.** Per-task against run 102's tdx subset (same 836 tasks,
+same portfolio and budget; different host/CPU, so timeout<->OOM movement is not all signal):
+
+| | run 102 | run 105 |
+|---|---|---|
+| frontend error (after parsing) | 166 | **112** |
+| timeout | 357 | 434 |
+| out of memory | 313 | 290 |
+| solved | 0 | 0 |
+
+Transitions: 70 frontend-error -> timeout and 4 -> OOM (tasks that now build), against 20
+OOM -> frontend-error and 92 that stayed. Net -54 frontend errors.
+
+### The 112 remaining are ONE bug, and it is mine
+
+Every one of the 112 is the same `ClassCastException` at `FrontendXcfaBuilder.kt:1730`:
+`CPointer cannot be cast to CStruct`. Reproduced locally in ~30 s.
+
+`copiedStructOrNull` deliberately accepts a **pointer to** the aggregate as well as the aggregate
+itself (that is what fixed the ldv/ntdrivers `*(p + i) = s` family). The `Dereference` branch
+resolves the type through it; the `RefExpr` branch instead tested the same predicate and then wrote
+`lhsType as CStruct` -- an assertion that the resolution had not done anything. It was unreachable
+while `copiedStructOrNull` still rejected unions; **`ce78ed430b` removed that rejection**, which is
+what let a pointer-typed lvalue reach the cast. The 20 OOM -> frontend-error transitions are that
+regression; the 92 that stayed were already failing, but on a different message.
+
+Fixed by resolving instead of casting, so the two branches agree. After the fix the same task gets
+through the frontend and falls into the **bytes** memory model (`note: ... retrying with
+--memory-model bytes`) -- and a 210 KB tdx source under one-cell-per-byte then exhausts an 11 GB
+heap locally. So the honest expected effect on the cluster is **112 frontend errors -> ~112
+OOMs, score unchanged at 0**. It removes a crash and makes the code consistent; it does not make
+tdx solvable.
+
+### Gate for the cast fix
+
+- Canaries: **338 PASS / 1 FAIL**, the FAIL being the known `cartpole_0_safe` memory flake -- re-run
+  alone it passes (exit 0). Fixtures **71/71**.
+- `:theta-c2xcfa:test` green.
+- `:theta-xcfa-cli:test` fails with the test *executor* killed (`exit value 137`), 0 test failures.
+  A/B'd by stashing the fix and re-running: **identical failure without it**, so it is host memory
+  pressure (~15 GB free of 62 on a shared box), not the change. Same family as the cartpole flake.
+- The fix is strictly crash-removing: every path that reached the cast previously threw, so no
+  previously-working case can change behaviour.
+- ⚠️ **No discriminating fixture.** `union_aggregate_assign.c` passes both before and after, so the
+  tdx shape is something else, and the tdx sources are too big to run locally as canary rows. Per the
+  no-hypothesis-repro rule the next step is to instrument the real input for the shape rather than
+  guess at a third fixture. Until then the guard is the tdx run itself.
+
+### What tdx actually needs
+
+Nothing here is frontend-bound any more, and the two families behind it are:
+- `__VERIFIER_nondet_memory` is undeclared -- `IllegalStateException: No such method` in some
+  config of **140** of the 836 tasks. The tdx harness calls it; theta has no stub for it.
+- The rest is capacity: 434 timeouts and 290 OOMs at 15 min / 15 GB, plus the bytes-model blowup
+  above for the union-heavy ones.
+
 ## Run 103 (libvsync only, OC only, 60 min / 30 GB) RESULT -- 2026-08-24
 
 User-directed question: at 4x the time and 2x the memory, with just the OC checker, does anything in

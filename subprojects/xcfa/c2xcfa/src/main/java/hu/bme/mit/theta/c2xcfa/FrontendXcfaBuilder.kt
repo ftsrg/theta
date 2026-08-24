@@ -1719,7 +1719,14 @@ class FrontendXcfaBuilder(
 
           is RefExpr<*> -> {
             val lhsType = CComplexType.getType(target, parseContext)
-            if (lhsType.isCopiedStruct(rExpression)) {
+            // Resolved, never cast: [copiedStructOrNull] accepts a **pointer to** the aggregate as
+            // well as the aggregate itself, so the lvalue's own type is not necessarily the CStruct
+            // being copied. `lhsType as CStruct` was therefore a ClassCastException waiting for a
+            // pointer-typed lvalue to reach it, and every one of the 112 remaining intel-tdx
+            // frontend failures of run 105 was that cast. The Dereference branch above already
+            // resolves the type instead of asserting it; these two agree now.
+            val copiedAggregate = lhsType.copiedStructOrNull(rExpression)
+            if (copiedAggregate != null) {
               // Checked before the pointer-arithmetic rewrite below, because `t = a[i]` on an array
               // of structs satisfies both: the element is now an offset into the array (`a + i*k`),
               // so it *has* arithmetic, but assigning one struct to another of the same type is a
@@ -1727,7 +1734,7 @@ class FrontendXcfaBuilder(
               // alias of the element -- and left it a split variable, which then failed outright on
               // the next bare use of `t`.
               SequenceLabel(
-                aggregateCopy(target, rExpression, lhsType as CStruct, getMetadata(statement))
+                aggregateCopy(target, rExpression, copiedAggregate, getMetadata(statement))
                   ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
