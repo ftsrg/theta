@@ -38,8 +38,10 @@ the headline gain is the memory budget rather than this work -- though run 102 a
 host and CPU model, so memory and hardware are not separated.
 
 Of the 24 results wrong in run 102 that were not wrong in the baseline, **23 were ERRORs there** and
-one was correct (limitation 1 below). Run 98 is included deliberately: it is the same
-work *before* the last two fixes, and it scored 6,428 **below** baseline. That dip was 456 Juliet
+one was correct (limitation 1 below).
+
+Run 98 is in the table deliberately: it is the same work *before* the last two fixes, and it scored
+6,428 **below** baseline. That dip was 456 Juliet
 tasks answering `false(no-overflow)` on correct programs, and it is the clearest evidence in this PR
 that error-count improvements mean nothing on their own — see "How this was validated".
 
@@ -47,8 +49,8 @@ Parse-only, 72,103 runs: frontend errors fell 580 (2,982 → 2,850 before-parsin
 after-parsing), netting +330 tasks that build. ~250 of that reduction returns as OOM/TIMEOUT, which
 is consistent with tasks now getting further before failing.
 
-A run at the competition's real allocation (15 min / 15 GB / 2 cores) is in flight; every run above
-used 7 GB, so it is not yet known how much of the error/OOM tail the real memory budget recovers.
+Run 102 was raced on two clusters and the slower one stopped; the winner is the one reported. The
+two hosts used different CPU models, so its wall-clock timings are not comparable with the others.
 
 ## What changed
 
@@ -93,9 +95,10 @@ zero effect; and a widened struct-copy guard that regressed working tasks. Each 
    `--arithmetic bitvector` answers `Unsafe` on this safe program while `integer` answers `Safe`.
    That commit only changed which encoding the task is routed to. A pre-existing bitvector defect,
    newly exposed. It is the only case in the whole branch where a working answer was taken away.
-2. **20 further results are wrong in run 99 that were not wrong in the baseline — all 20 were
+2. **23 further results are wrong in run 102 that were not wrong in the baseline — all 23 were
    ERRORs there.** Latent unsoundness exposed by tasks that now get far enough to answer, not caused.
-   9 are wrong-`true` (−32 each), which is the expensive direction and worth triaging first.
+   11 are wrong-`true` (−32 each), which is the expensive direction and worth triaging first. The
+   wrong count rose 55 → 72 across the branch; that is the honest cost of answering 1,976 more tasks.
 3. **The stub-range fix works but is unexplained.** It turned 456 Juliet tasks from wrong to correct
    (456/456, with 456 `_bad` controls still caught), yet five minimal programs of the obvious shape
    verify the same with and without it. Guarded by 6 canary rows rather than a fixture, because a
