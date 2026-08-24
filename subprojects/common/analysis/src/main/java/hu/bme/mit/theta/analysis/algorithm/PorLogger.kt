@@ -20,23 +20,38 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
 
 object PorLogger {
+
   lateinit var globalVars: Set<VarDecl<*>>
   var precisionableGlobalVarCount: Int? = null
   val exploredActions = mutableListOf<Long>()
   val precGlobalVarSizes = mutableListOf<Int>()
+  val precDataRaceFlagVarSizes = mutableListOf<Int>()
   var virtualExplorationTimeMs: Long = 0
   var dependentTimeMs: Long = 0
   var porTime: Long = 0
   var sporTime: Long = 0
 
+  private val dataRaceFlags =
+    setOf(
+      "_write_flag_",
+      "_read_flag_",
+      "_deref_array_write",
+      "_deref_array_read",
+      "_deref_offset_write",
+      "_deref_offset_read"
+    )
+
   fun newPrec(prec: Prec) {
     precGlobalVarSizes.add(prec.usedVars.filter { it in globalVars }.size)
+    precDataRaceFlagVarSizes.add(prec.usedVars.filter { v -> dataRaceFlags.any { v.name.startsWith(it) } }.size)
   }
 
   fun printStatistics() {
     System.err.println("POR explored actions (per iteration): $exploredActions")
     System.err.println("Precision global variables (per iteration): $precGlobalVarSizes")
     System.err.println("Number of global variables: $precisionableGlobalVarCount")
+    System.err.println("Precision data race flag variables (per iteration): $precDataRaceFlagVarSizes")
+    System.err.println("Number of data race flag variables: ${globalVars.filter { v -> dataRaceFlags.any { v.name.startsWith(it) } }.size}")
     System.err.println("POR algorithm time (ms): ${if (porTime == 0L) sporTime else porTime}")
     System.err.println("SPOR algorithm time (ms): $sporTime")
     System.err.println("DPOR Virtual exploration (ms): $virtualExplorationTimeMs")
