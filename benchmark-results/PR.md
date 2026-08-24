@@ -40,6 +40,31 @@ host and CPU model, so memory and hardware are not separated.
 Of the 24 results wrong in run 102 that were not wrong in run 93, **23 were ERRORs there** and
 one was correct (limitation 1 below).
 
+### Against the shipped release
+
+`theta v7.3.1` (run 2026-07-16, published at share.mit.bme.hu) on the **same 36,531 tasks**, after
+normalising task paths:
+
+| | theta v7.3.1 | **run 102** |
+|---|---|---|
+| **score** | 8,071 | **22,536** |
+| correct | 6,016 | **14,866** |
+| **wrong** | 147 | **72** |
+| error | 30,328 | **21,176** |
+
+**+14,465, with roughly half the wrong answers.** 144 of the release's 147 wrong verdicts are no
+longer wrong; 3 remain. Of the 69 that are wrong here and not there, **68 were ERRORs in the release**
+— tasks that only now get far enough to answer — and exactly one was correct:
+`pthread-divine/tls_basic` (unreach-call), which the release answers `true` and this branch answers
+`false`. That is a second correct→wrong case beyond limitation 1 and is not yet diagnosed.
+
+Caveats, all real: the release ran `--portfolio STABLE` (complex26) at 8 GB, this run COMPLEX27 at
+15 GB. Memory is not the driver — run 99 at **7 GB**, below the release's 8 GB, still scores 21,605.
+The portfolio difference is genuine and part of what this branch delivers, but it means the number is
+not attributable to the frontend fixes alone. Note also that upstream `master` has moved on since
+v7.3.1 (origin is at `9538c9ce76`), so this compares against a shipped release, not against current
+upstream.
+
 ⚠️ **"Run 93" is not master.** It is a mid-branch state built 2026-08-16, six weeks and dozens of
 commits after master's tip (`22ab2b88de`, 2026-07-06). It is the right reference for *this batch's*
 delta, but it is NOT the master→branch delta, and nothing above should be read as one. There is no
@@ -111,6 +136,9 @@ zero effect; and a widened struct-copy guard that regressed working tasks. Each 
 
 ## Known limitations — please read before merging
 
+0. **Two tasks go correct → wrong against the shipped release**: `ldv-regression/rule60_list2`
+   (item 1 below, diagnosed) and `pthread-divine/tls_basic` (unreach-call, **not yet diagnosed** —
+   found only when comparing against v7.3.1). Both deserve a look before merge.
 1. **`ldv-regression/rule60_list2` regressed from correct to wrong.** Bisected to `c8cf3c3ba9`, but
    the wrong answer is **not** that commit's: on every build, including pre-branch ones,
    `--arithmetic bitvector` answers `Unsafe` on this safe program while `integer` answers `Safe`.

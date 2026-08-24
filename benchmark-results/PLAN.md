@@ -7846,6 +7846,38 @@ Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-ra
 but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
 error-turned-wrong, both previously scoring 0.
 
+## Comparison against the SHIPPED RELEASE theta v7.3.1 (downloaded 2026-08-24)
+
+Hosted full runs live at `share.mit.bme.hu/index.php/s/75kYtHnEWcks4a4` (a public Nextcloud share,
+folder `benchmarks/<version>/<tool>/`). Listing is blocked (PROPFIND 401) but GET works with the
+token as basic-auth user, so the version dirs were found by streaming the zip and reading entry
+names, then probing candidates. Latest is **v7.3.1** (v7.3.0 does not exist; nothing above 7.3.1).
+Downloaded `v7.3.1/theta/` -- one full run, `theta.2026-07-16_17-02-22`, 55 result files, 448 MB.
+Extracted to `results-hosted-v7.3.1/`.
+
+Its limits: 900 s, **8 GB**, 2 cores, `--portfolio STABLE`. On the same 36,531 tasks (task paths
+normalised -- the hosted run uses a different prefix, which made the raw keys share nothing):
+
+| | theta v7.3.1 | run 102 |
+|---|---|---|
+| **score** | 8,071 | **22,536** |
+| correct | 6,016 | **14,866** |
+| **wrong** | 147 | **72** |
+| error | 30,328 | **21,176** |
+
+**+14,465, and the wrong count roughly halves.** 144 of the release's 147 wrongs are fixed, 3 remain,
+and 69 are wrong here but not there -- of which **68 were ERRORs in the release** and exactly **one
+was correct**: `pthread-divine/tls_basic` (unreach-call), release `true`, ours `false`. **Not yet
+diagnosed**, and a second correct->wrong case beyond `rule60_list2`.
+
+⚠️ Confounds, all real: portfolio (STABLE vs COMPLEX27) and memory (8 GB vs 15 GB). Memory is not the
+driver -- run 99 at 7 GB, *below* the release's 8 GB, still scores 21,605. Also, upstream master has
+moved on since v7.3.1 (`origin/master` = `9538c9ce76`, our local `master` ref is stale at
+`22ab2b88de`), so this is a comparison against a shipped release, not against current upstream.
+
+**This is a far better reference than run 93** and PR.md now leads the limitations with the two
+correct->wrong tasks.
+
 ## What master data exists locally (checked 2026-08-24)
 
 Asked whether any benchmark results for **master** are available locally. One, and it is partial:
