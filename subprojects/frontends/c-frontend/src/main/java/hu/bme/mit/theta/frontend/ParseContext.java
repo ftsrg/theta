@@ -33,6 +33,15 @@ public class ParseContext {
     private ArchitectureType architecture = ArchitectureType.LP64;
     private Boolean multiThreading = false;
     private ArithmeticType arithmetic = ArithmeticType.efficient;
+
+    /**
+     * Whether {@link #arithmetic} was picked by the frontend from `efficient` rather than chosen by
+     * the caller. Only an automatic choice may be revised: if the user asked for integer arithmetic
+     * and the program turns out to need bits, that is their answer to live with, but a guess this
+     * code made is fair game to correct.
+     */
+    private boolean arithmeticAutoSelected = false;
+
     private Boolean signedWraparound = false;
     private MemoryModelType memoryModel = MemoryModelType.multi;
 
@@ -132,6 +141,14 @@ public class ParseContext {
 
     public void setArithmetic(ArithmeticType arithmetic) {
         this.arithmetic = arithmetic;
+    }
+
+    public boolean isArithmeticAutoSelected() {
+        return arithmeticAutoSelected;
+    }
+
+    public void setArithmeticAutoSelected(boolean arithmeticAutoSelected) {
+        this.arithmeticAutoSelected = arithmeticAutoSelected;
     }
 
     public Boolean getSignedWraparound() {

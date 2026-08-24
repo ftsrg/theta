@@ -18,12 +18,19 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -87,6 +94,19 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val defined = builder.parent.getProcedures().map { it.name }.toSet()
+
+    // A symbolic byte count cannot be spelled out as straight-line assignments, so those calls are
+    // lowered to a real loop instead -- which needs new locations, i.e. edge surgery rather than
+    // the
+    // label replacement below. Done first so the inline pass never sees them.
+    builder.getEdges().toList().forEach { edge ->
+      val labels = edge.label.getFlatLabels()
+      val idx =
+        labels.indexOfFirst {
+          it is InvokeLabel && it.name in FILL && it.name !in defined && needsLoop(it)
+        }
+      if (idx >= 0) fillLoop(builder, edge, labels, idx, labels[idx] as InvokeLabel)
+    }
 
     builder.getEdges().toList().forEach { edge ->
       val labels = edge.label.getFlatLabels()
@@ -218,7 +238,6 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * wrong number of bytes.
    */
   private fun nondetFill(invoke: InvokeLabel, builder: XcfaProcedureBuilder): XcfaLabel? {
-    if (!parseContext.memoryModel.byteAddressed()) return null
     // The last two arguments are `mem` and `size`, whether or not a (void) return slot precedes
     // them.
     if (invoke.params.size < 2) return null
@@ -226,9 +245,21 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val size = literalValue(invoke.params[invoke.params.size - 1]) ?: return giveUp(invoke)
     if (size.signum() < 0 || size > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
 
-    val byteType = CUnsignedChar(null, parseContext)
+    // Under the bytes model a cell IS a byte, so `size` cells are written. Under the typed-cell
+    // models a cell is one element of the pointee type, so the byte count has to be divided by the
+    // element width -- the same translation `fill` does. This used to bail out entirely unless the
+    // bytes model was on, which left the call in place for `NondetFunctionPass` to reject it for
+    // "having arguments" (167 runs in the run-91 parse sweep).
+    val byteAddressed = parseContext.memoryModel.byteAddressed()
+    val cellType = if (byteAddressed) CUnsignedChar(null, parseContext) else elementOf(mem)
+    if (cellType == null) return giveUp(invoke)
+    val cells =
+      if (byteAddressed) size.toInt()
+      else (elementCount(invoke.params[invoke.params.size - 1], cellType) ?: return giveUp(invoke))
+
+    val byteType = cellType
     val stmts =
-      (0 until size.toInt()).flatMap { i ->
+      (0 until cells).flatMap { i ->
         val fresh = Var("__nondet_mem_${nondetMemCounter++}", byteType.smtType)
         builder.addVar(fresh)
         val cell = deref(mem, indexOf(i, mem), byteType)
@@ -374,6 +405,132 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     CComplexType.getUnsignedLong(parseContext).getValue("$i")
 
   @Suppress("UNCHECKED_CAST")
+  /** A fill this pass can only model as a loop: scalar element, but the byte count is symbolic. */
+  private fun needsLoop(invoke: InvokeLabel): Boolean {
+    if (invoke.params.size < 4) return false
+    if (aggregateOf(invoke.params[1]) != null) return false
+    val element = elementOf(invoke.params[1]) ?: return false
+    if (literalValue(invoke.params[3]) != null) return false // the constant path handles it better
+    if (element.width() <= 0 || element.width() % 8 != 0) return false
+    val zero = literalValue(invoke.params[2])?.equals(BigInteger.ZERO) == true
+    return zero || element.width() == 8
+  }
+
+  /**
+   * `memset(dst, c, n)` with a **symbolic** `n`, spelled out as a loop over the elements the count
+   * covers: `for (i = 0; i < n / sizeof *dst; i++) dst[i] = c`.
+   *
+   * The byte count only has to be translated into an element count -- `n / w` -- which is an
+   * ordinary division on the count expression and needs nothing known at build time. A partial fill
+   * of an array (`memset(arr, 0, k)` with `k` smaller than the object) falls out of the same bound.
+   * Before this, such a call was left unmodelled and surfaced as "No such method memset" (1,373
+   * runs in the batch-89 `pred_int` run) even though the pass had seen it and declined it.
+   *
+   * ⚠️ **The partially covered tail element is havoc'd, not skipped.** When `n` is not a whole
+   * number of elements the last one is only partly written, and leaving it holding its *old* value
+   * would be a specific wrong value -- able to hide a bug as easily as to invent one. Unconstrained
+   * is an over-approximation and safe, so the tail cell is havoc'd, guarded by `count * w != n` so
+   * the common exact case keeps its precision.
+   *
+   * ⚠️ This runs after [LoopUnrollPass], so the loop is never unrolled and reaches the analyses as
+   * a real loop. That is deliberate: the alternative here is not a better answer but no answer at
+   * all.
+   */
+  private fun fillLoop(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    labels: List<XcfaLabel>,
+    idx: Int,
+    invoke: InvokeLabel,
+  ) {
+    val dst = invoke.params[1]
+    val value = invoke.params[2]
+    val bytes = invoke.params[3]
+    val element = elementOf(dst) ?: return
+    val width = element.width() / 8
+    if (width <= 0) return
+    val zero = literalValue(value)?.equals(BigInteger.ZERO) == true
+    val filler: Expr<*> = if (zero) element.nullValue else element.castTo(value)
+
+    val idxType = CComplexType.getUnsignedLong(parseContext)
+    val i = Var("__memset_i_" + counter++, idxType.smtType)
+    builder.addVar(i)
+    val nCast = idxType.castTo(bytes)
+    val w = idxType.getValue("$width")
+    val count = Div(cast(nCast, idxType.smtType), cast(w, idxType.smtType))
+
+    val head = XcfaLocation("__memset_head_" + counter, metadata = EmptyMetaData)
+    val body = XcfaLocation("__memset_body_" + counter, metadata = EmptyMetaData)
+    val tail = XcfaLocation("__memset_tail_" + counter, metadata = EmptyMetaData)
+    val exit = XcfaLocation("__memset_exit_" + counter, metadata = EmptyMetaData)
+    listOf(head, body, tail, exit).forEach(builder::addLoc)
+
+    val before = labels.subList(0, idx) + AssignStmtLabel(i, idxType.getValue("0"), i.type)
+    val after = returns(invoke, dst) + labels.subList(idx + 1, labels.size)
+
+    builder.removeEdge(edge)
+    builder.addEdge(XcfaEdge(edge.source, head, SequenceLabel(before), edge.metadata))
+    // head: another element to write, or done
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        body,
+        SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Lt(i.ref, count))))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        tail,
+        SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Not(Lt(i.ref, count)))))),
+        EmptyMetaData,
+      )
+    )
+    // body: write this element and advance
+    builder.addEdge(
+      XcfaEdge(
+        body,
+        head,
+        SequenceLabel(
+          listOf(
+            StmtLabel(
+              MemoryAssignStmt.create(deref(dst, i.ref, element), cast(filler, element.smtType))
+            ),
+            AssignStmtLabel(i, Add(i.ref, idxType.getValue("1")), i.type),
+          )
+        ),
+        EmptyMetaData,
+      )
+    )
+    // tail: the count was not a whole number of elements -- the straddled cell is unconstrained
+    val exact = Eq(Mul(count, cast(w, idxType.smtType)), nCast)
+    val spill = Var("__memset_spill_" + counter++, element.smtType)
+    builder.addVar(spill)
+    builder.addEdge(
+      XcfaEdge(tail, exit, SequenceLabel(listOf(StmtLabel(AssumeStmt.of(exact)))), EmptyMetaData)
+    )
+    builder.addEdge(
+      XcfaEdge(
+        tail,
+        exit,
+        SequenceLabel(
+          listOf(
+            StmtLabel(AssumeStmt.of(Not(exact))),
+            StmtLabel(HavocStmt.of(spill)),
+            StmtLabel(
+              MemoryAssignStmt.create(deref(dst, count, element), cast(spill.ref, element.smtType))
+            ),
+          )
+        ),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(XcfaEdge(exit, edge.target, SequenceLabel(after), EmptyMetaData))
+  }
+
+  private var counter = 0
+
   private fun deref(pointer: Expr<*>, index: Expr<*>, element: CComplexType): Dereference<*, *, *> {
     val of = Dereference.of(pointer as Expr<Type>, index as Expr<Type>, element.smtType as Type)
     parseContext.metadata.create(of, "cType", element)

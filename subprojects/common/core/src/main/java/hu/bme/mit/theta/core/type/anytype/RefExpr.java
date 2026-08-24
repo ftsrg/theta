@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import java.util.NoSuchElementException;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -49,7 +50,22 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
     @Override
     public LitExpr<DeclType> eval(final Valuation val) {
-        return val.eval(decl).get();
+        // `.get()` on an absent value threw a bare `NoSuchElementException: No value present`,
+        // naming neither the declaration nor anything else -- untriageable in a log, and 39 runs of
+        // the run-91b parse sweep were indistinguishable because of it. Say which variable was
+        // unbound; the caller is always someone evaluating an expression against a valuation that
+        // does not cover its free variables.
+        return val.eval(decl)
+                .orElseThrow(
+                        () ->
+                                new NoSuchElementException(
+                                        "No value for '"
+                                                + decl.getName()
+                                                + "' of type "
+                                                + decl.getType()
+                                                + " in the valuation; an expression containing it"
+                                                + " was evaluated against a valuation that does"
+                                                + " not bind it."));
     }
 
     @Override

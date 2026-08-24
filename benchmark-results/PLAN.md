@@ -5140,3 +5140,3158 @@ fixture. Replaced with a call-counter form.
   attempt was killed by a host restart). They only answer near 900 s. Their `main` is a plain
   block-local `struct my_data data;` — no VLA and no symbolic alloca — so cause J's probe is ruled
   out; cause F (memcpy cells) or a batch-82 change remains the candidate.
+
+## Batch 85 — parse-only benchmark on benchcloud (launched 2026-08-07 13:14 CEST)
+
+benchcloud came back; sosy remains off-limits. Launched a **parse-only** run first, as directed,
+before spending a full verification run.
+
+- tool dir `Theta-svcomp-85` (= HEAD `6bc3648656`), XML `xmls/theta27-parse.xml`
+- output `results/Theta-svcomp-85/theta27-parse.xml/2026-08-07_13:14:33/`, screen `theta-parse85`
+- `--vcloudPriority IDLE` (as directed), `--vcloudCPUModel Skylake` (run 80's hardware),
+  `--vcloudClientHeap 8192`
+- gated first: canaries `parse` all green, fixtures 50 PASS / 0 FAIL
+
+`xmls/theta27-parse.xml` is `theta27-short.xml` with `--portfolio STABLE` swapped for
+`--backend NONE`; every other limit and all 8 rundefinitions are unchanged, which matters because
+the recent frontend fixes are **gated on the memory-safety properties** and would be invisible in a
+single-property run.
+
+**Why this run is worth a slot.** With no backend the tool-info's exit-code mapping turns every task
+into a pure frontend verdict — exit 0 → `unknown` (parsed), exit 210 → `ERROR (frontend failed,
+before|after parsing finished)`. Two things follow:
+
+1. It measures the frontend over all 36,602 task-runs instead of a 307-file sample, so the cause
+   ranking stops being an extrapolation.
+2. **It sees the `after parsing` failures, which a local `--backend NONE` probe structurally cannot.**
+   That was the flaw in my earlier probe: with the backend off, an after-parsing failure never gets
+   the chance to happen, so all 163 sampled files trivially reported "parses now". The 496
+   after-parsing files have therefore never been measured. In the *benchmark* the pass pipeline does
+   run, so exit 210 with `after` is reported honestly.
+
+Analysis script: `benchmark-results/parse_summary.py <results-dir> [--by-family] [--files <substr>]`.
+
+A full verification run follows only if this one looks clean — it is the cheaper way to find out
+whether HEAD regressed the frontend anywhere.
+
+### Re-ranking the frontend causes against HEAD (117 files, throw sites captured)
+
+The run-84 ranking was measured at `323c583fc7`; four fixes have landed since, so I re-probed the
+same stratified sample against HEAD. This time the probe captured the **throw site**, not just the
+exception class — the earlier `NullPointerException` bucket had no message and collapsed 21 files
+into one uninformative row.
+
+Sample counts are **not** proportional (the sample is 8 files per family, so small families are
+over-represented); the `weighted est.` column scales each bucket by its family's true size. Treat
+these as directional only — batch 85's parse-only run replaces them with exact counts.
+
+| bucket | sample | weighted est. files |
+|---|---|---|
+| byte-addressed union with a floating-point member | 17 | ~298 |
+| `Field [x] not found, available fields are: []` (opaque struct) | 4 | ~67 |
+| `__builtin_va_arg` over an unresolvable `typeof` | 8 | ~41 |
+| function-pointer call ("Only variable-backed functions are callable") | 7 | ~38 |
+| `&malloc` / attribute-in-parens declarator (goblint-coreutils) | 8 | ~24 |
+| `__builtin_inff` / `huge_val` | 6 | ~20 |
+| dimensionless array `T a[] = {…}` NPE | 10 | ~18 |
+| `__builtin_popcountl` | 2 | ~9 |
+| `__builtin_prefetch` | 3 | ~8 |
+
+**Two conclusions overturn earlier ones, and one confirms an earlier call.**
+
+1. **The NPE bucket is a single site** — `FunctionVisitor.java:1354`, `List.of(allocaSize)` with a
+   null dimension, i.e. the dimensionless array `T a[] = {…}`. That is the fix already sitting in
+   `stash@{0}`, measured at **net −32** and parked. So the largest NPE bucket is a known, priced,
+   deliberately-deferred item rather than a new bug. Left parked; batch 85 will say what it is worth.
+
+2. **The union/float bucket is ~298 files, not the 2 tasks I priced it at.** My earlier estimate came
+   from the run-84 *wrong-result* triage, which only ever saw the two tasks that got far enough to
+   answer; it could not see the hundreds that die in the frontend. The estimate was wrong by two
+   orders of magnitude and the decision deserved re-opening.
+
+   **The decision does not change, and the reason is worth stating.** The files are
+   `inv_sqrt_Quake`, `cast_float_union`, `float-newlib/*` — float↔int *type punning*, which needs
+   exactly the `fpToIEEEBV` round-trip that batch 59 closed as unsound. It is not an incidental
+   refusal that a small patch removes; it is the byte-granular memory model. And the scoring makes
+   guessing actively dangerous: 298 files currently score **0** as errors, whereas an unsound
+   round-trip that answers confidently costs −16/−32 each. This bucket is now the single strongest
+   argument for the byte-granular memory model, and it should be sized against that project rather
+   than patched.
+
+3. `&malloc` in goblint-coreutils is **not** a gap in the undeclared-memory-function fix — those
+   files take the *address* of `malloc` (`(void *(*)(size_t))(& malloc)`) and additionally spell its
+   declarator as `void *(__attribute__((...)) malloc)(size_t)`. Same family as the function-pointer
+   bucket, out of that fix's scope by design.
+
+### GCC builtins with no declaration (batch 85)
+
+`__builtin_*` names have no declarator in a preprocessed source, so the *callee identifier* fails to
+resolve ("No such variable or macro: __builtin_inff") and the whole file dies in the frontend before
+anything else runs. `handleBuiltinCall` already had the dispatch point; these names simply were not
+in it. Added, all with exact semantics:
+
+| builtin | model |
+|---|---|
+| `__builtin_inf` / `inff` / `infl`, `__builtin_huge_val*` | `+inf` literal of that width |
+| `__builtin_nan` / `nanf` / `nanl` | quiet NaN of that width (payload string ignored) |
+| `__builtin_isgreater(equal)`, `isless(equal)`, `islessgreater`, `isunordered` | alias to the plain names `FpFunctionsToExprsPass` already models |
+| `__builtin_isnan`, `__builtin_isfinite`, `__builtin_finite` | alias to `isnan` / `isfinite` |
+| `__builtin_prefetch` | dropped; operands still evaluated |
+
+Nothing here is an approximation: infinity and NaN are exact values, the comparisons already had
+exact models under their plain spelling, and `__builtin_prefetch` genuinely has no semantics. The
+NaN *payload* is the one thing discarded, and it is unobservable — reading it needs the bytes of a
+floating-point union member, which is refused outright.
+
+Two traps worth recording:
+
+- **`__builtin_inf` ends in `f` but is the `double` one.** Deriving the width from the name's last
+  character — which reads as the obvious implementation — silently returns a `float` infinity for it.
+  The names are spelled out instead, and the fixture checks `__builtin_inf` against a value only a
+  double infinity exceeds.
+- **`__builtin_prefetch`'s operands are still evaluated.** The hint has no effect, but
+  `__builtin_prefetch(&a[i++])` must still increment `i`. Dropping the whole call, which is the
+  tempting one-liner, would silently discard the side effect; the fixture pins it — **and caught a
+  real bug in the first version of this fix.** I copied the `__builtin_va_start` case, which
+  evaluates operands via `arg.accept(functionVisitor)`; that parses the operand but drops its side
+  effect, so `i` stayed 0 and the fixture went UNSAFE. Operands must go through
+  `arg.accept(this)` — the *expression* visitor is what emits side-effect statements — which is what
+  `__builtin_expect` next to it already did. The `va_start` case has the same latent flaw but is
+  harmless there: C requires those operands to be an lvalue and a parameter name, so they cannot
+  carry side effects. Left alone rather than widened.
+
+**Measured — and then corrected.** Of the 1747 before-parsing failures, 272 files (15.6%) use one of
+these builtins. My first number, "6 of 30 now parse", was **wrong**: the probe called a file parsed
+whenever `ParsingResult Success` appeared in the output, but theta prints that marker and can still
+fail in a later stage and exit 210. Re-measured with the **exit code** — which is what benchexec's
+tool-info actually keys on — it is **2 of 30** that fully succeed.
+
+What does hold, and is the point of the fix: **zero files remain blocked on any `__builtin_` name**.
+The other 28 fail on causes that were always sitting behind the builtin.
+
+⚠️ **Every "parses now" figure in this file measured before 2026-08-07 has the same flaw** and is an
+over-count. Use `scratchpad/probe_rc.sh` (exit-code based) for anything new. The docstring claimed `isnan`/`isfinite` were already aliased when only `isinf` and
+`isnormal` actually were, so that gap is closed too.
+
+Fixtures: `builtin_infinity.c`, `builtin_nan_compare.c`, `builtin_prefetch.c`.
+
+### Next target: the opaque-struct bucket, narrowed to one struct
+
+Of the remaining `Field [x] not found, available fields are: []` failures, **12 of 13 are the same
+field, `driver_data`**, and the accessed struct is `struct device_private`. In
+`…vmxnet3.cil.i` the ordering is: forward declaration at char 23805 → `struct device` (which holds
+`struct device_private *p`) at 27076 → the real definition of `device_private` at 180856 → the use
+`(dev->p)->driver_data` at 496895. So the tag is completed long before it is used, and
+`visitCompoundDefinition` already has the "complete a field-less forward declaration rather than
+replacing it" path that this should exercise.
+
+**Three minimal repros of that shape all parse fine**, so none of my theories is the bug:
+
+1. plain forward declaration completed later — parses;
+2. plus a *self-referential* `struct device` (`struct device *parent`), to force
+   `Struct.getActualType`'s `currentlyBeingBuilt` → "self-embedded structs! Using long as a
+   placeholder" path — parses;
+3. plus `sizeof(struct device)` before the completion, to force the field list to be expanded and
+   **cached** (`cachedActualFields`) while `device_private` was still empty — parses.
+
+Theory 3 is worth restating even though it failed, because it is still the only mechanism that
+explains an *empty* struct rather than an int placeholder: `cachedActualFields` is invalidated by
+`addField` only on the struct whose own fields changed, so a struct that expanded a
+still-incomplete member type would keep that empty expansion forever. It simply is not what these
+files trigger — `sizeof` did not force it.
+
+Confirmed from the real file (INFO log): the self-embedded placeholder path *does* fire (once), and
+the failing access is `(dev->p)->driver_data`, with `struct device_private` defined at char 180856,
+long before the use at 496895.
+
+**ROOT CAUSE FOUND — by instrumentation, after four failed repros.**
+
+The diagnostic (tag added to the message) first ruled out half the space: the real file reports
+`Field [driver_data] of struct device_private not found, available fields are: []` — the *right*
+struct, genuinely empty. A fourth repro (by-value embedding, which the real file does at
+139307–145981, before the completion at 180856) still parsed, so I stopped writing repros and traced
+`Struct.addField` / `getActualType` on the real file instead:
+
+```
+getActualType device_private  canonical=950689790  fields=[]           cached=null   <- expanded EMPTY
+getActualType device_private  canonical=950689790  fields=[]           cached=0      <- reuses the empty expansion
+getActualType device_private  canonical=950689790  fields=[]           cached=0
+getActualType device_private  canonical=950689790  fields=[]           cached=0
+addField      device_private.driver_data on 950689790                                <- definition finally arrives
+getActualType device_private  canonical=950689790  fields=[driver_data] cached=null
+```
+
+`device_private` is expanded into an **empty `CStruct` four times before its definition arrives**.
+`addField` correctly invalidates its *own* cache (the last line shows `cached=null`), but the empty
+`CStruct` objects handed out by those four expansions were already embedded in **enclosing** structs'
+`cachedActualFields`, and nothing invalidates those. So `struct device`'s field `p` stays a pointer
+to a field-less struct for the rest of the parse. This is theory 3 after all — the repros failed only
+because in each of them the *enclosing* expansion happened after completion, never before.
+
+Confirms it is **one bug**, matching the bucket's homogeneity (12 of 13 failures are the same field).
+
+**Fix, and the trap in it.** The obvious fix — a global generation counter bumped by every `addField`,
+with caches valid only for the current generation — is correct but risks re-introducing exactly what
+the cache was added to prevent: during the declaration phase every `addField` would invalidate every
+cache, and the comment on `cachedActualFields` records that unbounded re-expansion is *exponential in
+nesting depth* and "large LDV kernel headers ran out of heap inside it". The safer shape is to **not
+cache an expansion that contained an incomplete (field-less) named struct**, leaving it to be
+recomputed once the tag is complete; complete expansions still cache, so the steady state keeps
+today's performance. Before implementing, check whether `CDeclaration.getActualType` also memoises
+the stale type — invalidating only `Struct`'s cache is not enough if it does. Needs the full canary
+gate plus a timing check on a large LDV file, since the failure mode of getting it wrong is a heap
+blowup rather than a wrong answer.
+
+**Second, distinct bug found in the same family** (`Only structs expected here, got …complex.integer…`,
+forester-heap + 3 LDV files): `getActualType`'s self-embedded guard returns `signedInt` wrapped in
+the field's pointer levels, so `struct device *parent` resolves to **`int*` rather than
+`struct device*`**. A pointer to a struct under construction needs no recursion at all — a pointer is
+a scalar of known size — so the placeholder fires far too eagerly. Only genuine *by-value*
+self-embedding is illegal in C and needs the placeholder.
+
+
+### Struct cache fix — measured honestly (batch 85)
+
+The `cachedActualFields` fix (see the root-cause section above) works: across the 13 known
+opaque-struct files the `Field [x] … available fields are: []` error class is **gone entirely**. But
+the benchmark value is far smaller than the bucket size suggested — re-measured by exit code:
+
+| outcome with the fix | files |
+|---|---|
+| fully succeeds (exit 0) | **1** |
+| `Could not handle left-hand side of assignment` (FrontendXcfaBuilder:1416) | 6 |
+| `ClassCastException` (bv_zero / deref typing) | 4 |
+| timeout at 150s | 2 |
+
+All 13 scored 0 before as frontend errors, and 12 still score 0 as *different* frontend errors. So
+this is worth ~1 file today. It is still worth shipping: an empty struct type is silently **wrong
+modelling**, not merely a refusal, and wrong types are exactly the thing that produces wrong verdicts
+rather than honest errors. But it should be booked as unblocking, not as points — and
+`Could not handle left-hand side of assignment` is now the top blocker in this family, having been
+hidden behind the struct bug in 6 of 13 files.
+
+**No canary guards it.** Both real files I added were rejected by the suite and removed:
+`vmxnet3` does not fully parse even with the fix (it advances to the left-hand-side error), and
+`pktcdvd` is OOM-killed under `theta-start.sh`'s hardcoded `-Xmx14210m` in this host's 8 GB cgroup —
+and running two files that heavy 4-way parallel also OOM-killed an unrelated canary
+(`cartpole_0_safe`), which is a good reminder that a heavy canary damages its neighbours. Five
+minimal repros all parse identically with and without the fix, so the fix is validated only by the
+direct A/B recorded above (`THETA_NO_DEPINVAL`, both files flipping cleanly at `-Xmx4g`).
+
+## Batch 85 RESULTS — the parse-only run (complete, 72,103 task-runs)
+
+Finished 2026-08-07 ~14:30 CEST. This is the first measurement of the frontend over the *whole*
+benchmark rather than a sample, and the first that can see after-parsing failures at all.
+
+| status | runs | share |
+|---|---|---|
+| `unknown` (parsed, XCFA built) | 62,049 | **86.1%** |
+| ERROR (frontend failed, **before** parsing) | 3,753 | 5.2% |
+| OUT OF MEMORY | 2,603 | 3.6% |
+| ERROR (frontend failed, **after** parsing) | 2,502 | 3.5% |
+| TIMEOUT | 1,186 | 1.6% |
+
+**13.9% of the benchmark cannot even be handed to a backend**, and a third of that is resource
+exhaustion *while parsing* — 2,603 OOM and 1,186 timeouts with no verification work being done at
+all. That bucket was completely invisible before this run.
+
+### The ranking this produces — it is not the one I was working from
+
+| family | non-parsing runs | kind |
+|---|---|---|
+| **intel-tdx-module** | **1,634** | 688 before + 814 after + 132 OOM |
+| eca-rers2012 | 852 | 800 **OOM** |
+| hardware-verification-bv | 780 | 704 **TIMEOUT** |
+| ldv-linux-4.2-rc1 | 764 | mixed |
+| ldv-linux-3.14 | 638 | mixed |
+| float-newlib | 530 | the union/float-punning wall |
+| goblint-regression | 507 | **all after-parsing** |
+
+Three things this overturns:
+
+1. **`intel-tdx-module` is the single largest frontend blocker by a wide margin, and I have never
+   looked at it** — it did not stand out in the stratified sample because that sample took 8 files
+   per family regardless of family size. It is both the largest before-parsing *and* the largest
+   after-parsing family.
+2. **`goblint-regression` (507) is entirely after-parsing**, so no local `--backend NONE` probe could
+   ever have seen it. Same for most of `pthread-*`.
+3. **`eca-rers2012` OOM (800) and `hardware-verification-bv` TIMEOUT (704) are resource problems, not
+   missing features.** No amount of grammar work touches them; they need the frontend to be cheaper.
+   Worth noting next to the struct-cache work: that cache exists precisely because this expansion is
+   exponential, and 2,603 parse-time OOMs say the cost problem is real and unsolved elsewhere too.
+
+Next targets, in this order: `intel-tdx-module` (one family, 1,634 runs, cause unknown),
+`goblint-regression` (507, one cause worth identifying), then the parse-time OOM/TIMEOUT families.
+
+### Two methodology bugs found while acting on the batch-85 ranking
+
+**1. My yml→input-file extractor silently dropped whole families.** It matched
+`input_files:\s*'([^']+)'` — requiring single quotes. `intel-tdx-module`'s ymls write
+`input_files: name.i` bare, so **the single largest failing family was absent from every local
+sample I ever built**, which is why it never appeared in any ranking before the benchmark produced
+one. Accept quoted *or* bare.
+
+**2. "--backend NONE cannot see after-parsing failures" was wrong.** I stated this as the
+justification for the parse-only run. Probing 8 intel-tdx after-parsing files locally with
+`--backend NONE` reproduces **8 of 8** — theta prints `ParsingResult Success`, then fails building
+the XCFA, and exits 210. What actually hid them was the probe's success criterion (marker string
+instead of exit code), the same flaw that inflated the "parses now" counts. The parse-only run was
+still the right call — it gives complete, correctly weighted counts over 72k runs rather than a
+skewed sample — but not for the reason given.
+
+### Top after-parsing cause: bitfield assignment (`FrontendXcfaBuilder`)
+
+`Could not handle left-hand side of assignment` is the largest single after-parsing cause found so
+far: 6 of 8 in the intel-tdx sample, 6 of 13 in the opaque-struct files, 10 of 14 combined.
+
+The old message interpolated the `CAssignment`, whose `toString` is `CAssignment@4f8b199b` — it
+names the failure but not the construct, collapsing an entire family into an unclassifiable bucket.
+Naming the shape instead identified it immediately:
+
+```
+lhs is a BvZExtExpr
+  [ bv_zero_extend(bvpos(bv_zero_extend(extract(deref(error_code, …, Bv 8), 5, 6), Bv 8)), Bv 32) ]
+  of type (Bv 32), rhs type (Bv 32)
+```
+
+An `extract(…, 5, 6)` over a dereferenced byte: a **bitfield store**. The read path builds
+`extract`, and the write path then has an `extract` — not a location — on the left. A bitfield write
+needs read-modify-write: read the containing byte, clear the bit range, or in the shifted value,
+write the byte back. Reads already work, so the layout information needed (offset, width) is
+present.
+
+Worth doing next: it is the top after-parsing cause, it is one well-understood mechanism rather than
+a family of special cases, and `intel-tdx-module` alone has 407 after-parsing files.
+
+#### …and the bitfield store is not missing — its metadata is lost
+
+Reading further: `FrontendXcfaBuilder` **already implements** the read-modify-write store
+(`BitfieldSlice.write`, line ~1299). It finds the target by looking up `BitfieldSlice.CELL`
+metadata on `lValue`:
+
+```kotlin
+val bitfieldCell =
+  parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
+    as? Dereference<*, *, *>
+```
+
+`FrontendMetadata` is **identity-keyed**. The read path stamps CELL/OFFSET/WIDTH on the object it
+returns — `declaredType.castTo(BitfieldSlice.read(cell, ...))` — but the left-hand side that
+reaches the builder has been wrapped further:
+
+```
+bv_zero_extend( bvpos( bv_zero_extend( extract(deref(...), 5, 6), Bv 8)), Bv 32)
+                 ^^^^^  ^^^^^^^^^^^^^^ extra wrapping around the stamped object
+```
+
+so it is a *different object*, the lookup returns null, and it falls through to the error. **The
+feature works; the metadata does not survive re-wrapping.** Same identity-keyed-metadata trap that
+loses `cType` on rebuilt expressions.
+
+Two candidate fixes, in preference order:
+1. Find what wraps the lvalue after the member access and stop it wrapping the *assignment target*
+   (the conversion is meaningful for an rvalue read, not for a store target). Narrowest, but needs
+   the wrap site identified.
+2. Failing that, unwrap benign wrappers (`BvZExtExpr`/`BvSExtExpr`/`bvpos`) in the builder before
+   the CELL lookup and retry. Broader, and risks accepting an lvalue that genuinely *was* converted.
+
+Do NOT start by writing a bitfield read-modify-write — it already exists, and rewriting it would
+duplicate working code while leaving the actual defect in place.
+
+### Item 3 (byte-union float member): premise confirmed, and the one hazard to design around
+
+Both tasks are exactly as described — the float member is written with a **compile-time constant**
+and never read:
+
+```c
+union X { int y; double z; };
+var.z = 0x1.4p+4;                  /* constant; the only use of z */
+var.y = 10u;                       /* overwrites the same storage */
+__VERIFIER_assert(var.y == 10u);   /* only y is ever read */
+```
+
+So the exact IEEE-754 bytes are computable at parse time and no `fpToIEEEBV` round-trip is needed.
+Worth +4 (2 tasks).
+
+**The write machinery already exists.** `FrontendXcfaBuilder` handles byte-union member stores via
+`ByteUnionSlice.BASE` metadata — "the right-hand side is split into its own one-byte cells and each
+is written outright". A float member is refused earlier, at *access* time in
+`byteLaidOutMemberAccess`, because a **read** would need the round-trip.
+
+⚠️ **The hazard, which is why this is not a five-minute change.** Access is one call serving both
+reads and writes. Returning a marker for the float member so the store path can see it means the
+same marker is returned when the member is used as an *rvalue*, and it would then silently evaluate
+to a wrong value — in the very path gated for NaN soundness. A silent wrong read is worth −32 where
+the current refusal is worth 0, so the naive version is a bad trade even though it "works" on these
+two tasks.
+
+Any implementation must make a read of that marker **fail loudly**, not merely be discouraged. Two
+shapes worth considering: intercept at the *assignment* level in `FunctionVisitor` so no marker ever
+escapes into an expression; or return a marker that carries no usable value and have every rvalue
+consumer throw on it. Do not ship the version that only special-cases the store and leaves reads
+returning the marker.
+
+#### Bitfield store: the metadata is gone entirely, not merely wrapped — tried and reverted
+
+Traced the real failure (`intel-tdx-module/tdh_mng_init__…_havoc_object.i`) with a temporary probe in
+the builder's fallthrough:
+
+```
+TRACE lhs=BvZExtExpr CELL=ABSENT OFFSET=ABSENT cellExpr=null
+```
+
+**`BitfieldSlice.CELL` is absent on the lvalue**, so the earlier reading — "the stamp is on an inner
+node under an integer promotion" — is wrong. I implemented that fix anyway (`sliceCarrier`, peeling
+single-operand wrappers and retrying the lookup): the intel-tdx file **still failed identically**,
+so nothing on the ancestor chain carries the metadata either. The expression is rebuilt wholesale
+somewhere between the member access and the assignment, and identity-keyed metadata does not survive
+a rebuild. Reverted — it was unvalidated code with no measured effect. A plain pointer-to-bitfield
+store (`p->f = 1`) parses fine both before and after, so the simple path was never broken.
+
+**The promising direction is structural, not metadata-based.** The left-hand side is
+
+```
+bv_zero_extend( bvpos( bv_zero_extend( extract(deref(cell…), 5, 6), Bv 8)), Bv 32)
+```
+
+and an `extract` *carries its own offset and width* (5, 6) with the cell as its operand. So the
+builder can recognise the shape directly — peel the extends, match `BvExtractExpr` over a
+(possibly `Pos`-wrapped) `Dereference`, and reconstruct the read-modify-write from the extract's own
+bounds — with no reliance on metadata surviving. Needs care over signedness and the cell's C type,
+and must not intercept a genuine rvalue extract.
+
+Do not retry the metadata-lookup variants: the stamp is not there to be found.
+
+## Batch 86 RESULTS — full run at HEAD (finished 2026-08-08 14:36 CEST)
+
+`results-run86/`, launched at IDLE priority on benchcloud with `theta27-long900.xml`, CPU pinned to
+Skylake — deliberately the same host, XML and CPU model as **run 80**, so the comparison is not
+confounded by hardware or time limit. Tool dir `Theta-svcomp-86` = `03b1089b94`.
+
+| | run 80 | run 86 | delta |
+|---|---|---|---|
+| SV-COMP score | 13,828 | **19,516** | **+5,688** |
+| correct | 12,519 | 12,815 | +296 |
+| error | 22,869 | 23,314 | +445 |
+| unknown | 750 | 337 | −413 |
+| **wrong** | **393** | **65** | **−328** |
+| correct true / false | 8,157 / 4,362 | 8,061 / 4,754 | −96 / +392 |
+| wrong true / false | 35 / 358 | 20 / 45 | −15 / −313 |
+
+**Zero regressions** (nothing correct in run 80 became wrong). The gain is almost entirely
+**wrong-false collapsing 358 → 45**, i.e. the valid-memsafety false-deref flood is gone — that
+family was the batch-63 blocker and it is now closed at scale. Unlike run 84, none of this is a
+time-limit artefact: run 80 was already at 900 s.
+
+For reference against run 84 (sosy, 5750G): score 19,437 → 19,516 and wrong 82 → 65. Directionally
+positive but **not a clean comparison** — different host and CPU model — which is exactly why run 86
+was pinned to run 80's hardware instead.
+
+### The one thing to triage: 20 newly-wrong-from-non-answer
+
+No task regressed from correct, but 20 went from error/timeout to a *wrong* answer, which costs
+points where an error cost nothing (−16/−32 vs 0). Most are frontend fixes doing their job and
+handing a now-parsing task to a backend that then gets it wrong:
+
+- `memsafety/test-0214,-0217,-0218,-0232-2`, `list-ext-properties/test-0214_1,-0217_1,-0232_1-2`:
+  `frontend failed, before parsing` → **`false(valid-deref)`**. One family, one likely cause.
+- `uthash-2.0.2/uthash_JEN_nondet_test2-2`, `-test4-3` (both memcleanup and memsafety):
+  `frontend failed, after parsing` → `false(valid-deref)`.
+- `ldv-memsafety/ArraysOfVariableLength{,2}`, `pthread-complex/workstealqueue_mutex-2`: TIMEOUT →
+  `false(valid-deref)`.
+- `floats-cbmc-regression/float-rounding1`, `float-to-double2`: frontend → `false(unreach-call)`.
+- `aws-c-common/aws_linked_list_{node_reset,remove}_harness`: OOM → `false(unreach-call)`.
+
+The `test-021x` / `list-ext-properties` group is the obvious first target: 7 tasks, one property,
+one transition, and they only started answering because the frontend stopped refusing them.
+
+### ROOT CAUSE of the run-86 `test-021x` newly-wrong family: arrays declared through a typedef
+
+The 7 newly-wrong `memsafety/test-0214,-0217,-0218,-0232-2` + `list-ext-properties/test-0214_1,
+-0217_1,-0232_1-2` tasks are **not** a shape-analysis limitation. `test-0214` reproduces locally in
+**4.6 seconds with `Trace length: 7`** — far too short for a doubly-linked-list precision problem —
+and bisects to a four-line repro:
+
+| declaration | valid-memsafety verdict |
+|---|---|
+| `int arr[2];` | Safe |
+| `void *arr[2];` | Safe |
+| `static int arr[2];` | Safe |
+| **`typedef int arr_t[2]; arr_t a;`** | **Unsafe (valid-deref)** |
+| **`typedef void *p_t[2]; p_t a;`** | **Unsafe (valid-deref)** |
+| **`typedef void *p_t[2];` … local `p_t a;`** | **Unsafe (valid-deref)** |
+
+**Any array declared through a typedef loses its extent**, so the very first element read fails the
+`ptr_size` bound check. Element type and storage duration are irrelevant; only the typedef matters.
+Every one of these 7 tasks declares its list as `typedef ... list_t[2]; list_t list;`.
+
+Not a decay-to-pointer: `sizeof(typedef array) == sizeof(plain array)` verifies Safe, so the type
+really is a `CArray` with its dimension intact. The alloca emission in
+`FunctionVisitor#visitBodyDeclaration` is gated on `declaration.getActualType() instanceof CArray`,
+which a typedef'd array *does* satisfy — so the loss is somewhere after that, and the next step is
+to **diff the serialized XCFA** (`--enable-c-serialization`, unreach-call only) between the typedef
+and non-typedef locals rather than reason about it further.
+
+Note `CDeclaration.getArrayDimensions()` (the *declarator's* `[2]`) is empty for `p_t a;` while the
+*type's* dimension is present — a likely shape for the bug, and worth checking first.
+
+**Value:** −112 points today (7 tasks × −16), and these tasks only began answering because the
+frontend stopped refusing them, so this is the direct cost of the frontend fixes landing. Likely
+affects more than the 7, since typedef'd arrays are a common idiom. Fixing it should convert them to
+correct `true` rather than merely back to errors.
+
+#### Mechanism and fix design (typedef'd arrays)
+
+Serialized-XCFA diff between `int a[2]` and `typedef int arr_t[2]; arr_t a` inside `main`
+(`--enable-c-serialization`, unreach-call):
+
+```
+  plain                                   typedef
+  int_arr main__a;                        long main__a;          <- a SCALAR, not an array
+  long call_alloca_ret0;                  (absent)
+  __malloc = 3;                           (absent)
+  call_alloca_ret0 = (__malloc + 1);      (absent)
+  main__a = (+ call_alloca_ret0);         (absent)               <- no object, so no extent
+```
+
+The variable is not created as an array and **no `alloca` is emitted at all**, so the object has no
+`ptr_size` entry and the first element read fails the bound check. `sizeof` is nevertheless correct
+because it is computed from the type independently.
+
+**Why:** an array's dimensions live on the **declarator** (`CDeclaration.arrayDimensions`), not on
+the type. `typedef int arr_t[2]` therefore records `[2]` on the *typedef's own CDeclaration*, while
+`TypedefVisitor.getSimpleType(id)` — what `TypeVisitor#resolveTypedefName` hands to a later
+declaration — returns `CDeclaration::getType()`, the `CSimpleType`, which never carried it. So
+`arr_t a;` sees a plain scalar type. (`getType(id)`, returning `getActualType()`, *does* carry it —
+which is why `sizeof` is right and the `instanceof CArray` gate looked satisfied.)
+
+**Fix — follow the existing precedent.** `markFunctionPointerTypedefs` already solves exactly this
+shape for `typedef int (*handler)(int)`: it copies declarator-level function-pointer-ness onto
+`declaration.getType()` so later users inherit it. Do the same for dimensions:
+
+1. `CSimpleType`: hold the typedef's array dimensions (alongside `functionPointer`); include them in
+   `copyOf()`, which `resolveTypedefName` relies on.
+2. `TypedefVisitor`: a `markArrayTypedefs` pass beside `markFunctionPointerTypedefs`, copying a
+   typedef declaration's `getArrayDimensions()` onto its type.
+3. Where a declaration is built from a resolved typedef, append the typedef's dimensions **after**
+   the declarator's own. Order matters and is easy to get backwards: in C,
+   `typedef int A[2]; A x[3];` makes `x` an `int[3][2]`, i.e. the declarator's `[3]` is outermost.
+
+Gate on the four-line repros above (plain/static/typedef × global/local, all must be Safe), the 7
+run-86 tasks, and a fixture pinning both the extent *and* the dimension order for `A x[3]`.
+
+#### Fix shipped — and what it actually bought (measured, not predicted)
+
+Implemented as designed: dimensions carried on `CSimpleType` (and through `copyOf()`, which the
+typedef resolution relies on), a `markArrayTypedefs` pass beside `markFunctionPointerTypedefs` at
+both call sites, and inheritance appended **after** the declarator's own dimensions.
+
+Repro level — all pass, control unchanged:
+
+| shape | before | after |
+|---|---|---|
+| `typedef int[2]` global / `void*[2]` global / `void*[2]` local | Unsafe (valid-deref) | **Safe** |
+| plain `int[2]`, `void*[2]`, `static int[2]` (controls) | Safe | Safe |
+| `typedef int A[2]; A x[3]` — `sizeof(x[0]) == sizeof(plain[0])` | — | **Safe** |
+
+⚠️ **The 7 tasks it was supposed to fix are NOT fixed. My prediction above was wrong.**
+
+| task | before (run 86) | after (local, 400 s) |
+|---|---|---|
+| `test-0214`, `-0217`, `-0218`, `test-0214_1`, `-0217_1` | `false(valid-deref)` | **no answer (timeout)** |
+| `test-0232-2`, `test-0232_1-2` | `false(valid-deref)` | **still `false(valid-deref)`** |
+
+**0 of 7 correct.** What the fix actually did for five of them is remove an *immediate* spurious
+counterexample, so they now have to do real verification work — which does not finish in 400 s
+locally. Whether they finish inside the benchmark's 900 s is unknown from here; locally it is 0
+instead of −16 each, and would be +2 each only if they complete. Do not book either number without a
+run. The two `test-0232*` tasks are unchanged and need a **separate root cause**.
+
+Shipped anyway on correctness grounds, not on those tasks: a typedef'd array silently becoming a
+scalar with no object at all is wrong *modelling*, which is the class of defect that yields wrong
+verdicts rather than honest errors, and it is guarded by a fixture A/B'd to fail without the fix
+(`Safe` with, `Unsafe (valid-deref)` without).
+
+### The `test-0232*` cause: a ternary does not short-circuit its dereference
+
+The two tasks the typedef fix did not touch have their own bug, and it is a general one.
+
+`test-0232-2` reproduces with **`Trace length: 6`** — again far too short for a shape-analysis
+limit — on this line of `append`:
+
+```c
+item->data = (item->next) ? item->next->data : malloc(sizeof *item);
+```
+
+where `item->next` is legitimately NULL on the first append. Isolated:
+
+| guard form | verdict |
+|---|---|
+| `(p->next) ? p->next->v : 42` | **Unsafe (valid-deref)** ← false alarm |
+| `if (p->next) x = p->next->v; else x = 42;` | Unknown (no alarm) |
+
+`visitConditionalExpression` already guards each branch's *statements* behind a `CIf`, but the
+branch **values** both go into one `Ite`, so a dereference in the untaken branch is an
+unconditional memory access and the memsafety instrumentation checks an access C never performs.
+The equivalent if/else never misreported, which both proves the bug and dictates the fix: assign
+each branch's value to a temporary *inside* the guarded branch and let the conditional's value be
+that temporary. Afterwards the ternary and if/else forms agree exactly.
+
+**Gated on `parseContext.isCheckMemsafety()`** — under any other property the `Ite` is left exactly
+as it was (it selects the right branch, and reading the other is unobservable), so the XCFA is
+unchanged there, per the standing instruction.
+
+Measured: the repro goes Unsafe → Unknown (matching its if/else control), and `test-0232-2` loses
+its fast wrong answer (it now needs real work and does not finish in 250 s locally). Fixture
+`ternary_guarded_deref.c` A/B'd: Safe with the fix, `Unsafe (valid-deref)` without.
+
+**Triage lesson worth reusing:** both false-alarm classes found today — typedef'd arrays losing
+their extent, and this — presented as `false(valid-deref)` on heap-manipulating list benchmarks that
+look like hard shape-analysis targets, and both had **6–7 step counterexamples**. Trace length is a
+cheap first discriminator: a short trace on a "hard" program means a modelling bug, not imprecision.
+
+### Bitfield store, attempt 2: structural recognition — also reverted, and now the shape is known
+
+The structural fix the plan called for was implemented (peel the width/signedness wrappers, match
+`BvExtractExpr`, take the cell and the bounds from the extract itself) and **measured at zero
+effect**: the intel-tdx after-parsing sample is byte-for-byte identical before and after (6/8 still
+`Could not handle left-hand side`). Reverted, like the metadata attempt before it — unvalidated code
+that changes nothing does not ship.
+
+Tracing the real lvalue shows why, and it is the useful result:
+
+```
+TRACE lhs=BvPosExpr peeled=BvExtractExpr from=0 until=52 src=BvConcatExpr srcWidth=64
+      parts=[BvLitExpr:8, Dereference:8, Dereference:8, Dereference:8,
+             Dereference:8, Dereference:8, Dereference:8, Dereference:8]
+```
+
+**These are not single-cell bitfields.** The field is **52 bits wide**, and its storage unit is a
+64-bit value *assembled by concatenation* from **seven separate byte dereferences** plus a padding
+literal. Both earlier designs assumed one cell:
+
+- metadata lookup (attempt 1): CELL absent everywhere — the expression is rebuilt;
+- structural single-cell match (attempt 2): correctly refuses, because the field spans 7 cells.
+
+**What it actually needs** is a multi-cell read-modify-write: splice the value across every byte
+cell the field covers and write each one back, leaving the untouched bytes alone. The machinery
+exists next door — the `ByteUnionSlice.BASE` branch already splits a right-hand side into byte
+values and writes each cell — so this is a generalisation of that, not new ground.
+
+⚠️ **The hazard that decides whether it is worth doing.** The mapping from concat position to byte
+*address* must be exactly right: `Concat`'s first operand is the HIGH bits, and the derefs are at
+increasing addresses, so the order is reversed relative to the operand list. Getting it backwards
+writes the right bits to the wrong bytes — a silently wrong value, not a refusal, on 407
+intel-tdx-module files. That is the −32-per-task failure mode the batch exists to avoid, so this
+needs a fixture pinning the byte order (write one field, read back a *neighbouring* one) before any
+of it ships.
+
+### Bitfield store, attempt 3: multi-cell — SHIPPED
+
+The shape (established by tracing, see above) is a field wider than one cell whose storage unit is
+assembled by `Concat` from several byte dereferences. The store now splices the value across every
+cell the field overlaps and writes those cells back.
+
+**The byte-order hazard is avoided rather than reasoned about.** Instead of deriving byte addresses,
+the writer takes the mapping straight from the `Concat` that the *read* path built — each operand is
+a cell at a known bit range, and the read path is correct — so endianness is inherited, never
+recomputed. Only overlapped cells are written, so untouched neighbours are not rewritten (a spurious
+write would also invent a data race under no-data-race).
+
+**Measured, per file, on the intel-tdx after-parsing sample:**
+
+| outcome | before | after |
+|---|---|---|
+| `Could not handle left-hand side` | 6 | **2** |
+| fully succeeds (exit 0) | 0 | **2** |
+| advanced to a later error (ClassCastException) | 1 | 3 |
+
+Four files changed, **none regressed**.
+
+⚠️ **No canary guards this, after five attempts — and that is a real gap, recorded deliberately.**
+
+- Four minimal fixtures (local wide bitfield; pointer-to-global; `p->` access; a union mirroring
+  `pa_t`). The first three parse **identically with and without** the fix and would have guarded
+  nothing. The union one fails **both** ways — so there is at least one further bitfield-store
+  sub-shape this fix does *not* cover, and the 407-file bucket is not fully closed.
+- Two real files (~160 KB) as canaries: they pass, but they OOM-killed a neighbouring canary
+  (`cartpole_0_safe`, exit 137) in the 4-way parallel sweep, while passing in isolation. Removed —
+  a gate that flakes costs more than one missing guard. Same call as the LDV canaries earlier.
+
+The evidence standing in for a guard is the per-file A/B above, reproducible with
+`scratchpad/probe_rc.sh` over `scratchpad/tdx_after.txt`.
+
+**Why minimal repros keep failing here** (third time this session, after the struct cache): these
+bugs live in composite frontend paths — byte-laid-out unions, concat-assembled units — that
+hand-written C does not reach. The real shape only ever came out of tracing the actual input.
+
+### intel-tdx-module before-parsing (344 files): blocked on the bytes memory model
+
+Two causes in the 8-file sample: 5 × "Taking the address of a multi-byte member of a byte-addressed
+union", 3 × "Referencing non-lvalue expressions is not allowed!".
+
+The second was diagnosable once the message named the operand — it is `&` applied to
+`bvpos(bvpos(zext(extract(deref(...), 0, 64))))`, a **full-width** extract, i.e. an expression that
+does denote storage even though it is not syntactically an lvalue. I implemented the corresponding
+fix (`&` of a whole-cell extract = the cell's address, restricted to full width so a genuine
+bitfield — whose address C forbids — still refuses). **It worked**: all 3 files moved past the
+check. They then land on the *first* cause, so the sample is now 8/8 on that one refusal.
+
+**And that refusal is a model limitation, not an oversight.** Its own comment:
+
+> the resulting pointer would have to know it reads several byte-cells as one value, which no
+> pointer in this model can express. […] **Under the bytes memory model this restriction does not
+> apply**: every object is a run of byte cells and a pointer is a plain byte address.
+
+There is no standalone win either: `&u.raw` on a single 64-bit union member fails **identically with
+and without** the change, because in a byte-laid-out union a cell *is* a byte, so any 64-bit member
+spans eight of them. So the whole-cell fix converts one error into another and nothing more.
+
+**Reverted the logic; kept only the improved diagnostic** (which is what made this diagnosable and
+costs nothing). No measured benefit does not ship — the same rule applied to both earlier bitfield
+attempts.
+
+⚠️ **Strategic: two of the largest frontend buckets now converge on the same project.** This one
+(344 before-parsing files) and the float↔int union-punning wall (~298 files) are both waiting on the
+**byte-granular memory model**, already the designated next big task. Neither is reachable by
+further local patching, and work in this area will keep hitting the same wall. That is a stronger
+case for the bytes model than either bucket made on its own — and the whole-cell address-of fix
+above is worth re-applying *once the bytes model lands*, since it will be a genuine unblocker then.
+
+### goblint-regression (507 after-parsing runs): pthread handles passed by pointer
+
+Cause identified, and it is **not** a parsing problem — all of it is `CLibraryFunctionsPass`
+refusing the mutex handle. Sample of 10 files (103 distinct files behind the 507 runs):
+
+| message | files |
+|---|---|
+| `Unsupported library parameter: expected reference base` | 4 |
+| `Local mutex handles are not supported: <name>` | 4 |
+| `Non-static mutex handles (multiple writes)` | 1 |
+| `Unsupported library parameter: non-constant dereference` | 1 |
+
+The name is misleading: these are not locally *declared* mutexes. The shape is a handle reached
+through a **pointer parameter**:
+
+```c
+void munge(pthread_mutex_t *m, int *v) { pthread_mutex_lock(m); ... }
+void *t1_fun(void *a) { munge(&mutex1, &global1); }
+void *t2_fun(void *a) { munge(&mutex2, &global1); }
+```
+
+`checkMutexDecl` requires the handle to be a global `VarDecl`, because a pthread handle is an
+**identity key** — the analysis maps the decl to a mutex identity. Here it resolves to the local
+parameter `munge::m` instead of the global it points at, and refuses.
+
+⚠️ **Do not "fix" this by collapsing the local to one identity.** Two different globals reach that
+parameter, and the task is called `ptrmunge_racing` precisely because the verdict depends on telling
+`mutex1` from `mutex2`. Merging them would invent or hide races — a wrong answer where there is
+currently an honest error.
+
+**The obvious design does NOT work — checked, not assumed.** It would be: after inlining, each copy
+of `munge` has its own `m` written exactly once (`&mutex1` in one, `&mutex2` in the other), so a
+local handle with a single definition naming a global mutex resolves soundly while the copies stay
+distinct. But `ProcedurePassManager` runs **`CLibraryFunctionsPass` (line 55) before
+`InlineProceduresPass` (line 79)**, so at the time the handle is read there is exactly one `munge`
+with one parameter `m` and no definition at all — the design's premise is false.
+
+That leaves three routes, none of them small:
+1. **Move `CLibraryFunctionsPass` after inlining.** Cheapest to try, but the ordering is deliberate:
+   the comment above it requires an array element index to be constant *before* the pass reads the
+   handle, so moving it needs that constraint re-checked.
+2. **Interprocedural candidate sets** — resolve the parameter to the set of globals reaching it, and
+   keep them distinct (the actual "candidate sets for pthread handles" task).
+3. **Per-call-site specialisation** of procedures that take a handle parameter.
+
+Whichever is chosen, the soundness bar is unchanged: `mutex1` and `mutex2` must stay separate
+identities, or the racing tasks get wrong answers instead of honest errors.
+
+### Float literals were built one bit short — SHIPPED (a wrong-value bug, not a refusal)
+
+`ExpressionVisitor`'s FP literal path built `new BigFloat(text, new BinaryMathContext(significand - 1,
+exponent))` — 23 bits for `float`, 52 for `double` — and then stored the result in a full-width
+`FpType(exponent, significand)`. MPFR's precision counts the significand **including** the implicit
+leading bit (24 / 53), which is exactly what `FpUtils#bigFloatToFpLitExpr`, `FpType` and the core
+test (`BinaryMathContext(24, 8)` for FLOAT) all use. So every literal was rounded one bit short.
+
+Visible effect: `1 + 2^-23` is a tie at 23-bit precision and rounds to exactly `1.0f`, so a
+program's own `1.0000001f > 1.0f` read as **false** and safe float programs were reported **Unsafe**.
+Ground truth taken from gcc, not from my own FP reasoning: all the fixture's comparisons are true,
+and `1.0000001f` has exactly the bits `0x1.000002p+0`.
+
+**Pre-existing, but I propagated it.** The `- 1` was already there before `eab619083c` (hex float
+constants); that commit copied the same context into the new hex branch. It also means the earlier
+"hex floats unlocked 16 of 30" figure measured *parse success* while the values were subtly wrong.
+
+**How it was found — the diagnosis path is worth keeping.** Two hypotheses died cheaply before the
+real one:
+1. "`float-rounding1` fails because theta ignores `fesetround`" — refuted by the **trace length of 3**:
+   it failed on the *first* check, which uses the default rounding mode.
+2. "my hex-float commit is wrong" — refuted by a **decimal control**, `1.0000001f > 1.0f`, failing
+   identically.
+
+**Measured.** Six probes wrong → correct. A 40-task sample across floats-cbmc-regression,
+floats-esbmc-regression and float-benchs, run **both ways on the same tasks**: 15 correct / 1 wrong /
+24 no-answer, *identical* before and after, no per-task change.
+
+That flat result is deliberately not read as "no effect". Unlike the three fixes reverted this
+session — which produced byte-identical *error signatures*, i.e. the code path never engaged — here
+the mechanism provably fires on every float literal. For a global value change the sample's job is
+**regression detection**, and it found none; whether other tasks flip is a question only a full run
+answers. Shipped on the demonstrated wrong answer, with the fixture A/B'd (Safe with, Unsafe
+without) — not on sample movement.
+
+**Residue, now a queue item:** the sample's one wrong is `float-rounding1`, which after this fix
+fails on its *second* check — `fesetround(0x400)` (FE_DOWNWARD). Theta models no dynamic rounding
+mode and silently ignores `fesetround`, then answers confidently. By the batch's own rule that is
+backwards: it should **refuse** a non-default `fesetround` (0 rather than −16). Small and principled.
+
+### fesetround: refuse a rounding mode theta does not model — SHIPPED
+
+theta models one rounding mode, round-to-nearest-even (the C default). `fesetround` was silently
+ignored, so a program selecting FE_DOWNWARD carried on being evaluated to-nearest and answered
+confidently wrong — `floats-cbmc-regression/float-rounding1` asserts a sum under downward rounding
+and was reported Unsafe though it is safe. By the batch's own scoring rule that is backwards: an
+honest refusal is 0, that wrong answer is −16.
+
+Now: `fesetround(0)` (FE_TONEAREST) is a no-op returning 0; any other constant, **or a non-constant
+argument**, is refused; `fegetround()` returns 0, which is sound precisely because anything that
+would have changed the mode was refused. Measured: FE_DOWNWARD → refused, `fesetround(0)` → still
+Safe, `float-rounding1` → refused instead of wrong `false` (**+16**). Fixtures both ways
+(`fesetround_nondefault.c` FRONTEND-FAIL, `fesetround_default.c` SAFE).
+
+### aws_linked_list_node_reset_harness — a FOURTH bucket on the byte-granular memory model
+
+Reproduces locally: Unsafe, **trace 10**. The harness is
+
+```c
+memset(node, 0, sizeof(*node));                             /* cell-granular write */
+__VERIFIER_assert(aws_is_mem_zeroed(node, sizeof(*node)));  /* reads byte-by-byte via uint8_t* */
+```
+
+`aws_is_mem_zeroed` walks the object as `const uint8_t *`. Under a cell-per-value model those byte
+reads do not correspond to the cell writes `memset` made, so the check fails on a safe program.
+
+**Four independent buckets now converge on the bytes model**: intel-tdx before-parsing (344 files),
+float↔int union punning (~298), this aws family, and `float-to-double2`. None is reachable by local
+patching. That is the clearest prioritisation signal this batch has produced.
+
+`uthash_JEN_nondet_test2-2` and `ldv-memsafety/ArraysOfVariableLength` give **no answer even at 900 s
+locally**, so they cannot be triaged on this host — they need the benchmark's hardware.
+
+⚠️ **Process note:** one gate run reported `FAIL/ERROR: 0` from an *empty* file — the command ran
+gradle from the repo root and then `./run_canaries.sh` from there, which does not exist
+(`GATE_EXIT=127`). Only the exit code exposed it. Always check `GATE_EXIT` and the `Fixtures:` line,
+never a bare FAIL count.
+
+## Resource exhaustion — MEASURED, BUT EXPLICITLY NOT A TARGET (user decision, 2026-08-10)
+
+⚠️ **Do not work on timeouts/OOM.** They are expected behaviour for this tool on these benchmarks.
+The measurement below is kept as context — it explains why answered-rate is what it is, and it is a
+design input for the bytes model (which would *add* cost) — but it is **not** a work item and must
+not be proposed as one again.
+
+**Priority order set by the user (2026-08-10):**
+1. **Correctness / soundness — highest, and urgent once run 87 lands.** For each wrong answer:
+   fix it if possible; if not, find exactly what is under-implemented and **throw there**, so the
+   task fails loudly (0) instead of answering wrongly (−16/−32).
+2. goblint-regression (pthread handles through pointer parameters).
+3. intel-tdx-module.
+
+## Context only: where run 86's non-answers sit
+
+Measured over all 72,103 task-runs of run 86:
+
+| bucket | runs | share |
+|---|---|---|
+| **TIMEOUT** | 26,816 | **37.2%** |
+| answered (true / false / unknown) | 25,728 | 35.7% |
+| **OUT OF MEMORY** | 13,249 | **18.4%** |
+| ERROR (frontend, solver, other) | 6,310 | 8.8% |
+
+**~40,000 runs — 55.6% — score 0 because the analysis runs out of time or memory.** Every frontend
+error bucket *combined* is 6,310, and the ones triaged in detail this batch are far smaller than
+that: intel-tdx before-parsing 344 files, goblint 507 runs, the whole bitfield-store family 407.
+
+This does not invalidate the frontend work — wrong answers cost −16/−32 and fixing them is worth
+more per task than a timeout is — but it does say the **largest remaining pool of points is
+resource-bound, not correctness-bound**, and that no amount of grammar or modelling work touches it.
+A timeout and an OOM both score 0, exactly like an error, so converting even a few percent of 40,000
+runs outweighs closing any single frontend bucket.
+
+Worth noting alongside the byte-granular finding: the bytes model would *add* cost to an analysis
+already losing over half its runs to cost. Both facts should inform that project's design, not just
+its priority.
+
+Concrete resource-side items already on the list (PLAN.md "Cleanups"): drop
+`allocateArrayElements`' redundant per-element subobjects (the `outerarr` slowness), and fold
+literal div/mod in `SimplifyExprsPass`. Neither has been measured for effect yet.
+
+### Housekeeping from the 2026-08-10 pass
+
+**Both "Cleanups" items are stale — removed from the queue, not reimplemented.**
+- *Fold literal div/mod in SimplifyExprsPass*: core's `ExprSimplifier` already folds literal
+  `IntDivExpr`, `IntModExpr` **and** `IntRemExpr` (lines ~885–940). The pass delegates to
+  `ExprUtils.simplify`, so there is nothing to add. (Where an unfolded `(mod 4 4294967296)` shows up,
+  as `CLibraryFunctionsPass` documents, the cause is simplify not being *applied* at that point, not
+  a missing rule.)
+- *`allocateArrayElements` redundant per-element subobjects*: already guarded —
+  `if (aggregateFields.isEmpty()) return`, added in `575da57eae`, with the comment "the whole array
+  costs zero allocations however long it is".
+
+**Float-precision regression check, on the right population this time.** The 40-task sample used to
+clear `2a7e482564` drew from floats-cbmc-regression / floats-esbmc-regression / float-benchs — but
+the family most exposed to a change in every float literal is `hardness` (float-heavy, 15% of the
+benchmark, 11,546 resource-bound runs). Re-checked against 10 `hardness` tasks that answered `true`
+in run 86: **10/10 still correct**, all within the local limit. No regression.
+
+**`scopes4-1` (scopes cause B1) reproduced, hypothesis killed.** Unsafe (valid-deref) at 500 s
+locally, **trace length 1152**, and **zero** "Variable already exists" warnings.
+
+The tempting hypothesis was a static-local name collision: `foo2` has `static int arr[1024]`
+(written at index 194) and `foo` has `static int arr[123]`, so collapsing them would make `arr[194]`
+look out of bounds. It is wrong twice over — `promoteStaticLocal` registers into each function's own
+scope via `variables.peek()`, so the two never meet, and the run emits no collision warning at all.
+Checked before building on it.
+
+The long trace also puts this *outside* the class the trace-length heuristic identifies: the
+false-alarm bugs fixed this session had 6–7 step counterexamples, while 1152 steps on a 17-line
+program suggests the analysis is walking the 1024-element static array itself. Next step is
+instrumentation of where the deref bound check fails, not another hypothesis.
+
+### scopes4-1 (cause B1): reproduced, but not bisectable by simplification
+
+State with **all 7 of this session's fixes**: `Unsafe (valid-deref)`, **trace 1152**, expected `true`.
+A genuine wrong `false` — the highest-priority class.
+
+Two hypotheses already killed:
+- *static-local name collision* (`foo2` has `static int arr[1024]`, `foo` has `static int arr[123]`):
+  `promoteStaticLocal` registers into each function's **own** scope via `variables.peek()`, and the
+  run emits **zero** "Variable already exists" warnings.
+- *the trace-length heuristic doesn't apply here*: 1152 steps is nothing like the 6–7 step
+  counterexamples of the false-alarm bugs fixed this session. It most likely reflects walking the
+  1024-element static array.
+
+⚠️ **Simplified variants cannot be used to bisect it.** Cut-down versions
+(`static int arr[16]; arr[3]=13; return arr+1;` etc.) do not answer at all — the portfolio picks a
+BOUNDED/`KIND-Z3` config on them and the checker subprocess dies with
+`ErrorCodeException(2147483646)`. Not memory: it reproduces at `-Xmx2g` as well as `-Xmx4g`, and a
+control file passes on the same dist. That is a separate defect (an ERROR, score 0, so lower
+priority than the wrong answer), but it means **bisection by simplification is unavailable** for this
+task — the next step must be instrumenting `MemsafetyPass`'s deref bound check on the real file.
+
+⚠️ **Local-run trap worth remembering:** building the archive for a benchmark upload does
+`rm -rf …/Theta-svcomp` and only produces the zip. Local runs then fail with
+`NoSuchFileException: …/Theta-svcomp/solvers` — which looks like "no answer" if only the verdict is
+parsed. Four bisect runs were scored as no-answer before this was spotted. **Re-extract the zip
+after building it for upload.**
+
+### no-overflow additive chains: minimal repro found, and the cause is NOT the frontend
+
+All three tasks confirmed as **wrong `true` (−32 each)** with all seven of this session's fixes in
+place: `Stockholm-2`, `dijkstra6-both-nt` (both expect `false`), and a **4-line repro**:
+
+```c
+extern int __VERIFIER_nondet_int(void);
+int main(){ int x=__VERIFIER_nondet_int(), a=__VERIFIER_nondet_int(), b=__VERIFIER_nondet_int();
+  if (a == b) { while (x >= 0) { x = x + a - b - 1; } } return 0; }   /* answers Safe; is not */
+```
+
+The overflow is the **intermediate** `x + a` (take `x = a = b = INT_MAX`); with `a == b` the whole
+chain is worth `x - 1`, so the value is in range while a sub-expression is not.
+
+**Narrowed by variants — it needs the guard AND the chain together:**
+
+| variant | verdict |
+|---|---|
+| straight-line `int y = x + a - b - 1;` under `if (a==b)` | Unsafe ✓ |
+| loop, full chain, **no** `a==b` guard | Unsafe ✓ |
+| loop, `x = x + a`, with guard | Unsafe ✓ |
+| loop, `x = x + a`, no guard | Unsafe ✓ |
+| **loop + guard + full chain** | **Safe ✗** |
+
+**Two hypotheses tested and killed:**
+1. *"intermediates are not checked"* — a straight-line version of the same chain is correctly
+   Unsafe, as is a bare `x + a`.
+2. *"`SimplifyExprsPass` collapses `x+a-b-1` to `x-1` before the checks are inserted"* — plausible
+   because `OverflowDetectionPass` sits at `ProcedurePassManager` line 130, *after* SimplifyExprs
+   (68/98/126), LoopUnroll (69) and Lbe (111/123). **Refuted by tracing:** SimplifyExprs correctly
+   skips while `verifiedProperty == OVERFLOW`, the overflow pass then inserts its checks (6 edges in
+   the failing case vs 4 in the passing one), and simplification only runs afterwards, when the
+   checks are already explicit error edges.
+
+**So the checks are emitted and the wrong answer comes from downstream — the analysis proves the
+error edge unreachable when it is not.** That makes this an abstraction/CEGAR soundness issue, not a
+frontend one, and it is the most expensive class in the batch (−32). Next step: run the 4-line repro
+under the individual portfolio configurations to find which one returns Safe, rather than through
+`--portfolio STABLE`, then look at that config's abstraction.
+
+#### ROOT CAUSE: additive chains are flattened to n-ary Add, so C's intermediates cannot be checked
+
+Traced `OverflowDetectionPass`'s candidate expressions on the failing and passing repros. **Both
+produce exactly the same arithmetic**:
+
+```
+TRACE arith exprs=3 withCType=1 :: (- main::b) | (- 1) | (+ main::x main::a (- main::b) (- 1))
+```
+
+`x + a - b - 1` is **one flattened n-ary `AddExpr`**. C evaluates it left to right as
+`((x + a) - b) - 1`, and it is the *intermediate* `x + a` that overflows — but that sub-expression
+does not exist in the IR, so the pass can only range-check the **final sum**. Everything follows:
+
+| case | final sum | verdict |
+|---|---|---|
+| loop, no `a==b` | `x+a-b-1`, unconstrained → can overflow | Unsafe ✓ |
+| straight-line, `a==b` | `x-1`, `x` unconstrained → `INT_MIN-1` underflows | Unsafe ✓ (a *different*, real overflow) |
+| **loop + `a==b`** | `x-1` with `x >= 0` → always in range | **Safe ✗** (misses `x+a`) |
+
+**Two earlier conclusions were wrong and are corrected here:**
+1. *"`SimplifyExprsPass` erases the chain before the checks"* — refuted by tracing: it correctly
+   skips while `verifiedProperty == OVERFLOW`.
+2. *"`PRED_CART` is unsound"* — it returns Safe, but so does **BMC** on the same model. Both are
+   correctly proving a model that has no reachable overflow edge. The defect is the model, not the
+   abstraction. (Filing an unsound-abstraction bug here would have been wrong.)
+
+**Fix directions**, in preference order:
+1. In `OverflowDetectionPass`, expand an n-ary additive chain into its **binary prefixes**
+   (`x+a`, `(x+a)-b`, …) and range-check each. Purely local to the pass; no IR change; the operand
+   order in the flattened node is the C evaluation order, so the prefixes are recoverable.
+2. Stop flattening additive chains in the frontend when the property is no-overflow — bigger blast
+   radius, and it would pessimise every other property.
+
+⚠️ Note the second filter condition: candidates must carry **`cType` metadata**, and only 1 of the 3
+expressions above has it. `FrontendMetadata` is identity-keyed, the same trap that defeated the
+bitfield store, so any prefix synthesised in fix 1 must be given its `cType` explicitly or it will
+be silently filtered out.
+
+#### FIX SHIPPED: range-check the intermediates of a flattened chain
+
+`OverflowDetectionPass` now expands an n-ary `AddExpr`/`MulExpr` into the intermediates C actually
+computes (`x+a`, then `(x+a)-b`, …) and range-checks each, instead of only the final value. Operands
+are already in evaluation order, so each proper prefix is exactly one intermediate; the full-length
+one is skipped because the original node is already checked.
+
+⚠️ Every synthesised prefix is stamped with the chain's own `cType`. The candidate filter requires
+that metadata and `FrontendMetadata` is **identity-keyed**, so a freshly built expression carries
+none and would be silently filtered out — the fix would have been a no-op. Same trap that defeated
+the bitfield store's first two designs.
+
+**Measured both directions:**
+
+| | before | after |
+|---|---|---|
+| loop + `a==b` + full chain (the `Stockholm-2` shape) | Safe ✗ | **Unsafe ✓** |
+| loop, no guard / simple body (3 controls) | Unsafe | Unsafe ✓ |
+| **14 no-overflow tasks that expect `true` and answered `true` in run 86** | true | **12 Safe, 2 timeout, 0 false alarms** |
+
+That last row is the one that mattered: the change adds checks to *every* additive and
+multiplicative chain in the benchmark, and is sound only because the flattened operand order is C's
+evaluation order. Had anything reordered operands (a normaliser doing so on commutativity would be
+natural), the prefixes would be wrong intermediates and safe programs would report `false` at −16
+each. Sampling the exposed population found none.
+
+Fixture `overflow_chain_intermediate.c` (UNSAFE:no-overflow). Its A/B is real but asymmetric in
+time: with the fix it answers Unsafe in <200 s; without it the identical program does not answer at
+200 s and answered `Safe` at 900 s.
+
+**Confirmed on the real tasks at the full 900 s budget:**
+
+| task | before | after | expected |
+|---|---|---|---|
+| `termination-crafted/Stockholm-2` | `true` (−32) | **`false`** ✓ | false |
+| `termination-nla/dijkstra6-both-nt` | `true` (−32) | **`false`** ✓ | false |
+| `termination-crafted/Stockholm-1` (control) | `true` ✓ | `true` ✓ | true |
+
+A **+66 swing** on these two alone (−32 each → +1 each), with the safe control unchanged and no
+false alarms in the 14-task sample. The `no-overflow additive chains` item is closed.
+
+### scopes cause G (`scopes1`): address-taken scalars are never released — design verified, not yet implemented
+
+`scopes1` expects **false** and answers **`true`** (−32, the expensive class). It is a plain
+use-after-scope on a *scalar*:
+
+```c
+int *pA = 0;
+{ int a = 7; pA = &a; }        /* a's storage dies here */
+int b = 3; int *pB = &b;
+int sum = *pA + *pB;           /* use-after-scope; must be reported */
+```
+
+The rest of the family is already correct (`scopes2/3/4-2/5` all answer `false(valid-deref)`), so the
+scope-release machinery works — it just never covers this case.
+
+**Why.** `registerScoped` has exactly **one** caller (`FunctionVisitor` line 1377), the *alloca*
+path for block-local arrays. An address-taken **scalar** never goes through it: `ReferenceElimination`
+gives it a compile-time `3k+2` base at procedure entry instead, so no `__theta_scope_end` marker is
+emitted and `__theta_ptr_size[base]` is never cleared. The deref after the block is then accepted.
+
+**The lowering already exists and would work unchanged.** `AllocaFunctionPass#lowerScopeEnds` turns
+`InvokeLabel(SCOPE_END, params)` into `deallocate(parseContext, params[1])`, gated on
+`MemsafetyPass.enabled`. So the whole fix is on the emitting side.
+
+**Design:**
+1. In `ExpressionVisitor`'s `&` case, tell the function visitor which `VarDecl` had its address
+   taken.
+2. In `FunctionVisitor`, register that decl with the *current* scope, exactly as `registerScoped`
+   does for allocas — but **only** when it is block-local and **not** `static` (a static local
+   outlives the block and must never be released; parameters are fine, their block is the body).
+3. At scope end (`withScopeReleases`), emit `SCOPE_END` for it.
+
+⚠️ **The one refactor this needs:** `scopedAllocas` currently holds `VarDecl<?>`, and the marker's
+`params[1]` is the *variable's ref*, which for an alloca'd array already holds the base. A scalar's
+variable holds its **value**, not a base — the thing to release is `&var` (a `Reference` expr, which
+`ReferenceElimination` later folds to the `3k+2` literal). So the scope list has to carry the
+*expression to release* rather than the decl. That touches `scopedAllocas`, `registerScoped`,
+`releaseScopedInto` and `scopeMark`.
+
+Everything above is verified against the code, not assumed; only the refactor remains. Keep the
+memsafety gate: no other property's XCFA should change.
+
+#### FIX SHIPPED: address-taken scalars are released at the end of their own block
+
+`memsafety-ext3/scopes1` answered **`true`** against an expected `false` — a use-after-scope missed
+outright (−32). The rest of the family (`scopes2/3/4-2/5`) was already correct, so the machinery
+worked; it simply never covered scalars.
+
+The refactor the design called for is done: the scope stack now holds the **release expression**
+instead of the `VarDecl`. An alloca'd array's variable already *holds* its base, so releasing
+`varDecl.getRef()` was right for it; a scalar's variable holds its **value**, and the thing to
+release is `&a` (a `Reference`, which `ReferenceElimination` folds to the `3k+2` base).
+
+**Three ways this could have broken programs that already worked, and how each is handled:**
+- *releasing too early* — registration walks the scope stack to the block that **declared** the
+  variable, not the one where `&` appears, so `{ p = &a; }` inside `a`'s block does not end `a`'s
+  life at the inner brace;
+- *double release* — a per-scope `Set<VarDecl>` dedups, so `&a` twice releases once (a second
+  release would read as a double free);
+- *objects that outlive every block* — static locals are skipped via `staticLocals`, and the
+  outermost scope (globals) is skipped outright.
+
+**Measured:**
+
+| case | before | after |
+|---|---|---|
+| `scopes1` | `true` (−32) | **`false`** ✓ |
+| `&a` in a nested block, `a` declared outside | Safe | Safe ✓ |
+| address taken twice | Safe | Safe ✓ |
+| static local's address | Safe | Safe ✓ |
+| global's address | Safe | Safe ✓ |
+
+Gate: 60/60 fixtures — including every pre-existing alloca/scope fixture
+(`scope_end_release`, `scope_end_loop_iteration`, `scope_lifetime_ok`, `alloca_use_after_return`,
+`alloca_lifetime_ok`), which are exactly the previously-supported behaviour this refactor put at
+risk. New fixture `scope_end_scalar.c` covers the scalar direction and all three regression shapes.
+
+Still open in this family: **`scopes4-1`** (cause B1) — expects `true`, answers `false(valid-deref)`,
+trace 1152, and is **not bisectable by simplification** (cut-down variants crash the bounded
+backend; see above).
+
+## Batch 87 RESULTS — measuring this session's fixes (finished 2026-08-11 19:16 CEST)
+
+`results-run87/`, IDLE on benchcloud, `theta27-long900.xml`, Skylake-pinned — same host/XML/CPU as
+runs 80 and 86. Tool dir = `db8aecc4a1`, i.e. it measures: GCC builtins, struct-cache invalidation,
+typedef'd array extents, ternary short-circuit, multi-cell bitfield store, **float-literal
+precision**, and the `fesetround` refusal. (The later overflow-chain and scope-scalar fixes are
+**not** in it.)
+
+| | run 86 | run 87 | delta |
+|---|---|---|---|
+| SV-COMP score | 19,516 | **19,705** | **+189** |
+| correct | 12,815 | 12,825 | +10 |
+| **wrong** | **65** | **55** | **−10** |
+| wrong true (−32) | 20 | 19 | −1 |
+| wrong false (−16) | 45 | 36 | −9 |
+| error | 23,314 | 23,313 | −1 |
+
+vs run 80 the arc is now 13,828 → 19,705 (**+5,877**) and wrong 393 → 55.
+
+### ⚠️ One regression, and it is mine: `floats-cbmc-regression/float-no-simp7`
+
+`true` → `false(unreach-call)`; expected `true`. Caused by the float-literal precision fix
+(`2a7e482564`) — the only change that moves float values.
+
+```c
+float f = 0x1.9e0c22p-101f, g = -0x1.3c9014p-50f, target = -0x1p-149f;
+if (!(f * g == target)) reach_error();     /* gcc: the equality HOLDS */
+```
+
+gcc confirms the program is safe and that the literals are exactly as written — `0x1.9e0c22` needs a
+full 24-bit significand, which is precisely the bit the fix restored. So **theta used to have wrong
+literals and get the right answer; it now has right literals and gets a wrong one.** The exposed
+defect is in **subnormal (gradual-underflow) rounding**: `-101 + -50 = -151`, so the product lands
+below the smallest normal and near the tie between `0` and `2^-149`, where the old one-bit literal
+error happened to compensate.
+
+Probed and ruled out: it is **not** flush-to-zero — the subnormal literal is non-zero, the subnormal
+product is non-zero, and a normal-range control is fine. theta simply computes a different subnormal.
+
+**Do not revert the precision fix over this.** It is gcc-verified, it corrects *every* float and
+double literal in the benchmark, and run 87 is +189 with wrong down 10 overall; this single task is
+−16 against that. The right follow-up is the subnormal rounding path itself.
+
+Also newly wrong from a non-answer: `heap-manipulation/bubble_sort_linux-1` (TIMEOUT → `false`),
+which is a task that merely started answering, not a regression.
+
+### Run 87 wrong-set triage (authoritative benchexec categories)
+
+⚠️ **Count correction.** A YAML-derived script of mine reported 188 wrong task-runs; that was wrong —
+it misclassified `combinations` (88 entries, all actually correct). benchexec's own `category`
+column gives **102 wrong runs** across all 72,103, ≈51 distinct tasks (each appears twice).
+`compare_runs.py`'s 55 is the same data restricted to the 36,531-run common subset. **Use the
+`category` column, not re-derived expectations.**
+
+| wrong runs | family | verdict given |
+|---|---|---|
+| **26** | **termination-15** | `false(valid-deref)` ← largest group, −16 each |
+| 8 + 6 | aws-c-common | `false(unreach-call)` / `true` |
+| 6 | pthread-race-challenges | **`true`** (missed race, −32) |
+| 6 | ldv-memsafety | `false(valid-deref)` |
+| 4 | memory-model (`2SB`, `4SB`) | **`true`** (−32) |
+| 4 each | floats-cbmc-regression, uthash-2.0.2, list-ext-properties, memsafety | mixed |
+| 3 | goblint-regression | **`true`** (−32) |
+| 2 each | libvsync, termination-crafted, termination-nla, ldv-regression, heap-manipulation, ldv-linux-4.0-rc1-mav, termination-memory-alloca | mixed |
+
+(`termination-crafted`/`termination-nla` = Stockholm-2 + dijkstra6-both-nt, already fixed after this
+run's archive was built; likewise `memsafety-ext3/scopes1`.)
+
+**Next target: `termination-15`, 13 distinct tasks, all `*_reverse_alloca` / `*_mixed_alloca`.**
+A backwards buffer walk:
+
+```c
+char *s = alloca(length);  s[0] = '\0';  s += length - 1;
+while (*s != '\0' && *s != c) s--;        /* stops at index 0, which holds '\0' */
+```
+
+Expected `true`; theta reports `false(valid-deref)`. Safety depends on the invariant `s >= base`,
+held because index 0 carries the terminator. Distinct from the already-fixed alloca-string cases
+(`openbsd_cstrncmp-alloca-*`, handled by `NarrowCellRangePass`) and from the `pointer_backwards_walk`
+fixture, which only pinned that `p--` keeps its sign. Classification (modelling bug vs precision)
+pending on trace length.
+
+#### ROOT CAUSE (termination-15, 13 tasks): a mid-object pointer loses its bounds when passed to a function
+
+Classified by trace length first: `cstrchr_reverse_alloca` fails at **trace 6**, `cstrcmp_mixed_alloca`
+at **trace 9** — far too short for loop-invariant reasoning, so a modelling bug, not precision.
+
+**Minimal repro (9 lines, trace 6), and the backwards walk is NOT needed:**
+
+```c
+char peek(const char *s){ return *s; }
+int main(){ int n = __VERIFIER_nondet_int(); if (n < 1) n = 1;
+  char *p = (char*) alloca(n * sizeof(char));
+  p[0] = '\0';
+  p += n - 1;                       /* mid-object pointer, still in bounds */
+  if (peek(p) == 'x') reach_error();/* Unsafe -- FALSE ALARM */ }
+```
+
+**Bisected:**
+
+| variant | verdict |
+|---|---|
+| `alloca(n*sizeof(char))`, `p += n-1`, read `*p` **in main** | Safe ✓ |
+| `alloca(n)`, `p += n-1`, read in main | Safe ✓ |
+| `alloca(10)`, `p += 9`, read in main (constant size) | Safe ✓ |
+| **same, but the pointer is passed to a function and read there** | **Unsafe ✗** |
+| same, with the backwards-walk loop in the callee | Unsafe ✗ (identical trace 6) |
+
+So it is neither the symbolic size, nor the pointer arithmetic, nor the loop: **a pointer of the form
+`base + offset` loses its bounds across a call**, and the first dereference in the callee is reported
+invalid. The parameter assignment is a *store* of a split pointer — the same shape cause D refuses
+outright (`UnsupportedPointerSplitException`, fixture `store_split_pointer.c`) — but here it does not
+refuse, it silently drops the offset (or base) and the check then fails. A silent wrong answer where
+the sibling path takes a loud refusal.
+
+Worth **−416** as a class (26 wrong runs, 13 tasks) and the largest group in run 87. Next step: trace
+what the callee's parameter holds — base only, offset lost, or a base that is no longer the object's
+— rather than guessing which of the three it is.
+
+## Re-evaluation of every reverted/parked fix (user direction, 2026-08-11)
+
+⚠️ **Criterion changed: keep a fix if it is genuinely correct, regardless of its point effect.**
+Turning an error into a timeout/OOM, or uncovering a further bug, counts as progress. A correct
+parsing/modelling fix that exposes a latent defect elsewhere stays in — the latent defect is then the
+next thing to debug, not a reason to revert.
+
+| item | verdict | why |
+|---|---|---|
+| **dimensionless arrays** (`stash@{0}`) | **RESTORED** | valid C, and it removes a real asymmetry — the *global* path already infers the extent from the initializer (`FrontendXcfaBuilder#getArraySize`); only the local path did not. Parked before only because it measured net −32. |
+| **whole-cell address-of** | **RESTORED** | `&` on a full-width `extract` does name storage, so refusing it as "not an lvalue" was simply wrong. |
+| `sliceCarrier` (bitfield metadata peeling) | stays out | **not a fix at all**: tracing proved `BitfieldSlice.CELL` is absent on the lvalue *and every ancestor*, so the peeling can never find anything. Inert code. |
+| structural single-cell bitfield match | already shipped | subsumed by the multi-cell store (`if (unit is Dereference) …`). |
+
+**Measured effects (both are "progress without points", exactly as intended):**
+
+- *dimensionless arrays*, on its 10-file bucket: all 10 now get past the NPE — 1 succeeds outright,
+  1 reaches the `fesetround` refusal, and **8 expose a new bug**.
+- *whole-cell address-of*, on the intel-tdx before-parsing sample: **3 files** move from an internal
+  `IllegalStateException: Referencing non-lvalue expressions is not allowed!` to the documented
+  byte-union multi-cell refusal. They still do not verify (that needs the bytes model), but a
+  limitation-crash became an honest, documented failure.
+
+### NEW BUG uncovered by the dimensionless-array restore
+
+`ProcedureInliningKt.inlineCallSite(ProcedureInlining.kt:192)` —
+`IndexOutOfBoundsException: Index 2 out of bounds for length 2`, on 8 of the 10 files
+(`ddv-machzwd/ddv_machzwd_*`). An argument/parameter count mismatch while inlining a call: the call
+site supplies more arguments than the callee has parameters (or the reverse). Previously hidden
+behind the NPE. Worth handling properly — at minimum it should refuse with a message naming the
+callee and both arities, instead of an `IndexOutOfBoundsException`.
+
+**Also corrected:** the earlier justification for keeping the float-literal precision fix leaned on
+net points. The right justification is that the fix is gcc-verified correct and the subnormal-rounding
+defect it exposed is a real bug that had to be found regardless.
+
+### Inlining arity mismatch: crash → named refusal, and the mismatch is OURS
+
+`ProcedureInlining.kt:192` indexes `invokeLabel.params[i]` by the *callee's* parameter position, so
+any arity disagreement walks off the end. 8 `ddv-machzwd` files died with a bare
+`IndexOutOfBoundsException: Index 2 out of bounds for length 2` — naming neither the procedure nor
+the counts. (Uncovered by restoring the dimensionless-array fix, which let those files get this far.)
+
+⚠️ **My first guard blamed the input, and that was wrong.** Its message said "a call through a
+declaration whose parameter list disagrees with the definition". The source says otherwise:
+
+```c
+void outb(unsigned char byte, unsigned int);   /* declared with 2 params, never defined */
+outb(0x12, 0x218);                             /* every call passes 2 */
+```
+
+Yet the callee arrives with **3** parameters. The disagreement is **internal** — an only-declared
+`void` function gains a synthetic return slot that its call sites do not supply. Shipping the first
+message would have pinned theta's own defect on the benchmark.
+
+The refusal now reports both counts and says explicitly that it is an internal disagreement, "not
+necessarily a fault in the input". 8 files move from an opaque crash to a named refusal: same score,
+but actionable.
+
+**The real fix is upstream and still open:** either the stub built for an only-declared `void`
+function should not carry a return slot, or its call sites should pass one. Confirm which side is
+wrong before changing either.
+
+⚠️ **Tooling trap (second variant).** A gate run was reported as *failed, exit 1* while being fully
+green: the command chain ended in `grep -c "^(FAIL|ERROR)"`, and grep exits 1 when it matches
+nothing. The earlier variant was the mirror image — a *false green* from grepping an empty file after
+`run_canaries.sh` was invoked from the wrong directory. **Read the `Fixtures:`/`RESULT:` lines; never
+trust the pipeline's exit status alone.**
+
+## Exploratory per-config runs (batch 88) — 6 of 10 in
+
+Each config run **standalone** (not through the portfolio), 5 min / 7 GB / 2 cores, IDLE,
+Skylake-pinned, HEAD build `7976b40d75` = `Theta-svcomp-88`. Subsets chosen per config rather than
+running everything everywhere: the general backends on 11 sequential unreach-call groups, MDD on the
+control-heavy three (ECA / ControlFlow / ProductLines), OC on Concurrency only, LIVENESS_CEGAR on
+termination only.
+
+| config | runs | correct | % | wrong | timeout | oom | stuck | srv-err |
+|---|---|---|---|---|---|---|---|---|
+| CEGAR EXPL/NWT_IT_WP | 11,412 | 2,046 | **17.9%** | 10 | 2,374 | 2,366 | 1,832 | 1,792 |
+| KIND | 11,412 | 1,522 | 13.3% | 10 | 5,504 | 2,120 | 0 | 0 |
+| BMC | 11,412 | 1,446 | 12.7% | 10 | 5,846 | 2,136 | 0 | 0 |
+| IMC | 11,412 | 928 | 8.1% | 8 | 4,184 | 3,396 | 0 | 98 |
+| **MDD** | 3,870 | **0** | **0.0%** | 4 | 412 | 1,274 | **2,064** | 0 |
+| OC | 1,030 | 561 | **54.5%** | 3 | 184 | 19 | 0 | 32 |
+
+### Findings
+
+**1. Standalone MDD solves nothing on the sets picked to suit it.** 0 correct in 3,870 runs; its
+only 4 answers were `true` and *all four were wrong*. 53% end as "verification stuck" (exit 220),
+33% OOM, 11% timeout. Caveat before acting: this is `--backend MDD` alone at 5 min — the portfolio
+may give it different settings or budget — but on ECA/ControlFlow/ProductLines it contributed
+nothing here and was actively harmful the few times it answered.
+
+**2. OC is far and away the most productive per task** (54.5% correct) on Concurrency, its home
+ground, and barely uses memory (19 OOM in 1,030). Its main loss is **223 `frontend failed, after
+parsing`** — a fifth of the concurrency set never reaches the checker, which is a frontend problem,
+not an OC one.
+
+**3. "verification stuck" and "server error" are not resource exhaustion** and are worth separating
+from the timeout/OOM pool that is off the work list. They concentrate in exactly two configs:
+EXPL (1,832 stuck + 1,792 server errors) and MDD (2,064 stuck). BMC/KIND have **zero** of both —
+they fail cleanly by timeout instead. Whatever "stuck" and "server error" are, they are specific to
+those two analyses rather than general.
+
+**4. Nothing here beats the portfolio**, as expected — EXPL alone tops out at 17.9% of the sequential
+set at 5 min. The value of these runs is the per-config profile, not the totals.
+
+Still running: `predcart`, `predcart_bv` (identical task set to `predcart`, `--arithmetic bitvector`
+— a controlled encoding comparison), `ic3`, `liveness`.
+
+### Bitvector encoding: `bit2bool` back-transformation — SHIPPED, and the real story is the solver
+
+The batch-88 exploratory run gave `predcart_bv` (PRED_CART/BW_BIN_ITP + `--arithmetic bitvector`)
+**2,946 server errors** across **1,473 distinct tasks** in a dozen unrelated families
+(product-lines 532, neural-networks 354, seq-mthreaded 530, nla-digbench 250, array-* 400+ …). Every
+one reproduces as:
+
+```
+java.lang.NullPointerException: Unsupported function 'bit2bool' in Z3 back-transformation.
+```
+
+Z3 emits `(_ bit2bool k) x` when reasoning about individual bits; theta's `(name, arity)` dispatch
+had no entry, so it fell through to `toFuncLitExpr`, which requires a model and NPE'd without one.
+Handler added to **both** Z3 transformers (current + legacy), reading the index from the term text
+the way the neighbouring `extract` case does, lowering to `extract(op, k, k+1) == 1`.
+
+⚠️ **I had seen this error and dismissed it.** It appeared during the pre-submission smoke test on
+`bitvector/byte_add-1.c` and I called it "task-specific, like OC's calloc". It was the single
+largest failure mode of the encoding I was about to submit. The per-config split is what exposed the
+scale — a portfolio run would have hidden it behind a fallback.
+
+**Correctness established, not assumed.** The fix's only effect on real tasks is crash → *timeout*,
+which proves nothing about the lowering, so three bit-level probes were run to a verdict:
+
+| probe | expected | got |
+|---|---|---|
+| `(x&1)==1` then `(x&1)==0` | Safe | Safe ✓ |
+| bit 3 set, `8 <= x < 16` | **Unsafe** | Unsafe ✓ |
+| `y = x \| 1` vs an even constant | Safe | Safe ✓ |
+
+The UNSAFE case is what makes the set discriminating: an inverted comparison or off-by-one index
+cannot pass all three. Fixture `bitvector_bit2bool.c`.
+
+**Limits, stated plainly:**
+- Worth **no points**: sampled tasks go from server error to timeout, not to answers.
+- **Not the only 202 cause** — `neural-networks/log_4_safe` still server-errors, so at least one more
+  back-transformation gap sits behind that 2,946.
+- **Z3-path only.** MathSAT has its own transformer and never touches this code.
+
+### The bitvector collapse is a SOLVER limitation, not the encoding
+
+Behind the `bit2bool` crash sits `Z3Exception: theory not supported by interpolation` (exit 221):
+legacy Z3 cannot interpolate over bitvectors, which `BW_BIN_ITP` requires. Same domain, refinement
+and encoding under **MathSAT 5.6.12** instead:
+
+| task | Z3 + bitvector | MathSAT + bitvector |
+|---|---|---|
+| `bitvector/byte_add-1` (expects **false**) | solver error 221 | **Unsafe = false, CORRECT** |
+| `bitvector-loops/overflow_1-2` | solver error 221 | timeout |
+| `loop-acceleration/array_1-1` | server error → timeout | timeout |
+
+Zero solver errors under MathSAT. So `predcart_bv`'s 1,389 → 700 collapse is **not** the encoding
+being unviable — it is the wrong solver for that refinement. A `predcart_bv_ms` run (identical task
+set, MathSAT) is in flight to quantify it; the three runs form a chain with one variable each step:
+efficient/Z3 → bitvector/Z3 → bitvector/MathSAT.
+
+#### The other exit-202 cause: unmodelled math functions, misreported as "server error"
+
+With `bit2bool` fixed, the remaining server errors in the bitvector sample resolve to:
+
+```
+java.lang.IllegalStateException: No such method logf.
+   at XcfaAnalysisKt#getCoreXcfaLts$lambda$0:142
+```
+
+`neural-networks/*` call `logf` (and siblings). `FpFunctionsToExprsPass` models a good set of math
+functions — `sqrt`, `fabs`, `floor`, `ceil`, `round`, `trunc`, `fmin/fmax`, `fmod`, the `is*`
+classifiers — but **not** `logf`/`log`/`exp*`/`pow*`/trig. A call to one reaches the analysis as an
+`InvokeLabel` naming a procedure that does not exist, and dies deep in the LTS with a bare
+`IllegalStateException` that the tool-info maps to **exit 202, "server error"**.
+
+That label is actively misleading: nothing about the server is wrong. It is an unsupported library
+function, and it should say so — the same treatment given to the inlining arity mismatch
+(`7976b40d75`): name the function, classify it as unsupported (exit 209/210), and let the score be
+an honest 0 instead of an infrastructure-looking failure that invites the wrong investigation.
+
+Two possible follow-ups, in order:
+1. **Refuse clearly** where the missing procedure is detected — cheap, and stops mislabelling.
+2. **Model the missing functions** where sound (`log`, `exp`, `pow` have no exact bitvector/integer
+   semantics, so they would need an uninterpreted-function treatment with the usual caveats, not a
+   made-up value).
+
+⚠️ Do NOT invent values for these. An unsound `logf` would turn a 0 into a possible −16/−32.
+
+## ROOT CAUSE: subnormal float literals are encoded as normals (core FP bug)
+
+Chased from the run-87 regression `floats-cbmc-regression/float-no-simp7` and the bitvector-unique
+wrongs (9 of 10 of which are float tasks). **Encoding-independent** — `--arithmetic efficient` and
+`--arithmetic bitvector` are both wrong, `integer` honestly refuses floats:
+
+| probe | expected | got |
+|---|---|---|
+| `2^-149 != 2^-126` | Safe | Safe ✓ |
+| `2^-149 != 2^-148` | Safe | Safe ✓ |
+| `2^-149 > 0` | Safe | Safe ✓ |
+| `2^-100 < 2^-50` (normals, control) | Safe | Safe ✓ |
+| **`2^-149 < 2^-126`** | Safe | **Unsafe ✗** |
+| **`2^-149 > 2^-126`** | Unsafe | **Safe ✗** |
+
+So subnormals are *distinct* and *positive*, and normal-range ordering is fine — but a subnormal is
+placed **above** the smallest normal. They are being encoded too large.
+
+**Mechanism — CORRECTED.** My first write-up above blamed the ENCODE side
+(`bigFloatToFpLitExpr`) and sketched a fix for it. **That was wrong**, and the sketch would have
+broken working code. Instrumenting MPFR directly (`scratchpad/FpProbe.java`) shows the encoder is
+already correct: `0x1p-149` encodes to biased exponent **0**, significand 1 — bit-identical to
+`Float.floatToRawIntBits`. MPFR's `exponent(minExp,maxExp)` returns `minExp-1` for subnormals
+(the `Math.getExponent` convention), so the `+maxExponent` bias lands on 0 by itself.
+
+The bug is the **DECODE**, `FpUtils.fpLitExprToBigFloat`:
+
+```java
+final var exponent = neutralBvLitExprToBigInteger(expr.getExponent())
+                        .subtract(BigInteger.valueOf(maxExponent));          // 0 - 127 = -127
+final var significand = neutralBvLitExprToBigInteger(expr.getSignificand())
+                        .add(BigInteger.TWO.pow(type.getSignificand() - 1)); // ALWAYS +2^23
+```
+
+Both halves are wrong for a subnormal, and they compound:
+- the implicit leading 1 is added unconditionally, but subnormals do not have one;
+- exponent field 0 means `1 - maxExponent` (−126), not the `-maxExponent` (−127) it reads as.
+
+Round-tripping through theta (`scratchpad/FpRt.java`) before the fix:
+
+| literal | true value | theta decoded |
+|---|---|---|
+| `0x1p-149` | 1.4e-45 | **1.17549449e-38** |
+| `0x1p-127` | 5.88e-39 | **1.76324153e-38** |
+| `0x1p-126` | 1.1754944e-38 | 1.17549435e-38 ✓ |
+
+Every subnormal came back as ≈`2^-126*(1+f)` — i.e. just ABOVE the smallest normal, which is
+exactly the observed `2^-149 > 2^-126` = Safe. Doubles are hit identically: `Double.MIN_VALUE`
+(4.9e-324) decoded as 2.225e-308, i.e. `DBL_MIN`.
+
+**FIXED** — decode keys off a zero exponent field: no hidden bit, exponent `1 - maxExponent`. The
+existing `BinaryMathContext(p, e)` represents the result exactly; no context widening was needed.
+Since `fpLitExprToBigFloat` backs every comparison, add/sub/mul/div, rem, sqrt, min/max and
+round-to-integral on `FpLitExpr`, this corrects subnormal handling across all FP folding, not just
+literals.
+
+Gated: `FpSubnormalTest` (new, JVM `Float`/`Double` as an independent oracle) + fixture
+`float_subnormal_order.c`. **A/B verified** — with the fix reverted all 4 tests fail with exactly the
+values above and `2^-149 < 2^-126` evaluates to `false`; 679 core tests pass with it.
+
+⚠️ Remaining, NOT fixed: MPFR has no gradual underflow, so *arithmetic* that underflows below
+`2^-149` yields a smaller BigFloat instead of flushing to zero, and only the re-encode rounds it.
+That is a precision gap on the arithmetic path, not the ordering soundness bug fixed here.
+Related: the significand off-by-one fix `2a7e482564`, which made literals exact enough for this to
+become visible.
+
+## Batch 89 — integer vs bitvector encoding, full suite (user request 2026-08-12)
+
+Four full-suite runs at 5 min / 7 GB, Skylake-pinned, `Theta-svcomp-88`, benchcloud IDLE:
+`pred_int`, `pred_bvms`, `kind_int`, `kind_bvms` (bitvector runs use **MathSAT**).
+
+⚠️ **IDLE + four concurrent collections serialises them.** The vcloud scheduler fills machines in
+submission order, so `pred_int` ran alone (3 h 07 m, done), `pred_bvms` is draining next
+(14.5k/36.6k after 7.5 h → ~19 h), and both `kind` collections sat at **3 results each for 6+ hours**.
+That is queue starvation, not a stall: all three clients are alive and healthy, and another user's
+`cpachecker-por` job also outranks IDLE. Do not "fix" it by relaunching. Budget ~2 days wall-clock
+for all four, or submit them one at a time.
+
+### `pred_int` (PRED_CART / BW_BIN_ITP / `--arithmetic integer`) — COMPLETE
+
+36,602 runs, score **8,856**: correct 6,122 (3,310 true / 2,812 false), wrong 32, error 30,132,
+unknown 316.
+
+**The integer encoding's real limit is the FRONTEND, not the solver.** Error profile vs run 87
+(portfolio, `efficient`) on the identical task set:
+
+| status | `pred_int` | run 87 |
+|---|---|---|
+| frontend failed, **before** parsing | **15,683** | 1,609 |
+| server error | 4,449 | 0 |
+| generic error | 1,996 | 5 |
+| solver error | 1,773 | 199 |
+| verification stuck | 448 | 0 |
+
+**14,080 tasks parse under `efficient` but not under `integer`** — bitwise-heavy families:
+`hardness` 6,343, `btor2c` 1,224, Juliet `CWE190`/`CWE191` 1,717, `linux` 655, `tdh` 492, `aws` 260.
+Run 87 *solved* 3,427 of those 14,080 (2,478 true, 765 `false(no-overflow)`, 184 `false(unreach-call)`),
+so this is lost coverage, not tasks that were hopeless anyway. Integer arithmetic is therefore not a
+viable standalone config for the suite; its value is as a portfolio member on tasks it can express.
+
+The 32 wrongs are all **known** families, no new class: `cstr*`/`openbsd*` alloca-string
+`false(valid-deref)` 15 (the termination-15 bounds-across-call root cause above), `aws_linked_list_*` 3,
+`2SB`/`4SB` wrong-`true`, `09-regions_*` wrong-`true` races 2, plus `scopes4-1`,
+`ArraysOfVariableLength{,2}`, `memleaks_test11`, `test25-2`, `960521-1_1-2`, `test-0504{,_1}`,
+`lockfree-3.0`, `rec_strcopy_malloc`.
+
+Integer-encoding-specific error buckets worth a look **only if integer is kept in the portfolio**
+(they do not affect the shipped `efficient` config): `server error` is 3,151/4,449 Juliet CWE190+191;
+`generic error` is `minepump` 325, `email` 168, `pals` 131, `elevator` 90.
+
+## ⚠️ RETRACTION: "termination-15 = a mid-object pointer loses its bounds across a call" is REFUTED
+
+The root cause recorded earlier in this file (and its 9-line repro, `scratchpad/r4.c`) is **wrong**.
+Instrumenting instead of extending the repro (`--output ALL`, reading the emitted `xcfa.c`) showed it
+at once. Do not build on it.
+
+**The repro was invalid.** It reads an *uninitialized* alloca cell:
+
+```c
+char *p = alloca(n); p[0] = '\0'; p += n - 1;   /* for n>1, p now points at an UNWRITTEN cell */
+if (peek(p) == 'x') reach_error();              /* 'x' is a legitimate value -> Unsafe is CORRECT */
+```
+
+The bisect table claimed "read `*p` **in main** → Safe ✓, passed to a function → Unsafe ✗", and that
+asymmetry was the whole basis of the conclusion. It does not exist: **both are Unsafe**, and the
+in-main variant does not even use the pass that was blamed. Re-running a genuinely safe shape
+(constant size, every cell written before the mid-object read) gives **Safe both in main and across a
+call**, so a mid-object pointer survives a call fine. `seedSplitParams` is not implicated — its
+premise ("passing a bare split variable is rejected outright") *holds*: multi refuses these programs.
+
+**What actually happens on the real tasks.** `termination-15/cstrchr_reverse_alloca.i`
+(valid-memsafety, expected `true`) reproduces as `false(valid-deref)` trace 7, and the log says:
+
+```
+note: frontend build failed due to a pointer-splitting limitation under --memory-model multi;
+      retrying with --memory-model flat
+```
+
+So multi **refuses** (loudly, correctly), the CLI **silently falls back to flat**, and the wrong answer
+is produced by *flat*. This is the same family as the run-62 "F1 flood" (81 valid-memsafety
+false-derefs on the alloca/malloc string family under flat) — it is reaching us through the fallback
+even though multi is the default.
+
+**Leading hypothesis, NOT yet proven.** `FlatMemoryPass` documents its own soundness precondition:
+each object owns `[id*STRIDE, id*STRIDE+STRIDE)` and addresses never collide *"as long as no object is
+larger than FLAT_STRIDE cells"* (`FLAT_STRIDE = 1 shl 16 = 65536`). `alloca(length)` with symbolic
+`length` up to `INT_MAX` violates it, and **nothing enforces or checks it**; `MemsafetyPass` then
+recovers the base as `(addr / STRIDE) * STRIDE`, which for an in-object offset ≥ STRIDE truncates to a
+*different* object's base, whose recorded size is 0 — making the `size <= offset` guard a tautology and
+the bad-deref edge always enabled.
+
+Evidence is suggestive but incomplete: a constant-size `alloca(100000)` (> stride) variant of the task
+reproduces the false `Unsafe` (trace 5), but **both under-stride controls errored instead of proving
+Safe** (`UnknownSolverStatusException` exit 221, and `alloca(100)+bound` hit the array-ext bug below),
+so the stride link is not yet demonstrated by a clean A/B. Next step: get the actual counterexample
+*values* out of the real task (higher log level / trace dump) and read the chosen `length` — do not
+write more variants, that is what produced the retracted conclusion.
+
+If the stride limit is confirmed, the honest fix is to **refuse** under flat when an object's size is
+not provably < FLAT_STRIDE (error 0 beats wrong −16), and/or to stop the silent multi→flat fallback
+from selecting a model that is unsound for the program in hand.
+
+### NEW BUG: `array-ext` missing from the Z3 back-transformation
+
+`Z3TermTransformer.toFuncLitExpr:373` — `NullPointerException: Unsupported function 'array-ext' in Z3
+back-transformation`, exit **202 (server error)**. Same family as the `bit2bool` gap fixed in
+`646ac3b51c`. Z3 introduces `array-ext` (the array extensionality witness) when reasoning about array
+equality, so any model containing one is unrecoverable. Plausibly a real contributor to the
+**4,449 server errors** in `pred_int`; worth checking against that bucket before fixing.
+
+### MEASURED: the silent multi→flat fallback causes 18 of `pred_int`'s 32 wrong answers
+
+Ran the frontend (`--backend NONE`, so it is fast and exact) over all 32 `pred_int` wrong runs and
+counted which ones print `retrying with --memory-model flat`:
+
+**fallback = 18, no fallback = 14, not found = 0.**
+
+The 18 are the whole alloca-string family (`cstr{chr,cmp,cpy,cspn,len,ncpy,pbrk,spn}_{mixed,reverse}_alloca`,
+`openbsd_cmemrchr-alloca-1` — 15 runs), the DLL pair `test-0504` / `test-0504_1`, `960521-1_1-2`, and
+`aws_linked_list_init_harness`. **17 of the 18 are `valid-memsafety`**; only the aws one is unreach-call.
+
+So: multi refuses these programs (a pointer-splitting limitation — loudly and correctly), the CLI
+silently retries under flat, and flat is exactly the model with the known run-62 false-`valid-deref`
+flood on this family. The fallback converts an honest refusal (score 0) into a confident wrong answer
+(−16). That is the single largest wrong-answer source in this config, worth ~**+272** to remove.
+
+**Do not "fix" this by chasing the flat bug first.** The specific flat mechanism is still unproven —
+see the stride hypothesis above; every attempt to isolate it hit a *different* bug, which is itself
+worth knowing about this family:
+
+| config on `cstrchr_reverse_alloca` | outcome |
+|---|---|
+| efficient, unbounded (as shipped) | `false(valid-deref)` trace 7 — the wrong answer |
+| efficient, `length` bounded ≤100 | `Unsupported function 'array-ext'` NPE, exit **202** |
+| efficient, constant `alloca(100)` | `UnknownSolverStatusException`, exit **221** |
+| efficient, `FLAT_STRIDE = 2^40` | no answer in 420 s |
+| bitvector, unbounded | JVM **SIGSEGV** (exit 139, legacy Z3 native) |
+| bitvector, bounded ≤100 | `Z3Exception: theory not supported`, exit **221** |
+
+**Proposed fix (not yet implemented, needs the cost side measured first):** do not fall back to flat
+for `valid-memsafety`/`valid-memcleanup`, where flat is known-unsound on this shape; let the multi
+refusal stand instead. Before shipping, measure what the fallback currently *earns* on memsafety
+properties — how many currently-**correct** memsafety runs also take it — because those would become
+errors. Gate on that number, not on the +272.
+
+### ATTEMPTED AND REVERTED: banning the multi→flat fallback under memory-safety properties
+
+Implemented `mayFallBackToFlat && !checksMemorySafety` in `ExecuteConfig.frontend`
+(`inputProperty == MEMSAFETY || MEMCLEANUP`), built, and verified it does exactly what was intended:
+
+| task | property | before | after |
+|---|---|---|---|
+| `cstrchr_reverse_alloca` | valid-memsafety | fallback → `false(valid-deref)` (**wrong**, −16) | no fallback, **exit 210** frontend failed (0) |
+| `test-0504` | valid-memsafety | fallback → wrong | no fallback, exit 210 |
+| `aws_linked_list_init_harness` | unreach-call | fallback → builds | **unchanged**, still falls back, rc 0 |
+
+**The canary gate went red: 260 PASS / 2 FAIL** (baseline for this build is 262/0):
+
+- `c/libvsync/mcslock.yml` [valid-memsafety] → `Frontend failed!`
+- `c/uthash-2.0.2/uthash_JEN_test5-1.yml` [valid-memcleanup] → `Frontend failed!`
+
+Both are permanent zeros — `mcslock` TIMEOUTs on every property in *both* `pred_int` and run 87;
+`uthash_JEN_test5-1` frontend-fails in `pred_int` and TIMEOUTs/OOMs in run 87 — so **no correct answer
+is lost**, consistent with the 0/60 sample. But the change still removes frontend coverage: programs
+that used to build no longer build, which is precisely what the canary suite exists to catch, and
+there is no exclusion mechanism in the harness (the `recursified_geo1-u` precedent was a plain row
+deletion). **Reverted rather than hand-edit the gate to suit the change** — a gate you edit to make
+your own patch pass is not a gate.
+
+**The measurement stands and the better design is now clear.** Do not re-attempt the ban. Instead
+keep the fallback — so these programs still *build* — and make the unsound part of the answer honest:
+under a flat-**fallback** run with a memory-safety property, a `false(valid-*)` verdict is exactly the
+class flat is known to get wrong (run-62: incorrect-false 18→107), so downgrade it to
+unknown/error rather than reporting it. That kills the 17 wrong answers, keeps every currently-correct
+answer, and leaves both canaries green because the frontend still succeeds. A `true` verdict can stay:
+the observed flat memsafety failure mode is false alarms, not missed bugs (the flat *unsoundness*
+sightings in run 62 were `no-data-race`, a different property).
+
+Where to implement: the verdict is produced downstream of `frontend()`, so the flag to thread is "this
+XCFA came from the flat fallback" (set where `cConfig.memoryModel` is pinned to `flat` in the catch) —
+consult it where the memsafety result is finalised. Needs the canary gate **and** a portfolio-config
+check, since run 87 is the shipped configuration and these numbers are from `pred_int`.
+
+⚠️ **Correction on that gate run — it was load-contaminated, my fault.** The same log also shows
+`Fixtures: 43 PASS, 19 FAIL`, every failure `actual=OTHER` (no verdict produced at all) on fixtures
+that have nothing to do with the change: `hex_float_constant`, `storage_class_register`,
+`builtin_infinity`, `builtin_prefetch`, `undeclared_memory_functions`, … Cause: I ran
+`buildArchiveTheta-svcomp`, `shadowJar` and `:theta-xcfa-cli:test` in the foreground **while the
+sweep was running**, against the documented rule (8 GB cgroup — one theta at a time, never during a
+canary sweep). The verdict fixtures simply ran out of time. The identical fixture set was
+**62 PASS / 0 FAIL** on this very code earlier in the session.
+
+The two *canary* FAILs above are still genuine: `Frontend failed!` is a deterministic outcome, not a
+timeout, and both are memsafety/memcleanup — precisely the properties the change disabled the
+fallback for. So the revert decision stands; only the fixture numbers in that run are noise.
+
+Lesson for the next gate: do not start any gradle build while `run_canaries.sh` is live, and read
+`Fixtures:`/`RESULT:` lines rather than the harness exit status (a trailing `echo` in the launching
+command masked the nonzero exit here, exactly the failure mode already recorded for `grep -c`).
+
+## Batch 89 RESULT — PRED_CART: integer vs bitvector(MathSAT), full suite
+
+Both runs 36,602 tasks, 5 min / 7 GB, Skylake, `Theta-svcomp-88`, identical task set.
+
+| | `--arithmetic integer` | `--arithmetic bitvector` (MathSAT) |
+|---|---|---|
+| score | 8,856 | **10,383** |
+| correct | 6,122 | **7,270** |
+| wrong | **32** | 76 |
+| error | 30,132 | 28,820 |
+| unknown | 316 | 436 |
+
+**Bitvector wins overall (+1,527) but is not a strict improvement.** The transition matrix matters more
+than the totals:
+
+| transition | runs |
+|---|---|
+| error → correct | **2,724** (the win) |
+| correct → error | **1,566** (the hidden cost) |
+| error → wrong | 58 |
+| wrong → error | 15 |
+
+The 1,566 `correct → error` are not noise: 699 solver error, 562 TIMEOUT, 258 verification stuck,
+28 OOM — and by property 905 valid-memsafety, 505 unreach-call. So bitvector buys ~2.7k answers the
+integer encoding could not express and pays back ~1.6k that it could, mostly to solver cost.
+
+### Where bitvector is newly WRONG — 60 runs, the thing to fix
+
+By family: `chl-*.wvr` **14**, `uthash` 12, `aws` 6, `relu`/`count` 3 each, `float`/`inv`/`sqrt` 2 each.
+By verdict: `false(valid-deref)` 21, `false(no-overflow)` 18, `false(unreach-call)` 14, `true` 5.
+
+Two groups deserve attention:
+
+1. **`chl-*.wvr` — 14 new `false(no-overflow)` false alarms** where integer merely TIMEOUTs. A single
+   coherent family, so likely one bitvector-specific overflow-guard defect. **Highest-value bitvector
+   follow-up.**
+2. **9 wrong-`true` (−32 each), 4 of them `aws_*_negated` harnesses** — `aws_byte_buf_init_harness_negated`,
+   `aws_byte_buf_init_copy_from_cursor_harness_negated`, `aws_linked_list_init_harness_negated`,
+   `aws_string_new_from_array_harness_negated`. A `_negated` harness exists to *be* unsafe, so these are
+   **missed bugs**, the worst failure mode. Also `2SB`/`4SB` and the two `09-regions` races (already known).
+
+### Where integer is wrong and bitvector is not — 16 runs, and it is instructive
+
+12 of the 16 are the `cstr*`/`openbsd*` alloca-string family: integer answers `false(valid-deref)`
+(**wrong**, −16) while bitvector reports **`ERROR (solver error)`** (0). That is exactly the
+wrong→error trade the reverted fallback ban tried to engineer, arriving here by accident — further
+evidence that this family's wrong answers come from an unsound *model*, not from the property being
+genuinely violated. `scopes4-1` (TIMEOUT) and `960521-1_1-2` (verification stuck) behave the same way.
+
+### Reading
+
+Neither encoding dominates. Integer's ceiling is the **frontend** (14,080 tasks it cannot parse at all,
+see the `pred_int` entry above); bitvector's ceiling is the **solver** (699 solver errors + 562 timeouts
+on tasks integer solved). They are complementary, which argues for keeping both in the portfolio rather
+than picking one — but bitvector's 60 new wrongs, especially the 4 missed `aws_*_negated` bugs, must be
+triaged before leaning on it further.
+
+⚠️ Still pending: the KIND half. `kind_int` is running (22.5k/36.6k); `kind_bvms` still starved at 3.
+
+### ROOT CAUSE (bitvector `chl-*.wvr`, 14 wrong): a mixed-width guard comparison is mis-encoded
+
+The largest bitvector-only wrong family. **Not a regression from `c22f2d1988`** — run 87
+(portfolio/`efficient`, which contains that fix) answers these **18 correct / 0 wrong**; only
+`--arithmetic bitvector` gets them wrong. Encoding-specific.
+
+Instrumented rather than guessed: the violation witness points at **`chl-collitem-subst.wvr.c:109`,
+`return a - b;`** — the *guarded* subtraction inside `minus()`, not the guards themselves:
+
+```c
+int minus(int a, int b) {
+  assume_abort_if_not(b <= 0 || a >= b - 2147483648);   /* RHS only when b > 0 */
+  assume_abort_if_not(b >= 0 || a <= b + 2147483647);   /* RHS only when b < 0 */
+  return a - b;                                          /* provably cannot overflow */
+}
+```
+
+Those two guards are exactly sufficient (b>0 ⟹ a-b ≥ −2³¹; b<0 ⟹ a-b ≤ INT_MAX; b=0 trivial), so an
+overflow report at line 109 means the guard constraints are not holding in the encoding.
+
+**Minimal case — `scratchpad/guard_minus.c`, 10 lines, reproduces at trace 5:**
+
+```c
+int a = __VERIFIER_nondet_int(), b = __VERIFIER_nondet_int();
+if (!(b <= 0 || a >= b - 2147483648)) return 0;
+if (!(b >= 0 || a <= b + 2147483647)) return 0;
+return a - b;                       /* bitvector: Unsafe(no-overflow) -- WRONG; efficient: Safe */
+```
+
+Trace **5** on a guarded subtraction ⇒ modelling bug, not imprecision.
+
+**Mechanism:** under ILP32 the literal `2147483648` fits neither `int` nor `long`, so C types it
+`long long`; `b - 2147483648` is 64-bit and the comparison `a >= (b - 2147483648)` must be evaluated
+at 64-bit width after promoting `a`. Under bitvector it evidently is not — a 32-bit evaluation makes
+the guard admit `a` values for which `a - b` really does overflow, and the subsequent overflow check
+fires legitimately on a state the guard should have excluded.
+
+**Two hypotheses were tested and REFUTED first** (do not retry them):
+- literal typing alone — `long long g = b - 2147483648;` under `b > 0` is **Safe** in both encodings,
+  so the literal is not being wrapped to `INT_MIN`;
+- short-circuit handling — `(b >= 0) || (b + 2147483647 >= 0)` under `b > 0` is **Safe** in both, so
+  the `||` short-circuit *is* honoured by the overflow instrumentation.
+
+It is specifically the **mixed-width comparison** that breaks. Next step: dump the comparison's
+encoded form under bitvector and check the promotion of the `int` operand against the 64-bit RHS —
+suspect a `BvType` width unification that truncates to the narrower operand instead of promoting to
+the wider. Fixing it should recover 14 wrong → correct in the bitvector configuration, and the same
+guard idiom is used throughout `c/weaver/`, so the real reach is likely larger than 14.
+
+#### ⚠️ CORRECTION to the entry above: the "mixed-width comparison" mechanism is DISPROVEN
+
+Dumping the encoded form (`--output ALL`, `xcfa-main.smt2`) shows the 64-bit guard is encoded
+**correctly**:
+
+```smt
+(bvsge ((_ sign_extend 32) |main::a|)
+       (bvadd ((_ sign_extend 32) |main::b|) #xFFFFFFFF80000000))
+```
+
+`a` is promoted with a proper `sign_extend` and the literal is a 64-bit `-2^31`. The second guard is
+32-bit `(bvsle a (bvadd b #x7FFFFFFF))`, which is also right — `b + 2147483647` genuinely *is* `int`
+arithmetic in C. So the promotion is fine and my stated mechanism was wrong. The **observations**
+in that entry still hold (bitvector wrong / `efficient` correct; witness at line 109 `return a - b`;
+`guard_minus.c` reproduces at trace 5); only the explanation was premature. Do not build on it.
+
+Also refuted, in addition to the two dead ends already listed: literal wrapping, `||` short-circuit
+handling, and now operand promotion. Three mechanisms eliminated.
+
+**Blocking obstacle for the next attempt:** narrowing to a single guard hits a **native crash**.
+`g1.c` (guard 1 only, `b>0` forced — 8 lines) under `--arithmetic bitvector` with the default
+**legacy Z3** dies with **SIGSEGV, exit 139**, "the monitored command dumped core", after the
+frontend completes. Same crash seen earlier on `cstrchr_reverse_alloca` under bitvector. Both
+single-guard reductions (`g1.c`, `g2.c`) are unusable for this reason, while `efficient` answers both
+**Safe** in seconds. That native crash is a genuine bug in its own right and probably blocks other
+bitvector triage.
+
+⚠️ **Solver dimension not yet controlled.** The 14 benchmark wrongs came from `pred_bvms`, which uses
+**MathSAT**; every local reproduction here used the **default legacy Z3**. Both produce a false
+`Unsafe` on `chl-collitem-subst`, so the defect is unlikely to be solver-specific — but that has not
+been verified, and the next attempt should pin the solver explicitly on both sides before drawing any
+conclusion. Sequence for the next session: reproduce `guard_minus.c` under MathSAT, then diff the
+encoded query against the `efficient` one, rather than reducing the program further (reduction is
+what hit the segfault).
+
+### Batch 89 — `kind_int` (KIND / `--arithmetic integer`) COMPLETE
+
+36,602 runs, score **8,273**: correct 5,496, wrong 30, error 30,757, unknown 319.
+
+Against `pred_int` (same encoding, same task set — so this isolates the **backend**):
+
+| | PRED_CART | KIND |
+|---|---|---|
+| score | 8,856 | 8,273 |
+| correct | 6,122 | 5,496 |
+| wrong | 32 | 30 |
+
+| transition | runs |
+|---|---|
+| correct → error | **2,213** |
+| error → correct | **1,587** |
+
+KIND scores lower overall but is strongly **complementary, not dominated**: it solves 1,587 tasks
+PRED_CART cannot, while losing 2,213 it can. That is a real argument for keeping both in the
+portfolio — the headline score difference (−583) badly understates KIND's contribution, because
+~29% of what it answers correctly is outside PRED_CART's reach entirely.
+
+Its wrong set is also the *smallest* of the three completed runs (30 vs 32 vs 76), so KIND is not a
+soundness liability.
+
+Remaining: `kind_bvms` (10.2k/36.6k, last one running) completes the 2×2 and gives the KIND half of
+the integer-vs-bitvector question.
+
+## ROOT CAUSE CONFIRMED (bitvector `chl-*.wvr`): `a - b` widens the negation AFTER it wraps
+
+Supersedes the two earlier explanations in this file (both disproven — mixed-width comparison, and
+before that literal wrapping / short-circuit). This one is confirmed by a concrete witness.
+
+**Solver dimension controlled and eliminated** — same program, same solver, different encoding:
+
+| encoding | solver | verdict |
+|---|---|---|
+| bitvector | Z3 (default) | `Unsafe` trace 5 — **wrong** |
+| bitvector | **MathSAT 5.6.10** | `Unsafe` trace 5 — **wrong** |
+| efficient | **MathSAT 5.6.10** | `Safe` — correct |
+
+So it is the encoding, not the solver. (The 14 benchmark wrongs came from MathSAT; every local repro
+had used Z3 — that gap is now closed.)
+
+**Mechanism.** `BvOverflow.bvOverflowCondition` detects overflow by redoing the operation one bit
+wider and checking the two agree. C spells `a - b` as an n-ary **`(+ a (- b))`**, so the subtrahend
+arrives at `foldChecks` as a `NegExpr` and is widened with `widen(op, w)` = `SExt(bvneg b)` — the
+negation is performed at the **narrow** width, where it wraps. `bvneg INT_MIN == INT_MIN`, so for
+`b == INT_MIN` the "exact" reference value is `a - 2^31` instead of `a + 2^31`, the two sides differ,
+and a spurious overflow fires. The emitted SMT shows it plainly:
+
+```smt
+(= ((_ sign_extend 1) (bvadd a (bvneg b)))
+   (bvadd ((_ sign_extend 1) a) ((_ sign_extend 1) (bvneg b))))   ; <-- neg BEFORE widening
+```
+
+Note the real `SubExpr` branch (line ~102) is already correct — it widens both operands *then*
+subtracts. Only the `Add`-of-`Neg` spelling, which is what C actually produces, is affected.
+
+**Minimal witness — `scratchpad/negmin.c`, trace 5:** `a == -1`, `b == INT_MIN`;
+`a - b == 2147483647` is in range, yet bitvector reports `Unsafe(no-overflow)` while `efficient`
+reports `Safe`. `chl-*`'s `minus()` guards `a - b` and is called with unconstrained ints, so
+`b == INT_MIN` is reachable — hence the whole family.
+
+### ⚠️ First fix attempt FAILED — reverted, do not repeat it as-is
+
+Added `widenOperand(e, to) = if (e is NegExpr) BvExprs.Neg(widenOperand(e.op, to)) else widen(e, to)`
+and routed the reference side of `foldChecks`/`Sub`/`ShiftLeft` through it, deliberately leaving the
+**narrow** side on `widen` (the wrapped value must keep wrapping). It compiles and is arguably the
+right shape, but **`negmin.c` — three lines — then times out at 200 s** (rc 124) instead of answering,
+and so do `guard_minus.c` and the real `chl` task. Trading a wrong answer for a non-terminating run is
+not an improvement, so it was reverted; the tree is clean.
+
+Why it hangs is the open question, and is the next thing to establish (do **not** just retry the
+edit): the reference term becomes `bvadd (sext a) (bvneg (sext b))` where before it was
+`bvadd (sext a) (sext (bvneg b))`. Suspect the predicate-abstraction refinement no longer finds an
+interpolant it previously found. Worth checking first whether the *encoding* is now correct but the
+*analysis* diverges — e.g. run the same query with `--backend BMC` or a bounded check, which does not
+refine, to separate "formula wrong" from "CEGAR cannot refine it".
+
+### RESOLVED: the fix is CORRECT — the hang is CEGAR refinement, not the formula
+
+Supersedes "First fix attempt FAILED" above. Ran the fixed encoding under the **non-refining**
+backends, exactly as that entry proposed, and the split is clean:
+
+| `negmin.c`, bitvector | without fix | with fix |
+|---|---|---|
+| CEGAR / PRED_CART | `Unsafe` (**wrong**) | hangs (timeout) |
+| **BMC** | — | **Safe** ✓ |
+| **KIND** | `Unsafe` trace 4 (**wrong**) | **Safe** ✓ |
+
+So `widenOperand` produces a *correct* formula; PRED_CART's predicate refinement simply fails to
+converge on it. Clean A/B on the **same** backend (KIND, bitvector): without the fix `negmin.c` and
+`guard_minus.c` both answer `Unsafe`; with it both answer `Safe`.
+
+**Kept, per the standing rule** that a genuine fix stays even when it does not by itself produce an
+answer — it converts a **wrong** answer (−16) into a timeout (0) under PRED_CART, and into a
+**correct** answer under BMC/KIND, which are portfolio members. The remaining PRED_CART divergence is
+a separate, now-isolated problem (interpolation over `bvneg` of a sign-extended operand), not a reason
+to keep an unsound overflow check.
+
+Guarded by fixture `bv_sub_intmin.c` (`SAFE:no-overflow`, `bitvector`, batch 89) — carries both the
+minimal witness and the real `minus()` shape. The portfolio answers it `Safe` in well under the
+fixture timeout, verified before the row was added.
+
+Note the real `chl-collitem-subst` task still times out under KIND (3 threads); the fix removes the
+*wrong answer*, and whether those 14 runs become correct in the portfolio is for the next benchmark
+to say — do not assume +14.
+
+## Batch 89 COMPLETE — the 2×2: {PRED_CART, KIND} × {integer, bitvector+MathSAT}
+
+All four full-suite runs done, 36,602 tasks each, 5 min / 7 GB, Skylake, `Theta-svcomp-88`.
+
+| config | score | correct | wrong | wrong-`true` (−32) |
+|---|---|---|---|---|
+| PRED_CART integer | 8,856 | 6,122 | 32 | 4 |
+| PRED_CART bv+MathSAT | 10,383 | **7,270** | 76 | 9 |
+| KIND integer | 8,273 | 5,496 | 30 | 4 |
+| **KIND bv+MathSAT** | **10,629** | 6,876 | **29** | 12 |
+
+**KIND+bitvector is the best configuration on both axes that matter** — highest score *and* the
+fewest wrong answers (29 vs PRED+bitvector's 76), despite solving ~400 fewer tasks. That was not
+visible from the partial data: on the integer side KIND looks strictly worse than PRED_CART
+(8,273 vs 8,856), and the ordering reverses under bitvector.
+
+Bitvector helps both backends, and helps KIND more cleanly:
+
+| int → bv | error→correct | correct→error |
+|---|---|---|
+| PRED_CART | 2,724 | 1,566 |
+| KIND | 2,500 | **1,119** |
+
+### The wrong sets barely overlap — 22 of 83
+
+`PRED-bv wrong = 76`, `KIND-bv wrong = 29`, **both = 22**, PRED-only = 54, KIND-only = 7. So most of
+PRED+bitvector's extra wrongs are *backend*-specific, not encoding-specific, and KIND does not
+inherit them. Combined with the near-identical wrong counts under integer (32 vs 30), the story is:
+**bitvector is what unlocks tasks; PRED_CART is what turns some of them into wrong answers.**
+
+### What the shipped `65e6119b87` should move
+
+`chl-*` is **11 of KIND-bv's 29 wrongs** and 14 of PRED-bv's 76 — the largest single family in *both*
+bitvector configurations, and the one the INT_MIN negation fix addresses. It is therefore the biggest
+available win in the best-scoring config. (Still not to be assumed as +14/+11 — the fix removes the
+wrong answer; whether each task then answers or times out is for the next benchmark.)
+
+### Highest-severity remaining: 4 missed bugs, both bitvector configs
+
+`aws_byte_buf_init_harness_negated`, `aws_byte_buf_init_copy_from_cursor_harness_negated`,
+`aws_linked_list_init_harness_negated`, `aws_string_new_from_array_harness_negated` — all answered
+`true` where the expected verdict is `false`. A `_negated` harness exists precisely to *be* unsafe, so
+these are **missed bugs at −32 each**, the worst failure mode, and they are consistent across both
+backends under bitvector (under integer these tasks fail at the frontend instead, which is why they
+did not show up earlier). Next target.
+
+Other KIND-bv wrong-`true`: `popl20-*` (3, weaver concurrency), `2SB`/`4SB` (known memory-model),
+`09-regions_03-list2_rc` (known race), `cmp-freed-ptr`, `naturalNumbers1`.
+
+### NEXT TARGET — 4 aws `*_negated` missed bugs (−32 each, both bitvector backends)
+
+Reproduced locally on `aws_byte_buf_init_harness_negated.i` (LP64, bitvector, expected `false`):
+**both** `CEGAR/PRED_CART` and `KIND` answer `Safe`. A missed bug, not a false alarm — the worst
+failure mode, and consistent across backends, so it is a *modelling* problem rather than a search one.
+(Under `--arithmetic integer` these tasks fail at the frontend instead, which is why they surfaced
+only in the bitvector runs.)
+
+**What must be reachable.** The harness body is:
+
+```c
+struct aws_byte_buf buf = {nondet_ulong(), 0, nondet_ulong(), 0};
+struct aws_allocator *allocator = can_fail_allocator();   /* defined, returns &static */
+size_t capacity = nondet_size_t();
+if (aws_byte_buf_init(&buf, allocator, capacity) == 0) { ...negated asserts... }
+```
+
+and `aws_byte_buf_init` (defined at :7098, prototype at :4118 — normal order, so **not** the known
+"prototype after definition wiped the body" bug) already contains a negated assertion of its own
+before returning:
+
+```c
+buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
+if (capacity != 0 && buf->buffer == NULL) return -1;
+buf->len = 0; buf->capacity = capacity; buf->allocator = allocator;
+__VERIFIER_assert(!(aws_byte_buf_is_valid(buf)));      /* <-- must fire */
+return 0;
+```
+
+So there is a **very short** unsafe path: `capacity == 0` ⇒ `buffer = NULL` ⇒ the `if` guard is false
+(`capacity != 0` fails) ⇒ control falls straight into the inner assertion, with no allocation
+involved at all. `__VERIFIER_assert` is defined here as `if(!cond){reach_error();abort();}`, so this
+is plain reachability. Theta proving it `Safe` means it believes that path infeasible.
+
+Given the path needs no allocator success and no heap reasoning, the suspects are, in order:
+1. `aws_byte_buf_is_valid(buf)` evaluating to something that makes `!(valid)` true (check it directly
+   — it is a small predicate over `len`/`capacity`/`buffer`);
+2. the `assume_abort_if_not((buf))` / `assume_abort_if_not((allocator))` prologue killing the path;
+3. the `?:` on `capacity == 0` being mis-folded (note `ca34ff467e` already fixed one ternary
+   short-circuit defect — check whether this is a second shape rather than assuming it is not).
+
+Start by dumping the XCFA for the harness and checking whether the `capacity == 0` branch and the
+inner assert edge survive at all — do not write a hypothesis repro first.
+
+## Debugging bitvector where integer is CORRECT (user request 2026-08-15)
+
+The strict regression set — same task, `correct` under integer, `wrong` under bitvector — is **tiny**:
+
+| task | property | integer | bitvector | backends |
+|---|---|---|---|---|
+| `aws_linked_list_init_harness_negated` | unreach-call | `false(unreach-call)` ✓ | **`true`** ✗ | **both** |
+| `rule60_list2` | unreach-call | `true` ✓ | `false(unreach-call)` ✗ | PRED only |
+| `linear_interpolation_2` | no-overflow | `true` ✓ | `false(no-overflow)` ✗ | KIND only |
+
+Union of 3, one in both backends. So bitvector is **not** broadly less sound than integer — its extra
+76/29 wrongs are overwhelmingly on tasks integer could not answer at all, not regressions.
+
+### ✅ `linear_interpolation_2` is ALREADY FIXED by `65e6119b87`
+
+Re-run locally after the INT_MIN negation fix: **both** encodings now answer `Safe` (it was
+`false(no-overflow)` under bitvector in the batch-89 run). Independent confirmation that the fix
+generalises beyond the `c/weaver/chl-*` family it was found on.
+
+### `aws_linked_list_init_harness_negated` — reproduced, partially narrowed
+
+Integer: `Unsafe` **trace 9** (correct). Bitvector: `Safe` (missed bug, −32). The harness is 3 lines:
+
+```c
+struct aws_linked_list list;
+aws_linked_list_init(&list);                        /* head.next=&tail, head.prev=0,
+                                                       tail.prev=&head, tail.next=0 */
+__VERIFIER_assert(!(aws_linked_list_is_valid(&list)));
+```
+
+and `is_valid` returns `is_valid_deep(list)` only if
+`list && head.next && head.prev==NULL && tail.prev && tail.next==NULL` — all of which hold after
+`init`. Bitvector answering `Safe` means it evaluates that guard (or `is_valid_deep`) to false.
+
+**Refuted:** that a pointer to **offset 0** (`tail.prev = &head`) tests as NULL under bitvector —
+`scratchpad/ptr0.c` builds exactly that shape and is **Safe under both** encodings (KIND). So
+offset-0 truthiness is fine; suspicion moves to `aws_linked_list_is_valid_deep` (a loop walking the
+list) and to how the two encodings differ on the *empty-list* traversal.
+
+⚠️ **New blocker for this family:** PRED_CART + bitvector on pointer/struct programs dies with
+`Z3Exception: theory not supported by interpolation or bad proof`
+(`Z3ItpSolver.getInterpolant:108`, exit **221**) — even on the 12-line `ptr0.c`. Use **KIND** for
+bitvector pointer triage; PRED_CART cannot refine these at all. This is the third distinct
+bitvector solver-infrastructure failure recorded (with the `array-ext` back-transformation NPE and
+the native SIGSEGV) and is worth treating as its own work item — it likely accounts for a share of
+`pred_bvms`'s 699 solver errors.
+
+#### `aws_linked_list_init_harness_negated` — eliminations so far (NOT yet root-caused)
+
+Confirmed reproduction: integer `Unsafe` **trace 9** (correct), bitvector `Safe` (**missed bug**,
+−32), both backends, LP64, unreach-call.
+
+The unsafe path requires `aws_linked_list_is_valid_deep` to set `head_reaches_tail`, which turns on
+`temp == &list->tail` where `temp` was loaded back from `head.next`. If that comparison fails the
+walk falls out with the flag clear, `is_valid` returns 0, `!(is_valid)` holds, and the negated
+assertion passes — which is exactly the `Safe` bitvector reports. That is the shape to explain.
+
+**Eliminated (do not retry):**
+
+| hypothesis | test | result |
+|---|---|---|
+| offset-0 pointer tests as NULL under bv | `scratchpad/ptr0.c` | **Safe under both** — fine |
+| mid-object pointer store + compare-back loses offset | `scratchpad/midcmp.c` (exact `head.next=&tail; temp==&tail` shape) | **Safe under both** — fine |
+| the two encodings pick different memory models | both print `retrying with --memory-model flat` | **same model** — not it |
+| structural difference in the built XCFA | `xcfa.dot` 50 lines for both | **identical size** — not it |
+
+So the CFG and the memory model agree; the divergence is in *values*. From the emitted model
+(`scratchpad/aws_integer/xcfa.c`) the relevant encoding is:
+
+```
+aws_linked_list_init_harness__list_ = 65536 * (__malloc + 1);   /* object base */
+0[(+ list* 0)] = 65536 * (__malloc + 1);   /* head is its OWN sub-object, reached via a pointer cell */
+0[(+ list* 1)] = 65536 * (__malloc + 1);   /* tail likewise */
+0[(+ (deref 0 (+ init::list 0) Int) 0)] = init::list + 1;      /* head.next = &tail  ==  list + 1 */
+```
+
+i.e. `&list->tail` is `list + 1` (a *cell index*, not a byte offset), while `head`/`tail` themselves
+are separate sub-objects behind pointer cells. The next step is to compare the **bitvector** model's
+values for these same four assignments against the integer one — `xcfa.c` is not emitted under
+bitvector, so read `xcfa.json`/`xcfa.dot` in `scratchpad/aws_bitvector/`. Suspect the interaction of
+`65536 * (__malloc+1)` with the `+1` cell offsets once everything is Bv64 rather than unbounded Int.
+
+⚠️ Use **KIND** for any bitvector experiment here: PRED_CART + bitvector on pointer/struct programs
+cannot interpolate at all (`Z3Exception: theory not supported by interpolation`, exit 221) — it fails
+even on the 12-line `ptr0.c`.
+
+## ⚠️ CORRECTION (user, 2026-08-15): **bitvector + interpolation REQUIRES MathSAT**
+
+Z3-legacy cannot interpolate bitvector theories. Every local CEGAR/bitvector experiment in the
+sections above used the **default Z3** and is therefore invalid wherever interpolation was involved.
+Always pass `--abstraction-solver mathsat:5.6.10 --refinement-solver mathsat:5.6.10` with
+`--arithmetic bitvector` and a `*_ITP` refinement. (The batch-89 `pred_bvms`/`kind_bvms` runs already
+did this — only the local reproductions were misconfigured.)
+
+### What this changes
+
+**1. `65e6119b87` is BETTER than its commit message says.** That message states CEGAR/PRED_CART "no
+longer converges and times out" with the fix. **Wrong** — that was Z3 failing to interpolate, not
+divergence. With MathSAT, PRED_CART answers **`Safe`** on both `negmin.c` and `guard_minus.c`. So the
+fix is **wrong → correct** under the configuration the benchmark actually uses, not wrong → timeout.
+The reasoning for keeping it stands; only the stated downside was imaginary.
+
+The real `chl-collitem-subst` still **times out** at 280 s under PRED_CART+MathSAT with the fix
+(it answered `Unsafe` — wrongly — before). So for that task the trade really is wrong → timeout; for
+the minimal shapes it is wrong → correct. Whether the 14 benchmark runs land as correct or timeout at
+300 s is still for the next benchmark to say.
+
+**2. The "PRED_CART+bitvector cannot interpolate pointer programs" blocker was MY misconfiguration,
+not a theta bug.** With MathSAT, `ptr0.c` returns a clean `NotSolvableException` ("Task is not
+solvable with this configuration", exit **220**) instead of `Z3Exception: theory not supported by
+interpolation`. Strike that item from the bitvector-infrastructure list.
+
+**3. Re-check the other two "bitvector solver-infrastructure" findings before treating them as bugs** —
+both were observed under Z3 with bitvector and may be the same misconfiguration:
+- native **SIGSEGV** (exit 139) on `g1.c`/`cstrchr_reverse_alloca`;
+- **`array-ext`** back-transformation NPE (exit 202) in `Z3TermTransformer`.
+Neither has been retried with MathSAT. Do that before filing them as defects. (The `array-ext` NPE
+may still be real for *non*-interpolating uses of Z3, and `pred_bvms`'s 699 solver errors came from
+MathSAT runs, so that bucket needs its own look either way.)
+
+**4. UNAFFECTED: the `aws_linked_list_init_harness_negated` missed bug is real.** Re-run under
+PRED_CART + **MathSAT**: still `Safe` where integer says `Unsafe` (trace 9). The four eliminated
+hypotheses recorded above stand.
+
+### Retry of the two remaining "bitvector infrastructure" findings under MathSAT — verdicts
+
+| finding | under Z3 (as first seen) | under MathSAT | verdict |
+|---|---|---|---|
+| native SIGSEGV, `g1.c` | exit 139, dumped core | **`Safe`** | **NOT a bug** — misconfiguration. Struck. |
+| `array-ext` NPE, `bounded.c` | exit 202 | see below | **REAL** — see below |
+
+**`array-ext` is a genuine defect and it is NOT bitvector-specific.** It reproduces under
+`--arithmetic efficient` (which picks integer arithmetic here) with the **default Z3**, a
+configuration where Z3 interpolation is fully supported — so the MathSAT correction does not excuse
+it. That is also the configuration the shipped portfolio uses.
+
+| config on `scratchpad/bounded.c` | outcome |
+|---|---|
+| efficient + default Z3 | `NullPointerException: Unsupported function 'array-ext'`, exit **202** |
+| efficient + MathSAT | timeout (no error) |
+| bitvector + MathSAT | `SmtLibSolverException`, exit 221 |
+
+`array-ext` is Z3's array-extensionality skolem — the index witnessing that two arrays differ. It
+appears in models whenever array equality/disequality is reasoned about, and
+`Z3TermTransformer.toFuncLitExpr:373` has no handler, so it dies with a bare NPE. Exactly the same
+shape as the `bit2bool` gap fixed in `646ac3b51c`.
+
+Fixing it properly means back-transforming a skolem witness, which is not straightforward — a
+reconstructed index must not silently claim a wrong value. The cheap, honest step is to replace the
+bare NPE with a documented refusal naming the function (score is 0 either way, but the failure stops
+looking like a crash). Sizing it first would be sensible: the `pred_int` server-error bucket is 4,449
+runs and is dominated by Juliet CWE190/CWE191, so `array-ext`'s real share is unmeasured — the
+per-run logs are zipped on benchcloud, so measuring it means pulling
+`*.logfiles.zip` and grepping, not guessing.
+
+**Also confirmed:** `cstrchr_reverse_alloca` is `Unsafe` trace 7 under **bitvector + MathSAT** too, so
+that family's false `valid-deref` is encoding-independent — consistent with the multi→flat fallback
+root cause recorded earlier, not with anything solver-specific.
+
+## MEASURED: what the error buckets actually contain (from the zipped per-run logs)
+
+Pulled by grepping `*.logfiles.zip` **remotely** on benchcloud (35 MB for `pred_int`, no transfer).
+
+### `pred_int` (single config — counts ≈ runs)
+
+| count | error |
+|---|---|
+| 8,117 | `UnsupportedFrontendElementException` |
+| **4,752** | `IllegalStateException` **with no message at all** |
+| 1,871 | `IllegalStateException: Non-bitvector type found!` |
+| 1,589 | `UnknownSolverStatusException` |
+| **3,788** | `No such method` — `memset` 1,373, `fscanf` 1,290, `fgets` 719, `calloc` 372, `_setjmp` 34 |
+| **558** | **`array-ext`** back-transformation NPE |
+| 624 | `No such variable or macro` (`SHAREX_*` 560, `malloc` 64) |
+| 450 | `NotSolvableException` |
+
+So **`array-ext` is sized: 558 runs** in this config — real and worth fixing, and it is the third
+largest *fixable* single cause here.
+
+Two larger items surface alongside it:
+- **`No such method <libc>`, 3,788 runs.** `memset`/`calloc` are memory functions theta ought to
+  model. Note the fixture `undeclared_memory_functions.c` already covers *undeclared*
+  malloc/free/memcpy/memset being routed to the modelled ones — so this is a **different path**
+  (declared-but-not-defined), not a gap in that feature. Worth checking why the routing does not
+  apply.
+- **4,752 bare `IllegalStateException` with an empty message** — the second largest bucket and
+  completely undiagnosable as logged. Making these name their cause is cheap and would likely split
+  this bucket into several actionable families.
+
+### ⚠️ run 87 (shipped portfolio) — the same grep, but the counts mean something DIFFERENT
+
+`fscanf` 109,445 · `calloc` 90,050 · `memset` 82,623 · `fgets` 62,660 · `_setjmp` 9,526 · `fopen`
+7,239 · `tanhf` 3,479 · `memcpy` 3,326 · `expf` 2,484 · `sin` 2,344, plus 391,769
+`ErrorCodeException` and 39,438 `UnsupportedOperationException`.
+
+**Do not read these as run outcomes.** The portfolio tries config after config and each failing
+sub-config logs its own error, so one task contributes many messages. The proof is in the XML:
+run 87 has only ~**3,100** runs whose *final* status is an error (1,609 frontend-before, 1,322
+frontend-after, 199 solver, 5 generic) out of 23,381 category=`error` — the rest are TIMEOUT/OOM.
+So unmodelled libc functions mostly cost the portfolio **time** (each sub-config dies and the next is
+tried) rather than directly costing score. That may still convert would-be answers into timeouts,
+which is worth quantifying, but the headline counts must not be quoted as "82,623 tasks fail on
+memset".
+
+(`bit2bool` appears 3,182 times in run 87 and is already fixed in `646ac3b51c`, which post-dates that
+run — a useful confirmation that this grep does surface real, fixable causes.)
+
+## Batch 90 — diagnostics + libc audit (user request 2026-08-15)
+
+### Q: what ARE the 8,117 `UnsupportedFrontendElementException`s?
+
+**Essentially all of them are floating-point types under integer arithmetic** — not a defect:
+
+| count | message |
+|---|---|
+| 4,198 | `Not (yet) implemented (CFloat …)` |
+| 3,789 | `Not (yet) implemented (CDouble …)` |
+| 130 | `Not (yet) implemented (CLongDouble …)` |
+
+Everything else is in the tens: struct field not found 28, `typeof` over an undetermined type 25,
+the inlining-arity refusal from `7976b40d75` (22 `printk`, 14 `dev_err`, …), byte-union float member
+6, `fesetround` 3. So this bucket is the integer encoding declining floats, exactly as designed, and
+is **not** an actionable error family.
+
+### ✅ `array-ext`: clean refusal (both Z3 transformers)
+
+The old `checkNotNull(model, "Unsupported function '…'")` reported a **NullPointerException** whose
+message named the symbol — but the condition that actually failed was `model == null`, not the symbol
+being unsupported, so the message was misleading as well as ugly. Replaced with an explicit
+`UnsupportedOperationException` naming symbol **and arity** and saying why: no theta expression
+corresponds to it and there is no model to interpret it against.
+
+Deliberately **not** "fixed" by inventing an index: `array-ext(a,b)` is Z3's Skolem witness for array
+extensionality (`a≠b → select(a,ext) ≠ select(b,ext)`), and substituting a fresh variable for a
+Skolem changes what an interpolant means — trading a crash for a possible wrong answer.
+
+### ✅ Bare `IllegalStateException`s now carry messages
+
+Measured first: **4,728 of the 4,752** came from **one** site, `ExpressionVisitor#visitShiftExpression`,
+and 24 from `CAssignment#getrExpression`. Both are `checkState(x instanceof BvType)` with no message,
+and both fire for the same reason — **shifts and compound bitwise assignments are modelled only over
+bitvectors**, so under `--arithmetic integer` the operands are unbounded `Int`s. All six call sites
+now say that, and name the offending type and the flag to change.
+
+### ❌ `calloc`: attempted, does NOT work, reverted
+
+`calloc` is genuinely unmodelled (`malloc`/`realloc`/`memcpy`/`memset` all have passes; it does not).
+Lowered it as `calloc(n,s)` → `malloc(n*s)` + `memset(p,0,n*s)` in a new `CallocFunctionPass` placed
+before both — reusing tested machinery rather than open-coding, and inheriting `memset`'s
+known-count restriction.
+
+**It does not help.** `MemoryFunctionsPass.fill` needs the *pointee* type (`elementOf(dst)`), and
+`calloc` returns `void*` — there is no element type at the call, so the fill gives up and the task
+now fails with "No such method **memset**" instead of "No such method **calloc**". Verified on a
+4-element `calloc` test: exit 202 either way. Reverted; the pass file is deleted and unwired.
+
+**Why this is the byte-granular blocker again, not a missing pass:** memory is modelled as
+`arrays[base][index]` over *typed* cells, so "zero N bytes" is only expressible once the element type
+is known. `memcpy`/`memset` work because their destination is a typed pointer at the call site;
+`calloc`'s is `void*` by its C signature. A correct `calloc` therefore needs either the byte-granular
+model or the pointee type recovered from the *use* of the result — the same structural item already
+recorded for intel-tdx and union punning. Do **not** re-attempt the malloc+memset lowering.
+
+⚠️ Do not "fix" it by lowering `calloc` to plain `malloc`: freshly allocated cells are unconstrained,
+so a program that relies on `calloc` zeroing would get a **wrong answer** instead of an error.
+
+### The other unmodelled libc functions
+
+`fscanf`, `fgets`, `fopen`, `_setjmp`, and the math family (`tanhf`, `expf`, `sin`) remain unmodelled.
+These are **not** cheap to add soundly: `fgets`/`fscanf` write nondeterministic bytes *into a caller
+buffer* (the same typed-cell problem as `calloc`), and `_setjmp` is non-local control flow. Modelling
+any of them as a plain nondet return would be unsound — it would drop their memory side effects.
+They are correctly failing loudly today; sizing before attempting is the right order.
+
+### ✅ CORRECTION: `calloc` IS implementable — the earlier "reverted" entry above is superseded
+
+I gave up on this too early. The types *are* available from metadata; the mistake was looking for them
+in the wrong place, and then in the wrong scope.
+
+**Two things had to be right:**
+
+1. **Where the fill goes.** `calloc` returns `void *`, so at the call itself `pointeeOf` sees no
+   element type and `MemoryFunctionsPass.fill` gives up. But the result is bound to a properly typed
+   pointer (`int *p = (int *) calloc(...)`), and *that* expression carries the real `cType`. Emit the
+   `memset` against the **binding**, not the call.
+2. **Where to look for that binding.** It is on a **later edge**, not in the call's own label list —
+   which is why the first two attempts still reported "No such method calloc". The pass now works in
+   two phases over the whole procedure: replace each `calloc` with `malloc`, then scan for the
+   assignment that references the result and insert the fill after it.
+
+Also note the binding is `p = (T *) tmp`, a *cast*, not a bare `p = tmp`, so the match is on the
+right-hand side **referencing** the result rather than being it.
+
+**Verified in both directions** — this is the check that distinguishes a real fill from a vacuously
+infeasible path:
+
+| program | expected | got |
+|---|---|---|
+| `calloc(4,sizeof(int))`, assert `p[0]==0 && p[3]==0`, write/read `p[2]` | Safe | **Safe** ✓ |
+| same, but `if (p[1] == 0) reach_error();` | Unsafe (calloc *does* zero) | **Unsafe** trace 6 ✓ |
+
+Before the pass both were `exit 202, No such method calloc`.
+
+Guarded by fixture `calloc_zeroes.c` (batch 90). Restriction retained deliberately: a statically
+unknown count, or a result never bound to a typed pointer, is left alone and still fails loudly —
+handing back a block that is silently not zeroed would be a wrong answer, not a missing feature.
+
+`memset` itself was already implemented (`MemoryFunctionsPass`); what was missing was `calloc`
+reaching it with a usable destination. The remaining unmodelled names (`fscanf`, `fgets`, `fopen`,
+`_setjmp`, math) are still open and are a different problem — they write nondeterministic data into
+caller buffers or move control non-locally.
+
+## NEXT: `memset`/`memcpy` with a SYMBOLIC count — emit a loop instead of giving up
+
+User direction (2026-08-15): stop `giveUp`ing on a symbolic byte count; emit a loop over the
+elements of the pointee, sized by translating the byte count into an element count. Correct — and it
+does **not** need the byte-granular model, which is what I wrongly implied when I called this
+blocked.
+
+**Why it currently fails.** `MemoryFunctionsPass` has implemented `memset` since batch ~60, but
+`elementCount` (line ~346) requires `literalValue(bytes)`, so a symbolic `n` returns null and
+`giveUp` leaves the `InvokeLabel` in place. The analysis then reports **"No such method memset"** —
+a misleading message, since the pass *saw* the call and declined it. 1,373 runs in `pred_int`;
+82,623 message occurrences in run 87 (that second figure is sub-config noise, not runs — see the
+caveat above).
+
+**Design.**
+
+```
+i = 0
+while (i < n / w) { dst[i] = filler; i = i + 1 }     // w = sizeof(element), integer division
+```
+
+- `n / w` is computable symbolically — `Div` on the count expression — so nothing needs to be known
+  at build time. Partial fills of an array (`memset(arr, 0, k)` with `k < sizeof arr`) fall out
+  naturally: the bound is just smaller.
+- Needs new locations + edges inside the pass. Precedent: `MemsafetyPass` (`XcfaLocation(...)` at
+  :108/:192/:294/:334) already builds branch structure this way.
+- Keep the existing constant-count path: it emits straight-line assignments, which the analyses
+  handle far better than a loop. The loop is the fallback, not the replacement.
+
+**⚠️ Soundness subtlety not to skip — the partial tail.** When `n % w != 0` the last element is only
+*partly* covered. Filling `floor(n/w)` elements leaves that element holding its **old** value, but a
+real `memset` overwrote some of its bytes — so the model would carry a specific *wrong* value, which
+can both miss a bug and invent one. The tail element must therefore be **havoc'd**, not left alone:
+unconstrained is an over-approximation and safe, the stale value is not. (This is the one place the
+byte model would do better — it would fill exactly.)
+
+**⚠️ Pass-order consequence.** `MemoryFunctionsPass` runs at position 133, *after* `LoopUnrollPass`
+(69), so a loop introduced here is **never unrolled** — it reaches the analyses as a real loop. Fine
+for KIND/BMC/IMC; CEGAR must then find an invariant for a fill loop it previously never saw. Measure
+that rather than assume it: the honest comparison is against today's baseline of an outright error
+(score 0), so even a timeout is not a regression, but a *new* class of CEGAR divergence would be.
+
+Also worth doing at the same time and cheap: make the remaining `giveUp` cases say so. Reporting
+"No such method memset" for a call the pass deliberately declined is the same diagnosability defect
+just fixed for the bare `IllegalStateException`s.
+
+### ✅ IMPLEMENTED: symbolic-count `memset` emits a loop
+
+Supersedes the "NEXT" design entry above. `MemoryFunctionsPass` now lowers a `memset` whose byte
+count is not known at build time into a real loop over the elements it covers:
+
+```
+i = 0;  while (i < n / sizeof *dst) { dst[i] = c; i = i + 1; }
+```
+
+The byte count needs only to be *translated* into an element count — an ordinary division — so
+nothing has to be known statically and the byte-granular memory model is **not** required (my earlier
+claim that it was is withdrawn). A partial fill of an array falls out of the same bound.
+
+Verified both directions (the check that separates a real fill from an unreachable path):
+
+| program, symbolic `n`, count `n * sizeof(int)` | expected | got |
+|---|---|---|
+| `memset(p,0,n*4)` then assert `p[0]==0` | Safe | **Safe** ✓ |
+| same, but `if (p[0]==0) reach_error()` | Unsafe | **Unsafe** trace 10 ✓ |
+
+Both were `exit 202, No such method memset` before. Gate: 262 canaries / 65 fixtures / 0 FAIL,
+fixture `memset_symbolic.c`.
+
+**The straddled tail is havoc'd**, guarded on `count * w == n` so the exact case keeps its precision —
+leaving it with its stale value would be a specific wrong value, not a safe over-approximation.
+
+**Two things learned building it:**
+- Every edge label must be a `SequenceLabel`. Bare `StmtLabel`s on the assume edges made
+  `UnresolvedInvokeToHavocPass` → `splitIf` fail its `check(label is SequenceLabel)` — surfacing as
+  `IllegalStateException: Check failed`, exit 210.
+- **CEGAR/PRED_CART times out** on the symbolic case: the pass sits at position 133, after
+  `LoopUnrollPass` (69), so this loop is never unrolled and CEGAR must invent an invariant for it.
+  KIND/BMC/IMC answer it. Against a baseline of an outright error (0) that is not a regression, but
+  the win is backend-dependent and the portfolio must reach a loop-capable config.
+
+⚠️ **`--backend NONE` runs the full pass pipeline**, so parse-only runs *do* exercise all of this —
+they are not "frontend only" in the sense of skipping passes. Run 91 was launched before this landed
+and was therefore stopped and relaunched rather than kept.
+
+## Batch 91 — the run-91 parse regression, and three of the four error families
+
+### ⚠️ Run 85 was DOUBLE-COUNTED in my first comparison (user caught it)
+
+My run-85 figures came from an inline script that globbed **all 55** `*.xml.bz2`, with none of the
+runset/block-level dedup `psum.py` does — counting most runs twice (72,103). Deduped it is **36,602**,
+the *same task set* as run 91, so the two are directly comparable after all and my "different task
+sets, not comparable" was wrong.
+
+| status | run 85 | run 91 | Δ |
+|---|---|---|---|
+| built OK | 31,472 | 30,744 | **−728** |
+| frontend failed, before parsing | 1,878 | 1,565 | −313 ✓ |
+| frontend failed, **after** parsing | 1,352 | 2,260 | **+908** ✗ |
+
+Per-task diff: **920 regressed** (built → failed), 193 improved.
+
+### ROOT CAUSE of the regression: my own arity guard was too broad
+
+`7976b40d75` refused **any** arity difference. But the loop walks `calleeParams` and indexes
+`invokeLabel.params[i]`, so only a callee with **more** parameters than the call site supplies can run
+off the end. A call site supplying *extra* arguments is every variadic call — `printk(fmt, ...)`,
+`dev_err`, `__dynamic_dev_dbg` — which indexes safely and ignores the surplus, exactly as it did
+before the guard existed. Refusing those cost **713 runs** (printk 476, dev_err 158,
+__dynamic_dev_dbg 79), the bulk of the 839 after-parsing regressions, concentrated in LDV drivers.
+
+Narrowed to `calleeParams.size > invokeLabel.params.size`. Verified: a regressed
+`205_9a…cdc_eem.ko` task returns `ParsingResult Success`. **Same mistake as the reverted flat-fallback
+ban** — a guard written for one observed shape and applied wider than the evidence supported. No
+canary covers a variadic call into an undefined callee, which is why the gate stayed green.
+
+### The other families
+
+| family | count | status |
+|---|---|---|
+| inlining arity | 713 | **FIXED** (above) |
+| `lhs is a BvPosExpr / BvSignChangeExpr` | 325 | **FIXED** — a promotion/signedness wrapper on the *lvalue* names the same storage as the variable underneath, so the assignment is built against the peeled variable with the value converted to *its* type. Verified: the probe task moves past it to an unrelated `typeof` limitation. |
+| `__VERIFIER_nondet_memory with arguments` | 167 | **FIXED** — a pass-ordering bug. `NondetFunctionPass` (80) demands exactly one parameter and rejected it before `MemoryFunctionsPass` (133) could act; and `nondetFill` bailed out unless the *bytes* model was on. It now fills element cells under the typed-cell models too (byte count ÷ element width, the same translation `fill` does), and `NondetFunctionPass` defers in every memory model. |
+| `non-constant dereference offset` | 213 | **NOT fixed, deliberately** — see below |
+
+**Why the non-constant offset is left alone.** It is already a *documented refusal*, not a crash. The
+offsets are pthread array handles indexed by a loop variable that `PthreadArrayHandleUnrollPass` did
+not unroll: `(mod main::forN::i N)` 306, `(mod main::i N)` 28, `(mod t_fun::i N)` 22. Resolving them
+would mean giving `&t[i]` a thread identity for symbolic `i`; mapping them all to the base variable
+would **merge distinct threads**, which is exactly what makes racing tasks answer wrongly (the
+`mutex1`/`mutex2` constraint). That is a real analysis feature, not a pass tweak, and a wrong answer
+is worse than the honest refusal already in place.
+
+### Host note
+The machine was wiped mid-session again: **no JDK, gcc, python3, unzip, bzip2 or jq**, and `/tmp`
+(scratchpad, generated TSVs) gone. `./gradlew` fails with "JAVA_HOME is not set" — and a build whose
+output is grepped only for `^e:` will look like it *succeeded*. Reinstall with
+`sudo apt-get install -y openjdk-21-jdk-headless gcc python3 unzip bzip2 jq`. The repo,
+`benchmark-results/` and `sv-benchmarks` survive.
+
+## Batch 92 — the 10-item frontend plan (user-sequenced 2026-08-19)
+
+Worked ONE AT A TIME, each gated on `run_canaries.sh "" parse` (262 canaries + 65 fixtures) AND the
+per-module unit tests, then committed before the next is started. Cron `288bf05b` re-enters this every
+5 h so an interrupted session resumes here. Items marked **[subagent]** are to be delegated with fresh
+context, per the user; gate and commit their work in the main session.
+
+Baselines to beat: run 94 parse-only = **31,984 built OK**, 1,492 frontend-before, 850 frontend-after.
+Run 93 full portfolio = score 19,804, 57 wrong, 18 missed bugs.
+
+| # | item | why it is here | status |
+|---|---|---|---|
+| 1 | **[DONE]** print the offending TYPE in `Non-array expression used as array!` (was Q2) | the message names nothing, so the family cannot be triaged at all | |
+| 2 | **[DONE]** struct expanded mid-definition was cached stale (was Q3; NOT 'collection stops' -- re-entrant expansion via a fn-pointer member's typedef) | `cert_st` defines `key, valid, mask, export_mask, rsa_tmp, rsa_tmp_cb, dh_tmp, dh_tmp_cb, pkeys[5], references`; theta collected exactly `[valid, export_mask, key, mask, rsa_tmp]` and dropped everything from `rsa_tmp_cb` on. 28 runs directly, and very likely the SAME root cause as item 3 below | |
+| 3 | **[DONE -- no code needed]** fn-pointer through a `Dereference` (was Q8): measured against the pre-fix jar, already fixed by the earlier declarator fix; all 34 distinct families re-run, zero remain | `isCallableFunctionPointer` gates on the TYPE, not the shape -- candidate sets could dispatch any expression. These 79 are a `Dereference` whose cType lost its function-pointer-ness, i.e. probably item 2's bug. **Re-measure after item 2 before doing any work** | |
+| 4 | **[DONE]** peel `BvPosExpr`/`BvSignChangeExpr` in the remaining lvalue shapes (was Q7). Residue is a DIFFERENT bug: they peel to `BvExtractExpr (Bv 1)` = single-bit bitfield writes, all intel-tdx -- likely dissolves under item 10 | the branch peels to `RefExpr`/`Dereference`; 94 runs peel to something else. Item 1's type printing should reveal what | |
+| 5 | **[DONE]** give every DECLARED-but-not-defined function a referencable id (was Q6). Cause was the name PRE-PASS only walking definitions + reordered global decls; also closed a soundness hole where the id var was left unconstrained | only *defined* functions get an id, so `= malloc` / `= __VERIFIER_nondet_int` resolve to nothing (96 runs). Must work when a function is declared MORE THAN ONCE | |
+| 6 | **[DONE]** inline a void call that does not pass the synthetic return slot (was Q4). Fixed in the INLINER, not by removing the slot -- the pipeline assumes a ret var exists | `void outb(unsigned char, unsigned int);` is declared with 2 params and every call passes 2, yet the callee arrives with 3 -- the arity guard then refuses (30 runs). The C is consistent; the mismatch is ours | |
+| 7 | **[DONE]** switch to the bitvector encoding when a bitwise op needs it (was Q1). The fallback already existed at `XcfaParser.kt:267` and was DEAD: `FunctionVisitor` resolves `efficient` into integer/bitvector *before* the parse can fail, so the retry's `== efficient` guard was never true. Root cause underneath it: `BitwiseChecker` had no `visitAssignmentExpression` at all -- the grammar routes `x |= y` through `assignmentOperator`, not `inclusiveOrExpression` -- so a program whose only bit manipulation is compound looked purely arithmetic, integer was chosen, and `CAssignment` then refused the first `|=` under an encoding the frontend itself had picked. Also fixed: the four bitwise visitors descended into operand 0 only, leaving later operands unanalysed | `|=`, `>>=`, `<<=` and friends are only modelled over bitvectors; under `--arithmetic integer` there is no bit representation. Rather than refuse, fall back to bitvector for that task | |
+| 8 | **[DONE]** `Array with unspecified size must have initializer list` (was Q5). All 112 runs are `extern T a[];` -- a DECLARATION, not a definition (C17 6.9.2p2), whose extent lives in another TU and is unknowable here; 73 such declarations over 11 names across the 56 tasks, 100% extern, none defined in-file. Fix: give the object its base, invent no extent, skip the initializer sweep, and register a FLAT_STRIDE memsafety bound (an unregistered base reads back as size 0, which makes every access an invalid deref). ⚠️ The bound is deliberately the PERMISSIVE direction -- it can miss a real OOB on such an array, but the alternative invents an extent and produces wrong `false(valid-deref)`. Tentative definitions and flexible array members still refused, now by name | could not reproduce from logs -- the message truncates on `CArray.toString()`. Reproduce locally first, then decide the correct behaviour | |
+| 9 | **[DONE]** intel-tdx `ClassCastException: Expected (Bv 32), got (Bv 64)` (was Q9). TWO width bugs, one per data model. (a) `unsigned long` is 64-bit only under LP64, so "the unsigned type of width n" returned a type HALF the requested width under ILP32 and the union layout addressed past the cell (`_LARGE_INTEGER`, ldv drivers); now falls through to `unsigned long long` only where `unsigned long` is too narrow. (b) A union member that is a packed word of bitfields is stamped with the STRUCT's C type (so `.f` resolves as a field) and every aggregate reports a pointer-width placeholder as its SMT sort -> 64-bit value into a 32-bit cell (intel-tdx `keyid_ctrl.command = 1`); the splice now uses the unsigned type of the CELL's width, keeping the recorded type and still reporting when no C type matches. intel-tdx 210->0; ntdrivers advances to the separate `Could not handle left-hand side` family, so <298 runs are converted | 149 tasks x 2 configs, 62% intel-tdx. The archived XML truncates the message and no logfiles were kept, so it had to be reproduced locally | |
+| 10 | **[DONE -- implemented, measured, and DELIBERATELY NOT SHIPPED]** fall back to `--memory-model bytes` when a failure says the bytes model would fix it (was Q10). The fallback works (guards correct, 3 float-newlib tasks 210->0), but the model it falls back INTO is unsound for the very pattern that triggers it, so shipping it would convert ~554 score-0 ERRORs into wrong `false` verdicts at -16 each. Reverted; repro kept at `canaries/fixtures/union_double_punning_bytes_UNSOUND.c` | ⚠️ the bytes model IS implemented on this branch; the fallback is a ~40-line mirror of multi->flat. The blocker is soundness, not wiring | |
+
+### The fp round-trip's cost: NaN payloads (measured 2026-08-20, AFTER f470a74ddf)
+
+Asked whether the unshipped bytes fallback would only ever produce ERRORs after the round-trip fix,
+or could produce wrong verdicts. **It can produce wrong verdicts.** Measured, not reasoned:
+
+    u.words[1] = 0x7FF80000u; u.words[0] = 0x2Au;  /* a NaN with payload 42 */
+    double d = u.value;  u.value = d;              /* out through the float view and back */
+    if (u.words[0] != 0x2Au) reach_error();
+
+gcc: SAFE. theta under `--memory-model bytes`: **`SafetyResult Unsafe`** -- a spurious
+counterexample, i.e. a wrong `false` (-16), not an ERROR (0).
+
+Cause -- **corrected 2026-08-20 after checking the primary sources**, an earlier note here blamed
+the canonicalization and that was wrong. The payload cannot survive a float round trip at all,
+canonicalization or not, because SMT-LIB's FloatingPoint sort has **one** NaN element. Measured
+against z3 4.12.6:
+
+| query | result | meaning |
+|---|---|---|
+| `fp.isNaN x` and `fp.to_ieee_bv x != #x7FF8...0` | **sat** | the bits of a NaN are NOT pinned to the canonical pattern; the solver may choose |
+| two distinct NaNs whose `fp.to_ieee_bv` differ | **unsat** | it IS a function -- every NaN maps to the same bits, so payloads collapse |
+| `fp.to_ieee_bv((_ to_fp 11 53) #x7FF8...2A) != #x7FF8...2A` | **sat** | a payload round trip MAY lose the payload ... |
+| the same, asserted equal | **sat** | ... and may keep it. Purely the solver's choice |
+
+So in a verification query the solver is free to pick the representative that falsifies the property,
+and it will. Our `Ite(IsNan, canonicalNaNBits, ToIeeeBv)` only makes that choice *deterministic*
+(and consistent across solvers); the verdict on the repro is Unsafe with or without it. The
+regression is caused by floats now travelling through IEEE bits at all, not by the guard.
+
+Z3's own header (`z3_fpa.h`, `Z3_mk_fpa_to_ieee_bv`) reads: "IEEE 754-2008 allows multiple different
+representations of NaN. This conversion knows only one NaN and it will always produce the same
+bit-vector representation of that NaN." That is consistent with the table -- "one NaN" is the single
+NaN *element of the sort* (row 2), not a bit pattern fixed by the theory (row 1).
+
+⚠️ **This is a REGRESSION from f470a74ddf, and was verified as one** by rebuilding the parent commit:
+before the fix this program verified **Safe**, because a float write did not touch the byte cells at
+all, so the payload written through the integer view survived. That was luck, not soundness -- the
+same non-aliasing is what made `u.value = 1.0; u.parts.msw` unconstrained and Unsafe. So the fix
+trades a broad wrong-answer class (all punning of ordinary values, the newlib idiom) for a narrow one
+(NaN payload preservation). Net positive, NOT strictly better, and worth saying out loud.
+
+No cheap repair: an exact to-bits direction is what is needed and SMT-LIB does not specify one.
+Peeling `ToIeeeBv(FromIeeeBv(b))` only catches a write whose right-hand side is syntactically the
+read; here the value passes through a local first.
+
+Repro: `canaries/fixtures/union_nan_payload_bytes_KNOWN_WRONG.c`, unregistered on purpose.
+
+**Not reachable in anything shipped**, including runs 96/97: `bytes` needs an explicit
+`--memory-model`, and the automatic fallback to it stays unshipped. So the answer to "errors only?"
+is: on MathSAT yes, loudly (both conversion directions throw at encoding time); on a Z3 config the
+round trip works and is correct for ordinary values, but NaN payloads are silently wrong.
+
+## The canary suite is now a Gradle task (2026-08-22)
+
+`./gradlew :theta-xcfa-cli:canaryTest` -- registered in the `verification` group, reporting **one
+JUnit result per canary and per fixture** (337 = 268 + 69, verified) instead of a single exit code.
+
+Decisions worth keeping:
+- **It invokes `run_canaries.sh`, it does not reimplement it.** That script carries the traps learned
+  the hard way: a stale extracted distribution silently reused, the exec bit on `theta-start.sh`, and
+  `timeout` not killing the JVM the script spawns. A Kotlin rewrite would rediscover all of them.
+- **Skips when it cannot run, fails when it cannot be trusted.** No built distribution or no
+  sv-benchmarks checkout is an assumption failure (skip) -- neither exists on a fresh clone. But an
+  unparseable result set is a FAILURE, so a broken invocation cannot look like a clean sweep.
+- **Excluded from `test`** (verified: the normal task produces 7 result files, none of them the
+  canary class). A parse sweep is ~20 min and needs gigabytes of benchmarks.
+- `-Ptheta.canary.mode=full` checks verdicts rather than only that the frontend builds each task;
+  `-Ptheta.canary.jobs=N` lowers the sweep's parallelism.
+
+First run: 337 tests, 1 failure -- `neural-networks/cartpole_0_safe` with `nonzero exit 137`.
+⚠️ **Corrected after measuring:** this was first written up as an artefact of the suite's 4-way
+parallelism that passes when re-run alone. It is not. On a host with ~13 GB of 62 free it failed at
+4 jobs, failed again at `-Ptheta.canary.jobs=2`, and passed only at `PARALLEL_JOBS=1` -- and it has
+failed alone before too. The deciding factor is the machine's free memory, not the parallelism, so
+the knob is pressure relief rather than a remedy. **Deliberately not special-cased**: a test that
+swallows `exit 137` would also swallow a genuine memory regression.
+
+## PR document drafted (2026-08-22)
+
+`benchmark-results/PR.md`, not opened. Leads with the score table INCLUDING run 98's -6,428 dip,
+because that dip is the branch's strongest evidence that an error-count improvement means nothing on
+its own. Carries a "Known limitations -- please read before merging" section with all seven open
+items: the one correct->wrong regression and its bisect, the 20 exposed-not-caused wrongs (9 of them
+in the expensive -32 direction), the stub-range fix that works without an explanation, the 8 still
+refused ntdrivers tasks, the `CComplexType.getType` instability, the deliberate float refusal under
+the byte-addressed model, and the pre-existing formatting violations this branch neither adds to nor
+fixes.
+
+## Bisect of the one real regression: `ldv-regression/rule60_list2` (2026-08-22)
+
+`git bisect run` over the batch-92 range (good = `7dc13cc52d~1`, bad = `e07b3354df`, 4 steps):
+
+    c8cf3c3ba94ac135d947a2e6798a1aa121b7ea85 is the first bad commit
+    -- "select bitvectors for compound bitwise assignments, and let the fallback fire" (item 7)
+
+**But item 7 is not where the wrong answer lives.** On this task:
+
+| build / flag | verdict |
+|---|---|
+| `--arithmetic integer` (any build) | **Safe** -- correct |
+| `--arithmetic bitvector` (any build, INCLUDING pre-item-7) | **Unsafe** -- wrong |
+| `--arithmetic efficient`, pre-item-7 | Safe (it chose integer) |
+| `--arithmetic efficient`, at HEAD | Unsafe (it now lands on bitvector) |
+
+So the wrong answer is a **pre-existing bitvector-encoding defect that predates batch 92**; item 7
+only changed which encoding this task is given. Its widened fallback re-runs the task under bitvector
+after a POST-parse failure -- the log reads `ParsingResult Success` and then
+`Retrying parsing with bitvector arithmetic...`, one more case of that marker not meaning success.
+
+Same category as the other 20 wrongs in run 99 (latent unsoundness exposed), with the sting that this
+task was previously answered CORRECTLY under integer, so exposure cost a working result rather than
+an error. The file itself has no bitwise operator, no `~`, no float -- it is routed to bitvector by
+the retry, not by a trait.
+
+Two remedies, different in kind and NOT yet chosen:
+1. fix the bitvector defect that answers Unsafe on a safe program (right, unknown size); or
+2. narrow item 7's retry so a task whose integer parse SUCCEEDED is not relocated to bitvector by a
+   later failure (cheap, but hides the defect again).
+
+## Canary set enlarged: 262 -> 268 (2026-08-22)
+
+Six rows added to `canaries.tsv` to guard the stub-range fix, which has no fixture and was otherwise
+protected only by ad-hoc measurement:
+
+| | tasks |
+|---|---|
+| offenders (expected **true**) | `CWE190_..int64_t_fscanf_add_01_good`, `CWE191_..int_fscanf_predec_01_good`, `CWE190_..int_fscanf_postinc_01_good` |
+| controls (expected **false**) | the matching `_bad` variants |
+
+Chosen to span both CWE families (overflow and underflow), both widths (`int`, `int64_t`) and three
+operations, rather than six near-identical rows. All six verified correct on the current build, with
+measured `cputime` (~5.3-5.8 s each, so `build_guard_set.py`'s <60 s filter keeps them). In `parse`
+mode they guard that the family still builds; in `full` mode they guard the VERDICTS, which is the
+part that matters here. Gate after adding: **268 PASS / 0 FAIL**, 69 fixtures / 0 FAIL.
+
+## Run 99 (full portfolio, COMPLEX27 + fixes) RESULT -- finished 2026-08-22
+
+| | run 93 (complex26) | run 98 (COMPLEX27) | **run 99** |
+|---|---|---|---|
+| **score** | 19,835 | 13,407 | **21,605** |
+| correct | 12,890 | 13,905 | **14,349** |
+| wrong | 55 | 528 | **71** |
+| error | 23,173 | 21,684 | 21,697 |
+
+**+1,770 over the run-93 baseline, +8,198 over run 98.** The projection from run 100 was ~21,615
+against a measured 21,605 -- close, but the run is what settles it. 460 of run 98's wrong verdicts
+are gone and only 3 appeared.
+
+**The 21 results that are wrong in run 99 but were not wrong in run 93**, classified as required:
+- **20 were ERRORs in run 93** -- latent unsoundness exposed by tasks that now get far enough to
+  answer. 9 wrong-`true` (-32), 12 wrong-`false` (-16). Spread thin: memsafety 5, busybox 4,
+  aws-c-common 3, ldv-linux-4.0-rc1-mav 3, memsafety-bftpd 2, pthread-race-challenges 1.
+- **1 is a genuine regression**: `ldv-regression/rule60_list2.yml` (unreach-call, expected true) was
+  **correct in run 93** and answers `false(unreach-call)` in both run 98 and run 99. It is therefore
+  NOT caused by the run-99 fixes -- it entered with run 98's build (batch-92 items 1-10 or the union
+  cell-width fix) and is the one thing in this batch that took a working answer away. Worth chasing
+  next; -32 on its own, but it is the only case where the batch made a correct result wrong.
+
+5 verdicts that were wrong in run 93 are now correct.
+
+Only 3 wrongs are new relative to run 98, i.e. attributable to the lhs + stub-range fixes:
+`aws-c-common/sliced_aws_array_eq_harness` (error -> wrong false), `ldv .../xen-blkfront`
+(error -> wrong true), and `pthread-race-challenges/thread-join-counter-inner-race-2` (error -> wrong,
+but it was ALREADY wrong in run 93, so it is not a new defect against the baseline). Two genuine
+error-turned-wrong, both previously scoring 0.
+
+## Resource-out vs genuine error -- the split that changes the story (2026-08-24)
+
+Every "error" figure quoted until now was BenchExec's `error` CATEGORY, which lumps together "the
+tool failed" and "the tool ran out of time or memory". Split by status:
+
+| | correct | wrong | timeout | OOM | **tool error** | other |
+|---|---|---|---|---|---|---|
+| theta v7.3.1 (8 GB, STABLE) | 6,017 | 147 | 11,559 | 2,577 | **16,194** | 40 |
+| run 99 (7 GB, COMPLEX27) | 14,349 | 71 | 13,159 | 6,331 | **2,207** | 414 |
+| run 102 (15 GB, COMPLEX27) | 14,866 | 72 | 16,054 | 2,785 | **2,337** | 417 |
+
+**Genuine tool errors: 16,194 -> 2,337, down 86%.** That is the frontend work, and it is the number
+this branch should be judged on. Resource exhaustion went the other way (14,136 -> 18,839) for a good
+reason: tasks that used to be refused in seconds now run and burn their full 900 s.
+
+Memory redistributes within the resource bucket rather than shrinking it: 7 GB -> 15 GB moved OOM
+6,331 -> 2,785 and timeouts 13,159 -> 16,054, i.e. most rescued OOMs became timeouts rather than
+answers. That also explains why +931 score for +8 GB is a modest return.
+
+Implication worth carrying forward: the remaining headroom is now mostly **solver time**, not
+frontend coverage. 16,054 timeouts against 2,337 tool errors says further frontend fixes have far
+less left to win than analysis speed or better portfolio scheduling does.
+
+## Comparison against the SHIPPED RELEASE theta v7.3.1 (downloaded 2026-08-24)
+
+Hosted full runs live at `share.mit.bme.hu/index.php/s/75kYtHnEWcks4a4` (a public Nextcloud share,
+folder `benchmarks/<version>/<tool>/`). Listing is blocked (PROPFIND 401) but GET works with the
+token as basic-auth user, so the version dirs were found by streaming the zip and reading entry
+names, then probing candidates. Latest is **v7.3.1** (v7.3.0 does not exist; nothing above 7.3.1).
+Downloaded `v7.3.1/theta/` -- one full run, `theta.2026-07-16_17-02-22`, 55 result files, 448 MB.
+Extracted to `results-hosted-v7.3.1/`.
+
+Its limits: 900 s, **8 GB**, 2 cores, `--portfolio STABLE`. On the same 36,531 tasks (task paths
+normalised -- the hosted run uses a different prefix, which made the raw keys share nothing):
+
+| | theta v7.3.1 | run 102 |
+|---|---|---|
+| **score** | 8,071 | **22,536** |
+| correct | 6,016 | **14,866** |
+| **wrong** | 147 | **72** |
+| error | 30,328 | **21,176** |
+
+**+14,465, and the wrong count roughly halves.** 144 of the release's 147 wrongs are fixed, 3 remain,
+and 69 are wrong here but not there -- of which **68 were ERRORs in the release** and exactly **one
+was correct**: `pthread-divine/tls_basic` (unreach-call), release `true`, ours `false`. **Not yet
+diagnosed**, and a second correct->wrong case beyond `rule60_list2`.
+
+⚠️ Confounds, all real: portfolio (STABLE vs COMPLEX27) and memory (8 GB vs 15 GB). Memory is not the
+driver -- run 99 at 7 GB, *below* the release's 8 GB, still scores 21,605. Also, upstream master has
+moved on since v7.3.1 (`origin/master` = `9538c9ce76`, our local `master` ref is stale at
+`22ab2b88de`), so this is a comparison against a shipped release, not against current upstream.
+
+**This is a far better reference than run 93** and PR.md now leads the limitations with the two
+correct->wrong tasks.
+
+## What master data exists locally (checked 2026-08-24)
+
+Asked whether any benchmark results for **master** are available locally. One, and it is partial:
+
+`benchmark-results/baseline-master-22ab2b88de-oc-userprop/` -- master at the merge-base
+(`22ab2b88de`, 2026-07-06), run on sosy 2026-07-28. Scope: **Concurrency only**, ONE config
+(OC + `PROPAGATOR`, Z3), 4 properties, 3,176 runs. Its own README says it is not a valid baseline for
+the full portfolio, because master fails the frontend outright on the termination and product-lines
+families -- those tasks have no master verdict to regress from.
+
+All 3,176 of its tasks are also covered by run 102, so a direct comparison is possible on that
+subset:
+
+| on the shared 3,176 | master `22ab2b88de` | run 102 |
+|---|---|---|
+| score | 2,405 | **3,262** |
+| correct | 1,418 | **1,967** |
+| error | 1,751 | **1,197** |
+| wrong | 5 | 10 |
+
+**+857**, with errors down 554 and correct up 549. ⚠️ Confounded: master ran a single OC config while
+run 102 ran the whole COMPLEX27 portfolio, so part of the gap is the portfolio having more configs to
+try rather than this branch's fixes. Indicative, not controlled.
+
+⚠️ **This also exposed a mislabel in PR.md, now fixed.** Run 93 had been called "the baseline"
+throughout, which invites reading it as master. It is not: run 93's build is dated 2026-08-16, six
+weeks and dozens of branch commits after master's tip. It is the correct reference for *this batch's*
+delta and the wrong one for a master→branch claim. **There is no full-portfolio measurement of master
+at all**; getting one would mean running master's build over `theta27-long900-15g.xml`, which has not
+been done.
+
+## Run 102 (sosy, 15 min / 15 GB / 2 cores, CPU 1230) RESULT -- finished 2026-08-24
+
+**sosy won the race** (it ran at LOW, benchcloud at IDLE, so this was expected); benchcloud's run 101
+was stopped at 24,025 submitted, as agreed. 55 xml.bz2, 36,602 results, 0 `Cannot start process`.
+
+| | run 93 (7 GB, complex26) | run 99 (7 GB, COMPLEX27) | **run 102 (15 GB)** |
+|---|---|---|---|
+| **score** | 19,835 | 21,605 | **22,536** |
+| correct | 12,890 | 14,349 | **14,866** |
+| wrong | 55 | 71 | **72** |
+| error | 23,173 | 21,697 | **21,176** |
+
+**+931 over run 99 and +2,701 over the baseline.** Run 99 is the same source at 7 GB, so the delta is
+the memory budget: ~521 fewer errors, ~517 more correct answers, and the wrong count essentially
+flat (71 -> 72). That is the shape you want from more memory -- it buys answers, not risk.
+
+⚠️ **The +931 is not purely memory.** Run 102 also ran on a different host and CPU model (1230 vs
+Skylake). Memory is the plausible driver, since the gain is entirely errors turning into correct
+answers while the wrong-set barely moves, but the two variables are not separated. Separating them
+would need a 7 GB run on sosy/1230, which was not done.
+
+**Wrong-set, classified:** 5 new against run 99, and **all 5 were ERRORs in both run 99 and run 93** --
+tasks that only now get far enough to answer. 3 wrong-`true` (-32), 2 wrong-`false` (-16). 4 of run
+99's wrongs are fixed. Against the run-93 baseline: 24 wrong that were not wrong there, of which
+**23 were errors** and **1 was correct** -- still `ldv-regression/rule60_list2`, the pre-existing
+bitvector defect bisected earlier, and still the only case in the whole branch where a working answer
+was taken away.
+
+Every full-allocation number in PR.md should come from this run, not from the 7 GB ones.
+
+## Runs 101 (benchcloud) and 102 (sosy) -- the same benchmark raced on two hosts, 2026-08-23
+
+User-directed: run the full portfolio at the real SV-COMP allocation on BOTH hosts and keep whichever
+finishes first. (This lifts the standing "never launch anything on sosy" rule, explicitly and for
+this task.)
+
+| | run 101 | run 102 |
+|---|---|---|
+| host | benchcloud | **sosy** (`/data/scratch/bajczi`, tmux `theta-bench-102`) |
+| XML | `xmls/theta27-long900-15g.xml` | `xmls/theta27-long900-15g.xml` (created there; the copy on sosy was still 7 GB + STABLE, backed up as `.bak-stable-7g`) |
+| limits | 15 min / **15 GB** / 2 cores | same |
+| portfolio | COMPLEX27 | COMPLEX27 |
+| CPU model | Skylake | **1230** (the usual sosy Xeons) |
+| client heap | 8192 | 8192 |
+| priority | IDLE | **LOW** -- `run-tool.sh` hardcodes it |
+| tool dir | `Theta-svcomp-99` | `Theta-svcomp-102` |
+
+Both tool dirs carry source identical to HEAD (`git diff` over `subprojects/` is empty back to
+`4f41483289`). Launch checks passed on both: 0 `Cannot start process`, 0 `OutOfMemoryError`, relative
+tool dir, exec bit set, `--version` clean.
+
+⚠️ **The race is not a fair comparison of the two hosts.** sosy runs at LOW and benchcloud at IDLE,
+because `run-tool.sh` hardcodes its priority; sosy should therefore be expected to win on queueing
+alone. The point is a result sooner, not a benchmark of the clusters -- and the two use different CPU
+models, so their *timings* are not comparable either. The verdicts should agree; if they do not, that
+is worth knowing on its own.
+
+Baselines for whichever lands: run 99 (same source, 7 GB) = 21,605 / 71 wrong; run 93 = 19,835 / 55.
+
+## Run 100 (TARGETED Juliet, LOW) RESULT -- 2026-08-21, build 4f41483289
+
+912 tasks instead of 36,602, at the user's suggestion: re-run exactly the family that turned wrong
+rather than waiting on a full portfolio run to test a hypothesis about 456 tasks. Same options,
+limits and portfolio as `theta27-long900.xml`, so the verdicts compare directly to run 98.
+XML: `xmls/theta27-juliet.xml`; sets: `sv-benchmarks/c/juliet_offenders.set`, `juliet_controls.set`.
+
+| group | n | run 98 | run 100 |
+|---|---|---|---|
+| offenders (Juliet CWE190 `_good`, expected **true**) | 456 | **456 wrong** | **456 correct** |
+| controls (matching `_bad`, expected **false**) | 456 | 456 correct | **456 correct** |
+
+Every single offender flipped `wrong -> correct`, and **not one control regressed** -- the range
+bound removes the false alarms without suppressing the real overflows. That control group is the
+point of the run: the offenders alone could not distinguish "fixed" from "stopped detecting
+overflows", and a missed bug costs -32 where a false alarm costs -16.
+
+Family score: **-7,296 -> +912, a swing of +8,208.** That number is now MEASURED for this family
+rather than extrapolated from the 25-task sample. Run 99 (full portfolio, IDLE, same build) is still
+queued and will say whether the rest of the benchmark moves with it; run 98's 13,407 plus this
+family's swing would be ~21,615 against run 93's 19,835, but the rest of the run is not measured yet
+and that figure stays a projection until run 99 lands.
+
+⚠️ Still unexplained: WHY the bound changes these verdicts. Five minimal programs of the obvious
+shape verify Safe with and without it. The fix is protected only by this real-task evidence -- there
+is no fixture -- so a refactor could silently undo it.
+
+## Run 99 (full portfolio, COMPLEX27) -- launched 2026-08-21 17:56, benchcloud
+
+Tool dir `Theta-svcomp-99` = HEAD `4f41483289`. Same XML, priority (IDLE), CPU model (Skylake) and
+client heap as run 98, so the two are directly comparable. Screen `theta-portfolio99`, outdir
+`results/Theta-svcomp-99/theta27-long900.xml/2026-08-21_17:56:56/`. Launch checks: 0
+`Cannot start process`, 0 `OutOfMemoryError`.
+
+On top of run 98's build:
+- the two `Could not handle left-hand side` fixes (`1b22c445da`) -- bitfield through a narrowing,
+  struct copied through a pointer (~216 of the 224 runs in that family)
+- the library-stub havoc bounded to the C type it writes (`4f41483289`)
+
+**What this run is measuring.** Run 98 scored 13,407 against run 93's 19,835, and 456 of its 476 new
+wrong verdicts were the Juliet CWE190 `_good` family answering `false(no-overflow)`. The stub fix
+turned 25 of 25 sampled tasks from that family correct, with all 8 sampled `_bad` counterparts still
+caught. **Do not quote a projected score from that sample** -- this run exists to replace the
+projection with a measurement. The arithmetic that the sample suggests (~+8,200 over run 98, i.e.
+comfortably past run 93) is a hypothesis for run 99 to confirm or refute, nothing more.
+
+Baselines: run 93 = 19,835 / 55 wrong (complex26); run 98 = 13,407 / 528 wrong (COMPLEX27).
+Note run 93 is still a complex26 baseline, so any difference against it other than the families
+named above confounds portfolio with fixes; run 98 is the clean like-for-like comparison.
+
+## Run 98 (full portfolio, COMPLEX27) RESULT -- finished 2026-08-21
+
+| | run 93 (complex26) | run 98 (COMPLEX27) | delta |
+|---|---|---|---|
+| **score** | 19,835 | **13,407** | **-6,428** |
+| correct | 12,890 | **13,905** | +1,015 |
+| error | 23,173 | 21,684 | -1,489 |
+| **wrong** | 55 | **528** | **+473** |
+
+**The headline is misleading and the classification matters.** Of the 476 NEW wrong results, **475
+were ERRORs in run 93** (score 0) and exactly **one** was previously correct. This is latent
+unsoundness EXPOSED, not caused: tasks that used to fail now produce a verdict, and it is wrong.
+Direction: 467 wrong-`false` (-16), 9 wrong-`true` (-32).
+
+**It is not the portfolio.** Same build under `--portfolio STABLE` and `--portfolio COMPLEX27` gives
+the identical wrong verdict on these tasks, so the complex26 -> complex27 switch is exonerated; the
+cause is this batch's frontend work.
+
+**It is one family: `Juliet_Test` + `no-overflow`, 456 of the 476, costing -7,296.** All are
+`CWE190_Integer_Overflow__*_good` variants of the shape
+
+    data = 0; fscanf(stdin, "%ld", &data);
+    if (data < 0x7fffffffffffffffLL) { result = data + 1; }   /* provably safe */
+
+theta answers `false(no-overflow)`. Bisecting the REAL file: emptying `goodB2G` -> Safe; removing
+only the `fscanf` call -> Safe; removing only the `printLongLongLine` call -> still Unsafe. So the
+trigger is the `fscanf` stub introducing an unconstrained value, after which the guard fails to keep
+the addition safe. **The precise trigger is NOT yet isolated** -- minimal reproductions of that exact
+shape (both `long` and `long long`, both data models) all verify Safe, so something else in the real
+file participates. Three hypothesis repros failed; the next step is instrumenting the real input, not
+a fourth.
+
+**Mitigation, measured:** commenting the four `scanf`-family entries out of `LibraryStubsPass.STUBS`
+returns these tasks to `No such method fscanf`, i.e. ERROR / score 0 rather than -16.
+
+    run 98 as measured                                  13,407
+    run 98 with the Juliet/no-overflow wrongs as ERROR   20,703   (+868 vs run 93)
+
+So **the batch is net positive (+868) once this one family stops answering wrongly** -- the +1,015
+extra correct results are real. Two ways forward: fix the false alarm (better), or gate the
+scanf-family stubs off until it is fixed (cheap, recovers ~7,300 immediately). Not decided here.
+
+⚠️ Also note run 93 is a complex26 baseline; the portfolio differs. The A/B above shows the portfolio
+is not responsible for THIS family, but any other comparison against run 93 still confounds the two.
+
+## `Could not handle left-hand side of assignment` -- debugged 2026-08-20 (commit 1b22c445da)
+
+One message, **two unrelated bugs**, 224 runs in run 96. The type printing added by item 1 is what
+separated them; the message now also names the C types of both sides, and names a struct by its
+FIELDS (two different structs otherwise both print as `CStruct`, which was itself misleading).
+
+| shape | runs | cause | status |
+|---|---|---|---|
+| `ctls.some_bit = ...` (intel-tdx) | ~144 | `structuralBitfieldWrites` looked ONE level down, expecting the 1-bit extract to sit on a dereference/concat. Reading a bitfield out of a 64-bit cell narrows to 32 bits first, so the operand is another extract | **FIXED** -- fold the narrowing chain, `extract(extract(X,a,b),c,d)` = bits [a+c, a+d) of X, guarded against reaching past the inner extract or past the cell |
+| `*(list+i) = *(list+j)` (ldv-linux-*) | ~72 | the struct-copy guard demanded the lvalue's cType BE a struct; dereferencing a struct pointer yields the element's address, whose cType is the POINTER's | **FIXED** -- accept the pointee, only when the rhs is that same struct |
+| `Toc->TrackData[0] = Toc->TrackData[i]` (ntdrivers) | 8 | the RIGHT-hand element address loses its struct cType (identity-keyed metadata); `getType` then derives `CUnsignedInt` from the (Bv 32) sort, so the sides disagree | **NOT FIXED** |
+
+A/B, rebuilt each way: `tdh_mng_key_config__invalid_input_tdr_hkid` and `module_get_put-drivers-atm-eni`
+both 210 -> 0.
+
+⚠️ **The attempted fix for the last 8 was reverted, and the reason is worth keeping.** C requires a
+struct lvalue's rhs to be that same struct (6.5.16.1), so "accept an address-shaped rhs whose type did
+not survive" looked safe. It is not: a *derived* type cannot be told apart from a real one, so the
+rule also swallowed `CPointer` right-hand sides into `structCopy` (ClassCastException) and regressed
+tasks that had begun building. The fix belongs where that element address is built, by keeping the
+struct type on it.
+
+⚠️ **Latent, found on the way and NOT chased:** `CComplexType.getType` returned different answers for
+the same expression on successive calls (`CUnsignedInt` then `CStruct`). That instability is why an
+earlier guard appeared to contradict itself, and it likely explains other identity-keyed metadata
+surprises. Worth its own investigation.
+
+⚠️ **Yield could not be measured locally.** This host had ~9 GB of 62 free; 18 of the 24 *smallest*
+files in the family were SIGKILLed and 21 of 30 in the first sample. Of the 6 that did complete, none
+still failed on this message. The real number needs a benchmark run.
+
+## Local parse-only check of the byte-addressed union family (2026-08-20, build e07b3354df)
+
+User asked whether that family is "mostly handled" now that the fallback ships. **It is not.**
+Measured, stratified sample of **105** of the 724 distinct (file, property) pairs, run locally with
+`--backend NONE` on the build that has the fallback:
+
+| half of the family | n | built OK (exit 0) | fell back | outcome |
+|---|---|---|---|---|
+| `Accessing member [...]` (float member) | 45 | **0** | 2 | 43 refused as designed -- bytes cannot model a float either, so the fallback deliberately does not fire |
+| `Taking the address of a multi-byte member` | 60 | **8 (13%)** | 59 | the retry fires almost always, but the task then hits something else |
+| **total** | **105** | **8 (7.6%)** | 61 | |
+
+Where the 52 non-building addr-of tasks go: **28** `Could not handle left-hand side of assignment`
+(the item-4 residue), **11** `Unsupported initializer for ...`, **12 OUT OF MEMORY**, 1 timeout.
+
+⚠️ **The OOMs are real, not a local artifact.** They persist at `-Xmx14g`, so it is the container
+limit doing the killing -- and this host's cgroup is 8 GB while `theta27-parse.xml` sets
+`memlimit="7 GB"`, i.e. the benchmark is *tighter*. Byte-granular memory turns every wide access into
+8 cells plus a Concat, and on the large intel-tdx / ldv-linux files that does not fit. Expect run 98
+to show this family partly converting to OOM rather than to verdicts.
+
+**Extrapolated yield of the fallback: ~55 of 724 tasks (~8%)**, essentially all from the addr-of
+half. The fallback is correct and safe -- no wrong answers, floats refused loudly -- but it is not
+the 1,448-run win the raw error count suggested. What actually blocks that family is the
+`Could not handle left-hand side` work and the memory cost of the bytes model, in that order.
+
+## Run 96 (parse-only) RESULT -- finished 2026-08-20, vs run 94
+
+Both runs re-counted locally with one script so the comparison is like-for-like (the older
+"31,984 built OK" figure in this file is in a different unit -- it is roughly half of the run count).
+72,103 runs and 30,412 distinct tasks in each.
+
+| | run 94 | run 96 | delta |
+|---|---|---|---|
+| built OK (`unknown`) | 63,055 | **63,385** | **+330** |
+| error (total) | 9,048 | 8,718 | -330 |
+| ERROR frontend, before parsing | 2,982 | 2,850 | -132 |
+| ERROR frontend, after parsing | 1,518 | **1,070** | **-448** |
+| OUT OF MEMORY | 3,358 | 3,572 | **+214** |
+| TIMEOUT | 1,190 | 1,226 | +36 |
+
+Frontend errors fell by **580**; ~250 of that is given back as OOM/TIMEOUT, netting +330 built OK.
+The OOM rise is consistent with tasks now getting *further* before failing (a parse that used to die
+early now proceeds and runs out of memory) but that is an interpretation, not a measurement. Neither
+OOM nor ERROR scores anything, so no verdict was lost either way.
+
+**Per-family, the targeted fixes landed exactly where they were aimed:**
+
+| family | run 94 | run 96 | |
+|---|---|---|---|
+| item 7 compound bitwise `\|=` | 40 | **0** | gone |
+| item 8 `Array with unspecified size` | 112 | **0** | gone |
+| item 9 `ClassCastException` | 298 | **73** | -225; the residue advances to other failures |
+| item 6 inlining arity | 172 | 112 | -60 |
+| item 4/10 `Could not handle left-hand side` | 202 | **224** | **+22 -- newly EXPOSED**, not caused: tasks that used to die earlier now reach it |
+| byte-addressed union (both messages) | 1,448 | 1,448 | unchanged **as expected** -- run 96 is the build BEFORE the fallback (`08b9ce772c`); this family is what run 98 tests |
+
+The unchanged 1,448 is the useful control: it confirms the family is untouched by items 1-10 and is
+entirely down to the fallback, which only run 98 carries.
+
+## Runs 96 (parse, LOW) and 97 (portfolio, IDLE) -- launched 2026-08-20 09:55, benchcloud
+
+Both from the SAME build: tool dir `Theta-svcomp-96` = HEAD `08b9ce772c` (batch-92 items 1-10 plus
+the fp<->bits round-trip fix `f470a74ddf`). Gated 262 canaries / 69 fixtures / 0 FAIL before upload.
+
+| run | XML | priority | screen | outdir |
+|---|---|---|---|---|
+| 96 parse-only | `xmls/theta27-parse.xml` | **LOW** | `theta-parse96` | `results/Theta-svcomp-96/theta27-parse.xml/2026-08-20_09:55:21/` |
+| ~~97 portfolio~~ | `xmls/theta27-long900.xml` | IDLE | ~~`theta-portfolio97`~~ | **STOPPED 11:30 after 1h35m with 0 results** (IDLE, and parse96 at LOW held the queue) -- nothing lost |
+| **98 portfolio** | `xmls/theta27-long900.xml` | **IDLE** | `theta-portfolio98` | `results/Theta-svcomp-98/theta27-long900.xml/2026-08-20_11:32:07/` |
+
+Run 97 was replaced by **run 98** on a newer build, at the user's direction: tool dir
+`Theta-svcomp-98` = HEAD `e07b3354df`, which adds the bytes-memory-model fallback with floats
+refused loudly under it (`ByteMemoryPass`). The **parse run 96 was deliberately left running on the
+older build** (`Theta-svcomp-96` = `08b9ce772c`), so its comparison against run 94 measures items
+1-10 only, without the fallback. Run 98's tool dir is separate precisely so run 96's files are not
+disturbed mid-flight. Launch checks on 98: 0 `Cannot start process`, 0 `OutOfMemoryError`.
+
+Both pinned `--vcloudCPUModel Skylake --vcloudClientHeap 8192`. Launch sanity checks passed on both:
+0 `Cannot start process`, 0 `OutOfMemoryError`, results accumulating, screens alive.
+
+⚠️ **PORTFOLIO CHANGED, and it confounds the run-93 comparison.** `xmls/theta27-long900.xml` passed
+`--portfolio STABLE`, and `STABLE` maps to **complex26** (`ConfigToPortfolio.kt`), not complex27 --
+so every previous "SV-COMP 27" portfolio run, run 93 included, was actually run on the 2026
+portfolio. It now passes `--portfolio COMPLEX27` (backup at `xmls/theta27-long900.xml.stable-bak`).
+COMPLEX27 is also the only portfolio aware of the byte-addressed memory model. Smoke-tested on three
+canary tasks with known verdicts before launch; COMPLEX27 and STABLE agreed on all three.
+
+Consequence for triage: a verdict that differs from run 93 is **portfolio AND fixes**, not fixes
+alone. To attribute a regression to this batch's code, re-run that task under both portfolios rather
+than assuming. Baselines: run 94 parse = 31,984 built OK / 1,492 frontend-before / 850
+frontend-after; run 93 portfolio = score 19,804, 57 wrong, 18 missed bugs (on complex26).
+
+### Item 10 follow-up: the fp<->bits round trip IS fixed (2026-08-20, commit f470a74ddf)
+
+User-directed: "attempt to fix the fp-bits roundtrip; if not possible, just fail on the fpToIeeeBv
+when bytes model is used." Both halves are now true.
+
+**The cause was not `fpToIEEEBV` being wrong.** `ByteMemoryPass.wide()` accepted only `BvType`, so a
+floating-point cell was left in an array of its own while everything else was split into byte cells.
+A `double` and the bytes overlapping it were therefore unrelated storage -- the bytes were never
+written at all, so a read of them was unconstrained. Extending the split to `FpType` (store
+`fpToIEEEBV(v)`, rebuild with `fpFromIEEEBV`, NaN pinned to the canonical quiet encoding that
+FrontendXcfaBuilder already used for the same reason, now shared via `FpUtils.canonicalNaNBits`)
+makes all four punning cases answer Safe where they answered Unsafe, and NaN survives the trip
+(`x != x` still holds, exponent still all ones). Every expectation came from gcc.
+
+**Where it cannot be done, it now fails loudly** -- the requested fallback. `fp.to_ieee_bv` is a Z3
+extension; checked directly against the shipped MathSAT binary, it is an "unknown symbol" there,
+while the from-bits direction `((_ to_fp eb sb) bv)` IS standard and accepted. GenericSmtLibExprTransformer
+already throws `UnsupportedOperationException` for the to-bits direction, which is the right outcome.
+
+**The automatic fallback still does NOT ship.** Re-applied and re-measured after the round-trip fix:
+float-newlib tasks build (210 -> 0) but then die in the backend on that same unsupported operation,
+because complex27 runs BMC-MathSAT first for byte-addressed memory. Score 0 either way, so there is
+no gain to bank -- and `bytes` remains opt-in, so nothing changes by default. Making it pay off needs
+a to-bits encoding MathSAT can solve, which is the open piece.
+
+### Item 10: why the bytes fallback is not shipped (measured 2026-08-19)
+
+**The fallback itself was built and works.** `RequiresByteAddressedMemoryException` raised at the two
+union refusal sites (`ExpressionVisitor:1208` address-of-multi-byte-member, `:2607`
+byte-laid-out-member), an escape hatch in `getXcfa` beside the existing `rethrowPointerSplitLimitation`
+(needed because `getXcfa` catches `Exception` and calls `exitProcess`, so a caller cannot simply wrap
+it in a `try` -- that is why the first attempt silently did nothing), and a retry in
+`ExecuteConfig.frontend` pinning `memoryModel = bytes` + `arithmetic = bitvector`. Measured:
+
+| | exit |
+|---|---|
+| `float-newlib/double_req_bl_{0210,0220a,0240a}` before | 210, `byte-addressed union` |
+| same, with the fallback | **0** |
+| explicit `--memory-model multi` / `flat` / `--arithmetic integer` | 210, no fallback (user choice respected) |
+
+**Why it was reverted.** The bytes model gives WRONG ANSWERS on double/bytes punning -- the exact
+pattern that triggers the fallback:
+
+    u.value = 1.0;
+    if (u.parts.msw != 0x3FF00000u) reach_error();   // gcc: unreachable. theta: SafetyResult Unsafe
+
+That is with `--memory-model bytes --arithmetic bitvector` passed *explicitly*, no fallback involved,
+so the unsoundness is pre-existing in the model and not something the fallback introduces. The union's
+own layout is fine (`u.words[1] == u.parts.msw` verifies Safe); it is specifically the bits of a
+double **written as a double** that come back unconstrained, which yields spurious counterexamples.
+
+The connection is not incidental: the cell models refuse this program *because* the fp<->bits round
+trip is unsound (the batch-59 NaN gate on `fpToIEEEBV`). The byte-addressed model does not fix that
+round trip, it merely does not check. So the refusal I was converting into a fallback trigger is a
+load-bearing refusal.
+
+**Scale of the averted damage:** the two union messages are the largest frontend error family in run
+94 (1,448 runs: 852 address-of, 596 member-access). The half that the fallback actually rescues is
+float-newlib 530 + float-benchs 24, all of which are this punning pattern. Turning ~554 ERRORs
+(score 0) into wrong `false` verdicts costs -16 apiece. The intel-tdx half (688 runs) falls back but
+then dies on a later unrelated limitation, so it gains nothing either.
+
+**To make this shippable:** fix the fp<->bytes encoding under the byte-addressed model, then re-apply
+the fallback -- the wiring is straightforward and is described above. Until then a loud ERROR is the
+correct behaviour.
+
+### Follow-up found while doing item 7 (NOT in the 10-item plan)
+
+**Two of three arguments are dropped before inlining.** With the encoding fixed, the three
+`coreutils-v9.5-units/relpath_*` tasks get past `|=` and now fail later:
+
+    Inlining 'buffer_or_output': the call site supplies 2 argument(s) [(Bv 1), (Bv 32)]
+    but the procedure has 4 parameter(s) [(buffer_or_output_ret, OUT), (::str, IN), (::pbuf, IN), (::plen, IN)]
+
+The C is `static _Bool buffer_or_output (char const *str, char **pbuf, size_t *plen)` and every one
+of its six call sites passes three arguments (`buffer_or_output ("..", &buf, &len)`). The `(Bv 1)` is
+the `_Bool` return slot, so the call arrives with the slot plus exactly ONE real argument: two are
+lost somewhere between the call expression and the inliner. This is NOT the item-6 shape (that is a
+*void* callee with one slot too many, and the guard correctly declines to drop a non-void one), and
+it is not caused by the encoding change -- it was merely hidden behind the `|=` failure. The two
+survivors/casualties still need identifying; the `&buf`/`&len` address-of arguments are the
+suspects, being the ones that differ from the surviving string literal.
+
+
+**Then:** parse-only benchmark; if significantly better than run 94, a full portfolio run.

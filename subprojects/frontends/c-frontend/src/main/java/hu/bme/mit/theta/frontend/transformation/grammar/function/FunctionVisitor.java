@@ -83,6 +83,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public void clear() {
         variables.clear();
         scopedAllocas.clear();
+        scopedRegistered.clear();
         atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
@@ -154,6 +155,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
      * where a value has to be captured before a later statement can invalidate it.
      */
+    /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
+    private static boolean containsDereference(Expr<?> expr) {
+        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+            return true;
+        }
+        for (Expr<?> op : expr.getOps()) {
+            if (containsDereference(op)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
@@ -168,24 +182,100 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * <p>Only populated when a memory-safety property is being verified; see {@link
      * #registerScoped}.
      */
-    private final Deque<List<VarDecl<?>>> scopedAllocas = new ArrayDeque<>();
+    private final Deque<List<Expr<?>>> scopedAllocas = new ArrayDeque<>();
+
+    /**
+     * The declarations already registered in each scope, so that an object taken by address more
+     * than once (`&a` twice, or `&a` in two nested blocks) is released exactly once. Releasing the
+     * same base twice would look like a double free.
+     */
+    private final Deque<Set<VarDecl<?>>> scopedRegistered = new ArrayDeque<>();
 
     private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
         variables.push(scope);
         scopedAllocas.push(new ArrayList<>());
+        scopedRegistered.push(new LinkedHashSet<>());
     }
 
     private void popScope() {
         variables.pop();
         scopedAllocas.pop();
+        scopedRegistered.pop();
     }
 
     /**
      * Records that {@code varDecl} names a stack object whose lifetime ends with the current scope.
      */
+    /**
+     * Set while the arguments of a `pthread_*` call are visited. The address of a handle passed
+     * there belongs to the thread runtime for as long as the thread or lock lives, and theta models
+     * such a handle as an identity rather than storage that is read -- so releasing it at the end
+     * of its block is meaningless, and actively harmful for a handle declared inside a loop.
+     *
+     * <p>It lives HERE and not on ExpressionVisitor: call arguments are visited through the shared
+     * function visitor, which builds its own expression visitors, so a flag on one of those would
+     * never be seen by the nested visit that actually handles the `&`.
+     */
+    private boolean suppressScopedRelease = false;
+
+    public void setSuppressScopedRelease(boolean value) {
+        this.suppressScopedRelease = value;
+    }
+
+    public boolean isSuppressingScopedRelease() {
+        return suppressScopedRelease;
+    }
+
     private void registerScoped(VarDecl<?> varDecl) {
         if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
-            scopedAllocas.peek().add(varDecl);
+            if (scopedRegistered.peek().add(varDecl)) {
+                // An alloca'd object's variable *holds* its base, so the variable is what to
+                // release.
+                scopedAllocas.peek().add(varDecl.getRef());
+            }
+        }
+    }
+
+    /**
+     * Registers an address-taken *scalar* for release at the end of the block that declared it.
+     *
+     * <p>`{ int a = 7; p = &a; } ... *p` is a use-after-scope, but such a scalar never went through
+     * {@link #registerScoped}: it is not an alloca -- ReferenceElimination gives it a compile-time
+     * `3k+2` base at procedure entry -- so no lifetime-end marker was emitted, its
+     * `__theta_ptr_size` entry was never cleared, and the dereference after the block was accepted
+     * (`memsafety-ext3/scopes1`, answered `true` against an expected `false`).
+     *
+     * <p>The object is released where it was **declared**, not where the `&` appears: `&a` inside a
+     * nested block must not end `a`'s lifetime at that inner block's end, which would release it
+     * early and report a violation in a correct program. Globals and static locals are skipped
+     * outright -- they outlive every block.
+     *
+     * @param address the reference expression, which ReferenceElimination later folds to the base
+     */
+    public void registerScopedAddress(VarDecl<?> varDecl, Expr<?> address) {
+        if (!parseContext.isCheckMemsafety() || suppressScopedRelease) {
+            return;
+        }
+        for (Tuple2<CDeclaration, VarDecl<?>> staticLocal : staticLocals) {
+            if (staticLocal.get2().equals(varDecl)) {
+                return; // a static local outlives its block
+            }
+        }
+        final List<Tuple2<String, Map<String, VarDecl<?>>>> scopes = new ArrayList<>(variables);
+        final List<List<Expr<?>>> releases = new ArrayList<>(scopedAllocas);
+        final List<Set<VarDecl<?>>> registered = new ArrayList<>(scopedRegistered);
+        final int count = Math.min(scopes.size(), Math.min(releases.size(), registered.size()));
+        for (int i = 0; i < count; i++) {
+            if (!scopes.get(i).get2().containsValue(varDecl)) {
+                continue;
+            }
+            if (i == scopes.size() - 1) {
+                return; // the outermost scope is the globals; they are never released
+            }
+            if (registered.get(i).add(varDecl)) {
+                releases.get(i).add(address);
+            }
+            return;
         }
     }
 
@@ -207,40 +297,52 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * one (and `return` is covered one level up, by the release at procedure exit).
      */
     private CStatement withScopeReleases(CStatement body, int mark) {
-        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        final List<Expr<?>> scoped = scopedAllocas.peek();
         if (!parseContext.isCheckMemsafety() || scoped == null || scoped.size() <= mark) {
             return body;
         }
         final CCompound wrapper = new CCompound(parseContext);
         wrapper.addCStatement(body);
-        for (VarDecl<?> varDecl : scoped.subList(mark, scoped.size())) {
+        for (Expr<?> release : scoped.subList(mark, scoped.size())) {
             wrapper.addCStatement(
-                    new CCall(
-                            SCOPE_END,
-                            List.of(new CExpr(varDecl.getRef(), parseContext)),
-                            parseContext));
+                    new CCall(SCOPE_END, List.of(new CExpr(release, parseContext)), parseContext));
         }
         return wrapper;
     }
 
     /** Appends the current scope's lifetime-end markers directly to an existing compound. */
     private void releaseScopedInto(CCompound compound, int mark) {
-        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        final List<Expr<?>> scoped = scopedAllocas.peek();
         if (!parseContext.isCheckMemsafety() || scoped == null) {
             return;
         }
-        for (VarDecl<?> varDecl : scoped.subList(mark, scoped.size())) {
+        for (Expr<?> release : scoped.subList(mark, scoped.size())) {
             compound.addCStatement(
-                    new CCall(
-                            SCOPE_END,
-                            List.of(new CExpr(varDecl.getRef(), parseContext)),
-                            parseContext));
+                    new CCall(SCOPE_END, List.of(new CExpr(release, parseContext)), parseContext));
         }
+    }
+
+    /**
+     * How many elements an initializer gives an array declared without a dimension (`char a[] =
+     * {0,1,2}`). Designators count: `{[4] = 1}` makes the array five elements long.
+     */
+    private int initializerElements(CStatement initExpr) {
+        if (!(initExpr instanceof CInitializerList list)) {
+            return 1;
+        }
+        int next = 0;
+        int elements = 0;
+        for (Tuple2<Optional<CStatement>, CStatement> entry : list.getStatements()) {
+            final int position = designatedPosition(entry.get1(), next);
+            next = position + 1;
+            elements = Math.max(elements, position + 1);
+        }
+        return Math.max(elements, 1);
     }
 
     /** How many stack objects the current scope has declared so far. */
     private int scopeMark() {
-        final List<VarDecl<?>> scoped = scopedAllocas.peek();
+        final List<Expr<?>> scoped = scopedAllocas.peek();
         return scoped == null ? 0 : scoped.size();
     }
 
@@ -376,6 +478,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
         scopedAllocas.clear();
+        scopedRegistered.clear();
         atomicVariables.clear();
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
@@ -399,6 +502,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                     || arithmeticTraits.contains(ArithmeticTrait.FLOAT)
                             ? ArithmeticType.bitvector
                             : ArithmeticType.integer);
+            // Remembered so a later failure can still fall back to bitvectors: once `efficient` is
+            // resolved here, nothing downstream could tell an automatic choice apart from one the
+            // user made explicitly, and the fallback in XcfaParser refused to revise either.
+            parseContext.setArithmeticAutoSelected(true);
         }
 
         Set<CDeclaration> typedefs = ctx.accept(typedefVisitor);
@@ -446,6 +553,62 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         functions.put(varDecl, funcDecl);
                     }
                 }
+            } else if (externalDeclarationContext
+                    instanceof CParser.GlobalDeclarationContext globalDeclCtx) {
+                // The same hazard, for a function this file only *declares*. Its address can be
+                // taken exactly like a defined function's -- `struct allocator a = { &malloc };` is
+                // how preprocessed coreutils/ldv sources write it -- and that initializer is
+                // evaluated at the position of the object's *tentative* declaration, which comes
+                // before the prototype it names. Without a name here the use died as "No such
+                // variable or macro: malloc" (64 `malloc` + 32 `__VERIFIER_nondet_int` runs in the
+                // run-94 parse sweep). Registering it up front costs nothing for the same reason as
+                // above: the declaration is visited below anyway and finds its name already there.
+                //
+                // The initializer expressions are deliberately not built here (getInitExpr =
+                // false): only the declared names are wanted, and the declaration below builds them
+                // once, in the right place.
+                //
+                // A declaration this pass cannot read is simply left un-introduced rather than
+                // reported from here: the very same context is visited again below, unguarded, so a
+                // genuinely broken declaration still fails -- with its own message, raised at its
+                // own position. Without this, a file that today dies inside some *earlier*
+                // function's body would instead die on a later declaration, changing the reported
+                // cause of a failure this pass has no business touching.
+                List<CDeclaration> declarations;
+                try {
+                    declarations =
+                            declarationVisitor.getDeclarations(
+                                    globalDeclCtx.declaration().declarationSpecifiers(),
+                                    globalDeclCtx.declaration().initDeclaratorList(),
+                                    false);
+                } catch (OutOfMemoryError e) {
+                    // Never swallowed: continuing after an OOM leaves the JVM in a state where the
+                    // downstream failure has nothing to do with the real cause.
+                    throw e;
+                } catch (Throwable t) {
+                    continue;
+                }
+                for (CDeclaration declaration : declarations) {
+                    // Only functions: an ordinary global must keep being declared in source order,
+                    // where its initializer runs.
+                    if (declaration.getName() == null
+                            || !declaration.isFunc()
+                            || declaration.getType() == null
+                            || declaration.getType().isTypedef()
+                            || variables.peek().get2().containsKey(declaration.getName())) {
+                        continue;
+                    }
+                    parseContext
+                            .getMetadata()
+                            .create(
+                                    declaration.getName(),
+                                    "cType",
+                                    declaration.getType().getActualType());
+                    createVars(declaration);
+                    for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+                        functions.put(varDecl, declaration);
+                    }
+                }
             }
         }
 
@@ -461,8 +624,29 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         // Collected while the function bodies were visited; appended last so a static local is
         // initialised after the file-scope globals, exactly as C orders them.
         program.getGlobalDeclarations().addAll(staticLocals);
+        collectFunctionDeclarations(program);
         recordMetadata(ctx, program);
         return program;
+    }
+
+    /**
+     * Publishes the functions that are declared here but never defined, so that the variable
+     * standing for each one's address can be initialised to its id.
+     *
+     * <p>A prototype and its later definition share one variable (see {@link
+     * #visitFunctionDefinition}), so "declared but not defined" is exactly "in {@code functions},
+     * but not among any {@link CFunction}'s variables".
+     */
+    private void collectFunctionDeclarations(CProgram program) {
+        Set<VarDecl<?>> defined = new LinkedHashSet<>();
+        for (CFunction function : program.getFunctions()) {
+            defined.addAll(function.getFuncDecl().getVarDecls());
+        }
+        for (Map.Entry<VarDecl<?>, CDeclaration> entry : functions.entrySet()) {
+            if (!defined.contains(entry.getKey())) {
+                program.getFunctionDeclarations().add(Tuple2.of(entry.getValue(), entry.getKey()));
+            }
+        }
     }
 
     public void recordMetadataCommon(ParserRuleContext ctx, CStatement statement) {
@@ -1352,6 +1536,23 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // runtime value, so the scale factor is multiplied in rather than computed here.
                 final int elementCells = cellsOf(cArray.getEmbeddedType());
                 CStatement allocaSize = cArray.getArrayDimension();
+                if (allocaSize == null) {
+                    // `char a[] = {0,1,2};` takes its extent from the initializer, so the
+                    // declarator
+                    // carries no dimension at all. Reading it straight through left `List.of(null)`
+                    // and the frontend died with a bare NullPointerException
+                    // (`memsafety-ext3/naturalNumbers1`); the *global* path has always inferred the
+                    // extent (FrontendXcfaBuilder#getArraySize) and only the local one did not.
+                    // An element *count*, so the scaling below converts it to cells like any other.
+                    final CComplexType countType = CComplexType.getUnsignedLong(parseContext);
+                    allocaSize =
+                            new CExpr(
+                                    countType.getValue(
+                                            String.valueOf(
+                                                    initializerElements(
+                                                            declaration.getInitExpr()))),
+                                    parseContext);
+                }
                 if (elementCells != 1) {
                     final var dimExpr = allocaSize.getExpression();
                     final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
@@ -1686,6 +1887,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             Expr<?> lhs = ifTrue == null ? expr : ifTrue.getExpression();
             Expr<?> rhs = ifFalse.getExpression();
 
+            CComplexType smallestCommonType =
+                    CComplexType.getSmallestCommonType(
+                            List.of(
+                                    CComplexType.getType(lhs, parseContext),
+                                    CComplexType.getType(rhs, parseContext)),
+                            parseContext);
+
             CCompound guardCompound = new CCompound(parseContext);
             guardCompound.addCStatement(new CExpr(expr, parseContext));
             guardCompound.setPostStatements(new CNullStatement(parseContext));
@@ -1715,7 +1923,43 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             ifFalsePost.setPostStatements(new CNullStatement(parseContext));
             ifFalsePost.setPreStatements(new CNullStatement(parseContext));
 
-            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
+            // `p ? p->f : 0` must not dereference `p` when the guard is false. The branches'
+            // *statements* are already guarded by the CIf below, but the branch *values* end up
+            // inside a single Ite, so a dereference in one of them becomes an unconditional memory
+            // access -- and the memsafety instrumentation then checks an access C never performs.
+            // That is a false `valid-deref` alarm on an extremely common idiom (it is what
+            // `memsafety/test-0232*` trips on).
+            //
+            // Lower such a conditional the way the equivalent if/else is already lowered, which
+            // does not misreport: assign each branch's value to a temporary *inside* the guarded
+            // branch, and let the conditional's value be that temporary.
+            //
+            // Gated on memory-safety verification: for any other property the Ite is fine (it
+            // selects the right branch, and reading the unselected one has no observable effect),
+            // so the XCFA is left byte-for-byte unchanged there.
+            final boolean guardsDereference =
+                    parseContext.isCheckMemsafety()
+                            && (containsDereference(lhs) || containsDereference(rhs));
+            VarDecl<?> conditionalTmp = null;
+            if (guardsDereference) {
+                conditionalTmp = createTempVar(smallestCommonType, "ternary");
+                parseContext
+                        .getMetadata()
+                        .create(conditionalTmp.getRef(), "cType", smallestCommonType);
+                ifTruePre.addCStatement(
+                        new CAssignment(
+                                conditionalTmp.getRef(),
+                                new CExpr(smallestCommonType.castTo(lhs), parseContext),
+                                "=",
+                                parseContext));
+                ifFalsePre.addCStatement(
+                        new CAssignment(
+                                conditionalTmp.getRef(),
+                                new CExpr(smallestCommonType.castTo(rhs), parseContext),
+                                "=",
+                                parseContext));
+            }
+            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsDereference) {
                 CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
                 recordMetadata(ctx, preIf);
                 preStatements.addCStatement(preIf);
@@ -1726,12 +1970,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 postStatements.addCStatement(postIf);
             }
 
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(
-                            List.of(
-                                    CComplexType.getType(lhs, parseContext),
-                                    CComplexType.getType(rhs, parseContext)),
-                            parseContext);
             IteExpr<?> ite =
                     Ite(
                             AbstractExprs.Neq(
@@ -1739,7 +1977,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             smallestCommonType.castTo(lhs),
                             smallestCommonType.castTo(rhs));
             parseContext.getMetadata().create(ite, "cType", smallestCommonType);
-            iteExpr = ite;
+            iteExpr = conditionalTmp == null ? ite : conditionalTmp.getRef();
         } else {
             iteExpr = ctx.logicalOrExpression().accept(expressionVisitor);
         }

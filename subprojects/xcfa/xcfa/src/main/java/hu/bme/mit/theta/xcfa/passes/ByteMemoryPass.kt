@@ -23,9 +23,11 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
 import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
@@ -46,11 +48,23 @@ import java.math.BigInteger
  * (an address-taken local, a folded flat address) are byte-split here too, uniformly with the
  * frontend's own.
  *
- * A cell whose element type is not a bitvector wider than one byte is left untouched: a byte
- * (`Bv8`) is already a single cell, and a floating-point cell keeps its own array (byte-splitting a
- * float would need the `fpToIEEEBV` round-trip that is gated off for its NaN unsoundness). Byte
- * splitting is a bitvector operation, so the model presumes bitvector arithmetic; an `IntType` cell
- * (integer arithmetic) has no fixed width and is likewise left alone.
+ * A **floating-point** cell is REFUSED, loudly. Splitting one means routing the value through its
+ * IEEE-754 encoding, and that conversion cannot be trusted: SMT-LIB's FloatingPoint sort has a
+ * single NaN element, so `fp.to_ieee_bv` collapses every NaN to one bit pattern, and the theory
+ * does not fix *which* -- measured against z3 4.12.6, a NaN's bits may differ from the canonical
+ * pattern (sat), two NaNs must share their bits (unsat), and a payload round trip may lose the
+ * payload (sat) or keep it (sat). In a verification query the solver picks whichever falsifies the
+ * property, so a program inspecting a NaN's bits gets a spurious counterexample: a wrong `false`,
+ * worth -16 where a refusal is worth 0.
+ *
+ * Leaving the float in an array of its own -- what this pass used to do -- is worse than refusing,
+ * because it is silent: a `double` and the bytes overlapping it become unrelated storage, so
+ * `u.value = 1.0; u.parts.msw` reads cells nothing ever wrote and returns an unconstrained value.
+ * Refusing says the same thing out loud.
+ *
+ * A cell whose element type is neither of those is left untouched: a byte (`Bv8`) is already a
+ * single cell. Byte splitting is a bitvector operation, so the model presumes bitvector arithmetic;
+ * an `IntType` cell (integer arithmetic) has no fixed width and is likewise left alone.
  */
 class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -67,8 +81,34 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
-  /** Whether [type] is a bitvector strictly wider than one byte and a whole number of bytes. */
-  private fun wide(type: Type): Boolean = type is BvType && type.size > 8 && type.size % 8 == 0
+  /** The width in bytes of a cell this pass splits, or null if it leaves the cell alone. */
+  private fun byteWidth(type: Type): Int? {
+    val bits =
+      when (type) {
+        is BvType -> type.size
+        // Reached for any float that lives in memory under this model: refuse, do not encode.
+        is FpType -> refuseFloatCell(type)
+        else -> return null
+      }
+    return if (bits > 8 && bits % 8 == 0) bits / 8 else null
+  }
+
+  /** Whether [type] occupies more than one byte and is a whole number of them. */
+  private fun wide(type: Type): Boolean = byteWidth(type) != null
+
+  /**
+   * Refuses a float in byte-addressed memory. See the class comment for why the IEEE round trip
+   * cannot be trusted; the short version is that every NaN shares one bit pattern in SMT and the
+   * theory does not say which, so the solver may choose the one that breaks the program.
+   */
+  private fun refuseFloatCell(type: FpType): Nothing =
+    throw UnsupportedFrontendElementException(
+      "A floating-point object ($type) in byte-addressed memory is not supported: splitting it" +
+        " into byte cells requires the IEEE bit reinterpretation, which SMT-LIB leaves" +
+        " underspecified for NaN (every NaN shares one encoding and the theory does not fix" +
+        " which), so a program that inspects those bits can be given a spurious counterexample." +
+        " Use --memory-model multi or flat for this input."
+    )
 
   private fun XcfaLabel.bytify(): XcfaLabel =
     when (this) {
@@ -113,7 +153,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     val base = deref.array.expandReads()
     val offset = deref.offset.expandReads()
     val rhs = stmt.expr.expandReads()
-    val n = (deref.type as BvType).size / 8
+    val n = byteWidth(deref.type)!!
     val byteValues = ByteUnionSlice.toBytes(rhs, n)
     val writes =
       (0 until n).map { j ->
@@ -140,7 +180,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     if (this is Dereference<*, *, *> && wide(type)) {
       val base = array.expandReads()
       val offset = offset.expandReads()
-      val n = (type as BvType).size / 8
+      val n = byteWidth(type)!!
       val cells = (0 until n).map { j -> byteCell(base, offset, j) as Expr<*> }
       cast(ByteUnionSlice.read(cells, (type as BvType).signed), type) as Expr<T>
     } else {

@@ -59,6 +59,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(
       ReferenceElimination(parseContext),
+      // `calloc` lowers to malloc + a typed memset, so it precedes both of their passes.
+      CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
       ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
@@ -134,7 +136,12 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // Havoc remaining calls to unresolved external functions with integer-scalar signatures
     // (all passes that consume specific calls -- free, malloc, pthread_*, nondet -- have
     // already run), so they do not crash the analysis later with "No such method ...".
-    listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
+    listOf(
+      // Stub the known stdio/string library functions before the generic havoc pass, which refuses
+      // anything taking a pointer.
+      LibraryStubsPass(parseContext, uniqueWarningLogger),
+      UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger),
+    ),
     // Flat memory model: collapse every (base, offset) dereference to the single flat address
     // (deref 0 (+ base offset)). Runs last, downstream of every pass that creates or rewrites a
     // dereference (memsafety, overflow, data-race, mem*), so all three memory backends see already
@@ -185,6 +192,8 @@ class NontermValidationPasses(
     ),
     listOf(
       ReferenceElimination(parseContext),
+      // `calloc` lowers to malloc + a typed memset, so it precedes both of their passes.
+      CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
       ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),

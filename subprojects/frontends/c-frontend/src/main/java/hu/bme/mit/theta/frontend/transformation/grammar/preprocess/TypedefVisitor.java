@@ -74,6 +74,23 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
         }
     }
 
+    /**
+     * `typedef int arr_t[2]` -- carries the dimensions on the TYPE, so that variables later
+     * declared with the typedef name are arrays rather than scalars.
+     *
+     * <p>Exactly the same shape as {@link #markFunctionPointerTypedefs}: a declarator's brackets
+     * belong to the declaration that wrote them, and `arr_t a;` writes none of its own. Until this
+     * ran, such a variable was built as a scalar with no `alloca` behind it, so it had no size and
+     * its first element read was reported as an invalid dereference.
+     */
+    private static void markArrayTypedefs(List<CDeclaration> declarations) {
+        for (CDeclaration declaration : declarations) {
+            if (!declaration.getArrayDimensions().isEmpty()) {
+                declaration.getType().setTypedefArrayDimensions(declaration.getArrayDimensions());
+            }
+        }
+    }
+
     @Override
     public Set<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
         Set<CDeclaration> ret = new LinkedHashSet<>();
@@ -82,6 +99,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                     declarationVisitor.getDeclarations(
                             ctx.declarationSpecifiers(), ctx.initDeclaratorList());
             markFunctionPointerTypedefs(declarations);
+            markArrayTypedefs(declarations);
             this.declarations.addAll(declarations);
             ret.addAll(declarations);
             return ret;
@@ -127,6 +145,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                             ctx.declaration().declarationSpecifiers(),
                             ctx.declaration().initDeclaratorList());
             markFunctionPointerTypedefs(declarations);
+            markArrayTypedefs(declarations);
             ret.addAll(declarations);
             this.declarations.addAll(declarations);
             return ret;

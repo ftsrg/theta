@@ -71,6 +71,9 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
 
   fun widen(e: Expr<BvType>, to: Int): Expr<BvType> = BvExprs.SExt(e, BvType.of(to, true))
 
+  fun widenOperand(e: Expr<BvType>, to: Int): Expr<BvType> =
+    if (e is NegExpr<*>) BvExprs.Neg(widenOperand(bv(e.op), to)) else widen(e, to)
+
   fun lit(value: BigInteger): Expr<BvType> = BvUtils.bigIntegerToSignedBvLitExpr(value, width)
 
   /** The op disagrees with itself carried out in `wide` bits: that is exactly an overflow. */
@@ -87,7 +90,7 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
     for (op in ops.drop(1)) {
       val next = step(acc, op)
       val a = acc
-      checks.add(disagrees(next, wide) { w -> step(widen(a, w), widen(op, w)) })
+      checks.add(disagrees(next, wide) { w -> step(widenOperand(a, w), widenOperand(op, w)) })
       acc = next // the program carries on with the wrapped value, so we must too
     }
     return if (checks.size == 1) checks[0] else Or(checks)
@@ -99,7 +102,9 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
     is SubExpr<*> -> {
       val a = bv(expr.leftOp)
       val b = bv(expr.rightOp)
-      disagrees(BvExprs.Sub(a, b), width + 1) { w -> BvExprs.Sub(widen(a, w), widen(b, w)) }
+      disagrees(BvExprs.Sub(a, b), width + 1) { w ->
+        BvExprs.Sub(widenOperand(a, w), widenOperand(b, w))
+      }
     }
 
     is MulExpr<*> -> foldChecks(expr.ops.map(::bv), width * 2) { a, b -> BvExprs.Mul(listOf(a, b)) }

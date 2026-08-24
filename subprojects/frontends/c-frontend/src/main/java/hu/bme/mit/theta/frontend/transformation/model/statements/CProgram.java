@@ -26,15 +26,32 @@ public class CProgram extends CStatement {
 
     private final List<CFunction> functions;
     private final List<Tuple2<CDeclaration, VarDecl<?>>> globalDeclarations;
+    private final List<Tuple2<CDeclaration, VarDecl<?>>> functionDeclarations;
 
     public CProgram(ParseContext parseContext) {
         super(parseContext);
         this.functions = new ArrayList<>();
         this.globalDeclarations = new ArrayList<>();
+        this.functionDeclarations = new ArrayList<>();
     }
 
     public List<Tuple2<CDeclaration, VarDecl<?>>> getGlobalDeclarations() {
         return globalDeclarations;
+    }
+
+    /**
+     * The functions this translation unit only ever *declares*, with the variable that stands for
+     * each one's address.
+     *
+     * <p>They have no body here -- they are the library functions (`malloc`,
+     * `__VERIFIER_nondet_int`, ...) resolved by name much later -- so they are not among {@link
+     * #getFunctions()}. Their address can still be taken, exactly like a defined function's, and
+     * the variable then has to be initialised to the function's id; without that it is
+     * unconstrained, and every *other* candidate's dispatch guard `fp == id(g)` becomes satisfiable
+     * on a pointer that in fact holds this function.
+     */
+    public List<Tuple2<CDeclaration, VarDecl<?>>> getFunctionDeclarations() {
+        return functionDeclarations;
     }
 
     public List<CFunction> getFunctions() {

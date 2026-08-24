@@ -53,6 +53,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
@@ -94,6 +95,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     protected final Map<VarDecl<?>, CDeclaration> functions;
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
+
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
     private final PostfixVisitor postfixVisitor;
@@ -459,17 +461,35 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     public Expr<?> visitShiftExpression(CParser.ShiftExpressionContext ctx) {
         if (ctx.additiveExpression().size() > 1) {
             Expr<?> accept = ctx.additiveExpression(0).accept(this);
-            checkState(accept.getType() instanceof BvType);
+            // Shifts are modelled only over bitvectors. Under `--arithmetic integer` an operand is
+            // an unbounded Int, so this fires -- and used to do so as a bare
+            // `IllegalStateException`
+            // with no message at all, which made it the single largest undiagnosable failure in the
+            // integer configuration (4,728 runs in the batch-89 `pred_int` run). Say what happened.
+            checkState(
+                    accept.getType() instanceof BvType,
+                    "Shift expressions are only modelled over bitvectors, but the left operand has"
+                        + " type %s. This is expected under --arithmetic integer, which has no bit"
+                        + " representation to shift; use --arithmetic bitvector or efficient.",
+                    accept.getType());
             //noinspection unchecked
             Expr<BvType> expr = (Expr<BvType>) accept;
             CComplexType smallestCommonType =
                     getSmallestCommonType(
                             List.of(CComplexType.getType(accept, parseContext)), parseContext);
-            checkState(smallestCommonType.getSmtType() instanceof BvType);
+            checkState(
+                    smallestCommonType.getSmtType() instanceof BvType,
+                    "Shift expressions are only modelled over bitvectors, but the operands' common"
+                            + " type is %s (see --arithmetic).",
+                    smallestCommonType.getSmtType());
             for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
                 Expr<BvType> rightOp;
                 accept = ctx.additiveExpression(i).accept(this);
-                checkState(accept.getType() instanceof BvType);
+                checkState(
+                        accept.getType() instanceof BvType,
+                        "Shift expressions are only modelled over bitvectors, but the shift amount"
+                                + " has type %s (see --arithmetic).",
+                        accept.getType());
                 //noinspection unchecked
                 rightOp = (Expr<BvType>) accept;
                 Expr<BvType> leftExpr =
@@ -918,15 +938,33 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CParser.PrimaryExpressionBuiltinVaArgContext ctx) {
         ctx.unaryExpression().accept(this); // the va_list operand, for any side effects it has
         String typeName = ctx.typeName().getText();
-        CComplexType type =
-                typedefVisitor
-                        .getType(typeName)
-                        .or(() -> Optional.ofNullable(CComplexType.getType(typeName, parseContext)))
-                        .orElseThrow(
-                                () ->
-                                        new UnsupportedFrontendElementException(
-                                                "Cannot resolve the type read by __builtin_va_arg: "
-                                                        + typeName));
+        // Resolve through the TYPE VISITOR, not by name. The name lookups below only ever see the
+        // raw text, so anything that is not a plain identifier fails -- and the single shape that
+        // actually occurs is `__builtin_va_arg(ap, __typeof__(p->field))`, which the type visitor
+        // already knows how to resolve (it is the same machinery `container_of` needs). All 49
+        // failures in the run-91b parse sweep were literally the same expression,
+        // `__typeof__(on_off->optarg)`.
+        CComplexType type = null;
+        try {
+            type = ctx.typeName().specifierQualifierList().accept(typeVisitor).getActualType();
+        } catch (Exception e) {
+            // fall through to the name-based lookups below
+        }
+        if (type == null) {
+            type =
+                    typedefVisitor
+                            .getType(typeName)
+                            .or(
+                                    () ->
+                                            Optional.ofNullable(
+                                                    CComplexType.getType(typeName, parseContext)))
+                            .orElseThrow(
+                                    () ->
+                                            new UnsupportedFrontendElementException(
+                                                    "Cannot resolve the type read by"
+                                                            + " __builtin_va_arg: "
+                                                            + typeName));
+        }
         uniqueWarningLogger.write(
                 Level.INFO,
                 "WARNING: __builtin_va_arg yields a nondeterministic value; the variadic argument"
@@ -1169,7 +1207,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     // is just the address of the first of the member's cells and a read through it
                     // recombines the cells it spans. It is only the cell-per-value models that
                     // cannot express a pointer knowing it covers several cells.
-                    throw new UnsupportedFrontendElementException(
+                    throw new RequiresByteAddressedMemoryException(
                             "Taking the address of a multi-byte member of a byte-addressed union is"
                                     + " not supported.");
                 }
@@ -1189,10 +1227,41 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                             .create(address, "cType", new CPointer(null, ampType, parseContext));
                     return address;
                 }
+                // Taking a *scalar* local's address is what makes its storage observable after the
+                // block ends, and such a scalar is not an alloca -- ReferenceElimination gives it a
+                // compile-time base -- so nothing else would ever release it. Tell the function
+                // visitor, which releases it at the end of the block that DECLARED it.
+                if (functionVisitor != null && originalOperand instanceof RefExpr<?> ref) {
+                    final Expr<?> address = reference(originalOperand);
+                    functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
+                    return address;
+                }
+                // `&u.member` where the member covers its whole storage cell. A byte-laid-out
+                // union reads such a member as `extract(cell, 0, width)` -- the identity on that
+                // cell -- under the usual width/signedness casts, so the operand is not
+                // syntactically an lvalue even though it names exactly that cell's storage. Its
+                // address is the cell's address.
+                //
+                // Restricted to a *full-width* extract deliberately: a narrower one is a genuine
+                // bitfield, whose address C does not allow taking and which has no address of its
+                // own to give.
+                //
+                // This does not by itself make the intel-tdx-module files verify -- they go on to
+                // hit the byte-union multi-cell refusal, which only the bytes memory model lifts.
+                // It is kept because it is correct: it removes an internal "not an lvalue"
+                // limitation and lets the program reach the honest, documented refusal instead.
+                final Expr<?> wholeCell = wholeCellOf(originalOperand);
+                if (wholeCell != null) {
+                    return reference(wholeCell);
+                }
                 checkState(
                         originalOperand instanceof RefExpr<?>
                                 || originalOperand instanceof Dereference<?, ?, ?>,
-                        "Referencing non-lvalue expressions is not allowed!");
+                        "Referencing non-lvalue expressions is not allowed! Got a %s [%s] of type"
+                                + " %s",
+                        originalOperand.getClass().getSimpleName(),
+                        originalOperand,
+                        ampType);
                 return reference(originalOperand);
             case "*":
                 // `*f` on a function (pointer) is the function itself: (*fp)(x) == fp(x).
@@ -1642,7 +1711,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * Also aliases the {@code __builtin_}-prefixed floating-point classification builtins that have
      * no declaration to the plain library names that {@code FpFunctionsToExprsPass} already models
      * exactly ({@code isnan}, {@code isinf}, {@code isfinite}, {@code isnormal}), by emitting a
-     * call to the plain name.
+     * call to the plain name; supplies the infinity builtins ({@code __builtin_inf*}, {@code
+     * __builtin_huge_val*}) as exact literals; and drops {@code __builtin_prefetch}, which is a
+     * hint with no semantics.
      *
      * <p>Returns {@code null} when {@code ctx} is not such a call, so normal handling proceeds.
      */
@@ -1690,6 +1761,34 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 return args.get(0).accept(this);
             }
+            case "fesetround" -> {
+                // theta models one rounding mode: round-to-nearest-even, the C default. Setting
+                // that is a no-op and `fesetround` returns 0 for success. Setting any *other* mode
+                // silently would leave every later FP operation rounding the wrong way and the
+                // answer confidently wrong -- `floats-cbmc-regression/float-rounding1` asserts a
+                // sum under FE_DOWNWARD and was reported Unsafe though it is safe. An honest
+                // refusal scores 0; a wrong answer scores -16.
+                //
+                // A non-constant argument is refused too: it cannot be shown to be the default.
+                final Expr<?> mode = args.size() == 1 ? args.get(0).accept(this) : null;
+                if (mode == null || !isLiteralZero(ExprUtils.simplify(mode))) {
+                    throw new UnsupportedFrontendElementException(
+                            "fesetround with a non-default rounding mode is not supported: theta"
+                                    + " models only round-to-nearest-even.");
+                }
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> success = signedInt.getNullValue();
+                parseContext.getMetadata().create(success, "cType", signedInt);
+                return success;
+            }
+            case "fegetround" -> {
+                // Always the default mode, which is the only one that can be in effect: any
+                // fesetround that changed it was refused above. FE_TONEAREST is 0.
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> toNearest = signedInt.getNullValue();
+                parseContext.getMetadata().create(toNearest, "cType", signedInt);
+                return toNearest;
+            }
             case "__builtin_constant_p" -> {
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 LitExpr<?> zero = signedInt.getNullValue();
@@ -1701,6 +1800,56 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
             case "__builtin_isnormal" -> {
                 return callModeledLibraryFunction("isnormal", args, false);
+            }
+            case "__builtin_inf",
+                    "__builtin_inff",
+                    "__builtin_infl",
+                    "__builtin_huge_val",
+                    "__builtin_huge_valf",
+                    "__builtin_huge_vall" -> {
+                return infinityConstant(name);
+            }
+            case "__builtin_nan", "__builtin_nanf", "__builtin_nanl" -> {
+                return nanConstant(name);
+            }
+            case "__builtin_isnan" -> {
+                return callModeledLibraryFunction("isnan", args, false);
+            }
+            case "__builtin_isfinite", "__builtin_finite" -> {
+                return callModeledLibraryFunction("isfinite", args, false);
+            }
+            case "__builtin_isgreater",
+                    "__builtin_isgreaterequal",
+                    "__builtin_isless",
+                    "__builtin_islessequal",
+                    "__builtin_islessgreater",
+                    "__builtin_isunordered" -> {
+                // The NaN-safe comparison macros. FpFunctionsToExprsPass already models each under
+                // its plain name, so the `__builtin_` spelling only needs aliasing -- exactly as
+                // isinf/isnormal above.
+                return callModeledLibraryFunction(
+                        name.substring("__builtin_".length()), args, false);
+            }
+            case "__builtin_prefetch" -> {
+                // A cache hint with no semantic effect whatsoever: the C contract is explicitly
+                // that
+                // it does *not* dereference and is safe on any address, valid or not. Its operands
+                // are still ordinary expressions and are evaluated (`__builtin_prefetch(p->next)`
+                // really does read `p->next`), so they go through the visitor for their side
+                // effects and only the hint itself is dropped.
+                //
+                // Evaluated through `this`, the way `__builtin_expect` above does it, NOT through
+                // `functionVisitor`: it is this visitor that emits an operand's side-effect
+                // statements. Handing the context to the function visitor instead parses it and
+                // drops the effect on the floor -- `__builtin_prefetch(&a[i++])` left `i` at 0,
+                // which is what the fixture caught.
+                for (AssignmentExpressionContext arg : args) {
+                    arg.accept(this);
+                }
+                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+                LitExpr<?> unused = signedInt.getNullValue();
+                parseContext.getMetadata().create(unused, "cType", signedInt);
+                return unused;
             }
             case "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
@@ -1862,8 +2011,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
         }
         throw new UnsupportedFrontendElementException(
-                "Field [%s] not found, available fields are: %s"
-                        .formatted(memberName, structType.getFieldsAsMap().keySet()));
+                "Field [%s] of %s not found, available fields are: %s"
+                        .formatted(
+                                memberName,
+                                tagOf(structType),
+                                structType.getFieldsAsMap().keySet()));
+    }
+
+    /** The struct's tag as written, or its type name where the origin is not a tagged struct. */
+    private static String tagOf(CStruct structType) {
+        return structType.getOrigin()
+                        instanceof
+                        hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct s
+                ? s.getTagName()
+                : "<untagged struct>";
     }
 
     /**
@@ -2307,8 +2468,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // The batch-59 NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable
             // path: a floating-point member is refused rather than reopening the unsound
             // round-trip.
-            throw unsupportedByteLaidOutMember(
-                    memberName, "a floating-point member is not supported");
+            // Deliberately NOT the recoverable exception: the byte-addressed model refuses floats
+            // as well (ByteMemoryPass), because splitting one needs an IEEE bit reinterpretation
+            // that SMT-LIB leaves underspecified for NaN. Retrying there would trade one refusal
+            // for another after a second full frontend build.
+            throw new UnsupportedFrontendElementException(
+                    "Accessing member [%s] of a byte-addressed union is not supported: a"
+                                    .formatted(memberName)
+                            + " floating-point member is not supported.");
         }
         if (embeddedType instanceof CStruct) {
             // A nested struct or union member: return a marker carrying the union's own base and
@@ -2335,11 +2502,134 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return byteScalarRead(base, byteOffset, widthBytes, embeddedType);
     }
 
-    private static UnsupportedFrontendElementException unsupportedByteLaidOutMember(
+    /**
+     * The GCC infinity builtins, as an exact {@code +inf} literal of the right width.
+     *
+     * <p>These have no declaration to resolve, so a file using one died as "No such variable or
+     * macro: __builtin_inff" before anything else could happen -- and they are ordinary in float
+     * benchmarks, where {@code isgreater(__builtin_inff(), 1.0)} is exactly the sort of thing being
+     * tested.
+     *
+     * <p>The name decides the width, and it is spelled out rather than sniffed from the last
+     * character: {@code __builtin_inf} itself *ends in* {@code f} but is the {@code double} one, so
+     * a suffix test would silently hand back a {@code float} infinity for it. Unlike the
+     * hex-literal path, {@code long double} needs no exception here -- infinity carries no
+     * significand to round.
+     */
+    private Expr<?> infinityConstant(String name) {
+        final String kind =
+                switch (name) {
+                    case "__builtin_inff", "__builtin_huge_valf" -> "float";
+                    case "__builtin_infl", "__builtin_huge_vall" -> "longdouble";
+                    default -> "double";
+                };
+        return floatConstant(kind, true);
+    }
+
+    /**
+     * The GCC NaN builtins, as a quiet NaN of the right width.
+     *
+     * <p>The argument is a string naming the NaN's *payload* ({@code __builtin_nanf("0x1")}). It is
+     * deliberately ignored: the payload is unobservable except by inspecting the value's bytes, and
+     * that path -- a floating-point member of a byte-addressed union -- is refused outright, so no
+     * program that gets this far can tell one payload from another. The argument is a string
+     * literal, so dropping it evaluates nothing away.
+     */
+    private Expr<?> nanConstant(String name) {
+        final String kind =
+                switch (name) {
+                    case "__builtin_nanf" -> "float";
+                    case "__builtin_nanl" -> "longdouble";
+                    default -> "double";
+                };
+        return floatConstant(kind, false);
+    }
+
+    /** A width-correct {@code +inf} or quiet NaN literal, carrying the matching C type. */
+    private Expr<?> floatConstant(String kind, boolean infinite) {
+        final int exponent = parseContext.getArchitecture().getBitWidth(kind + "_e");
+        final int significand = parseContext.getArchitecture().getBitWidth(kind + "_s");
+        final CComplexType type =
+                switch (kind) {
+                    case "float" -> CComplexType.getFloat(parseContext);
+                    case "longdouble" -> CComplexType.getLongDouble(parseContext);
+                    default -> CComplexType.getDouble(parseContext);
+                };
+        final BigFloat value =
+                infinite ? BigFloat.positiveInfinity(significand) : BigFloat.NaN(significand);
+        final FpLitExpr literal = FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
+        parseContext.getMetadata().create(literal, "cType", type);
+        return literal;
+    }
+
+    /**
+     * The storage cell an operand names in full, or null if it does not name one exactly.
+     *
+     * <p>A member of a byte-laid-out union reads as `extract(cell, 0, cellWidth)` under the usual
+     * width and signedness wrappers. That extract is the identity, so the expression denotes the
+     * cell itself and `&` on it is the cell's address. A narrower extract is a real bitfield and
+     * returns null -- C forbids taking a bitfield's address, and there is none to give.
+     */
+    private static Expr<?> wholeCellOf(Expr<?> operand) {
+        Expr<?> current = operand;
+        for (int depth = 0; depth < 8; depth++) {
+            if (current instanceof hu.bme.mit.theta.core.type.bvtype.BvExtractExpr extract) {
+                final Expr<?> inner = peelCasts(extract.getBitvec());
+                if (!(inner instanceof Dereference<?, ?, ?>)) {
+                    return null;
+                }
+                if (!(inner.getType() instanceof BvType bv)) {
+                    return null;
+                }
+                final int from = extract.getFrom().getValue().intValue();
+                final int until = extract.getUntil().getValue().intValue();
+                return from == 0 && until == bv.getSize() ? inner : null;
+            }
+            final Expr<?> next = peelOnce(current);
+            if (next == current) {
+                return null;
+            }
+            current = next;
+        }
+        return null;
+    }
+
+    private static Expr<?> peelCasts(Expr<?> expr) {
+        Expr<?> current = expr;
+        for (int depth = 0; depth < 8; depth++) {
+            final Expr<?> next = peelOnce(current);
+            if (next == current) {
+                return current;
+            }
+            current = next;
+        }
+        return current;
+    }
+
+    /** Strips one width/signedness wrapper, or returns the expression unchanged. */
+    private static Expr<?> peelOnce(Expr<?> expr) {
+        if (expr instanceof hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
+                || expr instanceof hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
+                || expr instanceof PosExpr<?>) {
+            return expr.getOps().get(0);
+        }
+        return expr;
+    }
+
+    private UnsupportedFrontendElementException unsupportedByteLaidOutMember(
             String memberName, String reason) {
-        return new UnsupportedFrontendElementException(
+        final String message =
                 "Accessing member [%s] of a byte-addressed union is not supported: %s."
-                        .formatted(memberName, reason));
+                        .formatted(memberName, reason);
+        // These refusals are limits of laying a union out as cells by hand: a nested aggregate, or
+        // anything whose bytes would have to be recombined, has no single cell to be read from.
+        // Under the byte-addressed model there is nothing to lay out -- the object already IS its
+        // bytes -- so the caller is told the input needs that model rather than that it is
+        // unsupported. When it is already in force the limit is real. (The floating-point member
+        // does NOT come through here; bytes cannot help it either.)
+        return byteAddressed()
+                ? new UnsupportedFrontendElementException(message)
+                : new RequiresByteAddressedMemoryException(message);
     }
 
     /** Whether [memberName] of [structType] was declared as a bitfield (a non-whole-byte width). */
@@ -2554,7 +2844,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort
                             .CUnsignedShort(null, parseContext);
             case 32 -> CComplexType.getUnsignedInt(parseContext);
-            default -> CComplexType.getUnsignedLong(parseContext);
+            // `unsigned long` is 64 bits only under LP64; under ILP32 it is 32, so a 64-bit cell
+            // came back HALF its width and the union's own layout then addressed past its end:
+            // `union { LONGLONG QuadPart; struct { ULONG LowPart; LONG HighPart; }; }` put
+            // `HighPart` at bit 32 of a 32-bit cell, and the read-modify-write spliced a 64-bit
+            // value into it (ntdrivers, ldv-linux-*, all ILP32). `unsigned long long` is 64 under
+            // both data models, so fall through to it only where `unsigned long` is too narrow --
+            // LP64 keeps the type it already chose.
+            default ->
+                    CComplexType.getUnsignedLong(parseContext).width() >= bits
+                            ? CComplexType.getUnsignedLong(parseContext)
+                            : CComplexType.getUnsignedLongLong(parseContext);
         };
     }
 
@@ -3051,7 +3351,21 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(litExpr, "cType", signedInt);
                 return litExpr;
             }
-            throw new RuntimeException("No such variable or macro: " + name);
+            // Reaching here means `name` was used as a VALUE and resolved to nothing -- not a
+            // variable, not a modelled macro, not an enum constant. In practice it is a library
+            // function used as a function designator rather than called (`= malloc`,
+            // `= __VERIFIER_nondet_int`): only functions defined in this translation unit get an id
+            // that can be taken as a value, so an undefined one has nothing to refer to. Say that,
+            // rather than leaving a bare name (64 `malloc` + 32 `__VERIFIER_nondet_int` in the
+            // run-91b parse sweep looked like a lookup bug).
+            throw new RuntimeException(
+                    "No such variable or macro: "
+                            + name
+                            + ". It is not a declared variable, a modelled macro, or an enum"
+                            + " constant. If it is a function, note that using one as a *value*"
+                            + " (taking its address, assigning it to a function pointer) is only"
+                            + " modelled for functions defined in this translation unit -- an"
+                            + " undefined library function has no id to refer to.");
         } else {
             return variable.getRef();
         }
@@ -3108,15 +3422,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     throw new UnsupportedFrontendElementException(
                             "Hexadecimal long double constants are not yet supported!");
                 }
+                // Precision is the significand width *including* the implicit leading bit -- 24
+                // for float, 53 for double -- which is what MPFR means by precision and what
+                // FpUtils#bigFloatToFpLitExpr and FpType are given everywhere else. Passing
+                // `significand - 1` rounded every literal one bit short and then stored it in a
+                // full-width type, so `1.0000001f` (and `0x1.000002p+0f`, the same value) came out
+                // as a tie at 23 bits and rounded to exactly `1.0f`: the program's own
+                // `1.0000001f > 1.0f` then read as false and safe float programs were reported
+                // Unsafe.
                 bigFloat =
                         new BigFloat(
                                 Double.parseDouble(text),
-                                new BinaryMathContext(significand - 1, exponent));
+                                new BinaryMathContext(significand, exponent));
             } else if (text.startsWith("0b")) {
                 throw new UnsupportedFrontendElementException(
                         "Binary FP constants are not yet supported!");
             } else {
-                bigFloat = new BigFloat(text, new BinaryMathContext(significand - 1, exponent));
+                bigFloat = new BigFloat(text, new BinaryMathContext(significand, exponent));
             }
             FpLitExpr fpLitExpr =
                     FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));
@@ -3335,7 +3657,20 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else {
-                    throw new RuntimeException("Non-array expression used as array!");
+                    // Say WHAT was indexed. Subscripting dispatches on the operand's C type --
+                    // CArray or CPointer -- so reaching here means the type is neither, which in
+                    // practice means the pointee-ness was lost upstream rather than that the
+                    // program indexed a scalar. Naming the type and the expression is the whole
+                    // difference between a triageable family and 18 identical lines in a log.
+                    throw new RuntimeException(
+                            "Non-array expression used as array: the indexed operand has C type "
+                                    + arrayType
+                                    + " ("
+                                    + (arrayType == null
+                                            ? "null"
+                                            : arrayType.getClass().getSimpleName())
+                                    + "), which is neither an array nor a pointer. Operand: "
+                                    + primary);
                 }
             };
         }
@@ -3356,21 +3691,46 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return indirectCall(ctx, expr);
                 }
                 checkState(
-                        expr instanceof RefExpr<?>, "Only variable-backed functions are callable.");
+                        expr instanceof RefExpr<?>,
+                        "Only variable-backed functions are callable, but the callee is a %s whose"
+                            + " C type is %s (recognized as a function pointer: %s). A call through"
+                            + " a function POINTER is dispatched over the candidate set instead;"
+                            + " this fires when the pointer-ness was lost from the type.",
+                        expr.getClass().getSimpleName(),
+                        CComplexType.getType(expr, parseContext),
+                        isCallableFunctionPointer(expr));
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;
-                if (exprList == null) arguments = List.of();
-                else {
-                    List<CStatement> list = new ArrayList<>();
-                    for (AssignmentExpressionContext assignmentExpressionContext :
-                            exprList.assignmentExpression()) {
-                        if (functionVisitor == null)
-                            throw new RuntimeException(
-                                    "Cannot parse function calls without a function visitor.");
-                        CStatement accept = assignmentExpressionContext.accept(functionVisitor);
-                        list.add(accept);
+                // `pthread_create(&t, ...)`, `pthread_mutex_lock(&m)`: the address of a *handle*
+                // goes to the thread runtime, which owns it for as long as the thread or lock
+                // lives -- and theta models such a handle as a thread id or mutex identity, not as
+                // storage that is read. Releasing it at the end of the block that declared it is
+                // therefore both meaningless and harmful: `for (...) { pthread_t t;
+                // pthread_create(&t, ...); }` had its handle freed on every iteration and the next
+                // access reported a false `valid-deref` (`pthread-theta/unwind3-100` and
+                // `unwind3-nondet` regressed from correct to wrong in run 93 for exactly this).
+                final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
+                final boolean wasSuppressing =
+                        functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
+                if (calleeName.startsWith("pthread_") && functionVisitor != null)
+                    functionVisitor.setSuppressScopedRelease(true);
+                try {
+                    if (exprList == null) arguments = List.of();
+                    else {
+                        List<CStatement> list = new ArrayList<>();
+                        for (AssignmentExpressionContext assignmentExpressionContext :
+                                exprList.assignmentExpression()) {
+                            if (functionVisitor == null)
+                                throw new RuntimeException(
+                                        "Cannot parse function calls without a function visitor.");
+                            CStatement accept = assignmentExpressionContext.accept(functionVisitor);
+                            list.add(accept);
+                        }
+                        arguments = list;
                     }
-                    arguments = list;
+                } finally {
+                    if (functionVisitor != null)
+                        functionVisitor.setSuppressScopedRelease(wasSuppressing);
                 }
                 CCall cCall =
                         new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
@@ -3409,7 +3769,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         type instanceof CPointer
                                 ? ((CPointer) type).getEmbeddedType()
                                 : ((CArray) type).getEmbeddedType();
-                checkState(structTypeErased instanceof CStruct, "Only structs expected here");
+                checkState(
+                        structTypeErased instanceof CStruct,
+                        "Only structs expected here, got %s (%s) accessing ->%s of %s",
+                        structTypeErased,
+                        structTypeErased == null
+                                ? "null"
+                                : structTypeErased.getClass().getSimpleName(),
+                        ctx.Identifier().getText(),
+                        type);
                 return structMemberAccess(
                         primary, (CStruct) structTypeErased, ctx.Identifier().getText());
             };

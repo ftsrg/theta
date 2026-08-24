@@ -288,7 +288,11 @@ public final class ExprSimplifier {
                         instanceof
                         LitExpr<?>) { // The index is required to be a literal so that we can use
             // 'equals' to compare it against existing keys in the array
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(arr, index).eval(val);
         }
         return expr.with(arr, index);
     }
@@ -305,7 +309,11 @@ public final class ExprSimplifier {
         if (arr instanceof LitExpr<?>
                 && index instanceof LitExpr<?>
                 && elem instanceof LitExpr<?>) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(arr, index, elem).eval(val);
         }
         return expr.with(arr, index, elem);
     }
@@ -2036,7 +2044,11 @@ public final class ExprSimplifier {
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(leftOp, rightOp).eval(val);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2047,7 +2059,11 @@ public final class ExprSimplifier {
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(leftOp, rightOp).eval(val);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2058,7 +2074,11 @@ public final class ExprSimplifier {
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(leftOp, rightOp).eval(val);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2069,7 +2089,11 @@ public final class ExprSimplifier {
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(leftOp, rightOp).eval(val);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2095,7 +2119,11 @@ public final class ExprSimplifier {
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(leftOp, rightOp).eval(val);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2106,7 +2134,11 @@ public final class ExprSimplifier {
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(leftOp, rightOp).eval(val);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2116,7 +2148,11 @@ public final class ExprSimplifier {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(op).eval(val);
         }
 
         return expr.with(op);
@@ -2126,7 +2162,11 @@ public final class ExprSimplifier {
         final Expr<BvType> sgn = simplify(expr.getOp(), val);
 
         if (sgn instanceof BvLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(sgn).eval(val);
         }
 
         return expr.with(sgn);
@@ -2136,7 +2176,11 @@ public final class ExprSimplifier {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(op).eval(val);
         }
         return expr.with(op);
     }
@@ -2144,7 +2188,11 @@ public final class ExprSimplifier {
     private Expr<FpType> simplifyFpFromIeeeBv(final FpFromIeeeBvExpr expr, final Valuation val) {
         final Expr<BvType> op = simplify(expr.getOp(), val);
         if (op instanceof BvLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(op).eval(val);
         }
         return expr.with(op);
     }
@@ -2152,7 +2200,11 @@ public final class ExprSimplifier {
     private Expr<BvType> simplifyFpToIeeeBv(final FpToIeeeBvExpr expr, final Valuation val) {
         final Expr<FpType> op = simplify(expr.getOp(), val);
         if (op instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(op).eval(val);
         }
         return expr.with(op);
     }
@@ -2161,7 +2213,11 @@ public final class ExprSimplifier {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpLitExpr) {
-            return expr.eval(val);
+            // Evaluate the expression REBUILT from the already-simplified operands, not the
+            // original. Simplification can fold an operand to a literal without needing its
+            // variables (`x * 0` -> `0`), and re-evaluating the original then reaches those
+            // free variables and dies with NoSuchElementException out of RefExpr.eval.
+            return expr.with(op).eval(val);
         } else if (op instanceof FpToFpExpr) {
             return simplify(expr.with(((FpToFpExpr) op).getOp()), val);
         }

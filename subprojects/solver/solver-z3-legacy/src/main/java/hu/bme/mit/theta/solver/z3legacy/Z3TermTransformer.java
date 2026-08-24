@@ -292,6 +292,30 @@ final class Z3TermTransformer {
                         throw new Z3Exception("Not supported: " + term);
                     }
                 });
+        // Z3 introduces `(_ bit2bool k) x` when it reasons about individual bits of a bitvector:
+        // the term is true exactly when bit k of x is set. It has no counterpart in theta's
+        // expression language, so back-transformation fell through to toFuncLitExpr, which needs a
+        // model and threw `NullPointerException: Unsupported function 'bit2bool'` when there was
+        // none. That was the single largest failure of the bitvector encoding in the batch-88
+        // exploratory run -- 2,946 runs across 1,473 tasks in a dozen unrelated families.
+        //
+        // The bit index is read from the term's own text, the way the `extract` case above does it.
+        this.environment.put(
+                Tuple2.of("bit2bool", 1),
+                (term, model, vars) -> {
+                    Pattern pattern = Pattern.compile("bit2bool ([0-9]+)");
+                    Matcher match = pattern.matcher(term.toString());
+                    if (match.find()) {
+                        int index = Integer.parseInt(match.group(1));
+                        Expr<BvType> op =
+                                (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+                        return AbstractExprs.Eq(
+                                BvExtractExpr.of(op, IntExprs.Int(index), IntExprs.Int(index + 1)),
+                                BvUtils.bigIntegerToNeutralBvLitExpr(java.math.BigInteger.ONE, 1));
+                    } else {
+                        throw new Z3Exception("Not supported: " + term);
+                    }
+                });
         this.environment.put(
                 Tuple2.of("zero_extend", 1),
                 (term, model, vars) -> {
@@ -345,9 +369,27 @@ final class Z3TermTransformer {
 
     public Expr<?> toFuncLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
-        checkNotNull(
-                model,
-                "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
+        // A symbol with no handler in `environment` lands here. When there is no model to
+        // interpret it against, the old `checkNotNull` reported it as a bare NullPointerException
+        // whose message named the symbol -- which read like a crash rather than a limitation, and
+        // hid *which* condition actually failed (the null model, not the symbol as such).
+        //
+        // The symbol that reaches this in practice is Z3's `array-ext`: the Skolem witness for
+        // array extensionality, i.e. an index at which two arrays differ
+        // (`a != b -> select(a, array-ext(a,b)) != select(b, array-ext(a,b))`). It is Z3-internal,
+        // not SMT-LIB, and it leaks out of interpolants over quantified array reasoning. Theta has
+        // no expression for an existential witness, and inventing a fresh index variable would
+        // change what an interpolant means -- turning a crash into a possible wrong answer. So it
+        // is refused, deliberately and by name.
+        if (model == null) {
+            throw new UnsupportedOperationException(
+                    "Unsupported function '"
+                            + funcDecl.getName()
+                            + "'/"
+                            + funcDecl.getArity()
+                            + " in Z3 back-transformation: no theta expression corresponds to it,"
+                            + " and there is no model to interpret it against.");
+        }
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
         if (funcInterp == null) {
             return null;

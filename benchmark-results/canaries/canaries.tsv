@@ -261,3 +261,9 @@ c/neural-networks/cartpole_0_safe.c-amalgamation.yml	c/neural-networks/cartpole_
 c/loops-crafted-1/discover_list.yml	c/loops-crafted-1/discover_list.c	unreach-call	c/properties/unreach-call.prp	true	ILP32	0.000	loops-crafted-1
 c/libvsync/mcslock.yml	c/libvsync/mcslock.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	0.000	libvsync
 c/pthread-complex/safestack_relacy.yml	c/pthread-complex/safestack_relacy.i	valid-memsafety	c/properties/valid-memsafety.prp	true	ILP32	0.000	pthread-complex
+c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_01_good.yml	c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_01_good.i	no-overflow	c/properties/no-overflow.prp	true	LP64	5.282	Juliet_Test
+c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_01_bad.yml	c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_01_bad.i	no-overflow	c/properties/no-overflow.prp	false	LP64	5.446	Juliet_Test
+c/Juliet_Test/CWE191_Integer_Underflow__int_fscanf_predec_01_good.yml	c/Juliet_Test/CWE191_Integer_Underflow__int_fscanf_predec_01_good.i	no-overflow	c/properties/no-overflow.prp	true	LP64	5.575	Juliet_Test
+c/Juliet_Test/CWE191_Integer_Underflow__int_fscanf_predec_01_bad.yml	c/Juliet_Test/CWE191_Integer_Underflow__int_fscanf_predec_01_bad.i	no-overflow	c/properties/no-overflow.prp	false	LP64	5.520	Juliet_Test
+c/Juliet_Test/CWE190_Integer_Overflow__int_fscanf_postinc_01_good.yml	c/Juliet_Test/CWE190_Integer_Overflow__int_fscanf_postinc_01_good.i	no-overflow	c/properties/no-overflow.prp	true	LP64	5.639	Juliet_Test
+c/Juliet_Test/CWE190_Integer_Overflow__int_fscanf_postinc_01_bad.yml	c/Juliet_Test/CWE190_Integer_Overflow__int_fscanf_postinc_01_bad.i	no-overflow	c/properties/no-overflow.prp	false	LP64	5.803	Juliet_Test

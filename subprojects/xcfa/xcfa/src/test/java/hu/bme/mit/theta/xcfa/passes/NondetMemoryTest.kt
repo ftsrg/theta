@@ -44,14 +44,41 @@ class NondetMemoryTest {
 
   @Test
   fun nondetWithArgumentsIsRejected() {
+    // Havocing the return value of a nondet that takes arguments would silently discard whatever it
+    // does to them, so an unrecognised one is still refused. (`__VERIFIER_nondet_memory` is NOT the
+    // example any more: it has a real model in MemoryFunctionsPass and is deliberately deferred to
+    // it -- see nondetMemoryIsLeftForMemoryFunctionsPass below.)
     assertThrows(IllegalStateException::class.java) {
       runPasses {
         "ret" type Int()
         "ptr" type Int()
         "sz" type Int()
-        (init to "L1") { "__VERIFIER_nondet_memory"("ret", "ptr", "sz") }
+        (init to "L1") { "__VERIFIER_nondet_blob"("ret", "ptr", "sz") }
       }
     }
+  }
+
+  @Test
+  fun nondetMemoryIsLeftForMemoryFunctionsPass() {
+    // `__VERIFIER_nondet_memory(mem, size)` writes `size` bytes at `mem`; its effect is not its
+    // return value, so NondetFunctionPass must not touch it -- in ANY memory model. Gating that
+    // deferral on the bytes model meant the default models refused it outright for "having
+    // arguments" (167 runs in the run-91 parse sweep).
+    val ctx =
+      XcfaBuilder("").procedure("main") {
+        "ret" type Int()
+        "ptr" type Int()
+        "sz" type Int()
+        (init to "L1") { "__VERIFIER_nondet_memory"("ret", "ptr", "sz") }
+      }
+    val result =
+      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
+        ctx.builder
+      ) { acc, pass ->
+        pass.run(acc)
+      }
+    val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
+    assertTrue(labels.any { it is InvokeLabel && it.name == "__VERIFIER_nondet_memory" })
   }
 
   @Test

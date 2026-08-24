@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
@@ -40,8 +41,13 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr
+import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -52,6 +58,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
+import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration
 import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -64,6 +71,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -116,6 +124,174 @@ class FrontendXcfaBuilder(
     return getLoc(builder, "__loc_" + XcfaLocation.uniqueCounter(), metadata)
   }
 
+  /**
+   * Why an assignment's left-hand side could not be lowered, naming the shape rather than the
+   * object. The old message interpolated the CAssignment, whose toString is `CAssignment@4f8b199b`
+   * -- it identifies the failure but not the C construct behind it, so a whole family of failures
+   * collapses into one unclassifiable bucket.
+   */
+  /** One storage cell a bitfield store has to touch, and where the field sits inside it. */
+  private data class BitfieldCellWrite(
+    val cell: Dereference<*, *, *>,
+    /** bit offset of the written slice within this cell */
+    val cellOffset: Int,
+    /** bit offset of the written slice within the field's value */
+    val valueOffset: Int,
+    val width: Int,
+  )
+
+  /**
+   * The cells a bitfield store must write, recovered from the left-hand side's *shape*.
+   *
+   * [BitfieldSlice.read] builds `SignChange(ZExt|SExt(Extract(unit, off, off + width)))`, and an
+   * lvalue picks up C's integer promotion on top, so the `Extract` carries the field's bounds. The
+   * `unit` is a bare dereference for a field inside one cell, and a **`Concat` of byte cells** when
+   * the declared unit is assembled from several -- intel-tdx-module's fields are 52 bits wide over
+   * seven byte dereferences, which is why every single-cell design refused them.
+   *
+   * The concat's operand list *is* the address mapping, and it was built by the read path, which is
+   * correct. Taking each operand's own bit range from it means the store never has to reason about
+   * byte addresses or endianness independently -- the one way this could silently write the right
+   * bits to the wrong byte.
+   *
+   * Only cells the field actually overlaps are returned, so neighbouring bytes are not rewritten (a
+   * spurious write would also invent a data race). Null when the field overlaps anything that is
+   * not a dereference -- concat padding is not storage -- rather than dropping those bits.
+   */
+  private fun structuralBitfieldWrites(lValue: Expr<*>): List<BitfieldCellWrite>? {
+    val extract = peelWidthWrappers(lValue) as? BvExtractExpr ?: return null
+    var from = extract.from.value.toInt()
+    var until = extract.until.value.toInt()
+    if (until <= from) return null
+    var unit = peelWidthWrappers(extract.bitvec)
+    // The cell is often reached through further NARROWINGS, not directly: reading a bitfield out
+    // of a 64-bit cell slices the cell to 32 bits first, and the field is then extracted from
+    // that. `extract(extract(X, a, b), c, d)` is just bits [a+c, a+d) of X, so fold the chain down
+    // to the cell rather than giving up on it. Without this every `ctls.some_bit = ...` in the
+    // intel-tdx-module sources was refused -- ~144 runs of the batch-94 parse sweep -- because the
+    // operand was an extract where this expected a dereference.
+    var depth = 0
+    while (unit is BvExtractExpr && depth++ < 8) {
+      val innerFrom = unit.from.value.toInt()
+      val innerUntil = unit.until.value.toInt()
+      // The inner extract only exposes bits [innerFrom, innerUntil); a field reaching past that
+      // is not a narrowing of one cell and must not be folded into one.
+      if (innerFrom + until > innerUntil) return null
+      from += innerFrom
+      until += innerFrom
+      unit = peelWidthWrappers(unit.bitvec)
+    }
+    if (unit is Dereference<*, *, *>) {
+      // Never write past the end of the cell the chain landed on.
+      val cellWidth = (unit.type as? BvType)?.size ?: return null
+      if (until > cellWidth) return null
+      return listOf(BitfieldCellWrite(unit, from, 0, until - from))
+    }
+    if (unit !is BvConcatExpr) return null
+    val writes = mutableListOf<BitfieldCellWrite>()
+    // Concat's FIRST operand holds the HIGH bits, so walk the operands from the last one up.
+    var low = 0
+    for (part in unit.ops.reversed()) {
+      val partWidth = (part.type as? BvType)?.size ?: return null
+      val overlapLow = maxOf(from, low)
+      val overlapHigh = minOf(until, low + partWidth)
+      if (overlapLow < overlapHigh) {
+        val cell = peelWidthWrappers(part) as? Dereference<*, *, *> ?: return null
+        writes.add(
+          BitfieldCellWrite(
+            cell = cell,
+            cellOffset = overlapLow - low,
+            valueOffset = overlapLow - from,
+            width = overlapHigh - overlapLow,
+          )
+        )
+      }
+      low += partWidth
+    }
+    return writes.ifEmpty { null }
+  }
+
+  /**
+   * The C type to splice a value into [cell] at: the type of the cell's own storage.
+   *
+   * That is not always the type [recorded] on the cell. A union member that is one packed word of
+   * bitfields is stamped with the *struct's* C type, so that `u.parts.f` can resolve `f` as a field
+   * at all (see `ExpressionVisitor#directMemberAccess`), and every aggregate type reports the same
+   * pointer-width placeholder as its `smtType` rather than the cell's storage width. Casting the
+   * right-hand side to that hands a 64-bit value to a 32-bit cell -- intel-tdx-module's
+   * `keyid_ctrl.command = 1` on `union { struct { uint32_t command:8, ...; }; uint32_t raw; }`
+   * under LP64, and every ILP32 `_LARGE_INTEGER` write once the cell is read at its true width.
+   *
+   * When the recorded type does not have the cell's own sort, splice at the unsigned integer type
+   * that does: only the low `width` bits of the value are ever stored, so signedness cannot change
+   * what is written. If no C type has that width, keep the recorded one and let the mismatch be
+   * reported rather than guessing.
+   */
+  private fun cellSpliceType(cell: Expr<*>, recorded: CComplexType): CComplexType {
+    if (recorded.smtType == cell.type) return recorded
+    val bits = (cell.type as? BvType)?.size ?: return recorded
+    return listOf(
+        CUnsignedChar(null, parseContext),
+        CUnsignedShort(null, parseContext),
+        CComplexType.getUnsignedInt(parseContext),
+        CComplexType.getUnsignedLong(parseContext),
+        CComplexType.getUnsignedLongLong(parseContext),
+        CComplexType.getUnsigned128(parseContext),
+      )
+      .firstOrNull { it.width() == bits } ?: recorded
+  }
+
+  /** Peels the width/signedness wrappers a bitfield read and an integer promotion leave behind. */
+  private fun peelWidthWrappers(expr: Expr<*>): Expr<*> {
+    var current: Expr<*> = expr
+    var depth = 0
+    while (depth++ < 8) {
+      current =
+        when (current) {
+          is BvZExtExpr -> current.ops[0]
+          is BvSExtExpr -> current.ops[0]
+          // BvSignChangeExpr is a PosExpr, as is the `+` a cast can leave on an operand.
+          is PosExpr<*> -> current.ops[0]
+          else -> return current
+        }
+    }
+    return current
+  }
+
+  /**
+   * The SMT sorts alone do not say what the program meant: every aggregate reports the same
+   * pointer-width sort, so `(Bv 32) = (Bv 32)` covers a struct copy, a bitfield splice and a plain
+   * store alike. The C types are what separate them -- the pointer-to-struct lvalue this branch
+   * used to refuse was indistinguishable from a scalar store without them -- so name both.
+   */
+  private fun unhandledLhs(lValue: Expr<*>, target: Expr<*>, rExpression: Expr<*>): String =
+    "Could not handle left-hand side of assignment: lhs is a ${lValue.javaClass.simpleName}" +
+      " [$lValue] of type ${lValue.type} (C type ${cTypeName(target)})" +
+      (if (target !== lValue)
+        ", which peels to a ${target.javaClass.simpleName} of type ${target.type}"
+      else "") +
+      ", rhs type ${rExpression.type} (C type ${cTypeName(rExpression)})"
+
+  /**
+   * The C type of [expr] as a readable name, or `unknown` when the metadata did not survive.
+   *
+   * A struct is named by its FIELDS, not just as `CStruct`: two different structs print the same
+   * class name, and "both sides are CStruct" was exactly the misleading reading that hid the
+   * `Toc->TrackData[0] = Toc->TrackData[i]` case -- the two sides were the outer struct and the
+   * element struct, which are not the same type at all.
+   */
+  private fun cTypeName(expr: Expr<*>): String =
+    runCatching { describe(CComplexType.getType(expr, parseContext)) }.getOrElse { "unknown" }
+
+  private fun describe(t: CComplexType): String =
+    when (t) {
+      is CStruct ->
+        (if (t.isUnion) "union" else "struct") + t.fields.joinToString(",", "{", "}") { it.get1() }
+      is CPointer -> "ptr -> " + describe(t.embeddedType)
+      is CArray -> "array of " + describe(t.embeddedType)
+      else -> t.javaClass.simpleName
+    }
+
   private fun getMetadata(source: CStatement): MetaData =
     CMetaData(
       lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
@@ -167,6 +343,7 @@ class FrontendXcfaBuilder(
         // is an atomic variable; `_Atomic int *p` is a plain variable that happens to point at
         // atomic memory, and it is the memory, not `p`, that then cannot be raced on.
         globalDeclaration.get1().actualType.isAtomic,
+        globalDeclaration.get1(),
       )
     }
     // Every compile-time base has now been handed out (only globals take one), so publish the
@@ -183,9 +360,27 @@ class FrontendXcfaBuilder(
     // only needed when the program actually calls through a function pointer -- taking a function's
     // address merely to pass it to pthread_create resolves it by name -- so programs without
     // indirect calls are left completely unchanged.
-    for (function in if (FunctionIds.hasIndirectCall()) cProgram.functions else listOf()) {
-      val id = FunctionIds.getId(function.funcDecl.name) ?: continue
-      for (varDecl in function.funcDecl.varDecls) {
+    if (FunctionIds.hasIndirectCall()) {
+      // Keyed by variable so that a name reached through both lists (or declared twice) is
+      // initialised exactly once -- adding the same global twice is not idempotent.
+      val idVars = LinkedHashMap<VarDecl<*>, Int>()
+      for (function in cProgram.functions) {
+        val id = FunctionIds.getId(function.funcDecl.name) ?: continue
+        for (varDecl in function.funcDecl.varDecls) idVars.putIfAbsent(varDecl, id)
+      }
+      // A function that is only declared here has no body to dispatch into, but its address is a
+      // perfectly ordinary value that a function pointer can hold and be compared against. Its
+      // variable must therefore carry the same id its references were registered under; leaving it
+      // unconstrained would let a pointer holding it satisfy *another* candidate's guard
+      // `fp == id(g)` and dispatch into g. It is never itself a candidate: FunctionPointerCallsPass
+      // keeps only names that exist as procedures in this XCFA, so a call through a pointer that
+      // holds one falls into that pass's catch-all branch and havocs the return value -- the same
+      // over-approximation a *direct* call to the same undefined function gets.
+      for ((declaration, varDecl) in cProgram.functionDeclarations) {
+        val id = FunctionIds.getId(declaration.name) ?: continue
+        idVars.putIfAbsent(varDecl, id)
+      }
+      for ((varDecl, id) in idVars) {
         val idLit = functionIdLiteral(id, varDecl.type)
         builder.addVar(XcfaGlobalVar(varDecl, idLit))
         initStmtList.add(
@@ -603,7 +798,43 @@ class FrontendXcfaBuilder(
    * layout -- the same reason [giveStructObjectStorage] does not walk into them.
    */
   private fun CComplexType.isCopiedStruct(rExpression: Expr<*>): Boolean =
-    this is CStruct && !this.isUnion && this == CComplexType.getType(rExpression, parseContext)
+    copiedStructOrNull(rExpression) != null
+
+  /**
+   * The struct being copied by `<this-typed lvalue> = rExpression`, or null if this is not a struct
+   * copy.
+   *
+   * The lvalue's own type is usually the struct itself. It is a **pointer to** the struct when the
+   * assignment writes through a dereference -- `*(p + i) = s`, which is how CIL spells a struct
+   * element copy and how the `ldv-linux-*` and `ntdrivers` sources all write one. A struct-shaped
+   * region has no value distinct from its address (`&a == a == &a[0]`), so dereferencing a struct
+   * pointer yields the element's *address*, and the cType riding on that address expression is the
+   * pointer's rather than the pointee's. Reading only the outer type therefore saw `CPointer` where
+   * the program meant `struct eni_free`, decided this was not a copy, and the whole file was
+   * refused with "Could not handle left-hand side of assignment" -- 80 runs of the batch-94 parse
+   * sweep, `*(list + index) = *(list + len)` in `eni_alloc_mem` being the archetype.
+   *
+   * The pointee is only accepted when the right-hand side is that same struct, so `p = q` between
+   * two struct pointers is still an ordinary pointer assignment and not a copy.
+   */
+  private fun CComplexType.copiedStructOrNull(rExpression: Expr<*>): CStruct? {
+    val candidate =
+      when (this) {
+        is CStruct -> this
+        is CPointer -> this.embeddedType as? CStruct
+        else -> null
+      } ?: return null
+    if (candidate.isUnion) return null
+    // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
+    // (ntdrivers cdaudio/diskperf, 8 runs) fails here because the rhs element address loses its
+    // struct cType -- FrontendMetadata is identity-keyed -- and the frontend then derives
+    // `CUnsignedInt` from the (Bv 32) sort. Accepting "the lvalue is a struct, so C says the rhs
+    // must be too" was tried and reverted: a derived type is indistinguishable from a real one, so
+    // the rule also swallowed pointer assignments and sent them into structCopy, which threw
+    // ClassCastException -- and it regressed tasks that had started building. The real fix is to
+    // keep the struct type on the rebuilt element address; until then this stays a loud refusal.
+    return candidate.takeIf { it == CComplexType.getType(rExpression, parseContext) }
+  }
 
   /**
    * Copies a struct object's contents into another, field by field.
@@ -720,6 +951,7 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     initExpr: CStatement? = null,
     isAtomic: Boolean = false,
+    declaration: CDeclaration? = null,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
     if (type is CVoid) {
@@ -758,6 +990,17 @@ class FrontendXcfaBuilder(
         )
       )
       recordObjectAtomicity(objectBase, type)
+      // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
+      // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
+      // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
+      // translation unit, which is not part of this task, so the extent is not merely missing here,
+      // it is unknowable. Every use the standard permits on an incomplete array (`&a`, `a` decaying
+      // to `T *`, `a[i]`) needs only the *element* type; the ones that need the extent (`sizeof a`)
+      // are constraint violations a compiler rejects. Demanding one therefore refused valid C: 112
+      // runs of the run-94 parse sweep, all LDV, every one of them this shape (`extern unsigned
+      // char const _ctype[];`, `extern u32 const cx88_user_ctrls[];`, ...).
+      val extentUnknown =
+        declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
       if (MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
@@ -770,11 +1013,30 @@ class FrontendXcfaBuilder(
         // range, so the valid-deref bound `size <= offset` was satisfiable for perfectly good
         // accesses to later elements -- `struct Item arr[3]` recorded 3 for a 6-cell object, and
         // every `arr[2].b` was reported as an invalid dereference.
-        val elementCells = cellsOf(type.embeddedType)
-        val bounds =
-          CComplexType.getUnsignedLong(parseContext)
-            .getValue((getArraySize(type, initExpr).toLong() * elementCells).toString())
+        //
+        // An object of unknown extent gets its whole slice of the address line instead. It has to
+        // get *something*: an unregistered base reads back as size 0 (the size array's default,
+        // which is also how a freed block is marked), and `size <= offset` is then a tautology --
+        // every access to it would be reported as an invalid dereference. Any concrete bound would
+        // be invented, and inventing a small one is how a wrong `false(valid-deref)` gets produced:
+        // `_ctype[c]` indexes a 256-entry table this file never sees the definition of. The slice
+        // width is the largest bound that cannot collide with the next object (bases are spaced by
+        // FLAT_STRIDE), and it says the only true thing this unit knows -- it cannot bound an index
+        // into an object it does not define.
+        val cells =
+          if (extentUnknown) FlatMemoryPass.FLAT_STRIDE
+          else getArraySize(type, initExpr, declaration).toLong() * cellsOf(type.embeddedType)
+        val bounds = CComplexType.getUnsignedLong(parseContext).getValue(cells.toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
+      }
+      if (extentUnknown) {
+        // No initialization sweep, for want of anything true to write: the cells belong to the
+        // defining unit, so C says nothing about their values here -- not even zero, which is what
+        // a *definition* with static storage duration would get (6.7.10p10). Leaving them unwritten
+        // is the honest encoding and the safe one: an unwritten cell is unconstrained, so a read of
+        // it over-approximates whatever the real definition holds, where a zero would have been a
+        // claim this file has no basis for.
+        return
       }
       val flatElement = type.embeddedType
       if (
@@ -823,7 +1085,7 @@ class FrontendXcfaBuilder(
       }
       initializeCompound(
         builder,
-        getArraySize(type, initExpr),
+        getArraySize(type, initExpr, declaration),
         { type.embeddedType },
         initExpr,
         initStmtList,
@@ -1167,7 +1429,16 @@ class FrontendXcfaBuilder(
   private fun designatedIndex(designator: java.util.Optional<CStatement>): Int? =
     designator.map { (it.expression as IntLitExpr).value.toInt() }.orElse(null)
 
-  private fun getArraySize(type: CArray, initExpr: CStatement?): Int {
+  /**
+   * Whether [declaration] only *declares* its object, leaving the definition -- and anything the
+   * definition alone fixes, such as an array's extent -- to another translation unit. That is
+   * `extern` with no initializer, and nothing else: `extern T a[] = {...}` at file scope *is* the
+   * definition (C17 6.9.2p1), and a bare `T a[];` is a tentative definition this file completes.
+   */
+  private fun declaredElsewhere(declaration: CDeclaration?): Boolean =
+    declaration?.type?.isExtern == true && declaration.initExpr == null
+
+  private fun getArraySize(type: CArray, initExpr: CStatement?, declaration: CDeclaration?): Int {
     if (type.arrayDimension == null) {
       if (initExpr is CInitializerList) {
         // `[9] = x` extends the array: the size is the highest written position + 1.
@@ -1176,8 +1447,17 @@ class FrontendXcfaBuilder(
           .maxOrNull()
           ?.plus(1) ?: 0
       } else {
+        // Name the declaration. `CArray` has no toString of its own, so this used to print
+        // `...compound.CArray@1f9ba906`, which says nothing about which declaration is at fault --
+        // and, being long, was what the benchmark's status column truncated on, which is how a
+        // 112-run family stayed untriaged. The declaration's own type and name are the C text.
+        val what =
+          declaration?.let { "`${it.type} ${it.name}[]`" }
+            ?: "this array of ${type.embeddedType.javaClass.simpleName}"
         throw UnsupportedFrontendElementException(
-          "Array with unspecified size must have initializer list."
+          "Array with unspecified size must have initializer list: the extent of $what can" +
+            " be inferred only from a brace initializer, and the declaration has" +
+            " ${if (initExpr == null) "none" else "a ${initExpr.javaClass.simpleName} instead"}."
         )
       }
     }
@@ -1217,6 +1497,10 @@ class FrontendXcfaBuilder(
     val bitfieldCell =
       parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
         as? Dereference<*, *, *>
+    // The metadata is identity-keyed and does not survive the lvalue being rebuilt, which is what
+    // happens to every bitfield store in the intel-tdx-module sources. Recover the cells from the
+    // expression's shape instead; see [structuralBitfieldWrites].
+    val structuralWrites = if (bitfieldCell == null) structuralBitfieldWrites(lValue) else null
     // Assigning to a byte-laid-out union member (AD7, the intractable half -- see
     // ExpressionVisitor#byteScalarRead): unlike a bitfield there is no single cell to
     // read-modify-write, so the right-hand side is split into its own one-byte cells and each is
@@ -1253,6 +1537,33 @@ class FrontendXcfaBuilder(
             StmtLabel(MemoryAssignStmt.create(deref, cast(byteValues[j], deref.type)))
           }
         SequenceLabel(writes, metadata = getMetadata(statement))
+      } else if (structuralWrites != null) {
+        val memberType = CComplexType.getType(lValue, parseContext)
+        val fieldValue = memberType.castTo(rExpression)
+        val writes =
+          structuralWrites.map { w ->
+            val cellType = cellSpliceType(w.cell, CComplexType.getType(w.cell, parseContext))
+            val cellBv = cellType.smtType as BvType
+            @Suppress("UNCHECKED_CAST") val valueBv = fieldValue as Expr<BvType>
+            // The slice of the stored value that lands in this cell, moved into the cell's low
+            // bits so that BitfieldSlice.write can place it at the cell's own offset.
+            val slice =
+              BvExprs.ZExt(
+                BvExprs.Extract(
+                  valueBv,
+                  IntExprs.Int(w.valueOffset),
+                  IntExprs.Int(w.valueOffset + w.width),
+                ),
+                cellBv,
+              )
+            val newCell = BitfieldSlice.write(w.cell, slice, w.cellOffset, w.width)
+            val op = cast(w.cell.array, w.cell.array.type)
+            val offset = cast(w.cell.offset, op.type)
+            val deref = Dereference(op, offset, cellBv)
+            parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+            StmtLabel(MemoryAssignStmt.create(deref, cast(newCell, deref.type)))
+          }
+        SequenceLabel(writes, metadata = getMetadata(statement))
       } else if (bitfieldCell != null) {
         val bitOffset =
           (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.OFFSET).orElseThrow()
@@ -1262,7 +1573,8 @@ class FrontendXcfaBuilder(
           (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.WIDTH).orElseThrow()
               as Number)
             .toInt()
-        val cellType = CComplexType.getType(bitfieldCell, parseContext)
+        val cellType =
+          cellSpliceType(bitfieldCell, CComplexType.getType(bitfieldCell, parseContext))
         // A floating-point union member: the value spliced in is the right-hand side's raw IEEE
         // bit pattern, not an integer cast of it. Everything else is identical -- for a full-width
         // float, offset 0 and width == cell width, so the splice replaces the whole cell.
@@ -1296,11 +1608,23 @@ class FrontendXcfaBuilder(
           metadata = getMetadata(statement),
         )
       } else
-        when (lValue) {
+      // Dispatch on the lvalue with its width/sign wrappers PEELED. An integer promotion or a
+      // signedness change can leave a `BvPosExpr`/`BvSignChangeExpr` (both `PosExpr`), or a
+      // `BvZExt`/`BvSExt`, sitting on the left-hand side; none of them names different storage,
+      // so the assignment belongs to whatever is underneath. Peeling here rather than at
+      // `lValue`'s binding is deliberate: the bitfield-write path ABOVE inspects the unpeeled
+      // left-hand side, and peeling it there broke the byte-addressed-union and bitfield
+      // lowering (4 c2xcfa tests caught it).
+      //
+      // Dispatching the whole `when` on the peeled form -- rather than handling a couple of
+      // shapes in a `PosExpr` branch -- routes a wrapped dereference, a wrapped struct-array
+      // element (`AddExpr`) and a wrapped variable each to the branch that already knows how to
+      // assign to it.
+      when (val target = peelWidthWrappers(lValue)) {
           is Dereference<*, *, *> -> {
-            val op = cast(lValue.array, lValue.array.type)
-            val offset = cast(lValue.offset, op.type)
-            val castRExpression = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+            val op = cast(target.array, target.array.type)
+            val offset = cast(target.offset, op.type)
+            val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
             val type = CComplexType.getType(castRExpression, parseContext)
 
             val deref = Dereference(op, offset, type.smtType)
@@ -1312,7 +1636,7 @@ class FrontendXcfaBuilder(
           }
 
           is RefExpr<*> -> {
-            val lhsType = CComplexType.getType(lValue, parseContext)
+            val lhsType = CComplexType.getType(target, parseContext)
             if (lhsType.isCopiedStruct(rExpression)) {
               // Checked before the pointer-arithmetic rewrite below, because `t = a[i]` on an array
               // of structs satisfies both: the element is now an offset into the array (`a + i*k`),
@@ -1321,7 +1645,7 @@ class FrontendXcfaBuilder(
               // alias of the element -- and left it a split variable, which then failed outright on
               // the next bare use of `t`.
               SequenceLabel(
-                structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+                structCopy(target, rExpression, lhsType as CStruct, getMetadata(statement)),
                 metadata = getMetadata(statement),
               )
             } else if (
@@ -1363,13 +1687,13 @@ class FrontendXcfaBuilder(
                 // arithmetic
                 // the intel-tdx-module firmware does that the 2-D model cannot split.
                 AssignStmtLabel(
-                  lValue,
-                  cast(lhsType.castTo(rExpression), lValue.type),
+                  target,
+                  cast(lhsType.castTo(rExpression), target.type),
                   metadata = getMetadata(statement),
                 )
               } else {
                 AssignStmtLabel(
-                  lValue,
+                  target,
                   cast(
                     asReference
                       // A *multi-model-only* limitation, not a limitation of the program: the
@@ -1381,9 +1705,9 @@ class FrontendXcfaBuilder(
                       // exception in the cause chain), which is what already happens for the other
                       // shapes the base/offset split cannot represent.
                       ?: throw UnsupportedPointerSplitException(
-                        "Pointer arithmetic not supported: $lValue = $rExpression"
+                        "Pointer arithmetic not supported: $target = $rExpression"
                       ),
-                    lValue.type,
+                    target.type,
                   ),
                   metadata = getMetadata(statement),
                 )
@@ -1391,8 +1715,8 @@ class FrontendXcfaBuilder(
             } else {
               // TODO: check if assignment to arrays (stack AND heap) are value- or pointer-based
               AssignStmtLabel(
-                lValue,
-                cast(lhsType.castTo(rExpression), lValue.type),
+                target,
+                cast(lhsType.castTo(rExpression), target.type),
                 metadata = getMetadata(statement),
               )
             }
@@ -1405,19 +1729,19 @@ class FrontendXcfaBuilder(
           // the
           // sum back into base and offset for each field.
           is AddExpr<*> -> {
-            val lhsType = CComplexType.getType(lValue, parseContext)
-            if (lhsType.isCopiedStruct(rExpression)) {
+            val copied = CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
+            if (copied != null) {
               SequenceLabel(
-                structCopy(lValue, rExpression, lhsType as CStruct, getMetadata(statement)),
+                structCopy(target, rExpression, copied, getMetadata(statement)),
                 metadata = getMetadata(statement),
               )
             } else {
-              error("Could not handle left-hand side of assignment $statement")
+              error(unhandledLhs(lValue, target, rExpression))
             }
           }
 
           else -> {
-            error("Could not handle left-hand side of assignment $statement")
+            error(unhandledLhs(lValue, target, rExpression))
           }
         }
 

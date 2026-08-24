@@ -172,7 +172,18 @@ public class CDeclaration {
             actualType = functionPointer;
         }
         // `T *p[N]`: the star belongs to the element type, so it goes on before the dimensions.
-        for (int i = 0; i < pointerInsideArray; i++) {
+        //
+        // ⚠️ In `T (*name[N])(args)` -- an ARRAY OF FUNCTION POINTERS -- that same star is the
+        // function pointer's own, and it has already been consumed above. It is nevertheless
+        // recorded here too, because `addDeclaratorPointer` files any declarator star into
+        // `pointerInsideArray` once a dimension exists. Counting it twice gave the element two
+        // pointer levels instead of one, and the outer level carried no function-pointer flag -- so
+        // `tbl[0](x)` saw a plain `CPointer` and was refused with "Only variable-backed functions
+        // are callable" (106 runs in the run-91b parse sweep; `void *(*__CS_thread[3])(void *)` in
+        // the seq-pthread family, and the aws priority-queue harnesses).
+        int extraInsideArray =
+                pointerInsideArray - ((isFuncPointer && pointerInsideArray > 0) ? 1 : 0);
+        for (int i = 0; i < extraInsideArray; i++) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
             actualType = new CPointer(simpleType, actualType, actualType.getParseContext());

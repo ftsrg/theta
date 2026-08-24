@@ -460,58 +460,73 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             // them (a packed struct laid out unpacked misplaces everything after the first member).
             struct.setLayoutAttributes(LayoutAttributes.of(ctx.gccAttributeSpecifier()));
             int anonymousFields = 0;
-            for (CParser.StructDeclarationContext structDeclarationContext :
-                    ctx.structDeclarationList().structDeclaration()) {
-                CParser.SpecifierQualifierListContext specifierQualifierListContext =
-                        structDeclarationContext.specifierQualifierList();
-                if (specifierQualifierListContext == null) {
-                    continue; // bare `;` member (empty declaration)
-                }
-                CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
-                if (structDeclarationContext.structDeclaratorList() == null) {
-                    final var decl = new CDeclaration(cSimpleType);
-                    if (decl.getName() == null) {
-                        // A C11 anonymous struct/union member. It needs a slot in the field list
-                        // (member lookup flattens through it), and `addField` needs a name.
-                        final var anon =
-                                new CDeclaration(
-                                        CStruct.ANONYMOUS_FIELD_PREFIX + anonymousFields++);
-                        anon.setType(cSimpleType);
-                        struct.addField(anon);
+            // Reading a member can pull this very tag back in before the rest of the members are
+            // known -- a function-pointer member's parameter type (`RSA *(*cb)(SSL *ssl, ...)`)
+            // resolves a typedef whose struct points back here. Flagging the definition as
+            // in-progress makes such a half-expansion invalidatable, so it is rebuilt once the
+            // remaining members arrive instead of being cached forever (see
+            // Struct#definitionInProgress).
+            struct.beginDefinition();
+            try {
+                for (CParser.StructDeclarationContext structDeclarationContext :
+                        ctx.structDeclarationList().structDeclaration()) {
+                    CParser.SpecifierQualifierListContext specifierQualifierListContext =
+                            structDeclarationContext.specifierQualifierList();
+                    if (specifierQualifierListContext == null) {
+                        continue; // bare `;` member (empty declaration)
+                    }
+                    CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
+                    if (structDeclarationContext.structDeclaratorList() == null) {
+                        final var decl = new CDeclaration(cSimpleType);
+                        if (decl.getName() == null) {
+                            // A C11 anonymous struct/union member. It needs a slot in the
+                            // field list (member lookup flattens through it), and `addField`
+                            // needs a name.
+                            final var anon =
+                                    new CDeclaration(
+                                            CStruct.ANONYMOUS_FIELD_PREFIX + anonymousFields++);
+                            anon.setType(cSimpleType);
+                            struct.addField(anon);
+                        } else {
+                            struct.addField(decl);
+                        }
                     } else {
-                        struct.addField(decl);
-                    }
-                } else {
-                    for (CParser.StructDeclaratorContext structDeclaratorContext :
-                            structDeclarationContext.structDeclaratorList().structDeclarator()) {
-                        CDeclaration declaration =
-                                structDeclaratorContext.accept(declarationVisitor);
-                        if (declaration == null) {
-                            continue;
+                        final var declarators =
+                                structDeclarationContext.structDeclaratorList().structDeclarator();
+                        for (CParser.StructDeclaratorContext structDeclaratorContext :
+                                declarators) {
+                            CDeclaration declaration =
+                                    structDeclaratorContext.accept(declarationVisitor);
+                            if (declaration == null) {
+                                continue;
+                            }
+                            if (declaration.getType() == null) {
+                                declaration.setType(cSimpleType);
+                            }
+                            if (declaration.getName() == null) {
+                                // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not
+                                // a field. It has no name to be looked up by and no value to
+                                // hold, but it does move the next member -- `int : 0;` exists
+                                // precisely to close the current storage unit -- so its width
+                                // is kept for the layout.
+                                struct.addPadding(
+                                        Math.max(declaration.getBitfieldWidth(), 0),
+                                        cSimpleType.getActualType().width());
+                                continue;
+                            }
+                            // `int a __attribute__((aligned(8)));` -- a member's own
+                            // alignment, which outranks its struct's `packed`.
+                            if (declaration.getLayoutAttributes() == ObjectLayout.Attributes.NONE) {
+                                declaration.setLayoutAttributes(
+                                        LayoutAttributes.of(
+                                                structDeclarationContext.gccAttributeSpecifier()));
+                            }
+                            struct.addField(declaration);
                         }
-                        if (declaration.getType() == null) {
-                            declaration.setType(cSimpleType);
-                        }
-                        if (declaration.getName() == null) {
-                            // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not a field.
-                            // It has no name to be looked up by and no value to hold, but it does
-                            // move the next member -- `int : 0;` exists precisely to close the
-                            // current storage unit -- so its width is kept for the layout.
-                            struct.addPadding(
-                                    Math.max(declaration.getBitfieldWidth(), 0),
-                                    cSimpleType.getActualType().width());
-                            continue;
-                        }
-                        // `int a __attribute__((aligned(8)));` -- a member's own alignment, which
-                        // outranks its struct's `packed`.
-                        if (declaration.getLayoutAttributes() == ObjectLayout.Attributes.NONE) {
-                            declaration.setLayoutAttributes(
-                                    LayoutAttributes.of(
-                                            structDeclarationContext.gccAttributeSpecifier()));
-                        }
-                        struct.addField(declaration);
                     }
                 }
+            } finally {
+                struct.endDefinition();
             }
             return struct;
         }
