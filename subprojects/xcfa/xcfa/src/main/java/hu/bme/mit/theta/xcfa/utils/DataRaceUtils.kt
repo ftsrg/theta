@@ -83,8 +83,9 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
             }
 
             val threads =
-              if (partition == n) threadsAccessingMemory.sum()
-              else threadsAccessingMemory[partition] + varAccessCount + threadsAccessingMemory[n]
+              varAccessCount +
+                if (partition == n) threadsAccessingMemory.sum()
+                else threadsAccessingMemory[partition] + threadsAccessingMemory[n]
             val nonAtomic =
               if (partition == n) nonAtomicMemoryAccess.any()
               else nonAtomicMemoryAccess[partition] || nonAtomicMemoryAccess[n]
