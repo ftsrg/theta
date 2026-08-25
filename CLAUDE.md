@@ -58,8 +58,13 @@ looks-complete-but-worthless failure, same family as the abs-path trap below. `8
 benchexec's tool-info with `ValueError: invalid literal for int() with base 10: ''`.
 
 ⚠️ **The tool dir MUST be relative** (`Theta-svcomp-NN`), never an absolute path.
-`run-tool.sh` runs the job with `--hidden-dir /home --overlay-dir "$PWD"`; with an
-absolute path the container cannot resolve `theta-start.sh`, so **every** run dies as
+**This applies to `run-theta.sh` on benchcloud exactly as much as to `run-tool.sh` on
+sosy** — both pass `--hidden-dir /home --overlay-dir "$PWD"`, so both hide the very
+directory an absolute `/home/levente/...` path points at. Note that `~/Theta-svcomp-NN`
+IS an absolute path: the shell expands the tilde before the script ever sees it. Hit
+again on 2026-08-25, on benchcloud, costing runs 106 and 107 (923 runs, all dead);
+archived as `results/Theta-svcomp-106/*-FAILED-abspath`.
+With an absolute path the container cannot resolve `theta-start.sh`, so **every** run dies as
 `Cannot start process: [Errno 2] ... theta-start.sh` → `FAILED (KILLED BY SIGNAL 1)`.
 The whole 36,602-run benchmark then "finishes" in ~8 minutes, writes all 55
 `.xml.bz2` files and prints benchexec's normal completion epilogue — it looks like a
@@ -67,7 +72,11 @@ completed run and is entirely worthless. (Hit on 2026-07-20; the failed attempt 
 archived at `results/Theta-svcomp-51-FAILED-abspath`.)
 
 **Sanity-check every run before trusting its progress:**
-- `grep -c "Cannot start process" <log>` must be **0**.
+- `grep -c "Cannot start process" <log>` must be **0** — but note this greps the *client*
+  log, where a per-run launch failure does NOT appear. It read 0 on runs 106/107 while
+  every single run was dying. It is a necessary check, never a sufficient one.
+- **The check that actually catches the abs-path trap: real verdicts accumulating**, or
+  `grep -c "KILLED BY SIGNAL 1"` being 0. Do this a few minutes in, not at the end.
 - Real verdicts (`true` / `false(...)` / `TIMEOUT`) must actually be accumulating.
 - `grep -c writeRunResult <log>` counts **submissions, not completions** — it reaches
   36,602 early and is *not* a completion signal on its own.
