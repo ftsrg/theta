@@ -5,8 +5,8 @@
 ## What this is
 
 A long-running effort to make theta's C frontend get through the SV-COMP benchmark suite, and to
-make the answers it produces trustworthy. 459 commits, 258 source files, ~28.9k added / 2.6k removed,
-concentrated in the frontend and the XCFA construction:
+make the answers it produces trustworthy. 473 commits, 229 source files, concentrated in the
+frontend and the XCFA construction:
 
 | area | +/- |
 |---|---|
@@ -18,7 +18,8 @@ concentrated in the frontend and the XCFA construction:
 | `common/core` | 712 / 83 |
 | solver backends (smtlib, z3, z3-legacy, javasmt) | 918 / 191 |
 
-73 new test files, and a canary suite that now runs as a Gradle task.
+73 feature-guard fixtures and 268 sampled SV-COMP tasks, in a canary suite that now runs as a
+Gradle task (`./gradlew :theta-xcfa-cli:canaryTest`).
 
 ## Measured impact
 
@@ -99,6 +100,43 @@ tasks — all of which run 102 also covers:
 the whole COMPLEX27 portfolio, so part of that gap is the portfolio having more configs to try, not
 this branch's fixes. It is indicative, not a controlled comparison.
 
+### Two families that the release could not read at all
+
+Three targeted runs after the full portfolio, each answering one question. They move no score --
+both families are still at zero correct -- but they are the clearest evidence of what the frontend
+work did and did not buy.
+
+**intel-tdx-module** (836 runs, `unreach-call`, 15 min / 15 GB):
+
+| | v7.3.1 | run 102 | run 105 | **run 108** |
+|---|---:|---:|---:|---:|
+| frontend error | 836 | 166 | 112 | **0** |
+| out of memory | 0 | 313 | 290 | 442 |
+| timeout | 0 | 357 | 434 | 394 |
+| solved / wrong | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+
+**Every intel-tdx task now builds.** Run 105 also exposed a regression introduced by this branch --
+a `CPointer cannot be cast to CStruct` on a lvalue branch that asserted a type instead of resolving
+it, which took 20 tasks backwards from out-of-memory to frontend error. It is fixed (`37e3a3cf94`),
+and run 108 confirms the predicted outcome stated in that commit *before* the run: the remaining 112
+errors became out-of-memory, score unchanged at 0.
+
+What blocks the family now is capacity with a named cause: it falls `multi` -> `flat` -> `bytes` on
+one construct (`Taking the address of a multi-byte member of a byte-addressed union is not
+supported`), and 210 KB of firmware at one cell per byte does not fit in 15 GB.
+
+**libvsync** (87 runs at 60 min / 30 GB -- 4x the time and 2x the memory of a competition slot,
+across CEGAR/EXPL, CEGAR/PRED_CART and MDD): 45 timeouts, 25 runs raising theta's own
+`IllegalStateException: Cannot handle dereferences with changed variables in between` inside an
+`ATOMIC_BEGIN` block, 8 MDD/solvability errors, 7 lost to a solver misconfiguration on the
+reviewer's side of the fence (Z3-legacy cannot interpolate bitvectors), **0 correct** and **2
+wrong** -- both the same `bounded_mpmc_check_full` false alarm. An earlier run at the same budget
+with OC alone (29 runs) also solved nothing.
+
+That false alarm is now reproduced by three independent configurations (EXPL, PRED_CART, and the
+COMPLEX27 portfolio in run 102), which locates it in the **race detection itself** rather than in a
+domain, solver or POR setting. It is the single best-localised soundness target in the branch.
+
 Run 98 is in the table deliberately: it is the same work *before* the last two fixes, and it scored
 6,428 **below** run 93. That dip was 456 Juliet
 tasks answering `false(no-overflow)` on correct programs, and it is the clearest evidence in this PR
@@ -117,7 +155,9 @@ two hosts used different CPU models, so its wall-clock timings are not comparabl
 but-undefined functions having no referencable id; assignment through width/sign wrappers; `extern`
 arrays of unspecified extent (a *declaration*, not a sizing failure); compound bitwise assignments
 selecting the wrong arithmetic encoding; union cells spliced at a placeholder type rather than their
-own storage width; a bitfield reached through a narrowing; a struct copied through a pointer.
+own storage width; a bitfield reached through a narrowing; a struct copied through a pointer; brace elision over an
+array of unions; an aggregate assigned by copying its storage; and a copied aggregate's type
+resolved rather than asserted.
 
 **Library modelling.** `calloc`, symbolic `memset`, `va_arg`, variadic arity, `pthread_detach`, and a
 `LibraryStubsPass` for the stdio/string functions nothing defined — with the stub's havoc bounded to
@@ -135,7 +175,7 @@ misleading until it printed fields.
 
 ## How this was validated
 
-- **Canary suite**: 268 real SV-COMP tasks + 69 feature-guard fixtures, green on every commit that
+- **Canary suite**: 268 real SV-COMP tasks + 73 feature-guard fixtures, green on every commit that
   ships. Now registered as `./gradlew :theta-xcfa-cli:canaryTest` (see below).
 - **Per-module unit tests**, run one module at a time.
 - **A/B for every fix**, rebuilding both sides. Several changes were implemented, measured at zero
@@ -161,19 +201,29 @@ zero effect; and a widened struct-copy guard that regressed working tasks. Each 
    ERRORs there.** Latent unsoundness exposed by tasks that now get far enough to answer, not caused.
    11 are wrong-`true` (−32 each), which is the expensive direction and worth triaging first. The
    wrong count rose 55 → 72 across the branch; that is the honest cost of answering 1,976 more tasks.
-3. **The stub-range fix works but is unexplained.** It turned 456 Juliet tasks from wrong to correct
+3. **intel-tdx and libvsync parse completely and answer nothing.** 836 + 52 tasks moved from "cannot
+   be read" to "cannot be finished", which is worth zero points. tdx is capacity-bound behind the
+   byte-addressed fallback described above; libvsync does not converge under OC, CEGAR (either
+   domain) or MDD even at 60 min / 30 GB. Neither is a merge blocker -- both were unusable before --
+   but neither should be presented as solved.
+4. **A regression this branch introduced was caught by benchmark, not by tests.** The
+   `CPointer cannot be cast to CStruct` cast (limitation above) shipped in `ce78ed430b`, survived the
+   canary suite and the unit tests, and was only visible as 112 identical failures in an 836-run
+   family benchmark. It is fixed, but no fixture guards it: the shape that triggers it has not been
+   reduced to one, and the tdx sources are too large to run as canary rows. **The guard is the run.**
+5. **The stub-range fix works but is unexplained.** It turned 456 Juliet tasks from wrong to correct
    (456/456, with 456 `_bad` controls still caught), yet five minimal programs of the obvious shape
    verify the same with and without it. Guarded by 6 canary rows rather than a fixture, because a
    fixture that does not discriminate guards nothing.
-4. **8 ntdrivers tasks still refuse** `Toc->TrackData[0] = Toc->TrackData[i]`. The cause is known —
+6. **8 ntdrivers tasks still refuse** `Toc->TrackData[0] = Toc->TrackData[i]`. The cause is known —
    the right-hand element address loses its struct `cType` and the frontend derives `CUnsignedInt`
    from the sort — and the obvious fix was tried and reverted for regressing pointer assignments.
-5. **`CComplexType.getType` is not stable across calls** for the same expression. Found incidentally;
+7. **`CComplexType.getType` is not stable across calls** for the same expression. Found incidentally;
    unchased; likely explains other identity-keyed metadata surprises.
-6. **The byte-addressed model refuses floats.** Deliberate: SMT-LIB's FP sort has a single NaN, so
+8. **The byte-addressed model refuses floats.** Deliberate: SMT-LIB's FP sort has a single NaN, so
    `fp.to_ieee_bv` cannot preserve a payload, and MathSAT does not implement it at all. Loud refusal
    over a quiet wrong answer.
-7. **Pre-existing formatting violations** in ~12 files. This branch adds none — verified by comparing
+9. **Pre-existing formatting violations** in ~12 files. This branch adds none — verified by comparing
    the violation list against `master` — but does not fix them either.
 
 ## Review guidance
@@ -181,7 +231,10 @@ zero effect; and a widened struct-copy guard that regressed working tasks. Each 
 The frontend diff is large but most of it is comments explaining *why*, and tests. The places where
 judgement is embedded, and where review is most valuable:
 
-- `LibraryStubsPass` — what a stub havocs and how it is bounded. Item 3 above is unexplained.
+- `LibraryStubsPass` — what a stub havocs and how it is bounded. Item 5 above is unexplained.
+- `MemoryFunctionsPass.nondetFillLoop` — the loop lowering, and the deliberate refusal that remains:
+  a pointer to a compound under the typed-cell models, where a per-byte havoc would be invisible to a
+  sibling read at a wider type.
 - `ByteMemoryPass` — the decision to refuse floats rather than encode them.
 - `FrontendXcfaBuilder.copiedStructOrNull` / `structuralBitfieldWrites` — the two lvalue families.
 - `ExecuteConfig.frontend` — the fallback chain (`multi` → `flat`, and → `bytes`), and which failures
