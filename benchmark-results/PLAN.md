@@ -7987,6 +7987,78 @@ With both fixes in, a real tdx task still dies locally -- `exit 137` after 14 s,
 So tdx goes multi -> flat -> bytes, and 210 KB of firmware at one cell per byte does not fit in
 15 GB. **Supporting that address-of in the flat model is the next real tdx lead** -- not more stubs.
 
+## Runs 106/107 KILLED BY THE ABS-PATH TRAP -- 2026-08-24 (923 runs, all worthless)
+
+Launched with `~/Theta-svcomp-106` as the tool dir. The shell expands the tilde before
+`run-theta.sh` sees it, so benchexec got an absolute `--tool-directory` and `--hidden-dir /home`
+then hid the directory it pointed at. **836 + 87 runs, every one `FAILED (KILLED BY SIGNAL 1)`.**
+
+Two things this file and CLAUDE.md had wrong, both now fixed (`cfebb5ad72`):
+- the trap was written up as a sosy/`run-tool.sh` problem; benchcloud's `run-theta.sh` passes the
+  same flags and behaves identically;
+- the prescribed sanity check (`grep -c "Cannot start process"` on the client log) **read 0 while
+  all 923 runs were dying** -- per-run launch failures never appear there. Check for accumulating
+  verdicts, or `KILLED BY SIGNAL 1` being 0, a few minutes in.
+
+Archived as `results/Theta-svcomp-106/*-FAILED-abspath`. Relaunched as runs 108/109.
+
+## Run 108 (intel-tdx, COMPLEX27, 15 min / 15 GB) RESULT -- 2026-08-25
+
+Build = `be7cdb1aeb` (cast fix + nondet-fill loop). 836 runs.
+
+| | run 102 | run 105 | **run 108** |
+|---|---:|---:|---:|
+| frontend error | 166 | 112 | **0** |
+| out of memory | 313 | 290 | 442 |
+| timeout | 357 | 434 | 394 |
+| solved | 0 | 0 | **0** |
+| wrong | 0 | 0 | **0** |
+
+**Every intel-tdx task now builds.** The transition is exactly what was predicted in the commit
+message before the run: all 112 remaining frontend errors became out-of-memory, score unchanged at
+0. Nothing regressed into an error.
+
+What stands between tdx and an answer is now entirely capacity, and its cause is named: the family
+falls multi -> flat -> **bytes** on one construct (`Taking the address of a multi-byte member of a
+byte-addressed union is not supported`), and 210 KB of firmware at one cell per byte does not fit in
+15 GB. Supporting that address-of under the flat model is the next tdx lead; more frontend fixes are
+not.
+
+## Run 109 (libvsync, CEGAR EXPL + CEGAR PRED_CART + MDD, 60 min / 30 GB) RESULT -- 2026-08-25
+
+87 runs (17 race + 12 reach per checker). Follows run 103, which showed OC alone solves nothing at
+this budget. Question: does a different algorithm get anywhere?
+
+**No. Zero correct answers from any of the three checkers.** The only two verdicts produced are
+both wrong:
+
+| outcome | runs |
+|---|---:|
+| timeout | 45 |
+| `Cannot handle dereferences with changed variables in between` (IllegalStateException) | 25 |
+| Z3-legacy `theory not supported by interpolation or bad proof` | 7 |
+| MDD `XcfaMultiThreadToMonolithicAdapter does not support these labels` / NotSolvable / other | 8 |
+| **wrong** `false(no-data-race)` on `bounded_mpmc_check_full` (expected `true`) | **2** |
+| correct | **0** |
+
+Three findings worth keeping:
+
+1. **The `bounded_mpmc_check_full` false alarm is systematic, not a fluke.** EXPL and PRED_CART
+   reproduced it independently here, and the COMPLEX27 portfolio produced it in run 102. Three
+   configurations, one answer, and it is wrong -- so the defect is in the race detection itself, not
+   in a domain or a POR setting. That makes it a much better triage target than it looked when it
+   was one wrong result in a portfolio run.
+2. **benchexec's "server error" is theta's own exception here.** 25 of the runs are an
+   `IllegalStateException: Cannot handle dereferences with changed variables in between`, raised
+   inside an `ATOMIC_BEGIN` block. A named CEGAR limitation on exactly the shape libvsync is made
+   of, not infrastructure.
+3. ⚠️ **7 runs died from a config choice I should have avoided.** libvsync carries `BITWISE`
+   arithmetic traits (33 of the runs), so the encoding is bitvector -- and Z3-legacy cannot
+   interpolate bitvectors. `feedback_bitvector_needs_mathsat` says exactly this. I set Z3 for both
+   solvers by copying the portfolio's plain multithreaded configs, when the portfolio also carries
+   MATHSAT variants (`config_MULTITHREAD_EXPL_NWT_IT_WP_MATHSAT`) precisely for this case. Re-running
+   those 7 with `mathsat:5.6.10` is cheap and is the obvious next measurement.
+
 ## Run 105 (intel-tdx only, COMPLEX27, 15 min / 15 GB) RESULT -- 2026-08-24
 
 Build `Theta-svcomp-104` = `ce78ed430b` (brace elision + union assignment), 836 runs, benchcloud.
