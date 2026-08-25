@@ -82,9 +82,15 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
               writeMemoryAccess[partition] = true
             }
 
-            val threads = threadsAccessingMemory[partition] + varAccessCount
-            val nonAtomic = nonAtomicMemoryAccess[partition]
-            val write = writeMemoryAccess[partition]
+            val threads =
+              if (partition == n) threadsAccessingMemory.sum()
+              else threadsAccessingMemory[partition] + varAccessCount + threadsAccessingMemory[n]
+            val nonAtomic =
+              if (partition == n) nonAtomicMemoryAccess.any()
+              else nonAtomicMemoryAccess[partition] || nonAtomicMemoryAccess[n]
+            val write =
+              if (partition == n) writeMemoryAccess.any()
+              else writeMemoryAccess[partition] || writeMemoryAccess[n]
             if (threads > 1 && nonAtomic && write) {
               logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
               return true
