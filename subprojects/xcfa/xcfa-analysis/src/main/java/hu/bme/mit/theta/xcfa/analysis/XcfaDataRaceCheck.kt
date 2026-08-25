@@ -21,9 +21,11 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -354,7 +356,24 @@ private fun mayBeSameMemoryLocation(
   val pointerPartitions = state.xcfa!!.getPointerPartitions()
   val a1 = (array1 as? RefExpr<*>)?.decl ?: return true // cannot decide
   val a2 = (array2 as? RefExpr<*>)?.decl ?: return true // cannot decide
-  return pointerPartitions.any { a1 in it.first && a2 in it.first }
+  val partition1 = pointerPartitions.indexOfFirst { a1.belongsTo(it, state) }
+  val partition2 = pointerPartitions.indexOfFirst { a2.belongsTo(it, state) }
+  if (partition1 == -1 || partition2 == -1) return true // cannot decide
+  return partition1 == partition2
+}
+
+private fun Decl<*>.belongsTo(partition: Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>, state: XcfaState<*>): Boolean {
+  if (this in partition.first) return true
+  for ((_, procState) in state.processes) {
+    for (lookUp in procState.varLookup) {
+      for ((original, prefixed) in lookUp) {
+        if (prefixed == this) {
+          return original in partition.first
+        }
+      }
+    }
+  }
+  return false
 }
 
 private fun canExecuteConcurrently(
