@@ -84,7 +84,8 @@ class AtomicReadsOneWritePass : ProcedurePass {
     //
     // It has to cover every outgoing edge with one shared local, not just the edge that needs it:
     // the OC encoding ties sibling branch conditions together through the declaration they read
-    // (`assumeConsts` in XcfaToEventGraph), so localizing one branch while its siblings keep reading
+    // (`assumeConsts` in XcfaToEventGraph), so localizing one branch while its siblings keep
+    // reading
     // the global unties them and lets the two branches disagree about the value of the same global
     // -- a false race, not a crash. Hoisting gives a single read of the global that all the guards
     // share, which preserves the tie.
@@ -124,8 +125,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
       outgoing.forEach { e ->
         // Write the local back only on the branches that actually modify it: an unconditional
         // write-back would add a spurious write event to the global on a read-only branch.
-        val written =
-          e.collectVarsWithAccessType().any { (v, at) -> v in shared && at.isWritten }
+        val written = e.collectVarsWithAccessType().any { (v, at) -> v in shared && at.isWritten }
         val newLabels = e.getFlatLabels().map { it.replaceAccesses(localVersions) }
         val finalAssigns =
           if (!written) listOf()

@@ -307,7 +307,8 @@ constructor(
     // cut), yet XcfaProcedure.deepCopy resolves endpoints through a map keyed by equality and so
     // silently re-points the edge onto the registered instance. A cycle hidden that way only
     // materialises in the copy, where it surfaces as the OC checker rejecting the task for "loops".
-    val registered = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<XcfaLocation, Boolean>())
+    val registered =
+      java.util.Collections.newSetFromMap(java.util.IdentityHashMap<XcfaLocation, Boolean>())
     registered.addAll(locs)
     val dangling = edges.filter { it.source !in registered || it.target !in registered }
     check(dangling.isEmpty()) {

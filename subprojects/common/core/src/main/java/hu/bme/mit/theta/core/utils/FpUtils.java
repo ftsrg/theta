@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ public final class FpUtils {
             final var maxExponent = (1L << (expr.getType().getExponent() - 1)) - 1;
 
             final var exponentField = BvUtils.neutralBvLitExprToBigInteger(expr.getExponent());
-            final var significandField = BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand());
+            final var significandField =
+                    BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand());
 
             // An all-zero exponent field marks a SUBNORMAL, and IEEE-754 encodes those differently
             // in two ways at once: there is no implicit leading 1, and the exponent is the smallest

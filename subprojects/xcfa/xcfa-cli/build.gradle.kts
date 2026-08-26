@@ -104,8 +104,8 @@ val canaryTest by
         group = "verification"
         description =
             "Runs the canary suite (real SV-COMP tasks + feature-guard fixtures) against the built " +
-                "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
-                "than only that the frontend builds each task."
+            "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
+            "than only that the frontend builds each task."
 
         testClassesDirs = sourceSets["test"].output.classesDirs
         classpath = sourceSets["test"].runtimeClasspath
@@ -114,12 +114,23 @@ val canaryTest by
         // The suite needs the packaged distribution, not just the classes. Referenced by name
         // because the archive-packaging plugin registers its variants after this block is evaluated.
         dependsOn("buildArchiveTheta-svcomp")
+        // The filter below matches a compiled class, so the test classes have to exist even when
+        // this task is invoked on its own; without it the task can fail with "No tests found".
+        dependsOn(tasks.named("testClasses"))
 
-        systemProperty("theta.canary.home", layout.projectDirectory.dir("canaries").asFile.absolutePath)
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
         systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
         systemProperty(
             "theta.canary.dist",
-            layout.buildDirectory.dir("distributions/Theta-svcomp").get().asFile.absolutePath,
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
         )
         systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
         // The sweep runs PARALLEL_JOBS tasks at once (script default 4). Lowering it trades wall

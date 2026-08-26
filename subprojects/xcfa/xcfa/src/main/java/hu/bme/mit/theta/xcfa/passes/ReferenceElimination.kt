@@ -48,6 +48,10 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
@@ -58,14 +62,10 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
-import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntType
 import java.math.BigInteger
 
 /**
@@ -73,11 +73,10 @@ import java.math.BigInteger
  * cannot represent (a split variable read or assigned as a whole, instead of through a
  * dereference).
  *
- * This is a limitation of the splitting machinery, not of the input program: under
- * `--memory-model flat` a pointer is a single scalar address, nothing is ever split into a
- * base/offset pair, and the very same program builds fine. That is why the CLI recognises this
- * exact failure and transparently rebuilds the frontend with the flat model instead of reporting a
- * frontend failure.
+ * This is a limitation of the splitting machinery, not of the input program: under `--memory-model
+ * flat` a pointer is a single scalar address, nothing is ever split into a base/offset pair, and
+ * the very same program builds fine. That is why the CLI recognises this exact failure and
+ * transparently rebuilds the frontend with the flat model instead of reporting a frontend failure.
  *
  * It stays an [IllegalStateException] so that everything catching the `error(...)` it replaced
  * keeps behaving identically.
@@ -588,9 +587,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   /** Every variable this procedure reads or writes, including inside dereferences. */
   private fun XcfaProcedureBuilder.usedVars(): Set<VarDecl<*>> =
-    getEdges()
-      .flatMap { edge -> edge.label.getFlatLabels().flatMap { it.collectVars() } }
-      .toSet()
+    getEdges().flatMap { edge -> edge.label.getFlatLabels().flatMap { it.collectVars() } }.toSet()
 
   /**
    * The globals that get base/offset-split anywhere in the XCFA, with the *same* [SplitVarPair] for
@@ -602,9 +599,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * simple-reference map above, so each procedure's own discovery starts from it rather than
    * inventing a second pair of `_base`/`_offset` decls under the same names.
    */
-  private fun globalSplitVars(
-    builder: XcfaProcedureBuilder
-  ): MutableMap<VarDecl<*>, SplitVarPair> {
+  private fun globalSplitVars(builder: XcfaProcedureBuilder): MutableMap<VarDecl<*>, SplitVarPair> {
     @Suppress("UNCHECKED_CAST")
     return builder.parent.metaData.computeIfAbsent("complexSplitGlobals") {
       val shared = linkedMapOf<VarDecl<*>, SplitVarPair>()
@@ -1012,12 +1007,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   /**
    * Re-signs a pointer step that was encoded as a large *unsigned* literal.
    *
-   * Offsets are counted in the pointer-sized unsigned type, so `p--` reaches the pass as
-   * `&*(p + 4294967295)` under ILP32. Under **bitvector** arithmetic that is exactly `p - 1`,
-   * because the addition wraps by construction. Under **integer** arithmetic the operands are
-   * unbounded, so nothing wraps and the address ends up 2^32 too large: `MemsafetyPass` then
-   * recovers a nonsense object from it and reports a false invalid dereference on the very next
-   * read. Every backwards walk over a buffer was a false `valid-deref` alarm
+   * Offsets are counted in the pointer-sized unsigned type, so `p--` reaches the pass as `&*(p +
+   * 4294967295)` under ILP32. Under **bitvector** arithmetic that is exactly `p - 1`, because the
+   * addition wraps by construction. Under **integer** arithmetic the operands are unbounded, so
+   * nothing wraps and the address ends up 2^32 too large: `MemsafetyPass` then recovers a nonsense
+   * object from it and reports a false invalid dereference on the very next read. Every backwards
+   * walk over a buffer was a false `valid-deref` alarm
    * (`array-memsafety/openbsd_cmemrchr-alloca-2`, and the `cmemrchr` idiom generally), while the
    * sibling `n--` in the same loop stayed correct -- the frontend had wrapped *that* one.
    *
@@ -1182,23 +1177,21 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   /**
    * Rewrites this expression for the split variables, carrying its C type onto the rebuilt node.
    *
-   * `FrontendMetadata` is keyed by object *identity*, so a rebuilt expression -- even a structurally
-   * identical one -- arrives with no `cType` at all. That matters far beyond this pass: once a
-   * procedure has any split variable, [runComplexReferenceElimination] rewrites **every** edge in
-   * it, so every arithmetic node in the procedure lost its type, and [OverflowDetectionPass], which
-   * only instruments nodes whose `cType` is a signed integer, then silently emitted **no checks at
-   * all** -- `no-overflow` became vacuously true for the whole procedure, with no warning. A single
-   * `int *pa = &p->a;` was enough (ldv-regression/test22-2, add_last-alloca-1, the stroeder pair:
-   * four missed bugs). The *simple* reference-elimination path in this same file has always
-   * propagated the metadata; the complex one never did.
+   * `FrontendMetadata` is keyed by object *identity*, so a rebuilt expression -- even a
+   * structurally identical one -- arrives with no `cType` at all. That matters far beyond this
+   * pass: once a procedure has any split variable, [runComplexReferenceElimination] rewrites
+   * **every** edge in it, so every arithmetic node in the procedure lost its type, and
+   * [OverflowDetectionPass], which only instruments nodes whose `cType` is a signed integer, then
+   * silently emitted **no checks at all** -- `no-overflow` became vacuously true for the whole
+   * procedure, with no warning. A single `int *pa = &p->a;` was enough (ldv-regression/test22-2,
+   * add_last-alloca-1, the stroeder pair: four missed bugs). The *simple* reference-elimination
+   * path in this same file has always propagated the metadata; the complex one never did.
    */
   private fun <T : Type> Expr<T>.changeComplexReferredVars(
     splitVars: Map<VarDecl<*>, SplitVarPair>
   ): Expr<T> {
     val rewritten = rewriteComplexReferredVars(splitVars)
-    if (
-      rewritten !== this && parseContext.metadata.getMetadataValue(this, "cType").isPresent
-    ) {
+    if (rewritten !== this && parseContext.metadata.getMetadataValue(this, "cType").isPresent) {
       parseContext.metadata.create(rewritten, "cType", CComplexType.getType(this, parseContext))
     }
     return rewritten

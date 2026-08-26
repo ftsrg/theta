@@ -30,9 +30,9 @@ package hu.bme.mit.theta.frontend;
  * under the model that does support it rather than giving up on the task.
  *
  * <p><b>Not raised for a floating-point member.</b> The byte-addressed model refuses those too (see
- * {@code ByteMemoryPass}), because splitting a float means an IEEE bit reinterpretation that SMT-LIB
- * leaves underspecified for NaN. Retrying such an input would swap one refusal for another and waste
- * a whole second frontend build, so that case stays a plain unsupported-element failure.
+ * {@code ByteMemoryPass}), because splitting a float means an IEEE bit reinterpretation that
+ * SMT-LIB leaves underspecified for NaN. Retrying such an input would swap one refusal for another
+ * and waste a whole second frontend build, so that case stays a plain unsupported-element failure.
  */
 public class RequiresByteAddressedMemoryException extends UnsupportedFrontendElementException {
     public RequiresByteAddressedMemoryException(String message) {

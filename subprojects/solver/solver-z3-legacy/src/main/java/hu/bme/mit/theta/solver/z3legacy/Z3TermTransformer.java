@@ -309,8 +309,7 @@ final class Z3TermTransformer {
                         Expr<BvType> op =
                                 (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
                         return AbstractExprs.Eq(
-                                BvExtractExpr.of(
-                                        op, IntExprs.Int(index), IntExprs.Int(index + 1)),
+                                BvExtractExpr.of(op, IntExprs.Int(index), IntExprs.Int(index + 1)),
                                 BvUtils.bigIntegerToNeutralBvLitExpr(java.math.BigInteger.ONE, 1));
                     } else {
                         throw new Z3Exception("Not supported: " + term);

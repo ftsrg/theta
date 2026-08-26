@@ -25,8 +25,6 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
@@ -36,7 +34,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -143,7 +143,8 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                   // signed-only ("Unsigned BvType cannot be used here"). The two agree on the
                   // non-negative values an address can take. This only ever surfaced once the flat
                   // model started being reached for these tasks -- under flat the residue class
-                  // still identifies the allocator, since a base is `id * 65536` and 65536 = 1 mod 3.
+                  // still identifies the allocator, since a base is `id * 65536` and 65536 = 1 mod
+                  // 3.
                   Neq(Rem(argument, pointerType.getValue("3")), pointerType.nullValue),
                 ),
               )

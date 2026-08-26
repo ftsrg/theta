@@ -110,8 +110,8 @@ internal fun XcfaProcedureBuilder.snapshotBody(): ProcedureBody =
   )
 
 /**
- * Splices [callee]'s body into [builder] in place of a call, so that control flows
- * `source -> (copy of callee) -> target`.
+ * Splices [callee]'s body into [builder] in place of a call, so that control flows `source -> (copy
+ * of callee) -> target`.
  *
  * The caller is responsible for having removed the edge that carried [invokeLabel] and for bringing
  * [callee] to whatever optimization phase it needs: this only performs the splice, so that a caller
@@ -198,7 +198,8 @@ internal fun inlineCallSite(
   // of them can be acted on.
   //
   // ⚠️ Only a callee with MORE parameters than the call site supplies is a problem. The loop below
-  // walks `calleeParams` and indexes `invokeLabel.params[i]`, so that is the direction that runs off
+  // walks `calleeParams` and indexes `invokeLabel.params[i]`, so that is the direction that runs
+  // off
   // the end. A call site supplying *extra* arguments -- which is every variadic call, `printk(fmt,
   // ...)` and friends -- indexes safely and simply ignores the surplus. Refusing those too breaks
   // every driver that calls `printk`, `dev_err` or `__dynamic_dev_dbg`.
@@ -254,7 +255,10 @@ internal fun inlineCallSite(
       val stmt =
         AssignStmt.of(
           cast(varDecl, varDecl.type),
-          cast(CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref), varDecl.type),
+          cast(
+            CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
+            varDecl.type,
+          ),
         )
       outStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
     }

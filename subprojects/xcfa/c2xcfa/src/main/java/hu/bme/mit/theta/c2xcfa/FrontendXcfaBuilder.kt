@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
@@ -43,11 +44,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -126,8 +126,8 @@ class FrontendXcfaBuilder(
 
   /**
    * Why an assignment's left-hand side could not be lowered, naming the shape rather than the
-   * object. The old message interpolated the CAssignment, whose toString is `CAssignment@4f8b199b` --
-   * it identifies the failure but not the C construct behind it, so a whole family of failures
+   * object. The old message interpolated the CAssignment, whose toString is `CAssignment@4f8b199b`
+   * -- it identifies the failure but not the C construct behind it, so a whole family of failures
    * collapses into one unclassifiable bucket.
    */
   /** One storage cell a bitfield store has to touch, and where the field sits inside it. */
@@ -154,8 +154,8 @@ class FrontendXcfaBuilder(
    * byte addresses or endianness independently -- the one way this could silently write the right
    * bits to the wrong byte.
    *
-   * Only cells the field actually overlaps are returned, so neighbouring bytes are not rewritten
-   * (a spurious write would also invent a data race). Null when the field overlaps anything that is
+   * Only cells the field actually overlaps are returned, so neighbouring bytes are not rewritten (a
+   * spurious write would also invent a data race). Null when the field overlaps anything that is
    * not a dereference -- concat padding is not storage -- rather than dropping those bits.
    */
   private fun structuralBitfieldWrites(lValue: Expr<*>): List<BitfieldCellWrite>? {
@@ -214,10 +214,10 @@ class FrontendXcfaBuilder(
    * The C type to splice a value into [cell] at: the type of the cell's own storage.
    *
    * That is not always the type [recorded] on the cell. A union member that is one packed word of
-   * bitfields is stamped with the *struct's* C type, so that `u.parts.f` can resolve `f` as a
-   * field at all (see `ExpressionVisitor#directMemberAccess`), and every aggregate type reports
-   * the same pointer-width placeholder as its `smtType` rather than the cell's storage width.
-   * Casting the right-hand side to that hands a 64-bit value to a 32-bit cell -- intel-tdx-module's
+   * bitfields is stamped with the *struct's* C type, so that `u.parts.f` can resolve `f` as a field
+   * at all (see `ExpressionVisitor#directMemberAccess`), and every aggregate type reports the same
+   * pointer-width placeholder as its `smtType` rather than the cell's storage width. Casting the
+   * right-hand side to that hands a 64-bit value to a 32-bit cell -- intel-tdx-module's
    * `keyid_ctrl.command = 1` on `union { struct { uint32_t command:8, ...; }; uint32_t raw; }`
    * under LP64, and every ILP32 `_LARGE_INTEGER` write once the cell is read at its true width.
    *
@@ -277,8 +277,7 @@ class FrontendXcfaBuilder(
   private fun describe(t: CComplexType): String =
     when (t) {
       is CStruct ->
-        (if (t.isUnion) "union" else "struct") +
-          t.fields.joinToString(",", "{", "}") { it.get1() }
+        (if (t.isUnion) "union" else "struct") + t.fields.joinToString(",", "{", "}") { it.get1() }
       is CPointer -> "ptr -> " + describe(t.embeddedType)
       is CArray -> "array of " + describe(t.embeddedType)
       else -> t.javaClass.simpleName
@@ -863,17 +862,17 @@ class FrontendXcfaBuilder(
    *
    * A struct is copied member by member, but a union's members alias one region, so copying them
    * one by one would write the same storage several times through different type views -- which is
-   * why unions were excluded from the copy path outright, and why
-   * `lookup_context->field_id = ...field_id` (a plain union assignment, `md_field_id_t` being a
-   * `uint64_t` overlaid with a bitfield struct) was refused as an unhandled left-hand side. It is
-   * ordinary C; only the representation makes it look odd, since an aggregate's value is its base
-   * address and so an aggregate lvalue arrives as `base + offset` rather than as a dereference.
+   * why unions were excluded from the copy path outright, and why `lookup_context->field_id =
+   * ...field_id` (a plain union assignment, `md_field_id_t` being a `uint64_t` overlaid with a
+   * bitfield struct) was refused as an unhandled left-hand side. It is ordinary C; only the
+   * representation makes it look odd, since an aggregate's value is its base address and so an
+   * aggregate lvalue arrives as `base + offset` rather than as a dereference.
    *
-   * The cells copied here are exactly the ones `ExpressionVisitor` reads members out of:
-   * a word-sliceable union is ONE cell at offset 0, typed at the union's cell width (members are
-   * bit slices of it); a byte-laid-out one is its [unionCellCount] byte cells. Copying any other
-   * cell would write an array nothing reads -- a silent no-op rather than an error -- so this
-   * mirrors the reader rather than inventing a layout.
+   * The cells copied here are exactly the ones `ExpressionVisitor` reads members out of: a
+   * word-sliceable union is ONE cell at offset 0, typed at the union's cell width (members are bit
+   * slices of it); a byte-laid-out one is its [unionCellCount] byte cells. Copying any other cell
+   * would write an array nothing reads -- a silent no-op rather than an error -- so this mirrors
+   * the reader rather than inventing a layout.
    */
   private fun unionCopy(
     target: Expr<*>,
@@ -888,17 +887,17 @@ class FrontendXcfaBuilder(
     val cells = if (width != null) 1 else unionCellCount(type)
     return (0 until cells).map { i ->
       val offset = offsetLiteral(i.toLong())
-      val to =
-        Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
-      val from =
-        Dereference(cast(source, source.type), cast(offset, source.type), cellType.smtType)
+      val to = Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
+      val from = Dereference(cast(source, source.type), cast(offset, source.type), cellType.smtType)
       parseContext.metadata.create(to, "cType", cellType)
       parseContext.metadata.create(from, "cType", cellType)
       StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata)
     }
   }
 
-  /** Copies one aggregate object's contents into another: a union by storage, a struct by member. */
+  /**
+   * Copies one aggregate object's contents into another: a union by storage, a struct by member.
+   */
   private fun aggregateCopy(
     target: Expr<*>,
     source: Expr<*>,
@@ -1123,13 +1122,13 @@ class FrontendXcfaBuilder(
         // and the per-element path below would give every element its own base id and zero those
         // separate objects instead of the flat cells the accesses read -- so `arr[0].a` came back
         // holding element 0's *base id* as integer data, and later cells were never written at all.
-        // Zero the flat cells directly. (Scalar-element arrays are unaffected: one cell per element,
+        // Zero the flat cells directly. (Scalar-element arrays are unaffected: one cell per
+        // element,
         // so the per-element path already writes the cells that are read.)
         val total = flatArraySize(type) ?: 0
         for (index in 0 until total) {
           val cellType = cellTypeAt(type, index)
-          val cell =
-            Dereference(globalDeclaration, offsetLiteral(index.toLong()), cellType.smtType)
+          val cell = Dereference(globalDeclaration, offsetLiteral(index.toLong()), cellType.smtType)
           parseContext.metadata.create(cell, "cType", cellType)
           initStmtList.add(AssignStmtLabel(cell, cellType.nullValue))
         }
@@ -1606,8 +1605,7 @@ class FrontendXcfaBuilder(
           structuralWrites.map { w ->
             val cellType = cellSpliceType(w.cell, CComplexType.getType(w.cell, parseContext))
             val cellBv = cellType.smtType as BvType
-            @Suppress("UNCHECKED_CAST")
-            val valueBv = fieldValue as Expr<BvType>
+            @Suppress("UNCHECKED_CAST") val valueBv = fieldValue as Expr<BvType>
             // The slice of the stored value that lands in this cell, moved into the cell's low
             // bits so that BitfieldSlice.write can place it at the cell's own offset.
             val slice =
@@ -1671,19 +1669,19 @@ class FrontendXcfaBuilder(
           metadata = getMetadata(statement),
         )
       } else
-        // Dispatch on the lvalue with its width/sign wrappers PEELED. An integer promotion or a
-        // signedness change can leave a `BvPosExpr`/`BvSignChangeExpr` (both `PosExpr`), or a
-        // `BvZExt`/`BvSExt`, sitting on the left-hand side; none of them names different storage,
-        // so the assignment belongs to whatever is underneath. Peeling here rather than at
-        // `lValue`'s binding is deliberate: the bitfield-write path ABOVE inspects the unpeeled
-        // left-hand side, and peeling it there broke the byte-addressed-union and bitfield
-        // lowering (4 c2xcfa tests caught it).
-        //
-        // Dispatching the whole `when` on the peeled form -- rather than handling a couple of
-        // shapes in a `PosExpr` branch -- routes a wrapped dereference, a wrapped struct-array
-        // element (`AddExpr`) and a wrapped variable each to the branch that already knows how to
-        // assign to it.
-        when (val target = peelWidthWrappers(lValue)) {
+      // Dispatch on the lvalue with its width/sign wrappers PEELED. An integer promotion or a
+      // signedness change can leave a `BvPosExpr`/`BvSignChangeExpr` (both `PosExpr`), or a
+      // `BvZExt`/`BvSExt`, sitting on the left-hand side; none of them names different storage,
+      // so the assignment belongs to whatever is underneath. Peeling here rather than at
+      // `lValue`'s binding is deliberate: the bitfield-write path ABOVE inspects the unpeeled
+      // left-hand side, and peeling it there broke the byte-addressed-union and bitfield
+      // lowering (4 c2xcfa tests caught it).
+      //
+      // Dispatching the whole `when` on the peeled form -- rather than handling a couple of
+      // shapes in a `PosExpr` branch -- routes a wrapped dereference, a wrapped struct-array
+      // element (`AddExpr`) and a wrapped variable each to the branch that already knows how to
+      // assign to it.
+      when (val target = peelWidthWrappers(lValue)) {
           is Dereference<*, *, *> -> {
             val op = cast(target.array, target.array.type)
             val offset = cast(target.offset, op.type)
@@ -1762,10 +1760,14 @@ class FrontendXcfaBuilder(
               val asReference = rExpression.asPointerArithReference(lhsType, parseContext)
               if (asReference == null && parseContext.memoryModel.flatAddressing()) {
                 // Under flat/bytes addressing a pointer *is* a single scalar address, so `p = <ptr
-                // arithmetic>` of any shape is just scalar arithmetic -- assign it directly, with no
-                // base/offset split and none of the reference rewrite's `pointer + integer(s)` shape
-                // restriction (which refuses a pointer difference or a pointer under a multiply, both
-                // fine once the address is one scalar). This is what unblocks the pointer arithmetic
+                // arithmetic>` of any shape is just scalar arithmetic -- assign it directly, with
+                // no
+                // base/offset split and none of the reference rewrite's `pointer + integer(s)`
+                // shape
+                // restriction (which refuses a pointer difference or a pointer under a multiply,
+                // both
+                // fine once the address is one scalar). This is what unblocks the pointer
+                // arithmetic
                 // the intel-tdx-module firmware does that the 2-D model cannot split.
                 AssignStmtLabel(
                   target,
@@ -1810,8 +1812,7 @@ class FrontendXcfaBuilder(
           // the
           // sum back into base and offset for each field.
           is AddExpr<*> -> {
-            val copied =
-              CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
+            val copied = CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
             if (copied != null) {
               SequenceLabel(
                 aggregateCopy(target, rExpression, copied, getMetadata(statement))

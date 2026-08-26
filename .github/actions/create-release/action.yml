@@ -37,10 +37,18 @@ runs:
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash
+      # Passed through the environment, never interpolated into the script. `${{ }}` is substituted
+      # textually before bash runs, and backticks command-substitute even inside double quotes -- so
+      # a release message containing a backticked command (any PR description that quotes a shell
+      # command) was executed by the runner.
+      env:
+        VERSION: ${{ steps.value.outputs.version }}
+        TAGNAME: ${{ steps.value.outputs.tagname }}
+        MESSAGE: ${{ steps.value.outputs.message }}
       run: |
-        echo version "${{steps.value.outputs.version}}"
-        echo tagname "${{steps.value.outputs.tagname}}"
-        echo message "${{steps.value.outputs.message}}"
+        echo "version $VERSION"
+        echo "tagname $TAGNAME"
+        echo "message $MESSAGE"
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
         name: ThetaJars

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ class UnusedLocRemovalPass : ProcedurePass {
     val reachable = mutableSetOf(builder.initLoc)
     val stack = mutableListOf(builder.initLoc)
     while (stack.isNotEmpty()) {
-      stack.removeLast().outgoingEdges.forEach { if (reachable.add(it.target)) stack.add(it.target) }
+      stack.removeLast().outgoingEdges.forEach {
+        if (reachable.add(it.target)) stack.add(it.target)
+      }
     }
     // Reachability from the entry, not merely "has no incoming edge": loop unrolling leaves behind
     // whole *cycles* of copies past the unroll bound, and every location in such a cycle has an

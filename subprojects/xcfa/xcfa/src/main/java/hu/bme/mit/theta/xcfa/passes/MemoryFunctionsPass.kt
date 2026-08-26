@@ -17,20 +17,20 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -96,7 +96,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val defined = builder.parent.getProcedures().map { it.name }.toSet()
 
     // A symbolic byte count cannot be spelled out as straight-line assignments, so those calls are
-    // lowered to a real loop instead -- which needs new locations, i.e. edge surgery rather than the
+    // lowered to a real loop instead -- which needs new locations, i.e. edge surgery rather than
+    // the
     // label replacement below. Done first so the inline pass never sees them.
     builder.getEdges().toList().forEach { edge ->
       val labels = edge.label.getFlatLabels()
@@ -121,7 +122,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     builder.getEdges().toList().forEach { edge ->
       val labels = edge.label.getFlatLabels()
       if (
-        labels.none { it is InvokeLabel && it.name in COPY + FILL + NONDET_FILL && it.name !in defined }
+        labels.none {
+          it is InvokeLabel && it.name in COPY + FILL + NONDET_FILL && it.name !in defined
+        }
       ) {
         return@forEach
       }
@@ -190,7 +193,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
     // `memset(p, 0, sizeof *p)` on an aggregate, by cells rather than by element width -- see the
     // matching branch in [copy]. Only the zero fill is claimed: a non-zero byte means something
-    // different in every cell whose width is not one byte, and there is no honest cell value for it.
+    // different in every cell whose width is not one byte, and there is no honest cell value for
+    // it.
     aggregateOf(dst)?.let { (pointee, cells, bytes) ->
       if (literalValue(value) != BigInteger.ZERO) return giveUp(invoke)
       if (literalValue(invoke.params[3]) != bytes) return giveUp(invoke)
@@ -221,8 +225,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     // 32-bit value that has to be narrowed to the one-byte element. Keeping it in the argument's
     // type left a Bv32 to be `cast(..., Bv8)`d below, which threw ClassCastException and failed the
     // whole frontend (`discover_list`).
-    val filler =
-      if (zero) element.nullValue as Expr<*> else element.castTo(value)
+    val filler = if (zero) element.nullValue as Expr<*> else element.castTo(value)
     val stmts =
       (0 until count).map { i ->
         MemoryAssignStmt.create(deref(dst, indexOf(i, dst), element), cast(filler, element.smtType))
@@ -240,12 +243,14 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * Only spelled out under the **bytes** memory model, where it is sound: memory is one-byte cells
    * and every wider read is recombined from them, so a per-byte havoc is exactly visible to a later
    * read of any type overlapping the region. Under the 2-D model this would havoc a `uchar` array
-   * that a sibling read of the same bytes at a wider type never sees -- a silent under-approximation
-   * that could prove an unsafe program safe -- so it is left to fail loudly instead. A symbolic or
-   * over-large size is likewise left unmodelled rather than havocing the wrong number of bytes.
+   * that a sibling read of the same bytes at a wider type never sees -- a silent
+   * under-approximation that could prove an unsafe program safe -- so it is left to fail loudly
+   * instead. A symbolic or over-large size is likewise left unmodelled rather than havocing the
+   * wrong number of bytes.
    */
   private fun nondetFill(invoke: InvokeLabel, builder: XcfaProcedureBuilder): XcfaLabel? {
-    // The last two arguments are `mem` and `size`, whether or not a (void) return slot precedes them.
+    // The last two arguments are `mem` and `size`, whether or not a (void) return slot precedes
+    // them.
     if (invoke.params.size < 2) return null
     val mem = invoke.params[invoke.params.size - 2]
     val size = literalValue(invoke.params[invoke.params.size - 1]) ?: return giveUp(invoke)
@@ -257,7 +262,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val byteAddressed = parseContext.memoryModel.byteAddressed()
     val cellType = if (byteAddressed) CUnsignedChar(null, parseContext) else elementOf(mem)
     if (cellType == null) return giveUp(invoke)
-    val cells = if (byteAddressed) size.toInt() else (elementCount(invoke.params[invoke.params.size - 1], cellType) ?: return giveUp(invoke))
+    val cells =
+      if (byteAddressed) size.toInt()
+      else (elementCount(invoke.params[invoke.params.size - 1], cellType) ?: return giveUp(invoke))
 
     val byteType = cellType
     val stmts =
@@ -321,8 +328,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * The straight-line lowering in [nondetFill] emits two statements per cell, so the 4096-cell cap
    * on it is not arbitrary -- and the intel-tdx firmware walks straight through it: its harness
    * calls this on whole objects, and `sizeof` is 36,864 for `tdcs_t`, 61,440 for `tdvps_t`, 81,920
-   * for `tdx_module_global_t`. Written out, one call to the last of those is 163,840 statements.
-   * As a loop it is four edges, and the havoc **inside the body** still gives each cell its own
+   * for `tdx_module_global_t`. Written out, one call to the last of those is 163,840 statements. As
+   * a loop it is four edges, and the havoc **inside the body** still gives each cell its own
    * unconstrained value, which is what makes this the same model rather than a weaker one.
    *
    * ⚠️ **The straddled tail cell is included**, hence `ceil` rather than a truncating divide: a
@@ -357,7 +364,13 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     // is already a whole number of cells and this is just `n`.
     val count =
       Div(
-        cast(Add(cast(nCast, idxType.smtType), cast(idxType.getValue("${width - 1}"), idxType.smtType)), idxType.smtType),
+        cast(
+          Add(
+            cast(nCast, idxType.smtType),
+            cast(idxType.getValue("${width - 1}"), idxType.smtType),
+          ),
+          idxType.smtType,
+        ),
         cast(w, idxType.smtType),
       )
 
@@ -552,8 +565,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * is an over-approximation and safe, so the tail cell is havoc'd, guarded by `count * w != n` so
    * the common exact case keeps its precision.
    *
-   * ⚠️ This runs after [LoopUnrollPass], so the loop is never unrolled and reaches the analyses as a
-   * real loop. That is deliberate: the alternative here is not a better answer but no answer at all.
+   * ⚠️ This runs after [LoopUnrollPass], so the loop is never unrolled and reaches the analyses as
+   * a real loop. That is deliberate: the alternative here is not a better answer but no answer at
+   * all.
    */
   private fun fillLoop(
     builder: XcfaProcedureBuilder,
@@ -614,10 +628,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         SequenceLabel(
           listOf(
             StmtLabel(
-              MemoryAssignStmt.create(
-                deref(dst, i.ref, element),
-                cast(filler, element.smtType),
-              )
+              MemoryAssignStmt.create(deref(dst, i.ref, element), cast(filler, element.smtType))
             ),
             AssignStmtLabel(i, Add(i.ref, idxType.getValue("1")), i.type),
           )

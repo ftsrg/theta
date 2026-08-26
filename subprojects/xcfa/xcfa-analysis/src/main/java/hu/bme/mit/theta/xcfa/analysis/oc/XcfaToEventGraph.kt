@@ -353,7 +353,9 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
         check(current.incoming == current.lastWrites.size || current.loc.initial)
         check(current.incoming == current.threadLookups.size)
         check(current.incoming == current.atomics.size)
-        check(current.atomics.all { it == current.atomics.first() } || current.loc.isTerminalSink()) {
+        check(
+          current.atomics.all { it == current.atomics.first() } || current.loc.isTerminalSink()
+        ) {
           "incoming paths disagree on atomic nesting at ${current.loc.name}: ${current.atomics}"
         }
 
@@ -460,13 +462,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
               System.err.println("=== OC loop stall: ${waitList.size} waiting item(s)")
               val fromInit = mutableSetOf(thread.procedure.initLoc)
               val q = mutableListOf(thread.procedure.initLoc)
-              while (q.isNotEmpty())
-                q.removeLast().outgoingEdges.forEach { if (fromInit.add(it.target)) q.add(it.target) }
+              while (q.isNotEmpty()) q.removeLast().outgoingEdges.forEach {
+                if (fromInit.add(it.target)) q.add(it.target)
+              }
               waitList.forEach { item ->
                 val downstream = mutableSetOf(item.loc)
                 val q2 = mutableListOf(item.loc)
-                while (q2.isNotEmpty())
-                  q2.removeLast().outgoingEdges.forEach { if (downstream.add(it.target)) q2.add(it.target) }
+                while (q2.isNotEmpty()) q2.removeLast().outgoingEdges.forEach {
+                  if (downstream.add(it.target)) q2.add(it.target)
+                }
                 val missing = item.loc.incomingEdges.filter { it.source !in visited }
                 System.err.println(
                   "  ${item.loc.name}[${item.incoming}/${item.loc.incomingEdges.size}]" +
@@ -536,10 +540,9 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
           if (stillLive.add(it.target)) stack.add(it.target)
         }
       }
-      return waitList
-        .filterTo(mutableSetOf()) { item ->
-          item.loc.incomingEdges.none { it.source !in visited && it.source in stillLive }
-        }
+      return waitList.filterTo(mutableSetOf()) { item ->
+        item.loc.incomingEdges.none { it.source !in visited && it.source in stillLive }
+      }
     }
 
     private fun AssignStmt<*>.process() {

@@ -33,9 +33,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  *
  * A variable is range-constrained where it is havoc'd ([HavocPromotionAndRange]); a memory cell
  * never was. Under **integer** arithmetic a cell is an unbounded `Int`, so an *unwritten* one reads
- * back as any integer whatsoever -- not merely any `unsigned char`. That is unsound in the direction
- * that produces false alarms, and it produced them:
- *
+ * back as any integer whatsoever -- not merely any `unsigned char`. That is unsound in the
+ * direction that produces false alarms, and it produced them:
  * ```
  * unsigned char *a = alloca(2);
  * int r = (int) a[0] - (int) a[1];   // really in [-255, 255]
@@ -44,15 +43,16 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  *
  * Four probes pinned it exactly -- uninitialised cells → Unsafe; the same cells written first →
  * Safe; the same arithmetic through plain variables → Safe; the uninitialised version under
- * `--arithmetic bitvector` → Safe. Under bitvector the cell's SMT type is already the narrow one, and
- * a written cell carries the cast its write applied, so **only an unwritten cell under integer
+ * `--arithmetic bitvector` → Safe. Under bitvector the cell's SMT type is already the narrow one,
+ * and a written cell carries the cast its write applied, so **only an unwritten cell under integer
  * arithmetic** misbehaves. It accounts for a family of no-overflow false alarms on `alloca`-backed
  * string routines.
  *
- * Stated as an `assume` rather than a cast on the read. `CComplexType.castTo` would be a **no-op for
- * signed** narrow types -- `signedCast` returns the operand untouched unless `--enable-signed-wraparound`
- * is set, because signed overflow is undefined before C23 -- so it would fix `unsigned char` and
- * silently miss `char`. `limit()` states `MIN <= e <= MAX` directly and is exact for both.
+ * Stated as an `assume` rather than a cast on the read. `CComplexType.castTo` would be a **no-op
+ * for signed** narrow types -- `signedCast` returns the operand untouched unless
+ * `--enable-signed-wraparound` is set, because signed overflow is undefined before C23 -- so it
+ * would fix `unsigned char` and silently miss `char`. `limit()` states `MIN <= e <= MAX` directly
+ * and is exact for both.
  *
  * Only types *narrower* than `int` are constrained. An `int`-and-wider cell has the same gap in
  * principle, but it did not show up as a false alarm (two arbitrary `int`s genuinely can overflow

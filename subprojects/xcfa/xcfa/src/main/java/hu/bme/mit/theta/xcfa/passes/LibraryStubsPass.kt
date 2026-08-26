@@ -47,8 +47,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * at their old contents -- leaving them would be a specific wrong value, which can hide a bug as
  * easily as invent one, where unconstrained is a safe over-approximation.
  *
- * ⚠️ Not modelled here, deliberately: `setjmp`/`longjmp` (non-local control flow -- a havoc would be
- * a wrong program, and [UnresolvedInvokeToHavocPass] already refuses them by name) and the math
+ * ⚠️ Not modelled here, deliberately: `setjmp`/`longjmp` (non-local control flow -- a havoc would
+ * be a wrong program, and [UnresolvedInvokeToHavocPass] already refuses them by name) and the math
  * functions (`sin`, `expf`, ...), whose *values* matter to the programs that call them; a havoc
  * there would turn a precise computation into noise and answer float tasks by accident.
  */
@@ -157,7 +157,11 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         builder.addVar(fresh)
         val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
         val deref =
-          Dereference.of(ptr as Expr<Type>, cast(index, ptr.type) as Expr<Type>, cell.smtType as Type)
+          Dereference.of(
+            ptr as Expr<Type>,
+            cast(index, ptr.type) as Expr<Type>,
+            cell.smtType as Type,
+          )
         parseContext.metadata.create(deref, "cType", CPointer(null, cell, parseContext))
         out.add(StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata))
         // Bound it to the cell's C type, exactly as a `__VERIFIER_nondet_<type>()` result is

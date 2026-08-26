@@ -73,9 +73,7 @@ fun Dereference<*, *, *>.addressesAtomicData(
   }
   // A live pointer *variable*: its type says what it points at.
   (array as? RefExpr<*>)?.decl?.let { decl ->
-    globalVars
-      .firstOrNull { it.wrappedVar == decl }
-      ?.let { if (it.pointsToAtomic) return true }
+    globalVars.firstOrNull { it.wrappedVar == decl }?.let { if (it.pointsToAtomic) return true }
     val pointee =
       try {
         when (val type = CComplexType.getType(array, parseContext)) {
@@ -120,4 +118,3 @@ fun Expr<*>.resolveObjectBase(parseContext: ParseContext): BigInteger? {
   }
   return null
 }
-

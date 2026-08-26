@@ -107,9 +107,9 @@ class LoopUnrollPass(
   /**
    * Which procedures are recursive, decided once for the whole program.
    *
-   * The pass instance is reused across procedures, and expanding a call rewrites the *callee's* body
-   * in place, so asking again once some bodies have already been expanded gives a different -- and
-   * order-dependent -- answer. Recursion is a property of the program as it arrived, so it is
+   * The pass instance is reused across procedures, and expanding a call rewrites the *callee's*
+   * body in place, so asking again once some bodies have already been expanded gives a different --
+   * and order-dependent -- answer. Recursion is a property of the program as it arrived, so it is
    * settled on first use and kept.
    */
   private var recursiveProcedures: Set<String>? = null
@@ -216,9 +216,7 @@ class LoopUnrollPass(
       // unroll it. Without this the pass throws, which killed every OC run on a task with such a
       // loop.
       if (
-        (loopStartEdges + loopVarModifiers + loopVarInit).any {
-          it.label.dereferences.isNotEmpty()
-        }
+        (loopStartEdges + loopVarModifiers + loopVarInit).any { it.label.dereferences.isNotEmpty() }
       )
         return null
 
@@ -267,7 +265,8 @@ class LoopUnrollPass(
       val locs =
         loopLocs.associateWith {
           var name = "${it.name}_loop${index}"
-          while (!takenNames.add(name)) name = "${it.name}_loop${index}_${XcfaLocation.uniqueCounter()}"
+          while (!takenNames.add(name)) name =
+            "${it.name}_loop${index}_${XcfaLocation.uniqueCounter()}"
           val loc = XcfaLocation(name, metadata = it.metadata)
           builder.addLoc(loc)
           loc
@@ -322,23 +321,24 @@ class LoopUnrollPass(
   /**
    * Expands the calls left over after inlining, capping recursive ones at [forceUnrollLimit].
    *
-   * [InlineProceduresPass] refuses a procedure that (transitively) reaches recursion, and it refuses
-   * it *whole*: `canInline` is all-or-nothing, so a single recursive callee leaves every call in
-   * that procedure un-inlined, not just the recursive one. Backends that need a call-free CFA (the
-   * OC checker does) then reject the task outright. Expanding here recovers those programs whenever
-   * the interesting depth is bounded -- and, because this runs per force-unroll bound rather than
-   * once at inlining time, raising the bound genuinely re-expands the recursion deeper.
+   * [InlineProceduresPass] refuses a procedure that (transitively) reaches recursion, and it
+   * refuses it *whole*: `canInline` is all-or-nothing, so a single recursive callee leaves every
+   * call in that procedure un-inlined, not just the recursive one. Backends that need a call-free
+   * CFA (the OC checker does) then reject the task outright. Expanding here recovers those programs
+   * whenever the interesting depth is bounded -- and, because this runs per force-unroll bound
+   * rather than once at inlining time, raising the bound genuinely re-expands the recursion deeper.
    *
    * A call that is still recursive at the bound is cut, dropping the executions past it, which is
-   * the same promise force unrolling makes for loops; [XcfaProcedureBuilder.setUnsafeUnroll] records
-   * that so a `safe` verdict stays flagged as bound-limited.
+   * the same promise force unrolling makes for loops; [XcfaProcedureBuilder.setUnsafeUnroll]
+   * records that so a `safe` verdict stays flagged as bound-limited.
    */
   private fun unrollRecursiveCalls(builder: XcfaProcedureBuilder) {
     val parseContext = parseContext ?: return
     // Counted per callee: a non-recursive call chain is finite and expands to nothing on its own,
     // so only the calls that can come back round need a cap.
     val recursive =
-      recursiveProcedures ?: recursiveProcedureNames(builder.parent).also { recursiveProcedures = it }
+      recursiveProcedures
+        ?: recursiveProcedureNames(builder.parent).also { recursiveProcedures = it }
     val expansions = mutableMapOf<String, Int>()
     while (true) {
       // Capture every body before anything in this round is spliced. A self-recursive call has the
@@ -351,8 +351,7 @@ class LoopUnrollPass(
         val pred: (XcfaLabel) -> Boolean = { builder.callsKnownProcedure(it) }
         val split = edge.splitIf(pred)
         if (split.isEmpty()) continue
-        val hasCall =
-          split.size > 1 || pred((split[0].label as SequenceLabel).labels[0])
+        val hasCall = split.size > 1 || pred((split[0].label as SequenceLabel).labels[0])
         if (!hasCall) continue
 
         builder.removeEdge(edge)
@@ -507,7 +506,8 @@ class LoopUnrollPass(
         }
         // reduceOrNull, not reduce: a loop-condition location with no outgoing edges at all (a dead
         // end left behind by an earlier unroll) makes this an empty collection, and `reduce` throws
-        // "Empty collection can't be reduced" instead of just reporting that no single loop variable
+        // "Empty collection can't be reduced" instead of just reporting that no single loop
+        // variable
         // could be identified. Null is already the "not properly unrollable" answer handled below.
         .reduceOrNull { v1, v2 -> if (v1 != v2) null else v1 }
     if (loopVar == null) properlyUnrollable = false

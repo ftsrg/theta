@@ -116,7 +116,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      *
      * <pre>
      *   struct node *p = malloc(sizeof *p);          // the size mentions p
-     *   static struct mutex m = { ... &m.wait_list ... };   // a self-linked initializer
+     *   static struct mutex m = { ... &amp;m.wait_list ... };   // a self-linked initializer
      * </pre>
      *
      * The name used to be registered only *after* the initializer had been visited, so both died
@@ -238,16 +238,16 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /**
      * Registers an address-taken *scalar* for release at the end of the block that declared it.
      *
-     * <p>`{ int a = 7; p = &a; } ... *p` is a use-after-scope, but such a scalar never went through
-     * {@link #registerScoped}: it is not an alloca -- ReferenceElimination gives it a compile-time
-     * `3k+2` base at procedure entry -- so no lifetime-end marker was emitted, its
+     * <p>{@code { int a = 7; p = &a; } ... *p} is a use-after-scope, but such a scalar never went
+     * through {@link #registerScoped}: it is not an alloca -- ReferenceElimination gives it a
+     * compile-time `3k+2` base at procedure entry -- so no lifetime-end marker was emitted, its
      * `__theta_ptr_size` entry was never cleared, and the dereference after the block was accepted
      * (`memsafety-ext3/scopes1`, answered `true` against an expected `false`).
      *
-     * <p>The object is released where it was **declared**, not where the `&` appears: `&a` inside a
-     * nested block must not end `a`'s lifetime at that inner block's end, which would release it
-     * early and report a violation in a correct program. Globals and static locals are skipped
-     * outright -- they outlive every block.
+     * <p>The object is released where it was **declared**, not where the {@code &} appears: {@code
+     * &a} inside a nested block must not end `a`'s lifetime at that inner block's end, which would
+     * release it early and report a violation in a correct program. Globals and static locals are
+     * skipped outright -- they outlive every block.
      *
      * @param address the reference expression, which ReferenceElimination later folds to the base
      */

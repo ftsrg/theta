@@ -800,10 +800,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * `__builtin_offsetof(struct S, f)` evaluates to f's *element index* in S -- the same unit
      * every member dereference uses as its offset -- so the `container_of` idiom `(struct
-     * S*)((char*)p - offsetof(struct S, f))` round-trips exactly: `&obj->f` is (base, index(f)),
-     * and subtracting index(f) lands back on (base, 0), the object itself. Nested (`a.b`) and
-     * indexed (`a[3]`) designators are rejected: a struct-typed field holds a base id of its own in
-     * this model, so no single linear offset describes them.
+     * S*)((char*)p - offsetof(struct S, f))` round-trips exactly: {@code &obj->f} is (base,
+     * index(f)), and subtracting index(f) lands back on (base, 0), the object itself. Nested
+     * (`a.b`) and indexed (`a[3]`) designators are rejected: a struct-typed field holds a base id
+     * of its own in this model, so no single linear offset describes them.
      */
     @Override
     public Expr<?> visitPrimaryExpressionBuiltinOffsetof(
@@ -1655,7 +1655,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 && cPointer.isFunctionPointer();
     }
 
-    /** Marker call emitted for an indirect call; {@link FunctionPointerCallsPass} expands it. */
+    /** Marker call emitted for an indirect call; {@code FunctionPointerCallsPass} expands it. */
     public static final String INDIRECT_CALL = "__theta_indirect_call";
 
     /**

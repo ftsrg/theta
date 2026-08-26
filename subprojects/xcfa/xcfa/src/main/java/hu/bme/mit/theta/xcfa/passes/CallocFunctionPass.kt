@@ -133,8 +133,7 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct -> true
       is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray -> true
       is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer ->
-        type.embeddedType !is
-          hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
+        type.embeddedType !is hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
       else -> false
     }
 

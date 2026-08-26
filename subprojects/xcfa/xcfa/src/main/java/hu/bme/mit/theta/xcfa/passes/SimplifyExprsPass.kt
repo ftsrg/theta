@@ -147,17 +147,18 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
    * access simply stops existing, so the race is reported as absent (`reorder_c11_good-*`).
    *
    * Only assumes are guarded. Simplification also *rewrites* the address expression of a
-   * dereference -- folding `base + offset` to a constant -- and an assignment relies on that,
-   * since it is what lets the atomic-cell check resolve the object base (`09atomicfield_norace`).
-   * Such a rewrite drops the global var and the original dereference from the label without
-   * dropping the access, so a plain access comparison cannot tell the two apart.
+   * dereference -- folding `base + offset` to a constant -- and an assignment relies on that, since
+   * it is what lets the atomic-cell check resolve the object base (`09atomicfield_norace`). Such a
+   * rewrite drops the global var and the original dereference from the label without dropping the
+   * access, so a plain access comparison cannot tell the two apart.
    */
   private fun dropsSharedAccess(
     old: XcfaLabel,
     new: XcfaLabel,
     globalVars: Set<VarDecl<*>>,
   ): Boolean {
-    fun globals(label: XcfaLabel) = label.collectVarsWithAccessType().filterKeys { it in globalVars }
+    fun globals(label: XcfaLabel) =
+      label.collectVarsWithAccessType().filterKeys { it in globalVars }
 
     fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
 
