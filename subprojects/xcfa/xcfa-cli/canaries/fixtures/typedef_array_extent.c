@@ -5,7 +5,7 @@
 //
 // This is what made the run-86 `memsafety/test-021x` and `list-ext-properties` family answer
 // `false(valid-deref)` on programs that are safe -- they all declare their list as
-// `typedef ... list_t[2]; list_t list;`. Those tasks had only just started answering at all
+// `typedef... list_t[2]; list_t list;`. Those tasks had only just started answering at all
 // (the frontend previously refused them), so the bug turned 0-scoring errors into wrong answers.
 //
 // The multi-dimensional case pins the dimension ORDER, which is the easy thing to get backwards:

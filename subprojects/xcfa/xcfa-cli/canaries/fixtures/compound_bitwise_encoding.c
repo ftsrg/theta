@@ -13,7 +13,7 @@
 // required the arithmetic to still read `efficient`, which it never does by the time a parse fails.
 // So the retry was dead for exactly the programs it was written for.
 //
-// This is `|=` in the coreutils-v9.5-units `relpath_*` family (20 runs in the batch-94 parse run),
+// This is `|=` in the coreutils-v9.5-units `relpath_*` family,
 // where every one of them accumulates an error flag as `buf_err |= f(...)`.
 extern void abort(void);
 void reach_error() { abort(); }

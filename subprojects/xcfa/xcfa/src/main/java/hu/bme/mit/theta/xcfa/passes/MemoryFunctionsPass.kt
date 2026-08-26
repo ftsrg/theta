@@ -253,9 +253,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
     // Under the bytes model a cell IS a byte, so `size` cells are written. Under the typed-cell
     // models a cell is one element of the pointee type, so the byte count has to be divided by the
-    // element width -- the same translation `fill` does. This used to bail out entirely unless the
-    // bytes model was on, which left the call in place for `NondetFunctionPass` to reject it for
-    // "having arguments" (167 runs in the run-91 parse sweep).
+    // element width -- the same translation `fill` does.
     val byteAddressed = parseContext.memoryModel.byteAddressed()
     val cellType = if (byteAddressed) CUnsignedChar(null, parseContext) else elementOf(mem)
     if (cellType == null) return giveUp(invoke)
@@ -546,8 +544,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * The byte count only has to be translated into an element count -- `n / w` -- which is an
    * ordinary division on the count expression and needs nothing known at build time. A partial fill
    * of an array (`memset(arr, 0, k)` with `k` smaller than the object) falls out of the same bound.
-   * Before this, such a call was left unmodelled and surfaced as "No such method memset" (1,373 runs
-   * in the batch-89 `pred_int` run) even though the pass had seen it and declined it.
+   * A declined call is left in place and later surfaces as "No such method memset".
    *
    * ⚠️ **The partially covered tail element is havoc'd, not skipped.** When `n` is not a whole
    * number of elements the last one is only partly written, and leaving it holding its *old* value

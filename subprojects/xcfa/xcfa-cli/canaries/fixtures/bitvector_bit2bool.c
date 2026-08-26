@@ -3,9 +3,8 @@
 // fell through to toFuncLitExpr, which needs a model, and threw
 // `NullPointerException: Unsupported function 'bit2bool'` when there was none.
 //
-// That was the single largest failure of the bitvector encoding in the batch-88 exploratory run:
-// 2,946 runs across 1,473 distinct tasks in a dozen unrelated families. (I had seen this error
-// once during a pre-submission smoke test and wrongly dismissed it as task-specific.)
+// It was the largest single failure of the bitvector encoding, across many unrelated families --
+// and easy to dismiss as task-specific when it first shows up on one program.
 //
 // This fixture forces bit-level reasoning on a program small enough to actually finish, so the
 // handler has to round-trip to a verdict rather than merely not crash. Companion checks that were

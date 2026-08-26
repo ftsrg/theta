@@ -30,7 +30,7 @@ import java.math.BigInteger
 
 /**
  * `calloc`, which nothing modelled: it reached the analysis as a call to a procedure that does not
- * exist and brought it down ("No such method calloc" -- 372 runs in the batch-89 `pred_int` run).
+ * exist and brought it down with "No such method calloc".
  *
  * It is lowered into the two operations that already have careful implementations rather than being
  * open-coded: `calloc(n, s)` becomes `malloc(n * s)` plus a `memset(p, 0, n * s)`. This pass runs

@@ -167,9 +167,8 @@ class FrontendXcfaBuilder(
     // The cell is often reached through further NARROWINGS, not directly: reading a bitfield out
     // of a 64-bit cell slices the cell to 32 bits first, and the field is then extracted from
     // that. `extract(extract(X, a, b), c, d)` is just bits [a+c, a+d) of X, so fold the chain down
-    // to the cell rather than giving up on it. Without this every `ctls.some_bit = ...` in the
-    // intel-tdx-module sources was refused -- ~144 runs of the batch-94 parse sweep -- because the
-    // operand was an extract where this expected a dereference.
+    // to the cell rather than giving up on it. Without it a bitfield store reached through a
+    // narrowing is refused, because the operand is an extract where this expects a dereference.
     var depth = 0
     while (unit is BvExtractExpr && depth++ < 8) {
       val innerFrom = unit.from.value.toInt()
@@ -804,8 +803,8 @@ class FrontendXcfaBuilder(
    * pointer yields the element's *address*, and the cType riding on that address expression is the
    * pointer's rather than the pointee's. Reading only the outer type therefore saw `CPointer` where
    * the program meant `struct eni_free`, decided this was not a copy, and the whole file was
-   * refused with "Could not handle left-hand side of assignment" -- 80 runs of the batch-94 parse
-   * sweep, `*(list + index) = *(list + len)` in `eni_alloc_mem` being the archetype.
+   * refused with "Could not handle left-hand side of assignment". `*(list + index) = *(list + len)`
+   * is the archetype.
    *
    * The pointee is only accepted when the right-hand side is that same struct, so `p = q` between
    * two struct pointers is still an ordinary pointer assignment and not a copy.
@@ -818,8 +817,8 @@ class FrontendXcfaBuilder(
         else -> null
       } ?: return null
     // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
-    // (ntdrivers cdaudio/diskperf, 8 runs) fails here because the rhs element address loses its
-    // struct cType -- FrontendMetadata is identity-keyed -- and the frontend then derives
+    // fails here because the rhs element address loses its struct cType -- FrontendMetadata is
+    // identity-keyed -- and the frontend then derives
     // `CUnsignedInt` from the (Bv 32) sort. Accepting "the lvalue is a struct, so C says the rhs
     // must be too" was tried and reverted: a derived type is indistinguishable from a real one, so
     // the rule also swallowed pointer assignments and sent them into structCopy, which threw
@@ -1051,9 +1050,8 @@ class FrontendXcfaBuilder(
       // translation unit, which is not part of this task, so the extent is not merely missing here,
       // it is unknowable. Every use the standard permits on an incomplete array (`&a`, `a` decaying
       // to `T *`, `a[i]`) needs only the *element* type; the ones that need the extent (`sizeof a`)
-      // are constraint violations a compiler rejects. Demanding one therefore refused valid C: 112
-      // runs of the run-94 parse sweep, all LDV, every one of them this shape (`extern unsigned
-      // char const _ctype[];`, `extern u32 const cx88_user_ctrls[];`, ...).
+      // are constraint violations a compiler rejects. Demanding one therefore refused valid C,
+      // e.g. `extern unsigned char const _ctype[];`.
       val extentUnknown =
         declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
       if (MemsafetyPass.enabled) {
@@ -1102,9 +1100,8 @@ class FrontendXcfaBuilder(
         // straight into the flat cells. Recursing per row -- the one-dimensional path below --
         // would give every row a base of its own and initialise *those* instead, storage no read
         // ever looks at, since accesses go to arrays[a][i*stride + j]. The array would come back
-        // uninitialised, silently. (This case used to be refused outright: "Not handling init
-        // expression of high dimsension array", 865 tasks, almost all neural-networks weight
-        // matrices and hardness.)
+        // uninitialised, silently. (This case used to be refused outright, as "Not handling init
+        // expression of high dimsension array".)
         //
         // The same is true of an array whose elements are (scalar-field) structs: `S a[N]` stores
         // each element inline at `a[i*unitCount + f]` (see flatArraySize /
@@ -1165,8 +1162,7 @@ class FrontendXcfaBuilder(
       // **Brace elision.** `const fms_info_t x[6] = { 0 };` gives the whole array a single
       // initializer, so its first element -- a struct -- receives a bare scalar rather than a list.
       // C 6.7.10p17 says that scalar initialises the first member (recursively, the first scalar
-      // leaf) and every other member is zero. This was refused outright, and it was the single
-      // remaining frontend blocker for the intel-tdx-module family: 166 runs.
+      // leaf) and every other member is zero. This was refused outright.
       //
       // Routing the scalar to unit 0 and `null` to the rest gets the whole rule right by recursion:
       // a nested struct or array at unit 0 applies the same elision one level down, and every other
@@ -1721,10 +1717,9 @@ class FrontendXcfaBuilder(
             val lhsType = CComplexType.getType(target, parseContext)
             // Resolved, never cast: [copiedStructOrNull] accepts a **pointer to** the aggregate as
             // well as the aggregate itself, so the lvalue's own type is not necessarily the CStruct
-            // being copied. `lhsType as CStruct` was therefore a ClassCastException waiting for a
-            // pointer-typed lvalue to reach it, and every one of the 112 remaining intel-tdx
-            // frontend failures of run 105 was that cast. The Dereference branch above already
-            // resolves the type instead of asserting it; these two agree now.
+            // being copied, so `lhsType as CStruct` threw ClassCastException as soon as a
+            // pointer-typed lvalue reached it. The Dereference branch above resolves the type the
+            // same way; the two agree.
             val copiedAggregate = lhsType.copiedStructOrNull(rExpression)
             if (copiedAggregate != null) {
               // Checked before the pointer-arithmetic rewrite below, because `t = a[i]` on an array

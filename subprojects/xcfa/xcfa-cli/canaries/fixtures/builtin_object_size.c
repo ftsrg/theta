@@ -1,4 +1,4 @@
-// batch 43: __builtin_object_size grammar rule + conservative fallback
+// __builtin_object_size grammar rule + conservative fallback
 char dst[8];
 int main() {
   unsigned long n = __builtin_object_size(dst, 0);

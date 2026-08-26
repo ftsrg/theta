@@ -1,8 +1,7 @@
 // `memset` with a byte count that is not known at build time. MemoryFunctionsPass has implemented
 // memset for a long while, but only by spelling out one assignment per element -- which needs the
 // count. A symbolic one was declined, and a declined call is left in place as an InvokeLabel to a
-// procedure that does not exist, so it surfaced as "No such method memset" (1,373 runs in the
-// batch-89 pred_int run) even though the pass had seen the call and chosen not to model it.
+// procedure that does not exist, so it surfaced as "No such method memset" even though the pass had seen the call and chosen not to model it.
 //
 // It is now lowered to a real loop over the elements the count covers,
 // `for (i = 0; i < n / sizeof *dst; i++) dst[i] = c`. Translating the byte count into an element

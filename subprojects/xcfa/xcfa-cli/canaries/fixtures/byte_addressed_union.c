@@ -1,4 +1,4 @@
-// batch 60 (AD7, the intractable half): a union whose members do not all share a representation
+// (AD7, the intractable half): a union whose members do not all share a representation
 // AND cannot be packed into one word (unionCellWidth() == null -- an array member disqualifies it)
 // used to be refused outright as "members do not all share a representation". This is the
 // intel-tdx-module shape: `union { uint64_t qwords[2]; uint32_t dwords[4]; uint8_t bytes[16]; }`

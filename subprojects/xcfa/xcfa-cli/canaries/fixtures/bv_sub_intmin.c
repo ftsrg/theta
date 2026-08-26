@@ -9,7 +9,7 @@
 // widening now happens before the negation, where nothing wraps.
 //
 // This is what made the whole `c/weaver/chl-*.wvr` family answer `false(no-overflow)` on safe
-// programs under bitvector (14 wrong runs in the batch-89 `pred_bvms` run): their `minus()` helper
+// programs under bitvector (14 wrong runs in the `pred_bvms` run): their `minus()` helper
 // guards `a - b` and is called with unconstrained ints, so b == INT_MIN is reachable.
 //
 // The guarded form below is the actual `minus()` shape and is the one that regressed; the bare form

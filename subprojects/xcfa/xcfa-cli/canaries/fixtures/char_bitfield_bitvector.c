@@ -1,4 +1,4 @@
-// batch 54: `unsigned char` values under bitvector arithmetic.
+// `unsigned char` values under bitvector arithmetic.
 // CComplexType.getType matches a bitvector's width against the architecture's type sizes and
 // switches on the name -- but had no `case "char"`, and `char` is the first entry whose width is 8.
 // So every (Bv 8) fell out of the switch and threw "No suitable width found for type: (Bv 8)",

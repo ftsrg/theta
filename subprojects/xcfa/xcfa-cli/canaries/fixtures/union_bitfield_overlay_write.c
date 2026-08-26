@@ -1,11 +1,11 @@
-// batch 92 item 9: writing a bitfield of a union's packed-struct view.
+// writing a bitfield of a union's packed-struct view.
 //
 // `u.parts.f = v` read-modify-writes the union's shared cell. The cell expression is stamped
 // with the *struct's* C type -- that is what lets `.f` resolve as a field at all -- and every
 // aggregate type reports the same pointer-width placeholder as its SMT sort, so the assignment
 // cast the right-hand side to 64 bits and handed it to a 32-bit cell:
-// "Expected type (Bv 32) but the expression has type (Bv 64)". 298 runs in the run-94 parse
-// benchmark, 124 of them intel-tdx-module's `mktme_key_program.keyid_ctrl.command = 1`.
+// "Expected type (Bv 32) but the expression has type (Bv 64)".
+// `mktme_key_program.keyid_ctrl.command = 1` is the archetype.
 // The splice must use the cell's own storage width, which is what this checks: the field write
 // must land in exactly its own bits and leave the sibling integer view's other bits alone.
 // Checked as PARSE-OK, not as a verdict, for a reason that is NOT about this fix: the bitfields

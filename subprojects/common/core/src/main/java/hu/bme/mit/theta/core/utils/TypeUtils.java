@@ -99,10 +99,8 @@ public final class TypeUtils {
             final Expr<T> result = (Expr<T>) expr;
             return result;
         } else {
-            // Types FIRST, expression last: an expression pretty-prints over many lines, so
-            // leading with it pushed the only useful part of the message off the first line and
-            // every log grep truncated at "The type of expression ...". 147 of these in the run-91b
-            // parse sweep were indistinguishable from one another for exactly that reason.
+            // Types first, expression last: an expression pretty-prints over many lines, so
+            // leading with it pushes the only useful part of the message out of sight.
             throw new ClassCastException(
                     "Expected type "
                             + type

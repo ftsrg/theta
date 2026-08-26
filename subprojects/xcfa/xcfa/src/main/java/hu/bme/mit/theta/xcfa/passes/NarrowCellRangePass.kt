@@ -46,9 +46,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * Safe; the same arithmetic through plain variables → Safe; the uninitialised version under
  * `--arithmetic bitvector` → Safe. Under bitvector the cell's SMT type is already the narrow one, and
  * a written cell carries the cast its write applied, so **only an unwritten cell under integer
- * arithmetic** misbehaves. It explains five known no-overflow false alarms at once, among them
- * `termination-memory-alloca/openbsd_cstrncmp-alloca-1` (one of run 84's three genuine regressions),
- * the `openbsd_cstrcmp-alloca-*` pair and `dirname-1`.
+ * arithmetic** misbehaves. It accounts for a family of no-overflow false alarms on `alloca`-backed
+ * string routines.
  *
  * Stated as an `assume` rather than a cast on the read. `CComplexType.castTo` would be a **no-op for
  * signed** narrow types -- `signedCast` returns the operand untouched unless `--enable-signed-wraparound`

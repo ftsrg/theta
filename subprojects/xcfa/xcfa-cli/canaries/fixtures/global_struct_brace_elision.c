@@ -4,7 +4,7 @@
 // leaf, and every other member and element is zero.
 //
 // The frontend refused exactly that shape: "Unsupported initializer for global struct variable".
-// It was the last remaining reported frontend error for the intel-tdx-module family (166 runs),
+// It was the last remaining reported frontend error for the intel-tdx-module family,
 // where `const fms_info_t disallowed_fms[6] = { 0 };` is the archetype.
 //
 // The zeroes matter as much as the parse: if the object were left unwritten its cells would be

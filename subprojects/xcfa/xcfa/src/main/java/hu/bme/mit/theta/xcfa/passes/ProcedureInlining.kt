@@ -200,9 +200,8 @@ internal fun inlineCallSite(
   // ⚠️ Only a callee with MORE parameters than the call site supplies is a problem. The loop below
   // walks `calleeParams` and indexes `invokeLabel.params[i]`, so that is the direction that runs off
   // the end. A call site supplying *extra* arguments -- which is every variadic call, `printk(fmt,
-  // ...)` and friends -- indexes safely and simply ignores the surplus, exactly as it did before
-  // this guard existed. Refusing those too cost 713 LDV driver runs that used to build (`printk`
-  // 476, `dev_err` 158, `__dynamic_dev_dbg` 79), the bulk of the run-91 parse regression.
+  // ...)` and friends -- indexes safely and simply ignores the surplus. Refusing those too breaks
+  // every driver that calls `printk`, `dev_err` or `__dynamic_dev_dbg`.
   // A `void` procedure carries a SYNTHETIC return slot -- FrontendXcfaBuilder mints
   // `<name>_ret` for every procedure, void included, because the rest of the pipeline assumes a
   // return variable exists. A call site that discards the (nonexistent) result does not pass one,

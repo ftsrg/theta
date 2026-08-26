@@ -83,14 +83,14 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * @return the corresponding CDeclarations
      */
     /**
-     * Gives a declaration the array dimensions its typedef'd specifier carries
-     * (`typedef int arr_t[2]; arr_t a;`), which no declarator of its own ever wrote.
+     * Gives a declaration the array dimensions its typedef'd specifier carries (`typedef int
+     * arr_t[2]; arr_t a;`), which no declarator of its own ever wrote.
      *
-     * <p>Appended *after* the declarator's own, because that is the order C reads them in:
-     * `typedef int A[2]; A x[3];` makes `x` an `int[3][2]`, so the declarator's `[3]` is the
-     * outermost dimension and the typedef's `[2]` the inner one. Getting this backwards still
-     * produces an array of the right total size, so only a multi-dimensional case can catch it --
-     * which is what the fixture pins.
+     * <p>Appended *after* the declarator's own, because that is the order C reads them in: `typedef
+     * int A[2]; A x[3];` makes `x` an `int[3][2]`, so the declarator's `[3]` is the outermost
+     * dimension and the typedef's `[2]` the inner one. Getting this backwards still produces an
+     * array of the right total size, so only a multi-dimensional case can catch it -- which is what
+     * the fixture pins.
      */
     private static void inheritTypedefArrayDimensions(
             CDeclaration declaration, CSimpleType cSimpleType) {
@@ -194,8 +194,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * recurses into a nested list of its own -- which is what lets a multi-dimensional array carry
      * an initializer at all. Before, the loop called {@code initializer.assignmentExpression()}
      * unconditionally, so a nested brace (a `bracedPrimaryExpression`, not an assignment
-     * expression) made it NPE and the whole initializer was dropped as unsupported -- 865 tasks,
-     * almost all neural-network weight matrices.
+     * expression) made it NPE and the whole initializer was dropped as unsupported.
      *
      * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the
      * flat version did; the c2xcfa side re-casts to the true cell type when it writes the flat
@@ -248,8 +247,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * One initializer element's value at [type]: a nested list for a braced element (`{ ... }`),
      * otherwise the folded scalar cast to [type].
      */
-    private CStatement buildLeafValue(
-            CComplexType type, CParser.InitializerContext initializer) {
+    private CStatement buildLeafValue(CComplexType type, CParser.InitializerContext initializer) {
         if (initializer.bracedPrimaryExpression() != null) {
             return buildInitializerList(
                     initializer.bracedPrimaryExpression().initializerList(), type);
@@ -317,9 +315,10 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         final int cells = dimension == null ? bytes.size() : Math.min(dimension, bytes.size());
         final CInitializerList list = new CInitializerList(containerType, parseContext);
         for (int index = 0; index < cells; index++) {
-            final int value = element.isSsigned() && bytes.get(index) > 127
-                    ? bytes.get(index) - 256
-                    : bytes.get(index);
+            final int value =
+                    element.isSsigned() && bytes.get(index) > 127
+                            ? bytes.get(index) - 256
+                            : bytes.get(index);
             list.addStatement(
                     new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(index)), parseContext),
                     new CExpr(element.getValue(String.valueOf(value)), parseContext));
@@ -348,8 +347,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * decoded. The encoding prefix is dropped: a wide literal is only ever reached here for a
      * one-byte element type, where treating it as bytes is the closest available reading.
      */
-    private static List<Integer> stringLiteralBytes(
-            CParser.PrimaryExpressionStringsContext ctx) {
+    private static List<Integer> stringLiteralBytes(CParser.PrimaryExpressionStringsContext ctx) {
         final List<Integer> bytes = new ArrayList<>();
         for (org.antlr.v4.runtime.tree.TerminalNode token : ctx.StringLiteral()) {
             final String text = token.getText();

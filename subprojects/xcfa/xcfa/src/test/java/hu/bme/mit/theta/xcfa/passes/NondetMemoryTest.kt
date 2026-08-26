@@ -62,8 +62,7 @@ class NondetMemoryTest {
   fun nondetMemoryIsLeftForMemoryFunctionsPass() {
     // `__VERIFIER_nondet_memory(mem, size)` writes `size` bytes at `mem`; its effect is not its
     // return value, so NondetFunctionPass must not touch it -- in ANY memory model. Gating that
-    // deferral on the bytes model meant the default models refused it outright for "having
-    // arguments" (167 runs in the run-91 parse sweep).
+    // deferral on the bytes model made the other models refuse it for "having arguments".
     val ctx =
       XcfaBuilder("").procedure("main") {
         "ret" type Int()

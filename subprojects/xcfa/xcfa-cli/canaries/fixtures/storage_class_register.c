@@ -1,5 +1,5 @@
 // `register` and `auto` were refused outright, which kills the whole frontend on any file
-// that merely uses the keyword -- ~52 of run 84's before-parsing failures. Neither carries
+// that merely uses the keyword. Neither carries
 // semantics this model represents: `auto` is the default storage class for a block-scope
 // object, and `register` is a placement hint whose only observable effect is that `&x` is
 // ill-formed. Ignoring that is the safe direction -- it lets more programs through rather

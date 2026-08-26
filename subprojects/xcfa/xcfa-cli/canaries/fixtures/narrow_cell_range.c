@@ -3,7 +3,7 @@
 // integer at all -- not merely as any `unsigned char`. The difference of two char-sized
 // cells is in [-255,255] and its negation cannot overflow, but the model could not see that
 // and reported an overflow: five known no-overflow false alarms, including
-// termination-memory-alloca/openbsd_cstrncmp-alloca-1 (a regression in run 84) and
+// termination-memory-alloca/openbsd_cstrncmp-alloca-1 (a regression) and
 // dirname-1. Stated as an assume, not a cast: castTo is a *no-op for signed* narrow types
 // unless --enable-signed-wraparound is set, so it would fix `unsigned char` and silently
 // miss `char`.

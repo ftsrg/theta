@@ -1,4 +1,4 @@
-// batch 53: layout attributes and unnamed bitfields survive the frontend.
+// layout attributes and unnamed bitfields survive the frontend.
 // The offsets they imply are checked by ObjectLayoutFromSourceTest against gcc; this fixture
 // guards the parse path those changes touched (TypeVisitor's specifier walk, the declarator's
 // gcc extensions, and unnamed bitfields now coming back as nameless declarations rather than

@@ -3,7 +3,7 @@
 // The pass has modelled this call for a while, but only by writing out one havoc-and-store pair per
 // cell -- which needs the count. A symbolic one was declined, and a declined call is left in place
 // as an InvokeLabel to a procedure that does not exist, so it surfaced as
-// "No such method __VERIFIER_nondet_memory" (140 of the 836 intel-tdx runs of run 105) even though
+// "No such method __VERIFIER_nondet_memory" even though
 // the pass had seen the call and chosen not to model it. The same cap turned away every large
 // region: the cap is 4096 cells, and intel-tdx calls this on whole objects whose `sizeof` is 36,864
 // (`tdcs_t`), 61,440 (`tdvps_t`) and 81,920 (`tdx_module_global_t`) -- 163,840 statements for one

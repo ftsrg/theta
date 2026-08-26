@@ -214,8 +214,7 @@ private fun parseInputFiles(
  * it out as bytes by hand and run out of room (a pointer cannot cover several cells, a member whose
  * bytes must be recombined has no cell to read from), which is
  * [RequiresByteAddressedMemoryException]. `bytes` gives every object a run of byte cells and has
- * none of those limits, so that failure is retried there. Between its two messages it is the
- * largest frontend error family in the run-94 parse sweep. `bytes` is only defined over bitvectors,
+ * none of those limits, so that failure is retried there. `bytes` is only defined over bitvectors,
  * so the arithmetic moves with it. A *floating-point* member is excluded at the raise site: the
  * byte-addressed model refuses floats too, so retrying would only swap one refusal for another.
  *

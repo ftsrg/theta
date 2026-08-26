@@ -7,10 +7,9 @@
 // violation a compiler rejects.
 //
 // The frontend demanded one anyway -- "Array with unspecified size must have initializer list" --
-// and refused the whole file. 112 runs of the batch-94 parse sweep died on it, all LDV, every one
-// of them this exact shape: `extern unsigned char const _ctype[];` (ldv-consumption),
-// `extern u32 const cx88_user_ctrls[];` (ldv-validator-v0.6),
-// `extern struct device_attribute *ata_common_sdev_attrs[];` (ldv-linux-3.4-simple).
+// and refused the whole file. The shape is everywhere in LDV sources:
+// `extern unsigned char const _ctype[];`, `extern u32 const cx88_user_ctrls[];`,
+// `extern struct device_attribute *ata_common_sdev_attrs[];`.
 //
 // Checked as valid-memsafety on purpose, because the extent is also what `__theta_ptr_size` records
 // for the object, and any *invented* extent is a wrong `false(valid-deref)` waiting to happen: the

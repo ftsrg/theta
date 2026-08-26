@@ -7,7 +7,7 @@
 // Every comparison and every arithmetic fold on an FpLitExpr goes through that decode, so this was
 // a wrong ANSWER rather than lost precision: `x < FLT_MIN` was false for every subnormal x, which
 // is what made `floats-cbmc-regression/float-no-simp7` regress to a wrong verdict once literals
-// became exact enough (batch 88) for the gradual-underflow cases to be reached at all.
+// became exact enough for the gradual-underflow cases to be reached at all.
 //
 // Everything here is a constant, deliberately: constant folding is the path that calls the decoder.
 extern void abort(void);

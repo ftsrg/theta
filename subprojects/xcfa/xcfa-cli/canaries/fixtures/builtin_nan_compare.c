@@ -25,7 +25,7 @@ int main() {
   if (__builtin_islessequal(n, 1.0f)) reach_error();
   if (__builtin_islessgreater(n, 1.0f)) reach_error();
 
-  /* ... and unordered is true for exactly that case */
+  /*... and unordered is true for exactly that case */
   if (!__builtin_isunordered(n, 1.0f)) reach_error();
   if (__builtin_isunordered(1.0f, 2.0f)) reach_error();
 

@@ -1,4 +1,4 @@
-// batch 43: union of pointer + pointer-wide unsigned must alias (sameRepresentation relaxation)
+// union of pointer + pointer-wide unsigned must alias (sameRepresentation relaxation)
 union U { void *ptr; unsigned long i; };
 int main() {
   union U u; int x = 5;

@@ -1,7 +1,7 @@
 // A bitfield wider than one storage cell. The declared unit is assembled from several byte cells
 // by concatenation, so a store has to splice the value across every cell the field overlaps and
 // leave the rest alone. Before this worked, such an assignment died as "Could not handle left-hand
-// side of assignment" -- the largest single after-parsing failure cause in the batch-85 parse-only
+// side of assignment" -- the largest single after-parsing failure cause in the parse-only
 // run (intel-tdx-module alone has 407 after-parsing files, whose fields are 52 bits over seven
 // byte dereferences).
 //
@@ -31,7 +31,7 @@ int main() {
   /* a wide field round-trips its own value */
   w.mid = 0xABCDEF12345ULL;
   if (w.mid != 0xABCDEF12345ULL) reach_error();
-  /* ... and did not disturb its neighbour */
+  /*... and did not disturb its neighbour */
   if (w.lo != 0) reach_error();
 
   /* writing the narrow neighbour leaves the wide one intact */

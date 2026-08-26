@@ -17,7 +17,6 @@ package hu.bme.mit.theta.frontend.transformation.grammar.function;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
@@ -27,7 +26,6 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -122,10 +120,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * </pre>
      *
      * The name used to be registered only *after* the initializer had been visited, so both died
-     * with "No such variable or macro" -- and that message is **59% of all
-     * before-parsing frontend failures** in run 84 (101 of a 171-file sample), because the
-     * self-linked form is how the Linux kernel writes every statically initialised lock and list
-     * head.
+     * with "No such variable or macro". The self-linked form is how the Linux kernel writes every
+     * statically initialised lock and list head, so this was a very common frontend failure.
      */
     public void declareBeforeInitializer(CDeclaration declaration) {
         if (declaration.getName() == null
@@ -179,10 +175,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /**
-     * The stack objects declared in each open scope, innermost last -- kept in lockstep with
-     * {@link #variables} by {@link #pushScope}/{@link #popScope}.
+     * The stack objects declared in each open scope, innermost last -- kept in lockstep with {@link
+     * #variables} by {@link #pushScope}/{@link #popScope}.
      *
-     * Only populated when a memory-safety property is being verified; see {@link #registerScoped}.
+     * <p>Only populated when a memory-safety property is being verified; see {@link
+     * #registerScoped}.
      */
     private final Deque<List<Expr<?>>> scopedAllocas = new ArrayDeque<>();
 
@@ -211,8 +208,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /**
      * Set while the arguments of a `pthread_*` call are visited. The address of a handle passed
      * there belongs to the thread runtime for as long as the thread or lock lives, and theta models
-     * such a handle as an identity rather than storage that is read -- so releasing it at the end of
-     * its block is meaningless, and actively harmful for a handle declared inside a loop.
+     * such a handle as an identity rather than storage that is read -- so releasing it at the end
+     * of its block is meaningless, and actively harmful for a handle declared inside a loop.
      *
      * <p>It lives HERE and not on ExpressionVisitor: call arguments are visited through the shared
      * function visitor, which builds its own expression visitors, so a flag on one of those would
@@ -231,7 +228,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private void registerScoped(VarDecl<?> varDecl) {
         if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
             if (scopedRegistered.peek().add(varDecl)) {
-                // An alloca'd object's variable *holds* its base, so the variable is what to release.
+                // An alloca'd object's variable *holds* its base, so the variable is what to
+                // release.
                 scopedAllocas.peek().add(varDecl.getRef());
             }
         }
@@ -240,7 +238,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /**
      * Registers an address-taken *scalar* for release at the end of the block that declared it.
      *
-     * `{ int a = 7; p = &a; } ... *p` is a use-after-scope, but such a scalar never went through
+     * <p>`{ int a = 7; p = &a; } ... *p` is a use-after-scope, but such a scalar never went through
      * {@link #registerScoped}: it is not an alloca -- ReferenceElimination gives it a compile-time
      * `3k+2` base at procedure entry -- so no lifetime-end marker was emitted, its
      * `__theta_ptr_size` entry was never cleared, and the dereference after the block was accepted
@@ -285,12 +283,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * {@code mark}, so that the memory-safety checks see the object die where C says it does.
      *
      * <p>An object's storage is released when its *block* is left, and nothing ever said so:
-     * `__theta_ptr_size[base]` was written once and cleared only by an explicit `free`, so
-     * `{ int a[10]; p = a; }` followed by `p[0] = 1` was accepted, as was the next iteration of
-     * `for (...) { int a[10]; ... }` writing through the previous one's array
-     * (`memsafety-ext3/scopes3`, `scopes5`, `derefInLoop1`). The marker becomes a `deallocate` in
-     * {@link hu.bme.mit.theta.xcfa.passes.AllocaFunctionPass}, after which the existing
-     * `ptr_size[base] <= index` guard catches the stale access unchanged.
+     * `__theta_ptr_size[base]` was written once and cleared only by an explicit `free`, so `{ int
+     * a[10]; p = a; }` followed by `p[0] = 1` was accepted, as was the next iteration of `for (...)
+     * { int a[10]; ... }` writing through the previous one's array (`memsafety-ext3/scopes3`,
+     * `scopes5`, `derefInLoop1`). The marker becomes a `deallocate` in {@link
+     * hu.bme.mit.theta.xcfa.passes.AllocaFunctionPass}, after which the existing `ptr_size[base] <=
+     * index` guard catches the stale access unchanged.
      *
      * <p>Emitted only under a memory-safety property, so the model every other property sees is
      * exactly what it was. Emitted at the end of the block, so a `break`, `goto` or `return` that
@@ -324,8 +322,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /**
-     * How many elements an initializer gives an array declared without a dimension
-     * (`char a[] = {0,1,2}`). Designators count: `{[4] = 1}` makes the array five elements long.
+     * How many elements an initializer gives an array declared without a dimension (`char a[] =
+     * {0,1,2}`). Designators count: `{[4] = 1}` makes the array five elements long.
      */
     private int initializerElements(CStatement initExpr) {
         if (!(initExpr instanceof CInitializerList list)) {
@@ -377,12 +375,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * Gives a {@code static} local the static storage duration it asks for, by declaring it as a
      * global instead of a procedure variable.
      *
-     * <p>The specifier used to be dropped outright, which made the object an ordinary local: freshly
-     * declared on every entry, and re-run through its initializer each time. A `static int count =
-     * 0;` therefore never counted past one, and a `static int done = 0;` one-shot guard fired on
-     * every call. Registering it in the current scope (but not among the procedure's variables)
-     * keeps uses inside the function resolving to it, while the initializer runs once, in the init
-     * procedure, like any other global's.
+     * <p>The specifier used to be dropped outright, which made the object an ordinary local:
+     * freshly declared on every entry, and re-run through its initializer each time. A `static int
+     * count = 0;` therefore never counted past one, and a `static int done = 0;` one-shot guard
+     * fired on every call. Registering it in the current scope (but not among the procedure's
+     * variables) keeps uses inside the function resolving to it, while the initializer runs once,
+     * in the init procedure, like any other global's.
      */
     private void promoteStaticLocal(CDeclaration declaration) {
         createVars(declaration.getName(), declaration, designatorType(declaration), false);
@@ -516,14 +514,18 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     .create(typedef.getName(), "cTypedefName", typedef.getActualType());
         }
 
-        // Introduce every function's name before any global declaration is processed. A function has
+        // Introduce every function's name before any global declaration is processed. A function
+        // has
         // file scope, so C guarantees it is visible wherever the source refers to it -- but the
         // order these contexts are visited in is not the source order: a global that is declared
-        // early and *defined* later (`int (*p)(void);` ... `int (*p)(void) = f;`) keeps its original
-        // position while adopting the later context (see GlobalDeclUsageVisitor), so its initializer
+        // early and *defined* later (`int (*p)(void);` ... `int (*p)(void) = f;`) keeps its
+        // original
+        // position while adopting the later context (see GlobalDeclUsageVisitor), so its
+        // initializer
         // is evaluated here long before the `f` it names would be reached. That made whole driver
         // families die with "No such variable or macro: <function>". Creating the names up front
-        // costs nothing: these functions are visited below anyway, and each adopts the variable made
+        // costs nothing: these functions are visited below anyway, and each adopts the variable
+        // made
         // here rather than making its own (the prototype-before-definition path).
         for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
             if (externalDeclarationContext
@@ -543,7 +545,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     // is recognised by looking the variable up in this map
                     // (registerIfFunctionUsedAsValue), and the id that lookup registers is what
                     // initialises the address. Creating the variable here without the entry made
-                    // the later prototype/definition skip its own registration -- the name resolved,
+                    // the later prototype/definition skip its own registration -- the name
+                    // resolved,
                     // but every address-taken function lost its id and its initial value.
                     for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
                         functions.put(varDecl, funcDecl);
@@ -556,9 +559,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // how preprocessed coreutils/ldv sources write it -- and that initializer is
                 // evaluated at the position of the object's *tentative* declaration, which comes
                 // before the prototype it names. Without a name here the use died as "No such
-                // variable or macro: malloc" (64 `malloc` + 32 `__VERIFIER_nondet_int` runs in the
-                // run-94 parse sweep). Registering it up front costs nothing for the same reason as
-                // above: the declaration is visited below anyway and finds its name already there.
+                // variable or macro: malloc". Registering it up front costs nothing for the same
+                // reason as above: the declaration is visited below anyway and finds it there.
                 //
                 // The initializer expressions are deliberately not built here (getInitExpr =
                 // false): only the declared names are wanted, and the declaration below builds them
@@ -1227,7 +1229,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 && (memberType instanceof CStruct || memberType instanceof CArray);
     }
 
-    /** The cell {@code position} of {@code containerType} starts at, in the container's own cells. */
+    /**
+     * The cell {@code position} of {@code containerType} starts at, in the container's own cells.
+     */
     private int memberOffset(CComplexType containerType, int position) {
         if (containerType instanceof CArray cArrayType) {
             return position * cellsOf(cArrayType.getEmbeddedType());
@@ -1237,7 +1241,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (cStructType.isUnion() || fields.isEmpty()) {
                 return 0; // a union's members all start at the same address
             }
-            return cStructType.unitOffsetOf(fields.get(Math.min(position, fields.size() - 1)).get1());
+            return cStructType.unitOffsetOf(
+                    fields.get(Math.min(position, fields.size() - 1)).get1());
         }
         return position;
     }
@@ -1335,7 +1340,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 : cellTypeAt(containerType, offset - baseOffset);
                 final CAssignment cAssignment =
                         new CAssignment(
-                                cellOf(objectBase, offset, cellType, ptrType), value, "=",
+                                cellOf(objectBase, offset, cellType, ptrType),
+                                value,
+                                "=",
                                 parseContext);
                 recordMetadata(ctx, cAssignment);
                 compound.addCStatement(cAssignment);
@@ -1440,8 +1447,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /**
-     * How many storage cells one value of {@code type} occupies in the flat cell-indexed model
-     * this initializer loop uses (one cell per scalar field/element); mirrors
+     * How many storage cells one value of {@code type} occupies in the flat cell-indexed model this
+     * initializer loop uses (one cell per scalar field/element); mirrors
      * FrontendXcfaBuilder#cellsOf, which the same-shaped global initializer uses.
      */
     private int cellsOf(CComplexType type) {
@@ -1453,8 +1460,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (cStructType.isUnion()) {
                 final Integer width = cStructType.unionCellWidth();
                 return width == null
-                        ? ObjectLayout.of(cStructType, parseContext.getArchitecture()).bitSize()
-                                / 8
+                        ? ObjectLayout.of(cStructType, parseContext.getArchitecture()).bitSize() / 8
                         : 1;
             }
             return cStructType.getUnitCount();
@@ -1529,7 +1535,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 final int elementCells = cellsOf(cArray.getEmbeddedType());
                 CStatement allocaSize = cArray.getArrayDimension();
                 if (allocaSize == null) {
-                    // `char a[] = {0,1,2};` takes its extent from the initializer, so the declarator
+                    // `char a[] = {0,1,2};` takes its extent from the initializer, so the
+                    // declarator
                     // carries no dimension at all. Reading it straight through left `List.of(null)`
                     // and the frontend died with a bare NullPointerException
                     // (`memsafety-ext3/naturalNumbers1`); the *global* path has always inferred the
@@ -1540,7 +1547,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             new CExpr(
                                     countType.getValue(
                                             String.valueOf(
-                                                    initializerElements(declaration.getInitExpr()))),
+                                                    initializerElements(
+                                                            declaration.getInitExpr()))),
                                     parseContext);
                 }
                 if (elementCells != 1) {
@@ -1582,7 +1590,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 || expression instanceof Dereference<?, ?, ?>
                                 || initType instanceof CStruct) {
                             // A struct value is its base id, whether read from a variable or out of
-                            // another object's cell: `struct S s = *p;` and `= o.field` copy the same
+                            // another object's cell: `struct S s = *p;` and `= o.field` copy the
+                            // same
                             // way `= other;` does.
                             checkState(
                                     initType instanceof CStruct,
@@ -1597,10 +1606,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             // to stop here, so `struct S s = other;` declared `s` and then quietly
                             // never copied anything into it, leaving every field of `s`
                             // unconstrained. The solver could then read whatever it liked out of
-                            // `s`. The shape is not exotic -- it is what a struct-returning function
+                            // `s`. The shape is not exotic -- it is what a struct-returning
+                            // function
                             // looks like at the call site (`struct aws_byte_buf buf =
                             // aws_byte_buf_from_array(a, len);`), so the aws-c-common
-                            // byte_buf/byte_cursor harnesses all asserted on an uninitialised struct
+                            // byte_buf/byte_cursor harnesses all asserted on an uninitialised
+                            // struct
                             // and false-alarmed. The plain statement form (`s = other;`) always
                             // worked, so emit exactly that, as the non-struct branch below does.
                             emitInitAssignment(
@@ -1609,7 +1620,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             // A struct/union initialised with a *scalar* (`union U u = raw;`, the
                             // register-overlay idiom the intel-tdx-module firmware uses): C
                             // initialises the object's first member, so write the value into its
-                            // first cell (offset 0), exactly as `= { raw }` would. Refusing this used
+                            // first cell (offset 0), exactly as `= { raw }` would. Refusing this
+                            // used
                             // to fail parsing outright ("Initializer type not handled").
                             final VarDecl<?> varDecl = declaration.getVarDecls().get(0);
                             final var ptrType = CComplexType.getUnsignedLong(parseContext);
@@ -1929,7 +1941,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             VarDecl<?> conditionalTmp = null;
             if (guardsDereference) {
                 conditionalTmp = createTempVar(smallestCommonType, "ternary");
-                parseContext.getMetadata().create(conditionalTmp.getRef(), "cType", smallestCommonType);
+                parseContext
+                        .getMetadata()
+                        .create(conditionalTmp.getRef(), "cType", smallestCommonType);
                 ifTruePre.addCStatement(
                         new CAssignment(
                                 conditionalTmp.getRef(),

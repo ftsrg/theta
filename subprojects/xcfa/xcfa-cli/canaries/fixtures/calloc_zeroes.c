@@ -1,6 +1,5 @@
 // `calloc` was modelled by nothing at all: it reached the analysis as a call to a procedure that
-// does not exist and brought the run down with "No such method calloc" (372 runs in the batch-89
-// pred_int run, and the second most frequent unmodelled function overall).
+// does not exist and brought the run down with "No such method calloc".
 //
 // It is lowered to malloc + memset. The subtlety is WHERE the fill goes: calloc returns `void *`,
 // so at the call itself there is no pointee type and MemoryFunctionsPass cannot tell what a cell

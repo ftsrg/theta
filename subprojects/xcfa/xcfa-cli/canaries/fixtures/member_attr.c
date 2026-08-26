@@ -1,4 +1,4 @@
-// batch 39: __attribute__ between specifier and struct member declarator + bitfield attrs
+// __attribute__ between specifier and struct member declarator + bitfield attrs
 struct A {
   int __attribute__((aligned(4))) x;
   unsigned lo : 4 __attribute__((deprecated));

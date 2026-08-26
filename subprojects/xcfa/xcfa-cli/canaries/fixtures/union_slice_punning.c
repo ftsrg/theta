@@ -1,4 +1,4 @@
-// batch 56: union members of differing widths/signedness share the word as bit slices.
+// union members of differing widths/signedness share the word as bit slices.
 // A union's members all start at offset 0, so a narrower member is the low bits of the same word.
 // This used to be refused as "members do not all share a representation" -- the single largest
 // addressable frontend cluster (~1,029 tasks in the 2026-07-20 run). Values are checked by the
