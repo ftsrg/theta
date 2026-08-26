@@ -416,6 +416,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // over the candidate set instead of being treated as a data pointer.
             parseContext.getMetadata().create(varDecl.getRef(), "isFunctionPointer", true);
         }
+        if (!currentStatementContext.isEmpty()) {
+            Token location = currentStatementContext.peek().get1().start;
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationLine", location.getLine());
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
+        }
         declaration.addVarDecl(varDecl);
     }
 

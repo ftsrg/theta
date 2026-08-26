@@ -204,7 +204,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
             case LINUX:
                 return "mathsat";
             case MAC:
-                return "mathsat.dmg";
+                return "mathsat";
             default:
                 throw new AssertionError();
         }

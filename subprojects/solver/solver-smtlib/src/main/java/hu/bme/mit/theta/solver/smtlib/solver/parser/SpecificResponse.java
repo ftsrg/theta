@@ -49,6 +49,12 @@ public abstract class SpecificResponse {
                     public SpecificResponse visitProof_response(Proof_responseContext ctx) {
                         return GetProofResponse.fromContext(ctx);
                     }
+
+                    @Override
+                    public SpecificResponse visitPrecision_response(
+                            SMTLIBv2Parser.Precision_responseContext ctx) {
+                        return PrecisionResponse.fromContext(ctx);
+                    }
                 });
     }
 
@@ -70,6 +76,10 @@ public abstract class SpecificResponse {
 
     public boolean isGetProofResponse() {
         return this instanceof GetProofResponse;
+    }
+
+    public boolean isPrecisionResponse() {
+        return this instanceof PrecisionResponse;
     }
 
     public CheckSatResponse asCheckSatResponse() {
@@ -102,5 +112,10 @@ public abstract class SpecificResponse {
     public GetProofResponse asGetProofResponse() {
         checkState(isGetProofResponse());
         return (GetProofResponse) this;
+    }
+
+    public PrecisionResponse asPrecisionResponse() {
+        checkState(isPrecisionResponse());
+        return (PrecisionResponse) this;
     }
 }

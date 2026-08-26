@@ -43,10 +43,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
-import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
+import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.analysis.unit.UnitAnalysis
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
@@ -68,6 +65,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaSegmentOrderComparator
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
@@ -770,6 +768,11 @@ enum class InitPrec(
         PtrPrec(Prod2Prec.of(ExplPrec.empty(), PredPrec.of(xcfa.collectAssumes())), emptySet())
       )
     },
+  ),
+  REUSE(
+    explPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<ExplPrec>())) },
+    predPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<PredPrec>())) },
+    prod2Prec = { error("REUSE is not supported for the product domain.") },
   ),
 }
 
