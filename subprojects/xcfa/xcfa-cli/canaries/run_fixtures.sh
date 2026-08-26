@@ -3,7 +3,7 @@
 # run_fixtures.sh — feature-guard canaries.
 #
 # Each fixture under fixtures/ is a minimal program that isolates one frontend/grammar
-# modification (see fixtures/fixtures.tsv, column `batch`). Unlike the sampled canaries.tsv
+# modification (see fixtures/fixtures.tsv). Unlike the sampled canaries.tsv
 # tasks (which only *happen* to exercise a feature), a fixture builds iff its modification is
 # present, so reverting the fix flips its outcome and this suite goes red.
 #
@@ -43,7 +43,7 @@ fi
 [[ -f "$PROP" ]] || { echo "error: property file not found: $PROP" >&2; exit 2; }
 
 pass=0 fail=0
-while IFS=$'\t' read -r fixture arithmetic architecture expect batch feature; do
+while IFS=$'\t' read -r fixture arithmetic architecture expect feature; do
   [[ "$fixture" == "fixture" || -z "$fixture" ]] && continue
   input="$SCRIPT_DIR/fixtures/$fixture"
   verdict="${expect%%:*}"
@@ -70,7 +70,7 @@ while IFS=$'\t' read -r fixture arithmetic architecture expect batch feature; do
   fi
 
   if [[ "$actual" == "$expect" ]]; then
-    printf 'PASS  %-26s [b%-9s] %s\n' "$fixture" "$batch" "$feature"; ((pass++))
+    printf 'PASS  %-34s %s\n' "$fixture" "$feature"; ((pass++))
   else
     printf 'FAIL  %-26s expected=%s actual=%s -- %s\n' "$fixture" "$expect" "$actual" "$feature"; ((fail++))
   fi

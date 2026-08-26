@@ -33,10 +33,10 @@ given task only *happens* to exercise a feature. That is what the fixtures are f
 Each file under `fixtures/` is a minimal program that isolates one frontend/grammar
 modification, so it builds **iff** that modification is present; reverting the fix flips its
 outcome and the suite goes red. `fixtures/fixtures.tsv` maps each fixture to its arithmetic,
-architecture, expected outcome (`PARSE-OK` / `FRONTEND-FAIL`), and the batch it guards. Run
+architecture, expected outcome (`PARSE-OK` / `FRONTEND-FAIL`), and the feature it guards. Run
 directly, or automatically as part of `run_canaries.sh ... parse`.
 
-Add a fixture when a batch adds a frontend/grammar capability: write the smallest program that
+Add a fixture whenever a change adds a frontend/grammar capability: write the smallest program that
 needs it, confirm it builds now, and add a row. Verdict-level bugs (a fix changes the *answer*,
 not whether it builds) belong in `guard_set.tsv`, not here — e.g. the deferred packed-bitfield
 memsafety wrongs (`test-bitfields-*`) are tracked there as known-wrong until slicing lands.
@@ -48,6 +48,6 @@ their real property/verdict. Run in **full** mode — `run_canaries.sh "" full a
 check that `_Atomic` on a struct field, array element, whole struct, nested field or pointee still
 makes concurrent accesses race-free (and that plain cells still race). 41 are green; the 3 known-open
 are the cast-through-a-cast tasks (`cast-ptr`, `param-array`, `param-ptr-to-atomic`), which report a
-false race because their atomicity comes from a `(_Atomic int *)` cast the folding model discards
-(PLAN.md batch 62). Fast (~2.5 s each). The in-repo counterpart that runs without an sv-benchmarks
+false race because their atomicity comes from a `(_Atomic int *)` cast the folding model discards.
+Fast (~2.5 s each). The in-repo counterpart that runs without an sv-benchmarks
 checkout is `XcfaDataRaceTest.testAtomicCellDataRace`.

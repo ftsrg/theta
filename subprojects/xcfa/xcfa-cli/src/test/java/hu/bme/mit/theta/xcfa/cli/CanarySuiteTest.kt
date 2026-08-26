@@ -52,8 +52,15 @@ class CanarySuiteTest {
         val CANARY_ROW =
             Regex("""^(PASS|FAIL|ERROR|UNKNOWN|TIMEOUT)\s+(\S+)\s+(\S+)\s+(\S+)\s*(.*)$""")
 
-        /** Fixture rows look like `PASS  some_fixture.c   [b94       ] what it guards`. */
-        val FIXTURE_ROW = Regex("""^(PASS|FAIL)\s+(\S+\.c)\s+\[([^]]*)]\s*(.*)$""")
+        /**
+         * Fixture rows: `PASS  some_fixture.c   what it guards`, or
+         * `FAIL  some_fixture.c expected=X actual=Y -- what it guards`.
+         *
+         * Both shapes must match. An earlier version required a bracketed field that only the PASS
+         * line carried, so a FAILING fixture matched nothing and was skipped -- the one outcome
+         * this class exists to report.
+         */
+        val FIXTURE_ROW = Regex("""^(PASS|FAIL)\s+(\S+\.c)\s+(.*)$""")
 
         /** The suite is a sweep over hundreds of tasks; it is minutes, not seconds. */
         const val TIMEOUT_MINUTES = 90L
