@@ -103,8 +103,7 @@ object PrecReuse {
         PRED_BOOL,
         PRED_CART,
         PRED_SPLIT -> { format -> format.predPrecSerializer }
-        EXPL_PRED_SPLIT,
-        EXPL_PRED_STMT -> error("REUSE is not supported for the product domain.")
+        else -> error("REUSE is not supported for the $domain domain.")
       }
     emptyPrec = domain.initPrec(XCFA("", emptySet()), InitPrec.EMPTY).unwrap()
   }
