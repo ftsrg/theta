@@ -108,12 +108,19 @@ runs:
         echo "" >> "$GITHUB_OUTPUT"
         echo "$EOF" >> "$GITHUB_OUTPUT"
     - name: Debug release inputs
-      shell: bash  
+      shell: bash
+      # Environment, not interpolation -- see the note on "Verify variables" above. These values
+      # carry a user-supplied release message, and `${{ }}` is pasted into the script verbatim.
+      env:
+        DRY_RUN: ${{ inputs.dry-run }}
+        MESSAGE: ${{ inputs.message }}
+        FILES: ${{ steps.files.outputs.filelist }}
+        TAGNAME: ${{ steps.value.outputs.tagname }}
       run: |
-        echo "DRY_RUN = ${{ inputs.dry-run }}"
-        echo "MESSAGE = ${{ inputs.message }}"
-        echo "FILES = ${{steps.files.outputs.filelist}}"
-        echo "TAGNAME = ${{ steps.value.outputs.tagname }}"
+        echo "DRY_RUN = $DRY_RUN"
+        echo "MESSAGE = $MESSAGE"
+        echo "FILES = $FILES"
+        echo "TAGNAME = $TAGNAME"
     - name: Release
       if: inputs.dry-run == 'false'
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0
