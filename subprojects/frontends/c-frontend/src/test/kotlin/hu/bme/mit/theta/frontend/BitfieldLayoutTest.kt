@@ -21,9 +21,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 /**
- * The pure storage-unit layout that packs consecutive bitfields into shared cells (PLAN.md batch
- * 43-design step 1). Not yet wired into member access; these pin the packing arithmetic in
- * isolation so the wiring can rely on it.
+ * The pure storage-unit layout that packs consecutive bitfields into shared cells. Not yet wired
+ * into member access; these pin the packing arithmetic in isolation so the wiring can rely on it.
  */
 class BitfieldLayoutTest {
 

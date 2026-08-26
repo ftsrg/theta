@@ -35,23 +35,25 @@ public class ParseContext {
     private ArithmeticType arithmetic = ArithmeticType.efficient;
 
     /**
-     * Whether {@link #arithmetic} was picked by the frontend from `efficient` rather than
-     * chosen by the caller. Only an automatic choice may be revised: if the user asked for
-     * integer arithmetic and the program turns out to need bits, that is their answer to
-     * live with, but a guess this code made is fair game to correct.
+     * Whether {@link #arithmetic} was picked by the frontend from `efficient` rather than chosen by
+     * the caller. Only an automatic choice may be revised: if the user asked for integer arithmetic
+     * and the program turns out to need bits, that is their answer to live with, but a guess this
+     * code made is fair game to correct.
      */
     private boolean arithmeticAutoSelected = false;
+
     private Boolean signedWraparound = false;
     private MemoryModelType memoryModel = MemoryModelType.multi;
 
     /**
      * Whether the property being verified is a memory-safety one.
      *
-     * The frontend emits object-lifetime bookkeeping (see {@code FunctionVisitor}'s scope-end
+     * <p>The frontend emits object-lifetime bookkeeping (see {@code FunctionVisitor}'s scope-end
      * releases) that only the memory-safety checks read. Under any other property that bookkeeping
-     * would be pure cost -- and worse, an observable change to a model nothing asks a question of --
-     * so it is gated on this. The c-frontend module cannot see {@code MemsafetyPass.enabled}, which
-     * is where the same decision is recorded on the pass side; both are set from the same property.
+     * would be pure cost -- and worse, an observable change to a model nothing asks a question of
+     * -- so it is gated on this. The c-frontend module cannot see {@code MemsafetyPass.enabled},
+     * which is where the same decision is recorded on the pass side; both are set from the same
+     * property.
      */
     private boolean checkMemsafety = false;
 

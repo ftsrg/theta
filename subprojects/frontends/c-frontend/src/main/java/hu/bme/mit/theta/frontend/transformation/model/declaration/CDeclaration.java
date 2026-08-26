@@ -179,9 +179,9 @@ public class CDeclaration {
         // `pointerInsideArray` once a dimension exists. Counting it twice gave the element two
         // pointer levels instead of one, and the outer level carried no function-pointer flag -- so
         // `tbl[0](x)` saw a plain `CPointer` and was refused with "Only variable-backed functions
-        // are callable" (106 runs in the run-91b parse sweep; `void *(*__CS_thread[3])(void *)` in
-        // the seq-pthread family, and the aws priority-queue harnesses).
-        int extraInsideArray = pointerInsideArray - ((isFuncPointer && pointerInsideArray > 0) ? 1 : 0);
+        // are callable" -- e.g. `void *(*__CS_thread[3])(void *)`.
+        int extraInsideArray =
+                pointerInsideArray - ((isFuncPointer && pointerInsideArray > 0) ? 1 : 0);
         for (int i = 0; i < extraInsideArray; i++) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();

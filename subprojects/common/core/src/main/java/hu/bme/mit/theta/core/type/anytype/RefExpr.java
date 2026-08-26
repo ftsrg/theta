@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
-import java.util.NoSuchElementException;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import java.util.NoSuchElementException;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -50,11 +50,8 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
     @Override
     public LitExpr<DeclType> eval(final Valuation val) {
-        // `.get()` on an absent value threw a bare `NoSuchElementException: No value present`,
-        // naming neither the declaration nor anything else -- untriageable in a log, and 39 runs of
-        // the run-91b parse sweep were indistinguishable because of it. Say which variable was
-        // unbound; the caller is always someone evaluating an expression against a valuation that
-        // does not cover its free variables.
+        // Name the unbound variable: `.get()` would throw a bare "No value present", which says
+        // nothing about which declaration the valuation failed to cover.
         return val.eval(decl)
                 .orElseThrow(
                         () ->

@@ -50,12 +50,12 @@ import java.math.BigInteger
  *
  * A **floating-point** cell is REFUSED, loudly. Splitting one means routing the value through its
  * IEEE-754 encoding, and that conversion cannot be trusted: SMT-LIB's FloatingPoint sort has a
- * single NaN element, so `fp.to_ieee_bv` collapses every NaN to one bit pattern, and the theory does
- * not fix *which* -- measured against z3 4.12.6, a NaN's bits may differ from the canonical pattern
- * (sat), two NaNs must share their bits (unsat), and a payload round trip may lose the payload
- * (sat) or keep it (sat). In a verification query the solver picks whichever falsifies the property,
- * so a program inspecting a NaN's bits gets a spurious counterexample: a wrong `false`, worth -16
- * where a refusal is worth 0.
+ * single NaN element, so `fp.to_ieee_bv` collapses every NaN to one bit pattern, and the theory
+ * does not fix *which* -- measured against z3 4.12.6, a NaN's bits may differ from the canonical
+ * pattern (sat), two NaNs must share their bits (unsat), and a payload round trip may lose the
+ * payload (sat) or keep it (sat). In a verification query the solver picks whichever falsifies the
+ * property, so a program inspecting a NaN's bits gets a spurious counterexample: a wrong `false`,
+ * worth -16 where a refusal is worth 0.
  *
  * Leaving the float in an array of its own -- what this pass used to do -- is worse than refusing,
  * because it is silent: a `double` and the bytes overlapping it become unrelated storage, so

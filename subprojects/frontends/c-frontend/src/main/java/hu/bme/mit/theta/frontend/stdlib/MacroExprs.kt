@@ -33,7 +33,8 @@ private fun signedMax(t: CComplexType): String =
   BigInteger.TWO.pow(t.width() - 1).subtract(BigInteger.ONE).toString()
 
 /** The most negative value of a signed C type: two's complement reaches one further down. */
-private fun signedMin(t: CComplexType): String = BigInteger.TWO.pow(t.width() - 1).negate().toString()
+private fun signedMin(t: CComplexType): String =
+  BigInteger.TWO.pow(t.width() - 1).negate().toString()
 
 /** The largest value of an unsigned C type. */
 private fun unsignedMax(t: CComplexType): String =
@@ -97,8 +98,14 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   INT_MIN("INT_MIN", { CComplexType.getSignedInt(it).let { t -> t.getValue(signedMin(t)) } }),
   LONG_MAX("LONG_MAX", { CComplexType.getSignedLong(it).let { t -> t.getValue(signedMax(t)) } }),
   LONG_MIN("LONG_MIN", { CComplexType.getSignedLong(it).let { t -> t.getValue(signedMin(t)) } }),
-  LLONG_MAX("LLONG_MAX", { CComplexType.getSignedLongLong(it).let { t -> t.getValue(signedMax(t)) } }),
-  LLONG_MIN("LLONG_MIN", { CComplexType.getSignedLongLong(it).let { t -> t.getValue(signedMin(t)) } }),
+  LLONG_MAX(
+    "LLONG_MAX",
+    { CComplexType.getSignedLongLong(it).let { t -> t.getValue(signedMax(t)) } },
+  ),
+  LLONG_MIN(
+    "LLONG_MIN",
+    { CComplexType.getSignedLongLong(it).let { t -> t.getValue(signedMin(t)) } },
+  ),
 
   // long double
   LDBL_DIG("LDBL_DIG", { CComplexType.getSignedInt(it).getValue("15") }),
@@ -140,18 +147,45 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   PRIxPTR("PRIxPTR", { CComplexType.getSignedInt(it).getValue("\"x\"") }),
 
   // signed and unsigned char / short / int
-  SCHAR_MAX("SCHAR_MAX", { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedchar", it))) }),
-  SCHAR_MIN("SCHAR_MIN", { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedchar", it))) }),
-  SHRT_MAX("SHRT_MAX", { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedshort", it))) }),
-  SHRT_MIN("SHRT_MIN", { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedshort", it))) }),
-  UCHAR_MAX("UCHAR_MAX", { CComplexType.getUnsignedInt(it).getValue(unsignedMax(CComplexType.getType("unsignedchar", it))) }),
+  SCHAR_MAX(
+    "SCHAR_MAX",
+    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedchar", it))) },
+  ),
+  SCHAR_MIN(
+    "SCHAR_MIN",
+    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedchar", it))) },
+  ),
+  SHRT_MAX(
+    "SHRT_MAX",
+    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedshort", it))) },
+  ),
+  SHRT_MIN(
+    "SHRT_MIN",
+    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedshort", it))) },
+  ),
+  UCHAR_MAX(
+    "UCHAR_MAX",
+    {
+      CComplexType.getUnsignedInt(it)
+        .getValue(unsignedMax(CComplexType.getType("unsignedchar", it)))
+    },
+  ),
   UINT_MAX("UINT_MAX", { CComplexType.getUnsignedInt(it).let { t -> t.getValue(unsignedMax(t)) } }),
   ULLONG_MAX(
     "ULLONG_MAX",
     { CComplexType.getUnsignedLongLong(it).let { t -> t.getValue(unsignedMax(t)) } },
   ),
-  ULONG_MAX("ULONG_MAX", { CComplexType.getUnsignedLong(it).let { t -> t.getValue(unsignedMax(t)) } }),
-  USHRT_MAX("USHRT_MAX", { CComplexType.getUnsignedInt(it).getValue(unsignedMax(CComplexType.getType("unsignedshort", it))) }),
+  ULONG_MAX(
+    "ULONG_MAX",
+    { CComplexType.getUnsignedLong(it).let { t -> t.getValue(unsignedMax(t)) } },
+  ),
+  USHRT_MAX(
+    "USHRT_MAX",
+    {
+      CComplexType.getUnsignedInt(it)
+        .getValue(unsignedMax(CComplexType.getType("unsignedshort", it)))
+    },
+  ),
 }
 
 fun fromName(s: String, parseContext: ParseContext): Expr<*>? =

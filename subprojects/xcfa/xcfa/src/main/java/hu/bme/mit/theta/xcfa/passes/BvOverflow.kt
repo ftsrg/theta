@@ -102,7 +102,9 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
     is SubExpr<*> -> {
       val a = bv(expr.leftOp)
       val b = bv(expr.rightOp)
-      disagrees(BvExprs.Sub(a, b), width + 1) { w -> BvExprs.Sub(widenOperand(a, w), widenOperand(b, w)) }
+      disagrees(BvExprs.Sub(a, b), width + 1) { w ->
+        BvExprs.Sub(widenOperand(a, w), widenOperand(b, w))
+      }
     }
 
     is MulExpr<*> -> foldChecks(expr.ops.map(::bv), width * 2) { a, b -> BvExprs.Mul(listOf(a, b)) }

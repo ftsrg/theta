@@ -93,41 +93,49 @@ archivePackaging {
     }
 }
 
-// The canary suite (benchmark-results/canaries) as a registered Gradle test task.
+// The canary suite (see `canaries/README.md`) as a registered Gradle test task.
 //
-// It is NOT part of `test`: a parse-mode sweep is ~20 minutes and needs a built Theta-svcomp
-// distribution plus a local sv-benchmarks checkout, so putting it in the default task would make
-// every build depend on several gigabytes of benchmarks that a fresh clone does not have. As its own
-// task it is discoverable (`gradle tasks`), runnable in CI, and reports one JUnit result per canary
-// instead of a single opaque exit code. Where the prerequisites are missing the test skips itself
-// rather than failing -- see CanarySuiteTest.
+// Not part of `test`: a sweep takes ~20 minutes and needs a built Theta-svcomp distribution plus a
+// local sv-benchmarks checkout, neither of which a fresh clone has. As its own task it stays
+// discoverable and reports one JUnit result per canary instead of a single exit code; when the
+// prerequisites are missing it skips rather than fails (see CanarySuiteTest).
 val canaryTest by
     tasks.registering(Test::class) {
         group = "verification"
         description =
             "Runs the canary suite (real SV-COMP tasks + feature-guard fixtures) against the built " +
-                "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
-                "than only that the frontend builds each task."
+            "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
+            "than only that the frontend builds each task."
 
         testClassesDirs = sourceSets["test"].output.classesDirs
         classpath = sourceSets["test"].runtimeClasspath
         filter { includeTestsMatching("*CanarySuiteTest*") }
 
-        // The suite needs the packaged distribution, not just the classes. Referenced by name: the
-        // archive-packaging plugin registers its variants after this block is evaluated, so
-        // `tasks.named(...)` here would not find it yet.
+        // The suite needs the packaged distribution, not just the classes. Referenced by name
+        // because the archive-packaging plugin registers its variants after this block is evaluated.
         dependsOn("buildArchiveTheta-svcomp")
+        // The filter below matches a compiled class, so the test classes have to exist even when
+        // this task is invoked on its own; without it the task can fail with "No tests found".
+        dependsOn(tasks.named("testClasses"))
 
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
         systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
         systemProperty(
             "theta.canary.dist",
-            layout.buildDirectory.dir("distributions/Theta-svcomp").get().asFile.absolutePath,
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
         )
         systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
         // The sweep runs PARALLEL_JOBS tasks at once (script default 4). Lowering it trades wall
-        // time for memory headroom, which helps on a shared machine -- but measured on one with
-        // ~13 GB of 62 free, the largest canary was OOM-killed at 4 jobs AND at 2, passing only at
-        // 1. Treat this as pressure relief, not a fix for an under-provisioned machine.
+        // time for memory headroom on a shared machine. The largest canaries need several GB each,
+        // so this is pressure relief, not a substitute for enough memory.
         (project.findProperty("theta.canary.jobs"))?.let { environment("PARALLEL_JOBS", it.toString()) }
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())

@@ -1,0 +1,74 @@
+fixture	arithmetic	architecture	expect	feature
+union_punning.c	efficient	LP64	PARSE-OK	union punning: pointer + pointer-wide unsigned alias
+builtin_object_size.c	efficient	LP64	PARSE-OK	__builtin_object_size grammar + fallback
+typeof_type.c	efficient	LP64	PARSE-OK	__typeof__(type-name)
+builtin_offsetof.c	efficient	LP64	PARSE-OK	__builtin_offsetof
+statement_expr.c	efficient	LP64	PARSE-OK	gcc statement expression value
+elvis.c	efficient	LP64	PARSE-OK	GNU a ?: b
+types_compatible.c	efficient	LP64	PARSE-OK	__builtin_types_compatible_p
+anon_member.c	efficient	LP64	PARSE-OK	anonymous union member flattening
+designated_init.c	efficient	LP64	PARSE-OK	designated initializers
+empty_init.c	efficient	LP64	PARSE-OK	empty initializer list
+member_attr.c	efficient	LP64	PARSE-OK	member/bitfield __attribute__ positions
+struct_from_deref.c	efficient	LP64	PARSE-OK	struct s = *p
+enum_cast_bitvector.c	bitvector	LP64	PARSE-OK	undeclared enum is int (bitvector cast)
+packed_bitfields.c	efficient	LP64	PARSE-OK	packed bitfield storage units + slicing
+packed_bitfield_init.c	efficient	LP64	PARSE-OK	brace initializer over packed bitfield units
+packed_bitfield_init_bv.c	bitvector	LP64	PARSE-OK	packed bitfield initializer, bitvector fold
+layout_attributes.c	efficient	LP64	PARSE-OK	packed/aligned attributes + unnamed bitfields
+char_bitfield_bitvector.c	bitvector	LP64	PARSE-OK	unsigned char values under bitvector (Bv 8)
+union_slice_punning.c	efficient	LP64	PARSE-OK	union members of differing widths share the word
+union_slice_punning.c	bitvector	LP64	PARSE-OK	union slice punning, bitvector Extract/Concat
+byte_addressed_union.c	efficient	LP64	PARSE-OK	byte-addressed union (AD7, array members, no shared word)
+byte_addressed_union.c	bitvector	LP64	PARSE-OK	byte-addressed union, bitvector Concat/Extract
+deref_cast_lvalue.c	efficient	ILP32	PARSE-OK	assignment through a dereferenced cast lvalue (*(T*)p = v)
+funcptr_qualifier.c	efficient	ILP32	PARSE-OK	type qualifier on a function-pointer declarator (void (* _Atomic fp)(void))
+partial_init_zerofill.c	efficient	LP64	SAFE	local partial brace initializer zero-fills the remaining cells
+string_array_init.c	efficient	LP64	SAFE	char array initialised from a string literal gets its own object and the bytes
+alloca_static_base.c	efficient	LP64	SAFE	alloca bases start above the compile-time bases (no static/stack aliasing)
+char_literal_escapes.c	efficient	LP64	SAFE	character constant escapes, radixes and case
+static_local_storage.c	efficient	LP64	SAFE	static locals keep their value across calls (storage class no longer dropped)
+nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows the subobject, and untouched members are zero
+array_member_init.c	efficient	LP64	SAFE	array member is its own object; array elements and rows stay inline
+deref_dot_member.c	efficient	LP64	SAFE	(*p).field is one dereference, like p->field and p[0].field
+overflow_after_split.c	efficient	ILP32	UNSAFE:no-overflow	overflow checks survive the base/offset split (cType kept across the rebuild)
+alloca_declared.c	efficient	ILP32	SAFE	alloca is declared by stdlib.h
+memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee copy every cell, not n/4 of them
+vla_zero_length.c	efficient	ILP32	UNSAFE:valid-memsafety	a VLA sized from an unconstrained nondet may be zero-length (C11 6.7.6.2p5)
+vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	a VLA with a known-positive length is not flagged, and a fixed array costs nothing
+pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	p-- keeps its sign under integer arithmetic (backwards buffer walk)
+store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	storing a mid-object pointer is refused, not clobbered onto one cell
+alloca_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	alloca memory is released at function return (use-after-return is caught)
+alloca_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	a stack block used within its own function is not released early
+scope_end_release.c	efficient	ILP32	UNSAFE:valid-memsafety	a block-local object dies at block exit (use-after-scope is caught)
+scope_end_loop_iteration.c	efficient	ILP32	UNSAFE:valid-memsafety	a loop body releases its object each iteration
+scope_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	block-local objects used within their own block are not released early
+hex_float_constant.c	efficient	ILP32	SAFE	C99 hex float constants parse, with exact values
+self_referential_initializer.c	efficient	ILP32	SAFE	the declared name is in scope inside its own initializer
+storage_class_register.c	efficient	ILP32	SAFE	register/auto storage classes are accepted (including on parameters)
+narrow_cell_range.c	efficient	ILP32	SAFE:no-overflow	a narrow memory cell reads back inside its C type range
+undeclared_memory_functions.c	efficient	ILP32	SAFE	undeclared malloc/free/memcpy/memset are routed to the modeled ones
+own_memory_function_wins.c	efficient	ILP32	SAFE	a program-supplied memcpy definition wins over the model
+builtin_infinity.c	efficient	ILP32	SAFE	GCC infinity builtins are exact (__builtin_inf/inff/infl, huge_val*)
+builtin_prefetch.c	efficient	ILP32	SAFE	__builtin_prefetch is dropped but its operands are still evaluated
+builtin_nan_compare.c	efficient	ILP32	SAFE	GCC NaN builtin + NaN-safe comparison builtins alias to the modeled ones
+typedef_array_extent.c	efficient	ILP32	SAFE:valid-memsafety	an array declared through a typedef keeps its extent (and its dimension order)
+ternary_guarded_deref.c	efficient	ILP32	SAFE:valid-memsafety	a ?: guard must not dereference in the branch it does not take
+float_literal_precision.c	efficient	ILP32	SAFE	float/double literals keep their full significand (implicit bit included)
+fesetround_nondefault.c	efficient	ILP32	FRONTEND-FAIL	a non-default fesetround is refused, not silently ignored
+fesetround_default.c	efficient	ILP32	SAFE	fesetround(FE_TONEAREST)/fegetround still work (the mode theta models)
+overflow_chain_intermediate.c	efficient	LP64	UNSAFE:no-overflow	an intermediate of a flattened additive chain is range-checked
+scope_end_scalar.c	efficient	ILP32	SAFE:valid-memsafety	address-taken scalars die with their own block, not an inner one (and statics/globals never)
+bitvector_bit2bool.c	bitvector	ILP32	SAFE	Z3 bit2bool back-transformation (bitvector encoding)
+float_subnormal_order.c	efficient	ILP32	SAFE	subnormal floats decode below the smallest normal (no implicit bit, exponent 1-maxExponent)
+bv_sub_intmin.c	bitvector	ILP32	SAFE:no-overflow	subtracting INT_MIN: the negation is widened before it wraps (bitvector overflow check)
+calloc_zeroes.c	efficient	LP64	SAFE	calloc is lowered to malloc+memset, with the fill placed at the typed binding
+memset_symbolic.c	efficient	LP64	SAFE	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
+compound_bitwise_encoding.c	efficient	ILP32	SAFE	compound bitwise assignment selects the bitvector encoding
+extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	extern array of unspecified extent is a declaration, not a sizing failure
+union_wide_cell_halves.c	efficient	ILP32	SAFE	a 64-bit union cell is read at its full width under ILP32 (unsigned long is 32 there)
+union_bitfield_overlay_write.c	efficient	LP64	PARSE-OK	a bitfield write to a union splices at the cell width, not the aggregate placeholder
+global_struct_brace_elision.c	efficient	LP64	SAFE	brace elision: { 0 } over an array of structs zero-initialises every member
+union_aggregate_assign.c	efficient	LP64	SAFE	a union is assigned by copying its storage, through both member views
+nondet_memory_symbolic_size.c	efficient	LP64	UNSAFE	__VERIFIER_nondet_memory with a symbolic size is lowered to a loop that havocs every cell
+nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only the region it was given, not the whole object

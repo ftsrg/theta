@@ -38,8 +38,8 @@ import org.kframework.mpfr.BigFloat
  *
  * A variable a pass invents has no declaration in the source to initialise it, so anything reading
  * it before its first write reads nothing at all. Analyses differ in how loudly they object -- the
- * OC checker refuses the task outright ("variable ... is not initialized"), others quietly explore a
- * havoc'd value -- so a pass that adds a variable is responsible for also giving it a value.
+ * OC checker refuses the task outright ("variable ... is not initialized"), others quietly explore
+ * a havoc'd value -- so a pass that adds a variable is responsible for also giving it a value.
  */
 val Type.defaultValue: LitExpr<out Type>
   get() =

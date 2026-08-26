@@ -59,8 +59,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
      * null until a function scope exists, where the empty-scope visitor below still handles the
      * constant-expression forms.
      *
-     * <p>The supplied visitor deliberately carries a *null* function visitor: asking for a type must
-     * not emit anything, and a real function visitor would let a call inside the operand push
+     * <p>The supplied visitor deliberately carries a *null* function visitor: asking for a type
+     * must not emit anything, and a real function visitor would let a call inside the operand push
      * pre-statements into the function currently being built. A `typeof(f())` therefore still fails
      * and is reported as unsupported, which is the best-effort behaviour we want.
      */
@@ -393,8 +393,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 // ignoring that is the safe direction, since it only lets *more* programs through
                 // rather than changing the meaning of any that compile.
                 //
-                // Refusing them killed the whole frontend on files that merely used the keyword:
-                // `register` alone accounts for ~52 of run 84's before-parsing failures.
+                // Refusing them killed the whole frontend on any file that merely used the
+                // keyword.
                 return null;
             case "_Thread_local":
                 // Genuinely different: thread-local storage gives every thread its own copy, which

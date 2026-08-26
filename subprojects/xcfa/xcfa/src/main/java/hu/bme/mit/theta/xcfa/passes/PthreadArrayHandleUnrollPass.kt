@@ -79,7 +79,10 @@ class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : Pro
       }
     }
 
-  /** The handle -- `params[1]` for every one of [handleFunctions] -- is a non-constant array element. */
+  /**
+   * The handle -- `params[1]` for every one of [handleFunctions] -- is a non-constant array
+   * element.
+   */
   private fun InvokeLabel.hasArrayElementHandle(): Boolean {
     if (params.size <= 1) return false
     var handle = params[1]

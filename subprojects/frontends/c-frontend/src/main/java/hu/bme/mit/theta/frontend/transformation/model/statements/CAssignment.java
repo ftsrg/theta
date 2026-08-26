@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -87,7 +87,8 @@ public class CAssignment extends CStatement {
                     final Expr<?> modLeft = type.castTo(lValue);
                     final Expr<?> modRight = type.castTo(rExpression);
                     ret =
-                            (modLeft.getType() instanceof BvType && modRight.getType() instanceof BvType)
+                            (modLeft.getType() instanceof BvType
+                                            && modRight.getType() instanceof BvType)
                                     ? AbstractExprs.Rem(modLeft, modRight)
                                     : AbstractExprs.Mod(modLeft, modRight);
                     break;
@@ -103,9 +104,9 @@ public class CAssignment extends CStatement {
                         lValue.getType() instanceof BvType
                                 && rExpression.getType() instanceof BvType,
                         "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
-                            + " the operands have types %s and %s. This is expected under"
-                            + " --arithmetic integer, which has no bit representation; use"
-                            + " --arithmetic bitvector or efficient.",
+                                + " the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
                         "^=",
                         lValue.getType(),
                         rExpression.getType());
@@ -120,9 +121,9 @@ public class CAssignment extends CStatement {
                         lValue.getType() instanceof BvType
                                 && rExpression.getType() instanceof BvType,
                         "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
-                            + " the operands have types %s and %s. This is expected under"
-                            + " --arithmetic integer, which has no bit representation; use"
-                            + " --arithmetic bitvector or efficient.",
+                                + " the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
                         "&=",
                         lValue.getType(),
                         rExpression.getType());
@@ -137,9 +138,9 @@ public class CAssignment extends CStatement {
                         lValue.getType() instanceof BvType
                                 && rExpression.getType() instanceof BvType,
                         "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
-                            + " the operands have types %s and %s. This is expected under"
-                            + " --arithmetic integer, which has no bit representation; use"
-                            + " --arithmetic bitvector or efficient.",
+                                + " the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
                         "|=",
                         lValue.getType(),
                         rExpression.getType());
@@ -164,7 +165,8 @@ public class CAssignment extends CStatement {
                     final Expr<BvType> left = (Expr<BvType>) type.castTo(lValue);
                     final Expr<BvType> right = (Expr<BvType>) type.castTo(rExpression);
                     // Right shift is arithmetic on a signed left operand and logical on an unsigned
-                    // one -- the same split `visitShiftExpression` makes for the non-assigning `>>`.
+                    // one -- the same split `visitShiftExpression` makes for the non-assigning
+                    // `>>`.
                     ret =
                             left.getType().getSigned()
                                     ? BvExprs.ArithShiftRight(left, right)

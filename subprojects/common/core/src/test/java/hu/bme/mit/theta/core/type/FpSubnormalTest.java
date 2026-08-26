@@ -30,9 +30,9 @@ import org.junit.jupiter.api.Test;
  * Subnormals decoded back out of the IEEE fields, checked against the JVM's own encoders.
  *
  * <p>A zero exponent field means two things at once -- no implicit leading 1, and an exponent of
- * {@code 1 - maxExponent} rather than the {@code -maxExponent} the field literally reads as. Getting
- * either half wrong lands the value just ABOVE the smallest normal instead of far below it, so the
- * ordering assertions here are the ones that actually bite: {@code 2^-149} used to decode as
+ * {@code 1 - maxExponent} rather than the {@code -maxExponent} the field literally reads as.
+ * Getting either half wrong lands the value just ABOVE the smallest normal instead of far below it,
+ * so the ordering assertions here are the ones that actually bite: {@code 2^-149} used to decode as
  * {@code 2^-126 * (1 + 2^-23)} and compare GREATER than {@code FLT_MIN}. Every comparison and every
  * arithmetic fold on {@link FpLitExpr} runs through that decode, so the damage was a wrong verdict
  * (`floats-cbmc-regression/float-no-simp7`), not a lost bit of precision.
@@ -64,8 +64,7 @@ public class FpSubnormalTest {
                 BvUtils.bigIntegerToUnsignedBvLitExpr(
                         BigInteger.valueOf((bits >>> 52) & 0x7FF), DOUBLE.getExponent()),
                 BvUtils.bigIntegerToUnsignedBvLitExpr(
-                        BigInteger.valueOf(bits & 0xFFFFFFFFFFFFFL),
-                        DOUBLE.getSignificand() - 1));
+                        BigInteger.valueOf(bits & 0xFFFFFFFFFFFFFL), DOUBLE.getSignificand() - 1));
     }
 
     private static float decodeFloat(FpLitExpr lit) {
@@ -99,8 +98,7 @@ public class FpSubnormalTest {
 
     @Test
     public void testNegativeFloatSubnormalKeepsItsSign() {
-        assertEquals(
-                Float.intBitsToFloat(0x80000001), decodeFloat(floatBits(0x80000001)), 0.0f);
+        assertEquals(Float.intBitsToFloat(0x80000001), decodeFloat(floatBits(0x80000001)), 0.0f);
     }
 
     @Test

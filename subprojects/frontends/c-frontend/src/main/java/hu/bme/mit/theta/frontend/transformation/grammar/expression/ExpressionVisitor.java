@@ -462,9 +462,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (ctx.additiveExpression().size() > 1) {
             Expr<?> accept = ctx.additiveExpression(0).accept(this);
             // Shifts are modelled only over bitvectors. Under `--arithmetic integer` an operand is
-            // an unbounded Int, so this fires -- and used to do so as a bare `IllegalStateException`
-            // with no message at all, which made it the single largest undiagnosable failure in the
-            // integer configuration (4,728 runs in the batch-89 `pred_int` run). Say what happened.
+            // an unbounded Int, so this fires; say so instead of throwing a bare
+            // IllegalStateException.
             checkState(
                     accept.getType() instanceof BvType,
                     "Shift expressions are only modelled over bitvectors, but the left operand has"
@@ -479,7 +478,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             checkState(
                     smallestCommonType.getSmtType() instanceof BvType,
                     "Shift expressions are only modelled over bitvectors, but the operands' common"
-                        + " type is %s (see --arithmetic).",
+                            + " type is %s (see --arithmetic).",
                     smallestCommonType.getSmtType());
             for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
                 Expr<BvType> rightOp;
@@ -487,7 +486,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 checkState(
                         accept.getType() instanceof BvType,
                         "Shift expressions are only modelled over bitvectors, but the shift amount"
-                            + " has type %s (see --arithmetic).",
+                                + " has type %s (see --arithmetic).",
                         accept.getType());
                 //noinspection unchecked
                 rightOp = (Expr<BvType>) accept;
@@ -801,10 +800,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * `__builtin_offsetof(struct S, f)` evaluates to f's *element index* in S -- the same unit
      * every member dereference uses as its offset -- so the `container_of` idiom `(struct
-     * S*)((char*)p - offsetof(struct S, f))` round-trips exactly: `&obj->f` is (base, index(f)),
-     * and subtracting index(f) lands back on (base, 0), the object itself. Nested (`a.b`) and
-     * indexed (`a[3]`) designators are rejected: a struct-typed field holds a base id of its own in
-     * this model, so no single linear offset describes them.
+     * S*)((char*)p - offsetof(struct S, f))` round-trips exactly: {@code &obj->f} is (base,
+     * index(f)), and subtracting index(f) lands back on (base, 0), the object itself. Nested
+     * (`a.b`) and indexed (`a[3]`) designators are rejected: a struct-typed field holds a base id
+     * of its own in this model, so no single linear offset describes them.
      */
     @Override
     public Expr<?> visitPrimaryExpressionBuiltinOffsetof(
@@ -940,9 +939,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // Resolve through the TYPE VISITOR, not by name. The name lookups below only ever see the
         // raw text, so anything that is not a plain identifier fails -- and the single shape that
         // actually occurs is `__builtin_va_arg(ap, __typeof__(p->field))`, which the type visitor
-        // already knows how to resolve (it is the same machinery `container_of` needs). All 49
-        // failures in the run-91b parse sweep were literally the same expression,
-        // `__typeof__(on_off->optarg)`.
+        // already knows how to resolve (it is the same machinery `container_of` needs).
         CComplexType type = null;
         try {
             type = ctx.typeName().specifierQualifierList().accept(typeVisitor).getActualType();
@@ -961,7 +958,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                     () ->
                                             new UnsupportedFrontendElementException(
                                                     "Cannot resolve the type read by"
-                                                        + " __builtin_va_arg: "
+                                                            + " __builtin_va_arg: "
                                                             + typeName));
         }
         uniqueWarningLogger.write(
@@ -1471,10 +1468,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * a[n][m]` is just as contiguous, and `i * m + j` is as good an offset when `m` is a variable
      * as when it is a literal. Requiring a literal used to send VLAs down the fallback path below,
      * where `a[i]` became a *stored base* read out of cell `i` -- a base nothing ever writes, so
-     * the solver was free to make two rows the same object. That produced six false alarms in the
-     * 2026-07-20 run (`array-patterns/array13` and friends, all `int array[ARR_SIZE][ARR_SIZE]`):
-     * rows aliased, a summation loop read back the wrong values, and a safe program was reported
-     * unsafe.
+     * the solver was free to make two rows the same object -- rows aliased, a summation loop read
+     * back the wrong values, and a safe program was reported unsafe.
      *
      * <p>An array of <b>structs</b> is laid out the same way, scaled by the struct's cell count:
      * `s[i].f` becomes `arrays[s][i*k + f]`. That element used to be a *stored base* of its own,
@@ -1660,7 +1655,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 && cPointer.isFunctionPointer();
     }
 
-    /** Marker call emitted for an indirect call; {@link FunctionPointerCallsPass} expands it. */
+    /** Marker call emitted for an indirect call; {@code FunctionPointerCallsPass} expands it. */
     public static final String INDIRECT_CALL = "__theta_indirect_call";
 
     /**
@@ -1710,9 +1705,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * Also aliases the {@code __builtin_}-prefixed floating-point classification builtins that have
      * no declaration to the plain library names that {@code FpFunctionsToExprsPass} already models
      * exactly ({@code isnan}, {@code isinf}, {@code isfinite}, {@code isnormal}), by emitting a
-     * call to the plain name; supplies the infinity builtins ({@code __builtin_inf*},
-     * {@code __builtin_huge_val*}) as exact literals; and drops {@code __builtin_prefetch}, which is
-     * a hint with no semantics.
+     * call to the plain name; supplies the infinity builtins ({@code __builtin_inf*}, {@code
+     * __builtin_huge_val*}) as exact literals; and drops {@code __builtin_prefetch}, which is a
+     * hint with no semantics.
      *
      * <p>Returns {@code null} when {@code ctx} is not such a call, so normal handling proceeds.
      */
@@ -1773,7 +1768,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (mode == null || !isLiteralZero(ExprUtils.simplify(mode))) {
                     throw new UnsupportedFrontendElementException(
                             "fesetround with a non-default rounding mode is not supported: theta"
-                                + " models only round-to-nearest-even.");
+                                    + " models only round-to-nearest-even.");
                 }
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 LitExpr<?> success = signedInt.getNullValue();
@@ -1830,7 +1825,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         name.substring("__builtin_".length()), args, false);
             }
             case "__builtin_prefetch" -> {
-                // A cache hint with no semantic effect whatsoever: the C contract is explicitly that
+                // A cache hint with no semantic effect whatsoever: the C contract is explicitly
+                // that
                 // it does *not* dereference and is safe on any address, valid or not. Its operands
                 // are still ordinary expressions and are evaluated (`__builtin_prefetch(p->next)`
                 // really does read `p->next`), so they go through the visitor for their side
@@ -1930,9 +1926,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * these can be emitted with no declaration in sight, because the pass supplies the semantics.
      *
      * <p>`alloca` is deliberately absent: its return type is not carried in metadata the way
-     * `malloc`'s is (see {@code FunctionVisitor#declareMallocReturnsPointer}), so a synthesized call
-     * would default to an `int` return and truncate the pointer under LP64. It is declared in our
-     * `<stdlib.h>` model instead, and `__builtin_alloca` is handled above.
+     * `malloc`'s is (see {@code FunctionVisitor#declareMallocReturnsPointer}), so a synthesized
+     * call would default to an `int` return and truncate the pointer under LP64. It is declared in
+     * our `<stdlib.h>` model instead, and `__builtin_alloca` is handled above.
      */
     private static final Set<String> MODELED_MEMORY_FUNCTIONS =
             Set.of("malloc", "free", "realloc", "memcpy", "memmove", "memset");
@@ -2010,7 +2006,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
         throw new UnsupportedFrontendElementException(
                 "Field [%s] of %s not found, available fields are: %s"
-                        .formatted(memberName, tagOf(structType), structType.getFieldsAsMap().keySet()));
+                        .formatted(
+                                memberName,
+                                tagOf(structType),
+                                structType.getFieldsAsMap().keySet()));
     }
 
     /** The struct's tag as written, or its type name where the origin is not a tagged struct. */
@@ -2460,16 +2459,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (embeddedType
                 instanceof
                 hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
-            // The batch-59 NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable
-            // path: a floating-point member is refused rather than reopening the unsound
-            // round-trip.
+            // The NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable path: a
+            // floating-point member is refused rather than reopening the unsound round-trip.
             // Deliberately NOT the recoverable exception: the byte-addressed model refuses floats
             // as well (ByteMemoryPass), because splitting one needs an IEEE bit reinterpretation
             // that SMT-LIB leaves underspecified for NaN. Retrying there would trade one refusal
             // for another after a second full frontend build.
             throw new UnsupportedFrontendElementException(
                     "Accessing member [%s] of a byte-addressed union is not supported: a"
-                            .formatted(memberName)
+                                    .formatted(memberName)
                             + " floating-point member is not supported.");
         }
         if (embeddedType instanceof CStruct) {
@@ -2507,8 +2505,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      *
      * <p>The name decides the width, and it is spelled out rather than sniffed from the last
      * character: {@code __builtin_inf} itself *ends in* {@code f} but is the {@code double} one, so
-     * a suffix test would silently hand back a {@code float} infinity for it. Unlike the hex-literal
-     * path, {@code long double} needs no exception here -- infinity carries no significand to round.
+     * a suffix test would silently hand back a {@code float} infinity for it. Unlike the
+     * hex-literal path, {@code long double} needs no exception here -- infinity carries no
+     * significand to round.
      */
     private Expr<?> infinityConstant(String name) {
         final String kind =
@@ -2551,8 +2550,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 };
         final BigFloat value =
                 infinite ? BigFloat.positiveInfinity(significand) : BigFloat.NaN(significand);
-        final FpLitExpr literal =
-                FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
+        final FpLitExpr literal = FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
         parseContext.getMetadata().create(literal, "cType", type);
         return literal;
     }
@@ -2560,10 +2558,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * The storage cell an operand names in full, or null if it does not name one exactly.
      *
-     * A member of a byte-laid-out union reads as `extract(cell, 0, cellWidth)` under the usual width
-     * and signedness wrappers. That extract is the identity, so the expression denotes the cell
-     * itself and `&` on it is the cell's address. A narrower extract is a real bitfield and returns
-     * null -- C forbids taking a bitfield's address, and there is none to give.
+     * <p>A member of a byte-laid-out union reads as `extract(cell, 0, cellWidth)` under the usual
+     * width and signedness wrappers. That extract is the identity, so the expression denotes the
+     * cell itself and `&` on it is the cell's address. A narrower extract is a real bitfield and
+     * returns null -- C forbids taking a bitfield's address, and there is none to give.
      */
     private static Expr<?> wholeCellOf(Expr<?> operand) {
         Expr<?> current = operand;
@@ -2641,8 +2639,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * Whether [type] can sit in a byte-laid-out union's cells directly: a plain integer or a
      * pointer, both of which are always a whole number of bytes wide. Excludes a nested
-     * struct/union (needs its own base id, not a flat byte run) and a floating-point type (the
-     * batch-59 NaN gate on `fpToIEEEBV`, deliberately not reopened here).
+     * struct/union (needs its own base id, not a flat byte run) and a floating-point type (the NaN
+     * gate on `fpToIEEEBV`, deliberately not reopened here).
      */
     private boolean isByteAddressableScalar(CComplexType type) {
         return isPlainInteger(type) || type instanceof CPointer;
@@ -3350,9 +3348,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // variable, not a modelled macro, not an enum constant. In practice it is a library
             // function used as a function designator rather than called (`= malloc`,
             // `= __VERIFIER_nondet_int`): only functions defined in this translation unit get an id
-            // that can be taken as a value, so an undefined one has nothing to refer to. Say that,
-            // rather than leaving a bare name (64 `malloc` + 32 `__VERIFIER_nondet_int` in the
-            // run-91b parse sweep looked like a lookup bug).
+            // that can be taken as a value, so an undefined one has nothing to refer to. Say that
+            // rather than leaving a bare name, which reads like a lookup bug.
             throw new RuntimeException(
                     "No such variable or macro: "
                             + name
@@ -3681,10 +3678,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 checkState(
                         expr instanceof RefExpr<?>,
-                        "Only variable-backed functions are callable, but the callee is a %s whose C"
-                            + " type is %s (recognized as a function pointer: %s). A call through a"
-                            + " function POINTER is dispatched over the candidate set instead; this"
-                            + " fires when the pointer-ness was lost from the type.",
+                        "Only variable-backed functions are callable, but the callee is a %s whose"
+                            + " C type is %s (recognized as a function pointer: %s). A call through"
+                            + " a function POINTER is dispatched over the candidate set instead;"
+                            + " this fires when the pointer-ness was lost from the type.",
                         expr.getClass().getSimpleName(),
                         CComplexType.getType(expr, parseContext),
                         isCallableFunctionPointer(expr));
@@ -3696,27 +3693,26 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // storage that is read. Releasing it at the end of the block that declared it is
                 // therefore both meaningless and harmful: `for (...) { pthread_t t;
                 // pthread_create(&t, ...); }` had its handle freed on every iteration and the next
-                // access reported a false `valid-deref` (`pthread-theta/unwind3-100` and
-                // `unwind3-nondet` regressed from correct to wrong in run 93 for exactly this).
+                // access reported a false `valid-deref`.
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)
                     functionVisitor.setSuppressScopedRelease(true);
                 try {
-                if (exprList == null) arguments = List.of();
-                else {
-                    List<CStatement> list = new ArrayList<>();
-                    for (AssignmentExpressionContext assignmentExpressionContext :
-                            exprList.assignmentExpression()) {
-                        if (functionVisitor == null)
-                            throw new RuntimeException(
-                                    "Cannot parse function calls without a function visitor.");
-                        CStatement accept = assignmentExpressionContext.accept(functionVisitor);
-                        list.add(accept);
+                    if (exprList == null) arguments = List.of();
+                    else {
+                        List<CStatement> list = new ArrayList<>();
+                        for (AssignmentExpressionContext assignmentExpressionContext :
+                                exprList.assignmentExpression()) {
+                            if (functionVisitor == null)
+                                throw new RuntimeException(
+                                        "Cannot parse function calls without a function visitor.");
+                            CStatement accept = assignmentExpressionContext.accept(functionVisitor);
+                            list.add(accept);
+                        }
+                        arguments = list;
                     }
-                    arguments = list;
-                }
                 } finally {
                     if (functionVisitor != null)
                         functionVisitor.setSuppressScopedRelease(wasSuppressing);

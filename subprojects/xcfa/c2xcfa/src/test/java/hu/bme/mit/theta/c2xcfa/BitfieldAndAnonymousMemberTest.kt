@@ -65,7 +65,7 @@ class BitfieldAndAnonymousMemberTest {
   @Test
   fun consecutiveBitfieldsShareAStorageUnit() {
     // lo:4 and hi:4 fit one 32-bit unit, so they share cell 0 and `count` follows at cell 1 --
-    // the cell count then matches the packed byte size a program allocates for (batch 45).
+    // the cell count then matches the packed byte size a program allocates for.
     val derefs =
       writeDerefs(
         """
@@ -166,10 +166,9 @@ class BitfieldAndAnonymousMemberTest {
 
   @Test
   fun braceInitializerFoldsPackedBitfieldsIntoOneCell() {
-    // The batch-46 regression: once bitfields pack, an initializer element is a *member* index,
-    // not a cell index, so `{1, 2}` is one cell holding 1 | (2 shl 4) == 0x21 == 33. The old code
-    // refused outright ("Brace initializer for a struct with packed bitfields is not supported"),
-    // which cost 36 benchmark tasks; writing 1 and 2 into two separate cells would be worse still.
+    // Once bitfields pack, an initializer element is a *member* index, not a cell index, so
+    // `{1, 2}` is one cell holding 1 | (2 shl 4) == 0x21 == 33. This used to be refused outright;
+    // writing 1 and 2 into two separate cells would be worse still.
     val values =
       storedValues(
         """

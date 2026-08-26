@@ -31,8 +31,7 @@ import java.util.List;
  * a packed struct look like an out-of-bounds access.
  *
  * <p>This is the pure layout computation only; it does not yet drive {@code memberOffset} or the
- * bit-slice access/assignment lowering (see PLAN.md batch 43-design). It is exercised directly by
- * {@code BitfieldLayoutTest}.
+ * bit-slice access/assignment lowering. It is exercised directly by {@code BitfieldLayoutTest}.
  */
 public final class BitfieldLayout {
 

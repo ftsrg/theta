@@ -1,0 +1,53 @@
+# Canary regression suite
+
+Run it from Gradle as `./gradlew :theta-xcfa-cli:canaryTest`, which builds the distribution first and
+reports one JUnit result per canary. `-Ptheta.canary.mode=full` checks verdicts instead of only that
+the frontend builds each task; `-Ptheta.canary.jobs=N` lowers the parallelism on a machine short of
+memory (the largest canaries need several GB each, and one that is OOM-killed is reported as
+`nonzero exit 137`).
+
+**This suite is the gate.** Frontend and pass changes are expected to be run against it before they
+land, together with the affected module's unit tests. A fix whose effect a fixture cannot show is a
+fix nothing will protect: when you add one, check that it *fails* before your change and passes
+after, or it guards nothing.
+
+Fast checks run after a Theta-svcomp build to catch frontend/analysis regressions before a
+full benchmark. Point them at an extracted `Theta-svcomp` dir (or let them auto-extract the
+sibling `Theta-svcomp.zip`). Java 21+ must be on `PATH` (the launcher uses `theta-start.sh`).
+
+## `run_canaries.sh [THETA_DIR] [parse|full] [TSV]`
+
+- **parse** (default): frontend-only smoke test (`--backend NONE`) over `canaries.tsv` — 268
+  real sv-benchmarks tasks, one PASS per `ParsingResult Success`. The frontend *builds the
+  XCFA* under `--backend NONE`, so this catches c2xcfa regressions, not just ANTLR ones. In
+  this mode it also runs the feature-guard fixtures (below) and folds their result into the
+  exit status.
+- **full**: real `--portfolio STABLE` run comparing the printed verdict against
+  `expected_verdict`. Slow — use a small `TSV` subset (e.g. `guard_set.tsv`).
+
+`canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a
+given task only *happens* to exercise a feature. That is what the fixtures are for.
+
+## `run_fixtures.sh [THETA_DIR]` — feature guards
+
+Each file under `fixtures/` is a minimal program that isolates one frontend/grammar
+modification, so it builds **iff** that modification is present; reverting the fix flips its
+outcome and the suite goes red. `fixtures/fixtures.tsv` maps each fixture to its arithmetic,
+architecture, expected outcome (`PARSE-OK` / `FRONTEND-FAIL`), and the feature it guards. Run
+directly, or automatically as part of `run_canaries.sh ... parse`.
+
+Add a fixture whenever a change adds a frontend/grammar capability: write the smallest program that
+needs it, confirm it builds now, and add a row. Verdict-level bugs (a fix changes the *answer*,
+not whether it builds) belong in `guard_set.tsv`, not here — e.g. the deferred packed-bitfield
+memsafety wrongs (`test-bitfields-*`) are tracked there as known-wrong until slicing lands.
+
+## `atomic_qual.tsv` — `_Atomic`-qualifier verdict guard
+
+The 44 tasks of `sv-benchmarks/c/pthread-atomic-qualifier/` (the atomic-qualifier MR), keyed on
+their real property/verdict. Run in **full** mode — `run_canaries.sh "" full atomic_qual.tsv` — to
+check that `_Atomic` on a struct field, array element, whole struct, nested field or pointee still
+makes concurrent accesses race-free (and that plain cells still race). 41 are green; the 3 known-open
+are the cast-through-a-cast tasks (`cast-ptr`, `param-array`, `param-ptr-to-atomic`), which report a
+false race because their atomicity comes from a `(_Atomic int *)` cast the folding model discards.
+Fast (~2.5 s each). The in-repo counterpart that runs without an sv-benchmarks
+checkout is `XcfaDataRaceTest.testAtomicCellDataRace`.

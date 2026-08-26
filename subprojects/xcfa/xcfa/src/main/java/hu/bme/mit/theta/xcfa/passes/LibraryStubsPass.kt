@@ -40,17 +40,15 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * That pass only havocs a call whose arguments are all plain integer scalars, because havocing the
  * return of a function that takes a POINTER would silently swallow whatever it writes through it.
  * The rule is right, but it leaves the entire stdio and string family unmodelled, and such a call
- * reaches the analysis as a procedure that does not exist -- "No such method fscanf" and friends,
- * the single largest source of sub-configuration failure in the run-93 portfolio
- * (`memset` 213,795 log occurrences, `fscanf` 211,366, `fgets` 125,945).
+ * reaches the analysis as a procedure that does not exist -- "No such method fscanf" and friends.
  *
  * These are stubbed explicitly instead. Each entry states which arguments the function WRITES
  * THROUGH, and those pointees are filled with fresh nondeterministic values rather than being left
  * at their old contents -- leaving them would be a specific wrong value, which can hide a bug as
  * easily as invent one, where unconstrained is a safe over-approximation.
  *
- * ⚠️ Not modelled here, deliberately: `setjmp`/`longjmp` (non-local control flow -- a havoc would be
- * a wrong program, and [UnresolvedInvokeToHavocPass] already refuses them by name) and the math
+ * ⚠️ Not modelled here, deliberately: `setjmp`/`longjmp` (non-local control flow -- a havoc would
+ * be a wrong program, and [UnresolvedInvokeToHavocPass] already refuses them by name) and the math
  * functions (`sin`, `expf`, ...), whose *values* matter to the programs that call them; a havoc
  * there would turn a precise computation into noise and answer float tasks by accident.
  */
@@ -159,7 +157,11 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         builder.addVar(fresh)
         val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
         val deref =
-          Dereference.of(ptr as Expr<Type>, cast(index, ptr.type) as Expr<Type>, cell.smtType as Type)
+          Dereference.of(
+            ptr as Expr<Type>,
+            cast(index, ptr.type) as Expr<Type>,
+            cell.smtType as Type,
+          )
         parseContext.metadata.create(deref, "cType", CPointer(null, cell, parseContext))
         out.add(StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata))
         // Bound it to the cell's C type, exactly as a `__VERIFIER_nondet_<type>()` result is
@@ -167,14 +169,12 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         // arithmetic that sort is the UNBOUNDED integers, so without this a stubbed read can hand
         // back a value no object of that type could hold.
         //
-        // MEASURED, on real inputs: this turns the whole Juliet CWE190 `_good` family from
-        // `false(no-overflow)` into correct `true` -- 25 of 25 sampled tasks that were wrong in
-        // run 98 -- while all 8 sampled `_bad` counterparts still report the real overflow, so the
-        // assume is not suppressing genuine bugs. What is NOT established is the precise chain
-        // from the missing bound to that verdict: five minimal programs of the obvious shape
-        // (one-sided guard over a stub-written value, both data models, both arithmetics) all
-        // verify Safe with and without this line, so something else in those files participates.
-        // Treat the mechanism as open; the evidence for the fix is the real-task measurement.
+        // ⚠️ The effect is measured on real inputs but the mechanism is NOT understood: removing
+        // this line turns a whole family of correct `true` overflow verdicts into false alarms,
+        // while their buggy counterparts still report the real overflow -- yet minimal programs of
+        // the obvious shape (a one-sided guard over a stub-written value) verify the same with and
+        // without it. Something else in those inputs participates. Do not remove it on the grounds
+        // that a small repro shows no difference.
         //
         // Emitted here rather than left to [HavocPromotionAndRange], which adds exactly this assume
         // but runs BEFORE this pass in the pipeline, so a havoc introduced here never reaches it --

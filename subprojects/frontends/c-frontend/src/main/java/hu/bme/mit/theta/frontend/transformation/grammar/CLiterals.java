@@ -21,9 +21,9 @@ import java.util.List;
 /**
  * Decoding of C character and string literals. Shared so that {@code '\n'} and {@code "\n"} cannot
  * disagree: the two used to be decoded by separate ad-hoc code, and the character one got every
- * escape family wrong -- {@code '\x41'} was read as *octal* 41, {@code '\101'} as *decimal* 101, and
- * any single-letter escape ({@code '\n'}, {@code '\t'}, {@code '\\'}) threw NumberFormatException
- * out of the frontend.
+ * escape family wrong -- {@code '\x41'} was read as *octal* 41, {@code '\101'} as *decimal* 101,
+ * and any single-letter escape ({@code '\n'}, {@code '\t'}, {@code '\\'}) threw
+ * NumberFormatException out of the frontend.
  */
 public final class CLiterals {
 
@@ -52,12 +52,12 @@ public final class CLiterals {
     }
 
     /**
-     * The value of a character constant, quotes included ({@code 'a'}, {@code '\n'}, {@code '\x41'},
-     * {@code '\101'}), or {@code null} if [text] is not one.
+     * The value of a character constant, quotes included ({@code 'a'}, {@code '\n'}, {@code
+     * '\x41'}, {@code '\101'}), or {@code null} if [text] is not one.
      *
      * <p>A multi-character constant ({@code 'ab'}, and the {@code 'MAGI'} four-character tags that
-     * file-format code uses) is implementation-defined; the bytes are packed big-endian into an int,
-     * which is what gcc does.
+     * file-format code uses) is implementation-defined; the bytes are packed big-endian into an
+     * int, which is what gcc does.
      */
     public static Integer charValue(String text) {
         // An encoding prefix (`L'a'`, `u'a'`, `U'a'`) is dropped: the value of the character is the

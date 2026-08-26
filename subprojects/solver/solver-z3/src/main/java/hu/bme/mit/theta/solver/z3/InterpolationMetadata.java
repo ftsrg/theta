@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -98,7 +98,8 @@ record InterpolationMetadata(
      * over no variables is just its body. Hit when {@code a} or {@code b} (the CEGAR path segment
      * being interpolated) has no free constants -- e.g. a closed/literal-only conjunct.
      */
-    private static BoolExpr forallOrBody(Context ctx, com.microsoft.z3.Expr<?>[] vars, BoolExpr body) {
+    private static BoolExpr forallOrBody(
+            Context ctx, com.microsoft.z3.Expr<?>[] vars, BoolExpr body) {
         return vars.length == 0 ? body : ctx.mkForall(vars, body, 1, null, null, null, null);
     }
 }

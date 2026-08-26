@@ -271,6 +271,22 @@ public final class ExprSimplifier {
         return expr.with(cond, then, elze);
     }
 
+    private <ExprType extends Type> Expr<BoolType> unwrapIte(
+            Expr<ExprType> expr, LitExpr<ExprType> truth, boolean shouldEqual) {
+        if (expr instanceof IteExpr<ExprType> ite
+                && ite.getThen() instanceof LitExpr<ExprType> then
+                && ite.getElse() instanceof LitExpr<ExprType> elze) {
+            if (then.equals(truth) && !elze.equals(truth)) {
+                if (shouldEqual) return ite.getCond();
+                else return Not(ite.getCond());
+            } else if (!then.equals(truth) && elze.equals(truth)) {
+                if (shouldEqual) return Not(ite.getCond());
+                else return ite.getCond();
+            }
+        }
+        return null;
+    }
+
     private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
         return expr.map(it -> simplify(it, val));
     }
@@ -954,15 +970,20 @@ public final class ExprSimplifier {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
 
-        // special case for C: (= (ite expr 1 0) 0) ==> not(expr)
-        if (rightOp instanceof IntLitExpr litExpr
-                && litExpr.getValue().intValue() == 0
-                && leftOp instanceof IteExpr<IntType> ite
-                && ite.getThen() instanceof IntLitExpr then
-                && then.getValue().intValue() == 1
-                && ite.getElse() instanceof IntLitExpr elze
-                && elze.getValue().intValue() == 0) {
-            return Not(ite.getCond());
+        // special cases for C:
+        // (= (ite expr 1 0) 1) ==> expr
+        // (= (ite expr 1 0) 0) ==> !expr
+        if (rightOp instanceof IntLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(leftOp, litExpr, true);
+            if (iteCond != null) return iteCond;
+        }
+
+        // special cases for C:
+        // (= 1 (ite expr 1 0)) ==> expr
+        // (= 0 (ite expr 1 0)) ==> !expr
+        if (leftOp instanceof IntLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(rightOp, litExpr, true);
+            if (iteCond != null) return iteCond;
         }
 
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
@@ -980,15 +1001,20 @@ public final class ExprSimplifier {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
 
-        // special case for C: (\= (ite expr 1 0) 0) ==> expr
-        if (rightOp instanceof IntLitExpr litExpr
-                && litExpr.getValue().intValue() == 0
-                && leftOp instanceof IteExpr<IntType> ite
-                && ite.getThen() instanceof IntLitExpr then
-                && then.getValue().intValue() == 1
-                && ite.getElse() instanceof IntLitExpr elze
-                && elze.getValue().intValue() == 0) {
-            return ite.getCond();
+        // special cases for C:
+        // (\= (ite expr 1 0) 0) ==> expr
+        // (\= (ite expr 1 0) 1) ==> !expr
+        if (rightOp instanceof IntLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(leftOp, litExpr, false);
+            if (iteCond != null) return iteCond;
+        }
+
+        // special cases for C:
+        // (\= 0 (ite expr 1 0)) ==> expr
+        // (\= 1 (ite expr 1 0)) ==> !expr
+        if (leftOp instanceof IntLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(rightOp, litExpr, false);
+            if (iteCond != null) return iteCond;
         }
 
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
@@ -1631,15 +1657,20 @@ public final class ExprSimplifier {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
-        // special case for C: (= (ite expr 1 0) 0) ==> not(expr)
-        if (rightOp instanceof BvLitExpr litExpr
-                && BvUtils.neutralBvLitExprToBigInteger(litExpr).equals(BigInteger.ZERO)
-                && leftOp instanceof IteExpr<BvType> ite
-                && ite.getThen() instanceof BvLitExpr then
-                && BvUtils.neutralBvLitExprToBigInteger(then).equals(BigInteger.ONE)
-                && ite.getElse() instanceof BvLitExpr elze
-                && BvUtils.neutralBvLitExprToBigInteger(elze).equals(BigInteger.ZERO)) {
-            return Not(ite.getCond());
+        // special cases for C:
+        // (= (ite expr 1 0) 1) ==> expr
+        // (= (ite expr 1 0) 0) ==> !expr
+        if (rightOp instanceof BvLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(leftOp, litExpr, true);
+            if (iteCond != null) return iteCond;
+        }
+
+        // special cases for C:
+        // (= 1 (ite expr 1 0)) ==> expr
+        // (= 0 (ite expr 1 0)) ==> !expr
+        if (leftOp instanceof BvLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(rightOp, litExpr, true);
+            if (iteCond != null) return iteCond;
         }
 
         if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
@@ -1657,15 +1688,20 @@ public final class ExprSimplifier {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
-        // special case for C: (\= (ite expr 1 0) 0) ==> expr
-        if (rightOp instanceof BvLitExpr litExpr
-                && BvUtils.neutralBvLitExprToBigInteger(litExpr).equals(BigInteger.ZERO)
-                && leftOp instanceof IteExpr<BvType> ite
-                && ite.getThen() instanceof BvLitExpr then
-                && BvUtils.neutralBvLitExprToBigInteger(then).equals(BigInteger.ONE)
-                && ite.getElse() instanceof BvLitExpr elze
-                && BvUtils.neutralBvLitExprToBigInteger(elze).equals(BigInteger.ZERO)) {
-            return ite.getCond();
+        // special cases for C:
+        // (\= (ite expr 1 0) 0) ==> expr
+        // (\= (ite expr 1 0) 1) ==> !expr
+        if (rightOp instanceof BvLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(leftOp, litExpr, false);
+            if (iteCond != null) return iteCond;
+        }
+
+        // special cases for C:
+        // (\= 0 (ite expr 1 0)) ==> expr
+        // (\= 1 (ite expr 1 0)) ==> !expr
+        if (leftOp instanceof BvLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(rightOp, litExpr, false);
+            if (iteCond != null) return iteCond;
         }
 
         if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
@@ -2021,6 +2057,22 @@ public final class ExprSimplifier {
         final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
+        // special cases for C:
+        // (= (ite expr 1 0) 1) ==> expr
+        // (= (ite expr 1 0) 0) ==> !expr
+        if (rightOp instanceof FpLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(leftOp, litExpr, true);
+            if (iteCond != null) return iteCond;
+        }
+
+        // special cases for C:
+        // (= 1 (ite expr 1 0)) ==> expr
+        // (= 0 (ite expr 1 0)) ==> !expr
+        if (leftOp instanceof FpLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(rightOp, litExpr, true);
+            if (iteCond != null) return iteCond;
+        }
+
         if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
             return lLit.eq(rLit);
         }
@@ -2102,6 +2154,22 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyFpNeq(final FpNeqExpr expr, final Valuation val) {
         final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        // special cases for C:
+        // (\= (ite expr 1 0) 0) ==> expr
+        // (\= (ite expr 1 0) 1) ==> !expr
+        if (rightOp instanceof FpLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(leftOp, litExpr, false);
+            if (iteCond != null) return iteCond;
+        }
+
+        // special cases for C:
+        // (\= 0 (ite expr 1 0)) ==> expr
+        // (\= 1 (ite expr 1 0)) ==> !expr
+        if (leftOp instanceof FpLitExpr litExpr) {
+            final Expr<BoolType> iteCond = unwrapIte(rightOp, litExpr, false);
+            if (iteCond != null) return iteCond;
+        }
 
         if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
             return lLit.neq(rLit);

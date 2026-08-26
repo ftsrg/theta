@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -137,12 +136,11 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
    * Turns the frontend's scope-end markers into the release they stand for.
    *
    * An object's storage dies when its *block* is left. Nothing said so: `__theta_ptr_size[base]`
-   * was written once at the allocation and cleared only by an explicit `free`, so
-   * `{ int a[10]; p = a; }` followed by `p[0] = 1` was accepted, and so was the next iteration of
-   * `for (...) { int a[10]; ... }` writing through the previous iteration's array
-   * (`memsafety-ext3/scopes3`, `scopes5`, `derefInLoop1` -- and `derefInLoop1` is the proof the
-   * *check* was always fine: the model already gives each unrolled iteration its own base, it just
-   * never retired the old one).
+   * was written once at the allocation and cleared only by an explicit `free`, so `{ int a[10]; p =
+   * a; }` followed by `p[0] = 1` was accepted, and so was the next iteration of `for (...) { int
+   * a[10]; ... }` writing through the previous iteration's array (`memsafety-ext3/scopes3`,
+   * `scopes5`, `derefInLoop1` -- and `derefInLoop1` is the proof the *check* was always fine: the
+   * model already gives each unrolled iteration its own base, it just never retired the old one).
    *
    * The marker is only ever emitted under a memory-safety property (see
    * `FunctionVisitor#withScopeReleases`), so no other property's model is touched. It is dropped
@@ -172,8 +170,8 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
    * the program and a **use-after-return was accepted**: `int *a = alloca(n); ... return a;` and
    * the caller then reads through it (`memsafety-ext3/getNumbers1-1`, a missed bug).
    *
-   * Nothing else is needed: `MemsafetyPass.annotateDeref` already reports `ptr_size[base] <= index`,
-   * so once the size is zeroed the existing guard catches the stale access unchanged.
+   * Nothing else is needed: `MemsafetyPass.annotateDeref` already reports `ptr_size[base] <=
+   * index`, so once the size is zeroed the existing guard catches the stale access unchanged.
    *
    * Only the *last* base a repeated allocation produced is released -- a variable holds one value,
    * and an `alloca` in a loop overwrites it. That direction is safe: releasing too few objects can
@@ -228,8 +226,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     parseContext.metadata.create(probe.ref, "cType", element)
     val offset = CComplexType.getUnsignedLong(parseContext).nullValue
     @Suppress("UNCHECKED_CAST")
-    val cell =
-      Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
+    val cell = Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
     parseContext.metadata.create(cell, "cType", element)
     return AssignStmtLabel(probe, cast(cell, probe.type), probe.type)
   }

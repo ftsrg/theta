@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
-import java.math.BigInteger
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -38,14 +38,14 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.DereferenceAccessMap
 import hu.bme.mit.theta.xcfa.utils.READ
 import hu.bme.mit.theta.xcfa.utils.VarAccessMap
-import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.getPotentialRacingVars
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
+import java.math.BigInteger
 
 /**
  * Reduces data race checking to reachability checking by adding write access flags for each global
@@ -56,8 +56,7 @@ class DataRaceToReachabilityPass(
   private val property: XcfaProperty,
   private val parseContext: ParseContext? = null,
   enabled: Boolean? = null,
-) :
-  ProcedurePass {
+) : ProcedurePass {
 
   private val enabled: Boolean = enabled ?: Companion.enabled
 

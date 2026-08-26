@@ -182,3 +182,18 @@ XcfaConfig            "1" *-[#595959,plain]d-> "outputConfig\n1" OutputConfig
 </details>
 
 ![](config_diagram.svg)
+
+## Choosing solvers
+
+`--abstraction-solver` / `--refinement-solver` (and the portfolio's own choices) are not
+interchangeable, because not every solver supports every theory the frontend may pick.
+
+**Bitvector arithmetic plus interpolation requires MathSAT.** The arithmetic is chosen from the
+program: a source using bitwise operators, bitfields or a byte-addressed union resolves to bitvectors
+even under `--arithmetic efficient`. Z3-legacy cannot interpolate over bitvectors, so any CEGAR
+configuration whose refinement is interpolation-based (`*_ITP`) then fails with
+`theory not supported by interpolation or bad proof`. Pin `mathsat:5.6.10` for both solvers in that
+case. The failure looks like a solver defect and is a configuration mistake.
+
+The `bytes` memory model is defined only over bitvectors, so selecting it moves the arithmetic with
+it — and brings the same constraint.
