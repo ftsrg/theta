@@ -22,4 +22,6 @@ data class PtrPrec<P : Prec>(val innerPrec: P, val set: Set<Any> = emptySet(), v
   Prec {
 
   override fun getUsedVars(): Collection<VarDecl<*>> = innerPrec.usedVars
+
+  override fun getNumberOfTrackedItems(): Int = innerPrec.numberOfTrackedItems
 }

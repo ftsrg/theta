@@ -132,4 +132,9 @@ public final class PredPrec implements Prec {
                                         .collect(Collectors.toSet()))
                 .orElse(Set.of());
     }
+
+    @Override
+    public int getNumberOfTrackedItems() {
+        return predToNegMap.size();
+    }
 }

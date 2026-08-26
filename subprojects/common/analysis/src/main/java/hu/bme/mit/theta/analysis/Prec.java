@@ -22,4 +22,8 @@ import java.util.Collection;
 public interface Prec {
 
     Collection<VarDecl<?>> getUsedVars();
+
+    default int getNumberOfTrackedItems() {
+        return getUsedVars().size();
+    }
 }
