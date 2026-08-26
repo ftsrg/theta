@@ -43,3 +43,10 @@ invariants.txt
 # Python bytecode from the canary helper scripts
 __pycache__/
 *.pyc
+
+# IDE settings are personal, not project configuration
+.vscode/
+
+# Benchmark runs, triage notes and result archives are kept locally, not in the repo.
+# The canary suite that gates changes lives in subprojects/xcfa/xcfa-cli/canaries.
+benchmark-results/

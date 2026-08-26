@@ -28,7 +28,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 THETA_DIR="${1:-$REPO_ROOT/subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp}"
 TSV="$SCRIPT_DIR/fixtures/fixtures.tsv"
 PROP="${PROP:-$(cd "$REPO_ROOT/../sv-benchmarks" 2>/dev/null && pwd)/c/properties/unreach-call.prp}"
