@@ -1,12 +1,23 @@
 # Canary regression suite
 
+Run it from Gradle as `./gradlew :theta-xcfa-cli:canaryTest`, which builds the distribution first and
+reports one JUnit result per canary. `-Ptheta.canary.mode=full` checks verdicts instead of only that
+the frontend builds each task; `-Ptheta.canary.jobs=N` lowers the parallelism on a machine short of
+memory (the largest canaries need several GB each, and one that is OOM-killed is reported as
+`nonzero exit 137`).
+
+**This suite is the gate.** Frontend and pass changes are expected to be run against it before they
+land, together with the affected module's unit tests. A fix whose effect a fixture cannot show is a
+fix nothing will protect: when you add one, check that it *fails* before your change and passes
+after, or it guards nothing.
+
 Fast checks run after a Theta-svcomp build to catch frontend/analysis regressions before a
 full benchmark. Point them at an extracted `Theta-svcomp` dir (or let them auto-extract the
 sibling `Theta-svcomp.zip`). Java 21+ must be on `PATH` (the launcher uses `theta-start.sh`).
 
 ## `run_canaries.sh [THETA_DIR] [parse|full] [TSV]`
 
-- **parse** (default): frontend-only smoke test (`--backend NONE`) over `canaries.tsv` — 255
+- **parse** (default): frontend-only smoke test (`--backend NONE`) over `canaries.tsv` — 268
   real sv-benchmarks tasks, one PASS per `ParsingResult Success`. The frontend *builds the
   XCFA* under `--backend NONE`, so this catches c2xcfa regressions, not just ANTLR ones. In
   this mode it also runs the feature-guard fixtures (below) and folds their result into the
