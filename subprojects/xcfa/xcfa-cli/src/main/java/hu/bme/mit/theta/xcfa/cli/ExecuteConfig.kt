@@ -31,8 +31,6 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer
-import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
@@ -55,7 +53,6 @@ import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
@@ -110,8 +107,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     XcfaDporLts.random = random
   }
   if (
-    config.inputConfig.property == ErrorDetection.MEMSAFETY ||
-      config.inputConfig.property == ErrorDetection.MEMCLEANUP
+    config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
+      config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
   ) {
     MemsafetyPass.enabled = true
   }

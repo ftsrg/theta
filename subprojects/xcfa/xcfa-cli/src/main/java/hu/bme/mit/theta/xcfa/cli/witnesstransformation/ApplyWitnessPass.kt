@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
-import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
+import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl

@@ -956,10 +956,6 @@ public final class ExprSimplifier {
         return expr.with(leftOp, rightOp);
     }
 
-    private Boolean intCmpTruth(int value, int cmpTrue, int cmpFalse) {
-        return value == cmpTrue ? Boolean.TRUE : (value == cmpFalse ? Boolean.FALSE : null);
-    }
-
     private Expr<BoolType> simplifyIntEq(final IntEqExpr expr, final Valuation val) {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
