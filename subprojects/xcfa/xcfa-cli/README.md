@@ -182,3 +182,9 @@ XcfaConfig            "1" *-[#595959,plain]d-> "outputConfig\n1" OutputConfig
 </details>
 
 ![](config_diagram.svg)
+
+## Further reading
+
+* [Non-termination Witnesses and Their Validation](https://doi.org/10.1109/ASE63991.2025.00164) (ASE 2025) — the non-termination witness format produced and validated by this tool.
+
+The full publication list is at [theta.mit.bme.hu/publications](https://theta.mit.bme.hu/publications/).

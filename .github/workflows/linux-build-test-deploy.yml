@@ -415,6 +415,9 @@ jobs:
   deploy-docs:
     needs: [check-release]
     runs-on: ubuntu-24.04
+    # Only needs to push the built site to gh-pages; don't inherit the top-level write-all.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -424,8 +427,9 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Install dependencies
+        # --only-binary forces pre-built wheels, so no package's setup.py runs during install.
         run: |
-          pip install --break-system-packages mkdocs mkdocs-material python-markdown-math mkdocs-awesome-pages-plugin
+          pip install --break-system-packages --only-binary :all: -r doc/wiki/requirements.txt
       - name: Build docs via Gradle
         uses: ./.github/actions/cache-build
         with:

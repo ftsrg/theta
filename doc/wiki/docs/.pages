@@ -1,5 +1,7 @@
 nav:
     - index.md
-    - Formalisms
-    - Frontends
-    - Algorithms
+    - about.md
+    - Modules
+    - Guides
+    - claude.md
+    - contributing.md
