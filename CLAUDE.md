@@ -100,7 +100,7 @@ suites appear to wedge on one task; it is not the task being slow.
   `--smt-home <dist>/solvers`; `theta-start.sh` sets these but hardcodes `-Xmx14210m`.
 - Parse-only smoke test: `--svcomp --backend NONE --loglevel RESULT --property <prp> --architecture ILP32|LP64`
   (success marker: `ParsingResult Success`).
-- Canary suite details and traps: `benchmark-results/canaries/run_canaries.sh` header
-  comment; guard set for known-wrong neighborhoods: `guard_set.tsv`.
+- Canary suite: `subprojects/xcfa/xcfa-cli/canaries/` (README + `run_canaries.sh` header
+  comment for the traps). Run it as `./gradlew :theta-xcfa-cli:canaryTest`.
 - Benchmark triage log: `benchmark-results/PLAN.md` (batch entries, root causes,
   pending decisions).

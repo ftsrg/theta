@@ -23,7 +23,7 @@ sibling `Theta-svcomp.zip`). Java 21+ must be on `PATH` (the launcher uses `thet
   this mode it also runs the feature-guard fixtures (below) and folds their result into the
   exit status.
 - **full**: real `--portfolio STABLE` run comparing the printed verdict against
-  `expected_verdict`. Slow — use a small `TSV` subset (e.g. `guard_set.tsv`).
+  `expected_verdict`. Slow — pass a small `TSV` subset rather than the whole list.
 
 `canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a
 given task only *happens* to exercise a feature. That is what the fixtures are for.
@@ -37,17 +37,8 @@ architecture, expected outcome (`PARSE-OK` / `FRONTEND-FAIL`), and the feature i
 directly, or automatically as part of `run_canaries.sh ... parse`.
 
 Add a fixture whenever a change adds a frontend/grammar capability: write the smallest program that
-needs it, confirm it builds now, and add a row. Verdict-level bugs (a fix changes the *answer*,
-not whether it builds) belong in `guard_set.tsv`, not here — e.g. the deferred packed-bitfield
-memsafety wrongs (`test-bitfields-*`) are tracked there as known-wrong until slicing lands.
+needs it, confirm it *fails* before the change and passes after, and add a row. A fixture that does
+not discriminate guards nothing.
 
-## `atomic_qual.tsv` — `_Atomic`-qualifier verdict guard
-
-The 44 tasks of `sv-benchmarks/c/pthread-atomic-qualifier/` (the atomic-qualifier MR), keyed on
-their real property/verdict. Run in **full** mode — `run_canaries.sh "" full atomic_qual.tsv` — to
-check that `_Atomic` on a struct field, array element, whole struct, nested field or pointee still
-makes concurrent accesses race-free (and that plain cells still race). 41 are green; the 3 known-open
-are the cast-through-a-cast tasks (`cast-ptr`, `param-array`, `param-ptr-to-atomic`), which report a
-false race because their atomicity comes from a `(_Atomic int *)` cast the folding model discards.
-Fast (~2.5 s each). The in-repo counterpart that runs without an sv-benchmarks
-checkout is `XcfaDataRaceTest.testAtomicCellDataRace`.
+For a verdict-level bug — where a fix changes the *answer* rather than whether the program builds —
+a fixture with a `SAFE`/`UNSAFE` expectation is the right home; it runs in full mode.
