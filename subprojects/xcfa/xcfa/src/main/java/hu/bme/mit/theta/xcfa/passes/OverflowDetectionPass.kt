@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr
@@ -40,6 +42,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
@@ -71,6 +74,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import java.math.BigInteger
 
 class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseContext) :
   ProcedurePass {
@@ -79,10 +83,6 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
 
     if (property.inputProperty != ErrorDetection.OVERFLOW) {
       return builder
-    }
-
-    check(parseContext.arithmetic != ArchitectureConfig.ArithmeticType.bitvector) {
-      "Overflow checking does not yet support bitwise arithmetic"
     }
 
     property.transformSpecification(ErrorDetection.ERROR_LOCATION)
@@ -111,19 +111,45 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
         val conditions =
           label
             .getExpressions {
-              (it is AddExpr || it is SubExpr || it is MulExpr || it is DivExpr || it is NegExpr) &&
+              (it is AddExpr ||
+                it is SubExpr ||
+                it is MulExpr ||
+                it is DivExpr ||
+                it is NegExpr ||
+                it is BvShiftLeftExpr) &&
                 parseContext.metadata
                   .getMetadataValue(it, "cType")
                   .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
                   .orElse(false)
             }
-            .map {
-              val cType =
-                parseContext.metadata
-                  .getMetadataValue(it, "cType")
-                  .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
-                  .get() as CComplexType
-              Not(cType.accept(limitVisitor, it).cond)
+            .flatMap { listOf(it) + evaluationPrefixesOf(it) }
+            .mapNotNull {
+              if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
+                // A bitvector operation has already wrapped, so range-checking its result would
+                // always succeed; the overflow has to be reconstructed from the operands instead.
+                bvOverflowCondition(it)
+              } else if (it is DivExpr<*>) {
+                // Division must not be range-checked. C's `/` is lowered to the solver's `div`,
+                // which
+                // is unconstrained when the divisor is zero -- so the "result" could be any value
+                // at
+                // all, and a range check on it would report an overflow for a program that merely
+                // divides by zero (a different kind of undefined behaviour, and not this property's
+                // concern). State instead the one input pair that genuinely overflows: the most
+                // negative value divided by -1, whose true result is one past the maximum.
+                val cType = parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
+                And(
+                  Eq(it.leftOp, Int(BigInteger.TWO.pow(cType.width() - 1).negate())),
+                  Eq(it.rightOp, Int(BigInteger.ONE.negate())),
+                )
+              } else {
+                val cType =
+                  parseContext.metadata
+                    .getMetadataValue(it, "cType")
+                    .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
+                    .get() as CComplexType
+                Not(cType.accept(limitVisitor, it).cond)
+              }
             }
 
         if (conditions.isNotEmpty()) {
@@ -173,7 +199,19 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
             XcfaEdge(
               source,
               errorLoc,
-              StmtLabel(AssumeStmt.of(breakpoints[j].second), metadata = oldLabels[i].metadata),
+              // Every other edge this pass builds is a SequenceLabel, and the passes that run after
+              // it require one -- `splitIf` checks for it outright. A bare StmtLabel here made any
+              // overflow check that had to break an edge crash the later passes ("Check failed"
+              // from
+              // `splitIf`), so the branch to the error location is wrapped like the rest.
+              SequenceLabel(
+                listOf(
+                  AssumeStmt.of(breakpoints[j].second).let {
+                    StmtLabel(it, metadata = oldLabels[i].metadata)
+                  }
+                ),
+                metadata = oldLabels[i].metadata,
+              ),
               metadata = oldLabels[i].metadata,
             )
           )
@@ -189,6 +227,42 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
     }
 
     return SimplifyExprsPass(parseContext, property).run(builder)
+  }
+
+  /**
+   * The intermediate results C actually computes for a flattened arithmetic chain.
+   *
+   * `x + a - b - 1` reaches this pass as a single n-ary node, `(+ x a (- b) (- 1))`, but C
+   * evaluates it left to right as `((x + a) - b) - 1`. Only the *final* value was range-checked, so
+   * an overflow in an intermediate was invisible: with `a == b` and `x >= 0` the whole chain is
+   * worth `x - 1` and never overflows, while `x + a` overflows at `x = a = INT_MAX`. That is
+   * `termination-crafted/Stockholm-2` and `termination-nla/dijkstra6-both-nt`, both answered `true`
+   * against an expected `false`.
+   *
+   * Operands are already in evaluation order, so each proper prefix (two operands, then three, ...)
+   * is exactly one intermediate. The full-length prefix is left out because the caller already
+   * checks the original node.
+   *
+   * Each prefix is stamped with the chain's own `cType`: the candidate filter requires that
+   * metadata and `FrontendMetadata` is identity-keyed, so a freshly built expression carries none
+   * and would be silently dropped.
+   */
+  private fun evaluationPrefixesOf(expr: Expr<*>): List<Expr<*>> {
+    if (expr !is AddExpr<*> && expr !is MulExpr<*>) return listOf()
+    val ops = expr.ops
+    if (ops.size <= 2) return listOf()
+    val cType =
+      parseContext.metadata.getMetadataValue(expr, "cType").orElse(null) ?: return listOf()
+    val prefixes = mutableListOf<Expr<*>>()
+    var acc: Expr<*> = ops[0]
+    for (index in 1 until ops.size - 1) {
+      acc =
+        if (expr is AddExpr<*>) AbstractExprs.Add(acc, ops[index])
+        else AbstractExprs.Mul(acc, ops[index])
+      parseContext.metadata.create(acc, "cType", cType)
+      prefixes.add(acc)
+    }
+    return prefixes
   }
 }
 
@@ -233,9 +307,6 @@ private fun Expr<*>.getExpressions(
   f: (Expr<*>) -> Boolean,
   shortCircuitCondition: Expr<BoolType> = TrueExpr.getInstance(),
 ): Set<Expr<*>> {
-  if (this is DivExpr<*>) {
-    throw UnsupportedOperationException("We cannot soundly detect overflows with divisions.")
-  }
   var shortCircuitCondition: Expr<BoolType> = shortCircuitCondition
   val ret = mutableSetOf<Expr<*>>()
   for (expr in ops) {

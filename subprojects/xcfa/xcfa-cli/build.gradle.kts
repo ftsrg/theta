@@ -92,3 +92,64 @@ archivePackaging {
         scriptName = "chc"
     }
 }
+
+// The canary suite (see `canaries/README.md`) as a registered Gradle test task.
+//
+// Not part of `test`: a sweep takes ~20 minutes and needs a built Theta-svcomp distribution plus a
+// local sv-benchmarks checkout, neither of which a fresh clone has. As its own task it stays
+// discoverable and reports one JUnit result per canary instead of a single exit code; when the
+// prerequisites are missing it skips rather than fails (see CanarySuiteTest).
+val canaryTest by
+    tasks.registering(Test::class) {
+        group = "verification"
+        description =
+            "Runs the canary suite (real SV-COMP tasks + feature-guard fixtures) against the built " +
+            "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
+            "than only that the frontend builds each task."
+
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        filter { includeTestsMatching("*CanarySuiteTest*") }
+
+        // The suite needs the packaged distribution, not just the classes. Referenced by name
+        // because the archive-packaging plugin registers its variants after this block is evaluated.
+        dependsOn("buildArchiveTheta-svcomp")
+        // The filter below matches a compiled class, so the test classes have to exist even when
+        // this task is invoked on its own; without it the task can fail with "No tests found".
+        dependsOn(tasks.named("testClasses"))
+
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
+        systemProperty(
+            "theta.canary.dist",
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
+        // The sweep runs PARALLEL_JOBS tasks at once (script default 4). Lowering it trades wall
+        // time for memory headroom on a shared machine. The largest canaries need several GB each,
+        // so this is pressure relief, not a substitute for enough memory.
+        (project.findProperty("theta.canary.jobs"))?.let { environment("PARALLEL_JOBS", it.toString()) }
+        (project.findProperty("theta.canary.svBenchmarks"))?.let {
+            systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+
+        // The result depends on the benchmarks and the built archive, not only on this project's
+        // inputs, so caching a green run would hide a regression in either.
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events("failed", "skipped")
+            showStandardStreams = false
+        }
+    }
+
+// Keep the long sweep out of the ordinary test task.
+tasks.named<Test>("test") { filter { excludeTestsMatching("*CanarySuiteTest*") } }

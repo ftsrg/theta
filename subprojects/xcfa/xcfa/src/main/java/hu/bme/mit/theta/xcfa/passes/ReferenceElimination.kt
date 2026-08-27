@@ -20,24 +20,68 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import java.math.BigInteger
+
+/**
+ * Signals that the base/offset pointer splitting of `--memory-model multi` ran into a pattern it
+ * cannot represent (a split variable read or assigned as a whole, instead of through a
+ * dereference).
+ *
+ * This is a limitation of the splitting machinery, not of the input program: under `--memory-model
+ * flat` a pointer is a single scalar address, nothing is ever split into a base/offset pair, and
+ * the very same program builds fine. That is why the CLI recognises this exact failure and
+ * transparently rebuilds the frontend with the flat model instead of reporting a frontend failure.
+ *
+ * It stays an [IllegalStateException] so that everything catching the `error(...)` it replaced
+ * keeps behaving identically.
+ */
+class UnsupportedPointerSplitException(message: String) : IllegalStateException(message)
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
@@ -61,8 +105,23 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val references =
       builder.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } }
 
-    // Case 1: there are no references in the XCFA, so this pass must be a no-op.
-    if (references.isEmpty()) return builder
+    // Case 1: no reference concerns this procedure, so this pass must be a no-op.
+    // A global referred in *another* procedure concerns us even without a local reference:
+    // every access to it must go through the shared dereference, and the init procedure
+    // must seed the pointer variables (e.g. `main` calling pthread_create on a thread whose
+    // body takes `&y` — the `&t` handle was already consumed by CLibraryFunctionsPass).
+    // A global that is base/offset-split *elsewhere* also concerns us: this procedure may only
+    // dereference it, with no reference of its own, and skipping it here would leave those
+    // dereferences on the original variable that nothing assigns any more (see
+    // runComplexReferenceElimination).
+    if (
+      references.isEmpty() &&
+        globalReferredVars(builder).isEmpty() &&
+        (parseContext.memoryModel.flatAddressing() ||
+          globalSplitVars(builder).keys.none { it in builder.usedVars() })
+    ) {
+      return builder
+    }
 
     // Case 2: simple elimination first.
     // Summary: for references to VarDecls (`(ref x)`), keep the old behavior:
@@ -77,7 +136,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     // - normalize nested ref-to-deref occurrences with temporary vars
     // - split pointer-carrying vars to `<v>_base` and `<v>_offset`
     // - rewrite dereferences through split vars to `(deref v_base (+ v_offset off))`
-    val complexChanged = runComplexReferenceElimination(builder)
+    //
+    // Under the flat memory model the split is unnecessary: a pointer is a single scalar address,
+    // so `(ref (deref B O))` is just `B + O` and no `_base`/`_offset` pair is ever introduced. This
+    // is what lets a pointer value be stored into a memory cell with no duplication (the offset
+    // rides along inside the value); the address itself is later folded to base 0 by
+    // [FlatMemoryPass].
+    val complexChanged =
+      if (parseContext.memoryModel.flatAddressing()) {
+        runFlatReferenceElimination(builder)
+      } else {
+        runComplexReferenceElimination(builder)
+      }
 
     if (simpleChanged || complexChanged) {
       return DeterministicPass().run(NormalizePass().run(builder))
@@ -85,8 +155,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
-  private fun runSimpleReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
-    val ptrVar = builder.parent.ptrVar(parseContext)
+  @Suppress("UNCHECKED_CAST")
+  private fun globalReferredVars(
+    builder: XcfaProcedureBuilder
+  ): Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>> {
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
         builder.parent
@@ -100,24 +172,32 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .associateWith {
             val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
             val varDecl = Var(it.name + "*", ptrType.smtType)
-            val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
-            builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
+            val objectBase = cnt // capture: reading cnt hands out this base and advances it
+            val lit =
+              CComplexType.getType(varDecl.ref, parseContext)
+                .getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext))
+            // The referred object is atomic when the *variable's own type* is (`_Atomic int v`,
+            // `int * _Atomic p`); the global var already carries that flag, which is more reliable
+            // than the referred ref's recorded C type (address-taken scalars can lose the atomic
+            // level of that type). Taking its address does not make it any less atomic: every
+            // access
+            // to it now goes through this pointer, so the pointer has to carry the fact.
+            val referredAtomic =
+              builder.parent.getVars().firstOrNull { g -> g.wrappedVar == it }?.atomic == true
+            builder.parent.addVar(
+              XcfaGlobalVar(
+                varDecl,
+                lit,
+                pointsToAtomic = ptrType.embeddedType.isAtomic || referredAtomic,
+              )
+            )
+            recordReferencedObjectAtomicity(objectBase, ptrType.embeddedType, referredAtomic)
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
-                val t = ptrType.embeddedType
                 val assign2 =
-                  if (t is CStruct) {
-                    val type = Fitsall(null, parseContext)
-                    builder.parent.allocate(
-                      parseContext,
-                      varDecl.ref,
-                      type.getValue("${t.fields.size}"),
-                    )
-                  } else {
-                    builder.parent.allocateUnit(parseContext, varDecl.ref)
-                  }
+                  builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
 
                 listOf(assign, assign2)
               } else {
@@ -127,7 +207,39 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           }
       }
     checkState(globalReferredVars is Map<*, *>, "ReferenceElimination needs info on references")
-    globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+    return globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+  }
+
+  private fun cellsAreAtomic(type: CComplexType): Boolean =
+    type.isAtomic || (type is CArray && cellsAreAtomic(type.embeddedType))
+
+  /**
+   * Records which cells of an address-taken object are `_Atomic` against the base id its storage
+   * was given here, mirroring what the frontend builder does for objects that keep their
+   * compile-time base. Address-taken objects are re-based to this pointer's id, so a struct-field
+   * or pointee access through `&s` lands on this base, and the race check resolves atomicity from
+   * it.
+   */
+  private fun recordReferencedObjectAtomicity(
+    base: Int,
+    embeddedType: CComplexType,
+    referredAtomic: Boolean,
+  ) {
+    val baseId = BigInteger.valueOf(base.toLong())
+    if (referredAtomic || cellsAreAtomic(embeddedType)) {
+      parseContext.markObjectFullyAtomic(baseId)
+    } else if (embeddedType is CStruct) {
+      embeddedType.fields.forEach { field ->
+        if (cellsAreAtomic(field.get2())) {
+          parseContext.markObjectAtomicCell(baseId, embeddedType.unitOffsetOf(field.get1()))
+        }
+      }
+    }
+  }
+
+  private fun runSimpleReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
+    val ptrVar = builder.parent.ptrVar(parseContext)
+    val globalReferredVars = globalReferredVars(builder)
 
     val referredVars =
       builder
@@ -140,7 +252,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val ptrType = CPointer(null, CComplexType.getType(v.ref, parseContext), parseContext)
 
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
-            val initVal = ptrType.getValue("$cnt")
+            // Address-taken locals are handed bases from this counter. Under flat addressing they
+            // must be spaced by FLAT_STRIDE like every other object, for two reasons: unscaled,
+            // they all land inside the *first* stride slice only 3 apart, so two distinct objects
+            // whose size exceeds 3 overlap on the flat address line (a latent aliasing
+            // unsoundness); and recovering an object's base from a mid-object address by
+            // `addr / FLAT_STRIDE` -- which the valid-deref check now does -- would otherwise map
+            // every one of them to base 0, i.e. NULL.
+            val rawId = cnt // reading hands out this id and advances the counter
+            val initVal =
+              if (parseContext.memoryModel.flatAddressing()) {
+                ptrType.getValue(FlatMemoryPass.flatBaseValue(rawId, parseContext))
+              } else {
+                ptrType.getValue("$rawId")
+              }
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
@@ -156,15 +281,23 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               newEdges.forEach(proc::addEdge)
             }
           }
-          val assign1 =
-            AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType)
+          // Step by the same unit the init above uses, so consecutive objects stay one stride apart
+          // under flat and three raw ids apart under multi (the 3k+2 residue class).
+          val step =
+            if (parseContext.memoryModel.flatAddressing()) {
+              ptrType.getValue((3L * FlatMemoryPass.FLAT_STRIDE).toString())
+            } else {
+              ptrType.getValue("3")
+            }
+          val assign1 = AssignStmtLabel(ptrVar, Add(ptrVar.ref, step), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
             if (MemsafetyPass.enabled) {
-              val assign3 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+              val assign3 =
+                builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
 
               listOf(assign1, assign2, assign3)
             } else {
@@ -249,6 +382,46 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   private fun getDirectReferencedDecl(reference: Reference<*, *>): VarDecl<*>? =
     (reference.expr as? RefExpr<*>)?.decl as? VarDecl<*>
 
+  /**
+   * The number of flat cells an object of [type] occupies, or null when it is not statically sized
+   * (a VLA or a flexible array member). An array multiplies its constant dimensions through its
+   * element's cell count -- matching `FrontendXcfaBuilder.flatArraySize` and
+   * `ExpressionVisitor#rowOf`, which lay `int a[3][4]` out as twelve cells `arrays[a][i*4 + j]`.
+   */
+  private fun flatCellCount(type: CComplexType): Int? =
+    when (type) {
+      is CArray -> {
+        val dim = ObjectLayout.constantDimension(type) ?: return null
+        val elem = flatCellCount(type.embeddedType) ?: return null
+        dim * elem
+      }
+      is CStruct -> if (type.isUnion) 1 else type.unitCount
+      else -> 1
+    }
+
+  /**
+   * Sizes the object a taken address points to. An array is aliased with its own first element (`&a
+   * == a == &a[0]`), so the pointer the reference machinery hands out has to span the array's
+   * cells, not one: allocating a single unit made `arr[i]` for any `i > 0` -- reached through `(int
+   * **)&arr` and the like -- a spurious out-of-bounds `valid-deref`. A struct keeps its historical
+   * one-cell-per-field size; a scalar is one cell.
+   */
+  private fun XcfaBuilder.allocateReferenced(
+    parseContext: ParseContext,
+    base: Expr<*>,
+    embeddedType: CComplexType,
+  ): StmtLabel {
+    val cells =
+      when (embeddedType) {
+        is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
+        is CArray -> flatCellCount(embeddedType)
+        else -> 1
+      }
+    return if (cells != null)
+      allocate(parseContext, base, Fitsall(null, parseContext).getValue("$cells"))
+    else allocateUnit(parseContext, base)
+  }
+
   private data class SplitVarPair(val base: VarDecl<Type>, val offset: VarDecl<Type>)
 
   private enum class SplitChannel {
@@ -256,23 +429,146 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     OFFSET,
   }
 
+  /**
+   * A pointer cast to a same-or-wider integer and back is a `Pos` no-op (the cast visitor's
+   * width-preserving path emits no modulo), so a split pointer routed through an integer -- as CIL
+   * does, `q = (unsigned long)p; ... (T *)q` -- arrives wrapped in `Pos`. Look through it to find
+   * the split variable the base/offset machinery tracks.
+   */
+  private fun Expr<*>.stripPos(): Expr<*> = if (this is PosExpr<*>) op.stripPos() else this
+
+  /**
+   * The flat-model counterpart of [runComplexReferenceElimination]: it never splits. Every `(ref
+   * (deref B O))` -- how the frontend spells `&a[i]`, `p + i`, `p++`, and every other computed
+   * address -- becomes the single scalar `B + O`, so a pointer stays one value that can be copied,
+   * compared, differenced, stored, and loaded with no `_base`/`_offset` bookkeeping. Simple
+   * references (`(ref x)`) were already turned into flat-based pointer variables by
+   * [runSimpleReferenceElimination]; anything left is a ref-to-deref this collapses.
+   */
+  private fun runFlatReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
+    var changed = false
+    builder.getEdges().toList().forEach { edge ->
+      val newLabel = edge.label.flattenReferences()
+      if (newLabel != edge.label) {
+        changed = true
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(newLabel))
+      }
+    }
+    return changed
+  }
+
+  private fun XcfaLabel.flattenReferences(): XcfaLabel =
+    when (this) {
+      is SequenceLabel -> SequenceLabel(labels.map { it.flattenReferences() }, metadata)
+      is NondetLabel -> NondetLabel(labels.map { it.flattenReferences() }.toSet(), metadata)
+      is StmtLabel -> StmtLabel(stmt.flattenReferences(), choiceType, metadata)
+      is InvokeLabel ->
+        InvokeLabel(
+          name,
+          params.map { it.flattenReferences() },
+          metadata,
+          tempLookup,
+          isLibraryFunction,
+        )
+      is StartLabel ->
+        StartLabel(name, params.map { it.flattenReferences() }, pidVar, metadata, tempLookup)
+      is ReturnLabel -> ReturnLabel(enclosedLabel.flattenReferences())
+      else -> this
+    }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun Stmt.flattenReferences(): Stmt =
+    when (this) {
+      is AssignStmt<*> ->
+        AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.flattenReferences(), varDecl.type))
+      is MemoryAssignStmt<*, *, *> -> {
+        val d = (deref as Expr<*>).flattenReferences() as Dereference<*, *, *>
+        MemoryAssignStmt.create(d, cast(expr.flattenReferences(), d.type))
+      }
+      is AssumeStmt -> AssumeStmt.of(cond.flattenReferences())
+      else -> this
+    }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T : Type> Expr<T>.flattenReferences(): Expr<T> =
+    if (this is Reference<*, *> && this.expr is Dereference<*, *, *>) {
+      val innerDeref = this.expr as Dereference<*, *, *>
+      val base = innerDeref.array.flattenReferences()
+      val off = innerDeref.offset.flattenReferences()
+      cast(Add(cast(base, base.type), cast(signedStep(off), base.type)), this.type) as Expr<T>
+    } else {
+      withOps(ops.map { it.flattenReferences() })
+    }
+
   private fun runComplexReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
     val hasRefToDeref =
       builder.getEdges().any { edge ->
         edge.label.getFlatLabels().flatMap { it.references }.any { it.expr is Dereference<*, *, *> }
       }
-    if (!hasRefToDeref) return false
+    // A *global* split anywhere concerns every procedure that touches it, even one containing no
+    // reference of its own: `p = &q[1]` in main splits p into p_base/p_offset and rewrites main's
+    // accesses onto them, but a callee doing `return *p` was skipped here and kept dereferencing
+    // the original p -- which nothing assigns any more. p is then unconstrained, so the solver may
+    // alias it with anything, and a trivially safe program gets a counterexample (all 278
+    // `hardness_wrappers_*` false `false(unreach-call)` results, plus everything else that reads a
+    // global element pointer from a function).
+    if (!hasRefToDeref && globalSplitVars(builder).keys.none { it in builder.usedVars() }) {
+      return false
+    }
 
     var changed = normalizeNestedReferenceAssignments(builder)
     val splitVars = discoverSplitVars(builder)
     if (splitVars.isEmpty()) return changed
-
     val edges = LinkedHashSet(builder.getEdges())
     for (edge in edges) {
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(edge.label.changeComplexReferredVars(splitVars)))
     }
+    seedSplitParams(builder, splitVars)
     return true
+  }
+
+  /**
+   * A pointer parameter that gets split still enters the procedure as the single value the caller
+   * bound to it. This pass runs per-procedure, *before* inlining, so it never sees that binding: it
+   * splits the parameter `p` into `p_base`/`p_offset` and rewrites the body onto them, but nothing
+   * ever gives them a value. Inlining then binds the (now unused) original `p`, leaving `p_base`
+   * and `p_offset` unconstrained -- so the solver is free to pick an out-of-range offset and walk
+   * off the object, a false `valid-deref` on every `str*`-style callee that increments its
+   * argument.
+   *
+   * Seed the halves at the procedure entry from the still-bound parameter: `p_base = p`, `p_offset
+   * = 0`. The offset is zero because a pointer argument is a base id at offset 0 -- the model
+   * cannot carry a mid-object pointer across a call (passing a bare split variable is rejected
+   * outright), so whatever the caller binds to `p` is exactly the base.
+   */
+  private fun seedSplitParams(
+    builder: XcfaProcedureBuilder,
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+  ) {
+    val splitParams =
+      builder.getParams().filter { it.second != ParamDirection.OUT && it.first in splitVars.keys }
+    if (splitParams.isEmpty()) return
+    val seeds =
+      splitParams.flatMap { (param, _) ->
+        val split = splitVars[param]!!
+        listOf(
+          AssignStmtLabel(split.base, param.ref, split.base.type),
+          AssignStmtLabel(
+            split.offset,
+            CComplexType.getSignedLong(parseContext).nullValue,
+            split.offset.type,
+          ),
+        )
+      }
+    val initEdges = builder.initLoc.outgoingEdges.toList()
+    val newEdges =
+      initEdges.map {
+        it.withLabel(SequenceLabel(seeds + it.label.getFlatLabels(), it.label.metadata))
+      }
+    initEdges.forEach(builder::removeEdge)
+    newEdges.forEach(builder::addEdge)
   }
 
   private fun normalizeNestedReferenceAssignments(builder: XcfaProcedureBuilder): Boolean {
@@ -289,10 +585,64 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     return changed
   }
 
+  /** Every variable this procedure reads or writes, including inside dereferences. */
+  private fun XcfaProcedureBuilder.usedVars(): Set<VarDecl<*>> =
+    getEdges().flatMap { edge -> edge.label.getFlatLabels().flatMap { it.collectVars() } }.toSet()
+
+  /**
+   * The globals that get base/offset-split anywhere in the XCFA, with the *same* [SplitVarPair] for
+   * every procedure.
+   *
+   * The split has to be program-wide for a global: a pointer assigned `&q[i]` in one procedure and
+   * dereferenced in another must be rewritten onto one pair of halves, or the two procedures end up
+   * talking about different variables. Computed once and cached on the parent, exactly like the
+   * simple-reference map above, so each procedure's own discovery starts from it rather than
+   * inventing a second pair of `_base`/`_offset` decls under the same names.
+   */
+  private fun globalSplitVars(builder: XcfaProcedureBuilder): MutableMap<VarDecl<*>, SplitVarPair> {
+    @Suppress("UNCHECKED_CAST")
+    return builder.parent.metaData.computeIfAbsent("complexSplitGlobals") {
+      val shared = linkedMapOf<VarDecl<*>, SplitVarPair>()
+      val globals = builder.parent.getVars().map { it.wrappedVar }.toSet()
+      var changed: Boolean
+      do {
+        changed = false
+        builder.parent.getProcedures().forEach { proc ->
+          proc.getEdges().forEach { edge ->
+            edge.label.getFlatLabels().forEach { label ->
+              if (label is StmtLabel && label.stmt is AssignStmt<*>) {
+                val stmt = label.stmt as AssignStmt<*>
+                val lhs = stmt.varDecl
+                if (lhs !in globals) return@forEach
+                val rhs = stmt.expr
+                when {
+                  rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *> -> {
+                    val deref = rhs.expr as Dereference<*, *, *>
+                    changed =
+                      ensureSplitVar(proc, shared, lhs, deref.array.type, deref.offset.type) ||
+                        changed
+                  }
+                  rhs.stripPos().let { it is RefExpr<*> && it.decl in shared.keys } -> {
+                    val src = shared[(rhs.stripPos() as RefExpr<*>).decl]!!
+                    changed =
+                      ensureSplitVar(proc, shared, lhs, src.base.type, src.offset.type) || changed
+                  }
+                }
+              }
+            }
+          }
+        }
+      } while (changed)
+      shared
+    } as MutableMap<VarDecl<*>, SplitVarPair>
+  }
+
   private fun discoverSplitVars(
     builder: XcfaProcedureBuilder
   ): MutableMap<VarDecl<*>, SplitVarPair> {
+    // Start from the program-wide global splits so every procedure agrees on their halves.
     val splitVars = linkedMapOf<VarDecl<*>, SplitVarPair>()
+    splitVars.putAll(globalSplitVars(builder))
     var changed: Boolean
     do {
       changed = false
@@ -309,8 +659,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                   ensureSplitVar(builder, splitVars, lhs, deref.array.type, deref.offset.type) ||
                     changed
               }
-              rhs is RefExpr<*> && rhs.decl in splitVars.keys -> {
-                val src = splitVars[rhs.decl]!!
+              rhs.stripPos().let { it is RefExpr<*> && it.decl in splitVars.keys } -> {
+                val src = splitVars[(rhs.stripPos() as RefExpr<*>).decl]!!
                 changed =
                   ensureSplitVar(builder, splitVars, lhs, src.base.type, src.offset.type) || changed
               }
@@ -488,28 +838,33 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     when (this) {
       is AssignStmt<*> -> changeComplexAssign(splitVars)
       is MemoryAssignStmt<*, *, *> -> {
-        val hasSplitRefs = deref.containsSplitRefs(splitVars) || expr.containsSplitRefs(splitVars)
+        // A split variable in the stored *value* is a pointer being written to memory, whose base
+        // and offset go to two separate memory channels. A split variable in the *address* is only
+        // the pointer we write through: `deref.changeComplexReferredVars` (below) already folds it
+        // to `deref(base, offset)`, so it must not be channel-split -- otherwise `*p = 5` would
+        // write to both `p_base[0]` and `deref(p_offset, 0)` (i.e. to whatever object id the offset
+        // happens to equal) instead of the single cell `deref(p_base, p_offset)`.
+        val hasSplitRefs = expr.containsSplitRefs(splitVars)
 
         if (hasSplitRefs) {
-          val baseDeref =
-            deref
-              .replaceSplitRefs(splitVars, SplitChannel.BASE)
-              .changeComplexReferredVars(splitVars) as Dereference<*, *, *>
-          val baseExpr =
-            expr.replaceSplitRefs(splitVars, SplitChannel.BASE).changeComplexReferredVars(splitVars)
-
-          val offsetDeref =
-            deref
-              .replaceSplitRefs(splitVars, SplitChannel.OFFSET)
-              .changeComplexReferredVars(splitVars) as Dereference<*, *, *>
-          val offsetExpr =
-            expr
-              .replaceSplitRefs(splitVars, SplitChannel.OFFSET)
-              .changeComplexReferredVars(splitVars)
-
-          listOf(
-            MemoryAssignStmt.create(baseDeref, baseExpr),
-            MemoryAssignStmt.create(offsetDeref, offsetExpr),
+          // A pointer value occupies exactly one memory cell, so it has to be stored as one value
+          // -- and a `(base, offset)` pair is two. There is no second channel to put the offset
+          // in: `multi` has one memory array and one `__theta_ptr_size`.
+          //
+          // This used to emit two `MemoryAssignStmt`s, one per channel, on the claim that they were
+          // separate channels. They are not. When the address is an ordinary cell -- the common
+          // `struct { T *p; }` field -- both dereferences are *identical*, so the second store
+          // clobbers the first and the cell ends up holding the bare offset with the base lost:
+          // `ptr_size[1] == 0` and the next read through it is reported as an invalid dereference.
+          // Eight lines were enough (`struct C { int *p; } c; c.p = &a[1]; return *c.p;`), and
+          // `memsafety-ext3/test27-1` has the shape twice. When the address *is* split it is worse:
+          // the second store goes to whatever object id the offset happens to equal.
+          //
+          // Refusing hands the program to `--memory-model flat`, where a mid-object pointer is a
+          // single scalar address and needs no channels at all -- which is precisely the shape that
+          // cannot be expressed here. The CLI rebuilds on this exception (see ExecuteConfig).
+          throw UnsupportedPointerSplitException(
+            "Unsupported pointer arithmetic: storing a mid-object pointer into memory"
           )
         } else {
           listOf(
@@ -524,12 +879,33 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       is SequenceStmt ->
         listOf(SequenceStmt.of(stmts.flatMap { it.changeComplexReferredVars(splitVars) }))
       is SkipStmt -> listOf(this)
+      is HavocStmt<*> -> {
+        // A havoc has no expression to rewrite. If the havoced variable itself was split, both
+        // halves
+        // become non-deterministic; otherwise it passes through untouched.
+        val split = splitVars[varDecl]
+        if (split != null) listOf(HavocStmt.of(split.base), HavocStmt.of(split.offset))
+        else listOf(this)
+      }
       else -> TODO("Not yet implemented ($this)")
     }
 
   private fun Expr<*>.containsSplitRefs(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean =
-    (this is RefExpr<*> && this.decl in splitVars.keys) ||
-      this.ops.any { (it as Expr<Type>).containsSplitRefs(splitVars) }
+    when {
+      this is RefExpr<*> -> this.decl in splitVars.keys
+      // A dereference reads a value *through* a pointer. A split var in its address is the pointer
+      // we
+      // read through -- the deref rewriting folds it to `deref(base, offset)` -- not a pointer
+      // *value*
+      // being stored, and the value it reads is a single memory cell (a scalar, for `*to = *from`;
+      // a
+      // single base id for a pointer in memory), never a split var. Recursing into it counted the
+      // address as if it were a stored pointer, so `*to = *from` (a char copy through two split
+      // pointers) was wrongly channel-split into `arrays[to_offset][…] := arrays[from_offset][…]`,
+      // whose bounds check then read `ptr_size[offset]` -- unallocated -- and false-alarmed.
+      this is Dereference<*, *, *> -> false
+      else -> this.ops.any { (it as Expr<Type>).containsSplitRefs(splitVars) }
+    }
 
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.replaceSplitRefs(
@@ -555,15 +931,38 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     if (rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *>) {
       val split = splitVars[lhs] ?: error("Split vars not found for ${lhs.name}")
       val deref = rhs.expr as Dereference<*, *, *>
-      val baseExpr = deref.array.changeComplexReferredVars(splitVars)
+      val array = deref.array
       val offsetExpr = deref.offset.changeComplexReferredVars(splitVars)
+      if (array is RefExpr<*> && array.decl in splitVars.keys) {
+        // Chained pointer arithmetic: the base is itself a split pointer, as in `p = q + i` after
+        // `q = r + j`. Compose rather than re-address -- `p_base = q_base`, `p_offset = q_offset +
+        // i` -- so the offset accumulates instead of the bare split `q` being used as an address.
+        val src = splitVars[array.decl]!!
+        return listOf(
+          AssignStmt.of(cast(split.base, split.base.type), cast(src.base.ref, split.base.type)),
+          AssignStmt.of(
+            cast(split.offset, split.offset.type),
+            cast(
+              Add(
+                cast(src.offset.ref, split.offset.type),
+                cast(signedStep(offsetExpr), split.offset.type),
+              ),
+              split.offset.type,
+            ),
+          ),
+        )
+      }
+      val baseExpr = array.changeComplexReferredVars(splitVars)
       return listOf(
         AssignStmt.of(cast(split.base, split.base.type), cast(baseExpr, split.base.type)),
         AssignStmt.of(cast(split.offset, split.offset.type), cast(offsetExpr, split.offset.type)),
       )
     }
-    if (rhs is RefExpr<*> && rhs.decl in splitVars.keys) {
-      val src = splitVars[rhs.decl]!!
+    val strippedRhs = rhs.stripPos()
+    if (strippedRhs is RefExpr<*> && strippedRhs.decl in splitVars.keys) {
+      // A plain copy, or the same pointer routed through a width-preserving integer cast (which the
+      // cast visitor leaves as a `Pos` no-op): the base and the offset travel together.
+      val src = splitVars[strippedRhs.decl]!!
       val dst = splitVars[lhs] ?: error("Split vars not found for ${lhs.name}")
       return listOf(
         AssignStmt.of(cast(dst.base, dst.base.type), cast(src.base.ref, dst.base.type)),
@@ -571,21 +970,249 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       )
     }
     if (lhs in splitVars.keys) {
-      error("Unsupported pointer arithmetic: assignment to split pointer variable ${lhs.name}")
+      // Only a *flat* pointer value: a plain (never-split) variable, or a literal such as `NULL`.
+      // Deliberately NOT a dereference: `p = *q` loads a pointer that was *stored* to memory, and
+      // storing a split pointer writes base and offset to two separate channels (see the
+      // MemoryAssignStmt case). Reading only the base back and forcing the offset to 0 would
+      // silently drop a stored mid-object offset and address the wrong cell, so that case keeps
+      // failing loudly instead.
+      val flatPointerValue =
+        !rhs.containsSplitRefs(splitVars) &&
+          (strippedRhs is RefExpr<*> || strippedRhs is LitExpr<*>)
+      if (flatPointerValue) {
+        // `p = s` where `p` became split (through later arithmetic) but `s` never did: a plain
+        // pointer value is a base id at offset 0. Seed the halves accordingly -- `p_base = s`,
+        // `p_offset = 0` -- so the later `p++`/`p - s` operate on a well-defined origin. This is
+        // the
+        // same shape `seedSplitParams` gives a pointer parameter, applied to a local copy. A null
+        // pointer (`p = 0`) lands here too and is correctly (base 0, offset 0).
+        val dst = splitVars[lhs]!!
+        val baseExpr = rhs.changeComplexReferredVars(splitVars)
+        return listOf(
+          AssignStmt.of(cast(dst.base, dst.base.type), cast(baseExpr, dst.base.type)),
+          AssignStmt.of(
+            cast(dst.offset, dst.offset.type),
+            cast(getDefaultValue(dst.offset.type), dst.offset.type),
+          ),
+        )
+      }
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: assignment to split pointer variable ${lhs.name}"
+      )
     }
     val rewrittenRhs = rhs.changeComplexReferredVars(splitVars)
     return listOf(AssignStmt.of(cast(lhs, lhs.type), cast(rewrittenRhs, lhs.type)))
   }
 
+  /**
+   * Re-signs a pointer step that was encoded as a large *unsigned* literal.
+   *
+   * Offsets are counted in the pointer-sized unsigned type, so `p--` reaches the pass as `&*(p +
+   * 4294967295)` under ILP32. Under **bitvector** arithmetic that is exactly `p - 1`, because the
+   * addition wraps by construction. Under **integer** arithmetic the operands are unbounded, so
+   * nothing wraps and the address ends up 2^32 too large: `MemsafetyPass` then recovers a nonsense
+   * object from it and reports a false invalid dereference on the very next read. Every backwards
+   * walk over a buffer was a false `valid-deref` alarm
+   * (`array-memsafety/openbsd_cmemrchr-alloca-2`, and the `cmemrchr` idiom generally), while the
+   * sibling `n--` in the same loop stayed correct -- the frontend had wrapped *that* one.
+   *
+   * Re-signing the literal rather than wrapping the sum in a modulo is deliberate. Both are
+   * correct; the modulo costs a `Mod` on **every** pointer step, which is enough to turn a
+   * three-second forward-scan proof into a timeout. `p + (-1)` stays linear and the solver keeps
+   * its cheap arithmetic.
+   *
+   * Only literals are re-signed. A symbolic offset is left alone: its value is an index, which is
+   * non-negative in every shape this reconstructs, and guessing otherwise would cost the modulo
+   * again for no gain.
+   */
+  private fun signedStep(offset: Expr<*>): Expr<*> {
+    if (offset.type !is IntType) return offset // bitvector: the addition already wraps
+    // Through the simplifier: the step arrives wrapped in the frontend's casts (a `Pos`, or the
+    // modulo of a fold), not as a bare literal.
+    val literal = ExprUtils.simplify(offset) as? IntLitExpr ?: return offset
+    val width = CComplexType.getUnsignedLong(parseContext).width()
+    val modulus = BigInteger.TWO.pow(width)
+    val half = BigInteger.TWO.pow(width - 1)
+    return if (literal.value >= half) IntExprs.Int(literal.value.subtract(modulus)) else offset
+  }
+
+  private fun Expr<*>.splitPairOf(splitVars: Map<VarDecl<*>, SplitVarPair>): SplitVarPair? {
+    val resolved = stripPos()
+    return if (resolved is RefExpr<*> && resolved.decl in splitVars.keys) splitVars[resolved.decl]
+    else null
+  }
+
+  /**
+   * The base-id channel of an operand in a pointer comparison. A split pointer contributes its own
+   * `base`; anything else -- a null literal, or a plain pointer/array variable that was never split
+   * -- denotes a base id at offset 0, so it contributes its (rewritten) value.
+   */
+  private fun Expr<*>.pointerBaseChannel(
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+    baseType: Type,
+  ): Expr<*> {
+    val split = splitPairOf(splitVars)
+    return if (split != null) cast(split.base.ref, baseType)
+    else cast(this.changeComplexReferredVars(splitVars), baseType)
+  }
+
+  /**
+   * The offset channel of an operand in a pointer comparison or difference. A split pointer
+   * contributes its `offset`; a plain pointer value is at offset 0.
+   */
+  private fun Expr<*>.pointerOffsetChannel(
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+    offsetType: Type,
+  ): Expr<*> {
+    val split = splitPairOf(splitVars)
+    return if (split != null) cast(split.offset.ref, offsetType) else getDefaultValue(offsetType)
+  }
+
+  /**
+   * Uses of a split pointer that stay *scalar* -- a comparison or a pointer difference -- rather
+   * than dereferencing or re-addressing it. The split model keeps a pointer as `(base, offset)`,
+   * so:
+   * - `p == q` is `base_p == base_q && off_p == off_q` (well-defined across objects: two pointers
+   *   into different objects compare unequal), and `!=` is its negation;
+   * - `p < q` (and `<=`, `>`, `>=`) is defined by C only within one object, so it is `off_p <
+   *   off_q` -- a different-object comparison is undefined and any answer is sound;
+   * - `p - q` is `off_p - off_q`, in element units, exactly what the offset already counts (each
+   *   `p++` advances the offset by one element). The frontend spells a difference as an `Add` whose
+   *   split bases cancel (`Add(p, Neg(q))`, or `Add(p, Neg(1), Neg(s1))` for `p - 1 - s1`); a net
+   *   non-zero base means a mid-object pointer *value* is escaping into a scalar context, which the
+   *   split model cannot carry, so that falls through to the bare-use error.
+   *
+   * Returns the decomposed expression, or `null` when the shape is not one of these (so the caller
+   * proceeds with its ordinary rewriting, including the loud refusal of an unsupported bare use).
+   */
   @Suppress("UNCHECKED_CAST")
+  private fun <T : Type> Expr<T>.decomposeScalarPointerOp(
+    splitVars: Map<VarDecl<*>, SplitVarPair>
+  ): Expr<T>? {
+    if (
+      this is EqExpr<*> ||
+        this is NeqExpr<*> ||
+        this is LtExpr<*> ||
+        this is LeqExpr<*> ||
+        this is GtExpr<*> ||
+        this is GeqExpr<*>
+    ) {
+      val left = ops[0]
+      val right = ops[1]
+      val ref = left.splitPairOf(splitVars) ?: right.splitPairOf(splitVars) ?: return null
+      val baseType = ref.base.type
+      val offsetType = ref.offset.type
+      val baseL = left.pointerBaseChannel(splitVars, baseType)
+      val baseR = right.pointerBaseChannel(splitVars, baseType)
+      val offL = left.pointerOffsetChannel(splitVars, offsetType)
+      val offR = right.pointerOffsetChannel(splitVars, offsetType)
+      // Ordering compares offsets only when BOTH sides are pointers -- that is the one case C
+      // defines, and within an object the bases are equal. Against a plain integer it is not a
+      // pointer-vs-pointer comparison at all but a constraint on the pointer *value*, most often
+      // the
+      // range assume the frontend emits for a declaration (`0 <= us <= 4294967295`). Decomposing
+      // that onto the offset read the integer bound as "a pointer at offset 0" and collapsed the
+      // assume to `us_offset in [0,0]`, pinning the offset instead of stating a tautology. Such a
+      // constraint belongs on the base, the pointer's principal component.
+      val bothPointers = left.isPointerOperand(splitVars) && right.isPointerOperand(splitVars)
+      val ordL = if (bothPointers) offL else baseL
+      val ordR = if (bothPointers) offR else baseR
+      val decomposed: Expr<BoolType> =
+        when (this) {
+          is EqExpr<*> -> And(Eq(baseL, baseR), Eq(offL, offR))
+          is NeqExpr<*> -> Or(Neq(baseL, baseR), Neq(offL, offR))
+          is LtExpr<*> -> Lt(ordL, ordR)
+          is LeqExpr<*> -> Leq(ordL, ordR)
+          is GtExpr<*> -> Gt(ordL, ordR)
+          else -> Geq(ordL, ordR)
+        }
+      return cast(decomposed, this.type)
+    }
+    if (this is AddExpr<*>) {
+      val signed =
+        ops.map { op -> op.stripPos().let { if (it is NegExpr<*>) it.op to true else op to false } }
+      // Only a *split* pointer forces a decomposition here; without one the ordinary rewriting is
+      // fine (and a difference of two never-split pointers is not something this pass created).
+      val split = signed.firstOrNull { it.first.splitPairOf(splitVars) != null } ?: return null
+      // A difference is an Add whose pointer operands cancel: the bases drop out and only the
+      // element offsets remain. A net non-zero base means a mid-object pointer *value* is escaping
+      // into a scalar context, which the split model cannot carry -- fall through to the bare-use
+      // error rather than silently dropping the base.
+      val pointerTerms = signed.filter { it.first.isPointerOperand(splitVars) }
+      if (pointerTerms.count { !it.second } != pointerTerms.count { it.second }) return null
+      val offsetType = split.first.splitPairOf(splitVars)!!.offset.type
+      val summands =
+        signed.map { (term, negative) ->
+          // A split pointer contributes its offset; a plain pointer sits at offset 0; a plain
+          // integer term (`- 1`) contributes its own value.
+          val channel =
+            when {
+              term.splitPairOf(splitVars) != null ->
+                cast(term.splitPairOf(splitVars)!!.offset.ref, offsetType)
+              term.isPointerOperand(splitVars) -> getDefaultValue(offsetType)
+              else -> cast(term.changeComplexReferredVars(splitVars), offsetType)
+            }
+          if (negative) Neg(channel) else channel
+        }
+      return cast(Add(summands), this.type) as Expr<T>
+    }
+    return null
+  }
+
+  /**
+   * Whether an operand denotes a pointer value: a split pointer, or a plain variable declared with
+   * a pointer/array C type. Used to decide which operands of an `Add` are the bases that must
+   * cancel for it to be a scalar pointer difference.
+   */
+  private fun Expr<*>.isPointerOperand(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean {
+    if (splitPairOf(splitVars) != null) return true
+    val resolved = stripPos()
+    if (resolved is RefExpr<*>) {
+      val cType = CComplexType.getType((resolved.decl as VarDecl<*>).ref, parseContext)
+      return cType is CPointer || cType is CArray
+    }
+    return false
+  }
+
+  /**
+   * Rewrites this expression for the split variables, carrying its C type onto the rebuilt node.
+   *
+   * `FrontendMetadata` is keyed by object *identity*, so a rebuilt expression -- even a
+   * structurally identical one -- arrives with no `cType` at all. That matters far beyond this
+   * pass: once a procedure has any split variable, [runComplexReferenceElimination] rewrites
+   * **every** edge in it, so every arithmetic node in the procedure lost its type, and
+   * [OverflowDetectionPass], which only instruments nodes whose `cType` is a signed integer, then
+   * silently emitted **no checks at all** -- `no-overflow` became vacuously true for the whole
+   * procedure, with no warning. A single `int *pa = &p->a;` was enough (ldv-regression/test22-2,
+   * add_last-alloca-1, the stroeder pair: four missed bugs). The *simple* reference-elimination
+   * path in this same file has always propagated the metadata; the complex one never did.
+   */
   private fun <T : Type> Expr<T>.changeComplexReferredVars(
     splitVars: Map<VarDecl<*>, SplitVarPair>
   ): Expr<T> {
+    val rewritten = rewriteComplexReferredVars(splitVars)
+    if (rewritten !== this && parseContext.metadata.getMetadataValue(this, "cType").isPresent) {
+      parseContext.metadata.create(rewritten, "cType", CComplexType.getType(this, parseContext))
+    }
+    return rewritten
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T : Type> Expr<T>.rewriteComplexReferredVars(
+    splitVars: Map<VarDecl<*>, SplitVarPair>
+  ): Expr<T> {
+    decomposeScalarPointerOp(splitVars)?.let {
+      return it
+    }
     if (this is RefExpr<*> && this.decl in splitVars.keys) {
-      error("Unsupported pointer arithmetic: bare use of split variable ${this.decl.name}")
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: bare use of split variable ${this.decl.name}"
+      )
     }
     if (this is Dereference<*, *, *>) {
-      val arr = this.array
+      // The address may have come back through a width-preserving integer cast (`*(T *)q` after
+      // `q = (unsigned long)p`), which the cast visitor leaves as a `Pos` no-op.
+      val arr = this.array.stripPos()
       val rewrittenOffset = this.offset.changeComplexReferredVars(splitVars)
       if (arr is Reference<*, *> && arr.expr is Dereference<*, *, *>) {
         val innerDeref = arr.expr as Dereference<*, *, *>
@@ -711,6 +1338,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           )
 
         is SkipStmt -> listOf(this)
+        is HavocStmt<*> -> listOf(this) // no expression to rewrite; the havoced var is not referred
         else -> TODO("Not yet implemented ($this)")
       }
     val metadataValue = parseContext?.metadata?.getMetadataValue(this, "sourceStatement")
@@ -761,11 +1389,26 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>
   ): Expr<T> =
     varLut[this]?.first?.let {
-      Dereference(
-        cast(it.ref, it.type),
-        cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
-        this.type,
-      )
-        as Expr<T>
+      val cType = CComplexType.getType(this.ref, parseContext)
+      if (cType is CStruct || cType is CArray) {
+        // Struct/array variables already denote their own base id (a struct variable's value IS
+        // its base, see FrontendXcfaBuilder's ptrCnt init and
+        // ExpressionVisitor#visitPostfixExpressionMemberAccess). A bare use of such a variable must
+        // therefore resolve exactly like `&v` does above -- the referred-var pointer's raw value,
+        // with no extra indirection -- so that `m.field` (Deref(m, i)) and `a->field` (a = &m,
+        // Deref(a, i)) address the same cell.
+        cast(it.ref, this.type)
+      } else {
+        Dereference(
+          cast(it.ref, it.type),
+          // The offset is an offset into the pointed-to object, so it is pointer-wide -- like at
+          // every other pointer site here. `int` only happens to work under ILP32, where a pointer
+          // is 32 bits too; under LP64 it is 32 bits against a 64-bit pointer, and since `cast` is
+          // a checked cast rather than a conversion, every pointer dereference then fails.
+          cast(CComplexType.getSignedLong(parseContext).nullValue, it.type),
+          this.type,
+        )
+          as Expr<T>
+      }
     } ?: this.ref
 }

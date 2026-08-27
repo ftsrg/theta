@@ -50,6 +50,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -569,9 +570,10 @@ fun getBoundedXcfaChecker(
   bound: Int,
   solver: Solver,
   isHavoc: Boolean = false,
+  parseContext: ParseContext = ParseContext(),
 ): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
   val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
-  val target = getXcfaErrorDetector(errorDetection)
+  val target = getXcfaErrorDetector(errorDetection, parseContext)
   val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
   // Mirror the refiner's write-triple accumulation: the last enriched action's nextWriteTriples()
   // already carries the full accumulated write history up to that point, so we only need the

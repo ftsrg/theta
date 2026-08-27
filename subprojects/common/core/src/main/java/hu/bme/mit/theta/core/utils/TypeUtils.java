@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
@@ -98,13 +99,17 @@ public final class TypeUtils {
             final Expr<T> result = (Expr<T>) expr;
             return result;
         } else {
+            // Types first, expression last: an expression pretty-prints over many lines, so
+            // leading with it pushes the only useful part of the message out of sight.
             throw new ClassCastException(
-                    "The type of expression "
-                            + expr
-                            + " is not of type "
+                    "Expected type "
                             + type
-                            + ", but "
-                            + expr.getType());
+                            + " but the expression has type "
+                            + expr.getType()
+                            + " (a "
+                            + expr.getClass().getSimpleName()
+                            + "): "
+                            + expr);
         }
     }
 
@@ -123,7 +128,12 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                    "The type of expression " + expr + " is not of type BvType");
+                    "Expected a BvType but the expression has type "
+                            + expr.getType()
+                            + " (a "
+                            + expr.getClass().getSimpleName()
+                            + "): "
+                            + expr);
         }
     }
 
@@ -142,7 +152,12 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                    "The type of expression " + expr + " is not of type FpType");
+                    "Expected an FpType but the expression has type "
+                            + expr.getType()
+                            + " (a "
+                            + expr.getClass().getSimpleName()
+                            + "): "
+                            + expr);
         }
     }
 
@@ -192,12 +207,15 @@ public final class TypeUtils {
             return (LitExpr<T>) cast(IntExprs.Int(0), type);
         } else if (type instanceof RatType) {
             return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
-        } else if (type instanceof BvType) {
-            return (LitExpr<T>)
-                    cast(
-                            BvUtils.bigIntegerToNeutralBvLitExpr(
-                                    BigInteger.ZERO, ((BvType) type).getSize()),
-                            type);
+        } else if (type instanceof BvType bvType) {
+            // The literal has to carry the *type's* signedness. Building it "neutrally" and casting
+            // does not fix that up: BvType.equals compares sizes only, so the cast is a no-op and a
+            // signedness-less literal survives -- and a bitvector without a signedness cannot be
+            // compared at all (BvType.Lt and friends reject it).
+            final boolean[] bits =
+                    BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, bvType.getSize())
+                            .getValue();
+            return (LitExpr<T>) cast(BvExprs.Bv(bits, bvType.getSignedness()), type);
         } else if (type instanceof FpType) {
             return (LitExpr<T>)
                     cast(

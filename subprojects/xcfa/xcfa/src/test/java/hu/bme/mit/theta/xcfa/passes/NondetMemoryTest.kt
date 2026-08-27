@@ -1,0 +1,121 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.passes
+
+/**
+ * Regression test: __VERIFIER_nondet_memory(ptr, size) used to be silently turned into a havoc of
+ * the unused return-value slot, dropping the effect on the pointed-to memory entirely (vacuous
+ * "safe" results). Nondet calls with real arguments must fail loudly instead.
+ */
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.model.*
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+class NondetMemoryTest {
+
+  private val parseContext = ParseContext()
+
+  private fun runPasses(input: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilder {
+    val builder = XcfaBuilder("")
+    val procedureBuilder = builder.procedure("", input).builder
+    return listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
+      procedureBuilder
+    ) { acc, pass ->
+      pass.run(acc)
+    }
+  }
+
+  @Test
+  fun nondetWithArgumentsIsRejected() {
+    // Havocing the return value of a nondet that takes arguments would silently discard whatever it
+    // does to them, so an unrecognised one is still refused. (`__VERIFIER_nondet_memory` is NOT the
+    // example any more: it has a real model in MemoryFunctionsPass and is deliberately deferred to
+    // it -- see nondetMemoryIsLeftForMemoryFunctionsPass below.)
+    assertThrows(IllegalStateException::class.java) {
+      runPasses {
+        "ret" type Int()
+        "ptr" type Int()
+        "sz" type Int()
+        (init to "L1") { "__VERIFIER_nondet_blob"("ret", "ptr", "sz") }
+      }
+    }
+  }
+
+  @Test
+  fun nondetMemoryIsLeftForMemoryFunctionsPass() {
+    // `__VERIFIER_nondet_memory(mem, size)` writes `size` bytes at `mem`; its effect is not its
+    // return value, so NondetFunctionPass must not touch it -- in ANY memory model. Gating that
+    // deferral on the bytes model made the other models refuse it for "having arguments".
+    val ctx =
+      XcfaBuilder("").procedure("main") {
+        "ret" type Int()
+        "ptr" type Int()
+        "sz" type Int()
+        (init to "L1") { "__VERIFIER_nondet_memory"("ret", "ptr", "sz") }
+      }
+    val result =
+      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
+        ctx.builder
+      ) { acc, pass ->
+        pass.run(acc)
+      }
+    val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
+    assertTrue(labels.any { it is InvokeLabel && it.name == "__VERIFIER_nondet_memory" })
+  }
+
+  @Test
+  fun definedNondetNamedProcedureIsNotHavoced() {
+    // A program may define its own __VERIFIER_nondet*-named function (SV-COMP's memory-model
+    // benchmarks do); havocing it would discard its body and can prove unsafe programs safe.
+    val builder = XcfaBuilder("")
+    builder.procedure("__VERIFIER_nondet_step") {
+      "r" type Int()
+      (init to "L1") { "r".assign("1") }
+    }
+    val ctx =
+      builder.procedure("main") {
+        "x" type Int()
+        (init to "L1") { "__VERIFIER_nondet_step"("x") }
+      }
+    val result =
+      listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
+        ctx.builder
+      ) { acc, pass ->
+        pass.run(acc)
+      }
+    val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
+    assertTrue(
+      labels.any { it is InvokeLabel },
+      "a call to a defined __VERIFIER_nondet*-named procedure must survive for inlining",
+    )
+    assertTrue(labels.none { it is StmtLabel && it.stmt is HavocStmt<*> })
+  }
+
+  @Test
+  fun nondetReturnValueStillHavoced() {
+    val result = runPasses {
+      "x" type Int()
+      (init to "L1") { "__VERIFIER_nondet_int"("x") }
+    }
+    val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
+    assertTrue(labels.any { it is StmtLabel && it.stmt is HavocStmt<*> })
+    assertTrue(labels.none { it is InvokeLabel })
+  }
+}

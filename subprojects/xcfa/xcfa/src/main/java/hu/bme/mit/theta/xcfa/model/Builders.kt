@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 
@@ -152,6 +153,7 @@ constructor(
     var that = if (this::partlyOptimized.isInitialized) partlyOptimized else this
     for (pass in manager.passes[phase]) {
       that = pass.run(that)
+      that.checkEdgesHaveLocations(pass)
     }
 
     partlyOptimized = that
@@ -260,6 +262,15 @@ constructor(
     }
     addLoc(toAdd.source)
     addLoc(toAdd.target)
+    // addLoc is a no-op for a location that is already known, and refuses to (re-)add an error,
+    // initial or final one -- so an edge can still end up attached to a location this procedure
+    // does not list, which every consumer that maps edges through `locs` (XcfaProcedure.deepCopy,
+    // most directly) will then fail on with a bare NullPointerException far from the cause.
+    check(toAdd.source in locs && toAdd.target in locs) {
+      "Edge ${toAdd.source.name} -> ${toAdd.target.name} added to procedure $name with" +
+        " an endpoint that is not one of its locations" +
+        " (source present: ${toAdd.source in locs}, target present: ${toAdd.target in locs})"
+    }
     edges.add(toAdd)
     toAdd.source.outgoingEdges.add(toAdd)
     toAdd.target.incomingEdges.add(toAdd)
@@ -274,6 +285,39 @@ constructor(
       check(!toAdd.initial)
       check(!toAdd.final)
       locs.add(toAdd)
+    }
+  }
+
+  /**
+   * Asserts the basic well-formedness every consumer assumes: each edge runs between two locations
+   * this procedure actually lists.
+   *
+   * [removeLoc] drops a location without touching the edges attached to it, so a pass that removes
+   * locations and edges in the wrong order -- or misses an edge coming in from outside the region
+   * it is rewriting -- leaves the two out of sync. Nothing notices until something maps the edges
+   * through `locs` much later (`XcfaProcedure.deepCopy` does, and dies on a `!!` with no indication
+   * of which pass broke it), so the check is done here, right after the pass that could have caused
+   * it, and names that pass.
+   */
+  private fun checkEdgesHaveLocations(pass: ProcedurePass) {
+    // Identity, not equality. XcfaLocation is a data class, so a *different instance* carrying the
+    // same name/flags/metadata compares equal and satisfies `in locs` -- while owning its own,
+    // separate incoming/outgoing sets. An edge attached to such a stray twin is invisible to every
+    // traversal that walks adjacency (which is all of them, including LoopUnrollPass's back-edge
+    // cut), yet XcfaProcedure.deepCopy resolves endpoints through a map keyed by equality and so
+    // silently re-points the edge onto the registered instance. A cycle hidden that way only
+    // materialises in the copy, where it surfaces as the OC checker rejecting the task for "loops".
+    val registered =
+      java.util.Collections.newSetFromMap(java.util.IdentityHashMap<XcfaLocation, Boolean>())
+    registered.addAll(locs)
+    val dangling = edges.filter { it.source !in registered || it.target !in registered }
+    check(dangling.isEmpty()) {
+      "${pass::class.simpleName} left ${dangling.size} edge(s) of procedure $name attached to" +
+        " locations it no longer contains: " +
+        dangling.take(5).joinToString {
+          "${it.source.name}${if (it.source in locs) "" else "(missing)"} ->" +
+            " ${it.target.name}${if (it.target in locs) "" else "(missing)"}"
+        }
     }
   }
 
@@ -307,12 +351,21 @@ constructor(
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    while (locs.any(pred)) {
-      locs.removeIf(pred)
-      edges.removeIf {
-        pred(it.source).also { removing ->
+    while (true) {
+      // Snapshot the matches instead of re-evaluating `pred` while edges are being unhooked: the
+      // usual predicate asks whether a location has incoming edges, so removing edges underneath it
+      // changes the answer mid-pass. That is how a location could leave `locs` while an edge still
+      // pointed at it, leaving the builder with an edge attached to a location it no longer holds.
+      val toRemove = locs.filterTo(LinkedHashSet(), pred)
+      if (toRemove.isEmpty()) break
+      locs.removeAll(toRemove)
+      // An edge whose *target* vanished is just as orphaned as one whose source did, so drop
+      // everything incident to a removed location and unhook it from the endpoint that survives.
+      edges.removeIf { edge ->
+        (edge.source in toRemove || edge.target in toRemove).also { removing ->
           if (removing) {
-            it.target.incomingEdges.remove(it)
+            edge.source.outgoingEdges.remove(edge)
+            edge.target.incomingEdges.remove(edge)
           }
         }
       }

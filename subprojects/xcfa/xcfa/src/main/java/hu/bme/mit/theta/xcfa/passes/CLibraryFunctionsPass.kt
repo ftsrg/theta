@@ -26,7 +26,10 @@ import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -44,13 +47,21 @@ import java.math.BigInteger
  * their valuations (e.g. `m == 0`) are not legal C expressions over the original program; consumers
  * that emit C-expression constraints (e.g. violation witnesses) use this flag to exclude them.
  */
-class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : ProcedurePass {
+class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+
+  /**
+   * The C zero of the variable's own type. The pthread functions return `int`, which is the SMT
+   * `Int` only under integer arithmetic -- under bitvector arithmetic it is a `Bv`, and a hardcoded
+   * `Int(0)` is then a type error.
+   */
+  private fun zeroOf(expr: Expr<*>): Expr<*> = CComplexType.getType(expr, parseContext).nullValue
 
   private val supportedFunctions =
     setOf(
       "printf",
       "scanf",
       "pthread_join",
+      "pthread_detach",
       "pthread_create",
       "pthread_mutex_lock",
       "pthread_mutex_unlock",
@@ -136,7 +147,11 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   val handle = invokeLabel.getParam(1)
                   listOf(
                     JoinLabel(handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
                   )
                 }
 
@@ -151,7 +166,11 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   // int(0) to solve StartLabel not handling return params
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
                   )
                 }
 
@@ -193,6 +212,13 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
                   listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata))
                 }
 
+                // Detaching only makes a thread unjoinable; it neither starts nor stops it, so it
+                // has no effect on what may race. Left unmodelled it survived as a call to a
+                // procedure that does not exist and brought down the race analysis' own procedure
+                // classifier ("Unknown procedure: pthread_detach", DataRaceUtils#
+                // getMultipleThreadsPerProcedure) -- which is reached only on the
+                // datarace-to-reachability path, so it never showed up in ordinary runs.
+                "pthread_detach",
                 "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
                 "pthread_cond_signal", // No need for special handling due to spurious wakeup
                 "pthread_mutex_init",
@@ -257,12 +283,35 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
 
-  private fun Expr<*>.isLiteralZero(): Boolean =
+  private fun Expr<*>.isLiteralZero(): Boolean = asConstant() == BigInteger.ZERO
+
+  private fun Expr<*>.asConstant(): BigInteger? =
     when (this) {
-      is IntLitExpr -> value == BigInteger.ZERO
-      is BvLitExpr -> value.all { !it }
-      else -> false
+      is IntLitExpr -> value
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
+      // A constant that has not been folded yet is still a constant. Unrolling substitutes the
+      // index but leaves the unsigned-wraparound wrapper the frontend put around it, so the offset
+      // of `&t[4]` arrives as `(mod 4 4294967296)` -- matching only a bare literal rejected the
+      // handle as "non-constant dereference offset" even though its value is perfectly known.
+      else ->
+        ExprUtils.simplify(this).let { simplified ->
+          when (simplified) {
+            is IntLitExpr -> simplified.value
+            is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(simplified)
+            else -> null
+          }
+        }
     }
+
+  /**
+   * A distinct thread/mutex handle per array element `t[i]`. A pthread handle is an identity key (a
+   * [VarDecl] the analysis maps to a thread id, matching a start to its join); an array of handles
+   * -- `pthread_t t[3]` with `pthread_create(&t[i], …)` / `pthread_join(t[i], …)` -- needs a
+   * distinct one per element, and `&t[i]` and `t[i]` for the same constant `i` must resolve to the
+   * *same* key. The element index has to be a compile-time constant, which is why the create/join
+   * loops are unrolled before this pass runs (see the extra [LoopUnrollPass] in [CPasses]).
+   */
+  private val arrayElementHandles = mutableMapOf<Pair<VarDecl<*>, BigInteger>, VarDecl<*>>()
 
   private fun InvokeLabel.getParam(index: Int): VarDecl<*> {
     var param = params[index]
@@ -277,12 +326,22 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
         check(param.array is RefExpr<*>) {
           "Unsupported library parameter: expected reference base variable, got ${param.array}"
         }
-        check(param.offset.isLiteralZero()) {
-          "Unsupported library parameter: non-zero dereference offsets are not supported (${param.offset})"
-        }
-        val base = param.array as RefExpr<*>
-        check(base.decl is VarDecl<*>)
-        base.decl as VarDecl<*>
+        val base = (param.array as RefExpr<*>).decl
+        check(base is VarDecl<*>)
+        val offset =
+          checkNotNull(param.offset.asConstant()) {
+            // A non-constant offset is a not-yet-unrolled loop handle (`&t[i]`); the create/join
+            // loops are unrolled and their index folded (PthreadArrayHandleUnrollPass + the
+            // SimplifyExprsPass after it) before this pass runs.
+            "Unsupported library parameter: non-constant dereference offset (${param.offset})"
+          }
+        // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
+        // single-object cases -- while every higher element gets its own synthetic handle.
+        if (offset == BigInteger.ZERO) base
+        else
+          arrayElementHandles.getOrPut(base to offset) {
+            Decls.Var("${base.name}_$offset", base.type)
+          }
       }
 
       else -> error("Unsupported library parameter expression: $param")

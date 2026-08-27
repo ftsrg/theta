@@ -23,6 +23,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
 enum class HeaderFile(val filename: String, val content: String) {
+  ALLOCA_H("alloca.h", alloca_h),
   ASSERT_H("assert.h", assert_h),
   CTYPE_H("ctype.h", ctype_h),
   ERRNO_H("errno.h", errno_h),
@@ -47,6 +48,18 @@ private fun fromPath(s: String): String =
   HeaderFile.entries.firstOrNull() { it.filename == s }?.content ?: ""
 
 private val includePattern = Regex("<(.*)>")
+
+/**
+ * The text of the header an `#include` names, or null if it is one we do not carry.
+ *
+ * A header is only *expanded* later, when the visitors run -- but its typedefs have to be known
+ * before that, while the file is still being parsed: `pthread_mutex_t mutex;` cannot be told from a
+ * multiplication unless we already know `pthread_mutex_t` names a type.
+ */
+fun headerContent(includeDirective: String): String? {
+  val headerFile = includePattern.find(includeDirective)?.groupValues?.get(1) ?: return null
+  return fromPath(headerFile).ifEmpty { null }
+}
 
 fun <T> parseHeaderFile(includeDirective: String, visitor: CBaseVisitor<T>): T? {
   val headerFile = includePattern.find(includeDirective)?.groupValues?.get(1) ?: return null

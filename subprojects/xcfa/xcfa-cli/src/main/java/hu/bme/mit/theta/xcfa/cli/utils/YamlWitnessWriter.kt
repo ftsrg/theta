@@ -113,7 +113,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
               cexSolverFactory,
               parseContext,
-              wrapExprTraceCheckerWithDataRaceCondition(property),
+              wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
             )
 
           val witness =
@@ -637,7 +637,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             lastState.mutexes,
             lastState.threadLookup,
             lastState.bottom,
-          )
+          ),
+          parseContext,
         )
       } catch (_: Exception) {
         // the final state of a --datarace-to-reachability trace is an inserted error location, not

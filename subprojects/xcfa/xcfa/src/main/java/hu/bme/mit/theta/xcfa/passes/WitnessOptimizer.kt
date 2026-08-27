@@ -31,6 +31,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intersect
 import hu.bme.mit.theta.xcfa.utils.simplify
@@ -50,6 +51,22 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
   ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    // This pass exists to normalize the segment counters ApplyWitnessPass inserts when *validating*
+    // an input witness; without a witness there are none, and its only other effect -- propagating
+    // the thread-start literal arguments through the body -- is redundant, since the OC event graph
+    // already binds each start parameter (XcfaToEventGraph). So with no segment counter there is
+    // nothing to do, and running the forward propagation anyway deadlocks on any loop in the thread
+    // body (it waits for every incoming edge of a location, which a loop head never gets).
+    val hasSegmentCounter =
+      builder.getEdges().any { edge ->
+        edge.label.getFlatLabels().any { label ->
+          label.collectVars().any { it.name == SEGMENT_COUNTER }
+        }
+      }
+    if (!hasSegmentCounter) {
+      return builder
+    }
+
     val initialValuation = MutableValuation()
     builder.getParams().forEachIndexed { index, param ->
       if (param.second == ParamDirection.IN && index < params.size && params[index] is LitExpr<*>) {

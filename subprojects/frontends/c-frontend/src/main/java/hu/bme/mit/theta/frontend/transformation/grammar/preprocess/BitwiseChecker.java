@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,6 +55,19 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
     }
 
     @Override
+    public Void visitTypeSpecifierSimple(CParser.TypeSpecifierSimpleContext ctx) {
+        // `__float128` is modeled as a floating-point type, so it forces float arithmetic exactly
+        // as
+        // `double` and `float` do; without this a program whose only real type is `__float128`
+        // would
+        // be analysed with integer arithmetic and hit the unimplemented float path.
+        if ("__float128".equals(ctx.getText())) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT);
+        }
+        return super.visitTypeSpecifierSimple(ctx);
+    }
+
+    @Override
     public Void visitDirectDeclaratorArray1(DirectDeclaratorArray1Context ctx) {
         parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
         return null;
@@ -88,9 +101,26 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
         return super.visitPrimaryExpressionConstant(ctx);
     }
 
+    /**
+     * `__builtin_bswapN` reverses a value's bytes, which only means anything if the value *has*
+     * bytes -- so a program that calls it needs bitvectors, exactly as one that uses {@code &} or
+     * {@code <<} does. Without this the analysis could pick integer arithmetic and the builtin
+     * would have nothing to work on.
+     */
+    @Override
+    public Void visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
+        if (ctx.primaryExpression() instanceof CParser.PrimaryExpressionIdContext id
+                && id.Identifier().getText().startsWith("__builtin_bswap")) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
+        }
+        return super.visitPostfixExpression(ctx);
+    }
+
     @Override
     public Void visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
-        ctx.exclusiveOrExpression(0).accept(this);
+        for (var operand : ctx.exclusiveOrExpression()) {
+            operand.accept(this);
+        }
         boolean b = ctx.exclusiveOrExpression().size() > 1;
         if (b) {
             parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
@@ -100,7 +130,9 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
 
     @Override
     public Void visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
-        ctx.andExpression(0).accept(this);
+        for (var operand : ctx.andExpression()) {
+            operand.accept(this);
+        }
         boolean b = ctx.andExpression().size() > 1;
         if (b) {
             parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
@@ -110,7 +142,9 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
 
     @Override
     public Void visitAndExpression(CParser.AndExpressionContext ctx) {
-        ctx.equalityExpression(0).accept(this);
+        for (var operand : ctx.equalityExpression()) {
+            operand.accept(this);
+        }
         boolean b = ctx.equalityExpression().size() > 1;
         if (b) {
             parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
@@ -120,7 +154,9 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
 
     @Override
     public Void visitShiftExpression(CParser.ShiftExpressionContext ctx) {
-        ctx.additiveExpression(0).accept(this);
+        for (var operand : ctx.additiveExpression()) {
+            operand.accept(this);
+        }
         boolean b = ctx.additiveExpression().size() > 1;
         if (b) {
             parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
@@ -134,6 +170,33 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
             parseContext.addArithmeticTrait(ArithmeticTrait.NONLIN_INT);
         }
         return super.visitMultiplicativeExpression(ctx);
+    }
+
+    /**
+     * `x |= y` and friends are as much a bitwise operation as `x = x | y`, but the grammar routes
+     * them through {@code assignmentOperator} rather than through {@code inclusiveOrExpression}, so
+     * none of the visitors above ever sees one. A program whose only bit manipulation is compound
+     * therefore looked purely arithmetic, {@link
+     * hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor} resolved {@code
+     * efficient} to integer arithmetic, and the assignment then failed in {@code CAssignment} with
+     * "only modelled over bitvectors" -- on an encoding this checker itself had chosen. The
+     * compound multiplicative operators are recorded for the same reason {@link
+     * #visitMultiplicativeExpression} records the binary ones.
+     */
+    @Override
+    public Void visitAssignmentExpressionAssignmentExpression(
+            CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
+        final String op = ctx.assignmentOperator().getText();
+        if (op.equals("|=")
+                || op.equals("&=")
+                || op.equals("^=")
+                || op.equals("<<=")
+                || op.equals(">>=")) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
+        } else if (op.equals("*=") || op.equals("/=") || op.equals("%=")) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.NONLIN_INT);
+        }
+        return super.visitAssignmentExpressionAssignmentExpression(ctx);
     }
 
     @Override

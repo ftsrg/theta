@@ -37,10 +37,18 @@ runs:
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Verify variables
       shell: bash
+      # Passed through the environment, never interpolated into the script. `${{ }}` is substituted
+      # textually before bash runs, and backticks command-substitute even inside double quotes -- so
+      # a release message containing a backticked command (any PR description that quotes a shell
+      # command) was executed by the runner.
+      env:
+        VERSION: ${{ steps.value.outputs.version }}
+        TAGNAME: ${{ steps.value.outputs.tagname }}
+        MESSAGE: ${{ steps.value.outputs.message }}
       run: |
-        echo version "${{steps.value.outputs.version}}"
-        echo tagname "${{steps.value.outputs.tagname}}"
-        echo message "${{steps.value.outputs.message}}"
+        echo "version $VERSION"
+        echo "tagname $TAGNAME"
+        echo "message $MESSAGE"
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
         name: ThetaJars
@@ -100,12 +108,19 @@ runs:
         echo "" >> "$GITHUB_OUTPUT"
         echo "$EOF" >> "$GITHUB_OUTPUT"
     - name: Debug release inputs
-      shell: bash  
+      shell: bash
+      # Environment, not interpolation -- see the note on "Verify variables" above. These values
+      # carry a user-supplied release message, and `${{ }}` is pasted into the script verbatim.
+      env:
+        DRY_RUN: ${{ inputs.dry-run }}
+        MESSAGE: ${{ inputs.message }}
+        FILES: ${{ steps.files.outputs.filelist }}
+        TAGNAME: ${{ steps.value.outputs.tagname }}
       run: |
-        echo "DRY_RUN = ${{ inputs.dry-run }}"
-        echo "MESSAGE = ${{ inputs.message }}"
-        echo "FILES = ${{steps.files.outputs.filelist}}"
-        echo "TAGNAME = ${{ steps.value.outputs.tagname }}"
+        echo "DRY_RUN = $DRY_RUN"
+        echo "MESSAGE = $MESSAGE"
+        echo "FILES = $FILES"
+        echo "TAGNAME = $TAGNAME"
     - name: Release
       if: inputs.dry-run == 'false'
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0

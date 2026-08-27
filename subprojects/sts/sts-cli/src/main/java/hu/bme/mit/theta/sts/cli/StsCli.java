@@ -492,7 +492,7 @@ public class StsCli {
             writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
             writer.newRow();
         } else {
-            logger.write(Level.RESULT, status.toString());
+            logger.write(Level.RESULT, "%s", status.toString());
         }
     }
 

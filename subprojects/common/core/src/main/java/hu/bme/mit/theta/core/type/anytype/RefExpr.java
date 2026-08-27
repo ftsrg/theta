@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import java.util.NoSuchElementException;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -49,7 +50,19 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
     @Override
     public LitExpr<DeclType> eval(final Valuation val) {
-        return val.eval(decl).get();
+        // Name the unbound variable: `.get()` would throw a bare "No value present", which says
+        // nothing about which declaration the valuation failed to cover.
+        return val.eval(decl)
+                .orElseThrow(
+                        () ->
+                                new NoSuchElementException(
+                                        "No value for '"
+                                                + decl.getName()
+                                                + "' of type "
+                                                + decl.getType()
+                                                + " in the valuation; an expression containing it"
+                                                + " was evaluated against a valuation that does"
+                                                + " not bind it."));
     }
 
     @Override

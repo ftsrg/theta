@@ -226,6 +226,15 @@ afterEvaluate {
 
           from(solversDirPath) {
             into("solvers" because "Installed SMT solvers used by the tool.")
+            // A Zip does not carry the source file's mode across -- which is why the script and the
+            // smoketest above have to state 0755 outright. A solver would otherwise arrive as 0644
+            // and simply refuse to run, and the tool would not say so: the affected configurations
+            // die on solver startup and the tasks that need them come back with no verdict at all.
+            eachFile {
+              if (file.canExecute()) {
+                permissions { unix(0b111101101) } // 0755 in octal = rwxr-xr-x
+              }
+            }
           }
 
         }

@@ -25,22 +25,15 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
-import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.BvUtils
-import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
@@ -53,8 +46,8 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.utils.defaultValue
 import java.math.BigInteger
-import org.kframework.mpfr.BigFloat
 
 abstract class XcfaToMonolithicAdapter(
   model: XCFA,
@@ -94,23 +87,6 @@ abstract class XcfaToMonolithicAdapter(
       .filter { it !in excludedVars }
       .map { reprEq(it.ref, it.type.defaultValue) }
       .let { And(it) }
-
-  private val Type.defaultValue: LitExpr<out Type>
-    get() =
-      when (this) {
-        is IntType -> smtInt(0)
-        is BoolType -> Bool(false)
-        is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, size)
-        is RatType -> Rat(0, 1)
-        is FpType -> FpUtils.bigFloatToFpLitExpr(BigFloat.zero(significand), this)
-        is ArrayType<*, *> ->
-          ArrayLitExpr.of(
-            listOf(),
-            cast(elemType.defaultValue, elemType),
-            ArrayType.of(indexType, elemType),
-          )
-        else -> error("No default value for type $this")
-      }
 
   protected fun events(stmts: List<Stmt>): List<Event<VarDecl<*>>> =
     stmts

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,13 +36,94 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   companion object {
     private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
-    private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
+    /**
+     * [XcfaBuilder.metaData] key under which the frontend publishes the first compile-time base id
+     * it did *not* hand out to a global. The allocation counter starts at or above it, so a runtime
+     * block can never be given the address of a static object. Absent (older/synthetic builders)
+     * means no compile-time bases were minted, and the counter starts at zero as it always did.
+     */
+    const val STATIC_BASE_LIMIT = "staticBaseLimit"
+
+    /**
+     * Where the allocation counter starts: the smallest multiple of three at or above the
+     * compile-time high-water mark.
+     *
+     * A multiple of three, because the residue class *is* the memory kind -- `3k+0` heap, `3k+1`
+     * stack, `3k+2` address-taken (see [AllocaFunctionPass]) -- and seeding off-class would file
+     * every allocation under the wrong one. At or above the mark, because `alloca` shares the
+     * `3k+1` class with the frontend's static bases: from zero, the first stack object took base 4,
+     * which the second global already owned.
+     */
+    private fun XcfaBuilder.allocationSeed(): Int {
+      val limit = (metaData[STATIC_BASE_LIMIT] as? Int) ?: 0
+      return ((limit + 2) / 3) * 3
+    }
+
+    /**
+     * The allocation counter. [AllocaFunctionPass] hands out addresses from the *same* counter, so
+     * that a heap block and a stack block can never be given the same base.
+     */
+    fun XcfaBuilder.mallocVar(parseContext: ParseContext): VarDecl<*> =
       mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
+
+    /**
+     * Creates the shared allocation counter and seeds it to null in the init procedure, once per
+     * XCFA. Does nothing if the counter already exists.
+     *
+     * ⚠️ Must be called *before* a pass starts iterating a snapshot of its own edges. Seeding
+     * replaces every outgoing edge of the init procedure's `initLoc` with a new instance carrying
+     * the prepended assignment, so any edge captured in a snapshot beforehand is stale. Removing
+     * such an edge later dies with "Cannot remove edge if it wasn't already present!" — which is
+     * exactly what [AllocaFunctionPass] did on the `*-amalgamation` NN tasks, where `main` allocas
+     * and no `malloc` ran first to create the counter.
+     */
+    fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexType) {
+      val mallocVar = mallocVar(parseContext)
+      if (getVars().any { it.wrappedVar == mallocVar }) return
+      val seed = retType.getValue(allocationSeed().toString())
+      addVar(XcfaGlobalVar(mallocVar, seed))
+      val initProc = getInitProcedures().map { it.first }
+      check(initProc.size == 1) { "Multiple start procedure are not handled well" }
+      initProc.forEach { proc ->
+        val initAssign =
+          StmtLabel(Assign(cast(mallocVar, mallocVar.type), cast(seed, mallocVar.type)))
+        val oldEdges = proc.initLoc.outgoingEdges.toList()
+        val newEdges =
+          oldEdges.map {
+            it.withLabel(
+              SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata)
+            )
+          }
+        oldEdges.forEach(proc::removeEdge)
+        newEdges.forEach(proc::addEdge)
+      }
+    }
+
+    /**
+     * The C type the first allocation call matching [predicate] writes its base into, or null when
+     * this procedure performs no such allocation. Lets the counter be seeded before the rewrite
+     * loop, without needing an allocation site in hand.
+     */
+    fun XcfaProcedureBuilder.firstAllocationRetType(
+      parseContext: ParseContext,
+      predicate: (XcfaLabel) -> Boolean,
+    ): CComplexType? =
+      getEdges()
+        .asSequence()
+        .flatMap { it.getFlatLabels().asSequence() }
+        .filter(predicate)
+        .map { CComplexType.getType((it as InvokeLabel).params[0], parseContext) }
+        .firstOrNull()
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
+    // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
+    // snapshot's init-procedure edges (see [ensureMallocVar]).
+    builder.firstAllocationRetType(parseContext, this::predicate)?.let {
+      builder.parent.ensureMallocVar(parseContext, it)
+    }
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
       if (
@@ -55,38 +136,6 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             val invokeLabel = e.label.labels[0] as InvokeLabel
             val ret = invokeLabel.params[0] as RefExpr<*>
             val arg = invokeLabel.params[1]
-            if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
-              builder.parent.addVar(
-                XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
-              )
-              if (MemsafetyPass.enabled) {
-                builder.parent.addVar(
-                  XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
-                )
-              }
-              val initProc = builder.parent.getInitProcedures().map { it.first }
-              check(initProc.size == 1) { "Multiple start procedure are not handled well" }
-              initProc.forEach { proc ->
-                val initAssign =
-                  StmtLabel(
-                    Assign(
-                      cast(mallocVar, mallocVar.type),
-                      cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type),
-                    )
-                  )
-                val newEdges =
-                  proc.initLoc.outgoingEdges.map {
-                    it.withLabel(
-                      SequenceLabel(
-                        listOf(initAssign) + it.label.getFlatLabels(),
-                        it.label.metadata,
-                      )
-                    )
-                  }
-                proc.initLoc.outgoingEdges.forEach(proc::removeEdge)
-                newEdges.forEach(proc::addEdge)
-              }
-            }
             val assign1 =
               AssignStmtLabel(
                 mallocVar,
@@ -94,7 +143,18 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 ret.type,
                 EmptyMetaData,
               )
-            val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
+            val assign2 =
+              AssignStmtLabel(
+                ret,
+                cast(
+                  FlatMemoryPass.flatBaseExpr(
+                    mallocVar.ref,
+                    CComplexType.getType(ret, parseContext),
+                    parseContext,
+                  ),
+                  ret.type,
+                ),
+              )
             val labels =
               if (MemsafetyPass.enabled) {
                 val assign3 = builder.parent.allocate(parseContext, ret, arg)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ public class CSimpleTypeFactory {
         return Extern.instance;
     }
 
+    public static Static Static() {
+        return Static.instance;
+    }
+
     public static Typedef Typedef() {
         return Typedef.instance;
     }
@@ -63,6 +67,14 @@ public class CSimpleTypeFactory {
     public static Struct Struct(
             final String name, ParseContext parseContext, Logger uniqueWarningLogger) {
         return new Struct(name, parseContext, uniqueWarningLogger);
+    }
+
+    public static Struct Struct(
+            final String name,
+            final boolean union,
+            ParseContext parseContext,
+            Logger uniqueWarningLogger) {
+        return new Struct(name, union, parseContext, uniqueWarningLogger);
     }
 
     public static ThreadLocal ThreadLocal() {
