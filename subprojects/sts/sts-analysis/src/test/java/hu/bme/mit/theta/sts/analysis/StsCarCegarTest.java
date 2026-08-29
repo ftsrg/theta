@@ -31,7 +31,9 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarOptimizations;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -51,7 +53,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class StsIc3Test {
+public class StsCarCegarTest {
     public String filePath;
     public boolean isSafe;
 
@@ -93,14 +95,17 @@ public class StsIc3Test {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-
         final var checker =
                 new StsPipelineChecker<>(
                         sts,
                         monolithicExpr ->
-                                new Ic3Checker(
+                                new CarCegarChecker(
                                         monolithicExpr,
                                         Z3LegacySolverFactory.getInstance(),
+                                        ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                                Z3LegacySolverFactory.getInstance()),
+                                        new CarOptimizations(
+                                                true, true, true, true, true, true, true, true),
                                         logger),
                         List.of(),
                         List.of(),

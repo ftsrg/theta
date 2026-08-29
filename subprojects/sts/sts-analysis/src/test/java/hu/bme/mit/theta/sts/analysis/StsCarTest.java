@@ -31,7 +31,7 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarChecker;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class StsIc3Test {
+public class StsCarTest {
     public String filePath;
     public boolean isSafe;
 
@@ -98,7 +98,7 @@ public class StsIc3Test {
                 new StsPipelineChecker<>(
                         sts,
                         monolithicExpr ->
-                                new Ic3Checker(
+                                new CarChecker(
                                         monolithicExpr,
                                         Z3LegacySolverFactory.getInstance(),
                                         logger),

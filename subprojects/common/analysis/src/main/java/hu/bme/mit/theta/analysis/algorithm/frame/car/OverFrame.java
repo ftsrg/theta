@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,12 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.ic3;
+package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -27,20 +30,21 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 
-public class Frame {
-    private final Frame parent;
+public class OverFrame {
+    private final OverFrame parent;
     private final Set<Expr<BoolType>> exprs;
 
     private final UCSolver solver;
     private final MonolithicExpr monolithicExpr;
 
-    Frame(final Frame parent, UCSolver solver, MonolithicExpr monolithicExpr) {
+    public OverFrame(final OverFrame parent, UCSolver solver, MonolithicExpr monolithicExpr) {
         this.parent = parent;
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
-        exprs = new HashSet<>();
+        exprs = CollectionUtil.createSet();
     }
 
     public void refine(Expr<BoolType> expression) {
