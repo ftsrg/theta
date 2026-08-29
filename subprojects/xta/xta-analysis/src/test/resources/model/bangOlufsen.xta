@@ -1,0 +1,338 @@
+const int t40 = 40;
+const int t50000 = 50000;
+const int t25000 = 25000;
+const int t781 = 781;
+
+int A_T4;
+int B_no;
+int A_Pn;
+int A_msg;
+int A_new_Pn;
+int B_new_Pn;
+int B_S2;
+int B_S1;
+int B_msg;
+int A_Pf;
+int A_frame;
+int B_stop;
+int B_check;
+int zero;
+int A_reset;
+int A_diff;
+int B_observe;
+int A_stop;
+int A_observe;
+int A_no;
+int B_T4;
+int A_res;
+int A_S1;
+int A_S2;
+int B_Pn;
+int B_err;
+int B_start;
+int A_err;
+int one;
+int B_diff;
+int B_Pf;
+int B_res;
+int B_eof;
+int A_start;
+int B_frame;
+int A_eof;
+int B_reset;
+int A_check;
+
+clock A_c;
+clock B_c;
+
+
+process bus() {
+	state
+		c_analyze,
+		active;
+
+	init c_analyze;
+
+	trans
+		active -> active { guard B_Pn == 0; assign zero = 1, one = 0; },
+		active -> active { guard B_Pn == 1 && A_Pn == 1; assign one = 1, zero = 0; },
+		active -> active { guard A_Pn == 0; assign zero = 1, one = 0; },
+		c_analyze -> active { assign A_Pn = 1, B_Pn = 1; };
+}
+process Frame_Generator_A() {
+	state
+		start,
+		first,
+		msg,
+		last,
+		c_set_stop,
+		c_continue,
+		c_set_msg;
+
+	init start;
+
+	trans
+		last -> start { guard A_new_Pn == 1; assign A_Pn = 1, A_eof = 1, A_start = 0; },
+		msg -> c_set_msg { guard A_reset == 0 && A_new_Pn == 1 && A_T4 == 0 && A_msg == 0; assign A_no = A_no + 1, A_Pn = 0, A_start = 1, A_Pn = 0; },
+		start -> first { guard A_frame == 1; assign A_no = 1, A_msg = 10, A_eof = 0, A_stop = 0, A_T4 = 0; },
+		c_set_stop -> c_continue { guard A_T4 == 0; },
+		c_continue -> msg { },
+		first -> msg { guard A_new_Pn == 1; assign A_Pn = 0; },
+		c_set_stop -> c_continue { guard A_T4 == 1 && 7 <= A_msg; },
+		c_set_msg -> msg { guard A_no <= 2 && A_no > 1; assign A_msg = 8, A_T4 = 1; },
+		c_set_msg -> msg { guard A_no < 2; assign A_msg = 2; },
+		c_set_msg -> msg { guard A_no < 2; assign A_msg = 4; },
+		c_set_msg -> msg { guard A_no < 2; assign A_msg = 6; },
+		msg -> c_set_stop { guard A_reset == 0 && A_new_Pn == 1 && A_msg > 0; assign A_Pn = 1, A_msg = A_msg - 1; },
+		c_set_stop -> c_continue { guard A_T4 == 1 && A_msg < 7; assign A_stop = 4; },
+		msg -> start { guard A_reset == 1; assign A_reset = 0; },
+		msg -> last { guard A_reset == 0 && A_new_Pn == 0 && A_T4 == 1 && A_msg == 0; assign A_Pn = 0; };
+}
+process Detector_A() {
+	state
+		wait_call,
+		c_ex_Pf,
+		c_ex_S1,
+		c_ex_Pn,
+		c_ex_S2,
+		c_ex1_S1,
+		c_ex1_S2,
+		c_calc_res;
+
+	init wait_call;
+
+	trans
+		c_ex_S2 -> wait_call { guard A_S2 == 0 && A_err <= 3; assign A_err = A_err + 1; },
+		c_ex_S2 -> c_ex_S1 { guard A_S2 == 1; },
+		c_ex1_S2 -> c_calc_res { guard A_S2 == 1; },
+		c_ex_S1 -> c_ex_Pn { guard A_S1 == 0 && A_err > 3; },
+		wait_call -> c_ex_Pf { guard A_check == 1; assign A_check = 0, A_res = 0; },
+		c_ex1_S1 -> c_ex1_S2 { guard A_S1 == 0; },
+		c_ex1_S1 -> c_calc_res { guard A_S1 == 1; },
+		c_calc_res -> wait_call { guard A_res == 0 && A_err == 0; },
+		c_ex_S1 -> c_ex_Pn { guard A_S1 == 0 && A_err <= 3; assign A_err = A_err + 1; },
+		c_calc_res -> wait_call { guard A_err > 3; assign A_res = 2; },
+		c_ex_S1 -> c_ex_Pn { guard A_S1 == 1; },
+		c_ex1_S2 -> wait_call { guard A_S2 == 0; },
+		c_ex_Pn -> c_ex1_S1 { guard A_Pn == 0; },
+		c_ex_Pf -> c_ex_S1 { guard A_Pf == 1; },
+		c_ex_Pf -> c_ex1_S1 { guard A_Pf == 0; },
+		c_calc_res -> wait_call { guard A_err <= 3 && A_err > 0; assign A_res = 1; },
+		c_ex_Pn -> c_ex_S2 { guard A_Pn == 1; },
+		c_ex_S2 -> wait_call { guard A_S2 == 0 && A_err > 3; };
+}
+process Sender_A() {
+	state
+		sample { A_c <= t781 },
+		c_call_observe,
+		c_call_check,
+		ex_jam { A_c <= t781 },
+		c_nPf,
+		jam { A_c <= t25000 },
+		until_silence { A_c <= t781 },
+		hold { A_c <= 36 * t781 },
+		start,
+		idle { A_c <= t781 },
+		c_ex_start,
+		other_started { A_c <= 4 * t781 },
+		ex_silence1 { A_c <= 3 * t781 },
+		c_goto_idle,
+		ex_silence2 { A_c <= t781 },
+		transmit { A_c <= t781 },
+		c_check_eof,
+		loc_stop { A_c <= t50000 },
+		newPn { A_c <= t40 };
+
+	init start;
+
+	trans
+		idle -> c_ex_start { guard A_c == t781; },
+		jam -> transmit { guard A_c == t25000; assign A_c = 0, A_Pn = 1, A_start = 0, A_res = 0; },
+		ex_jam -> c_nPf { guard A_res == 0 && A_c == t781; },
+		until_silence -> hold { guard one == 1 && A_c == t781; assign A_c = 0; },
+		c_nPf -> c_check_eof { guard A_Pn == 1; assign A_Pf = 1; },
+		c_check_eof -> newPn { guard zero == 1 && A_eof == 0; assign A_c = 0, A_S1 = 0; },
+		loc_stop -> idle { guard A_c == t50000; assign A_c = 0; },
+		c_check_eof -> newPn { guard one == 1 && A_eof == 0; assign A_c = 0, A_S1 = 1; },
+		transmit -> c_check_eof { guard A_c == t781; assign A_err = 0, A_diff = 0, A_Pf = 1, A_frame = 1; },
+		other_started -> ex_silence1 { guard B_start == 0 && A_c == 4 * t781; assign A_c = 0; },
+		start -> idle { assign A_c = 0; },
+		c_call_observe -> c_call_check { assign A_observe = 1; },
+		ex_jam -> jam { guard A_res == 1 && A_c == t781; assign A_c = 0, A_Pn = 0, A_reset = 1; },
+		c_ex_start -> other_started { guard B_start == 1; assign A_c = 0; },
+		ex_silence1 -> c_goto_idle { guard zero == 1 && A_c == 3 * t781; },
+		ex_silence2 -> transmit { guard one == 1 && A_c == t781; assign A_c = 0; },
+		newPn -> sample { guard A_err == 0 && A_c == t40; assign A_new_Pn = 1; },
+		ex_silence1 -> ex_silence2 { guard one == 1 && A_c == 3 * t781; assign A_c = 0; },
+		hold -> c_goto_idle { guard A_c == 36 * t781; assign A_res = 0; },
+		c_nPf -> c_check_eof { guard A_Pn == 0; assign A_Pf = 0; },
+		c_check_eof -> loc_stop { guard A_eof == 1; assign A_c = 0; },
+		c_goto_idle -> idle { assign A_c = 0; },
+		c_call_check -> ex_jam { guard A_res == 1 && A_stop == 1; assign A_c = 0; },
+		newPn -> sample { guard A_c == t40 && A_err > 0; assign A_Pn = 1; },
+		other_started -> other_started { guard B_start == 1 && A_c == 4 * t781; assign A_c = 0; },
+		c_call_check -> ex_jam { guard A_check == 1 && A_stop == 0; assign A_c = 0; },
+		ex_jam -> until_silence { guard A_res == 2 && A_c == t781; assign A_c = 0, A_Pn = 1, A_reset = 1, A_start = 0; },
+		sample -> c_call_observe { guard zero == 1 && A_c == t781; assign A_S2 = 0; },
+		until_silence -> until_silence { guard zero == 1 && A_c == t781; assign A_c = 0; },
+		sample -> c_call_observe { guard one == 1 && A_c == t781; assign A_S2 = 1; },
+		ex_silence2 -> c_goto_idle { guard zero == 1 && A_c == t781; },
+		c_ex_start -> ex_silence1 { guard B_start == 0; assign A_c = 0; };
+}
+process Frame_Generator_B() {
+	state
+		start,
+		first,
+		msg,
+		last,
+		c_set_stop,
+		c_continue,
+		c_set_msg;
+
+	init start;
+
+	trans
+		c_set_msg -> msg { guard B_no < 2; assign B_msg = 4; },
+		c_set_msg -> msg { guard B_no < 2; assign B_msg = 2; },
+		msg -> last { guard B_reset == 0 && B_new_Pn == 0 && B_T4 == 1 && B_msg == 0; assign B_Pn = 0; },
+		last -> start { guard B_new_Pn == 1; assign B_Pn = 1, B_eof = 1, B_start = 0; },
+		c_set_stop -> c_continue { guard B_T4 == 1 && B_msg < 7; assign B_stop = 4; },
+		msg -> c_set_msg { guard B_reset == 0 && B_new_Pn == 1 && B_T4 == 0 && B_msg == 0; assign B_no = B_no + 1, B_Pn = 0, B_start = 1, B_Pn = 0; },
+		c_continue -> msg { },
+		c_set_stop -> c_continue { guard B_T4 == 0; },
+		c_set_msg -> msg { guard B_no < 2; assign B_msg = 6; },
+		c_set_stop -> c_continue { guard B_T4 == 1 && 7 <= B_msg; },
+		c_set_msg -> msg { guard B_no <= 2 && B_no < 1; assign B_msg = 8, B_T4 = 1; },
+		start -> first { guard B_frame == 1; assign B_no = 1, B_msg = 10, B_eof = 0, B_stop = 0, B_T4 = 0; },
+		msg -> start { guard B_reset == 1; assign B_reset = 0; },
+		first -> msg { guard B_new_Pn == 1; assign B_Pn = 0; },
+		msg -> c_set_stop { guard B_reset == 0 && B_new_Pn == 1 && B_msg > 0; assign B_Pn = 1, B_msg = B_msg - 1; };
+}
+process Detector_B() {
+	state
+		wait_call,
+		c_ex_Pf,
+		c_ex_S1,
+		c_ex_Pn,
+		c_ex_S2,
+		c_ex1_S1,
+		c_ex1_S2,
+		c_calc_res;
+
+	init wait_call;
+
+	trans
+		c_ex_S1 -> c_ex_Pn { guard B_S1 == 0 && B_err <= 3; assign B_err = B_err + 1; },
+		c_ex1_S1 -> c_calc_res { guard B_S1 == 1; },
+		c_ex_S2 -> c_ex_S1 { guard B_S2 == 1; },
+		c_ex1_S1 -> c_ex1_S2 { guard B_S1 == 0; },
+		c_ex_Pf -> c_ex_S1 { guard B_Pf == 1; },
+		c_ex_S2 -> wait_call { guard B_S2 == 0 && B_err > 3; },
+		wait_call -> c_ex_Pf { guard B_check == 1; assign B_check = 0, B_res = 0; },
+		c_ex_Pf -> c_ex1_S1 { guard B_Pf == 0; },
+		c_calc_res -> wait_call { guard B_res == 0 && B_err == 0; },
+		c_calc_res -> wait_call { guard B_err > 3; assign B_res = 2; },
+		c_ex_S1 -> c_ex_Pn { guard B_S1 == 1; },
+		c_ex_Pn -> c_ex_S2 { guard B_Pn == 1; },
+		c_ex_S2 -> wait_call { guard B_S2 == 0 && B_err <= 3; assign B_err = B_err + 1; },
+		c_ex_Pn -> c_ex1_S1 { guard B_Pn == 0; },
+		c_ex1_S2 -> wait_call { guard B_S2 == 0; },
+		c_ex_S1 -> c_ex_Pn { guard B_S1 == 0 && B_err > 3; },
+		c_ex1_S2 -> c_calc_res { guard B_S2 == 1; },
+		c_calc_res -> wait_call { guard B_err <= 3 && B_err > 0; assign B_res = 1; };
+}
+process Sender_B() {
+	state
+		sample { B_c <= t781 },
+		c_call_observe,
+		c_call_check,
+		ex_jam { B_c <= t781 },
+		c_nPf,
+		jam { B_c <= t25000 },
+		until_silence { B_c <= t781 },
+		hold { B_c <= 36 * t781 },
+		start,
+		idle { B_c <= t781 },
+		c_ex_start,
+		other_started { B_c <= 4 * t781 },
+		ex_silence1 { B_c <= 3 * t781 },
+		c_goto_idle,
+		ex_silence2 { B_c <= t781 },
+		transmit { B_c <= t781 },
+		c_check_eof,
+		loc_stop { B_c <= t50000 },
+		newPn { B_c <= t40 };
+
+	init start;
+
+	trans
+		ex_silence1 -> ex_silence2 { guard one == 1 && B_c == 3 * t781; assign B_c = 0; },
+		ex_silence2 -> c_goto_idle { guard zero == 1 && B_c == t781; },
+		ex_jam -> until_silence { guard B_res == 2 && B_c == t781; assign B_c = 0, B_Pn = 1, B_reset = 1, B_start = 0; },
+		hold -> c_goto_idle { guard B_c == 36 * t781; assign B_res = 0; },
+		c_check_eof -> loc_stop { guard B_eof == 1; assign B_c = 0; },
+		loc_stop -> idle { guard B_c == t50000; assign B_c = 0; },
+		c_call_check -> ex_jam { guard B_check == 1 && B_stop == 0; assign B_c = 0; },
+		c_ex_start -> ex_silence1 { guard A_start == 0; assign B_c = 0; },
+		ex_jam -> c_nPf { guard B_res == 0 && B_c == t781; },
+		ex_jam -> jam { guard B_res == 1 && B_c == t781; assign B_c = 0, B_Pn = 0, B_reset = 1; },
+		c_check_eof -> newPn { guard one == 1 && B_eof == 0; assign B_c = 0, B_S1 = 1; },
+		c_call_observe -> c_call_check { assign B_observe = 1; },
+		other_started -> other_started { guard A_start == 1 && B_c == 4 * t781; assign B_c = 0; },
+		ex_silence1 -> c_goto_idle { guard zero == 1 && B_c == 3 * t781; },
+		c_nPf -> c_check_eof { guard B_Pn == 0; assign B_Pf = 0; },
+		jam -> transmit { guard B_c == t25000; assign B_c = 0, B_Pn = 1, B_start = 0, B_res = 0; },
+		start -> idle { assign B_c = 0; },
+		c_check_eof -> newPn { guard zero == 1 && B_eof == 0; assign B_c = 0, B_S1 = 0; },
+		until_silence -> until_silence { guard zero == 1 && B_c == t781; assign B_c = 0; },
+		until_silence -> hold { guard one == 1 && B_c == t781; assign B_c = 0; },
+		idle -> c_ex_start { guard B_c == t781; },
+		c_ex_start -> other_started { guard A_start == 1; assign B_c = 0; },
+		sample -> c_call_observe { guard zero == 1 && B_c == t781; assign B_S2 = 0; },
+		c_goto_idle -> idle { assign B_c = 0; },
+		sample -> c_call_observe { guard one == 1 && B_c == t781; assign B_S2 = 1; },
+		transmit -> c_check_eof { guard B_c == t781; assign B_err = 0, B_diff = 0, B_Pf = 1, B_frame = 1; },
+		newPn -> sample { guard B_err == 0 && B_c == t40; assign B_new_Pn = 1; },
+		c_call_check -> ex_jam { guard B_res == 1 && B_stop == 1; assign B_c = 0; },
+		newPn -> sample { guard B_c == t40 && B_err > 0; assign B_Pn = 1; },
+		other_started -> ex_silence1 { guard A_start == 0 && B_c == 4 * t781; assign B_c = 0; },
+		c_nPf -> c_check_eof { guard B_Pn == 1; assign B_Pf = 1; },
+		ex_silence2 -> transmit { guard one == 1 && B_c == t781; assign B_c = 0; };
+}
+process Observer_A() {
+	state
+		compare;
+
+	init compare;
+
+	trans
+		compare -> compare { guard A_S2 == 0 && A_observe == 1 && A_Pn == 1; assign A_observe = 0, A_diff = 1; },
+		compare -> compare { guard A_S1 == A_Pf && A_Pn == A_S2 && A_observe == 1; assign A_observe = 0; },
+		compare -> compare { guard A_Pf == 1 && A_S1 == 0 && A_observe == 1; assign A_observe = 0, A_diff = 1; };
+}
+process Observer_B() {
+	state
+		compare;
+
+	init compare;
+
+	trans
+		compare -> compare { guard B_Pf == 1 && B_S1 == 0 && B_observe == 1; assign B_observe = 0, B_diff = 1; },
+		compare -> compare { guard B_S2 == 0 && B_observe == 1 && B_Pn == 1; assign B_observe = 0, B_diff = 1; },
+		compare -> compare { guard B_S1 == B_Pf && B_Pn == B_S2 && B_observe == 1; assign B_observe = 0; };
+}
+process SUPER_OBSERVER() {
+	state
+		No_Error,
+		Error;
+
+	init No_Error;
+
+	trans
+		No_Error -> Error { guard B_diff == 1 && B_eof == 1; },
+		No_Error -> Error { guard A_res == 0 && B_eof == 1; },
+		No_Error -> Error { guard A_diff == 1 && A_eof == 1; },
+		No_Error -> Error { guard B_res == 0 && A_eof == 1; };
+}
+
+system bus, Frame_Generator_A, Detector_A, Sender_A, Frame_Generator_B, Detector_B, Sender_B, Observer_A, Observer_B, SUPER_OBSERVER;

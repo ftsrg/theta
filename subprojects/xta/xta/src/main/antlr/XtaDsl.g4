@@ -17,8 +17,12 @@ grammar XtaDsl;
 
 // S P E C I F I C A T I O N
 
-xta	:	(fFunctionDecls+=functionDecl | fVariableDecls+=variableDecl | fTypeDecls+=typeDecl | fProcessDecls+=processDecl)* (fInstantiations+=instantiation)* fSystem=system
+xta	:	(fFunctionDecls+=functionDecl | fVariableDecls+=variableDecl | fTypeDecls+=typeDecl | fProcessDecls+=processDecl)* (fInstantiations+=instantiation)* fSystem=system fProperty=property?
 	;
+
+property
+    : PROP LBRAC q=quantifier prop=expression RBRAC
+    ;
 
 iteratorDecl
 	:	fId=ID COLON fType=type
@@ -49,7 +53,7 @@ functionDecl
 	;
 
 processDecl
-	:	PROCESS	fId=ID fParameterList=parameterList LBRAC fProcessBody=processBody RBRAC
+	:	PROCESS	fId=ID fParameterList=parameterList? LBRAC fProcessBody=processBody RBRAC
 	;
 
 processBody
@@ -101,7 +105,7 @@ select
 	;
 
 guard
-	:	GUARD fExpression=expression SEMICOLON
+	:	GUARD fExpressions+=expression (COMMA fExpressions+=expression)* SEMICOLON
 	;
 
 sync:	SYNC fExpression=expression (fEmit=EXCL | fRecv=QUEST) SEMICOLON
@@ -152,6 +156,9 @@ SYNC:	'sync'
 ASSIGN
 	:	'assign'
 	;
+PROP
+    :   'prop'
+    ;
 
 // T Y P E S
 
@@ -365,6 +372,8 @@ RETURN
 	:	'return'
 	;
 
+
+
 // E X P R E S S I O N S
 
 ////////////////////////////////////////////////////////////////////////////
@@ -396,9 +405,14 @@ textAndExpression
 	;
 
 textNotExpression
-	:	assignmentExpression
+	:	arrayAssignmentExpression
+	|	assignmentExpression
 	|	textNotOp fOp=textNotExpression
 	;
+
+arrayAssignmentExpression
+    :   fArrayId=conditionalExpression (fArrayAccess=arrayAccessOp fOper=assignmentOp fRightOp=arrayAssignmentExpression)?
+    ;
 
 assignmentExpression
 	:	fLeftOp=conditionalExpression (fOper=assignmentOp fRightOp=assignmentExpression)?
@@ -727,6 +741,11 @@ structSelectOp
 	:	DOT fId=ID
 	;
 
+quantifier
+
+    : AG | EF | AF | EG
+    ;
+
 FORALL
 	:	'forall'
 	;
@@ -954,6 +973,20 @@ LARROW
 RARROW
 	:	'->'
 	;
+
+AG
+    : 'A[]'
+    ;
+
+AF
+    : 'A<>'
+    ;
+EG
+    : 'E[]'
+    ;
+EF
+    : 'E<>'
+    ;
 
 
 

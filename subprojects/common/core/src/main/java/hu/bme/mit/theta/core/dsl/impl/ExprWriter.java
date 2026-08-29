@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -141,6 +142,10 @@ public final class ExprWriter {
                         .addCase(IntLtExpr.class, e -> infixBinary(e, " < "))
                         .addCase(IntLitExpr.class, e -> e.getValue() + "")
                         .addCase(IntToRatExpr.class, e -> prefixUnary(e, "(rat)"))
+
+                        // Range
+
+                        .addCase(InRangeExpr.class, e -> postfixUnary(e, "in " + e.getRange()))
 
                         // Rational
 

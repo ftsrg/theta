@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
@@ -41,6 +44,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.ForallExpr;
@@ -100,6 +104,9 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -210,6 +217,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(EnumLitExpr.class, this::transformEnumLit)
                 .addCase(EnumNeqExpr.class, this::transformEnumNeq)
                 .addCase(EnumEqExpr.class, this::transformEnumEq)
+
+                // Ranges
+
+                .addCase(InRangeExpr.class, this::transformInRange)
 
                 // Bitvectors
 
@@ -640,6 +651,21 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         String longName = EnumType.makeLongName(expr.getType(), expr.getValue());
         symbolTable.putEnumLiteral(longName, expr);
         return longName;
+    }
+
+    /*
+     * Ranges
+     */
+
+    protected String transformInRange(final InRangeExpr expr) {
+        final Expr<IntType> op = expr.getOp();
+
+        final RangeType range = expr.getRange();
+        final Expr<IntType> lower = Int(range.getLower());
+        final Expr<IntType> upper = Int(range.getUpper());
+
+        final Expr<BoolType> asBoolExpr = And(Leq(lower, op), Leq(op, upper));
+        return toTerm(asBoolExpr);
     }
 
     /*

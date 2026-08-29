@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,22 +20,29 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.xta.XtaProcess;
 import java.util.Collection;
 import java.util.Collections;
 
 final class XtaZoneInitFunc implements InitFunc<ZoneState, ZonePrec> {
 
-    private static final XtaZoneInitFunc INSTANCE = new XtaZoneInitFunc();
+    private final Collection<XtaProcess.Loc> initLocs;
 
-    private XtaZoneInitFunc() {}
+    private XtaZoneInitFunc(final Collection<XtaProcess.Loc> initLocs) {
+        this.initLocs = initLocs;
+    }
 
-    static XtaZoneInitFunc getInstance() {
-        return INSTANCE;
+    static XtaZoneInitFunc create(final Collection<XtaProcess.Loc> initLocs) {
+        return new XtaZoneInitFunc(initLocs);
     }
 
     @Override
     public Collection<ZoneState> getInitStates(final ZonePrec prec) {
         checkNotNull(prec);
-        return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
+        ZoneState initZone = ZoneState.zero(prec.getVars());
+        if (initLocs.stream().allMatch(l -> l.getKind() == XtaProcess.LocKind.NORMAL)) {
+            initZone = initZone.transform().up().build();
+        }
+        return Collections.singleton(initZone);
     }
 }

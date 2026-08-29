@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@ package hu.bme.mit.theta.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -34,20 +32,22 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
-import hu.bme.mit.theta.xta.utils.RangeType;
 import java.util.List;
 
 final class XtaVariableSymbol implements Symbol {
 
-    private final String name;
+    private String name;
     private final boolean constant;
     private final boolean broadcast;
+    private boolean global;
 
     private final XtaType type;
     private final XtaInitialiser initialiser;
@@ -66,6 +66,38 @@ final class XtaVariableSymbol implements Symbol {
                 variableIdcontext.fInitialiser != null
                         ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
                         : null;
+    }
+
+    private XtaVariableSymbol(final String name, final XtaVariableSymbol toCopy) {
+        this.name = name;
+        constant = toCopy.constant;
+        broadcast = toCopy.broadcast;
+        type = toCopy.type;
+        initialiser = toCopy.initialiser;
+    }
+
+    public XtaVariableSymbol copy(String prefix) {
+        return new XtaVariableSymbol(prefix + name, this);
+    }
+
+    private XtaVariableSymbol(String _name) {
+        name = _name;
+        constant = false;
+        broadcast = false;
+        type = null;
+        initialiser = null;
+    }
+
+    public static XtaVariableSymbol forcedCreate(String name) {
+        return new XtaVariableSymbol(name);
+    }
+
+    public void setGlobal() {
+        global = true;
+    }
+
+    public boolean isGlobal() {
+        return global;
     }
 
     @Override
@@ -139,19 +171,17 @@ final class XtaVariableSymbol implements Symbol {
         }
     }
 
-    private static boolean isSupportedDataType(Type type) {
+    private static boolean isSupportedDataType(final Type type) {
+        if (type instanceof final ArrayType<?, ?> arrayType) {
+            return (arrayType.getIndexType() instanceof IntType)
+                    && isSupportedDataType(arrayType.getElemType());
+        }
         return type instanceof BoolType || type instanceof IntType;
     }
 
     private static <T extends Type> LitExpr<T> defaultValueFor(final T type) {
         checkArgument(isSupportedDataType(type));
-        if (type instanceof BoolType) {
-            return (LitExpr<T>) cast(False(), type);
-        } else if (type instanceof IntType) {
-            return (LitExpr<T>) cast(Int(0), type);
-        } else {
-            throw new AssertionError();
-        }
+        return TypeUtils.getDefaultValue(type);
     }
 
     private static boolean isChanArrayType(final Type type) {
@@ -252,7 +282,6 @@ final class XtaVariableSymbol implements Symbol {
     }
 
     public static final class DataVariable extends InstantiateResult {
-
         private final VarDecl<?> varDecl;
         private final LitExpr<?> initValue;
 
@@ -281,7 +310,6 @@ final class XtaVariableSymbol implements Symbol {
     }
 
     public static final class ClockVariable extends InstantiateResult {
-
         private final VarDecl<RatType> varDecl;
 
         private ClockVariable(final VarDecl<RatType> varDecl) {
@@ -304,7 +332,6 @@ final class XtaVariableSymbol implements Symbol {
     }
 
     public static final class Constant extends InstantiateResult {
-
         private final LitExpr<?> expr;
 
         private Constant(final LitExpr<?> expr) {
@@ -328,7 +355,6 @@ final class XtaVariableSymbol implements Symbol {
     }
 
     public static final class Channel extends InstantiateResult {
-
         private final Label label;
 
         private Channel(final Label label) {
@@ -348,5 +374,9 @@ final class XtaVariableSymbol implements Symbol {
         public Label getLabel() {
             return label;
         }
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

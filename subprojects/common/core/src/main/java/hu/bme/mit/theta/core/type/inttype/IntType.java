@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-public final class IntType
+public class IntType
         implements Additive<IntType>,
                 Multiplicative<IntType>,
                 Divisible<IntType>,
@@ -40,7 +40,7 @@ public final class IntType
     private static final int HASH_SEED = 222670;
     private static final String TYPE_LABEL = "Int";
 
-    private IntType() {}
+    protected IntType() {}
 
     public static IntType getInstance() {
         return INSTANCE;

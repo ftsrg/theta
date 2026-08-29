@@ -1,0 +1,109 @@
+const int dB_Low_l = 19;
+const int dA_Low_u = 18;
+const int dOr_l = 3;
+const int dB_High_u = 8;
+const int dA_Low_l = 16;
+const int dAnd_u = 4;
+const int dA_High_u = 14;
+const int dB_Low_u = 20;
+const int dOr_u = 4;
+const int dAnd_l = 3;
+const int dA_High_l = 13;
+const int dB_High_l = 7;
+
+chan xUp;
+chan xDown;
+chan bUp;
+chan bDown;
+chan aUp;
+chan aDown;
+chan tUp;
+chan tDown;
+
+bool a = true;
+bool b = true;
+bool t = true;
+bool x = true;
+
+
+process andGate() {
+	clock ckAnd;
+
+	state
+    consistent,
+    transient{ ckAnd <= dAnd_u };
+
+	init consistent;
+
+	trans
+    consistent -> consistent {guard t==false; sync bUp?;},
+    consistent -> transient {guard t; sync bUp?; assign ckAnd = 0;},
+    consistent -> consistent {guard t==false; sync bDown?;},
+    consistent -> transient {guard t; sync bDown?; assign ckAnd = 0;},
+    consistent -> consistent {guard b==false; sync tUp?;},
+    consistent -> transient {guard b; sync tUp?; assign ckAnd = 0;},
+    consistent -> consistent {guard b==false; sync tDown?;},
+    consistent -> transient {guard b; sync tDown?; assign ckAnd = 0;},
+    transient -> consistent {guard t==x; sync bUp?;},
+    transient -> transient {guard t!=x; sync bUp?; assign ckAnd = 0;},
+    transient -> consistent {guard x==false; sync bDown?;},
+    transient -> transient {guard x; sync bDown?; assign ckAnd = 0;},
+    transient -> consistent {guard b==x; sync tUp?;},
+    transient -> transient {guard b!=x; sync tUp?; assign ckAnd = 0;},
+    transient -> consistent {guard x==false; sync tDown?;},
+    transient -> transient {guard x; sync tDown?; assign ckAnd = 0;},
+    transient -> consistent {guard ckAnd >= dAnd_l && t==false; sync xDown!; assign x = false;},
+    transient -> consistent {guard ckAnd >= dAnd_l && b==false; sync xDown!; assign x = false;},
+    transient -> consistent {guard ckAnd >= dAnd_l && t==true && b==true; sync xUp!; assign x = true;};
+}
+process orGate() {
+	clock ckOr;
+
+  state
+    consistent,
+    transient{ ckOr <= dOr_u };
+
+	init consistent;
+
+	trans
+    consistent -> consistent {guard a==true; sync xUp?;},
+    consistent -> transient {guard a==false; sync xUp?; assign ckOr = 0;},
+    consistent -> consistent {guard a==true; sync xDown?;},
+    consistent -> transient {guard a==false; sync xDown?; assign ckOr = 0;},
+    consistent -> consistent {guard x==true; sync aUp?;},
+    consistent -> transient {guard x==false; sync aUp?; assign ckOr = 0;},
+    consistent -> consistent {guard x==true; sync aDown?;},
+    consistent -> transient {guard x==false; sync aDown?; assign ckOr = 0;},
+    transient -> consistent {guard t==true; sync xUp?;},
+    transient -> transient {guard t==false; sync xUp?; assign ckOr = 0;},
+    transient -> consistent {guard t==a; sync xDown?;},
+    transient -> transient {guard t!=a; sync xDown?; assign ckOr = 0;},
+    transient -> consistent {guard t==true; sync tUp?;},
+    transient -> transient {guard t==false; sync tUp?; assign ckOr = 0;},
+    transient -> consistent {guard t==x; sync tDown?;},
+    transient -> transient {guard t!=x; sync tDown?; assign ckOr = 0;},
+    transient -> consistent {guard ckOr >= dOr_l && a==true; sync tUp!; assign t = true;},
+    transient -> consistent {guard ckOr >= dOr_l && x==true; sync tUp!; assign t = true;},
+    transient -> consistent {guard ckOr >= dOr_l && a==false && x==false; sync tDown!; assign t = false;};
+}
+
+process input() {
+	clock cka;
+	clock ckb;
+
+	state
+		InputInit { ckb <= dB_High_u },
+		Input2 { cka <= dA_High_u },
+		Input3 { ckb <= dB_Low_u },
+		Input4 { cka <= dA_Low_u };
+
+	init InputInit;
+
+	trans
+		InputInit -> Input2 { guard ckb >= dB_High_l; sync bDown!; assign ckb = 0; },
+		Input3 -> Input4 { guard ckb >= dB_Low_l; sync bUp!; assign ckb = 0; },
+		Input2 -> Input3 { guard cka >= dA_High_l; sync aDown!; assign cka = 0; },
+		Input4 -> InputInit { guard cka >= dA_Low_l; sync aUp!; assign cka = 0, ckb = 0; };
+}
+
+system andGate, orGate, input;
