@@ -95,7 +95,7 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, v1.label),
                   DataRaceAccess(process2.key, edge2, v2.label),
-                  True(),
+                  And(v1.precondition, v2.precondition),
                 )
             }
           }
@@ -114,7 +114,12 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, m1.label),
                   DataRaceAccess(process2.key, edge2, m2.label),
-                  And(Eq(m1.array, m2.array), Eq(m1.offset, m2.offset)),
+                  And(
+                    m1.precondition,
+                    m2.precondition,
+                    Eq(m1.array, m2.array),
+                    Eq(m1.offset, m2.offset),
+                  ),
                 )
               }
             }
@@ -190,7 +195,13 @@ private sealed class GlobalAccessWithMutexes(
   val access: AccessType,
   val acquiredMutexes: Set<String>,
   val blockingMutexes: Set<String>,
-)
+  val precedingAssumes: List<AssumeStmt>,
+) {
+  val precondition: Expr<BoolType> get() =
+    precedingAssumes.fold<AssumeStmt, Expr<BoolType>>(True()) { acc, assume ->
+      And(acc, assume.cond)
+    }
+}
 
 /**
  * Represents a global variable access: stores the variable declaration, the access type
@@ -202,7 +213,8 @@ private class GlobalVarAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<String>,
   blockingMutexes: Set<String>,
-) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes)
+  precedingAssumes: List<AssumeStmt>,
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
 
 /**
  * Represents a memory access: stores the array expression, the offset expression, the access type
@@ -217,7 +229,8 @@ private class MemoryAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<String>,
   blockingMutexes: Set<String>,
-) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes)
+  precedingAssumes: List<AssumeStmt>,
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
 
 /**
  * Returns the global variable accesses of the label.
@@ -234,6 +247,7 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
   val acquiredMutexes = currentMutexes.toMutableSet()
   val blockingMutexes = mutableSetOf<String>()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
+  val precedingAssumes = mutableListOf<AssumeStmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
@@ -248,11 +262,14 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
+              precedingAssumes.toList(),
             )
           )
         }
       }
     }
+
+    ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
   }
   return accesses
 }
@@ -272,6 +289,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
   val blockingMutexes = mutableSetOf<String>()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
   val changedVars = mutableSetOf<VarDecl<*>>()
+  val precedingAssumes = mutableListOf<AssumeStmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
@@ -298,11 +316,13 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
+              precedingAssumes.toList(),
             )
           )
         }
       }
     }
+    ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
     label.collectVarsWithAccessType().forEach { (v, access) ->
       if (access.isWritten) changedVars.add(v)
     }

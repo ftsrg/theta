@@ -261,7 +261,10 @@ class AtomicReadsOneWritePass : ProcedurePass {
             if (atomicEnd) it else it.replaceAccesses(localVersions)
           }
           .toMutableList()
-      builder.removeEdge(current)
+
+      if (current in builder.getEdges()) {
+        builder.removeEdge(current)
+      }
 
       if (!atomicEnd) {
         toVisit.addAll(current.target.outgoingEdges)
