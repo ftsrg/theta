@@ -19,7 +19,6 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
@@ -27,12 +26,12 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ctl.MddCtlChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.ctl.CtlParser
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.analysis.XstsToMonolithicAdapter
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 class XstsCliCtl :
   XstsCliBaseCommand(
@@ -88,6 +87,6 @@ class XstsCliCtl :
           )
       }
     sw.stop()
-    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsedMillis())
   }
 }

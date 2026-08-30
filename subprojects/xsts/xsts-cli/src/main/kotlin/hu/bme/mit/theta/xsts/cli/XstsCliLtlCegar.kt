@@ -19,7 +19,6 @@ import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -33,12 +32,12 @@ import hu.bme.mit.theta.common.cfa.buchi.hoa.ExternalLtl2Hoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
 import hu.bme.mit.theta.common.ltl.LtlChecker
 import hu.bme.mit.theta.common.ltl.cli.LtlCliOptions
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.analysis.XstsState
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*
 import hu.bme.mit.theta.xsts.passes.XstsNormalizerPass
-import java.util.concurrent.TimeUnit
 
 private typealias NSF<D> =
   NextSideFunctions.NextSideFunction<
@@ -148,7 +147,7 @@ class XstsCliLtlCegar :
       val sw = Stopwatch.createStarted()
       val result = checker.check(configBuilder.initPrec, configBuilder.initPrec)
       sw.stop()
-      printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+      printBenchmarkResult(result, xsts, sw.elapsedMillis())
       writeCex(result, xsts)
     }
     if (domain in setOf(Domain.PRED_CART, Domain.PRED_SPLIT, Domain.PRED_BOOL)) {
@@ -173,7 +172,7 @@ class XstsCliLtlCegar :
       val sw = Stopwatch.createStarted()
       val result = checker.check(configBuilder.initPrec, configBuilder.initPrec)
       sw.stop()
-      printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+      printBenchmarkResult(result, xsts, sw.elapsedMillis())
       writeCex(result, xsts)
     }
   }

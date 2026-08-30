@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
@@ -34,6 +33,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -58,7 +58,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 fun runConfig(
@@ -249,9 +248,7 @@ private fun frontend(
     uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
   }
 
-  logger.benchmark(
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)"
-  )
+  logger.benchmark("Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)")
 
   logger.benchmark("ParsingResult Success")
   logger.benchmark(
@@ -348,7 +345,7 @@ private fun backend(
               }
             }
 
-        logger.info("Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
+        logger.info("Backend finished (in ${stopwatch.elapsedMillis()} ms)")
         result
       }
     }
@@ -377,7 +374,7 @@ private fun tracegenBackend(
     }
   logger.info(
     "Backend finished (in ${
-      stopwatch.elapsed(TimeUnit.MILLISECONDS)
+      stopwatch.elapsedMillis()
     } ms)\n"
   )
 
