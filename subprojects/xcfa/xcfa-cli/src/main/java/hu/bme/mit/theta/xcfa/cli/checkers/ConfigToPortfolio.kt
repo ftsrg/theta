@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -35,7 +35,6 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.io.FileReader
-import java.util.concurrent.TimeUnit
 import javax.script.Bindings
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
@@ -102,7 +101,7 @@ fun getPortfolioChecker(
   val result =
     portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
-  logger.result("Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
+  logger.result("Config ${result.first.first} succeeded in ${sw.elapsedMillis()} ms")
   logger.benchmark("success-result: ${result.first.first}\n")
   result.second
     as

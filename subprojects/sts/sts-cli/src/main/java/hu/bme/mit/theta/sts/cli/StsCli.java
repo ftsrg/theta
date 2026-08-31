@@ -18,7 +18,6 @@ package hu.bme.mit.theta.sts.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
@@ -48,6 +47,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.common.stopwatch.Stopwatch;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -77,7 +77,6 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -370,7 +369,7 @@ public class StsCli {
                 status = formalismChecker.check(null);
             }
             sw.stop();
-            printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
+            printResult(status, sts, sw.elapsedMillis());
             if (status.isUnsafe() && cexfile != null) {
                 writeCex(sts, status.asUnsafe());
             }

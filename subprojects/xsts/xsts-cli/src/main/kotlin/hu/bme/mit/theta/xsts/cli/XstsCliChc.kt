@@ -15,11 +15,10 @@
  */
 package hu.bme.mit.theta.xsts.cli
 
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.analysis.toRelations
-import java.util.concurrent.TimeUnit
 
 class XstsCliChc :
   XstsCliBaseCommand(name = "CHC", help = "Model checking using the Horn solving backend") {
@@ -33,6 +32,6 @@ class XstsCliChc :
     val checker = HornChecker(xsts.toRelations(), solverFactory, logger)
     val result = checker.check()
     sw.stop()
-    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsedMillis())
   }
 }
