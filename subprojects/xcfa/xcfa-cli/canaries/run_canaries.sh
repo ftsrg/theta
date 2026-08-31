@@ -24,12 +24,11 @@
 #                         WARNING: do not run this over the whole
 #                         canaries.tsv casually — it is the real,
 #                         possibly-slow verifier. Use TSV_FILE to point
-#                         at a small subset (e.g. output of spot_check.py)
-#                         or guard_set.tsv.
+#                         at a small subset.
 #
-#   TSV_FILE    A canaries.tsv-shaped TSV (also accepts guard_set.tsv —
-#               columns are looked up by name, extra leading columns are
-#               ignored). Default: canaries.tsv next to this script.
+#   TSV_FILE    A canaries.tsv-shaped TSV. Columns are looked up by name
+#               and extra leading columns are ignored, so any superset of
+#               the schema works. Default: canaries.tsv next to this script.
 #
 # Environment overrides:
 #   SV_BENCHMARKS_ROOT   sv-benchmarks checkout root
@@ -160,9 +159,8 @@ fi
 export PARSE_TIMEOUT="${PARSE_TIMEOUT:-60}"
 export FULL_TIMEOUT="${FULL_TIMEOUT:-90}"
 
-# Normalize input: extract the 8 canaries columns by name so this also
-# works unmodified against guard_set.tsv (which has 2 extra leading
-# columns) or any TSV superset of the canaries.tsv schema.
+# Normalize input: extract the 8 canaries columns by name, so any TSV that is a
+# superset of the canaries.tsv schema works unmodified.
 normalized_lines=$(awk -F'\t' '
   NR==1 {
     for (i = 1; i <= NF; i++) col[$i] = i
