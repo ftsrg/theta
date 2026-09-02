@@ -63,13 +63,20 @@ public class MddExpressionTemplate implements MddNode.Template {
             SAT_CACHE = new MddGraph.Key<>("satCache");
 
     // simplify outputs are fixed points: remembering them (per graph, by identity) makes the
-    // re-simplify of an expression a caller already simplified O(1) instead of a full traversal
+    // re-simplify of an expression a caller already simplified O(1) instead of a full traversal.
+    // Weak identity keys: the memo must not keep dead expressions (and their subtrees) alive.
     private static final MddGraph.Key<Set<Expr<BoolType>>> SIMPLIFIED =
             new MddGraph.Key<>("simplifiedExprs");
 
+    private static Set<Expr<BoolType>> newSimplifiedSet() {
+        final java.util.concurrent.ConcurrentMap<Expr<BoolType>, Boolean> weakIdentityMap =
+                new com.google.common.collect.MapMaker().weakKeys().makeMap();
+        return Collections.newSetFromMap(weakIdentityMap);
+    }
+
     static Expr<BoolType> simplify(final Expr<BoolType> expr, final MddGraph<?> graph) {
         final Set<Expr<BoolType>> known =
-                graph.getAttribute(SIMPLIFIED, () -> Collections.newSetFromMap(new IdentityHashMap<>()));
+                graph.getAttribute(SIMPLIFIED, MddExpressionTemplate::newSimplifiedSet);
         if (known.contains(expr)) {
             return expr;
         }
@@ -81,7 +88,7 @@ public class MddExpressionTemplate implements MddNode.Template {
     static Expr<BoolType> simplify(
             final Expr<BoolType> expr, final Valuation valuation, final MddGraph<?> graph) {
         final Set<Expr<BoolType>> known =
-                graph.getAttribute(SIMPLIFIED, () -> Collections.newSetFromMap(new IdentityHashMap<>()));
+                graph.getAttribute(SIMPLIFIED, MddExpressionTemplate::newSimplifiedSet);
         final Expr<BoolType> result = ExprUtils.simplify(expr, valuation);
         known.add(result);
         return result;

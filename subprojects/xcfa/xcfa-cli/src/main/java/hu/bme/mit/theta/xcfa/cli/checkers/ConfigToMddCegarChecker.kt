@@ -32,7 +32,11 @@ import hu.bme.mit.theta.xcfa.cli.params.MddCegarRefinement
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -68,7 +72,30 @@ fun getMddCegarChecker(
       MddCegarRefinement.BW_BIN_ITP -> createBwBinItpCheckerFactory(refinementSolverFactory)
     }
 
-  val baseChecker = { monolithicExpr: MonolithicExpr ->
+  // Boolean variables assigned at most once per transition are tracked explicitly, like the control
+  // variables, instead of through predicates: their two values cost the MDD nothing and every
+  // predicate over them would only carve the same two cells.
+  fun isBoolean(v: VarDecl<*>): Boolean {
+    if (v.type is BoolType) return true
+    // C's _Bool is an integer type in the frontend; the metadata still knows it
+    return try {
+      CComplexType.getType(v.ref, parseContext) is CBool
+    } catch (e: Exception) {
+      false
+    }
+  }
+
+  fun promoteBools(me: MonolithicExpr): MonolithicExpr {
+    if (!mddCegarConfig.explicitBools) return me
+    val promoted =
+      me.vars.filter { it !in me.ctrlVars && me.transOffsetIndex[it] >= 1 && isBoolean(it) }
+    if (promoted.isEmpty()) return me
+    logger.write(Logger.Level.MAINSTEP, "Explicit Boolean variables: %d\n", promoted.size)
+    return me.copy(ctrlVars = me.ctrlVars + promoted)
+  }
+
+  val baseChecker = { rawExpr: MonolithicExpr ->
+    val monolithicExpr = promoteBools(rawExpr)
     MddCegarChecker(
       monolithicExpr,
       solverPool,
@@ -88,6 +115,7 @@ fun getMddCegarChecker(
         JoiningPrecRefiner.create(ItpRefToPredPrec(mddCegarConfig.predSplit.exprSplitter)),
       literalPlacement = mddCegarConfig.literalPlacement,
       tracesPerIteration = mddCegarConfig.tracesPerIteration,
+      clearCaches = mddCegarConfig.clearCaches,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
