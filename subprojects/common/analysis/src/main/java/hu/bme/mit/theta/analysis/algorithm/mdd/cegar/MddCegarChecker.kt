@@ -80,8 +80,10 @@ constructor(
   private val logger: Logger,
   private val traceCheckerFactory: (MonolithicExpr) -> ExprTraceChecker<ItpRefutation>,
   private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  // the property only: the init expression as a predicate mentions every variable, so its literal
+  // connects every other literal to every transition and defeats the per-group relation split
   private val initPrec: (MonolithicExpr) -> PredPrec = { model ->
-    PredPrec.of(listOf(model.propExpr, model.initExpr))
+    PredPrec.of(listOf(model.propExpr))
   },
   private val precRefiner: PrecRefiner<PredState, ExprAction, PredPrec, ItpRefutation> =
     JoiningPrecRefiner.create(ItpRefToPredPrec(ExprSplitters.atoms())),
@@ -162,11 +164,12 @@ constructor(
 
       logger.write(
         Logger.Level.MAINSTEP,
-        "CEGAR iteration %d: |prec|=%d, newLiterals=%d, relationChecks=%d, saturationChecks=%d, " +
-          "stateSpace=%d, violating=%d, cacheHit=%d/%d, ssgTime=%dms\n",
+        "CEGAR iteration %d: |prec|=%d, newLiterals=%d, transitions=%d, relationChecks=%d, " +
+          "saturationChecks=%d, stateSpace=%d, violating=%d, cacheHit=%d/%d, ssgTime=%dms\n",
         i,
         currentPrec.preds.size,
         newLits.size,
+        model.split.size,
         iter.relationSolverCalls,
         iter.saturationSolverCalls,
         iter.stateSpaceSize,
@@ -195,10 +198,11 @@ constructor(
         totalTime.stop()
         logSummary(i, totalSolverCalls, totalTime.elapsedMillis())
         val valuations = res.asFeasible().valuations
+        // the checked trace's actions are the concrete per-step actions already
         val cex =
-          Trace.of(
+          Trace.of<ExplState, ExprAction>(
             valuations.states.map { ExplState.of(it) },
-            valuations.actions.map { concreteModel.action() },
+            valuations.actions.map { it as ExprAction },
           )
         return SafetyResult.unsafe(
           cex,

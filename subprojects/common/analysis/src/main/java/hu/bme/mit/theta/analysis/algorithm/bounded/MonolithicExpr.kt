@@ -38,8 +38,14 @@ constructor(
   val ctrlVars: Collection<VarDecl<*>> = listOf(),
   val events: List<Event<VarDecl<*>>> =
     splitTransExpr(transExpr).map { MonolithicExprEvent(it, transOffsetIndex) },
+  /**
+   * An explicit disjunctive decomposition of [transExpr]. When given, [split] returns exactly this
+   * list (in this order) instead of splitting a top-level disjunction of [transExpr]; consumers may
+   * rely on the indices, see [splitAction].
+   */
+  val explicitSplit: List<Expr<BoolType>>? = null,
 ) {
-  val split: List<Expr<BoolType>> by lazy { splitTransExpr(transExpr) }
+  val split: List<Expr<BoolType>> by lazy { explicitSplit ?: splitTransExpr(transExpr) }
 }
 
 fun MonolithicExpr.action() =
@@ -48,6 +54,25 @@ fun MonolithicExpr.action() =
 
     override fun nextIndexing(): VarIndexing = transOffsetIndex
   }
+
+/**
+ * The action of the [index]th disjunct of a [MonolithicExpr.split]: the transition that actually
+ * fired in a step, as opposed to [action], which stands for the whole relation.
+ */
+class MonolithicExprSplitAction(
+  val index: Int,
+  private val expr: Expr<BoolType>,
+  private val indexing: VarIndexing,
+) : ExprAction {
+  override fun toExpr(): Expr<BoolType> = expr
+
+  override fun nextIndexing(): VarIndexing = indexing
+
+  override fun toString(): String = "SplitAction($index)"
+}
+
+fun MonolithicExpr.splitAction(index: Int): ExprAction =
+  MonolithicExprSplitAction(index, split[index], transOffsetIndex)
 
 // TODO: not this simple, can mess up STS with or
 private fun splitTransExpr(expr: Expr<BoolType>): List<Expr<BoolType>> {
