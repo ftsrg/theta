@@ -603,9 +603,23 @@ data class MddConfig(
   var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
+/** Trace checkers available to the MDD CEGAR backend. */
+enum class MddCegarRefinement {
+  SEQ_ITP,
+  FW_BIN_ITP,
+  BW_BIN_ITP,
+}
+
 data class MddCegarConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
+  @Parameter(
+    names = ["--refinement-solver"],
+    description = "Solver for the trace check / interpolation (defaults to --solver)",
+  )
+  var refinementSolver: String = "",
+  @Parameter(names = ["--refinement"], description = "Trace checker used for refinement")
+  var refinement: MddCegarRefinement = MddCegarRefinement.SEQ_ITP,
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
