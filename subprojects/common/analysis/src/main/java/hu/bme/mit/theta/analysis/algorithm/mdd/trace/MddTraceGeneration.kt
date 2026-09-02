@@ -53,6 +53,9 @@ import java.util.concurrent.TimeoutException
  * step from the previous state; the final state is chosen as a successor of its predecessor inside the
  * violating set, not an arbitrary violating state.
  */
+/** A generated trace and the (single) violating state it ends in, in the state order. */
+internal class GeneratedTrace(val trace: Trace<ExplState, ExprAction>, val target: MddHandle)
+
 internal fun generateTrace(
   transNodes: List<MddHandle>,
   transSig: MddSignature,
@@ -64,17 +67,21 @@ internal fun generateTrace(
   traceTimeout: Long,
   logger: Logger,
   transDataBoundary: Any? = null,
-): Trace<ExplState, ExprAction>? {
+  /** Violating states not to end in (targets of traces generated earlier in the same iteration). */
+  excluded: MddHandle? = null,
+): GeneratedTrace? {
+  val violating = if (excluded != null) propViolating.minus(excluded) else propViolating
+  if (violating.isTerminalZero) return null
   // when an initial state itself violates, seed with the initial violating states: TraceProvider
   // would accept the whole violating set as a length-1 trace and the valuation collector could
   // pick a non-initial state from it, producing a trace that fails concretization
-  val initViolating = propViolating.intersection(initNode)
+  val initViolating = violating.intersection(initNode)
   val traceSeed =
-    if (MddInterpreter.calculateNonzeroCount(initViolating) > 0) initViolating else propViolating
+    if (MddInterpreter.calculateNonzeroCount(initViolating) > 0) initViolating else violating
 
   val executor = Executors.newSingleThreadExecutor()
   val future =
-    executor.submit<Trace<ExplState, ExprAction>> {
+    executor.submit<GeneratedTrace> {
       val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
       val explicitTrans =
         transNodes.map {
@@ -123,7 +130,7 @@ internal fun generateTrace(
             0,
           )
         }
-      return@submit Trace.of(valuations.map(ExplState::of), actions)
+      return@submit GeneratedTrace(Trace.of(valuations.map(ExplState::of), actions), states.last())
     }
 
   val traceTime = Stopwatch.createStarted()

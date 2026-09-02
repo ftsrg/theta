@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.cegar
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
+import hu.bme.mit.delta.java.mdd.MddVariable
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.delta.mdd.MddInterpreter
@@ -102,11 +103,19 @@ constructor(
   private val splitRelation: Boolean = true,
   // check the counterexample with the transition fired at each step instead of the whole relation
   private val perStepRefinement: Boolean = true,
+  // where new literal levels go relative to the existing ones (BOTTOM disables seeding, whose lifts
+  // assume the newest literals on top)
+  private val literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
+  // how many counterexamples (ending in distinct violating states) to refine with per iteration
+  private val tracesPerIteration: Int = 1,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
+
+  private val seedingEnabled = useTransitionSeeding && literalPlacement == LiteralPlacement.TOP
+  private val boundEnabled = useTransitionBound && seedingEnabled
 
   // the transition bound (upper) subsumes the reach-set constraint's source pruning, so the reach
   // constraint is dropped when it is used; witness caching (lower) is the orthogonal seeding knob
-  private val applyReachConstraint = useReachConstraint && !useTransitionBound
+  private val applyReachConstraint = useReachConstraint && !boundEnabled
 
   init {
     require(!useTransitionBound || useTransitionSeeding) {
@@ -121,7 +130,7 @@ constructor(
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    val orders = CegarOrders(concreteModel, useTransitionSeeding, useTransitionBound)
+    val orders = CegarOrders(concreteModel, seedingEnabled, boundEnabled, literalPlacement)
     orders.stateOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     orders.transOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     orders.stateExprOrder?.mddGraph?.setAttribute(
@@ -129,7 +138,7 @@ constructor(
       lookAheadStrategy,
     )
     val seed =
-      if (useTransitionSeeding)
+      if (seedingEnabled)
         SeedKnowledge(
           transitionBinding(concreteModel),
           orders.transDataBoundary,
@@ -158,7 +167,7 @@ constructor(
       i++
       val (model, newLits) = abstractor.abstractModel(currentPrec)
 
-      newLits.forEach(orders::createLevelOnTop)
+      newLits.forEach(orders::createLiteralLevel)
 
       val constraint = if (applyReachConstraint) prevStateSpace else null
 
@@ -192,32 +201,48 @@ constructor(
         )
       }
 
-      checkNotNull(iter.trace) {
+      check(iter.traces.isNotEmpty()) {
         "CEGAR iteration $i found a violation but trace generation timed out"
       }
 
-      val predTrace = abstractor.toPredTrace(iter.trace)
-      val res = traceChecker.check(predTrace)
-      if (res.isFeasible) {
-        totalTime.stop()
-        logSummary(i, totalSolverCalls, totalTime.elapsedMillis())
-        val valuations = res.asFeasible().valuations
-        // the checked trace's actions are the concrete per-step actions already
-        val cex =
-          Trace.of<ExplState, ExprAction>(
-            valuations.states.map { ExplState.of(it) },
-            valuations.actions.map { it as ExprAction },
+      val refinementTime = Stopwatch.createStarted()
+      var refined = currentPrec
+      for (trace in iter.traces) {
+        val predTrace = abstractor.toPredTrace(trace)
+        val res = traceChecker.check(predTrace)
+        if (res.isFeasible) {
+          totalTime.stop()
+          logSummary(i, totalSolverCalls, totalTime.elapsedMillis())
+          val valuations = res.asFeasible().valuations
+          // the checked trace's actions are the concrete per-step actions already
+          val cex =
+            Trace.of<ExplState, ExprAction>(
+              valuations.states.map { ExplState.of(it) },
+              valuations.actions.map { it as ExprAction },
+            )
+          return SafetyResult.unsafe(
+            cex,
+            MddProof.of(iter.stateSpace, proofStrategy),
+            statisticsOf(iter, totalTime.elapsedMillis()),
           )
-        return SafetyResult.unsafe(
-          cex,
-          MddProof.of(iter.stateSpace, proofStrategy),
-          statisticsOf(iter, totalTime.elapsedMillis()),
-        )
+        }
+        refined = precRefiner.refine(refined, predTrace, res.asInfeasible().refutation)
       }
-
-      val refutation = res.asInfeasible().refutation
-      currentPrec = precRefiner.refine(currentPrec, predTrace, refutation)
-      currentPrec = PredPrec.of(currentPrec.preds.filter { ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any() })
+      refinementTime.stop()
+      val newPrec =
+        PredPrec.of(
+          refined.preds.filter { ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any() }
+        )
+      logger.write(
+        Logger.Level.MAINSTEP,
+        "CEGAR refinement %d: traces=%d, traceStates=%s, checkTime=%dms, newPreds=%d\n",
+        i,
+        iter.traces.size,
+        iter.traces.map { it.states.size }.toString(),
+        refinementTime.elapsedMillis(),
+        newPrec.preds.size - currentPrec.preds.size,
+      )
+      currentPrec = newPrec
 
       prevStateSpace = iter.stateSpace
     }
@@ -227,7 +252,7 @@ constructor(
     val stateSpace: MddHandle,
     val violatingSize: Long,
     val stateSpaceSize: Long,
-    val trace: Trace<ExplState, ExprAction>?,
+    val traces: List<Trace<ExplState, ExprAction>>,
     val relationSolverCalls: Long,
     val saturationSolverCalls: Long,
     val ssgTimeMs: Long,
@@ -322,26 +347,34 @@ constructor(
     val violatingSize = MddInterpreter.calculateNonzeroCount(propViolating)
     val stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace)
 
-    val trace =
-      if (violatingSize != 0L) {
-        // trace generation does set operations between state sets and the taller init node, so the
-        // init node is brought to a state-order set: reachable ∩ init = init (init ⊆ reachable)
-        val traceInitNode =
-          if (stateExprSig != null) filterStates(stateSpace, initNode, seed?.init?.bound)
-          else initNode
-        generateTrace(
-          transNodes,
-          transSig,
-          stateSpace,
-          propViolating,
-          traceInitNode,
-          stateSig,
-          model,
-          traceTimeout,
-          logger,
-          orders.transDataBoundary,
-        )
-      } else null
+    val traces = ArrayList<Trace<ExplState, ExprAction>>()
+    if (violatingSize != 0L) {
+      // trace generation does set operations between state sets and the taller init node, so the
+      // init node is brought to a state-order set: reachable ∩ init = init (init ⊆ reachable)
+      val traceInitNode =
+        if (stateExprSig != null) filterStates(stateSpace, initNode, seed?.init?.bound)
+        else initNode
+      // several traces per iteration end in distinct violating states; each is refined separately
+      var excluded: MddHandle? = null
+      for (k in 0 until tracesPerIteration) {
+        val generated =
+          generateTrace(
+            transNodes,
+            transSig,
+            stateSpace,
+            propViolating,
+            traceInitNode,
+            stateSig,
+            model,
+            traceTimeout,
+            logger,
+            orders.transDataBoundary,
+            excluded,
+          ) ?: break
+        traces.add(generated.trace)
+        excluded = excluded?.union(generated.target) ?: generated.target
+      }
+    }
 
     // after trace generation, so its probes land in the extracted bounds too
     if (seed != null) {
@@ -354,7 +387,7 @@ constructor(
       stateSpace,
       violatingSize,
       stateSpaceSize,
-      trace,
+      traces,
       relSolverCalls,
       satSolverCalls,
       ssgTime.elapsedMillis(),
@@ -446,11 +479,26 @@ constructor(
  * per refinement, above the ctrl levels and — with seeding — the concrete witness levels at the
  * bottom of the trans and state-expression orders.
  */
+/** Where a new literal level is inserted relative to the existing literal levels. */
+enum class LiteralPlacement {
+  /** Newest literal highest (the seeding lifts depend on this). */
+  TOP,
+  /** Newest literal lowest, directly above the ctrl levels. */
+  BOTTOM,
+}
+
 private class CegarOrders(
   concreteModel: MonolithicExpr,
   useTransitionSeeding: Boolean,
   useTransitionBound: Boolean,
+  private val literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
 ) {
+  // the lowest literal level of each order (for BOTTOM placement; null before the first literal)
+  private var lowestStateLiteral: MddVariable? = null
+  private var lowestStateExprLiteral: MddVariable? = null
+  private var lowestStateBoundLiteral: MddVariable? = null
+  private var lowestTransLiteral: MddVariable? = null // the primed (lower) level of the lowest pair
+  private var lowestTransBoundLiteral: MddVariable? = null
 
   val stateOrder: MddVariableOrder =
     JavaMddFactory.getDefault()
@@ -525,6 +573,49 @@ private class CegarOrders(
     createStateExprLevelOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
     // abstract vars (ctrl vars and literals) always have offset 1 in the abstract relation
     createTransLevelOnTop(v, 1)
+  }
+
+  /** A new literal level in every order, placed according to [literalPlacement]. */
+  fun createLiteralLevel(v: VarDecl<*>) {
+    val desc0 = MddVariableDescriptor.create(v.getConstDecl(0), 0)
+    val desc1 = MddVariableDescriptor.create(v.getConstDecl(1), 0)
+    val bottom = literalPlacement == LiteralPlacement.BOTTOM && lowestStateLiteral != null
+    if (!bottom) {
+      val s = stateOrder.createOnTop(desc0)
+      if (lowestStateLiteral == null) lowestStateLiteral = s
+      lowestStateExprLiteral = insertTop(stateExprOrder, desc0, lowestStateExprLiteral)
+      lowestStateBoundLiteral = insertTop(stateBoundOrder, desc0, lowestStateBoundLiteral)
+      val t = transOrder.createOnTop(desc1)
+      transOrder.createOnTop(desc0)
+      if (lowestTransLiteral == null) lowestTransLiteral = t
+      transBoundOrder?.let {
+        val tb = it.createOnTop(desc1)
+        it.createOnTop(desc0)
+        if (lowestTransBoundLiteral == null) lowestTransBoundLiteral = tb
+      }
+    } else {
+      // directly above the ctrl block: below the current lowest literal, pairs kept v0 above v1
+      lowestStateLiteral = stateOrder.createBelow(lowestStateLiteral!!, desc0)
+      lowestStateExprLiteral = stateExprOrder?.createBelow(lowestStateExprLiteral!!, desc0)
+      lowestStateBoundLiteral = stateBoundOrder?.createBelow(lowestStateBoundLiteral!!, desc0)
+      val t0 = transOrder.createBelow(lowestTransLiteral!!, desc0)
+      lowestTransLiteral = transOrder.createBelow(t0, desc1)
+      transBoundOrder?.let {
+        val tb0 = it.createBelow(lowestTransBoundLiteral!!, desc0)
+        lowestTransBoundLiteral = it.createBelow(tb0, desc1)
+      }
+    }
+  }
+
+  // creates on top and returns the first-created (lowest) literal level of that order
+  private fun insertTop(
+    order: MddVariableOrder?,
+    desc: MddVariableDescriptor,
+    lowest: MddVariable?,
+  ): MddVariable? {
+    if (order == null) return null
+    val created = order.createOnTop(desc)
+    return lowest ?: created
   }
 
   private fun createTransLevelOnTop(v: VarDecl<*>, targetIndex: Int) {
