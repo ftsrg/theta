@@ -123,13 +123,17 @@ constructor(
           )
       }
 
-    // transOffsetIndex: default offset 1, incremented only over non-ctrl concrete vars
+    // transOffsetIndex: default offset 1 (literals, ctrl vars assigned once); non-ctrl concrete vars
+    // and ctrl vars assigned several times per transition keep their concrete offsets
     var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
-    concreteModel.vars
-      .filter { it !in concreteModel.ctrlVars }
-      .forEach { decl ->
-        repeat(concreteModel.transOffsetIndex[decl]) { indexingBuilder = indexingBuilder.inc(decl) }
+    concreteModel.vars.forEach { decl ->
+      val offset = concreteModel.transOffsetIndex[decl]
+      if (decl !in concreteModel.ctrlVars) {
+        repeat(offset) { indexingBuilder = indexingBuilder.inc(decl) }
+      } else if (offset > 1) {
+        repeat(offset - 1) { indexingBuilder = indexingBuilder.inc(decl) }
       }
+    }
     val transOffsetIndex = indexingBuilder.build()
 
     // group the concrete transitions by their connected literal set, in first-seen order

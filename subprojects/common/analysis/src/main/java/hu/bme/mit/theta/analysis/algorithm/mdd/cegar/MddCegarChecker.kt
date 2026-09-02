@@ -108,6 +108,8 @@ constructor(
   private val literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
   // how many counterexamples (ending in distinct violating states) to refine with per iteration
   private val tracesPerIteration: Int = 1,
+  // drop the saturation and SAT caches before every iteration (bounded memory, no cross-iteration reuse)
+  private val clearCaches: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   private val seedingEnabled = useTransitionSeeding && literalPlacement == LiteralPlacement.TOP
@@ -165,6 +167,12 @@ constructor(
 
     while (true) {
       i++
+      if (clearCaches && i > 1) {
+        provider.clear()
+        listOfNotNull(orders.stateOrder, orders.transOrder, orders.stateExprOrder).forEach {
+          it.mddGraph.getAttribute(MddExpressionTemplate.SAT_CACHE)?.clear()
+        }
+      }
       val (model, newLits) = abstractor.abstractModel(currentPrec)
 
       newLits.forEach(orders::createLiteralLevel)
@@ -493,6 +501,10 @@ private class CegarOrders(
   useTransitionBound: Boolean,
   private val literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
 ) {
+  // the concrete relation offsets of the ctrl vars, consulted when their trans levels are created
+  private val ctrlOffsets: Map<VarDecl<*>, Int> =
+    concreteModel.ctrlVars.associateWith { concreteModel.transOffsetIndex[it] }
+
   // the lowest literal level of each order (for BOTTOM placement; null before the first literal)
   private var lowestStateLiteral: MddVariable? = null
   private var lowestStateExprLiteral: MddVariable? = null
@@ -571,8 +583,9 @@ private class CegarOrders(
   fun createLevelOnTop(v: VarDecl<*>) {
     stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
     createStateExprLevelOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
-    // abstract vars (ctrl vars and literals) always have offset 1 in the abstract relation
-    createTransLevelOnTop(v, 1)
+    // ctrl vars keep their concrete offset (1 for the XCFA location and edge variables; a promoted
+    // Boolean may be assigned several times per transition); a var never assigned gets an identity
+    createTransLevelOnTop(v, ctrlOffsets[v] ?: 1)
   }
 
   /** A new literal level in every order, placed according to [literalPlacement]. */

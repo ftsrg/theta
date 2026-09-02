@@ -91,36 +91,46 @@ internal fun generateTrace(
         explicitTrans.map { ReverseNextStateDescriptor.of(stateSpace, it) }
       val orReversed = OrNextStateDescriptor.create(reversedDescriptors)
 
+      // both providers register themselves on the graph: dispose them, or every iteration's trace
+      // caches (reversed relations, single-step results) stay reachable for the whole run
       val traceProvider = TraceProvider(stateSig.variableOrder)
-      val layers =
-        traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
-
-      // the backward walk records neither the fired transition nor, for the last layer, which
-      // violating state is reached: resolve both by stepping forward transition by transition
-      val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
       val stepper = SingleStepProvider(stateSig.variableOrder)
-      val top = stateSig.topVariableHandle
-      val states = ArrayList<MddHandle>(layers.size)
-      val actions = ArrayList<ExprAction>(layers.size - 1)
-      states.add(layers[0].satOne())
-      for (k in 0 until layers.size - 1) {
-        val source = states[k]
-        var resolved = false
-        for ((index, transition) in forward.withIndex()) {
-          val successors =
-            stepper.compute(MddNodePostcondition.of(source), transition, top).intersection(layers[k + 1])
-          if (!successors.isTerminalZero) {
-            states.add(successors.satOne())
-            actions.add(model.splitAction(index))
-            resolved = true
-            break
+      val states = ArrayList<MddHandle>()
+      val actions = ArrayList<ExprAction>()
+      try {
+        val layers =
+          traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
+
+        // the backward walk records neither the fired transition nor, for the last layer, which
+        // violating state is reached: resolve both by stepping forward transition by transition
+        val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
+        val top = stateSig.topVariableHandle
+        states.add(layers[0].satOne())
+        for (k in 0 until layers.size - 1) {
+          val source = states[k]
+          var resolved = false
+          for ((index, transition) in forward.withIndex()) {
+            val successors =
+              stepper
+                .compute(MddNodePostcondition.of(source), transition, top)
+                .intersection(layers[k + 1])
+            if (!successors.isTerminalZero) {
+              states.add(successors.satOne())
+              actions.add(model.splitAction(index))
+              resolved = true
+              break
+            }
+          }
+          if (!resolved) {
+            // should not happen: fall back to the layer's own state and the whole relation
+            states.add(layers[k + 1].satOne())
+            actions.add(model.action())
           }
         }
-        if (!resolved) {
-          // should not happen: fall back to the layer's own state and the whole relation
-          states.add(layers[k + 1].satOne())
-          actions.add(model.action())
-        }
+      } finally {
+        traceProvider.dispose()
+        stepper.clear()
+        stepper.dispose()
       }
 
       val valuations =

@@ -699,6 +699,19 @@ data class MddCegarConfig(
       "Number of abstract counterexamples (ending in distinct violating states) refined per CEGAR iteration",
   )
   var tracesPerIteration: Int = 1,
+  @Parameter(
+    names = ["--clear-caches"],
+    description = "Drop the saturation and SAT caches before every CEGAR iteration",
+    arity = 1,
+  )
+  var clearCaches: Boolean = false,
+  @Parameter(
+    names = ["--explicit-bools"],
+    description =
+      "Track Boolean variables (assigned at most once per transition) explicitly like control variables instead of abstracting them",
+    arity = 1,
+  )
+  var explicitBools: Boolean = false,
 ) : SpecBackendConfig
 
 data class Ic3Config(
