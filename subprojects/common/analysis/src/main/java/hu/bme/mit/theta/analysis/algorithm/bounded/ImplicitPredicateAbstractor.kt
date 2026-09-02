@@ -63,7 +63,15 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
  * same literal levels anyway in one node instead of repeating the enumeration per transition. With
  * every literal connected to every transition this degenerates to the single monolithic node.
  */
-class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
+class ImplicitPredicateAbstractor
+@JvmOverloads
+constructor(
+  private val concreteModel: MonolithicExpr,
+  /** Group the relation by connected literals; false gives the single monolithic disjunct. */
+  private val splitRelation: Boolean = true,
+  /** Map trace steps to the fired concrete transition; false maps every step to the whole relation. */
+  private val perStepActions: Boolean = true,
+) {
 
   private val predToLiteral = LinkedHashMap<Expr<BoolType>, VarDecl<BoolType>>()
   private val literalToPredMap = LinkedHashMap<Decl<*>, Expr<BoolType>>()
@@ -127,9 +135,14 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
     // group the concrete transitions by their connected literal set, in first-seen order
     val literalVars = activationLiterals.associateWith { ExprUtils.getVars(literalToPredMap[it]!!) }
     val groups = LinkedHashMap<Set<VarDecl<BoolType>>, MutableList<Int>>()
-    concreteModel.split.indices.forEach { i ->
-      val connected = connectedLiterals(transitionVars[i], activationLiterals, literalVars)
-      groups.getOrPut(connected) { ArrayList() }.add(i)
+    if (splitRelation) {
+      concreteModel.split.indices.forEach { i ->
+        val connected = connectedLiterals(transitionVars[i], activationLiterals, literalVars)
+        groups.getOrPut(connected) { ArrayList() }.add(i)
+      }
+    } else {
+      // one group, every literal connected: the classic monolithic abstract relation
+      groups[activationLiterals.toSet()] = concreteModel.split.indices.toMutableList()
     }
     groupTransitions = groups.values.map { it.toList() }
     val splits =
@@ -184,7 +197,11 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
   fun toPredTrace(trace: Trace<ExplState, ExprAction>): Trace<PredState, ExprAction> {
     val actions =
       trace.actions.mapIndexed { k, action ->
-        if (action is MonolithicExprSplitAction && action.index in groupTransitions.indices)
+        if (
+          perStepActions &&
+            action is MonolithicExprSplitAction &&
+            action.index in groupTransitions.indices
+        )
           concreteAction(groupTransitions[action.index], trace.states[k], trace.states[k + 1])
         else concreteModel.action()
       }
