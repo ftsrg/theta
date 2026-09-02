@@ -23,7 +23,9 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner
 import hu.bme.mit.theta.analysis.expr.refinement.createSeqItpCheckerFactory
+import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
@@ -68,6 +70,10 @@ fun getMddCegarChecker(
       proofStrategy = mddCegarConfig.proofStrategy,
       splitRelation = mddCegarConfig.splitRelation,
       perStepRefinement = mddCegarConfig.perStepRefinement,
+      precRefiner =
+        JoiningPrecRefiner.create(ItpRefToPredPrec(mddCegarConfig.predSplit.exprSplitter)),
+      literalPlacement = mddCegarConfig.literalPlacement,
+      tracesPerIteration = mddCegarConfig.tracesPerIteration,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
@@ -735,6 +736,23 @@ data class MddCegarConfig(
     arity = 1,
   )
   var perStepRefinement: Boolean = true,
+  @Parameter(
+    names = ["--pred-split"],
+    description = "How refinement interpolants are turned into predicates",
+  )
+  var predSplit: ExprSplitterOptions = ExprSplitterOptions.ATOMS,
+  @Parameter(
+    names = ["--literal-placement"],
+    description =
+      "Where new literal levels go in the MDD orders: TOP (newest highest) or BOTTOM (newest directly above the ctrl levels; disables seeding)",
+  )
+  var literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
+  @Parameter(
+    names = ["--traces-per-iteration"],
+    description =
+      "Number of abstract counterexamples (ending in distinct violating states) refined per CEGAR iteration",
+  )
+  var tracesPerIteration: Int = 1,
 ) : SpecBackendConfig
 
 data class Ic3Config(

@@ -213,7 +213,7 @@ constructor(
           monolithicExpr,
           traceTimeout,
           logger,
-        ) ?: Trace.of(listOf(ExplState.top()), listOf())
+        )?.trace ?: Trace.of(listOf(ExplState.top()), listOf())
       result = SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
     } else {
       result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)
