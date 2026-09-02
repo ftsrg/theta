@@ -721,6 +721,26 @@ data class MddCegarConfig(
     arity = 1,
   )
   var transitionBound: Boolean = true,
+  @Parameter(
+    names = ["--split-relation"],
+    description =
+      "Build the abstract relation per group of concrete transitions with identical connected literals (identity for the rest)",
+    arity = 1,
+  )
+  var splitRelation: Boolean = true,
+  @Parameter(
+    names = ["--per-step-refinement"],
+    description =
+      "Check the abstract counterexample with the concrete transition fired at each step instead of the whole relation",
+    arity = 1,
+  )
+  var perStepRefinement: Boolean = true,
+  @Parameter(
+    names = ["--init-prec-with-init"],
+    description = "Add the initial-state expression to the initial precision",
+    arity = 1,
+  )
+  var initPrecWithInit: Boolean = false,
 ) : SpecBackendConfig
 
 data class Ic3Config(

@@ -98,6 +98,12 @@ constructor(
     MddExpressionRepresentation.MddToExprStrategy.NONE,
   private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  // build the abstract relation per group of concrete transitions with identical connected literals
+  private val splitRelation: Boolean = true,
+  // check the counterexample with the transition fired at each step instead of the whole relation
+  private val perStepRefinement: Boolean = true,
+  // add the initial-state expression to the initial precision (the pre-split default)
+  private val initPrecWithInit: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   // the transition bound (upper) subsumes the reach-set constraint's source pruning, so the reach
@@ -137,9 +143,10 @@ constructor(
         )
       else null
 
-    val abstractor = ImplicitPredicateAbstractor(concreteModel)
+    val abstractor = ImplicitPredicateAbstractor(concreteModel, splitRelation, perStepRefinement)
     val traceChecker = traceCheckerFactory(concreteModel)
     var currentPrec = initPrec(concreteModel)
+    if (initPrecWithInit) currentPrec = PredPrec.of(currentPrec.preds + concreteModel.initExpr)
     var prevStateSpace: MddHandle? = null
 
     // one provider for the whole run: its saturation/relProd caches are keyed by (node, descriptor),
