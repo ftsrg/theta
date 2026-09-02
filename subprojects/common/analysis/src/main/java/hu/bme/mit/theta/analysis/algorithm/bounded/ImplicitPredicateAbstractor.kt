@@ -146,17 +146,21 @@ constructor(
     }
     groupTransitions = groups.values.map { it.toList() }
     val splits =
-      groups.map { (connected, transitions) ->
-        val identity = activationLiterals.filter { it !in connected }
-        And(
-          listOf(
-            And(connected.map { lambda[it]!! }),
-            And(connected.map { lambdaPrime[it]!! }),
-            Or(transitions.map { concreteModel.split[it] }),
-            And(identity.map { Eq(Exprs.Prime(it.ref), it.ref) }),
+      if (!splitRelation)
+        // the classic monolithic relation, over the raw transition expression
+        listOf(And(listOf(And(lambda.values), And(lambdaPrime.values), concreteModel.transExpr)))
+      else
+        groups.map { (connected, transitions) ->
+          val identity = activationLiterals.filter { it !in connected }
+          And(
+            listOf(
+              And(connected.map { lambda[it]!! }),
+              And(connected.map { lambdaPrime[it]!! }),
+              Or(transitions.map { concreteModel.split[it] }),
+              And(identity.map { Eq(Exprs.Prime(it.ref), it.ref) }),
+            )
           )
-        )
-      }
+        }
     val allLambda = And(lambda.values)
 
     val model =
@@ -274,30 +278,51 @@ constructor(
     return connected
   }
 
-  /** The variables a transition reads or writes: all its variables except those only framed. */
+  /**
+   * The variables a transition reads or writes: all variables of its non-frame conjuncts, plus every
+   * variable the relation may change (offset above 0) that this transition does not frame — a
+   * havoc leaves no constraint at all, so its absence from the expression means "written", not
+   * "untouched".
+   */
   private fun readWriteVars(transition: Expr<BoolType>): Set<VarDecl<*>> {
     val conjuncts = ArrayList<Expr<BoolType>>()
     fun collect(e: Expr<BoolType>) {
       if (e is AndExpr) e.ops.forEach(::collect) else conjuncts.add(e)
     }
     collect(transition)
-    return conjuncts.filterNot(::isFrameEquality).flatMap { ExprUtils.getVars(it) }.toSet()
+    val framed = HashSet<VarDecl<*>>()
+    val touched = HashSet<VarDecl<*>>()
+    for (c in conjuncts) {
+      val frameVar = frameEqualityVar(c)
+      if (frameVar != null) framed.add(frameVar) else touched.addAll(ExprUtils.getVars(c))
+    }
+    for (v in concreteModel.vars) {
+      if (v !in concreteModel.ctrlVars && concreteModel.transOffsetIndex[v] > 0 && v !in framed) {
+        touched.add(v)
+      }
+    }
+    return touched
   }
 
-  /** `x = x'…'`, either side first: the unfolder's frame condition for a variable left untouched. */
-  private fun isFrameEquality(e: Expr<BoolType>): Boolean {
+  /**
+   * The variable of a frame condition `x = x'…'` (either side first, the unfolder's condition for a
+   * variable the transition leaves untouched), or null if [e] is not one.
+   */
+  private fun frameEqualityVar(e: Expr<BoolType>): VarDecl<*>? {
     val (left, right) =
       when (e) {
         is EqExpr<*> -> e.leftOp to e.rightOp
         is IffExpr -> e.leftOp to e.rightOp
-        else -> return false
+        else -> return null
       }
     val (leftVar, leftPrimes) = stripPrimes(left)
     val (rightVar, rightPrimes) = stripPrimes(right)
-    return leftVar != null &&
-      leftVar == rightVar &&
-      minOf(leftPrimes, rightPrimes) == 0 &&
-      leftPrimes != rightPrimes
+    val frame =
+      leftVar != null &&
+        leftVar == rightVar &&
+        minOf(leftPrimes, rightPrimes) == 0 &&
+        leftPrimes != rightPrimes
+    return if (frame) leftVar else null
   }
 
   private fun stripPrimes(e: Expr<*>): Pair<VarDecl<*>?, Int> {
