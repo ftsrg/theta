@@ -21,10 +21,14 @@ import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
+import hu.bme.mit.theta.analysis.algorithm.bounded.splitAction
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SingleStepProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.TraceProvider
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -37,11 +41,17 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Backward trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and [MddCegarChecker]: reverses the transition
- * nodes over the computed state space and walks from [propViolating] back to [initNode]. Returns
- * null if generation does not finish within [traceTimeout] seconds. With seeding the trans order has
- * concrete witness levels below the abstract ones that [stateSig] lacks, so [transDataBoundary] must
- * cut the extraction there — otherwise the reversed descent outlives the state recursion.
+ * Backward trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and
+ * [hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker]: reverses the transition nodes
+ * over the computed state space and walks from [propViolating] back to [initNode]. Returns null if
+ * generation does not finish within [traceTimeout] seconds. With seeding the trans order has concrete
+ * witness levels below the abstract ones that [stateSig] lacks, so [transDataBoundary] must cut the
+ * extraction there — otherwise the reversed descent outlives the state recursion.
+ *
+ * Each step of the returned trace carries the action of the transition (element of
+ * [MonolithicExpr.split], matched by index to [transNodes]) that produced it, resolved by a forward
+ * step from the previous state; the final state is chosen as a successor of its predecessor inside the
+ * violating set, not an arbitrary violating state.
  */
 internal fun generateTrace(
   transNodes: List<MddHandle>,
@@ -65,28 +75,55 @@ internal fun generateTrace(
   val executor = Executors.newSingleThreadExecutor()
   val future =
     executor.submit<Trace<ExplState, ExprAction>> {
-      val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
       val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
-      for (transNode in transNodes) {
-        val explTrans =
-          MddExplicitRepresentationExtractor.transform(transNode, mirrorTop, transDataBoundary)
-        reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
-      }
+      val explicitTrans =
+        transNodes.map {
+          MddExplicitRepresentationExtractor.transform(it, mirrorTop, transDataBoundary)
+        }
+      val reversedDescriptors: List<AbstractNextStateDescriptor> =
+        explicitTrans.map { ReverseNextStateDescriptor.of(stateSpace, it) }
       val orReversed = OrNextStateDescriptor.create(reversedDescriptors)
 
       val traceProvider = TraceProvider(stateSig.variableOrder)
-      val mddTrace =
+      val layers =
         traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
-      val valuations =
-        mddTrace
-          .map {
-            PathUtils.extractValuation(
-              MddValuationCollector.collect(it).stream().findFirst().orElseThrow(),
-              0,
-            )
+
+      // the backward walk records neither the fired transition nor, for the last layer, which
+      // violating state is reached: resolve both by stepping forward transition by transition
+      val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
+      val stepper = SingleStepProvider(stateSig.variableOrder)
+      val top = stateSig.topVariableHandle
+      val states = ArrayList<MddHandle>(layers.size)
+      val actions = ArrayList<ExprAction>(layers.size - 1)
+      states.add(layers[0].satOne())
+      for (k in 0 until layers.size - 1) {
+        val source = states[k]
+        var resolved = false
+        for ((index, transition) in forward.withIndex()) {
+          val successors =
+            stepper.compute(MddNodePostcondition.of(source), transition, top).intersection(layers[k + 1])
+          if (!successors.isTerminalZero) {
+            states.add(successors.satOne())
+            actions.add(model.splitAction(index))
+            resolved = true
+            break
           }
-          .toList()
-      return@submit Trace.of(valuations.map(ExplState::of), model.action())
+        }
+        if (!resolved) {
+          // should not happen: fall back to the layer's own state and the whole relation
+          states.add(layers[k + 1].satOne())
+          actions.add(model.action())
+        }
+      }
+
+      val valuations =
+        states.map {
+          PathUtils.extractValuation(
+            MddValuationCollector.collect(it).stream().findFirst().orElseThrow(),
+            0,
+          )
+        }
+      return@submit Trace.of(valuations.map(ExplState::of), actions)
     }
 
   val traceTime = Stopwatch.createStarted()
