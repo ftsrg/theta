@@ -68,7 +68,6 @@ fun getMddCegarChecker(
       proofStrategy = mddCegarConfig.proofStrategy,
       splitRelation = mddCegarConfig.splitRelation,
       perStepRefinement = mddCegarConfig.perStepRefinement,
-      initPrecWithInit = mddCegarConfig.initPrecWithInit,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

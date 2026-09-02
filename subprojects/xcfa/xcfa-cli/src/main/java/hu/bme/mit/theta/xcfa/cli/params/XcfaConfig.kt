@@ -667,12 +667,6 @@ data class MddCegarConfig(
     arity = 1,
   )
   var perStepRefinement: Boolean = true,
-  @Parameter(
-    names = ["--init-prec-with-init"],
-    description = "Add the initial-state expression to the initial precision",
-    arity = 1,
-  )
-  var initPrecWithInit: Boolean = false,
 ) : SpecBackendConfig
 
 data class Ic3Config(
