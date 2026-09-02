@@ -25,8 +25,10 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos
@@ -363,6 +365,14 @@ fun <T1 : Type, T2 : Type> AssignStmtLabel(
     is RefExpr<*> -> AssignStmtLabel(lhs as RefExpr<T1>, rhs, metadata)
     is Dereference<*, *, *> ->
       StmtLabel(MemoryAssignStmt.create(lhs as Dereference<*, *, *>, rhs), metadata = metadata)
+    else -> throw IllegalArgumentException("LHS of assignment must be a reference expression.")
+  }
+
+@Suppress("FunctionName")
+fun HavocStmtLabel(lhs: Expr<*>, metadata: MetaData = EmptyMetaData): StmtLabel =
+  when (lhs) {
+    is RefExpr<*> -> StmtLabel(Havoc(lhs.decl as VarDecl<*>), metadata = metadata)
+    is Dereference<*, *, *> -> StmtLabel(SkipStmt.getInstance())
     else -> throw IllegalArgumentException("LHS of assignment must be a reference expression.")
   }
 
