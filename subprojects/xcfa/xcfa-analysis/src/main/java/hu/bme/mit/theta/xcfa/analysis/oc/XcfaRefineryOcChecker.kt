@@ -74,7 +74,8 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
 
   private fun generateMetamodel(): String {
     return """
-            class Event {
+            import builtin::strategy.
+            abstract class Event {
                 int value
             }
             
@@ -82,10 +83,11 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
             
             class Read extends Event.
             class Write extends Event.
-
-            !exists(Read::new).
-            !exists(Read::new).
             
+            !exists(Read::new).
+            !exists(Write::new).
+            
+            @decide(false)
             pred hb(Event a, Event b).
             
             pred po(Event a, Event b).
@@ -96,40 +98,69 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
             
             pred ws(Write w1, Write w2).
             default !ws(*, *).
-
+            
             propagation rule rfIsHb(Write w, Read r) <->
                 rf(w, r) ==> hb(w, r).
+            propagation rule notHbIsNotRf(Write w, Read r) <->
+                !hb(w, r) ==> !rf(w, r).
                 
             propagation rule poIsHb(Event a, Event b) <->
                 po(a, b) ==> hb(a, b).
+            propagation rule notHbIsNotPo(Event a, Event b) <->
+                !hb(a, b) ==> !po(a, b).
                 
             propagation rule wsIsHb(Write w1, Write w2) <->
                 ws(w1, w2) ==> hb(w1, w2).
-
+            propagation rule notHbIsNotWs(Write w1, Write w2) <->
+                !hb(w1, w2) ==> !ws(w1, w2).
+                
+            propagation rule hbAntySymmetric(Event a, Event b) <->
+                hb(a, b) ==> !hb(b, a).
+            
+            error pred cycle(Event e) <-> hb(e, e).
+            
+            propagation rule hbNotReflexive(Event e)
+                ==> !hb(e, e).
+            
             propagation rule hbTransitive(Event a, Event c) <->
                 hb(a, b), hb(b, c) ==> hb(a, c).
                 
             pred wsInactive(Write w1, Write w2) <->
                 !guard(w1) ; !guard(w2).
-        
+            
             error pred wsViolation(Write w1, Write w2) <->
                 ws(w1, w2),
                 wsInactive(w1, w2).
-
-            error pred cycle(Event e) <-> hb(e, e).
-
+            
             pred rfDisabledOrNotEqual(Write w, Read r) <->
                 value(w) != value(r) ;
                 !guard(w) ; 
                 !guard(r).
-        
+            
             error pred rfViolation(Write w, Read r) <->
-                (rf(w, r)), 
+                rf(w, r), 
                 rfDisabledOrNotEqual(w, r).
-
+            
+            propagation rule rfVal(Write w, Read r) <->
+                rf(w, r) ==> guard(w), guard(r), assert value(w) == value(r).
+            
             error pred readFromSeveralWriters(Read r, Write w1, Write w2) <->
                 rf(w1, r), rf(w2, r), w1 != w2.
+            
+            propagation rule readFromSeveralWritesProp2(Read r, Write w2) <->
+                rf(w1, r), w1 != w2 ==> !rf(w2, r).
+            
+            propagation rule noRfForDisabledRead(Write w, Read r) <->
+                !guard(r), may(rf(w, r)) ==> !rf(w, r).
                 
+            error pred rfSome(Read r) <->
+                guard(r), !rf(_, r).
+            
+            error pred fromReadViolation(Write w1, Write w2, Read r) <->
+                rf(w1, r), ws(w1, w2), hb(w2, r).
+            
+            propagation rule fromReadPropagation(Write w2, Read r) <->
+                rf(w1, r), ws(w1, w2) ==> hb(r, w2).
         """.trimIndent()
   }
 
@@ -350,6 +381,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       helperScripts.add(helperDef)
       "$helperName()"
     }
+    is PosExpr<*> -> op.toRefineryExpr(events, helperScripts, currentEventId)
     else -> throw UnsupportedOperationException("Unsupported expression $this in refinery expression conversion.")
   }
 }
