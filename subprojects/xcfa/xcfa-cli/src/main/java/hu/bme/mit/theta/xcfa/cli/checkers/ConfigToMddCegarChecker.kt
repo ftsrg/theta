@@ -117,6 +117,9 @@ fun getMddCegarChecker(
       tracesPerIteration = mddCegarConfig.tracesPerIteration,
       clearCaches = mddCegarConfig.clearCaches,
       adaptivePredSplit = mddCegarConfig.adaptivePredSplit,
+      forceEvents = mddCegarConfig.forceEvents,
+      forceReverse = mddCegarConfig.forceReverse,
+      traceSearch = mddCegarConfig.traceSearch,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

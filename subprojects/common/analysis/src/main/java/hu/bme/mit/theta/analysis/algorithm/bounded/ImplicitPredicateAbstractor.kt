@@ -153,6 +153,17 @@ constructor(
       groups[activationLiterals.toSet()] = concreteModel.split.indices.toMutableList()
     }
     groupTransitions = groups.values.map { it.toList() }
+    // events over the connected closure: the literal levels an abstract transition node really spans
+    val closureOf = HashMap<Int, Set<VarDecl<BoolType>>>()
+    groups.forEach { (connected, transitions) -> transitions.forEach { closureOf[it] = connected } }
+    val closureEvents: List<Event<VarDecl<*>>> =
+      concreteModel.split.indices.map { i ->
+        val affected: List<VarDecl<*>> =
+          transitionVars[i].filter { it in concreteModel.ctrlVars } + closureOf[i]!!.toList()
+        object : Event<VarDecl<*>> {
+          override fun getAffectedVars(): List<VarDecl<*>> = affected
+        }
+      }
     val splits =
       if (!splitRelation)
         // the classic monolithic relation, over the raw transition expression
@@ -196,7 +207,7 @@ constructor(
           },
         explicitSplit = splits,
       )
-    return AbstractionResult(model, newLiterals, connectivity)
+    return AbstractionResult(model, newLiterals, connectivity, closureEvents)
   }
 
   /**
@@ -350,4 +361,10 @@ data class AbstractionResult(
   val newLiterals: List<VarDecl<BoolType>>, // creation order
   /** For every literal, the number of concrete transitions it is connected to. */
   val connectivity: Map<VarDecl<BoolType>, Int> = emptyMap(),
+  /**
+   * One event per concrete transition over its ctrl vars and the connected-literal closure of its
+   * group (the levels its abstract transition node spans), for FORCE ordering; [model]'s own events
+   * use only the literals sharing a variable with the transition.
+   */
+  val closureEvents: List<Event<VarDecl<*>>> = emptyList(),
 )

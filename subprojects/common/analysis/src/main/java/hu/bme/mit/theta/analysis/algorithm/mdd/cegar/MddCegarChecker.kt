@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.ImplicitPredicateAbstractor
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
@@ -112,6 +113,12 @@ constructor(
   private val clearCaches: Boolean = false,
   // refine with whole interpolants first and fall back to [precRefiner] only when that adds nothing
   private val adaptivePredSplit: Boolean = false,
+  // the events the FORCE ordering minimizes the spans of
+  private val forceEvents: ForceEvents = ForceEvents.DIRECT,
+  // flip the FORCE ordering: its top becomes the bottom
+  private val forceReverse: Boolean = false,
+  // how the abstract counterexample is searched backward from the violating states
+  private val traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   private val wholeRefiner: PrecRefiner<PredState, ExprAction, PredPrec, ItpRefutation> =
@@ -187,7 +194,13 @@ constructor(
         // the FORCE ordering of the abstract model's variables (ctrl vars and literals interleaved;
         // events: the concrete transitions with their connected literals); the levels of an existing
         // order cannot be permuted, so the orders, graphs and caches are rebuilt from scratch
-        val o = newOrders(model.orderVars())
+        val ordered =
+          when (forceEvents) {
+            ForceEvents.DIRECT -> model.orderVars()
+            ForceEvents.CLOSURE ->
+              orderVarsFromRandomStartingPoints(model.vars, abstraction.closureEvents, 50)
+          }
+        val o = newOrders(if (forceReverse) ordered.reversed() else ordered)
         orders = o
         provider = iterationStrategy.createProvider(o.stateOrder)
       } else {
@@ -425,6 +438,7 @@ constructor(
             logger,
             orders.transDataBoundary,
             excluded,
+            traceSearch == TraceSearch.BFS,
           ) ?: break
         traces.add(generated.trace)
         excluded = excluded?.union(generated.target) ?: generated.target
@@ -534,6 +548,28 @@ constructor(
  * per refinement, above the ctrl levels and — with seeding — the concrete witness levels at the
  * bottom of the trans and state-expression orders.
  */
+/** How the abstract counterexample is searched backward from the violating states. */
+enum class TraceSearch {
+  /**
+   * One arbitrary unexplored predecessor per step with backtracking: cheap steps, but the walk (and
+   * so the counterexample) can be far longer than the shortest one and depends on the variable order.
+   */
+  DFS,
+  /** Layers of all unexplored predecessors: the shortest counterexample. */
+  BFS,
+}
+
+/** The events whose spans the FORCE ordering ([LiteralPlacement.FORCE]) minimizes. */
+enum class ForceEvents {
+  /** Per concrete transition: its ctrl vars and the literals sharing a variable with it. */
+  DIRECT,
+  /**
+   * Per concrete transition: its ctrl vars and the connected-literal closure of its group, i.e. the
+   * literal levels its abstract transition node actually spans.
+   */
+  CLOSURE,
+}
+
 /** Where a new literal level is inserted relative to the existing literal levels. */
 enum class LiteralPlacement {
   /** Newest literal highest (the seeding lifts depend on this). */
