@@ -136,7 +136,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   @Parameter(
     names = ["--memory-init"],
     description =
-      "How the dereference memory array starts: ZERO, UNCONSTRAINED, or AUTO, which is ZERO for the MDD backends and UNCONSTRAINED otherwise",
+      "How the dereference memory array starts: ZERO, UNCONSTRAINED, or AUTO, which is ZERO for the MDD backend, whose fixpoint needs a finite set of initial states, and UNCONSTRAINED otherwise",
   )
   var memoryInit: MemoryInit = MemoryInit.AUTO,
   @Parameter(
