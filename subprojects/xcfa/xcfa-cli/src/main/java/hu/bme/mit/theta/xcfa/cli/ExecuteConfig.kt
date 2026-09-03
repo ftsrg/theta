@@ -86,16 +86,16 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.defaultLevel = config.frontendConfig.lbeLevel
   // A saturation fixpoint enumerates the initial states, and an unconstrained memory array is not a
-  // finite set of them, so the MDD backends cannot start at all on a program that takes the address of
-  // a variable. They get zeroed memory unless told otherwise; the price is that uninitialized stack
-  // and heap read as zeroed, which can hide a bug but cannot invent one.
+  // finite set of them, so MDD cannot start at all on a program that takes the address of a variable:
+  // zeroing it is worth 18 tasks on SV-COMP sw-concurrency and loses none. MDD_CEGAR is deliberately
+  // excluded even though it also builds diagrams, because there the array is an ordinary data variable
+  // that predicate abstraction quantifies away rather than a level of its own; it was never blocked,
+  // and zeroing only narrows its initial states, which measured 367 against 370.
   DereferenceToArrayPass.zeroInitialized =
     when (config.frontendConfig.memoryInit) {
       MemoryInit.ZERO -> true
       MemoryInit.UNCONSTRAINED -> false
-      MemoryInit.AUTO ->
-        config.backendConfig.backend == Backend.MDD ||
-          config.backendConfig.backend == Backend.MDD_CEGAR
+      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
     }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
