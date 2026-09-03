@@ -110,14 +110,22 @@ constructor(
   private val tracesPerIteration: Int = 1,
   // drop the saturation and SAT caches before every iteration (bounded memory, no cross-iteration reuse)
   private val clearCaches: Boolean = false,
+  // refine with whole interpolants first and fall back to [precRefiner] only when that adds nothing
+  private val adaptivePredSplit: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
+
+  private val wholeRefiner: PrecRefiner<PredState, ExprAction, PredPrec, ItpRefutation> =
+    JoiningPrecRefiner.create(ItpRefToPredPrec(ExprSplitters.whole()))
 
   private val seedingEnabled = useTransitionSeeding && literalPlacement == LiteralPlacement.TOP
   private val boundEnabled = useTransitionBound && seedingEnabled
 
   // the transition bound (upper) subsumes the reach-set constraint's source pruning, so the reach
-  // constraint is dropped when it is used; witness caching (lower) is the orthogonal seeding knob
-  private val applyReachConstraint = useReachConstraint && !boundEnabled
+  // constraint is dropped when it is used; witness caching (lower) is the orthogonal seeding knob.
+  // FORCE placement rebuilds the orders every iteration, and the previous reach set, a node of the
+  // old orders, cannot be carried over
+  private val applyReachConstraint =
+    useReachConstraint && !boundEnabled && literalPlacement != LiteralPlacement.FORCE
 
   init {
     require(!useTransitionBound || useTransitionSeeding) {
@@ -132,18 +140,14 @@ constructor(
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    val orders = CegarOrders(concreteModel, seedingEnabled, boundEnabled, literalPlacement)
-    orders.stateOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
-    orders.transOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
-    orders.stateExprOrder?.mddGraph?.setAttribute(
-      MddExpressionRepresentation.LOOK_AHEAD,
-      lookAheadStrategy,
-    )
+    // FORCE placement creates its orders per iteration, once the abstract model is known
+    var orders: CegarOrders? =
+      if (literalPlacement == LiteralPlacement.FORCE) null else newOrders(null)
     val seed =
       if (seedingEnabled)
         SeedKnowledge(
           transitionBinding(concreteModel),
-          orders.transDataBoundary,
+          orders!!.transDataBoundary,
           orders.stateDataBoundary,
           orders.transBoundOrder,
           orders.stateBoundOrder,
@@ -160,15 +164,16 @@ constructor(
     // one provider for the whole run: its saturation/relProd caches are keyed by (node, descriptor),
     // so a refined relation never gets a false hit, while the unchanged concrete sub-structure is
     // reused across iterations; the graph cleanup listener prunes entries whose nodes have died
-    val provider = iterationStrategy.createProvider(orders.stateOrder)
+    var provider: StateSpaceEnumerationProvider? =
+      orders?.let { iterationStrategy.createProvider(it.stateOrder) }
 
     var totalSolverCalls = 0L
     var i = 0
 
     while (true) {
       i++
-      if (clearCaches && i > 1) {
-        provider.clear()
+      if (clearCaches && i > 1 && orders != null) {
+        provider!!.clear()
         listOfNotNull(orders.stateOrder, orders.transOrder, orders.stateExprOrder).forEach {
           it.mddGraph.getAttribute(MddExpressionTemplate.SAT_CACHE)?.clear()
         }
@@ -177,18 +182,40 @@ constructor(
       val model = abstraction.model
       val newLits = abstraction.newLiterals
 
-      newLits.forEach { orders.createLiteralLevel(it, abstraction.connectivity[it] ?: 0) }
+      val orderTime = Stopwatch.createStarted()
+      if (literalPlacement == LiteralPlacement.FORCE) {
+        // the FORCE ordering of the abstract model's variables (ctrl vars and literals interleaved;
+        // events: the concrete transitions with their connected literals); the levels of an existing
+        // order cannot be permuted, so the orders, graphs and caches are rebuilt from scratch
+        val o = newOrders(model.orderVars())
+        orders = o
+        provider = iterationStrategy.createProvider(o.stateOrder)
+      } else {
+        newLits.forEach { orders!!.createLiteralLevel(it, abstraction.connectivity[it] ?: 0) }
+      }
+      orderTime.stop()
+      val currentOrders = orders!!
+      val currentProvider = provider!!
 
       val constraint = if (applyReachConstraint) prevStateSpace else null
 
       val iter =
-        runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred, provider)
+        runIteration(
+          model,
+          constraint,
+          currentOrders,
+          seed,
+          newLits,
+          abstractor.literalToPred,
+          currentProvider,
+        )
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
 
       logger.write(
         Logger.Level.MAINSTEP,
         "CEGAR iteration %d: |prec|=%d, newLiterals=%d, transitions=%d, relationChecks=%d, " +
-          "saturationChecks=%d, stateSpace=%d, violating=%d, cacheHit=%d/%d, ssgTime=%dms\n",
+          "saturationChecks=%d, stateSpace=%d, violating=%d, cacheHit=%d/%d, ssgTime=%dms, " +
+          "orderTime=%dms\n",
         i,
         currentPrec.preds.size,
         newLits.size,
@@ -200,6 +227,7 @@ constructor(
         iter.hitCount,
         iter.queryCount,
         iter.ssgTimeMs,
+        orderTime.elapsedMillis(),
       )
 
       if (iter.violatingSize == 0L) {
@@ -236,7 +264,14 @@ constructor(
             statisticsOf(iter, totalTime.elapsedMillis()),
           )
         }
-        refined = precRefiner.refine(refined, predTrace, res.asInfeasible().refutation)
+        val refutation = res.asInfeasible().refutation
+        refined =
+          if (adaptivePredSplit) {
+            // whole interpolants keep the literal count low; atoms only when they bring nothing new
+            val whole = wholeRefiner.refine(refined, predTrace, refutation)
+            if (whole.preds.size > refined.preds.size) whole
+            else precRefiner.refine(refined, predTrace, refutation)
+          } else precRefiner.refine(refined, predTrace, refutation)
       }
       refinementTime.stop()
       val newPrec =
@@ -256,6 +291,16 @@ constructor(
 
       prevStateSpace = iter.stateSpace
     }
+  }
+
+  /** Fresh orders; with [fullOrder], every level (ctrl vars and literals) in that order, top first. */
+  private fun newOrders(fullOrder: List<VarDecl<*>>?): CegarOrders {
+    val orders =
+      CegarOrders(concreteModel, seedingEnabled, boundEnabled, literalPlacement, fullOrder)
+    listOfNotNull(orders.stateOrder, orders.transOrder, orders.stateExprOrder).forEach {
+      it.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    }
+    return orders
   }
 
   private data class IterationResult(
@@ -501,6 +546,12 @@ enum class LiteralPlacement {
    * is, so it goes low; a rarely used one goes high, raising few).
    */
   CONNECTIVITY,
+  /**
+   * The FORCE variable ordering heuristic over the abstract model, ctrl vars and literals interleaved,
+   * recomputed and rebuilt from scratch every iteration (the reach constraint and cross-iteration
+   * cache reuse are lost; seeding is disabled).
+   */
+  FORCE,
 }
 
 private class CegarOrders(
@@ -508,6 +559,9 @@ private class CegarOrders(
   useTransitionSeeding: Boolean,
   useTransitionBound: Boolean,
   private val literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
+  // a complete ordering of the ctrl vars and literals (first = highest level) to build instead of
+  // the ctrl-block-at-the-bottom layout; used by FORCE placement
+  fullOrder: List<VarDecl<*>>? = null,
 ) {
   // the concrete relation offsets of the ctrl vars, consulted when their trans levels are created
   private val ctrlOffsets: Map<VarDecl<*>, Int> =
@@ -565,6 +619,16 @@ private class CegarOrders(
     private set
 
   init {
+    if (fullOrder != null) {
+      require(!useTransitionSeeding) { "a full ordering has no place for the witness levels" }
+      // built bottom-up; literals go on top of whatever is below them
+      fullOrder.reversed().forEach {
+        if (it in concreteModel.ctrlVars) createLevelOnTop(it) else createLiteralLevel(it)
+      }
+    } else initCtrlAtBottom(concreteModel, useTransitionSeeding)
+  }
+
+  private fun initCtrlAtBottom(concreteModel: MonolithicExpr, useTransitionSeeding: Boolean) {
     // ctrl vars sit at the bottom, in the concrete model's relative ordering
     val orderedVars = concreteModel.orderVars()
     val ctrlOrdered = orderedVars.filter { it in concreteModel.ctrlVars }
@@ -619,6 +683,8 @@ private class CegarOrders(
           while (i < literals.size && literals[i].connectivity >= connectivity) i++
           i
         }
+        // the full ordering is built bottom-up, so each literal goes on top
+        LiteralPlacement.FORCE -> literals.size
       }
     val entry =
       if (index == literals.size) {
