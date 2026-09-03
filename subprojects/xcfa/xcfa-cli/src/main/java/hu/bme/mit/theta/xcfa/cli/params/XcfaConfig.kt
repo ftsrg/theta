@@ -712,6 +712,13 @@ data class MddCegarConfig(
     arity = 1,
   )
   var explicitBools: Boolean = false,
+  @Parameter(
+    names = ["--adaptive-pred-split"],
+    description =
+      "Refine with whole interpolants first; fall back to --pred-split only when that adds no predicate",
+    arity = 1,
+  )
+  var adaptivePredSplit: Boolean = false,
 ) : SpecBackendConfig
 
 data class Ic3Config(
