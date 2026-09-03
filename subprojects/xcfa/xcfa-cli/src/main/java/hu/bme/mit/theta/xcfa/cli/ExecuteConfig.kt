@@ -88,7 +88,18 @@ fun runConfig(
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.defaultLevel = config.frontendConfig.lbeLevel
-  DereferenceToArrayPass.zeroInitialized = config.frontendConfig.zeroInitMemory
+  // A saturation fixpoint enumerates the initial states, and an unconstrained memory array is not a
+  // finite set of them, so the MDD backends cannot start at all on a program that takes the address of
+  // a variable. They get zeroed memory unless told otherwise; the price is that uninitialized stack
+  // and heap read as zeroed, which can hide a bug but cannot invent one.
+  DereferenceToArrayPass.zeroInitialized =
+    when (config.frontendConfig.memoryInit) {
+      MemoryInit.ZERO -> true
+      MemoryInit.UNCONSTRAINED -> false
+      MemoryInit.AUTO ->
+        config.backendConfig.backend == Backend.MDD ||
+          config.backendConfig.backend == Backend.MDD_CEGAR
+    }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 

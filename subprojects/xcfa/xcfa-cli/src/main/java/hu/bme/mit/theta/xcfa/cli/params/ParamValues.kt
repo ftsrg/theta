@@ -836,3 +836,16 @@ enum class WitnessLevel {
   SVCOMP,
   ALL,
 }
+
+/** How the dereference memory array starts out. */
+enum class MemoryInit {
+  /**
+   * Zero for the checkers that enumerate every variable and need a finite set of initial states, and
+   * unconstrained for the rest.
+   */
+  AUTO,
+  /** Zero, as C guarantees for globals; uninitialized stack and heap then read as zeroed too. */
+  ZERO,
+  /** Unconstrained, the faithful choice for stack and heap. */
+  UNCONSTRAINED,
+}
