@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.NamedType;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -38,6 +39,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -310,20 +312,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             return null;
         }
         final List<Integer> bytes = stringLiteralBytes(strings);
-        bytes.add(0); // the terminating NUL is part of the literal's value
-        final Integer dimension = ObjectLayout.constantDimension(arrayType);
-        final int cells = dimension == null ? bytes.size() : Math.min(dimension, bytes.size());
-        final CInitializerList list = new CInitializerList(containerType, parseContext);
-        for (int index = 0; index < cells; index++) {
-            final int value =
-                    element.isSsigned() && bytes.get(index) > 127
-                            ? bytes.get(index) - 256
-                            : bytes.get(index);
-            list.addStatement(
-                    new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(index)), parseContext),
-                    new CExpr(element.getValue(String.valueOf(value)), parseContext));
-        }
-        return list;
+        return stringInitializerListFromBytes(bytes, containerType);
     }
 
     /**
@@ -343,6 +332,28 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     }
 
     /**
+     * The array declaration a string literal used as a *value* stands for: {@code char <name>[n] =
+     * "...";} for the decoded bytes of [ctx] (with the terminating NUL) -- built through exactly the
+     * array-with-initializer machinery {@code char a[] = "..."} already goes through. Callers run the
+     * result the way any other local array declaration is run (allocation + initialization); see
+     * {@code FunctionVisitor#declareStringLiteral}, which is what actually executes it.
+     */
+    public CDeclaration stringLiteralDeclaration(
+        CParser.PrimaryExpressionStringsContext ctx, String name) {
+        final List<Integer> bytes = stringLiteralBytes(ctx);
+        final CSimpleType simpleType = NamedType("char", parseContext, uniqueWarningLogger);
+        simpleType.setSigned(true);
+        final CDeclaration declaration = new CDeclaration(name);
+        declaration.setType(simpleType);
+        declaration.addArrayDimension(
+            new CExpr(
+                CComplexType.getSignedInt(parseContext).getValue(String.valueOf(bytes.size())),
+                parseContext));
+        declaration.setInitExpr(stringInitializerListFromBytes(bytes, declaration.getActualType()));
+        return declaration;
+    }
+
+    /**
      * The byte values of a (possibly multi-token, adjacent-concatenated) string literal, escapes
      * decoded. The encoding prefix is dropped: a wide literal is only ever reached here for a
      * one-byte element type, where treating it as bytes is the closest available reading.
@@ -357,7 +368,33 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             }
             bytes.addAll(CLiterals.stringBytes(text.substring(open + 1, text.length() - 1)));
         }
+        bytes.add(0); // the terminating NUL is part of the literal's value
         return bytes;
+    }
+
+    /**
+     * The byte-to-{@link CInitializerList} tail of {@link #stringInitializerList}, factored out so a
+     * caller that already has the decoded bytes (rather than a source assignment expression to detect
+     * and decode) can build the identical list -- keeping the char-over-127 sign handling in exactly
+     * one place instead of two that could drift apart.
+     */
+    private CInitializerList stringInitializerListFromBytes(
+        List<Integer> bytes, CComplexType containerType) {
+        final CArray arrayType = (CArray) containerType;
+        final CInteger element = (CInteger) arrayType.getEmbeddedType();
+        final Integer dimension = ObjectLayout.constantDimension(arrayType);
+        final int cells = dimension == null ? bytes.size() : Math.min(dimension, bytes.size());
+        final CInitializerList list = new CInitializerList(containerType, parseContext);
+        for (int index = 0; index < cells; index++) {
+            final int value =
+                element.isSsigned() && bytes.get(index) > 127
+                    ? bytes.get(index) - 256
+                    : bytes.get(index);
+            list.addStatement(
+                new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(index)), parseContext),
+                new CExpr(element.getValue(String.valueOf(value)), parseContext));
+        }
+        return list;
     }
 
     /**

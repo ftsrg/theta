@@ -1291,7 +1291,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             CInitializerList list,
             CComplexType ptrType,
             CCompound compound,
-            CParser.BodyDeclarationContext ctx) {
+            ParserRuleContext ctx) {
         final Set<Integer> written = new LinkedHashSet<>();
         if (list != null) {
             writeMembers(objectBase, objectType, list, 0, written, ptrType, compound, ctx);
@@ -1312,7 +1312,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             Set<Integer> written,
             CComplexType ptrType,
             CCompound compound,
-            CParser.BodyDeclarationContext ctx) {
+            ParserRuleContext ctx) {
         int nextPosition = 0;
         for (Tuple2<Optional<CStatement>, CStatement> entry : list.getStatements()) {
             final int position = designatedPosition(entry.get1(), nextPosition);
@@ -1373,7 +1373,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             Set<Integer> written,
             CComplexType ptrType,
             CCompound compound,
-            CParser.BodyDeclarationContext ctx) {
+            ParserRuleContext ctx) {
         if (type instanceof CArray cArrayType) {
             final Integer dimension = ObjectLayout.constantDimension(cArrayType);
             if (dimension == null) {
@@ -1432,7 +1432,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     private void emitInitAssignment(
-            CParser.BodyDeclarationContext ctx,
+            ParserRuleContext ctx,
             CDeclaration declaration,
             CCompound compound,
             CCompound preCompound,
@@ -1511,199 +1511,223 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         compound.setPreStatements(preCompound);
         compound.setPostStatements(postCompound);
         for (CDeclaration declaration : declarations) {
-            if (declaration.getType().isStaticStorage()) {
-                promoteStaticLocal(declaration);
-                continue;
-            }
-            createVars(declaration);
-            if (declaration.getActualType() instanceof CArray cArray) {
-                // A stack array is an `alloca`, not a `malloc`+`free`. Both give it a fresh runtime
-                // base -- so, unlike the old compile-time base, two activations of the function
-                // (recursion, threads) cannot alias -- but `alloca` is the honest model: its memory
-                // is released when the function returns, not by the program, so it lands in the
-                // free residue class and is neither a leak the program must clean up nor freeable.
-                // The old free at scope exit modelled it as heap, which reported a bogus
-                // double-free
-                // for a returned-and-reused block and a bogus leak when the scope was a loop body.
-                parseContext
-                        .getMetadata()
-                        .create(
-                                "alloca",
-                                "cType",
-                                new CPointer(null, cArray.getEmbeddedType(), parseContext));
-                // The block has to span the array's *flat cells*, not its element count: `a[i].f`
-                // is addressed as `a[i * unitCount + f]` (see ExpressionVisitor#rowOf), so an
-                // element occupying several cells makes the object that many times longer. Passing
-                // the bare dimension recorded a size smaller than the object's own addressable
-                // range, and every access past the first element then satisfied the valid-deref
-                // bound `size <= offset` -- `struct Item arr[3]` was recorded as 3 cells for a
-                // 6-cell object.
-                //
-                // Built as an expression, not folded to an int: the dimension may be a VLA's
-                // runtime value, so the scale factor is multiplied in rather than computed here.
-                final int elementCells = cellsOf(cArray.getEmbeddedType());
-                CStatement allocaSize = cArray.getArrayDimension();
-                if (allocaSize == null) {
-                    // `char a[] = {0,1,2};` takes its extent from the initializer, so the
-                    // declarator
-                    // carries no dimension at all. Reading it straight through left `List.of(null)`
-                    // and the frontend died with a bare NullPointerException
-                    // (`memsafety-ext3/naturalNumbers1`); the *global* path has always inferred the
-                    // extent (FrontendXcfaBuilder#getArraySize) and only the local one did not.
-                    // An element *count*, so the scaling below converts it to cells like any other.
-                    final CComplexType countType = CComplexType.getUnsignedLong(parseContext);
-                    allocaSize =
-                            new CExpr(
-                                    countType.getValue(
-                                            String.valueOf(
-                                                    initializerElements(
-                                                            declaration.getInitExpr()))),
-                                    parseContext);
-                }
-                if (elementCells != 1) {
-                    final var dimExpr = allocaSize.getExpression();
-                    final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
-                    final var scaled =
-                            AbstractExprs.Mul(
-                                    dimType.castTo(dimExpr),
-                                    dimType.getValue(String.valueOf(elementCells)));
-                    parseContext.getMetadata().create(scaled, "cType", dimType);
-                    allocaSize = new CExpr(scaled, parseContext);
-                }
-                final var alloca = new CCall("alloca", List.of(allocaSize), parseContext);
-                preCompound.addCStatement(alloca);
-                CAssignment cAssignment =
-                        new CAssignment(
-                                declaration.getVarDecls().get(0).getRef(),
-                                new CExpr(alloca.getRet().getRef(), parseContext),
-                                "=",
-                                parseContext);
-                recordMetadata(ctx, cAssignment);
-                compound.addCStatement(cAssignment);
-                registerScoped(declaration.getVarDecls().get(0));
-            }
-            if (declaration.getInitExpr() != null) {
-                if (declaration.getActualType() instanceof CStruct) {
-                    if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
-                        initializeObject(
-                                declaration.getVarDecls().get(0).getRef(),
-                                declaration.getActualType(),
-                                initializerList,
-                                CComplexType.getUnsignedLong(parseContext),
-                                compound,
-                                ctx);
-                    } else {
-                        Expr<?> expression = declaration.getInitExpr().getExpression();
-                        final var initType = CComplexType.getType(expression, parseContext);
-                        if (expression instanceof RefExpr<?>
-                                || expression instanceof Dereference<?, ?, ?>
-                                || initType instanceof CStruct) {
-                            // A struct value is its base id, whether read from a variable or out of
-                            // another object's cell: `struct S s = *p;` and `= o.field` copy the
-                            // same
-                            // way `= other;` does.
-                            checkState(
-                                    initType instanceof CStruct,
-                                    "Initializer type not handled for structs: " + expression);
-                            checkState(
-                                    initType.equals(declaration.getActualType()),
-                                    "Mismatching types: "
-                                            + initType
-                                            + " vs. "
-                                            + declaration.getActualType());
-                            // Checking the types is not initialising the variable: this branch used
-                            // to stop here, so `struct S s = other;` declared `s` and then quietly
-                            // never copied anything into it, leaving every field of `s`
-                            // unconstrained. The solver could then read whatever it liked out of
-                            // `s`. The shape is not exotic -- it is what a struct-returning
-                            // function
-                            // looks like at the call site (`struct aws_byte_buf buf =
-                            // aws_byte_buf_from_array(a, len);`), so the aws-c-common
-                            // byte_buf/byte_cursor harnesses all asserted on an uninitialised
-                            // struct
-                            // and false-alarmed. The plain statement form (`s = other;`) always
-                            // worked, so emit exactly that, as the non-struct branch below does.
-                            emitInitAssignment(
-                                    ctx, declaration, compound, preCompound, postCompound);
-                        } else {
-                            // A struct/union initialised with a *scalar* (`union U u = raw;`, the
-                            // register-overlay idiom the intel-tdx-module firmware uses): C
-                            // initialises the object's first member, so write the value into its
-                            // first cell (offset 0), exactly as `= { raw }` would. Refusing this
-                            // used
-                            // to fail parsing outright ("Initializer type not handled").
-                            final VarDecl<?> varDecl = declaration.getVarDecls().get(0);
-                            final var ptrType = CComplexType.getUnsignedLong(parseContext);
-                            final LitExpr<?> zero = ptrType.getNullValue();
-                            final var deref =
-                                    Exprs.Dereference(
-                                            cast(varDecl.getRef(), zero.getType()),
-                                            cast(zero, zero.getType()),
-                                            expression.getType());
-                            CAssignment cAssignment =
-                                    new CAssignment(
-                                            deref, declaration.getInitExpr(), "=", parseContext);
-                            recordMetadata(ctx, cAssignment);
-                            compound.addCStatement(cAssignment);
-                        }
-                    }
-                } else {
-                    checkState(
-                            declaration.getVarDecls().size() == 1,
-                            "non-struct declarations shall only have one variable!");
-                    if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
-                        initializeObject(
-                                declaration.getVarDecls().get(0).getRef(),
-                                declaration.getActualType(),
-                                initializerList,
-                                CComplexType.getUnsignedLong(parseContext),
-                                compound,
-                                ctx);
-                    } else {
-                        emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
-                    }
-                }
-            } else {
-                // if there is no initializer, then we'll add an assumption regarding min and max
-                // values
-                if (declaration.getActualType() instanceof CStruct) {
-                    for (VarDecl<?> varDecl : declaration.getVarDecls()) {
-                        if (!(varDecl.getType() instanceof ArrayType)
-                                && !(varDecl.getType()
-                                        instanceof
-                                        BoolType)) { // BoolType is either well-defined true/false,
-                            // or a struct in disguise
-                            AssumeStmt assumeStmt =
-                                    CComplexType.getType(varDecl.getRef(), parseContext)
-                                            .limit(varDecl.getRef());
-                            CAssume cAssume = new CAssume(assumeStmt, parseContext);
-                            recordMetadata(ctx, cAssume);
-                            cAssume.setFunctionName("NotC");
-                            // as assumption is not in C
-                            // file
-                            compound.addCStatement(cAssume);
-                        }
-                    }
-                } else {
-                    VarDecl<?> varDecl = declaration.getVarDecls().get(0);
-                    if (!(varDecl.getType() instanceof ArrayType)
-                            && !(varDecl.getType() instanceof BoolType)
-                            && !(CComplexType.getType(varDecl.getRef(), parseContext)
-                                    instanceof CVoid)) {
-                        AssumeStmt assumeStmt =
-                                CComplexType.getType(varDecl.getRef(), parseContext)
-                                        .limit(varDecl.getRef());
-                        CAssume cAssume = new CAssume(assumeStmt, parseContext);
-                        recordMetadata(ctx, cAssume);
-                        cAssume.setFunctionName("NotC");
-                        // assumption is not in C file
-                        compound.addCStatement(cAssume);
-                    }
-                }
-            }
+            visitDeclaration(declaration, compound, preCompound, postCompound, ctx);
         }
         recordMetadata(ctx, compound);
         return compound;
+    }
+
+    public CDeclaration declareStringLiteral(
+        CParser.PrimaryExpressionStringsContext ctx,
+        CCompound preStatement) {
+        final String name = "__theta_str" + anonCnt++;
+        final CDeclaration declaration = declarationVisitor.stringLiteralDeclaration(ctx, name);
+        createVars(declaration);
+
+        final var preCompound = new CCompound(parseContext);
+        final var postCompound = new CCompound(parseContext);
+        preStatement.setPreStatements(preCompound);
+        preStatement.setPostStatements(postCompound);
+
+        visitDeclaration(declaration, preStatement, preCompound, postCompound, ctx);
+        return declaration;
+    }
+
+    private void visitDeclaration(CDeclaration declaration,
+                                  CCompound compound,
+                                  CCompound preCompound,
+                                  CCompound postCompound,
+                                  ParserRuleContext ctx) {
+        if (declaration.getType().isStaticStorage()) {
+            promoteStaticLocal(declaration);
+            return;
+        }
+        createVars(declaration);
+        if (declaration.getActualType() instanceof CArray cArray) {
+            // A stack array is an `alloca`, not a `malloc`+`free`. Both give it a fresh runtime
+            // base -- so, unlike the old compile-time base, two activations of the function
+            // (recursion, threads) cannot alias -- but `alloca` is the honest model: its memory
+            // is released when the function returns, not by the program, so it lands in the
+            // free residue class and is neither a leak the program must clean up nor freeable.
+            // The old free at scope exit modelled it as heap, which reported a bogus
+            // double-free
+            // for a returned-and-reused block and a bogus leak when the scope was a loop body.
+            parseContext
+                .getMetadata()
+                .create(
+                    "alloca",
+                    "cType",
+                    new CPointer(null, cArray.getEmbeddedType(), parseContext));
+            // The block has to span the array's *flat cells*, not its element count: `a[i].f`
+            // is addressed as `a[i * unitCount + f]` (see ExpressionVisitor#rowOf), so an
+            // element occupying several cells makes the object that many times longer. Passing
+            // the bare dimension recorded a size smaller than the object's own addressable
+            // range, and every access past the first element then satisfied the valid-deref
+            // bound `size <= offset` -- `struct Item arr[3]` was recorded as 3 cells for a
+            // 6-cell object.
+            //
+            // Built as an expression, not folded to an int: the dimension may be a VLA's
+            // runtime value, so the scale factor is multiplied in rather than computed here.
+            final int elementCells = cellsOf(cArray.getEmbeddedType());
+            CStatement allocaSize = cArray.getArrayDimension();
+            if (allocaSize == null) {
+                // `char a[] = {0,1,2};` takes its extent from the initializer, so the
+                // declarator
+                // carries no dimension at all. Reading it straight through left `List.of(null)`
+                // and the frontend died with a bare NullPointerException
+                // (`memsafety-ext3/naturalNumbers1`); the *global* path has always inferred the
+                // extent (FrontendXcfaBuilder#getArraySize) and only the local one did not.
+                // An element *count*, so the scaling below converts it to cells like any other.
+                final CComplexType countType = CComplexType.getUnsignedLong(parseContext);
+                allocaSize =
+                    new CExpr(
+                        countType.getValue(
+                            String.valueOf(
+                                initializerElements(
+                                    declaration.getInitExpr()))),
+                        parseContext);
+            }
+            if (elementCells != 1) {
+                final var dimExpr = allocaSize.getExpression();
+                final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
+                final var scaled =
+                    AbstractExprs.Mul(
+                        dimType.castTo(dimExpr),
+                        dimType.getValue(String.valueOf(elementCells)));
+                parseContext.getMetadata().create(scaled, "cType", dimType);
+                allocaSize = new CExpr(scaled, parseContext);
+            }
+            final var alloca = new CCall("alloca", List.of(allocaSize), parseContext);
+            preCompound.addCStatement(alloca);
+            CAssignment cAssignment =
+                new CAssignment(
+                    declaration.getVarDecls().get(0).getRef(),
+                    new CExpr(alloca.getRet().getRef(), parseContext),
+                    "=",
+                    parseContext);
+            recordMetadata(ctx, cAssignment);
+            compound.addCStatement(cAssignment);
+            registerScoped(declaration.getVarDecls().get(0));
+        }
+        if (declaration.getInitExpr() != null) {
+            if (declaration.getActualType() instanceof CStruct) {
+                if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
+                    initializeObject(
+                        declaration.getVarDecls().get(0).getRef(),
+                        declaration.getActualType(),
+                        initializerList,
+                        CComplexType.getUnsignedLong(parseContext),
+                        compound,
+                        ctx);
+                } else {
+                    Expr<?> expression = declaration.getInitExpr().getExpression();
+                    final var initType = CComplexType.getType(expression, parseContext);
+                    if (expression instanceof RefExpr<?>
+                        || expression instanceof Dereference<?, ?, ?>
+                        || initType instanceof CStruct) {
+                        // A struct value is its base id, whether read from a variable or out of
+                        // another object's cell: `struct S s = *p;` and `= o.field` copy the
+                        // same
+                        // way `= other;` does.
+                        checkState(
+                            initType instanceof CStruct,
+                            "Initializer type not handled for structs: " + expression);
+                        checkState(
+                            initType.equals(declaration.getActualType()),
+                            "Mismatching types: "
+                                + initType
+                                + " vs. "
+                                + declaration.getActualType());
+                        // Checking the types is not initialising the variable: this branch used
+                        // to stop here, so `struct S s = other;` declared `s` and then quietly
+                        // never copied anything into it, leaving every field of `s`
+                        // unconstrained. The solver could then read whatever it liked out of
+                        // `s`. The shape is not exotic -- it is what a struct-returning
+                        // function
+                        // looks like at the call site (`struct aws_byte_buf buf =
+                        // aws_byte_buf_from_array(a, len);`), so the aws-c-common
+                        // byte_buf/byte_cursor harnesses all asserted on an uninitialised
+                        // struct
+                        // and false-alarmed. The plain statement form (`s = other;`) always
+                        // worked, so emit exactly that, as the non-struct branch below does.
+                        emitInitAssignment(
+                            ctx, declaration, compound, preCompound, postCompound);
+                    } else {
+                        // A struct/union initialised with a *scalar* (`union U u = raw;`, the
+                        // register-overlay idiom the intel-tdx-module firmware uses): C
+                        // initialises the object's first member, so write the value into its
+                        // first cell (offset 0), exactly as `= { raw }` would. Refusing this
+                        // used
+                        // to fail parsing outright ("Initializer type not handled").
+                        final VarDecl<?> varDecl = declaration.getVarDecls().get(0);
+                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        final LitExpr<?> zero = ptrType.getNullValue();
+                        final var deref =
+                            Exprs.Dereference(
+                                cast(varDecl.getRef(), zero.getType()),
+                                cast(zero, zero.getType()),
+                                expression.getType());
+                        CAssignment cAssignment =
+                            new CAssignment(
+                                deref, declaration.getInitExpr(), "=", parseContext);
+                        recordMetadata(ctx, cAssignment);
+                        compound.addCStatement(cAssignment);
+                    }
+                }
+            } else {
+                checkState(
+                    declaration.getVarDecls().size() == 1,
+                    "non-struct declarations shall only have one variable!");
+                if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
+                    initializeObject(
+                        declaration.getVarDecls().get(0).getRef(),
+                        declaration.getActualType(),
+                        initializerList,
+                        CComplexType.getUnsignedLong(parseContext),
+                        compound,
+                        ctx);
+                } else {
+                    emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
+                }
+            }
+        } else {
+            // if there is no initializer, then we'll add an assumption regarding min and max
+            // values
+            if (declaration.getActualType() instanceof CStruct) {
+                for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+                    if (!(varDecl.getType() instanceof ArrayType)
+                        && !(varDecl.getType()
+                        instanceof
+                        BoolType)) { // BoolType is either well-defined true/false,
+                        // or a struct in disguise
+                        AssumeStmt assumeStmt =
+                            CComplexType.getType(varDecl.getRef(), parseContext)
+                                .limit(varDecl.getRef());
+                        CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                        recordMetadata(ctx, cAssume);
+                        cAssume.setFunctionName("NotC");
+                        // as assumption is not in C
+                        // file
+                        compound.addCStatement(cAssume);
+                    }
+                }
+            } else {
+                VarDecl<?> varDecl = declaration.getVarDecls().get(0);
+                if (!(varDecl.getType() instanceof ArrayType)
+                    && !(varDecl.getType() instanceof BoolType)
+                    && !(CComplexType.getType(varDecl.getRef(), parseContext)
+                    instanceof CVoid)) {
+                    AssumeStmt assumeStmt =
+                        CComplexType.getType(varDecl.getRef(), parseContext)
+                            .limit(varDecl.getRef());
+                    CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                    recordMetadata(ctx, cAssume);
+                    cAssume.setFunctionName("NotC");
+                    // assumption is not in C file
+                    compound.addCStatement(cAssume);
+                }
+            }
+        }
     }
 
     @Override

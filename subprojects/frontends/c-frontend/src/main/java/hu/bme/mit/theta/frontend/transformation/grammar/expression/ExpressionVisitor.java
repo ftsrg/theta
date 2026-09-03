@@ -3585,11 +3585,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
-        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-        Expr<?> ret = signedInt.getUnitValue();
-        uniqueWarningLogger.write(Level.INFO, "WARNING: using int(1) as a string constant\n");
-        parseContext.getMetadata().create(ret, "cType", signedInt);
-        return ret;
+        CCompound compound = new CCompound(parseContext);
+        CDeclaration ret = functionVisitor.declareStringLiteral(ctx, compound);
+        preStatements.add(compound);
+        return ret.getVarDecls().getFirst().getRef();
     }
 
     class PostfixVisitor extends IncludeHandlingCBaseVisitor<Function<Expr<?>, Expr<?>>> {
