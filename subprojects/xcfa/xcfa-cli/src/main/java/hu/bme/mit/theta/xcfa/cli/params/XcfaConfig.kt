@@ -758,7 +758,7 @@ data class MddCegarConfig(
   @Parameter(
     names = ["--literal-placement"],
     description =
-      "Where new literal levels go in the MDD orders: TOP (newest highest) or BOTTOM (newest directly above the ctrl levels; disables seeding)",
+      "Where new literal levels go in the MDD orders: TOP (newest highest), BOTTOM (newest directly above the ctrl levels) or CONNECTIVITY (most connected lowest); the latter two disable seeding",
   )
   var literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
   @Parameter(

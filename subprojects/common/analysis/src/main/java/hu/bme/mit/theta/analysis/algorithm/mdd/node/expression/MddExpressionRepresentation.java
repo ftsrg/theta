@@ -626,6 +626,17 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 solver.pop();
                 enumerationActive = false;
             }
+            releaseSolver();
+        }
+
+        // A solver is held only while an enumeration keeps state in it; otherwise it goes straight
+        // back to the pool. Every node has a lazy traverser that is never closed, so a traverser that
+        // parked its solver kept a whole Z3 context alive per queried node (thousands per run).
+        private void releaseSolver() {
+            if (solver != null && !enumerationActive) {
+                solverPool.returnSolver(solver);
+                solver = null;
+            }
         }
 
         public MddExpressionRepresentation moveUp() {
@@ -671,6 +682,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     model = status.isSat() ? solver.getModel() : null;
                 }
                 Preconditions.checkNotNull(status);
+                releaseSolver();
                 if (status.isSat()) {
                     cacheModel(model);
                     currentRepresentation.explicitRepresentation.markVisited(assignment);
@@ -836,11 +848,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         @Override
         public void close() {
-            if (solver != null) {
-                stopEnumeration();
-                solverPool.returnSolver(this.solver);
-                this.solver = null;
-            }
+            stopEnumeration();
+            releaseSolver();
         }
 
         private static class QueryResult {
