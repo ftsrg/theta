@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
@@ -544,10 +545,24 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
+    /**
+     * The `(as const (Array I E)) e` construct: an array mapping every index to {@code e}.
+     *
+     * <p>{@link hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr} insists that its element is a
+     * literal, which holds when the term comes from a model but not otherwise. Interpolants and
+     * assertions can name a constant array over an arbitrary term, and building a literal from one of
+     * those failed with "ArrayLitExprs shall only contain literal values!". That killed 59 of 726
+     * SV-COMP sw-concurrency tasks with MathSAT as the interpolating solver, since the memory model
+     * puts arrays in all of them. ArrayInit expresses the same array without the restriction, so it is
+     * used whenever the element is not a literal.
+     */
     @SuppressWarnings("unchecked")
     private <I extends Type, E extends Type> Expr<?> createArrayLitExpr(
             final Expr<?> elze, final ArrayType<I, E> type) {
-        return Array(Collections.emptyList(), (Expr<E>) elze, type);
+        if (elze instanceof LitExpr<?>) {
+            return Array(Collections.emptyList(), (Expr<E>) elze, type);
+        }
+        return ArrayInit(Collections.emptyList(), (Expr<E>) elze, type);
     }
 
     private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(
