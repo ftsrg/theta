@@ -132,12 +132,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
   @Parameter(
-    names = ["--zero-init-memory"],
+    names = ["--memory-init"],
     description =
-      "Start the dereference memory array at zero instead of unconstrained; the decision-diagram checkers need a finite initial state",
-    arity = 1,
+      "How the dereference memory array starts: ZERO, UNCONSTRAINED, or AUTO, which is ZERO for the MDD backends and UNCONSTRAINED otherwise",
   )
-  var zeroInitMemory: Boolean = false,
+  var memoryInit: MemoryInit = MemoryInit.AUTO,
   @Parameter(
     names = ["--force-unroll"],
     description =
