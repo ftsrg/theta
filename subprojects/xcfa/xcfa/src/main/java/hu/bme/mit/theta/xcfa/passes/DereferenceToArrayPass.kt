@@ -30,6 +30,21 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpType
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr
+import hu.bme.mit.theta.core.type.rattype.RatType
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.FpUtils
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import java.math.BigInteger
+import org.kframework.mpfr.BigFloat
 
 private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type>>
 
@@ -51,6 +66,18 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  * writes in the init procedure.
  */
 class DereferenceToArrayPass : ProcedurePass {
+
+  companion object {
+    /**
+     * Start the memory array at zero instead of unconstrained. Unconstrained is the faithful choice,
+     * since stack and heap cells hold garbage until written and globals get their zeros from ordinary
+     * writes in the init procedure. It is not free for every checker though: a decision-diagram
+     * fixpoint enumerates the initial states, and an unconstrained array is not a finite set of them,
+     * so the saturation-based checkers need a concrete starting array. Programs that read
+     * uninitialized stack or heap then look zeroed, which can hide a bug but cannot invent one.
+     */
+    var zeroInitialized: Boolean = false
+  }
 
   private lateinit var arraysByType: Map<Triple<Type, Type, Type>, VarDecl<out ArrayType2D>>
 
@@ -76,8 +103,13 @@ class DereferenceToArrayPass : ProcedurePass {
     val arrayType = ArrayType.of(derefArrayType, ArrayType.of(derefOffsetType, derefType))
 
     val decl = Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}", arrayType)
-    val globalDecl = XcfaGlobalVar(decl, atomic = true)
-    val initLabel = StmtLabel(HavocStmt.of(decl))
+    val zero =
+      ArrayLitExpr.of(listOf(), cast(arrayType.elemType.defaultValue, arrayType.elemType), arrayType)
+    val globalDecl =
+      if (zeroInitialized) XcfaGlobalVar(decl, zero, atomic = true)
+      else XcfaGlobalVar(decl, atomic = true)
+    val initLabel =
+      if (zeroInitialized) AssignStmtLabel(decl, zero) else StmtLabel(HavocStmt.of(decl))
     xcfa.addVar(globalDecl)
     xcfa.getInitProcedures().forEach { (procedure, _) ->
       procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
@@ -198,4 +230,21 @@ class DereferenceToArrayPass : ProcedurePass {
     } else {
       withOps(ops.map { it.getArrayReads(xcfa) })
     }
+
+  private val Type.defaultValue: LitExpr<out Type>
+    get() =
+      when (this) {
+        is IntType -> IntLitExpr.of(BigInteger.ZERO)
+        is BoolType -> Bool(false)
+        is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, size)
+        is RatType -> RatLitExpr.of(BigInteger.ZERO, BigInteger.ONE)
+        is FpType -> FpUtils.bigFloatToFpLitExpr(BigFloat.zero(significand), this)
+        is ArrayType<*, *> ->
+          ArrayLitExpr.of(
+            listOf(),
+            cast(elemType.defaultValue, elemType),
+            ArrayType.of(indexType, elemType),
+          )
+        else -> error("No default value for type $this")
+      }
 }

@@ -134,6 +134,13 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
   @Parameter(
+    names = ["--zero-init-memory"],
+    description =
+      "Start the dereference memory array at zero instead of unconstrained; the decision-diagram checkers need a finite initial state",
+    arity = 1,
+  )
+  var zeroInitMemory: Boolean = false,
+  @Parameter(
     names = ["--force-unroll"],
     description =
       "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)",
