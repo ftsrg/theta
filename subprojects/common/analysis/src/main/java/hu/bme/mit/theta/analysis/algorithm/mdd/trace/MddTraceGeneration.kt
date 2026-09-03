@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.trace
 
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
+import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
@@ -56,6 +57,27 @@ import java.util.concurrent.TimeoutException
 /** A generated trace and the (single) violating state it ends in, in the state order. */
 internal class GeneratedTrace(val trace: Trace<ExplState, ExprAction>, val target: MddHandle)
 
+/** How the abstract counterexample is searched between the initial and the violating states. */
+enum class TraceSearch {
+  /**
+   * Backward from the violating states, one arbitrary unexplored predecessor per step with
+   * backtracking: cheap steps, but the walk (and so the counterexample) can be far longer than the
+   * shortest one and depends on the variable order.
+   */
+  DFS,
+  /**
+   * Forward breadth-first layers from the initial states until a violating state is reached, then
+   * one backward step per layer: the shortest counterexample, with the forward steps on the same
+   * (cheap, cached) machinery as saturation.
+   */
+  BFS,
+  /**
+   * Backward breadth-first layers from all violating states: also the shortest counterexample, but
+   * every layer is a reversed step of a large set, which can cost seconds when many states violate.
+   */
+  BFS_BACKWARD,
+}
+
 internal fun generateTrace(
   transNodes: List<MddHandle>,
   transSig: MddSignature,
@@ -69,8 +91,7 @@ internal fun generateTrace(
   transDataBoundary: Any? = null,
   /** Violating states not to end in (targets of traces generated earlier in the same iteration). */
   excluded: MddHandle? = null,
-  /** Breadth-first backward search (shortest counterexample) instead of the depth-first walk. */
-  breadthFirst: Boolean = false,
+  search: TraceSearch = TraceSearch.DFS,
 ): GeneratedTrace? {
   val violating = if (excluded != null) propViolating.minus(excluded) else propViolating
   if (violating.isTerminalZero) return null
@@ -100,20 +121,19 @@ internal fun generateTrace(
       val states = ArrayList<MddHandle>()
       val actions = ArrayList<ExprAction>()
       try {
+        val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
+        val top = stateSig.topVariableHandle
         val layers =
-          if (breadthFirst)
-            traceProvider.computeBreadthFirst(
-              traceSeed,
-              orReversed,
-              initNode,
-              stateSig.topVariableHandle,
-            )
-          else traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
+          when (search) {
+            TraceSearch.DFS -> traceProvider.compute(traceSeed, orReversed, initNode, top)
+            TraceSearch.BFS_BACKWARD ->
+              traceProvider.computeBreadthFirst(traceSeed, orReversed, initNode, top)
+            TraceSearch.BFS ->
+              forwardBreadthFirst(initNode, traceSeed, forward, orReversed, stepper, top)
+          }
 
         // the backward walk records neither the fired transition nor, for the last layer, which
         // violating state is reached: resolve both by stepping forward transition by transition
-        val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
-        val top = stateSig.topVariableHandle
         states.add(layers[0].satOne())
         for (k in 0 until layers.size - 1) {
           val source = states[k]
@@ -172,4 +192,50 @@ internal fun generateTrace(
   } finally {
     executor.shutdownNow()
   }
+}
+
+/**
+ * Forward breadth-first search from [initNode] until a state of [violating] is reached (layers of
+ * new states only), then one backward step per layer from that state through [orReversed]: the
+ * states of a shortest counterexample, one per layer, initial side first.
+ */
+private fun forwardBreadthFirst(
+  initNode: MddHandle,
+  violating: MddHandle,
+  forward: List<AbstractNextStateDescriptor>,
+  orReversed: AbstractNextStateDescriptor,
+  stepper: SingleStepProvider,
+  top: MddVariableHandle,
+): List<MddHandle> {
+  val orForward = OrNextStateDescriptor.create(forward)
+  val layers = ArrayList<MddHandle>()
+  var current = initNode
+  var explored = initNode
+  layers.add(current)
+  var hit = current.intersection(violating)
+  while (hit.isTerminalZero) {
+    if (Thread.interrupted()) {
+      throw InterruptedException("forward search interrupted after ${layers.size} layers")
+    }
+    val next = stepper.compute(MddNodePostcondition.of(current), orForward, top).minus(explored)
+    check(!next.isTerminalZero) {
+      "forward search exhausted the reachable states without reaching a violating state"
+    }
+    explored = explored.union(next)
+    current = next
+    layers.add(current)
+    hit = current.intersection(violating)
+  }
+  // one state per layer, chosen backward from the violating state reached
+  val states = arrayOfNulls<MddHandle>(layers.size)
+  states[layers.size - 1] = hit.satOne()
+  for (j in layers.size - 2 downTo 0) {
+    val preds =
+      stepper
+        .compute(MddNodePostcondition.of(states[j + 1]!!), orReversed, top)
+        .intersection(layers[j])
+    check(!preds.isTerminalZero) { "no predecessor of the chosen state in the previous layer" }
+    states[j] = preds.satOne()
+  }
+  return states.map { it!! }
 }

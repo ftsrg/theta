@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSe
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.ForceEvents
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
-import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.TraceSearch
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
@@ -736,7 +736,7 @@ data class MddCegarConfig(
   @Parameter(
     names = ["--trace-search"],
     description =
-      "Backward search for the abstract counterexample: DFS (one predecessor per step, order-dependent length) or BFS (shortest counterexample)",
+      "Search for the abstract counterexample: DFS (backward, one predecessor per step, order-dependent length), BFS (forward layers then one backward step per layer: shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
   )
   var traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SpecBackendConfig
