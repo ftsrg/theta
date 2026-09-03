@@ -58,16 +58,40 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  * where arrays is the global array variable corresponding to the types of array, offset, and
  * element. Upon each write to the memory location, the corresponding global array is also updated
  * to reflect the change.
+ *
+ * The array is chosen by the types alone. It must not also depend on whether the pointer expression
+ * happens to be a global variable: the same address can be reached through a global pointer at one
+ * place and through a local one at another, and putting those accesses in different arrays would
+ * make them stop aliasing, so a write through one would be invisible to a read through the other.
+ * Whether *any* dereference of a type triple is global only decides how the array starts out: zero,
+ * as C guarantees for global variables, or unconstrained.
  */
 class DereferenceToArrayPass : ProcedurePass {
 
   private lateinit var arraysByType:
     Map<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>
 
-  /** Maps a dereference to an identifying type key */
-  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey(
+  /**
+   * How the array of a type triple starts out: zero when the program dereferences a global pointer
+   * of these types anywhere, unconstrained otherwise.
+   */
+  private lateinit var globalByTypes: Map<Triple<Type, Type, Type>, Boolean>
+
+  /** The types of a dereference, which alone select its array. */
+  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.types():
+    Triple<Type, Type, Type> = Triple(array.type, offset.type, type)
+
+  /** The array key of a dereference: its types, plus how that array is initialized. */
+  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey():
+    Tuple4<Type, Type, Type, Boolean> {
+    val t = types()
+    return Tuple4.of(t.first, t.second, t.third, globalByTypes[t]!!)
+  }
+
+  /** Whether this single dereference goes through a global pointer. */
+  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.isGlobalDeref(
     xcfa: XcfaBuilder
-  ): Tuple4<Type, Type, Type, Boolean> {
+  ): Boolean {
     val globalVars = xcfa.getVars().map { it.wrappedVar }
     val isGlobal =
       (array as? RefExpr<*>)?.decl in globalVars ||
@@ -81,7 +105,7 @@ class DereferenceToArrayPass : ProcedurePass {
             }
           }
         }
-    return Tuple4.of(array.type, offset.type, type, isGlobal)
+    return isGlobal
   }
 
   /** Returns an array from the pre-generated lookup of types */
@@ -90,7 +114,7 @@ class DereferenceToArrayPass : ProcedurePass {
   ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
     val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
 
-    return cast(arraysByType[getTypeKey(xcfa)]!!, arrayType)
+    return cast(arraysByType[getTypeKey()]!!, arrayType)
   }
 
   /** Creates arrays from dereference types */
@@ -127,14 +151,22 @@ class DereferenceToArrayPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!::arraysByType.isInitialized) {
-      val arrays = mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
-      val types = mutableSetOf<Tuple4<Type, Type, Type, Boolean>>()
+      // one array per type triple; a triple starts out zeroed when any of its dereferences is global
+      val global = mutableMapOf<Triple<Type, Type, Type>, Boolean>()
       builder.parent.getProcedures().forEach { p ->
         p.getEdges().forEach { e ->
-          e.label.dereferences.forEach { deref -> types.add(deref.getTypeKey(builder.parent)) }
+          e.label.dereferences.forEach { deref ->
+            val t = deref.types()
+            global[t] = (global[t] ?: false) || deref.isGlobalDeref(builder.parent)
+          }
         }
       }
-      types.forEach { arrays[it] = createArray(it, builder.parent) }
+      globalByTypes = global
+      val arrays = mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
+      global.forEach { (t, isGlobal) ->
+        val key = Tuple4.of(t.first, t.second, t.third, isGlobal)
+        arrays[key] = createArray(key, builder.parent)
+      }
       arraysByType = arrays
     }
 
