@@ -18,7 +18,9 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.ForceEvents
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.TraceSearch
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
@@ -690,7 +692,7 @@ data class MddCegarConfig(
   @Parameter(
     names = ["--literal-placement"],
     description =
-      "Where new literal levels go in the MDD orders: TOP (newest highest), BOTTOM (newest directly above the ctrl levels) or CONNECTIVITY (most connected lowest); the latter two disable seeding",
+      "Where new literal levels go in the MDD orders: TOP (newest highest), BOTTOM (newest directly above the ctrl levels), CONNECTIVITY (most connected lowest) or FORCE (the FORCE ordering of ctrl vars and literals, rebuilt every iteration); all but TOP disable seeding",
   )
   var literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
   @Parameter(
@@ -719,6 +721,24 @@ data class MddCegarConfig(
     arity = 1,
   )
   var adaptivePredSplit: Boolean = false,
+  @Parameter(
+    names = ["--force-events"],
+    description =
+      "Events of the FORCE ordering: DIRECT (literals sharing a variable with the transition) or CLOSURE (the connected-literal closure the abstract transition node spans)",
+  )
+  var forceEvents: ForceEvents = ForceEvents.DIRECT,
+  @Parameter(
+    names = ["--force-reverse"],
+    description = "Flip the FORCE ordering (its top becomes the bottom)",
+    arity = 1,
+  )
+  var forceReverse: Boolean = false,
+  @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Backward search for the abstract counterexample: DFS (one predecessor per step, order-dependent length) or BFS (shortest counterexample)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SpecBackendConfig
 
 data class Ic3Config(

@@ -69,6 +69,8 @@ internal fun generateTrace(
   transDataBoundary: Any? = null,
   /** Violating states not to end in (targets of traces generated earlier in the same iteration). */
   excluded: MddHandle? = null,
+  /** Breadth-first backward search (shortest counterexample) instead of the depth-first walk. */
+  breadthFirst: Boolean = false,
 ): GeneratedTrace? {
   val violating = if (excluded != null) propViolating.minus(excluded) else propViolating
   if (violating.isTerminalZero) return null
@@ -99,7 +101,14 @@ internal fun generateTrace(
       val actions = ArrayList<ExprAction>()
       try {
         val layers =
-          traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
+          if (breadthFirst)
+            traceProvider.computeBreadthFirst(
+              traceSeed,
+              orReversed,
+              initNode,
+              stateSig.topVariableHandle,
+            )
+          else traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
 
         // the backward walk records neither the fired transition nor, for the last layer, which
         // violating state is reached: resolve both by stepping forward transition by transition
