@@ -139,12 +139,16 @@ constructor(
     // group the concrete transitions by their connected literal set, in first-seen order
     val literalVars = activationLiterals.associateWith { ExprUtils.getVars(literalToPredMap[it]!!) }
     val groups = LinkedHashMap<Set<VarDecl<BoolType>>, MutableList<Int>>()
+    val connectivity = LinkedHashMap<VarDecl<BoolType>, Int>()
+    activationLiterals.forEach { connectivity[it] = 0 }
     if (splitRelation) {
       concreteModel.split.indices.forEach { i ->
         val connected = connectedLiterals(transitionVars[i], activationLiterals, literalVars)
+        connected.forEach { connectivity[it] = connectivity[it]!! + 1 }
         groups.getOrPut(connected) { ArrayList() }.add(i)
       }
     } else {
+      activationLiterals.forEach { connectivity[it] = concreteModel.split.size }
       // one group, every literal connected: the classic monolithic abstract relation
       groups[activationLiterals.toSet()] = concreteModel.split.indices.toMutableList()
     }
@@ -192,7 +196,7 @@ constructor(
           },
         explicitSplit = splits,
       )
-    return AbstractionResult(model, newLiterals)
+    return AbstractionResult(model, newLiterals, connectivity)
   }
 
   /**
@@ -344,4 +348,6 @@ constructor(
 data class AbstractionResult(
   val model: MonolithicExpr,
   val newLiterals: List<VarDecl<BoolType>>, // creation order
+  /** For every literal, the number of concrete transitions it is connected to. */
+  val connectivity: Map<VarDecl<BoolType>, Int> = emptyMap(),
 )

@@ -173,9 +173,11 @@ constructor(
           it.mddGraph.getAttribute(MddExpressionTemplate.SAT_CACHE)?.clear()
         }
       }
-      val (model, newLits) = abstractor.abstractModel(currentPrec)
+      val abstraction = abstractor.abstractModel(currentPrec)
+      val model = abstraction.model
+      val newLits = abstraction.newLiterals
 
-      newLits.forEach(orders::createLiteralLevel)
+      newLits.forEach { orders.createLiteralLevel(it, abstraction.connectivity[it] ?: 0) }
 
       val constraint = if (applyReachConstraint) prevStateSpace else null
 
@@ -493,6 +495,12 @@ enum class LiteralPlacement {
   TOP,
   /** Newest literal lowest, directly above the ctrl levels. */
   BOTTOM,
+  /**
+   * Literal levels sorted by connectivity: the more concrete transitions a literal is connected to,
+   * the lower its level (a widely used literal raises the top of many transition nodes wherever it
+   * is, so it goes low; a rarely used one goes high, raising few).
+   */
+  CONNECTIVITY,
 }
 
 private class CegarOrders(
@@ -505,12 +513,18 @@ private class CegarOrders(
   private val ctrlOffsets: Map<VarDecl<*>, Int> =
     concreteModel.ctrlVars.associateWith { concreteModel.transOffsetIndex[it] }
 
-  // the lowest literal level of each order (for BOTTOM placement; null before the first literal)
-  private var lowestStateLiteral: MddVariable? = null
-  private var lowestStateExprLiteral: MddVariable? = null
-  private var lowestStateBoundLiteral: MddVariable? = null
-  private var lowestTransLiteral: MddVariable? = null // the primed (lower) level of the lowest pair
-  private var lowestTransBoundLiteral: MddVariable? = null
+  /** The levels one literal occupies in the orders (trans levels: the lower, primed one of the pair). */
+  private class LiteralLevels(
+    val state: MddVariable,
+    val stateExpr: MddVariable?,
+    val stateBound: MddVariable?,
+    val transPrimed: MddVariable,
+    val transBoundPrimed: MddVariable?,
+    val connectivity: Int,
+  )
+
+  // the literal levels from the bottom (directly above the ctrl block) to the top
+  private val literals = ArrayList<LiteralLevels>()
 
   val stateOrder: MddVariableOrder =
     JavaMddFactory.getDefault()
@@ -588,47 +602,55 @@ private class CegarOrders(
     createTransLevelOnTop(v, ctrlOffsets[v] ?: 1)
   }
 
-  /** A new literal level in every order, placed according to [literalPlacement]. */
-  fun createLiteralLevel(v: VarDecl<*>) {
+  /**
+   * A new literal level in every order, placed according to [literalPlacement]; [connectivity] is the
+   * number of concrete transitions the literal is connected to (used by CONNECTIVITY placement).
+   */
+  fun createLiteralLevel(v: VarDecl<*>, connectivity: Int = 0) {
     val desc0 = MddVariableDescriptor.create(v.getConstDecl(0), 0)
     val desc1 = MddVariableDescriptor.create(v.getConstDecl(1), 0)
-    val bottom = literalPlacement == LiteralPlacement.BOTTOM && lowestStateLiteral != null
-    if (!bottom) {
-      val s = stateOrder.createOnTop(desc0)
-      if (lowestStateLiteral == null) lowestStateLiteral = s
-      lowestStateExprLiteral = insertTop(stateExprOrder, desc0, lowestStateExprLiteral)
-      lowestStateBoundLiteral = insertTop(stateBoundOrder, desc0, lowestStateBoundLiteral)
-      val t = transOrder.createOnTop(desc1)
-      transOrder.createOnTop(desc0)
-      if (lowestTransLiteral == null) lowestTransLiteral = t
-      transBoundOrder?.let {
-        val tb = it.createOnTop(desc1)
-        it.createOnTop(desc0)
-        if (lowestTransBoundLiteral == null) lowestTransBoundLiteral = tb
+    // index in [literals] the new literal takes: everything from that index up moves one level up
+    val index =
+      when (literalPlacement) {
+        LiteralPlacement.TOP -> literals.size
+        LiteralPlacement.BOTTOM -> 0
+        LiteralPlacement.CONNECTIVITY -> {
+          var i = 0
+          while (i < literals.size && literals[i].connectivity >= connectivity) i++
+          i
+        }
       }
-    } else {
-      // directly above the ctrl block: below the current lowest literal, pairs kept v0 above v1
-      lowestStateLiteral = stateOrder.createBelow(lowestStateLiteral!!, desc0)
-      lowestStateExprLiteral = stateExprOrder?.createBelow(lowestStateExprLiteral!!, desc0)
-      lowestStateBoundLiteral = stateBoundOrder?.createBelow(lowestStateBoundLiteral!!, desc0)
-      val t0 = transOrder.createBelow(lowestTransLiteral!!, desc0)
-      lowestTransLiteral = transOrder.createBelow(t0, desc1)
-      transBoundOrder?.let {
-        val tb0 = it.createBelow(lowestTransBoundLiteral!!, desc0)
-        lowestTransBoundLiteral = it.createBelow(tb0, desc1)
+    val entry =
+      if (index == literals.size) {
+        // on top of every existing level; pairs keep v0 above v1 (built bottom-up)
+        val s = stateOrder.createOnTop(desc0)
+        val se = stateExprOrder?.createOnTop(desc0)
+        val sb = stateBoundOrder?.createOnTop(desc0)
+        val t1 = transOrder.createOnTop(desc1)
+        transOrder.createOnTop(desc0)
+        val tb1 =
+          transBoundOrder?.let {
+            val x = it.createOnTop(desc1)
+            it.createOnTop(desc0)
+            x
+          }
+        LiteralLevels(s, se, sb, t1, tb1, connectivity)
+      } else {
+        // directly below the literal currently at [index]
+        val above = literals[index]
+        val s = stateOrder.createBelow(above.state, desc0)
+        val se = stateExprOrder?.createBelow(above.stateExpr!!, desc0)
+        val sb = stateBoundOrder?.createBelow(above.stateBound!!, desc0)
+        val t0 = transOrder.createBelow(above.transPrimed, desc0)
+        val t1 = transOrder.createBelow(t0, desc1)
+        val tb1 =
+          transBoundOrder?.let {
+            val x0 = it.createBelow(above.transBoundPrimed!!, desc0)
+            it.createBelow(x0, desc1)
+          }
+        LiteralLevels(s, se, sb, t1, tb1, connectivity)
       }
-    }
-  }
-
-  // creates on top and returns the first-created (lowest) literal level of that order
-  private fun insertTop(
-    order: MddVariableOrder?,
-    desc: MddVariableDescriptor,
-    lowest: MddVariable?,
-  ): MddVariable? {
-    if (order == null) return null
-    val created = order.createOnTop(desc)
-    return lowest ?: created
+    literals.add(index, entry)
   }
 
   private fun createTransLevelOnTop(v: VarDecl<*>, targetIndex: Int) {
