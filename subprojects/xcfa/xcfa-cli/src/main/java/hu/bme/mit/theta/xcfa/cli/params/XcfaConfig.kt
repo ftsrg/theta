@@ -736,7 +736,7 @@ data class MddCegarConfig(
   @Parameter(
     names = ["--trace-search"],
     description =
-      "Search for the abstract counterexample: DFS (backward, one predecessor per step, order-dependent length), BFS (forward layers then one backward step per layer: shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+      "Search for the abstract counterexample: DFS (backward, one predecessor per step, order-dependent length), DFS_FEASIBLE (the same walk, stopped as soon as the concrete suffix is infeasible, refining on that fragment), BFS (forward layers then one backward step per layer: shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
   )
   var traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SpecBackendConfig

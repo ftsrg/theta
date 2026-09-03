@@ -42,6 +42,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.GeneratedTrace
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
@@ -177,6 +178,9 @@ constructor(
 
     var totalSolverCalls = 0L
     var i = 0
+    // a fragment refines but does not have to add a predicate; if one ever fails to, complete traces
+    // are used from then on, so the loop cannot spin on the same abstraction
+    var fragmentsAllowed = true
 
     while (true) {
       i++
@@ -213,6 +217,26 @@ constructor(
 
       val constraint = if (applyReachConstraint) prevStateSpace else null
 
+      // Concretize a suffix on demand: this is what stops the feasibility-driven walk. An infeasible
+      // suffix is only worth stopping for if it actually refines. Short suffixes near the error are
+      // routinely infeasible for control-flow reasons alone, and predicates over control variables
+      // are dropped (those variables are tracked explicitly), so such a suffix would end the walk
+      // and teach nothing. Keep walking until the refutation adds a predicate.
+      val precNow = currentPrec
+      val oracle: ((Trace<ExplState, ExprAction>) -> ItpRefutation?)? =
+        if (traceSearch == TraceSearch.DFS_FEASIBLE && fragmentsAllowed)
+          { suffix ->
+            val predTrace = abstractor.toPredTrace(suffix)
+            val res = traceChecker.check(predTrace)
+            if (res.isFeasible) null
+            else {
+              val refutation = res.asInfeasible().refutation
+              val candidate = dataPreds(refineWith(precNow, predTrace, refutation))
+              if (candidate.size > dataPreds(precNow).size) refutation else null
+            }
+          }
+        else null
+
       val iter =
         runIteration(
           model,
@@ -222,6 +246,7 @@ constructor(
           newLits,
           abstractor.literalToPred,
           currentProvider,
+          oracle,
         )
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
 
@@ -259,8 +284,16 @@ constructor(
 
       val refinementTime = Stopwatch.createStarted()
       var refined = currentPrec
-      for (trace in iter.traces) {
+      var usedFragment = false
+      for (generated in iter.traces) {
+        val trace = generated.trace
         val predTrace = abstractor.toPredTrace(trace)
+        // a fragment was already found infeasible by the walk; it cannot witness a bug
+        if (generated.fragmentRefutation != null) {
+          usedFragment = true
+          refined = refineWith(refined, predTrace, generated.fragmentRefutation)
+          continue
+        }
         val res = traceChecker.check(predTrace)
         if (res.isFeasible) {
           totalTime.stop()
@@ -278,29 +311,27 @@ constructor(
             statisticsOf(iter, totalTime.elapsedMillis()),
           )
         }
-        val refutation = res.asInfeasible().refutation
-        refined =
-          if (adaptivePredSplit) {
-            // whole interpolants keep the literal count low; atoms only when they bring nothing new
-            val whole = wholeRefiner.refine(refined, predTrace, refutation)
-            if (whole.preds.size > refined.preds.size) whole
-            else precRefiner.refine(refined, predTrace, refutation)
-          } else precRefiner.refine(refined, predTrace, refutation)
+        refined = refineWith(refined, predTrace, res.asInfeasible().refutation)
       }
       refinementTime.stop()
-      val newPrec =
-        PredPrec.of(
-          refined.preds.filter { ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any() }
-        )
+      val newPrec = PredPrec.of(dataPreds(refined))
       logger.write(
         Logger.Level.MAINSTEP,
         "CEGAR refinement %d: traces=%d, traceStates=%s, checkTime=%dms, newPreds=%d\n",
         i,
         iter.traces.size,
-        iter.traces.map { it.states.size }.toString(),
+        iter.traces.map { it.trace.states.size }.toString(),
         refinementTime.elapsedMillis(),
         newPrec.preds.size - currentPrec.preds.size,
       )
+      if (usedFragment && newPrec.preds.size <= dataPreds(currentPrec).size) {
+        // the fragment taught us nothing; fall back to complete counterexamples for the rest of the run
+        logger.write(
+          Logger.Level.MAINSTEP,
+          "Trace fragment added no predicate, switching to complete counterexamples\n",
+        )
+        fragmentsAllowed = false
+      }
       currentPrec = newPrec
 
       prevStateSpace = iter.stateSpace
@@ -317,11 +348,26 @@ constructor(
     return orders
   }
 
+  /** The predicates that survive into the next precision: control variables are tracked explicitly. */
+  private fun dataPreds(prec: PredPrec): List<Expr<BoolType>> =
+    prec.preds.filter { p -> ExprUtils.getVars(p).any { it !in concreteModel.ctrlVars } }
+
+  private fun refineWith(
+    prec: PredPrec,
+    predTrace: Trace<PredState, ExprAction>,
+    refutation: ItpRefutation,
+  ): PredPrec =
+    if (adaptivePredSplit) {
+      // whole interpolants keep the literal count low; atoms only when they bring nothing new
+      val whole = wholeRefiner.refine(prec, predTrace, refutation)
+      if (whole.preds.size > prec.preds.size) whole else precRefiner.refine(prec, predTrace, refutation)
+    } else precRefiner.refine(prec, predTrace, refutation)
+
   private data class IterationResult(
     val stateSpace: MddHandle,
     val violatingSize: Long,
     val stateSpaceSize: Long,
-    val traces: List<Trace<ExplState, ExprAction>>,
+    val traces: List<GeneratedTrace>,
     val relationSolverCalls: Long,
     val saturationSolverCalls: Long,
     val ssgTimeMs: Long,
@@ -338,6 +384,7 @@ constructor(
     newLits: List<VarDecl<BoolType>>,
     literalToPred: Map<Decl<*>, Expr<BoolType>>,
     provider: StateSpaceEnumerationProvider,
+    feasibilityOracle: ((Trace<ExplState, ExprAction>) -> ItpRefutation?)? = null,
   ): IterationResult {
     val stateSig: MddSignature = orders.stateOrder.defaultSetSignature
     val transSig: MddSignature = orders.transOrder.defaultSetSignature
@@ -416,7 +463,7 @@ constructor(
     val violatingSize = MddInterpreter.calculateNonzeroCount(propViolating)
     val stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace)
 
-    val traces = ArrayList<Trace<ExplState, ExprAction>>()
+    val traces = ArrayList<GeneratedTrace>()
     if (violatingSize != 0L) {
       // trace generation does set operations between state sets and the taller init node, so the
       // init node is brought to a state-order set: reachable ∩ init = init (init ⊆ reachable)
@@ -440,8 +487,9 @@ constructor(
             orders.transDataBoundary,
             excluded,
             traceSearch,
+            feasibilityOracle,
           ) ?: break
-        traces.add(generated.trace)
+        traces.add(generated)
         excluded = excluded?.union(generated.target) ?: generated.target
       }
     }
