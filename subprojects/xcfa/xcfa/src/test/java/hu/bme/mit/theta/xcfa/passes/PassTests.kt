@@ -542,7 +542,7 @@ class PassTests {
         PassTestData(
           global = {
             global(
-              "__arrays_Int_Int_Int_false",
+              "__arrays_Int_Int_Int",
               ArrayType.of(Int(), ArrayType.of(Int(), Int())),
               null,
               true,
@@ -555,17 +555,17 @@ class PassTests {
           },
           output = {
             (init to "L1") {
-              "__arrays_Int_Int_Int_false" assign
-                "(write __arrays_Int_Int_Int_false 1 (write (read __arrays_Int_Int_Int_false 1) 0 42))"
+              "__arrays_Int_Int_Int" assign
+                "(write __arrays_Int_Int_Int 1 (write (read __arrays_Int_Int_Int 1) 0 42))"
             }
-            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_false 1) 0) 42)") }
+            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int 1) 0) 42)") }
           },
         ),
         PassTestData(
           global = {
             "x" type Int() init "0"
             global(
-              "__arrays_Int_Int_Int_true",
+              "__arrays_Int_Int_Int",
               ArrayType.of(Int(), ArrayType.of(Int(), Int())),
               "(array (default (array (default 0))))",
               true,
@@ -580,10 +580,10 @@ class PassTests {
           output = {
             "y" type Int()
             (init to "L1") {
-              "__arrays_Int_Int_Int_true" assign
-                "(write __arrays_Int_Int_Int_true x (write (read __arrays_Int_Int_Int_true x) y 42))"
+              "__arrays_Int_Int_Int" assign
+                "(write __arrays_Int_Int_Int x (write (read __arrays_Int_Int_Int x) y 42))"
             }
-            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_true x) y) 42)") }
+            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int x) y) 42)") }
           },
         ),
       )
