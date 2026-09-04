@@ -206,17 +206,18 @@ constructor(
       // on trace generation timeout, fall back to an empty trace
       val trace =
         generateTrace(
-          transNodes,
-          transSig,
-          stateSpace,
-          propViolating,
-          initNode,
-          stateSig,
-          monolithicExpr,
-          traceTimeout,
-          logger,
-          search = traceSearch,
-        ) ?: Trace.of(listOf(ExplState.top()), listOf())
+            transNodes,
+            transSig,
+            stateSpace,
+            propViolating,
+            initNode,
+            stateSig,
+            monolithicExpr,
+            traceTimeout,
+            logger,
+            search = traceSearch,
+          )
+          ?.trace ?: Trace.of(listOf(ExplState.top()), listOf())
       result = SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
     } else {
       result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)

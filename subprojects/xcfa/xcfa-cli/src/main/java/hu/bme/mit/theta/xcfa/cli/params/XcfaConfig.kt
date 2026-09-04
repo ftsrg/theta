@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.ForceEvents
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
@@ -648,9 +650,23 @@ data class MddConfig(
   var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
+/** Trace checkers available to the MDD CEGAR backend. */
+enum class MddCegarRefinement {
+  SEQ_ITP,
+  FW_BIN_ITP,
+  BW_BIN_ITP,
+}
+
 data class MddCegarConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
+  @Parameter(
+    names = ["--refinement-solver"],
+    description = "Solver for the trace check / interpolation (defaults to --solver)",
+  )
+  var refinementSolver: String = "",
+  @Parameter(names = ["--refinement"], description = "Trace checker used for refinement")
+  var refinement: MddCegarRefinement = MddCegarRefinement.SEQ_ITP,
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
@@ -688,9 +704,72 @@ data class MddCegarConfig(
   )
   var onTheFlyReachability: Boolean = false,
   @Parameter(
+    names = ["--split-relation"],
+    description =
+      "Build the abstract relation per group of concrete transitions with identical connected literals (identity for the rest)",
+    arity = 1,
+  )
+  var splitRelation: Boolean = true,
+  @Parameter(
+    names = ["--per-step-refinement"],
+    description =
+      "Check the abstract counterexample with the concrete transition fired at each step instead of the whole relation",
+    arity = 1,
+  )
+  var perStepRefinement: Boolean = true,
+  @Parameter(
+    names = ["--pred-split"],
+    description = "How refinement interpolants are turned into predicates",
+  )
+  var predSplit: ExprSplitterOptions = ExprSplitterOptions.ATOMS,
+  @Parameter(
+    names = ["--literal-placement"],
+    description =
+      "Where new literal levels go in the MDD orders: TOP (newest highest), BOTTOM (newest directly above the ctrl levels), CONNECTIVITY (most connected lowest) or FORCE (the FORCE ordering of ctrl vars and literals, rebuilt every iteration); all but TOP disable seeding",
+  )
+  var literalPlacement: LiteralPlacement = LiteralPlacement.TOP,
+  @Parameter(
+    names = ["--traces-per-iteration"],
+    description =
+      "Number of abstract counterexamples (ending in distinct violating states) refined per CEGAR iteration",
+  )
+  var tracesPerIteration: Int = 1,
+  @Parameter(
+    names = ["--clear-caches"],
+    description = "Drop the saturation and SAT caches before every CEGAR iteration",
+    arity = 1,
+  )
+  var clearCaches: Boolean = false,
+  @Parameter(
+    names = ["--explicit-bools"],
+    description =
+      "Track Boolean variables (assigned at most once per transition) explicitly like control variables instead of abstracting them",
+    arity = 1,
+  )
+  var explicitBools: Boolean = false,
+  @Parameter(
+    names = ["--adaptive-pred-split"],
+    description =
+      "Refine with whole interpolants first; fall back to --pred-split only when that adds no predicate",
+    arity = 1,
+  )
+  var adaptivePredSplit: Boolean = false,
+  @Parameter(
+    names = ["--force-events"],
+    description =
+      "Events of the FORCE ordering: DIRECT (literals sharing a variable with the transition) or CLOSURE (the connected-literal closure the abstract transition node spans)",
+  )
+  var forceEvents: ForceEvents = ForceEvents.DIRECT,
+  @Parameter(
+    names = ["--force-reverse"],
+    description = "Flip the FORCE ordering (its top becomes the bottom)",
+    arity = 1,
+  )
+  var forceReverse: Boolean = false,
+  @Parameter(
     names = ["--trace-search"],
     description =
-      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+      "Search for the abstract counterexample: DFS (backward, one predecessor per step, order-dependent length), DFS_FEASIBLE (the same walk, stopped as soon as the concrete suffix is infeasible, refining on that fragment), BFS (forward layers then one backward step per layer: shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
   )
   var traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SpecBackendConfig
