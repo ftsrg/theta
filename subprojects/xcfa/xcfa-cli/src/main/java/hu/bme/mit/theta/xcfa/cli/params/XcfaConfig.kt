@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -128,6 +128,12 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
   var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
+  @Parameter(
+    names = ["--memory-init"],
+    description =
+      "Initial value of the dereference memory arrays: ZERO, UNCONSTRAINED or AUTO (ZERO for the MDD backend, whose fixpoint needs a finite set of initial states)",
+  )
+  var memoryInit: MemoryInit = MemoryInit.AUTO,
   @Parameter(
     names = ["--force-unroll"],
     description =

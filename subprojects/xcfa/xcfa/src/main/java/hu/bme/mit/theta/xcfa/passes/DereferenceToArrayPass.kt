@@ -61,6 +61,14 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  */
 class DereferenceToArrayPass : ProcedurePass {
 
+  companion object {
+    /**
+     * Start every memory array at zero: a decision-diagram fixpoint enumerates the initial states,
+     * and an unconstrained array is not a finite set of them.
+     */
+    var zeroInitialized: Boolean = false
+  }
+
   private lateinit var arraysByType:
     Map<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>
 
@@ -104,7 +112,7 @@ class DereferenceToArrayPass : ProcedurePass {
     val decl =
       Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}_${isGlobal}", arrayType)
     val (globalDecl, initLabel) =
-      if (isGlobal) {
+      if (isGlobal || zeroInitialized) {
         val defaultValue =
           ArrayLitExpr.of(
             listOf(),

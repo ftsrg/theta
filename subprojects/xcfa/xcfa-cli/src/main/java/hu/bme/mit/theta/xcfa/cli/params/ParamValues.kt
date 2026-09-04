@@ -742,3 +742,11 @@ enum class WitnessLevel {
   SVCOMP,
   ALL,
 }
+
+/** Initial value of the dereference memory arrays. */
+enum class MemoryInit {
+  /** ZERO for the MDD backend, UNCONSTRAINED otherwise. */
+  AUTO,
+  ZERO,
+  UNCONSTRAINED,
+}
