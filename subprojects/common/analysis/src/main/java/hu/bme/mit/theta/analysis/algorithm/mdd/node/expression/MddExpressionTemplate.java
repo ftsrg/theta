@@ -55,6 +55,9 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final SolverPool solverPool;
     private final boolean transExpr;
     private final boolean knownSat;
+    // never query the solver: decide structure purely by substitution, an undetermined bottom edge
+    // being absent.
+    private final boolean substitutionOnly;
 
     public static final MddGraph.Key<UnaryOperationCache<Expr<BoolType>, Optional<Valuation>>>
             SAT_CACHE = new MddGraph.Key<>("satCache");
@@ -114,17 +117,19 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr,
-            boolean knownSat) {
+            boolean knownSat,
+            boolean substitutionOnly) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
         this.transExpr = transExpr;
         this.knownSat = knownSat;
+        this.substitutionOnly = substitutionOnly;
     }
 
     public static MddExpressionTemplate of(
             Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false, false);
     }
 
     public static MddExpressionTemplate of(
@@ -132,7 +137,7 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false, false);
     }
 
     public static MddExpressionTemplate ofKnownSat(
@@ -140,11 +145,21 @@ public class MddExpressionTemplate implements MddNode.Template {
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true, false);
+    }
+
+    public static MddExpressionTemplate ofSubstitution(
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false, true);
     }
 
     private MddExpressionTemplate knownChild(Expr<BoolType> childExpr) {
-        return ofKnownSat(childExpr, o -> (Decl) o, solverPool, transExpr);
+        return substitutionOnly
+                ? ofSubstitution(childExpr, o -> (Decl) o, solverPool, transExpr)
+                : ofKnownSat(childExpr, o -> (Decl) o, solverPool, transExpr);
     }
 
     @Override
@@ -162,6 +177,10 @@ public class MddExpressionTemplate implements MddNode.Template {
             satModel = null;
         } else if (simplifiedExpr instanceof FalseExpr) {
             return null;
+        } else if (substitutionOnly) {
+            // an explicit False prunes; otherwise assume satisfiable and let substitution decide
+            // below
+            satModel = null;
         } else {
             satModel = checkSat(ExprUtils.canonize(simplifiedExpr), solverPool, satCache);
             if (satModel == null) return null;
@@ -178,10 +197,17 @@ public class MddExpressionTemplate implements MddNode.Template {
                 childNode = mddGraph.getNodeFor(simplifiedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
-                    simplifiedExpr, decl, mddVariable, solverPool, childNode, transExpr);
+                    simplifiedExpr,
+                    decl,
+                    mddVariable,
+                    solverPool,
+                    childNode,
+                    transExpr,
+                    substitutionOnly);
         }
 
         if (transExpr
+                && !substitutionOnly
                 && decl instanceof IndexedConstDecl<?> constDecl
                 && constDecl.getIndex() == 0) {
 
@@ -266,11 +292,24 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
 
             return MddExpressionRepresentation.ofDetermined(
-                    simplifiedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
+                    simplifiedExpr,
+                    decl,
+                    mddVariable,
+                    solverPool,
+                    key,
+                    childNode,
+                    transExpr,
+                    substitutionOnly);
         }
 
         return MddExpressionRepresentation.of(
-                simplifiedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+                simplifiedExpr,
+                decl,
+                mddVariable,
+                solverPool,
+                transExpr,
+                satModel,
+                substitutionOnly);
     }
 
     private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
