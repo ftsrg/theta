@@ -29,16 +29,35 @@ public final class TraceProvider implements MddGraph.CleanupListener {
             cacheManager = new CacheManager<>(v -> new BinaryOperationCache<>());
     private final MddVariableOrder variableOrder;
     private final SingleStepProvider singleStepProvider;
+    private final boolean ownsSingleStepProvider;
 
     public TraceProvider(final MddVariableOrder variableOrder) {
-        this(variableOrder, new SingleStepProvider(variableOrder));
+        this(variableOrder, new SingleStepProvider(variableOrder), true);
     }
 
     public TraceProvider(
             final MddVariableOrder variableOrder, final SingleStepProvider singleStepProvider) {
+        this(variableOrder, singleStepProvider, false);
+    }
+
+    private TraceProvider(
+            final MddVariableOrder variableOrder,
+            final SingleStepProvider singleStepProvider,
+            final boolean ownsSingleStepProvider) {
         this.variableOrder = variableOrder;
         this.singleStepProvider = singleStepProvider;
+        this.ownsSingleStepProvider = ownsSingleStepProvider;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
+    }
+
+    /** Clears the caches and unregisters from the graph so the provider can be collected. */
+    public void dispose() {
+        clear();
+        this.variableOrder.getMddGraph().unregisterCleanupListener(this);
+        if (ownsSingleStepProvider) {
+            singleStepProvider.clear();
+            singleStepProvider.dispose();
+        }
     }
 
     public List<MddHandle> compute(

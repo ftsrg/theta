@@ -71,9 +71,14 @@ internal fun generateTrace(
       }
       val orReversed = OrNextStateDescriptor.create(reversedDescriptors)
 
+      // the provider registers itself on the graph: dispose it, or its caches stay reachable
       val traceProvider = TraceProvider(stateSig.variableOrder)
       val mddTrace =
-        traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
+        try {
+          traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
+        } finally {
+          traceProvider.dispose()
+        }
       val valuations =
         mddTrace
           .map {
