@@ -133,7 +133,7 @@ fun XcfaLabel.changeVars(
           is MutexTryLockLabel ->
             MutexTryLockLabel(lock.changeVars(varLut), successVar.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
           is MutexUnlockLabel -> MutexUnlockLabel(lock.changeVars(varLut), metadata)
-        is RWLockReadLockLabel -> RWLockReadLockLabel(lock.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
+          is RWLockReadLockLabel -> RWLockReadLockLabel(lock.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
           is RWLockWriteLockLabel -> RWLockWriteLockLabel(lock.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
           is RWLockUnlockLabel -> RWLockUnlockLabel(lock.changeVars(varLut), metadata)
         }

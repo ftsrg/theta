@@ -41,6 +41,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.passes.getLoopElements
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 import java.util.*
@@ -193,6 +194,19 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
       )
 
     is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
+
+    is FenceLabel -> {
+      val simplifiedLock = ExprUtils.simplify(lock, valuation)
+      when (this) {
+        is AtomicFenceLabel -> this
+        is MutexLockLabel -> copy(lock = simplifiedLock)
+        is MutexTryLockLabel -> copy(lock = simplifiedLock)
+        is MutexUnlockLabel -> copy(lock = simplifiedLock)
+        is RWLockReadLockLabel -> copy(lock = simplifiedLock)
+        is RWLockWriteLockLabel -> copy(lock = simplifiedLock)
+        is RWLockUnlockLabel -> copy(lock = simplifiedLock)
+      }
+    }
 
     else -> this
   }
