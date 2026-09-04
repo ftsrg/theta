@@ -24,8 +24,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.TraceProvider
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.common.logging.Logger
@@ -37,11 +37,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Backward trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and [MddCegarChecker]: reverses the transition
- * nodes over the computed state space and walks from [propViolating] back to [initNode]. Returns
- * null if generation does not finish within [traceTimeout] seconds. With seeding the trans order has
- * concrete witness levels below the abstract ones that [stateSig] lacks, so [transDataBoundary] must
- * cut the extraction there — otherwise the reversed descent outlives the state recursion.
+ * Backward trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and
+ * [hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker]: reverses the transition nodes
+ * over the computed state space and walks from [propViolating] back to [initNode]. Returns null if
+ * generation does not finish within [traceTimeout] seconds.
  */
 internal fun generateTrace(
   transNodes: List<MddHandle>,
@@ -53,7 +52,6 @@ internal fun generateTrace(
   model: MonolithicExpr,
   traceTimeout: Long,
   logger: Logger,
-  transDataBoundary: Any? = null,
 ): Trace<ExplState, ExprAction>? {
   // when an initial state itself violates, seed with the initial violating states: TraceProvider
   // would accept the whole violating set as a length-1 trace and the valuation collector could
@@ -68,8 +66,7 @@ internal fun generateTrace(
       val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
       val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
       for (transNode in transNodes) {
-        val explTrans =
-          MddExplicitRepresentationExtractor.transform(transNode, mirrorTop, transDataBoundary)
+        val explTrans = MddExplicitRepresentationExtractor.transform(transNode, mirrorTop)
         reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
       }
       val orReversed = OrNextStateDescriptor.create(reversedDescriptors)

@@ -647,18 +647,6 @@ data class MddCegarConfig(
     description = "Terminate saturation as soon as a violating state is reached",
   )
   var onTheFlyReachability: Boolean = false,
-  @Parameter(
-    names = ["--transition-seeding"],
-    description = "Seed each iteration's nodes from the previous iteration's witnesses",
-    arity = 1,
-  )
-  var transitionSeeding: Boolean = true,
-  @Parameter(
-    names = ["--transition-bound"],
-    description = "Prune each iteration's exploration by the previous relation's visited edges",
-    arity = 1,
-  )
-  var transitionBound: Boolean = true,
 ) : SpecBackendConfig
 
 data class Ic3Config(

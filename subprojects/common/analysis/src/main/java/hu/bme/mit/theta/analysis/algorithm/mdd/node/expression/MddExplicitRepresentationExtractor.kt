@@ -44,23 +44,14 @@ object MddExplicitRepresentationExtractor {
     return mirrorOrder.defaultSetSignature.topVariableHandle
   }
 
+  /** Extracts [node] into the [variable] order. */
   fun transform(node: MddHandle, variable: MddVariableHandle): MddHandle =
-    transform(node, variable, dataBoundary = null)
+    transform(node, variable, UnaryOperationCache())
 
-  /**
-   * Extracts [node] into the [variable] order. With a non-null [dataBoundary] the walk is truncated at
-   * that level — every variable at and below it is accepted (the lattice top) — and only the edges
-   * exploration actually consumed (visited via get or cursor) are extracted: the explicit caches also
-   * hold seeded entries the iteration never touched, which must not widen the bound.
-   */
-  fun transform(node: MddHandle, variable: MddVariableHandle, dataBoundary: Any?): MddHandle =
-    transform(node, variable, UnaryOperationCache(), dataBoundary)
-
-  fun transform(
+  private fun transform(
     node: MddHandle,
     variable: MddVariableHandle,
     cache: UnaryOperationCache<MddHandle, MddHandle>,
-    dataBoundary: Any?,
   ): MddHandle {
     cache.getOrNull(node)?.let {
       return it
@@ -73,15 +64,12 @@ object MddExplicitRepresentationExtractor {
           val mddGraph: MddGraph<Any> = variable.mddGraph as MddGraph<Any>
           mddGraph.terminalVariableHandle.getHandleFor(mddGraph.getNodeFor(node.data))
         }
-        dataBoundary != null && atBoundary(node.variableHandle, dataBoundary) ->
-          variable.mddGraph.handleForTop
         node.isSkippedLevel -> {
           val s =
             transform(
               lowerOf(node.variableHandle).getHandleFor(node.node),
               lowerOf(variable),
               cache,
-              dataBoundary,
             )
           if (s.isTerminalZero) variable.mddGraph.terminalZeroHandle
           else variable.checkInNode(MddStructuralTemplate.of(IntObjMapView.empty(s.node)))
@@ -96,7 +84,6 @@ object MddExplicitRepresentationExtractor {
                 .getHandleFor((node.node.representation as IdentityRepresentation).continuation),
               variable.lower.get().lower.orElse(null),
               cache,
-              dataBoundary,
             )
           if (!s.isTerminalZero) variable.checkInNode(IdentityTemplate(s.node))
           else variable.mddGraph.terminalZeroHandle
@@ -111,22 +98,8 @@ object MddExplicitRepresentationExtractor {
                 node.variableHandle.lower.get().getHandleFor(knownEdges.defaultValue()),
                 variable.lower.orElse(null),
                 cache,
-                dataBoundary,
               )
             if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
-          } else if (dataBoundary != null) {
-            val keys = explored.visitedKeys().cursor()
-            while (keys.moveNext()) {
-              val child = knownEdges.get(keys.elem()) ?: continue
-              val s =
-                transform(
-                  node.variableHandle.lower.get().getHandleFor(child),
-                  variable.lower.orElse(null),
-                  cache,
-                  dataBoundary,
-                )
-              if (!s.isTerminalZero) templateBuilder.set(keys.elem(), s.node)
-            }
           } else {
             val cursor = knownEdges.cursor()
             while (cursor.moveNext()) {
@@ -135,7 +108,6 @@ object MddExplicitRepresentationExtractor {
                   node.variableHandle.lower.get().getHandleFor(cursor.value()),
                   variable.lower.orElse(null),
                   cache,
-                  dataBoundary,
                 )
               if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
             }
@@ -148,9 +120,6 @@ object MddExplicitRepresentationExtractor {
     cache.addToCache(node, result)
     return result
   }
-
-  private fun atBoundary(varHandle: MddVariableHandle, dataBoundary: Any): Boolean =
-    varHandle.variable.map { it.traceInfo }.orElse(null) == dataBoundary
 
   private fun lowerOf(varHandle: MddVariableHandle): MddVariableHandle =
     if (varHandle.lower.isPresent) varHandle.lower.get()

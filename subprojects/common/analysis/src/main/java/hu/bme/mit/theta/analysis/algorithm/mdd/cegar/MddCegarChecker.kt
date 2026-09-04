@@ -19,7 +19,6 @@ import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
 import hu.bme.mit.delta.java.mdd.MddVariableOrder
-import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.Trace
@@ -29,20 +28,19 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.ImplicitPredicateAbstractor
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
-import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
@@ -59,9 +57,7 @@ import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
@@ -88,61 +84,39 @@ constructor(
   private val useReachConstraint: Boolean = true,
   private val useOnTheFlyReachability: Boolean = false,
   private val traceTimeout: Long = 10,
-  // the lower bound: cache the previous iteration's witnesses into this iteration's nodes
-  private val useTransitionSeeding: Boolean = false,
-  // the upper bound: prune by the previous relation's visited edges (needs the seeding infrastructure)
-  private val useTransitionBound: Boolean = useTransitionSeeding,
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NONE,
   private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
-  // the transition bound (upper) subsumes the reach-set constraint's source pruning, so the reach
-  // constraint is dropped when it is used; witness caching (lower) is the orthogonal seeding knob
-  private val applyReachConstraint = useReachConstraint && !useTransitionBound
-
   init {
-    require(!useTransitionBound || useTransitionSeeding) {
-      "the transition bound needs the witness-order infrastructure of transition seeding"
-    }
-    require(!(useOnTheFlyReachability && (useReachConstraint || useTransitionBound))) {
-      "on-the-fly reachability is sound only without an upper bound: it cannot combine with the " +
-        "reach-set constraint or the transition bound (early termination leaves the bound unsound)"
+    require(!(useOnTheFlyReachability && useReachConstraint)) {
+      "on-the-fly reachability cannot combine with the reach-set constraint: early termination " +
+        "leaves the constraint unsound"
     }
   }
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    val orders = CegarOrders(concreteModel, useTransitionSeeding, useTransitionBound)
-    orders.stateOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
-    orders.transOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
-    orders.stateExprOrder?.mddGraph?.setAttribute(
+    val orders = CegarOrders(concreteModel)
+    orders.stateOrder.mddGraph.setAttribute(
       MddExpressionRepresentation.LOOK_AHEAD,
       lookAheadStrategy,
     )
-    val seed =
-      if (useTransitionSeeding)
-        SeedKnowledge(
-          transitionBinding(concreteModel),
-          orders.transDataBoundary,
-          orders.stateDataBoundary,
-          orders.transBoundOrder,
-          orders.stateBoundOrder,
-          solverPool,
-          logger,
-        )
-      else null
+    orders.transOrder.mddGraph.setAttribute(
+      MddExpressionRepresentation.LOOK_AHEAD,
+      lookAheadStrategy,
+    )
 
     val abstractor = ImplicitPredicateAbstractor(concreteModel)
     val traceChecker = traceCheckerFactory(concreteModel)
     var currentPrec = initPrec(concreteModel)
     var prevStateSpace: MddHandle? = null
 
-    // one provider for the whole run: its saturation/relProd caches are keyed by (node, descriptor),
-    // so a refined relation never gets a false hit, while the unchanged concrete sub-structure is
-    // reused across iterations; the graph cleanup listener prunes entries whose nodes have died
+    // one provider for the whole run: its caches are keyed by (node, descriptor), so a refined
+    // relation never gets a false hit while the unchanged concrete sub-structure is reused
     val provider = iterationStrategy.createProvider(orders.stateOrder)
 
     var totalSolverCalls = 0L
@@ -154,10 +128,9 @@ constructor(
 
       newLits.forEach(orders::createLevelOnTop)
 
-      val constraint = if (applyReachConstraint) prevStateSpace else null
+      val constraint = if (useReachConstraint) prevStateSpace else null
 
-      val iter =
-        runIteration(model, constraint, orders, seed, newLits, abstractor.literalToPred, provider)
+      val iter = runIteration(model, constraint, orders, provider)
       totalSolverCalls += iter.relationSolverCalls + iter.saturationSolverCalls
 
       logger.write(
@@ -209,7 +182,12 @@ constructor(
 
       val refutation = res.asInfeasible().refutation
       currentPrec = precRefiner.refine(currentPrec, predTrace, refutation)
-      currentPrec = PredPrec.of(currentPrec.preds.filter { ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any() })
+      currentPrec =
+        PredPrec.of(
+          currentPrec.preds.filter { pred ->
+            ExprUtils.getVars(pred).any { it !in concreteModel.ctrlVars }
+          }
+        )
 
       prevStateSpace = iter.stateSpace
     }
@@ -232,115 +210,71 @@ constructor(
     model: MonolithicExpr,
     prevStateSpace: MddHandle?,
     orders: CegarOrders,
-    seed: SeedKnowledge?,
-    newLits: List<VarDecl<BoolType>>,
-    literalToPred: Map<Decl<*>, Expr<BoolType>>,
     provider: StateSpaceEnumerationProvider,
   ): IterationResult {
     val stateSig: MddSignature = orders.stateOrder.defaultSetSignature
     val transSig: MddSignature = orders.transOrder.defaultSetSignature
-    val stateExprSig: MddSignature? = orders.stateExprOrder?.defaultSetSignature
-    // the bounds live in mirror orders; their current top floats a bound built last iteration over
-    // this iteration's new literal levels, exactly as the source top would
-    val transBoundSig: MddSignature? = orders.transBoundOrder?.defaultSetSignature
-    val stateBoundSig: MddSignature? = orders.stateBoundOrder?.defaultSetSignature
-    // the on-the-fly kill switch fires on reaching a terminal below the prop node, which a
-    // node with concrete witness levels never does
-    val propSeedable = stateExprSig != null && !useOnTheFlyReachability
 
-    // build + seed the three node kinds. the abstract init and relation are non-empty whenever the
-    // concrete ones are (the v⟺pred literal definitions are always satisfiable), so their root
-    // satisfiability check is skippable; the prop node has no such guarantee and stays checked
-    val initNode = stateNode(PathUtils.unfold(model.initExpr, 0), stateExprSig ?: stateSig, true)
-    seed?.init?.seed(listOf(initNode), newLits, literalToPred)
+    // the abstract init and relation are non-empty whenever the concrete ones are (the literal
+    // definitions are always satisfiable), so their root satisfiability check is skipped; the prop
+    // node has no such guarantee
+    val initNode = stateNode(PathUtils.unfold(model.initExpr, 0), stateSig, true)
 
     val relSolverBefore = solverPool.checkCount
     val transNodes =
       model.split.map { expr ->
-        val transExpr =
-          And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(orders.identityExprs))
         transSig.topVariableHandle.checkInNode(
-          MddExpressionTemplate.ofKnownSat(transExpr, { it as Decl<*> }, solverPool, true)
+          MddExpressionTemplate.ofKnownSat(
+            PathUtils.unfold(expr, VarIndexingFactory.indexing(0)),
+            { it as Decl<*> },
+            solverPool,
+            true,
+          )
         )
       }
-    seed?.trans?.seed(transNodes, newLits, literalToPred)
-
-    val propNode =
-      stateNode(
-        PathUtils.unfold(Not(model.propExpr), 0),
-        if (propSeedable) stateExprSig!! else stateSig,
-      )
-    if (propSeedable) seed?.prop?.seed(listOf(propNode), newLits, literalToPred)
+    val propNode = stateNode(PathUtils.unfold(Not(model.propExpr), 0), stateSig)
     val relSolverCalls = solverPool.checkCount - relSolverBefore
 
-    val relationOr =
+    val relation =
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
-    // lift each bound under the current top so the interpreter floats it over the literal levels
-    // added since it was built, then AND it onto the relation
-    val nextStates =
-      listOfNotNull(
-          prevStateSpace?.let {
-            MddNodePostcondition.of(stateSig.topVariableHandle.getHandleFor(it.node))
-          },
-          seed?.trans?.bound?.let {
-            MddNodeNextStateDescriptor.of(transBoundSig!!.topVariableHandle.getHandleFor(it.node))
-          },
-          relationOr,
+    // the constraint is lifted under the current top, so the interpreter floats it over the literal
+    // levels added since it was built
+    val constrained =
+      if (prevStateSpace == null) relation
+      else
+        AndNextStateDescriptor.of(
+          MddNodePostcondition.of(stateSig.topVariableHandle.getHandleFor(prevStateSpace.node)),
+          relation,
         )
-        .reduce(AndNextStateDescriptor::of)
-
-    val effectiveNextStates =
-      if (useOnTheFlyReachability)
-        OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
-      else nextStates
+    val nextStates =
+      if (useOnTheFlyReachability) OnTheFlyReachabilityNextStateDescriptor.of(constrained, propNode)
+      else constrained
 
     val satSolverBefore = solverPool.checkCount
     val ssgTime = Stopwatch.createStarted()
     val stateSpace =
-      provider.compute(
-        boundedInitializer(
-          initNode,
-          seed?.init?.bound?.let { stateBoundSig!!.topVariableHandle.getHandleFor(it.node) },
-        ),
-        effectiveNextStates,
-        stateSig.topVariableHandle,
-      )
+      provider.compute(MddNodePostcondition.of(initNode), nextStates, stateSig.topVariableHandle)
     ssgTime.stop()
     val satSolverCalls = solverPool.checkCount - satSolverBefore
 
-    val propViolating =
-      if (propSeedable) filterStates(stateSpace, propNode, seed?.prop?.bound)
-      else stateSpace.intersection(propNode)
+    val propViolating = stateSpace.intersection(propNode)
     val violatingSize = MddInterpreter.calculateNonzeroCount(propViolating)
     val stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace)
 
     val trace =
-      if (violatingSize != 0L) {
-        // trace generation does set operations between state sets and the taller init node, so the
-        // init node is brought to a state-order set: reachable ∩ init = init (init ⊆ reachable)
-        val traceInitNode =
-          if (stateExprSig != null) filterStates(stateSpace, initNode, seed?.init?.bound)
-          else initNode
+      if (violatingSize != 0L)
         generateTrace(
           transNodes,
           transSig,
           stateSpace,
           propViolating,
-          traceInitNode,
+          initNode,
           stateSig,
           model,
           traceTimeout,
           logger,
-          orders.transDataBoundary,
         )
-      } else null
-
-    // after trace generation, so its probes land in the extracted bounds too
-    if (seed != null) {
-      seed.trans.update()
-      seed.init.update()
-      if (propSeedable) seed.prop.update()
-    }
+      else null
 
     return IterationResult(
       stateSpace,
@@ -353,50 +287,6 @@ constructor(
       provider.hitCount,
       provider.queryCount,
       provider.cacheSize,
-    )
-  }
-
-  /**
-   * The saturation initializer for [node], restricted by [boundLift] — its previous-iteration bound,
-   * already lifted to the current top — an over-approximation, so this only changes the exploration
-   * effort, not the set.
-   */
-  private fun boundedInitializer(
-    node: MddHandle,
-    boundLift: MddHandle?,
-  ): AbstractNextStateDescriptor.Postcondition {
-    val nodeInit = MddNodePostcondition.of(node)
-    val boundInit = boundLift?.let { MddNodePostcondition.of(it) }
-    return if (boundInit != null) AndNextStateDescriptor.of(boundInit, nodeInit) else nodeInit
-  }
-
-  /**
-   * `states ∩ exprNode` when [exprNode] lives in the taller state-expression order, which delta set
-   * ops cannot combine with state-order handles. The get() probes cache witnesses into [exprNode];
-   * keys the accumulated [bound] knows absent are skipped unprobed.
-   */
-  private fun filterStates(states: MddHandle, exprNode: MddHandle, bound: MddHandle?): MddHandle {
-    if (states.isTerminalZero || exprNode.isTerminalZero || bound?.isTerminalZero == true)
-      return states.variableHandle.mddGraph.terminalZeroHandle
-    if (states.isTerminal) return states
-    val boundEff = if (bound != null && bound.isTerminal) null else bound
-    val traceInfo = states.variableHandle.variable.orElseThrow().traceInfo
-    val boundAligned =
-      boundEff != null && boundEff.variableHandle.variable.orElseThrow().traceInfo == traceInfo
-    val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-    val cursor = states.cursor()
-    while (cursor.moveNext()) {
-      val childBound: MddHandle?
-      if (boundAligned) {
-        val child = boundEff!!.node.get(cursor.key()) ?: boundEff.node.defaultValue()
-        if (child == null || child == boundEff.variableHandle.mddGraph.terminalZeroNode) continue
-        childBound = boundEff.variableHandle.lower.orElseThrow().getHandleFor(child)
-      } else childBound = boundEff
-      val filtered = filterStates(cursor.value() as MddHandle, exprNode.get(cursor.key()), childBound)
-      if (!filtered.isTerminalZero) templateBuilder.set(cursor.key(), filtered.node)
-    }
-    return states.variableHandle.checkInNode(
-      MddStructuralTemplate.of(templateBuilder.buildAndReset())
     )
   }
 
@@ -428,21 +318,16 @@ constructor(
       iterations,
       totalSolverCalls,
       totalTimeMs,
-      applyReachConstraint,
+      useReachConstraint,
     )
   }
 }
 
 /**
- * The variable orders of one CEGAR run and their lockstep growth: literal levels are added on top
- * per refinement, above the ctrl levels and — with seeding — the concrete witness levels at the
- * bottom of the trans and state-expression orders.
+ * The variable orders of one CEGAR run: the ctrl levels at the bottom, literal levels added on top
+ * per refinement.
  */
-private class CegarOrders(
-  concreteModel: MonolithicExpr,
-  useTransitionSeeding: Boolean,
-  useTransitionBound: Boolean,
-) {
+private class CegarOrders(concreteModel: MonolithicExpr) {
 
   val stateOrder: MddVariableOrder =
     JavaMddFactory.getDefault()
@@ -454,91 +339,20 @@ private class CegarOrders(
       .createMddVariableOrder(
         JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
       )
-  // init and prop nodes go to their own order with concrete witness levels at the bottom, so
-  // their exploration caches full witnesses and they can be seeded like the relation
-  val stateExprOrder: MddVariableOrder? =
-    if (useTransitionSeeding)
-      JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
-    else null
-  // the extracted bounds live in fresh mirror graphs growing in lockstep with the trans /
-  // state-expression orders: checking the structural bound nodes into the source graphs would
-  // collide them with the procedural expression nodes there and force solver-driven equality
-  // enumeration during canonization
-  val transBoundOrder: MddVariableOrder? =
-    if (useTransitionBound)
-      JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
-    else null
-  val stateBoundOrder: MddVariableOrder? =
-    if (useTransitionBound)
-      JavaMddFactory.getDefault().createMddVariableOrder(ExprLatticeDefinition.forExpr())
-    else null
-  val identityExprs = mutableListOf<Expr<BoolType>>()
-
-  // topmost concrete witness level of each order; bound extraction cuts here, keeping the
-  // bounds over the abstract levels that saturation consults
-  var transDataBoundary: Any? = null
-    private set
-
-  var stateDataBoundary: Any? = null
-    private set
 
   init {
-    // ctrl vars sit at the bottom, in the concrete model's relative ordering
-    val orderedVars = concreteModel.orderVars()
-    val ctrlOrdered = orderedVars.filter { it in concreteModel.ctrlVars }
-    val dataOrdered = orderedVars.filter { it !in concreteModel.ctrlVars }
-
-    if (useTransitionSeeding) {
-      // concrete witness levels sit below all abstract levels; the state order does not get them
-      dataOrdered.reversed().forEach {
-        createTransLevelOnTop(it, concreteModel.transOffsetIndex[it])
-        createStateExprLevelOnTop(MddVariableDescriptor.create(it.getConstDecl(0), 0))
-      }
-      transDataBoundary =
-        transOrder.defaultSetSignature.topVariableHandle.variable.map { it.traceInfo }.orElse(null)
-      stateDataBoundary =
-        stateExprOrder!!
-          .defaultSetSignature
-          .topVariableHandle
-          .variable
-          .map { it.traceInfo }
-          .orElse(null)
-    }
-    // createOnTop builds bottom-up, so reverse to keep ctrlOrdered[0] highest within the block
-    ctrlOrdered.reversed().forEach(::createLevelOnTop)
+    // createOnTop builds bottom-up: reversed, so the first ctrl var ends up highest
+    concreteModel
+      .orderVars()
+      .filter { it in concreteModel.ctrlVars }
+      .reversed()
+      .forEach(::createLevelOnTop)
   }
 
-  /**
-   * Top-insertion: new literal levels go above the ctrl and witness levels. The bound lift depends on
-   * this — placed elsewhere, the skip-level handle would stop being a pure default-edge lift.
-   */
+  /** Abstract vars (ctrl vars and literals) always have offset 1 in the abstract relation. */
   fun createLevelOnTop(v: VarDecl<*>) {
     stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
-    createStateExprLevelOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
-    // abstract vars (ctrl vars and literals) always have offset 1 in the abstract relation
-    createTransLevelOnTop(v, 1)
-  }
-
-  private fun createTransLevelOnTop(v: VarDecl<*>, targetIndex: Int) {
-    val domainSize = 0
-    if (targetIndex > 0) {
-      addTransLevel(MddVariableDescriptor.create(v.getConstDecl(targetIndex), domainSize))
-    } else {
-      addTransLevel(MddVariableDescriptor.create(v.getConstDecl(1), domainSize))
-      identityExprs.add(Eq(v.getConstDecl(0).ref, v.getConstDecl(1).ref))
-    }
-    addTransLevel(MddVariableDescriptor.create(v.getConstDecl(0), domainSize))
-  }
-
-  // the trans / state-expression orders and their bound mirrors grow in lockstep, so a bound built
-  // at one iteration's top lifts over later literal levels exactly as the source node does
-  private fun addTransLevel(desc: MddVariableDescriptor) {
-    transOrder.createOnTop(desc)
-    transBoundOrder?.createOnTop(desc)
-  }
-
-  private fun createStateExprLevelOnTop(desc: MddVariableDescriptor) {
-    stateExprOrder?.createOnTop(desc)
-    stateBoundOrder?.createOnTop(desc)
+    transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), 0))
+    transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))
   }
 }
