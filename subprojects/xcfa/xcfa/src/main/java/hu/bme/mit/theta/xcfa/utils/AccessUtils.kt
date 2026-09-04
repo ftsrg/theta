@@ -238,6 +238,7 @@ val XcfaLabel.references: List<Reference<*, *>>
       is NondetLabel -> labels.flatMap { it.references }
       is SequenceLabel -> labels.flatMap { it.references }
       is StartLabel -> params.flatMap { it.references }
+      is FenceLabel -> lock.references
       else -> emptyList()
     }
 
@@ -257,6 +258,7 @@ val XcfaLabel.dereferences: List<Dereference<*, *, *>>
       is NondetLabel -> labels.flatMap { it.dereferences }
       is SequenceLabel -> labels.flatMap { it.dereferences }
       is StartLabel -> params.flatMap { it.dereferences }
+      is FenceLabel -> lock.dereferences
       else -> emptyList()
     }
 
@@ -285,6 +287,7 @@ val XcfaLabel.dereferencesWithAccessType: DereferenceAccessMap
       is InvokeLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
       is StartLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
       is StmtLabel -> stmt.dereferencesWithAccessType
+      is FenceLabel -> lock.dereferences.associateWith { READ }
       else -> mapOf()
     }
 

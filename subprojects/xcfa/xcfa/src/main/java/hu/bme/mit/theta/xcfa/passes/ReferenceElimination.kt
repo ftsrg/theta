@@ -1291,6 +1291,19 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             )
             .let { if (it.labels.size == 1) it.labels[0] else it }
 
+        is FenceLabel -> {
+          val updatedLock = lock.changeReferredVars(varLut, parseContext)
+          when (this) {
+            is AtomicFenceLabel -> this
+            is MutexLockLabel -> copy(lock = updatedLock)
+            is MutexUnlockLabel -> copy(lock = updatedLock)
+            is MutexTryLockLabel -> copy(lock = updatedLock)
+            is RWLockReadLockLabel -> copy(lock = updatedLock)
+            is RWLockWriteLockLabel -> copy(lock = updatedLock)
+            is RWLockUnlockLabel -> copy(lock = updatedLock)
+          }
+        }
+
         else -> this
       }
     else this
