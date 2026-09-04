@@ -62,6 +62,8 @@ fun getMddCegarChecker(
       useReachConstraint = mddCegarConfig.reachConstraint,
       useOnTheFlyReachability = mddCegarConfig.onTheFlyReachability,
       traceTimeout = mddCegarConfig.traceTimeout,
+      useTransitionSeeding = mddCegarConfig.transitionSeeding,
+      useTransitionBound = mddCegarConfig.transitionBound,
       lookAheadStrategy = mddCegarConfig.lookAheadStrategy,
       proofStrategy = mddCegarConfig.proofStrategy,
       traceSearch = mddCegarConfig.traceSearch,

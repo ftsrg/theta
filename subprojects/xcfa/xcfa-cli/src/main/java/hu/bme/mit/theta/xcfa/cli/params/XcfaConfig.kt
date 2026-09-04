@@ -688,6 +688,18 @@ data class MddCegarConfig(
   )
   var onTheFlyReachability: Boolean = false,
   @Parameter(
+    names = ["--transition-seeding"],
+    description = "Seed each iteration's nodes from the previous iteration's witnesses",
+    arity = 1,
+  )
+  var transitionSeeding: Boolean = true,
+  @Parameter(
+    names = ["--transition-bound"],
+    description = "Prune each iteration's exploration by the previous relation's visited edges",
+    arity = 1,
+  )
+  var transitionBound: Boolean = true,
+  @Parameter(
     names = ["--trace-search"],
     description =
       "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",

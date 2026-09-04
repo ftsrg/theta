@@ -69,6 +69,7 @@ internal fun generateTrace(
   model: MonolithicExpr,
   traceTimeout: Long,
   logger: Logger,
+  transDataBoundary: Any? = null,
   search: TraceSearch = TraceSearch.DFS,
 ): Trace<ExplState, ExprAction>? {
   // an initially violating state must be the seed, or the collector may pick a non-initial one
@@ -81,7 +82,9 @@ internal fun generateTrace(
     executor.submit<Trace<ExplState, ExprAction>> {
       val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
       val explicitTrans =
-        transNodes.map { MddExplicitRepresentationExtractor.transform(it, mirrorTop) }
+        transNodes.map {
+          MddExplicitRepresentationExtractor.transform(it, mirrorTop, transDataBoundary)
+        }
       val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
       val orReversed =
         OrNextStateDescriptor.create(

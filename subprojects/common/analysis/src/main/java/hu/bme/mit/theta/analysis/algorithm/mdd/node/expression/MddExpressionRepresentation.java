@@ -346,6 +346,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public MddNode get(int key) {
         final var cached = explicitRepresentation.getCacheView().get(key);
         if (cached != null || this.explicitRepresentation.isComplete()) {
+            if (cached != null) explicitRepresentation.markVisited(key);
             return cached;
         }
         if (explicitRepresentation.isNegativelyCached(key)) return null;
@@ -402,6 +403,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
         if (!mddVariable.isNullOrZero(childNode)) {
             explicitRepresentation.cacheNode(key, childNode);
+            explicitRepresentation.markVisited(key);
         } else {
             // also for the zero node of a non-bottom level: the absence must land in the
             // explicit caches for later iterations' bounds to see it
@@ -494,6 +496,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         IntSetView knownAbsentKeys();
 
+        IntSetView visitedKeys();
+
         boolean isComplete();
     }
 
@@ -501,6 +505,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         private final HashIntObjMap<MddNode> cache;
         private final GrowingIntArray edgeOrdering;
         private final HashIntSet negativeCache;
+        private final HashIntSet visited;
         private MddNode defaultValue;
         private boolean complete;
 
@@ -508,6 +513,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             this.cache = HashIntObjMaps.newUpdatableMap();
             this.edgeOrdering = new GrowingIntArray(100, 100);
             this.negativeCache = HashIntSets.newUpdatableSet();
+            this.visited = HashIntSets.newUpdatableSet();
             this.defaultValue = null;
             this.complete = false;
         }
@@ -524,6 +530,15 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         void cacheNegative(int key) {
             negativeCache.add(key);
+        }
+
+        void markVisited(int key) {
+            visited.add(key);
+        }
+
+        @Override
+        public IntSetView visitedKeys() {
+            return IntSetView.of(visited);
         }
 
         public boolean isNegativelyCached(int key) {
@@ -639,6 +654,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     .getCacheView()
                     .keySet()
                     .contains(assignment)) {
+                currentRepresentation.explicitRepresentation.markVisited(assignment);
                 return true;
             }
             if (currentRepresentation.explicitRepresentation.getCacheView().defaultValue() != null)
@@ -672,6 +688,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 releaseSolver();
                 if (status.isSat()) {
                     cacheModel(model);
+                    currentRepresentation.explicitRepresentation.markVisited(assignment);
                     return true;
                 } else {
                     currentRepresentation.explicitRepresentation.cacheNegative(assignment);
@@ -1005,6 +1022,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 key = currentRepresentation.explicitRepresentation.getEdge(index);
                 value = currentRepresentation.explicitRepresentation.getCacheView().get(key);
                 initialized = true;
+                currentRepresentation.explicitRepresentation.markVisited(key);
                 return true;
             } else if (!currentRepresentation.explicitRepresentation.isComplete()
                     && !constrainedFailed) {
@@ -1016,6 +1034,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     key = queryResult.getKey();
                     value = currentRepresentation.explicitRepresentation.getCacheView().get(key);
                     initialized = true;
+                    currentRepresentation.explicitRepresentation.markVisited(key);
                     return true;
                 } else if (queryResult.getStatus()
                         == Traverser.QueryResult.Status.CONSTRAINED_FAILED) {
