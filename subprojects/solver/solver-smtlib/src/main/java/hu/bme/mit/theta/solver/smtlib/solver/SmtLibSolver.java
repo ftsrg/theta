@@ -269,7 +269,8 @@ public class SmtLibSolver implements UCSolver, Solver {
         assert model == null;
 
         solverBinary.issueCommand("(get-model)");
-        final var res = parseResponse(solverBinary.readResponse());
+        final var rawModelResponse = solverBinary.readResponse();
+        final var res = parseResponse(rawModelResponse);
         if (res.isError()) {
             throw new SmtLibSolverException(res.getReason());
         } else if (res.isSpecific()) {
@@ -280,7 +281,11 @@ public class SmtLibSolver implements UCSolver, Solver {
                     termTransformer,
                     getModelResponse.getModel());
         } else {
-            throw new AssertionError();
+            // A bare AssertionError here says nothing about which solver returned what, and this
+            // path fires whenever a solver answers (get-model) in a shape the generic parser does
+            // not recognise. Report the response so the mismatch is diagnosable.
+            throw new SmtLibSolverException(
+                    "Solver returned an unparsable response to (get-model): " + rawModelResponse);
         }
     }
 
