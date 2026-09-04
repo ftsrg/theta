@@ -24,10 +24,10 @@ import com.github.ajalt.clikt.parameters.types.long
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.VarDecl

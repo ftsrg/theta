@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 import com.google.common.collect.Lists;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddSinglePathExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -30,16 +30,35 @@ public final class TraceProvider implements MddGraph.CleanupListener {
             cacheManager = new CacheManager<>(v -> new BinaryOperationCache<>());
     private final MddVariableOrder variableOrder;
     private final SingleStepProvider singleStepProvider;
+    private final boolean ownsSingleStepProvider;
 
     public TraceProvider(final MddVariableOrder variableOrder) {
-        this(variableOrder, new SingleStepProvider(variableOrder));
+        this(variableOrder, new SingleStepProvider(variableOrder), true);
     }
 
     public TraceProvider(
             final MddVariableOrder variableOrder, final SingleStepProvider singleStepProvider) {
+        this(variableOrder, singleStepProvider, false);
+    }
+
+    private TraceProvider(
+            final MddVariableOrder variableOrder,
+            final SingleStepProvider singleStepProvider,
+            final boolean ownsSingleStepProvider) {
         this.variableOrder = variableOrder;
         this.singleStepProvider = singleStepProvider;
+        this.ownsSingleStepProvider = ownsSingleStepProvider;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
+    }
+
+    /** Clears the caches and unregisters from the graph so the provider can be collected. */
+    public void dispose() {
+        clear();
+        this.variableOrder.getMddGraph().unregisterCleanupListener(this);
+        if (ownsSingleStepProvider) {
+            singleStepProvider.clear();
+            singleStepProvider.dispose();
+        }
     }
 
     public List<MddHandle> compute(
@@ -70,9 +89,9 @@ public final class TraceProvider implements MddGraph.CleanupListener {
                                     highestAffectedVariable)
                             .minus(alreadyExplored);
             if (MddInterpreter.calculateNonzeroCount(newLayer) > 0) {
-                currentState = MddSinglePathExtractor.INSTANCE.transform((MddHandle) newLayer);
+                currentState = newLayer.satOne();
                 states.push(currentState);
-                alreadyExplored = (MddHandle) alreadyExplored.union(currentState);
+                alreadyExplored = alreadyExplored.union(currentState);
             } else {
                 states.pop();
                 currentState = states.peek();
@@ -80,6 +99,48 @@ public final class TraceProvider implements MddGraph.CleanupListener {
         }
 
         return Lists.reverse(states);
+    }
+
+    /**
+     * Backward breadth-first layers from {@code targetStates} to the initial states, initial side
+     * first; a path picked forward through them is a shortest trace.
+     */
+    public List<MddHandle> computeBreadthFirst(
+            MddHandle targetStates,
+            AbstractNextStateDescriptor reversedNextStateRelation,
+            MddHandle initialStates,
+            MddVariableHandle highestAffectedVariable)
+            throws InterruptedException {
+
+        final List<MddHandle> layers = new ArrayList<>();
+        MddHandle current = targetStates;
+        MddHandle explored = targetStates;
+        layers.add(current);
+        MddHandle initHit = current.intersection(initialStates);
+
+        while (initHit.isTerminalZero()) {
+            if (Thread.interrupted()) {
+                System.out.println(
+                        "Trace computation interrupted after " + layers.size() + " layers.");
+                throw new InterruptedException();
+            }
+            final MddHandle next =
+                    singleStepProvider
+                            .compute(current, reversedNextStateRelation, highestAffectedVariable)
+                            .minus(explored);
+            if (next.isTerminalZero()) {
+                throw new IllegalStateException(
+                        "backward search exhausted the state space without reaching an initial"
+                                + " state");
+            }
+            explored = explored.union(next);
+            current = next;
+            layers.add(current);
+            initHit = current.intersection(initialStates);
+        }
+
+        layers.set(layers.size() - 1, initHit);
+        return Lists.reverse(layers);
     }
 
     @Override

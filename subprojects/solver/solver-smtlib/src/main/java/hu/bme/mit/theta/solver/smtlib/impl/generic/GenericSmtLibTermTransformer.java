@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
@@ -526,10 +527,15 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
+    // (as const (Array I E)) e: ArrayLitExpr needs a literal element, which only model terms
+    // guarantee; interpolants can name a constant array over an arbitrary term
     @SuppressWarnings("unchecked")
     private <I extends Type, E extends Type> Expr<?> createArrayLitExpr(
             final Expr<?> elze, final ArrayType<I, E> type) {
-        return Array(Collections.emptyList(), (Expr<E>) elze, type);
+        if (elze instanceof LitExpr<?>) {
+            return Array(Collections.emptyList(), (Expr<E>) elze, type);
+        }
+        return ArrayInit(Collections.emptyList(), (Expr<E>) elze, type);
     }
 
     private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(

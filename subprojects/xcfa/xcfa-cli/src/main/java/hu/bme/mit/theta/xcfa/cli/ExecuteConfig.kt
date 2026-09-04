@@ -85,6 +85,12 @@ fun runConfig(
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.defaultLevel = config.frontendConfig.lbeLevel
+  DereferenceToArrayPass.zeroInitialized =
+    when (config.frontendConfig.memoryInit) {
+      MemoryInit.ZERO -> true
+      MemoryInit.UNCONSTRAINED -> false
+      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+    }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 

@@ -19,8 +19,8 @@ import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
 import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
 import hu.bme.mit.delta.java.mdd.MddHandle;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
