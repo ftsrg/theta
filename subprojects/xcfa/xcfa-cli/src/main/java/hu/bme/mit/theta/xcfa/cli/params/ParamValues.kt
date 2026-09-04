@@ -43,10 +43,10 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
-import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
+import hu.bme.mit.theta.analysis.ptr.*
+import hu.bme.mit.theta.analysis.unit.UnitAnalysis
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -55,13 +55,20 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LAST_SEGMENT_PASSED
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LOGICAL_THREAD_ID
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.THREAD_ID_PARAM
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.autoexpl.xcfaNewOperandsAutoExpl
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
+import hu.bme.mit.theta.xcfa.cli.utils.XcfaSegmentOrderComparator
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -87,6 +94,7 @@ enum class Backend {
   KIND,
   IMC,
   KINDIMC,
+  PATH_ENUMERATION,
   CHC,
   OC,
   LAZY,
@@ -490,6 +498,51 @@ enum class Domain(
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
   ),
+  UNIT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          xcfa,
+          solver,
+          getExplPredStmtXcfaTransFunc(solver, false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(UnitXcfaAnalysis(a, j), d, e, f, g, h)
+    },
+    itpPrecRefiner = { a, b ->
+      XcfaPrecRefiner<PtrState<UnitState>, UnitPrec, ItpRefutation>(
+        ItpRefToPtrPrec(
+          object : RefutationToPrec<UnitPrec, ItpRefutation> {
+            override fun join(prec1: UnitPrec?, prec2: UnitPrec?) = UnitPrec.getInstance()
+
+            override fun toPrec(refutation: ItpRefutation?, index: Int) = UnitPrec.getInstance()
+          }
+        )
+      )
+    },
+    initPrec = { _, _ -> XcfaPrec(PtrPrec(UnitPrec.getInstance())) },
+    partialOrd = { UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd() },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<UnitState>>, XcfaAction>(),
+    stateType = TypeToken.get(UnitState::class.java).type,
+  ),
 }
 
 enum class Refinement(
@@ -635,6 +688,16 @@ enum class Search {
     override fun getComp(cfa: XCFA): ArgNodeComparator {
       return XcfaDistToErrComparator(cfa)
     }
+  },
+  SEGMENT_ORDER {
+
+    override fun getComp(cfa: XCFA): ArgNodeComparator {
+      // BFS base, but states pinning the witness segment counter are preferred (highest first).
+      return ArgNodeComparators.combine(
+        ArgNodeComparators.targetFirst(),
+        ArgNodeComparators.combine(XcfaSegmentOrderComparator(), ArgNodeComparators.bfs()),
+      )
+    }
   };
 
   abstract fun getComp(cfa: XCFA): ArgNodeComparator
@@ -644,6 +707,13 @@ enum class TracegenAbstraction {
   NONE
   // TODO add EXPL
 }
+
+/**
+ * Names of the bookkeeping variables [ApplyWitnessPass] adds to the XCFA; see
+ * [InitPrec.WITNESSVARS].
+ */
+private val WITNESS_VAR_NAMES =
+  setOf(SEGMENT_COUNTER, LAST_SEGMENT_PASSED, LOGICAL_THREAD_ID, THREAD_ID_PARAM)
 
 enum class InitPrec(
   val explPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<ExplPrec>>,
@@ -663,6 +733,25 @@ enum class InitPrec(
       XcfaPrec(PtrPrec(Prod2Prec.of(ExplPrec.of(xcfa.collectVars()), PredPrec.of()), emptySet()))
     },
   ),
+  WITNESSVARS(
+    explPrec = { xcfa ->
+      XcfaPrec(
+        PtrPrec(ExplPrec.of(xcfa.collectVars().filter { it.name in WITNESS_VAR_NAMES }), emptySet())
+      )
+    },
+    predPrec = { error("WITNESSVARS is not interpreted for the predicate domain.") },
+    prod2Prec = { xcfa ->
+      XcfaPrec(
+        PtrPrec(
+          Prod2Prec.of(
+            ExplPrec.of(xcfa.collectVars().filter { it.name in WITNESS_VAR_NAMES }),
+            PredPrec.of(),
+          ),
+          emptySet(),
+        )
+      )
+    },
+  ),
   ALLGLOBALS(
     explPrec = { xcfa ->
       XcfaPrec(PtrPrec(ExplPrec.of(xcfa.globalVars.map { it.wrappedVar }), emptySet()))
@@ -680,6 +769,11 @@ enum class InitPrec(
         PtrPrec(Prod2Prec.of(ExplPrec.empty(), PredPrec.of(xcfa.collectAssumes())), emptySet())
       )
     },
+  ),
+  REUSE(
+    explPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<ExplPrec>())) },
+    predPrec = { xcfa -> XcfaPrec(PtrPrec(PrecReuse.get<PredPrec>())) },
+    prod2Prec = { error("REUSE is not supported for the product domain.") },
   ),
 }
 

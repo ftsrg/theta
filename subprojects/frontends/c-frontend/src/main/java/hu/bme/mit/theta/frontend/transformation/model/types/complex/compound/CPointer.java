@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import java.util.Objects;
 
 public class CPointer extends CInteger {
 
@@ -51,5 +52,17 @@ public class CPointer extends CInteger {
     @Override
     public String getTypeName() {
         return new CUnsignedLong(null, parseContext).getTypeName();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CPointer cPointer = (CPointer) o;
+        return Objects.equals(embeddedType, cPointer.embeddedType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass(), embeddedType);
     }
 }

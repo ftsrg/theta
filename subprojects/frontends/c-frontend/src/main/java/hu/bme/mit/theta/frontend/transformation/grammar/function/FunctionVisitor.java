@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -122,6 +122,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
         parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
         parseContext.getMetadata().create(varDecl.getName(), "cName", name);
+        if (!currentStatementContext.isEmpty()) {
+            Token location = currentStatementContext.peek().get1().start;
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationLine", location.getLine());
+            parseContext
+                    .getMetadata()
+                    .create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
+        }
         declaration.addVarDecl(varDecl);
     }
 
@@ -889,12 +898,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             ifFalsePost.setPreStatements(new CNullStatement(parseContext));
 
             if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
-                preStatements.addCStatement(
-                        new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
+                CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
+                recordMetadata(ctx, preIf);
+                preStatements.addCStatement(preIf);
             }
             if (!ifTruePostList.isEmpty() || !ifFalsePostList.isEmpty()) {
-                postStatements.addCStatement(
-                        new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
+                CIf postIf = new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext);
+                recordMetadata(ctx, postIf);
+                postStatements.addCStatement(postIf);
             }
 
             CComplexType smallestCommonType =

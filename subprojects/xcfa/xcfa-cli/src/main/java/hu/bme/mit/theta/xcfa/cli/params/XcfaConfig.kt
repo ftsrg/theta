@@ -33,6 +33,8 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuseFormat
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -184,6 +186,13 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
+  @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
+  var useCir2c: Boolean = false,
+  @Parameter(
+    names = ["--cir2c-dir", "--cir2c-directory"],
+    description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
+  )
+  var cir2cDir: File = File("./cir2c"),
 ) : SpecFrontendConfig
 
 /** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
@@ -268,6 +277,7 @@ data class BackendConfig<T : SpecBackendConfig>(
             as T
         Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
+        Backend.PATH_ENUMERATION -> PathEnumerationConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
@@ -284,6 +294,8 @@ data class BackendConfig<T : SpecBackendConfig>(
 data class CegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(names = ["--prec-file"], description = "File of precision to reuse")
+  var precFile: String? = null,
   @Parameter(names = ["--por"], description = "POR algorithm type") var por: POR = POR.NOPOR,
   @Parameter(
     names = ["--por-seed"],
@@ -561,6 +573,27 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--oc-unroll-start"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStart: Int = 2,
+  @Parameter(
+    names = ["--oc-unroll-end"],
+    description = "Upper force loop unrolling bound for OC checker (-1 for no limit)",
+  )
+  var forceUnrollBoundEnd: Int = -1,
+  @Parameter(
+    names = ["--oc-unroll-step"],
+    description = "Step size for force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-witness-optimizations"],
+    description =
+      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
+  )
+  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
@@ -697,6 +730,7 @@ data class OutputConfig(
   val cOutputConfig: COutputConfig = COutputConfig(),
   val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
   val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
+  val precOutputConfig: PrecOutputConfig = PrecOutputConfig(),
   val witnessConfig: WitnessConfig = WitnessConfig(),
   val argConfig: ArgConfig = ArgConfig(),
 ) : Config {
@@ -706,12 +740,20 @@ data class OutputConfig(
       cOutputConfig.getObjects() union
       xcfaOutputConfig.getObjects() union
       chcOutputConfig.getObjects() union
+      precOutputConfig.getObjects() union
       witnessConfig.getObjects() union
       argConfig.getObjects()
   }
 
   override fun update(): Boolean =
-    listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, witnessConfig, argConfig)
+    listOf(
+        cOutputConfig,
+        xcfaOutputConfig,
+        chcOutputConfig,
+        precOutputConfig,
+        witnessConfig,
+        argConfig,
+      )
       .map { it.update() }
       .any { it }
 }
@@ -722,6 +764,13 @@ data class XcfaOutputConfig(
 
 data class ChcOutputConfig(
   @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
+) : Config
+
+data class PrecOutputConfig(
+  @Parameter(names = ["--prec-serialization-format"], variableArity = true)
+  var format: List<PrecReuseFormat> = PrecReuseFormat.entries,
+  @Parameter(names = ["--prec-serialization-mode"])
+  var serializationMode: PrecSerializationMode = PrecSerializationMode.NEVER,
 ) : Config
 
 data class COutputConfig(
@@ -769,3 +818,44 @@ data class DebugConfig(
   )
   var argToFile: Boolean = false,
 ) : Config
+
+data class PathEnumerationConfig(
+  @Parameter(names = ["--path-enumeration-solver"], description = "Path enumeration solver name")
+  var pathEnumerationSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-path-enumeration-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validatePathEnumerationSolver: Boolean = false,
+  @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
+  var maxBound: Int = 0,
+  @Parameter(names = ["--prec"], description = "Precision") var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(names = ["--por-level"], description = "POR dependency level")
+  var porLevel: POR = POR.NOPOR,
+  @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
+  var porRandomSeed: Int = -1,
+  @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
+  var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
+  @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+  var abstractionSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-abstraction-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateAbstractionSolver: Boolean = false,
+  @Parameter(names = ["--domain"], description = "Abstraction domain")
+  var domain: Domain = Domain.UNIT,
+  @Parameter(
+    names = ["--maxenum"],
+    description =
+      "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",
+  )
+  var maxEnum: Int = 1,
+  @Parameter(
+    names = ["--havoc-memory"],
+    description = "HAVOC memory model (do not track pointers in transition function)",
+  )
+  var havocMemory: Boolean = false,
+) : SpecBackendConfig

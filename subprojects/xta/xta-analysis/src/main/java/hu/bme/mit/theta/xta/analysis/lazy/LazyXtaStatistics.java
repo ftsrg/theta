@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.common.stopwatch.Stopwatch;
 import hu.bme.mit.theta.common.table.TableWriter;
 
 public final class LazyXtaStatistics extends Statistics {
@@ -43,13 +42,13 @@ public final class LazyXtaStatistics extends Statistics {
     private final long argNodesExpanded;
 
     private LazyXtaStatistics(final Builder builder) {
-        algorithmTimeInMs = builder.algorithmTimer.elapsed(MILLISECONDS);
-        expandTimeInMs = builder.expandTimer.elapsed(MILLISECONDS);
-        closeTimeInMs = builder.closeTimer.elapsed(MILLISECONDS);
-        expandExplRefinementTimeInMs = builder.expandExplRefinementTimer.elapsed(MILLISECONDS);
-        expandZoneRefinementTimeInMs = builder.expandZoneRefinementTimer.elapsed(MILLISECONDS);
-        closeExplRefinementTimeInMs = builder.closeExplRefinementTimer.elapsed(MILLISECONDS);
-        closeZoneRefinementTimeInMs = builder.closeZoneRefinementTimer.elapsed(MILLISECONDS);
+        algorithmTimeInMs = builder.algorithmTimer.elapsedMillis();
+        expandTimeInMs = builder.expandTimer.elapsedMillis();
+        closeTimeInMs = builder.closeTimer.elapsedMillis();
+        expandExplRefinementTimeInMs = builder.expandExplRefinementTimer.elapsedMillis();
+        expandZoneRefinementTimeInMs = builder.expandZoneRefinementTimer.elapsedMillis();
+        closeExplRefinementTimeInMs = builder.closeExplRefinementTimer.elapsedMillis();
+        closeZoneRefinementTimeInMs = builder.closeZoneRefinementTimer.elapsedMillis();
         coverageChecks = builder.coverageChecks;
         coverageAttempts = builder.coverageAttempts;
         coverageSuccesses = builder.coverageSuccesses;

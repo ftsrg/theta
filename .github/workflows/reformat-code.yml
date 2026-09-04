@@ -1,5 +1,5 @@
 
-name: Reformat code
+name: Reformat code and apply copyright headers
 on: 
   workflow_dispatch:
     inputs:
@@ -26,7 +26,7 @@ jobs:
     - name: Do reformat
       uses: ./.github/actions/cache-build
       with:
-        arguments: spotlessApply
+        arguments: spotlessApply applyCopyright
 
     - name: Create Pull Request
       if: ${{ !inputs.direct-commit }}

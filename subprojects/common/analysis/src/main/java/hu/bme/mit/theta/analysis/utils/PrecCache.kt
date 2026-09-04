@@ -13,31 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.stopwatch
 
-interface Stopwatch {
+package hu.bme.mit.theta.analysis.utils
 
-  fun start()
+import hu.bme.mit.theta.analysis.Prec
 
-  fun stop()
+object PrecCache {
+  private var cached: Prec? = null
+  private var listeners: MutableList<PrecChangeListener> = mutableListOf()
 
-  fun elapsedNanos(): Long
-
-  fun elapsedMillis(): Long
-
-  companion object {
-    fun create(): Stopwatch {
-      return if (CgroupStopwatch.detectCgroupVersion() > 0) {
-        CgroupStopwatch()
-      } else {
-        GuavaStopwatch()
-      }
-    }
-
-    fun createStarted(): Stopwatch {
-      val stopwatch = create()
-      stopwatch.start()
-      return stopwatch
-    }
+  fun <P : Prec> store(prec: P) {
+    cached = prec
+    listeners.forEach { it.onChange() }
   }
+
+  fun get(): Prec? {
+    return cached
+  }
+
+  fun register(listener: PrecChangeListener) {
+    listeners.add(listener)
+  }
+}
+
+fun interface PrecChangeListener {
+  fun onChange()
 }

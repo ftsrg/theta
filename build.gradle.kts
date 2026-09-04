@@ -32,11 +32,50 @@ dependencies {
     }
 }
 
+// Solver-installation failures are environmental (no network, moved download URL, ...), so the
+// affected tests skip instead of failing. This task is what keeps such a run from passing: it
+// collects what the test JVMs recorded and fails once, listing every solver that is missing.
+// The failures are reported to the GitHub job summary by the tests themselves, as they happen.
+val verifySolverInstallations by tasks.registering {
+    group = "verification"
+    description = "Fails the build if any SMT-LIB solver could not be installed during tests."
+
+    val reportDir = layout.buildDirectory.dir("solver-install-failures")
+
+    doLast {
+        val failures = (reportDir.get().asFile.listFiles() ?: emptyArray())
+            .filter { it.isFile }
+            .flatMap { it.readLines() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "Could not install ${failures.size} SMT-LIB solver(s); " +
+                        "the tests depending on them were skipped:\n  - ",
+                    separator = "\n  - "
+                )
+            )
+        }
+    }
+}
+
 subprojects {
     apply(plugin = "copyright-check")
-    
+
     tasks.matching { it.name == "test" }.configureEach {
         dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
+
+        // Tests skip themselves when a solver cannot be installed, so the build has to be
+        // failed separately -- otherwise a run that tested nothing would report success.
+        // The ordering is declared from here rather than from the task itself: reaching into
+        // the subprojects' task containers while the root project is configured would realize
+        // them before they are evaluated.
+        val testTask = this
+        finalizedBy(rootProject.tasks.named("verifySolverInstallations"))
+        rootProject.tasks.named("verifySolverInstallations") { mustRunAfter(testTask) }
     }
 }
 

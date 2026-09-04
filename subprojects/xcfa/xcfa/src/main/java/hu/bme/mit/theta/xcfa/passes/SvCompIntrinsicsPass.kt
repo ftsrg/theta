@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,14 +33,14 @@ class SvCompIntrinsicsPass : ProcedurePass {
       for (outgoingEdge in ArrayList(builder.initLoc.outgoingEdges)) {
         builder.removeEdge(outgoingEdge)
         val labels: MutableList<XcfaLabel> = ArrayList()
-        labels.add(AtomicBeginLabel(outgoingEdge.metadata))
+        labels.add(AtomicBeginLabel())
         labels.addAll((outgoingEdge.label as SequenceLabel).labels)
         builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels)))
       }
       for (incomingEdge in ArrayList(builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {
         builder.removeEdge(incomingEdge)
         val labels = ArrayList((incomingEdge.label as SequenceLabel).labels)
-        labels.add(AtomicEndLabel(incomingEdge.metadata))
+        labels.add(AtomicEndLabel())
         builder.addEdge(incomingEdge.withLabel(SequenceLabel(labels)))
       }
     }

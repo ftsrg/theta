@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
@@ -33,8 +32,8 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -47,6 +46,8 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
@@ -57,7 +58,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 fun runConfig(
@@ -104,6 +104,13 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
   }
+  if (config.backendConfig.backend == Backend.PATH_ENUMERATION) {
+    val pathEnumerationConfig = config.backendConfig.specConfig
+    pathEnumerationConfig as PathEnumerationConfig
+    val random = Random(pathEnumerationConfig.porRandomSeed)
+    XcfaSporLts.random = random
+    XcfaDporLts.random = random
+  }
   if (
     config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
       config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
@@ -118,9 +125,18 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     WebDebuggerLogger.enableWebDebuggerLogger()
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
   }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (
+      cegarConfig.initPrec == InitPrec.REUSE ||
+        config.outputConfig.precOutputConfig.serializationMode != PrecSerializationMode.NEVER
+    ) {
+      PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
+    }
+  }
 
   LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
-  LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
+  LoopUnrollPass.FORCE_UNROLL_LIMIT =
+    if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
@@ -136,9 +152,19 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
+  rule("NoDataRaceWithPathEnumeration") {
+    config.backendConfig.backend == Backend.PATH_ENUMERATION &&
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+    // technically only when pointers are present, but we don't know that yet
+  }
   rule("NoAaporWhenDataRace") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+  }
+  rule("NoAaporOrDporPathEnumeration") {
+    (config.backendConfig.specConfig as? PathEnumerationConfig)?.porLevel.let {
+      it != null && (it.isAbstractionAware || it.isDynamic)
+    }
   }
   rule("DPORWithoutDFS") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&
@@ -212,6 +238,10 @@ private fun frontend(
     } else {
       emptySet()
     }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (cegarConfig.initPrec == InitPrec.REUSE)
+      PrecReuse.load(cegarConfig.precFile, xcfa.collectVars(), parseContext, logger)
+  }
 
   if (
     parseContext.multiThreading &&
@@ -224,9 +254,7 @@ private fun frontend(
     uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
   }
 
-  logger.benchmark(
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)"
-  )
+  logger.benchmark("Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)")
 
   logger.benchmark("ParsingResult Success")
   logger.benchmark(
@@ -253,6 +281,10 @@ private fun backend(
     } else if (config.backendConfig.backend == Backend.TRACEGEN) {
       tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
     } else {
+      logger.info(
+        "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
+      )
+
       // we would not do post analysis logging if running in a portfolio otherwise
       if (
         config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
@@ -276,10 +308,6 @@ private fun backend(
       } else {
         val stopwatch = Stopwatch.createStarted()
         val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-
-        logger.info(
-          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
-        )
 
         logger.info(
           "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}"
@@ -323,7 +351,7 @@ private fun backend(
               }
             }
 
-        logger.info("Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
+        logger.info("Backend finished (in ${stopwatch.elapsedMillis()} ms)")
         result
       }
     }
@@ -352,7 +380,7 @@ private fun tracegenBackend(
     }
   logger.info(
     "Backend finished (in ${
-      stopwatch.elapsed(TimeUnit.MILLISECONDS)
+      stopwatch.elapsedMillis()
     } ms)\n"
   )
 
@@ -418,5 +446,6 @@ internal fun concretizeTrace(
         config.outputConfig.witnessConfig.validateConcretizerSolver,
       ),
       parseContext,
+      wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property),
     )
   }

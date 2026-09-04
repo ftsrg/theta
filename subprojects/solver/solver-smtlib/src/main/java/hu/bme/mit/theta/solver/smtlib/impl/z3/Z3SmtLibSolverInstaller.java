@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             case LINUX:
                 return "z3";
             case MAC:
-                return "z3.dmg";
+                return "z3";
             default:
                 throw new AssertionError();
         }
