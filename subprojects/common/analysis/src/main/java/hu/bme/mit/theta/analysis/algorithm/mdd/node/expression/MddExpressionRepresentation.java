@@ -28,8 +28,8 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprUtilKt;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -201,9 +201,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         cacheModel(model, null, new IdentityHashMap<>());
     }
 
-    /**
-     * Caches the known structure {@code source} into this node.
-     */
+    /** Caches the known structure {@code source} into this node. */
     public void cacheModel(Valuation prefix, MddNode source) {
         cacheModel(prefix, source, new IdentityHashMap<>());
     }
@@ -240,7 +238,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             if (child != null) child.cacheModel(prefix, null, done);
             return;
         }
-        // below the prefix: mirror source's structure, memoized so a shared sub-DAG (a compact MDD has
+        // below the prefix: mirror source's structure, memoized so a shared sub-DAG (a compact MDD
+        // has
         // exponentially many paths) is walked once per node, not once per path
         if (!done.computeIfAbsent(this, k -> new HashSet<>()).add(source)) {
             return;
@@ -258,8 +257,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     }
 
     /**
-     * Builds the explorable expression child for {@code key} (its expression substituted), caching the
-     * edge when {@code cacheEdge}; returns its representation, or null at a terminal/identity bottom.
+     * Builds the explorable expression child for {@code key} (its expression substituted), caching
+     * the edge when {@code cacheEdge}; returns its representation, or null at a terminal/identity
+     * bottom.
      */
     private MddExpressionRepresentation cacheChild(int key, boolean cacheEdge) {
         MddNode childNode = cacheEdge ? explicitRepresentation.getCacheView().get(key) : null;
@@ -269,7 +269,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             ? MddExpressionTemplate.simplify(
                                     expr,
                                     ImmutableValuation.builder()
-                                            .put(decl, LitExprConverter.toLitExpr(key, decl.getType()))
+                                            .put(
+                                                    decl,
+                                                    LitExprConverter.toLitExpr(key, decl.getType()))
                                             .build(),
                                     mddVariable.getMddGraph())
                             : expr;
@@ -384,7 +386,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             } else if (canonizedExpr instanceof TrueExpr) {
                 childNode = mddGraph.getNodeFor(True());
             } else if (substitutionOnly) {
-                // substitution left the bottom expression undetermined: treat as absent, never solve
+                // substitution left the bottom expression undetermined: treat as absent, never
+                // solve
                 childNode = null;
             } else {
                 var solver = solverPool.requestSolver();
@@ -626,6 +629,17 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 solver.pop();
                 enumerationActive = false;
             }
+            releaseSolver();
+        }
+
+        // hold the solver only while an enumeration keeps state in it: the lazy traversers are
+        // never
+        // closed, so a parked solver would leak a context per queried node
+        private void releaseSolver() {
+            if (solver != null && !enumerationActive) {
+                solverPool.returnSolver(solver);
+                solver = null;
+            }
         }
 
         public MddExpressionRepresentation moveUp() {
@@ -671,6 +685,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     model = status.isSat() ? solver.getModel() : null;
                 }
                 Preconditions.checkNotNull(status);
+                releaseSolver();
                 if (status.isSat()) {
                     cacheModel(model);
                     currentRepresentation.explicitRepresentation.markVisited(assignment);
@@ -836,11 +851,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         @Override
         public void close() {
-            if (solver != null) {
-                stopEnumeration();
-                solverPool.returnSolver(this.solver);
-                this.solver = null;
-            }
+            stopEnumeration();
+            releaseSolver();
         }
 
         private static class QueryResult {
