@@ -31,11 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * The full-relation (source and target) descriptor of an MDD node, descending two levels per key.
- * Read through the handle's interpreter, so a node sitting below its variable handle floats down
- * the don't-care prefix (default edges) until its own level.
- */
+/** The full-relation (source and target) descriptor of an MDD node, two levels per key. */
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddHandle handle;

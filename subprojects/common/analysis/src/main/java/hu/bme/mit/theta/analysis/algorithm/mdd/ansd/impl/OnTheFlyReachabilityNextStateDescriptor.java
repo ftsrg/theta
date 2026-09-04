@@ -26,11 +26,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The wrapped relation with early termination for reachability: the {@code target} node is
- * descended in lockstep with image enumeration, and once a produced state lies under it (the
- * descended target reaches a non-zero terminal) a shared kill switch empties every image,
- * truncating the fixpoint. Sound only for deciding whether {@code target} is reachable, not for
- * computing the full reach set.
+ * The wrapped relation with early termination: once an image state lies under {@code target}, a
+ * shared kill switch empties every image. Sound only for deciding reachability of {@code target}.
  */
 public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStateDescriptor {
 

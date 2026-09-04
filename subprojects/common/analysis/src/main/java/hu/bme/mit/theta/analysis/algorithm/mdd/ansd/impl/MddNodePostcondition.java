@@ -23,11 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.Objects;
 
-/**
- * The target-only (postcondition) descriptor of an MDD node, descending one level per key. Read
- * through the handle's interpreter, so a node sitting below its variable handle floats down the
- * don't-care prefix (default edges) until its own level.
- */
+/** The target-only (postcondition) descriptor of an MDD node, one level per key. */
 public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcondition {
 
     private final MddHandle handle;

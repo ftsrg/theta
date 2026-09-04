@@ -108,10 +108,7 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
     return AbstractionResult(model, newLiterals)
   }
 
-  /**
-   * Maps an abstract trace (over activation-literal valuations) back to a predicate trace over the
-   * concrete model's actions, under the prec of the last [abstractModel] call.
-   */
+  /** Maps an abstract trace to a predicate trace under the prec of the last [abstractModel]. */
   fun toPredTrace(trace: Trace<ExplState, ExprAction>): Trace<PredState, ExprAction> =
     Trace.of(trace.states.map(this::toPredState), trace.actions.map { concreteModel.action() })
 

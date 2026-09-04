@@ -61,7 +61,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     private final SolverPool solverPool;
     private final boolean transExpr;
-    // the lookahead strategy is attached per graph (run-scoped), defaulting to VARIABLE_LEVEL
     public static final MddGraph.Key<MddToExprStrategy> LOOK_AHEAD =
             new MddGraph.Key<>("lookAheadStrategy");
 
@@ -108,7 +107,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         this.transExpr = transExpr;
     }
 
-    /** Read-only view of this node's explored structure, for consumers that must not mutate it. */
+    /** Read-only view of the explored structure. */
     public Explored explored() {
         return explicitRepresentation;
     }
@@ -414,11 +413,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return Objects.hash(expr, decl, mddVariable);
     }
 
-    /**
-     * Read-only view of what exploration has established about an expression node: the edges and
-     * default it has cached so far (a lower bound on the node's edges), the keys proven absent, and
-     * whether exploration has exhausted the node. None of the cache's mutators are reachable here.
-     */
+    /** What exploration has established about a node so far: its cached edges and completeness. */
     public interface Explored {
         IntObjMapView<MddNode> knownEdges();
 
@@ -536,9 +531,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             releaseSolver();
         }
 
-        // hold the solver only while an enumeration keeps state in it: the lazy traversers are
-        // never
-        // closed, so a parked solver would leak a context per queried node
+        // hold the solver only while an enumeration keeps state in it
         private void releaseSolver() {
             if (solver != null && !enumerationActive) {
                 solverPool.returnSolver(solver);

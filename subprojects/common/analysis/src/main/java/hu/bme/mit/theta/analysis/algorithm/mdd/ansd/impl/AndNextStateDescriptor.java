@@ -25,11 +25,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The intersection of two next-state relations, descended in lockstep. Operand shapes follow the
- * {@link AbstractNextStateDescriptor} algebra: a {@link AbstractNextStateDescriptor.Postcondition}
- * constrains the target only, a full relation constrains source and target. Enumeration drives the
- * exhaustive (no-default) side and probes the other by key, so pass the structural/explicit operand
- * as {@code lhs}.
+ * The intersection of two next-state relations. Enumeration drives the exhaustive (no-default) side
+ * and probes the other by key, so pass the structural operand as {@code lhs}.
  */
 public final class AndNextStateDescriptor implements AbstractNextStateDescriptor {
 
@@ -37,7 +34,8 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
     private final AbstractNextStateDescriptor rhs;
 
-    private AndNextStateDescriptor(AbstractNextStateDescriptor lhs, AbstractNextStateDescriptor rhs) {
+    private AndNextStateDescriptor(
+            AbstractNextStateDescriptor lhs, AbstractNextStateDescriptor rhs) {
         this.lhs = lhs;
         this.rhs = rhs;
     }
@@ -141,7 +139,8 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
     /** Intersects two target views, descending each key to {@code of} of the children. */
     private static IntObjMapView<AbstractNextStateDescriptor> andViews(
-            IntObjMapView<AbstractNextStateDescriptor> l, IntObjMapView<AbstractNextStateDescriptor> r) {
+            IntObjMapView<AbstractNextStateDescriptor> l,
+            IntObjMapView<AbstractNextStateDescriptor> r) {
         return new IntObjMapView<>() {
             @Override
             public AbstractNextStateDescriptor get(int key) {
@@ -159,8 +158,7 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
             @Override
             public IntObjCursor<? extends AbstractNextStateDescriptor> cursor() {
-                // drive by cursor value (not get), so a cursor-only operand (the reversed CTL
-                // relation) can drive; both-default falls back to the key-union mapCursor
+                // drive by cursor value, so a cursor-only operand can drive
                 if (isEmptyValue(l.defaultValue())) return driveCursor(l, r, true);
                 if (isEmptyValue(r.defaultValue())) return driveCursor(r, l, false);
                 return mapCursor(l, r, this::get);
@@ -174,8 +172,6 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
 
             @Override
             public boolean isProcedural() {
-                // procedural iff the driven (no-default) side is; a bounded driver makes the result
-                // explicit even over a procedural other side, which is only probed
                 if (isEmptyValue(l.defaultValue())) return l.isProcedural();
                 if (isEmptyValue(r.defaultValue())) return r.isProcedural();
                 return l.isProcedural() || r.isProcedural();
@@ -201,7 +197,10 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         return child != null ? child : view.defaultValue();
     }
 
-    /** ANDs [driver]'s cursor values with [other]'s child by key, keeping operand order; never gets [driver]. */
+    /**
+     * ANDs [driver]'s cursor values with [other]'s child by key, keeping operand order; never gets
+     * [driver].
+     */
     private static IntObjCursor<AbstractNextStateDescriptor> driveCursor(
             IntObjMapView<AbstractNextStateDescriptor> driver,
             IntObjMapView<AbstractNextStateDescriptor> other,
@@ -237,7 +236,10 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         };
     }
 
-    /** Like {@link #driveCursor} but recomputes values via [valueOf]; unions both key sets when both default. */
+    /**
+     * Like {@link #driveCursor} but recomputes values via [valueOf]; unions both key sets when both
+     * default.
+     */
     private static <V> IntObjCursor<V> mapCursor(
             IntObjMapView<?> l, IntObjMapView<?> r, java.util.function.IntFunction<V> valueOf) {
         final var keys = new ArrayList<Integer>();
@@ -318,9 +320,6 @@ public final class AndNextStateDescriptor implements AbstractNextStateDescriptor
         }
         return Optional.empty();
     }
-
-    // isLocallyIdentity uses the interface default (inspects the intersected diagonal/off-diagonal),
-    // correct whether an operand is identity or a don't-care prefix leaves the other constraining.
 
     @Override
     public boolean evaluate() {

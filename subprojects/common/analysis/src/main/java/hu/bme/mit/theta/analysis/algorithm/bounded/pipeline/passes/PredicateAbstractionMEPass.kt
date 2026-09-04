@@ -32,10 +32,8 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
 /**
- * Implicit predicate abstraction as a pipeline pass, for checkers that cannot drive CEGAR
- * themselves: the pipeline's forward/backward loop plays the role of the refinement loop. The
- * abstraction itself is delegated to [ImplicitPredicateAbstractor]; CEGAR-aware checkers use that
- * class directly instead of this pass.
+ * Implicit predicate abstraction as a pipeline pass: the pipeline's forward/backward loop is the
+ * refinement loop, the abstraction itself is [ImplicitPredicateAbstractor].
  */
 class PredicateAbstractionMEPass<Pr : InvariantProof>
 @JvmOverloads

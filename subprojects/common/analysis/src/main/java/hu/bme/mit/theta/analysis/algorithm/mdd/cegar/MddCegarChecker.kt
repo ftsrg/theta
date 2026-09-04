@@ -65,10 +65,7 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
 
-/**
- * CEGAR over implicit predicate abstraction where each iteration's saturation is constrained to the
- * previous iteration's reachable set.
- */
+/** CEGAR over implicit predicate abstraction, with saturation as the abstract model checker. */
 class MddCegarChecker
 @JvmOverloads
 constructor(
@@ -117,8 +114,7 @@ constructor(
     var currentPrec = initPrec(concreteModel)
     var prevStateSpace: MddHandle? = null
 
-    // one provider for the whole run: its caches are keyed by (node, descriptor), so a refined
-    // relation never gets a false hit while the unchanged concrete sub-structure is reused
+    // one provider for the run: its caches are keyed by (node, descriptor)
     val provider = iterationStrategy.createProvider(orders.stateOrder)
 
     var totalSolverCalls = 0L
@@ -217,9 +213,7 @@ constructor(
     val stateSig: MddSignature = orders.stateOrder.defaultSetSignature
     val transSig: MddSignature = orders.transOrder.defaultSetSignature
 
-    // the abstract init and relation are non-empty whenever the concrete ones are (the literal
-    // definitions are always satisfiable), so their root satisfiability check is skipped; the prop
-    // node has no such guarantee
+    // the abstract init and relation are satisfiable whenever the concrete ones are
     val initNode = stateNode(PathUtils.unfold(model.initExpr, 0), stateSig, true)
 
     val relSolverBefore = solverPool.checkCount
@@ -239,8 +233,7 @@ constructor(
 
     val relation =
       OrNextStateDescriptor.create(transNodes.map { MddNodeNextStateDescriptor.of(it) })
-    // the constraint is lifted under the current top, so the interpreter floats it over the literal
-    // levels added since it was built
+    // lifted under the current top, so the interpreter floats it over the new literal levels
     val constrained =
       if (prevStateSpace == null) relation
       else
@@ -326,10 +319,7 @@ constructor(
   }
 }
 
-/**
- * The variable orders of one CEGAR run: the ctrl levels at the bottom, literal levels added on top
- * per refinement.
- */
+/** The state and transition orders: ctrl levels at the bottom, literal levels added on top. */
 private class CegarOrders(concreteModel: MonolithicExpr) {
 
   val stateOrder: MddVariableOrder =

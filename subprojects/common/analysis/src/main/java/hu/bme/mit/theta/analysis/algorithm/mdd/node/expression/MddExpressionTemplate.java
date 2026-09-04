@@ -56,14 +56,10 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final boolean transExpr;
     private final boolean knownSat;
 
-    // caches the model, not just satness, per-graph (run-scoped) so it is dropped with the graph
-    // instead of living for the whole JVM.
     public static final MddGraph.Key<UnaryOperationCache<Expr<BoolType>, Optional<Valuation>>>
             SAT_CACHE = new MddGraph.Key<>("satCache");
 
-    // simplify outputs are fixed points: remembering them (per graph, by identity) makes the
-    // re-simplify of an expression a caller already simplified O(1) instead of a full traversal.
-    // weak keys, so the memo does not keep dead expressions alive
+    // simplify outputs are fixed points: a memoized expression is not simplified again
     private static final MddGraph.Key<Set<Expr<BoolType>>> SIMPLIFIED =
             new MddGraph.Key<>("simplifiedExprs");
 
@@ -167,8 +163,6 @@ public class MddExpressionTemplate implements MddNode.Template {
         } else if (simplifiedExpr instanceof FalseExpr) {
             return null;
         } else {
-            // canonized only here: the canonical form is the solver-cache key, nothing else reads
-            // it
             satModel = checkSat(ExprUtils.canonize(simplifiedExpr), solverPool, satCache);
             if (satModel == null) return null;
         }

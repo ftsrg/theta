@@ -41,25 +41,23 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-/** How the counterexample is searched between the initial and the violating states. */
+/**
+ * How the counterexample is searched: DFS takes an arbitrary predecessor per step (its length
+ * depends on the variable order), BFS builds forward layers from the initial states and
+ * BFS_BACKWARD backward layers from the violating states; both give a shortest counterexample.
+ */
 enum class TraceSearch {
-  /** Backward, one arbitrary predecessor per step: cheap, but the length depends on the order. */
   DFS,
-  /** Forward layers from the initial states, then one backward step per layer: shortest trace. */
   BFS,
-  /**
-   * Backward layers from all violating states: shortest trace, costly with many violating states.
-   */
   BFS_BACKWARD,
 }
 
 /**
  * Trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and
- * [hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker]: reverses the transition nodes
- * over the computed state space and searches from [propViolating] back to [initNode]. Each step
- * carries the action of the transition (element of [MonolithicExpr.split], matched by index to
- * [transNodes]) that produced it. Returns null if generation does not finish within [traceTimeout]
- * seconds.
+ * [hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker]: searches the computed state
+ * space from [propViolating] back to [initNode]; each step carries the action of the transition
+ * (index into [MonolithicExpr.split] and [transNodes]) that fired. Null if not finished within
+ * [traceTimeout] seconds.
  */
 internal fun generateTrace(
   transNodes: List<MddHandle>,
@@ -73,9 +71,7 @@ internal fun generateTrace(
   logger: Logger,
   search: TraceSearch = TraceSearch.DFS,
 ): Trace<ExplState, ExprAction>? {
-  // when an initial state itself violates, seed with the initial violating states: TraceProvider
-  // would accept the whole violating set as a length-1 trace and the valuation collector could
-  // pick a non-initial state from it, producing a trace that fails concretization
+  // an initially violating state must be the seed, or the collector may pick a non-initial one
   val initViolating = propViolating.intersection(initNode)
   val traceSeed =
     if (MddInterpreter.calculateNonzeroCount(initViolating) > 0) initViolating else propViolating
@@ -93,8 +89,6 @@ internal fun generateTrace(
         )
       val top = stateSig.topVariableHandle
 
-      // both providers register themselves on the graph: dispose them, or their caches stay
-      // reachable
       val traceProvider = TraceProvider(stateSig.variableOrder)
       val stepper = SingleStepProvider(stateSig.variableOrder)
       val states = ArrayList<MddHandle>()
@@ -108,8 +102,7 @@ internal fun generateTrace(
             TraceSearch.BFS_BACKWARD ->
               traceProvider.computeBreadthFirst(traceSeed, orReversed, initNode, top)
           }
-        // the backward search records neither the fired transition nor, for BFS_BACKWARD, which
-        // state of the next layer is reached: resolve both by stepping forward per transition
+        // resolve the fired transition (and, for BFS_BACKWARD, the next state) by a forward step
         states.add(layers[0].satOne())
         for (k in 0 until layers.size - 1) {
           val fired =
@@ -167,8 +160,8 @@ internal fun generateTrace(
 }
 
 /**
- * Forward breadth-first search from [initNode] until a state of [violating] is reached, then one
- * backward step per layer from that state: the states of a shortest trace, initial side first.
+ * Forward breadth-first layers from [initNode] to a state of [violating], then one backward step
+ * per layer: the states of a shortest trace, initial side first.
  */
 private fun forwardBreadthFirst(
   initNode: MddHandle,

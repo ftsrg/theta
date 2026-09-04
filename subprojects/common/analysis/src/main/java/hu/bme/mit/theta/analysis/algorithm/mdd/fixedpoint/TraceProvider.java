@@ -102,9 +102,8 @@ public final class TraceProvider implements MddGraph.CleanupListener {
     }
 
     /**
-     * Backward breadth-first search: the sets of states at distance 0, 1, ... from {@code
-     * targetStates} (each minus the earlier ones), the last one cut to its initial states, reversed
-     * so the initial side comes first. A path picked forward through them is a shortest trace.
+     * Backward breadth-first layers from {@code targetStates} to the initial states, initial side
+     * first; a path picked forward through them is a shortest trace.
      */
     public List<MddHandle> computeBreadthFirst(
             MddHandle targetStates,

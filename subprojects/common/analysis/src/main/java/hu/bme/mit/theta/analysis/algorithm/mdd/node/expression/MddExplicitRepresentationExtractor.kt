@@ -29,9 +29,8 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityTemplate
 object MddExplicitRepresentationExtractor {
 
   /**
-   * Builds a variable order mirroring [top]'s chain on a fresh graph. Extracting through it keeps
-   * the explicit nodes out of the source order's unique tables, where hash collisions with the
-   * procedural expression nodes force solver-driven equality enumeration.
+   * A variable order mirroring [top]'s chain on a fresh graph, keeping the extracted explicit nodes
+   * out of the source order's unique tables.
    */
   fun mirrorTopOf(top: MddVariableHandle): MddVariableHandle {
     val mirrorOrder =
