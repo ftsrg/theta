@@ -60,9 +60,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     private final SolverPool solverPool;
     private final boolean transExpr;
-    // never query the solver: decide every edge by substitution, treating an undetermined result as
-    // absent (matches the witness classification of seeding). Used by the seeding constraint nodes.
-    private final boolean substitutionOnly;
     // the lookahead strategy is attached per graph (run-scoped), defaulting to VARIABLE_LEVEL
     public static final MddGraph.Key<MddToExprStrategy> LOOK_AHEAD =
             new MddGraph.Key<>("lookAheadStrategy");
@@ -101,15 +98,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final Decl<?> decl,
             final MddVariable mddVariable,
             final SolverPool solverPool,
-            final boolean transExpr,
-            final boolean substitutionOnly) {
+            final boolean transExpr) {
         this.expr = expr;
         this.decl = decl;
         this.mddVariable = mddVariable;
         this.solverPool = solverPool;
         this.explicitRepresentation = new ExplicitRepresentation();
         this.transExpr = transExpr;
-        this.substitutionOnly = substitutionOnly;
     }
 
     /** Read-only view of this node's explored structure, for consumers that must not mutate it. */
@@ -123,8 +118,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final MddVariable mddVariable,
             final SolverPool solverPool,
             final boolean transExpr) {
-        return new MddExpressionRepresentation(
-                expr, decl, mddVariable, solverPool, transExpr, false);
+        return new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
     }
 
     public static MddExpressionRepresentation of(
@@ -133,11 +127,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final MddVariable mddVariable,
             final SolverPool solverPool,
             final boolean transExpr,
-            final Valuation satModel,
-            final boolean substitutionOnly) {
+            final Valuation satModel) {
         final var repr =
-                new MddExpressionRepresentation(
-                        expr, decl, mddVariable, solverPool, transExpr, substitutionOnly);
+                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
         if (satModel != null) {
             repr.getLazyTraverser().cacheModel(satModel);
         }
@@ -150,11 +142,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final MddVariable mddVariable,
             final SolverPool solverPool,
             final MddNode defaultValue,
-            final boolean transExpr,
-            final boolean substitutionOnly) {
+            final boolean transExpr) {
         final MddExpressionRepresentation representation =
-                new MddExpressionRepresentation(
-                        expr, decl, mddVariable, solverPool, transExpr, substitutionOnly);
+                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
         representation.explicitRepresentation.cacheDefault(defaultValue);
         representation.explicitRepresentation.setComplete();
         return representation;
@@ -167,11 +157,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final SolverPool solverPool,
             final int key,
             final MddNode childNode,
-            final boolean transExpr,
-            final boolean substitutionOnly) {
+            final boolean transExpr) {
         final MddExpressionRepresentation representation =
-                new MddExpressionRepresentation(
-                        expr, decl, mddVariable, solverPool, transExpr, substitutionOnly);
+                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
         if (!mddVariable.isNullOrZero(childNode)) {
             representation.explicitRepresentation.cacheNode(key, childNode);
         }
@@ -370,11 +358,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         final MddNode childNode;
         if (mddVariable.getLower().isPresent()) {
             final MddExpressionTemplate template =
-                    substitutionOnly
-                            ? MddExpressionTemplate.ofSubstitution(
-                                    simplifiedExpr, o -> (Decl) o, solverPool, transExpr)
-                            : MddExpressionTemplate.of(
-                                    simplifiedExpr, o -> (Decl) o, solverPool, transExpr);
+                    MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverPool, transExpr);
             childNode = mddVariable.getLower().get().checkInNode(template);
         } else {
             final Expr<BoolType> canonizedExpr = ExprUtils.canonize(simplifiedExpr);
@@ -384,10 +368,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 childNode = null;
             } else if (canonizedExpr instanceof TrueExpr) {
                 childNode = mddGraph.getNodeFor(True());
-            } else if (substitutionOnly) {
-                // substitution left the bottom expression undetermined: treat as absent, never
-                // solve
-                childNode = null;
             } else {
                 var solver = solverPool.requestSolver();
                 try (var wpp = new WithPushPop(solver)) {
@@ -646,12 +626,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             if (currentRepresentation.explicitRepresentation.isNegativelyCached(assignment))
                 return false;
             if (!currentRepresentation.explicitRepresentation.isComplete()) {
-
-                if (currentRepresentation.substitutionOnly) {
-                    // decide and cache the edge by substitution (get is solver-free here)
-                    return currentRepresentation.get(assignment) != null;
-                }
-
                 if (solver == null) solver = solverPool.requestSolver();
 
                 final SolverStatus status;
