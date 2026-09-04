@@ -23,15 +23,17 @@ import java.util.Optional;
 
 /**
  * Accepts any continuation: every value leads to {@code child}, with no source constraint (a {@link
- * AbstractNextStateDescriptor.Postcondition} whose off-diagonal is the diagonal under every source).
- * The self-looping {@link #ANY} singleton accepts everything below it — the bound's data-boundary cut
- * and the identity of the {@link AndNextStateDescriptor} postcondition intersection.
+ * AbstractNextStateDescriptor.Postcondition} whose off-diagonal is the diagonal under every
+ * source). The self-looping {@link #ANY} singleton accepts everything below it — the bound's
+ * data-boundary cut and the identity of the {@link AndNextStateDescriptor} postcondition
+ * intersection.
  */
 public class AnyNextStateDescriptor implements AbstractNextStateDescriptor.Postcondition {
     private static final UniqueTable<AnyNextStateDescriptor> uniqueTable =
             UniqueTable.newInstance();
 
-    public static final AbstractNextStateDescriptor.Postcondition ANY = new AnyNextStateDescriptor();
+    public static final AbstractNextStateDescriptor.Postcondition ANY =
+            new AnyNextStateDescriptor();
 
     public static AbstractNextStateDescriptor withChild(AbstractNextStateDescriptor child) {
         return uniqueTable.checkIn(new AnyNextStateDescriptor(child));
@@ -53,7 +55,8 @@ public class AnyNextStateDescriptor implements AbstractNextStateDescriptor.Postc
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+            StateSpaceInfo localStateSpace) {
         return IntObjMapView.empty(child);
     }
 

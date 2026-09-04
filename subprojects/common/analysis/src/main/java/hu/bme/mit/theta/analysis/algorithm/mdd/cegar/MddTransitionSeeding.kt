@@ -66,7 +66,10 @@ internal class CrossIterationKnowledge(
   var prev: MddHandle? = null
     private set
 
-  /** The previous iteration's upper bound: its visited-edge snapshot, lifted and AND-ed on consumption. */
+  /**
+   * The previous iteration's upper bound: its visited-edge snapshot, lifted and AND-ed on
+   * consumption.
+   */
   var bound: MddHandle? = null
     private set
 
@@ -112,13 +115,31 @@ internal class SeedKnowledge(
 ) {
   val trans =
     CrossIterationKnowledge(
-      transBinding, transDataBoundary, transBoundOrder, solverPool, "Transition", logger)
+      transBinding,
+      transDataBoundary,
+      transBoundOrder,
+      solverPool,
+      "Transition",
+      logger,
+    )
   val init =
     CrossIterationKnowledge(
-      stateBinding, stateDataBoundary, stateBoundOrder, solverPool, "Init", logger)
+      stateBinding,
+      stateDataBoundary,
+      stateBoundOrder,
+      solverPool,
+      "Init",
+      logger,
+    )
   val prop =
     CrossIterationKnowledge(
-      stateBinding, stateDataBoundary, stateBoundOrder, solverPool, "Property", logger)
+      stateBinding,
+      stateDataBoundary,
+      stateBoundOrder,
+      solverPool,
+      "Property",
+      logger,
+    )
 }
 
 /** Binds a literal's defining predicate to the decls of the levels the literal occupies. */
@@ -141,15 +162,15 @@ internal val stateBinding = LiteralBinding { literal, pred ->
 }
 
 /**
- * Seeds [newNodes] from [prev]'s known transitions without flattening them to a set of witnesses. The
- * previous relation is extracted solver-free into a fresh mirror graph and restricted case by case —
- * one case per new-literal binding, as if each literal had arrived in its own iteration: the two
- * predicate cofactors of a case become the edges of a new level checked in on top of the running
- * mirror MDD, so an empty cofactor prunes every literal combination below it and shared cofactor
- * results are built once. The finished mirror carries the new-literal levels as ordinary edges and one
- * [MddExpressionRepresentation.cacheModel] walk relays it. The cofactor constraints are decided purely
- * by substitution, so seeding stays solver-free; identity levels of the relation survive a case that
- * is silent on them and drop the subtree otherwise (see [SeedRestrictor]).
+ * Seeds [newNodes] from [prev]'s known transitions without flattening them to a set of witnesses.
+ * The previous relation is extracted solver-free into a fresh mirror graph and restricted case by
+ * case — one case per new-literal binding, as if each literal had arrived in its own iteration: the
+ * two predicate cofactors of a case become the edges of a new level checked in on top of the
+ * running mirror MDD, so an empty cofactor prunes every literal combination below it and shared
+ * cofactor results are built once. The finished mirror carries the new-literal levels as ordinary
+ * edges and one [MddExpressionRepresentation.cacheModel] walk relays it. The cofactor constraints
+ * are decided purely by substitution, so seeding stays solver-free; identity levels of the relation
+ * survive a case that is silent on them and drop the subtree otherwise (see [SeedRestrictor]).
  */
 internal fun seedFromPrevious(
   prev: MddHandle?,
@@ -166,7 +187,8 @@ internal fun seedFromPrevious(
   if (prev == null || newLiterals.isEmpty() || newNodes.size != 1) return
   val newTop = expressionTop(newNodes[0]) ?: return
   // the new node's top-down literal layout: newest literal highest, the unprimed level of a pair
-  // above the primed one — the mirror below must repeat it level by level, cacheModel walks lockstep
+  // above the primed one — the mirror below must repeat it level by level, cacheModel walks
+  // lockstep
   val cases = newLiterals.asReversed().flatMap { binding.bind(it, literalToPred[it]!!) }
 
   val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(prev.variableHandle)
@@ -295,7 +317,8 @@ private class SeedRestrictor(private val graph: MddGraph<*>) {
 }
 
 private fun lowerOf(varHandle: MddVariableHandle): MddVariableHandle =
-  if (varHandle.lower.isPresent) varHandle.lower.get() else varHandle.mddGraph.terminalVariableHandle
+  if (varHandle.lower.isPresent) varHandle.lower.get()
+  else varHandle.mddGraph.terminalVariableHandle
 
 /** The expression node at the top of [handle], unwrapping identity levels. */
 private fun expressionTop(handle: MddHandle): MddExpressionRepresentation? {
@@ -305,4 +328,3 @@ private fun expressionTop(handle: MddHandle): MddExpressionRepresentation? {
   }
   return if (node.isTerminal) null else node.representation as? MddExpressionRepresentation
 }
-

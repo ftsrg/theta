@@ -29,21 +29,21 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.ImplicitPredicateAbstractor
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
-import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.AndNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
@@ -91,7 +91,8 @@ constructor(
   private val traceTimeout: Long = 10,
   // the lower bound: cache the previous iteration's witnesses into this iteration's nodes
   private val useTransitionSeeding: Boolean = false,
-  // the upper bound: prune by the previous relation's visited edges (needs the seeding infrastructure)
+  // the upper bound: prune by the previous relation's visited edges (needs the seeding
+  // infrastructure)
   private val useTransitionBound: Boolean = useTransitionSeeding,
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NONE,
@@ -118,12 +119,17 @@ constructor(
     val totalTime = Stopwatch.createStarted()
 
     val orders = CegarOrders(concreteModel, useTransitionSeeding, useTransitionBound)
-    orders.stateOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
-    orders.transOrder.mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
-    orders.stateExprOrder?.mddGraph?.setAttribute(
+    orders.stateOrder.mddGraph.setAttribute(
       MddExpressionRepresentation.LOOK_AHEAD,
       lookAheadStrategy,
     )
+    orders.transOrder.mddGraph.setAttribute(
+      MddExpressionRepresentation.LOOK_AHEAD,
+      lookAheadStrategy,
+    )
+    orders.stateExprOrder
+      ?.mddGraph
+      ?.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     val seed =
       if (useTransitionSeeding)
         SeedKnowledge(
@@ -142,7 +148,8 @@ constructor(
     var currentPrec = initPrec(concreteModel)
     var prevStateSpace: MddHandle? = null
 
-    // one provider for the whole run: its saturation/relProd caches are keyed by (node, descriptor),
+    // one provider for the whole run: its saturation/relProd caches are keyed by (node,
+    // descriptor),
     // so a refined relation never gets a false hit, while the unchanged concrete sub-structure is
     // reused across iterations; the graph cleanup listener prunes entries whose nodes have died
     val provider = iterationStrategy.createProvider(orders.stateOrder)
@@ -211,7 +218,12 @@ constructor(
 
       val refutation = res.asInfeasible().refutation
       currentPrec = precRefiner.refine(currentPrec, predTrace, refutation)
-      currentPrec = PredPrec.of(currentPrec.preds.filter { ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any() })
+      currentPrec =
+        PredPrec.of(
+          currentPrec.preds.filter {
+            ExprUtils.getVars(it).filter { it !in concreteModel.ctrlVars }.any()
+          }
+        )
 
       prevStateSpace = iter.stateSpace
     }
@@ -292,8 +304,7 @@ constructor(
         .reduce(AndNextStateDescriptor::of)
 
     val effectiveNextStates =
-      if (useOnTheFlyReachability)
-        OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
+      if (useOnTheFlyReachability) OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
       else nextStates
 
     val satSolverBefore = solverPool.checkCount
@@ -360,9 +371,9 @@ constructor(
   }
 
   /**
-   * The saturation initializer for [node], restricted by [boundLift] — its previous-iteration bound,
-   * already lifted to the current top — an over-approximation, so this only changes the exploration
-   * effort, not the set.
+   * The saturation initializer for [node], restricted by [boundLift] — its previous-iteration
+   * bound, already lifted to the current top — an over-approximation, so this only changes the
+   * exploration effort, not the set.
    */
   private fun boundedInitializer(
     node: MddHandle,
@@ -395,7 +406,8 @@ constructor(
         if (child == null || child == boundEff.variableHandle.mddGraph.terminalZeroNode) continue
         childBound = boundEff.variableHandle.lower.orElseThrow().getHandleFor(child)
       } else childBound = boundEff
-      val filtered = filterStates(cursor.value() as MddHandle, exprNode.get(cursor.key()), childBound)
+      val filtered =
+        filterStates(cursor.value() as MddHandle, exprNode.get(cursor.key()), childBound)
       if (!filtered.isTerminalZero) templateBuilder.set(cursor.key(), filtered.node)
     }
     return states.variableHandle.checkInNode(
@@ -512,8 +524,8 @@ private class CegarOrders(
   }
 
   /**
-   * Top-insertion: new literal levels go above the ctrl and witness levels. The bound lift depends on
-   * this — placed elsewhere, the skip-level handle would stop being a pure default-edge lift.
+   * Top-insertion: new literal levels go above the ctrl and witness levels. The bound lift depends
+   * on this — placed elsewhere, the skip-level handle would stop being a pure default-edge lift.
    */
   fun createLevelOnTop(v: VarDecl<*>) {
     stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0))

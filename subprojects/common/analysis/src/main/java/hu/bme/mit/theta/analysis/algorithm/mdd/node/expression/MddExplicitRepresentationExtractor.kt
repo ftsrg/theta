@@ -47,10 +47,10 @@ object MddExplicitRepresentationExtractor {
     transform(node, variable, dataBoundary = null)
 
   /**
-   * Extracts [node] into the [variable] order. With a non-null [dataBoundary] the walk is truncated at
-   * that level — every variable at and below it is accepted (the lattice top) — and only the edges
-   * exploration actually consumed (visited via get or cursor) are extracted: the explicit caches also
-   * hold seeded entries the iteration never touched, which must not widen the bound.
+   * Extracts [node] into the [variable] order. With a non-null [dataBoundary] the walk is truncated
+   * at that level — every variable at and below it is accepted (the lattice top) — and only the
+   * edges exploration actually consumed (visited via get or cursor) are extracted: the explicit
+   * caches also hold seeded entries the iteration never touched, which must not widen the bound.
    */
   fun transform(node: MddHandle, variable: MddVariableHandle, dataBoundary: Any?): MddHandle =
     transform(node, variable, UnaryOperationCache(), dataBoundary)
