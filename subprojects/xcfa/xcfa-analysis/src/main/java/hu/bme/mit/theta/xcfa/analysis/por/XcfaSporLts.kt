@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
@@ -65,7 +65,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   /* CACHE COLLECTIONS */
 
   /** Global variables used by an edge. */
-  private val usedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
+  private val usedObjects: MutableMap<XcfaEdge, Set<Any>> = mutableMapOf()
 
   private val usedMemLocs: MutableMap<XcfaEdge, Set<MemLoc>> = mutableMapOf()
 
@@ -73,14 +73,11 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * Global variables that are used by the key edge or by edges reachable from the current state via
    * a given edge.
    */
-  private val influencedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
+  private val influencedObjects: MutableMap<XcfaEdge, Set<Any>> = mutableMapOf()
   private val influencedMemLocs: MutableMap<XcfaEdge, Set<MemLoc>> = mutableMapOf()
 
   /** Backward edges in the CFA (an edge of a loop). */
   private val backwardEdges: MutableSet<Pair<XcfaLocation, XcfaLocation>> = mutableSetOf()
-
-  /** Variables of mutex handles (VarDecls in FenceLabels), needed for AASPOR. */
-  protected val fenceVars: MutableSet<VarDecl<*>> = mutableSetOf()
 
   init {
     collectBackwardEdges()
@@ -158,11 +155,20 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
       }
     disabledOutEdges.forEach { edge ->
       edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
-        fence.blockingMutexes.forEach { mutex ->
-          state.mutexes[mutex.name]?.forEach { pid2 ->
-            if (pid2 !in firstProcesses) {
-              firstProcesses.add(pid2)
-              checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+        fence.blockingMutexes(state).forEach { mutex ->
+          if (mutex !is FixedMutexLock || state.mutexes.keys.any { it !is FixedMutexLock }) {
+            state.mutexes.values.flatten().toSet().forEach { pid2 ->
+              if (pid2 !in firstProcesses) {
+                firstProcesses.add(pid2)
+                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+              }
+            }
+          } else {
+            state.mutexes[mutex]?.forEach { pid2 ->
+              if (pid2 !in firstProcesses) {
+                firstProcesses.add(pid2)
+                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+              }
             }
           }
         }
@@ -227,8 +233,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   ): Boolean {
     if (sourceSetAction.pid == action.pid) return true
 
-    val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
-    val influencedVars = getInfluencedVars(getEdge(action))
+    val sourceSetActionVars = getCachedUsedObjects(getEdge(sourceSetAction), state)
+    val influencedVars = getInfluencedObjects(getEdge(action))
     if ((influencedVars intersect sourceSetActionVars).isNotEmpty()) return true
 
     val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
@@ -321,15 +327,13 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * @param edge whose global variables are to be returned
    * @return the set of used global variables
    */
-  private fun getDirectlyUsedVars(edge: XcfaEdge): Set<VarDecl<*>> {
+  private fun getDirectlyUsedObjects(edge: XcfaEdge): Set<Any> {
     val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar)
-    fenceVars.addAll(edge.fenceVars)
     return edge
       .getFlatLabels()
       .flatMap { label -> label.collectVars().filter { it in globalVars } }
       .toSet() union
-      edge.acquiredEmbeddedFenceVars.let { mutexes ->
-        fenceVars.addAll(mutexes)
+      edge.acquiredEmbeddedMutexes.let { mutexes ->
         if (mutexes.size <= 1) setOf() else mutexes
       }
   }
@@ -354,18 +358,18 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * @param edge whose global variables are to be returned
    * @return the set of directly or indirectly used global variables
    */
-  protected fun getCachedUsedVars(edge: XcfaEdge): Set<VarDecl<*>> {
-    if (edge in usedVars) return usedVars[edge]!!
+  protected fun getCachedUsedObjects(edge: XcfaEdge, state: State): Set<Any> {
+    if (edge in usedObjects) return usedObjects[edge]!!
     val flatLabels = edge.getFlatLabels()
     val mutexes =
-      flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
+      flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes(state) }.toMutableSet()
     val vars =
       if (mutexes.isEmpty()) {
-        getDirectlyUsedVars(edge)
+        getDirectlyUsedObjects(edge)
       } else {
-        getVarsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
+        getObjectsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
       }
-    usedVars[edge] = vars
+    usedObjects[edge] = vars
     return vars
   }
 
@@ -397,10 +401,10 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * @param edge whose successor edges' global variables are to be returned.
    * @return the set of influenced global variables
    */
-  protected fun getInfluencedVars(edge: XcfaEdge): Set<VarDecl<*>> {
-    if (edge in influencedVars) return influencedVars[edge]!!
-    val vars = getVarsWithBFS(edge) { true }
-    influencedVars[edge] = vars
+  protected fun getInfluencedObjects(edge: XcfaEdge): Set<Any> {
+    if (edge in influencedObjects) return influencedObjects[edge]!!
+    val vars = getObjectsWithBFS(edge) { true }
+    influencedObjects[edge] = vars
     return vars
   }
 
@@ -426,14 +430,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    *   edge
    * @return the set of encountered global variables
    */
-  private fun getVarsWithBFS(startEdge: XcfaEdge, goFurther: Predicate<XcfaEdge>): Set<VarDecl<*>> {
-    val vars = mutableSetOf<VarDecl<*>>()
+  private fun getObjectsWithBFS(startEdge: XcfaEdge, goFurther: Predicate<XcfaEdge>): Set<Any> {
+    val vars = mutableSetOf<Any>()
     val exploredEdges = mutableListOf<XcfaEdge>()
     val edgesToExplore = mutableListOf<XcfaEdge>()
     edgesToExplore.add(startEdge)
     while (edgesToExplore.isNotEmpty()) {
       val exploring = edgesToExplore.removeAt(0)
-      vars.addAll(getDirectlyUsedVars(exploring))
+      vars.addAll(getDirectlyUsedObjects(exploring))
       if (goFurther.test(exploring)) {
         val successiveEdges = getSuccessiveEdges(exploring)
         for (newEdge in successiveEdges) {

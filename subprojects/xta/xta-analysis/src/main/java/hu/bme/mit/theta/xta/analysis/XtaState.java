@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.WrapperState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class XtaState<S extends State> implements ExprState {
+public final class XtaState<S extends State> implements ExprState, WrapperState {
 
     private static final int HASH_SEED = 8291;
     private volatile int hashCode = 0;
@@ -112,6 +113,11 @@ public final class XtaState<S extends State> implements ExprState {
         } else {
             throw new UnsupportedOperationException();
         }
+    }
+
+    @Override
+    public S getWrappedState() {
+        return state;
     }
 
     @Override

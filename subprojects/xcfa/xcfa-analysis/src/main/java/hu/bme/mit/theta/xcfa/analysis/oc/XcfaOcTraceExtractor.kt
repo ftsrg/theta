@@ -241,10 +241,10 @@ internal class XcfaOcTraceExtractor(
     // extend the trace until the target location is reached
     while (
       currentState.processes[pid]!!.locs.peek() != to ||
-        (currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid) != pid
+        (currentState.mutexes[ATOMIC_MUTEX]?.first() ?: pid) != pid
     ) {
       // finish atomic block first
-      val stepPid = currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid
+      val stepPid = currentState.mutexes[ATOMIC_MUTEX]?.first() ?: pid
       val edge =
         currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
       check(stepPid == pid || edge.label.collectVars().isEmpty()) {
@@ -271,11 +271,11 @@ internal class XcfaOcTraceExtractor(
     return actions to states
   }
 
-  private fun Map<String, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<String, Set<Int>> {
+  private fun Map<MutexLock, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<MutexLock, Set<Int>> {
     val map = this.toMutableMap()
     edge.getFlatLabels().forEach {
-      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX.name] = setOf(pid)
-      if (it is AtomicEndLabel) map.remove(ATOMIC_MUTEX.name)
+      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX] = setOf(pid)
+      if (it is AtomicEndLabel) map.remove(ATOMIC_MUTEX)
     }
     return map
   }

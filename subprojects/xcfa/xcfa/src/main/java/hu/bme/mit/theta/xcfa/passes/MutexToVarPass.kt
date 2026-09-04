@@ -19,15 +19,12 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.model.RWLockReadLockLabel.Companion.readHandle
-import hu.bme.mit.theta.xcfa.model.RWLockWriteLockLabel.Companion.writeHandle
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
@@ -40,10 +37,14 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 class MutexToVarPass : ProcedurePass {
 
   companion object {
-    private val mutexVars = mutableMapOf<String, VarDecl<IntType>>()
+    private val mutexVars = mutableMapOf<LitExpr<*>, VarDecl<IntType>>()
 
-    private val String.mutexFlag
-      get() = mutexVars.getOrPut(this) { Decls.Var("_mutex_flag_${ifEmpty { "atomic" }}", Int()) }
+    private val LitExpr<*>.mutexFlag
+      get() = mutexVars.getOrPut(this) { Decls.Var("__theta_mutex_flag_$this", Int()) }
+
+    private val Expr<*>.mutexFlag
+      get() = (this as? IntLitExpr)?.mutexFlag
+        ?: throw UnsupportedOperationException("Unknown mutex not supported by mutex elimination.")
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -58,7 +59,7 @@ class MutexToVarPass : ProcedurePass {
       }
     }
 
-    mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, False(), atomic = true)) }
+    mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, Int(0), atomic = true)) }
     builder.parent.getInitProcedures().forEach { (proc, _) ->
       mutexVars.forEach { (_, v) ->
         val initEdge = proc.initLoc.outgoingEdges.first()
@@ -90,19 +91,19 @@ class MutexToVarPass : ProcedurePass {
           is RWLockUnlockLabel -> {
             // this is a hack because RWLockUnlock unlocks both read and write locks
             // if write lock is held, it unlocks that, otherwise a read lock
-            val writeFlag = handle.writeHandle.name.mutexFlag
-            val readFlag = handle.readHandle.name.mutexFlag
+            val writeFlag = lock.mutexFlag
+            val readFlag = lock.mutexFlag
             return setOf(
               SequenceLabel(
                 listOf(
                   StmtLabel(AssumeStmt.of(Eq(writeFlag.ref, Int(0)))),
-                  StmtLabel(AssignStmt.of(readFlag, IntExprs.Sub(readFlag.ref, Int(1)))),
+                  StmtLabel(AssignStmt.of(readFlag, Sub(readFlag.ref, Int(1)))),
                 )
               ),
               SequenceLabel(
                 listOf(
                   StmtLabel(AssumeStmt.of(Neq(writeFlag.ref, Int(0)))),
-                  StmtLabel(AssignStmt.of(writeFlag, IntExprs.Sub(writeFlag.ref, Int(1)))),
+                  StmtLabel(AssignStmt.of(writeFlag, Sub(writeFlag.ref, Int(1)))),
                 )
               ),
             )
@@ -110,15 +111,15 @@ class MutexToVarPass : ProcedurePass {
 
           else -> {
             blockingMutexes.forEach {
-              actions.add(StmtLabel(AssumeStmt.of(Eq(it.name.mutexFlag.ref, Int(0)))))
+              actions.add(StmtLabel(AssumeStmt.of(Eq(it.lock.mutexFlag.ref, Int(0)))))
             }
             acquiredMutexes.forEach {
-              val m = it.name.mutexFlag
-              actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Add(m.ref, Int(1)))))
+              val m = it.lock.mutexFlag
+              actions.add(StmtLabel(AssignStmt.of(m, Add(m.ref, Int(1)))))
             }
             releasedMutexes.forEach {
-              val m = it.name.mutexFlag
-              actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Sub(m.ref, Int(1)))))
+              val m = it.lock.mutexFlag
+              actions.add(StmtLabel(AssignStmt.of(m, Sub(m.ref, Int(1)))))
             }
           }
         }

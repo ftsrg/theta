@@ -132,8 +132,8 @@ open class XcfaAasporLts(
     ignoredVariables: MutableSet<VarDecl<*>>,
   ): Boolean {
     if (sourceSetAction.pid == action.pid) return true
-    val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
-    val influencedVars = getInfluencedVars(getEdge(action))
+    val sourceSetActionVars = getCachedUsedObjects(getEdge(sourceSetAction), state)
+    val influencedVars = getInfluencedObjects(getEdge(action))
     val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
     val influencedMemLocs = getInfluencedMemLocs(getEdge(action))
 
@@ -146,9 +146,11 @@ open class XcfaAasporLts(
     val precVars = prec.usedVars
     for (varDecl in influencedVars) {
       if (varDecl in sourceSetActionVars) {
-        if (varDecl !in precVars && varDecl !in fenceVars) {
+        if (varDecl !in precVars) {
           // the actions would be dependent, but we can ignore it in the current abstraction
-          ignoredVariables.add(varDecl)
+          if (varDecl is VarDecl<*>) {
+            ignoredVariables.add(varDecl)
+          }
           continue
         }
         return true

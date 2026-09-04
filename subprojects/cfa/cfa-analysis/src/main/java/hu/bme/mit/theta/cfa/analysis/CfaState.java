@@ -17,13 +17,14 @@ package hu.bme.mit.theta.cfa.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.analysis.WrapperState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public final class CfaState<S extends ExprState> implements ExprState {
+public final class CfaState<S extends ExprState> implements ExprState, WrapperState {
 
     private static final int HASH_SEED = 3613;
     private volatile int hashCode = 0;
@@ -71,6 +72,11 @@ public final class CfaState<S extends ExprState> implements ExprState {
     public Expr<BoolType> toExpr() {
         // TODO Should be loc = l and toExpr(state)
         return state.toExpr();
+    }
+
+    @Override
+    public S getWrappedState() {
+        return state;
     }
 
     ////

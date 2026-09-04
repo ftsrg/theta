@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis
 
+import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -27,6 +28,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -82,39 +84,40 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
           val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
           val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
 
-          val globals1 = label1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-          val globals2 = label2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+          val globals1 = label1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1, s)
+          val globals2 = label2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2, s)
           for (v1 in globals1) {
             for (v2 in globals2) {
               if (
                 v1.globalVar == v2.globalVar &&
                   !v1.globalVar.atomic &&
                   (v1.access.isWritten || v2.access.isWritten) &&
-                  canExecuteConcurrently(v1, v2)
+                  mayExecuteConcurrently(v1, v2)
               )
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, v1.label),
                   DataRaceAccess(process2.key, edge2, v2.label),
-                  And(v1.precondition, v2.precondition),
+                  And(concurrentExecutionCondition(v1, v2), v1.precondition, v2.precondition),
                 )
             }
           }
 
-          val mems1 = label1.getMemoryAccessesWithMutexes(mutexes1, xcfa, parseContext)
-          val mems2 = label2.getMemoryAccessesWithMutexes(mutexes2, xcfa, parseContext)
+          val mems1 = label1.getMemoryAccessesWithMutexes(mutexes1, xcfa, parseContext, s)
+          val mems2 = label2.getMemoryAccessesWithMutexes(mutexes2, xcfa, parseContext, s)
           for (m1 in mems1) {
             for (m2 in mems2) {
               if (
                 (m1.access.isWritten || m2.access.isWritten) &&
                   !m1.atomic &&
                   !m2.atomic &&
-                  canExecuteConcurrently(m1, m2) &&
+                  mayExecuteConcurrently(m1, m2) &&
                   mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
               ) {
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, m1.label),
                   DataRaceAccess(process2.key, edge2, m2.label),
                   And(
+                    concurrentExecutionCondition(m1, m2),
                     m1.precondition,
                     m2.precondition,
                     Eq(m1.array, m2.array),
@@ -193,8 +196,8 @@ private sealed class GlobalAccessWithMutexes(
   /** The (flat) label the access was found in -- the concurrent-witness writer reports it. */
   val label: XcfaLabel,
   val access: AccessType,
-  val acquiredMutexes: Set<String>,
-  val blockingMutexes: Set<String>,
+  val acquiredMutexes: Set<MutexLock>,
+  val blockingMutexes: Set<MutexLock>,
   val precedingAssumes: List<AssumeStmt>,
 ) {
   val precondition: Expr<BoolType> get() =
@@ -211,8 +214,8 @@ private class GlobalVarAccessWithMutexes(
   val globalVar: XcfaGlobalVar,
   label: XcfaLabel,
   access: AccessType,
-  acquiredMutexes: Set<String>,
-  blockingMutexes: Set<String>,
+  acquiredMutexes: Set<MutexLock>,
+  blockingMutexes: Set<MutexLock>,
   precedingAssumes: List<AssumeStmt>,
 ) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
 
@@ -227,8 +230,8 @@ private class MemoryAccessWithMutexes(
   /** The cell is `_Atomic`, so nothing that touches it races with anything. */
   val atomic: Boolean,
   access: AccessType,
-  acquiredMutexes: Set<String>,
-  blockingMutexes: Set<String>,
+  acquiredMutexes: Set<MutexLock>,
+  blockingMutexes: Set<MutexLock>,
   precedingAssumes: List<AssumeStmt>,
 ) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
 
@@ -241,17 +244,18 @@ private class MemoryAccessWithMutexes(
  */
 private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
   xcfa: XCFA,
-  currentMutexes: Set<String>,
+  currentMutexes: Set<MutexLock>,
+  state: State,
 ): List<GlobalVarAccessWithMutexes> {
   val globalVars = xcfa.globalVars
   val acquiredMutexes = currentMutexes.toMutableSet()
-  val blockingMutexes = mutableSetOf<String>()
+  val blockingMutexes = mutableSetOf<MutexLock>()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
   val precedingAssumes = mutableListOf<AssumeStmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
-      acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
-      blockingMutexes.addAll(label.blockingMutexes.map { it.name })
+      acquiredMutexes.addAll(label.acquiredMutexes(state))
+      blockingMutexes.addAll(label.blockingMutexes(state))
     } else {
       label.collectGlobalVars(globalVars).forEach { (v, access) ->
         if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
@@ -281,19 +285,20 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
  * @return the list of memory accesses (c.f., [MemoryAccessWithMutexes])
  */
 private fun XcfaLabel.getMemoryAccessesWithMutexes(
-  currentMutexes: Set<String>,
+  currentMutexes: Set<MutexLock>,
   xcfa: XCFA,
   parseContext: ParseContext,
+  state: State
 ): List<MemoryAccessWithMutexes> {
   val acquiredMutexes = currentMutexes.toMutableSet()
-  val blockingMutexes = mutableSetOf<String>()
+  val blockingMutexes = mutableSetOf<MutexLock>()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
   val changedVars = mutableSetOf<VarDecl<*>>()
   val precedingAssumes = mutableListOf<AssumeStmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
-      acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
-      blockingMutexes.addAll(label.blockingMutexes.map { it.name })
+      acquiredMutexes.addAll(label.acquiredMutexes(state))
+      blockingMutexes.addAll(label.blockingMutexes(state))
     } else {
       label.dereferencesWithAccessType.forEach { (deref, access) ->
         val vars = ExprUtils.getVars(deref.array) + ExprUtils.getVars(deref.offset)
@@ -387,9 +392,33 @@ private fun Decl<*>.belongsTo(partition: Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>,
   return false
 }
 
-private fun canExecuteConcurrently(
+private fun mayExecuteConcurrently(
   access1: GlobalAccessWithMutexes,
   access2: GlobalAccessWithMutexes,
 ): Boolean =
   (access1.acquiredMutexes intersect access2.blockingMutexes).isEmpty() &&
     (access2.acquiredMutexes intersect access1.blockingMutexes).isEmpty()
+
+private fun concurrentExecutionCondition(
+  access1: GlobalAccessWithMutexes,
+  access2: GlobalAccessWithMutexes,
+): Expr<BoolType> =
+  And(
+    noCommon(access1.acquiredMutexes, access2.blockingMutexes),
+    noCommon(access2.acquiredMutexes, access1.blockingMutexes),
+  )
+
+private fun noCommon(
+  mutexes1: Set<MutexLock>,
+  mutexes2: Set<MutexLock>,
+): Expr<BoolType> =
+  And(
+    mutexes1.flatMap { m1 ->
+      mutexes2.mapNotNull { m2 ->
+        if (m1 !is FixedMutexLock || m2 !is FixedMutexLock)
+          NeqExpr.create2(m1.lock, m2.lock)
+        else
+          null
+      }
+    }
+  )

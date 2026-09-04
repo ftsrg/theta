@@ -15,18 +15,16 @@
  */
 package hu.bme.mit.theta.xcfa.utils
 
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.FenceLabel
+import hu.bme.mit.theta.xcfa.model.MutexLock
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
-
-val XcfaEdge.fenceVars: Set<VarDecl<*>>
-  get() = getFlatLabels().filterIsInstance<FenceLabel>().map { fence -> fence.handle }.toSet()
+import hu.bme.mit.theta.xcfa.model.fixed
 
 /** The set of mutexes acquired embedded into each other. */
-inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<VarDecl<*>>
+inline val XcfaEdge.acquiredEmbeddedMutexes: Set<MutexLock>
   get() {
-    val acquired = mutableSetOf<VarDecl<*>>()
-    val toVisit = mutableListOf<Pair<XcfaEdge, Set<VarDecl<*>>>>(this to setOf())
+    val acquired = mutableSetOf<MutexLock>()
+    val toVisit = mutableListOf<Pair<XcfaEdge, Set<MutexLock>>>(this to setOf())
     while (toVisit.isNotEmpty()) {
       val (visiting, mutexes) = toVisit.removeFirst()
       val newMutexes = mutexes.toMutableSet()
@@ -48,13 +46,14 @@ inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<VarDecl<*>>
  * @param mutexes the set of mutexes currently acquired
  * @return true if the set of mutexes is non-empty after the mutex operations
  */
-fun XcfaEdge.mutexOperations(mutexes: MutableSet<VarDecl<*>>): Boolean {
+fun XcfaEdge.mutexOperations(mutexes: MutableSet<MutexLock>): Boolean {
   val edgeFlatLabels = getFlatLabels()
-  val acquiredLocks = mutableSetOf<VarDecl<*>>()
-  val releasedLocks = mutableSetOf<VarDecl<*>>()
+  val acquiredLocks = mutableSetOf<MutexLock>()
+  val releasedLocks = mutableSetOf<MutexLock>()
   edgeFlatLabels.filterIsInstance<FenceLabel>().forEach { fence ->
-    releasedLocks.addAll(fence.releasedMutexes)
-    acquiredLocks.removeAll(fence.releasedMutexes)
+    val released = fence.releasedMutexes.fixed()
+    releasedLocks.addAll(released)
+    acquiredLocks.removeAll(released)
 
     acquiredLocks.addAll(fence.acquiredMutexes)
     releasedLocks.removeAll(fence.acquiredMutexes)

@@ -127,14 +127,15 @@ fun XcfaLabel.changeVars(
 
       is FenceLabel -> {
         when (this) {
-          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is AtomicFenceLabel -> this
+          is MutexLockLabel ->
+            MutexLockLabel(lock.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
           is MutexTryLockLabel ->
-            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
-          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
-          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
-          else -> this
+            MutexTryLockLabel(lock.changeVars(varLut), successVar.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
+          is MutexUnlockLabel -> MutexUnlockLabel(lock.changeVars(varLut), metadata)
+        is RWLockReadLockLabel -> RWLockReadLockLabel(lock.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
+          is RWLockWriteLockLabel -> RWLockWriteLockLabel(lock.changeVars(varLut), metadata, lockVar?.changeVars(varLut))
+          is RWLockUnlockLabel -> RWLockUnlockLabel(lock.changeVars(varLut), metadata)
         }
       }
 

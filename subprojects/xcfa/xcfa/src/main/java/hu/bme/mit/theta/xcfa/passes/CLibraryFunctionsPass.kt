@@ -31,8 +31,10 @@ import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
@@ -100,7 +102,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
   /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
   private fun markSynchronizationObject(handle: VarDecl<*>) {
-    parseContext.metadata?.create(handle.name, SYNC_VAR_METADATA_KEY, true)
+    parseContext.metadata?.create(handle, SYNC_VAR_METADATA_KEY, true)
   }
 
   /** Best-effort tagging of the synchronization object referenced by parameter [index], if any. */
@@ -224,39 +226,39 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               }
 
               "pthread_mutex_lock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(MutexLockLabel(handle, metadata))
               }
 
               "pthread_mutex_unlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(MutexUnlockLabel(handle, metadata))
               }
 
               "pthread_mutex_trylock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 val ret = invokeLabel.getParam(0)
                 addSingle(MutexTryLockLabel(handle, ret, metadata))
               }
 
               "pthread_rwlock_rdlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockReadLockLabel(handle, metadata))
               }
 
               "pthread_rwlock_wrlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockWriteLockLabel(handle, metadata))
               }
 
               "pthread_rwlock_unlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockUnlockLabel(handle, metadata))
               }
 
               "pthread_cond_wait" -> {
                 invokeLabel.markSyncParam(1) // the condition variable (non-scalar source type)
-                val handle = invokeLabel.getMutexHandle(builder, 2)
+                val handle = invokeLabel.getMutexHandle(2)
                 // Due to spurious wakeup, it is basically equivalent to unlock+lock
                 addSeq(listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata)))
               }
@@ -391,13 +393,5 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     }
   }
 
-  private fun InvokeLabel.getMutexHandle(
-    builder: XcfaProcedureBuilder,
-    index: Int = 1,
-  ): VarDecl<*> {
-    val handle = getParam(index)
-    checkMutexDecl(handle, builder)
-    markSynchronizationObject(handle)
-    return handle
-  }
+  private fun InvokeLabel.getMutexHandle(index: Int = 1): Expr<*> = params[index]
 }

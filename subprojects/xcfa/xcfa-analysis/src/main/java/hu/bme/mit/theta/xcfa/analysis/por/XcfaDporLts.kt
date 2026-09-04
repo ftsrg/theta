@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel
+import hu.bme.mit.theta.xcfa.model.MutexLock
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectIndirectGlobalVarAccesses
 import hu.bme.mit.theta.xcfa.utils.isWritten
@@ -97,7 +98,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     val lastDependents: Map<Int, Map<Int, Int>> =
       mutableMapOf(), // for each process p it stores the index of the last action of each process
     // that is dependent with the last actions of p
-    val mutexLocks: MutableMap<String, Int> =
+    val mutexLocks: MutableMap<MutexLock, Int> =
       mutableMapOf(), // for each locked mutex the index of the state on the stack where the mutex
     // has been locked
     private val _backtrack: MutableSet<A> = mutableSetOf(),
@@ -197,9 +198,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
           if (stack.size >= 2) {
             val lastButOne = stack[stack.size - 2]
             val mutexNeverReleased =
-              last.mutexLocks.containsKey(AtomicFenceLabel.ATOMIC_MUTEX.name) &&
+              last.mutexLocks.containsKey(AtomicFenceLabel.ATOMIC_MUTEX) &&
                 (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
-                  AtomicFenceLabel.ATOMIC_MUTEX.name
+                  AtomicFenceLabel.ATOMIC_MUTEX
                 )
             if (last.node.explored.isEmpty() || mutexNeverReleased) {
               // if a mutex is never released another action (practically all the others) have to be
