@@ -40,6 +40,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepr
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -88,6 +89,7 @@ constructor(
     MddExpressionRepresentation.MddToExprStrategy.NONE,
   private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  private val traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   init {
@@ -273,6 +275,7 @@ constructor(
           model,
           traceTimeout,
           logger,
+          search = traceSearch,
         )
       else null
 

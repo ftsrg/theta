@@ -17,13 +17,18 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.trace
 
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddSignature
+import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
+import hu.bme.mit.theta.analysis.algorithm.bounded.splitAction
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodePostcondition
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SingleStepProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.TraceProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -36,11 +41,25 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
+/** How the counterexample is searched between the initial and the violating states. */
+enum class TraceSearch {
+  /** Backward, one arbitrary predecessor per step: cheap, but the length depends on the order. */
+  DFS,
+  /** Forward layers from the initial states, then one backward step per layer: shortest trace. */
+  BFS,
+  /**
+   * Backward layers from all violating states: shortest trace, costly with many violating states.
+   */
+  BFS_BACKWARD,
+}
+
 /**
- * Backward trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and
+ * Trace generation shared by [hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker] and
  * [hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker]: reverses the transition nodes
- * over the computed state space and walks from [propViolating] back to [initNode]. Returns null if
- * generation does not finish within [traceTimeout] seconds.
+ * over the computed state space and searches from [propViolating] back to [initNode]. Each step
+ * carries the action of the transition (element of [MonolithicExpr.split], matched by index to
+ * [transNodes]) that produced it. Returns null if generation does not finish within [traceTimeout]
+ * seconds.
  */
 internal fun generateTrace(
   transNodes: List<MddHandle>,
@@ -52,6 +71,7 @@ internal fun generateTrace(
   model: MonolithicExpr,
   traceTimeout: Long,
   logger: Logger,
+  search: TraceSearch = TraceSearch.DFS,
 ): Trace<ExplState, ExprAction>? {
   // when an initial state itself violates, seed with the initial violating states: TraceProvider
   // would accept the whole violating set as a length-1 trace and the valuation collector could
@@ -63,32 +83,65 @@ internal fun generateTrace(
   val executor = Executors.newSingleThreadExecutor()
   val future =
     executor.submit<Trace<ExplState, ExprAction>> {
-      val reversedDescriptors = mutableListOf<AbstractNextStateDescriptor>()
       val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
-      for (transNode in transNodes) {
-        val explTrans = MddExplicitRepresentationExtractor.transform(transNode, mirrorTop)
-        reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans))
-      }
-      val orReversed = OrNextStateDescriptor.create(reversedDescriptors)
+      val explicitTrans =
+        transNodes.map { MddExplicitRepresentationExtractor.transform(it, mirrorTop) }
+      val forward = explicitTrans.map { MddNodeNextStateDescriptor.of(it) }
+      val orReversed =
+        OrNextStateDescriptor.create(
+          explicitTrans.map { ReverseNextStateDescriptor.of(stateSpace, it) }
+        )
+      val top = stateSig.topVariableHandle
 
-      // the provider registers itself on the graph: dispose it, or its caches stay reachable
+      // both providers register themselves on the graph: dispose them, or their caches stay
+      // reachable
       val traceProvider = TraceProvider(stateSig.variableOrder)
-      val mddTrace =
-        try {
-          traceProvider.compute(traceSeed, orReversed, initNode, stateSig.topVariableHandle)
-        } finally {
-          traceProvider.dispose()
-        }
-      val valuations =
-        mddTrace
-          .map {
-            PathUtils.extractValuation(
-              MddValuationCollector.collect(it).stream().findFirst().orElseThrow(),
-              0,
-            )
+      val stepper = SingleStepProvider(stateSig.variableOrder)
+      val states = ArrayList<MddHandle>()
+      val actions = ArrayList<ExprAction>()
+      try {
+        val layers =
+          when (search) {
+            TraceSearch.DFS -> traceProvider.compute(traceSeed, orReversed, initNode, top)
+            TraceSearch.BFS ->
+              forwardBreadthFirst(initNode, traceSeed, forward, orReversed, stepper, top)
+            TraceSearch.BFS_BACKWARD ->
+              traceProvider.computeBreadthFirst(traceSeed, orReversed, initNode, top)
           }
-          .toList()
-      return@submit Trace.of(valuations.map(ExplState::of), model.action())
+        // the backward search records neither the fired transition nor, for BFS_BACKWARD, which
+        // state of the next layer is reached: resolve both by stepping forward per transition
+        states.add(layers[0].satOne())
+        for (k in 0 until layers.size - 1) {
+          val fired =
+            forward.withIndex().firstNotNullOfOrNull { (index, transition) ->
+              val successors =
+                stepper
+                  .compute(MddNodePostcondition.of(states[k]), transition, top)
+                  .intersection(layers[k + 1])
+              if (successors.isTerminalZero) null else index to successors.satOne()
+            }
+          if (fired != null) {
+            actions.add(model.splitAction(fired.first))
+            states.add(fired.second)
+          } else {
+            actions.add(model.action())
+            states.add(layers[k + 1].satOne())
+          }
+        }
+      } finally {
+        traceProvider.dispose()
+        stepper.clear()
+        stepper.dispose()
+      }
+
+      val valuations =
+        states.map {
+          PathUtils.extractValuation(
+            MddValuationCollector.collect(it).stream().findFirst().orElseThrow(),
+            0,
+          )
+        }
+      return@submit Trace.of(valuations.map(ExplState::of), actions)
     }
 
   val traceTime = Stopwatch.createStarted()
@@ -111,4 +164,46 @@ internal fun generateTrace(
   } finally {
     executor.shutdownNow()
   }
+}
+
+/**
+ * Forward breadth-first search from [initNode] until a state of [violating] is reached, then one
+ * backward step per layer from that state: the states of a shortest trace, initial side first.
+ */
+private fun forwardBreadthFirst(
+  initNode: MddHandle,
+  violating: MddHandle,
+  forward: List<AbstractNextStateDescriptor>,
+  orReversed: AbstractNextStateDescriptor,
+  stepper: SingleStepProvider,
+  top: MddVariableHandle,
+): List<MddHandle> {
+  val orForward = OrNextStateDescriptor.create(forward)
+  val layers = ArrayList<MddHandle>()
+  var current = initNode
+  var explored = initNode
+  layers.add(current)
+  var hit = current.intersection(violating)
+  while (hit.isTerminalZero) {
+    if (Thread.interrupted()) {
+      throw InterruptedException("forward search interrupted after ${layers.size} layers")
+    }
+    val next = stepper.compute(MddNodePostcondition.of(current), orForward, top).minus(explored)
+    check(!next.isTerminalZero) { "forward search exhausted the state space without a violation" }
+    explored = explored.union(next)
+    current = next
+    layers.add(current)
+    hit = current.intersection(violating)
+  }
+  val states = arrayOfNulls<MddHandle>(layers.size)
+  states[layers.size - 1] = hit.satOne()
+  for (j in layers.size - 2 downTo 0) {
+    val preds =
+      stepper
+        .compute(MddNodePostcondition.of(states[j + 1]!!), orReversed, top)
+        .intersection(layers[j])
+    check(!preds.isTerminalZero) { "no predecessor of the chosen state in the previous layer" }
+    states[j] = preds.satOne()
+  }
+  return states.map { it!! }
 }

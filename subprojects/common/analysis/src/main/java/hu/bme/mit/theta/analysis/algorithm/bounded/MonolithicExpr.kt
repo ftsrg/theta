@@ -49,6 +49,25 @@ fun MonolithicExpr.action() =
     override fun nextIndexing(): VarIndexing = transOffsetIndex
   }
 
+/**
+ * The action of the [index]th disjunct of [MonolithicExpr.split], as opposed to [action], which
+ * stands for the whole relation.
+ */
+class MonolithicExprSplitAction(
+  val index: Int,
+  private val expr: Expr<BoolType>,
+  private val indexing: VarIndexing,
+) : ExprAction {
+  override fun toExpr(): Expr<BoolType> = expr
+
+  override fun nextIndexing(): VarIndexing = indexing
+
+  override fun toString(): String = "SplitAction($index)"
+}
+
+fun MonolithicExpr.splitAction(index: Int): ExprAction =
+  MonolithicExprSplitAction(index, split[index], transOffsetIndex)
+
 // TODO: not this simple, can mess up STS with or
 private fun splitTransExpr(expr: Expr<BoolType>): List<Expr<BoolType>> {
   val simplifiedTransExpr = ExprUtils.simplify(expr)

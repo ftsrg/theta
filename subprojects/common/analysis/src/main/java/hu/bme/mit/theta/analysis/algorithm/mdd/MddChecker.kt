@@ -27,13 +27,14 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.generateTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -67,6 +68,7 @@ constructor(
   private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   private val solverMeasurements: Boolean = false,
+  private val traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
@@ -213,6 +215,7 @@ constructor(
           monolithicExpr,
           traceTimeout,
           logger,
+          search = traceSearch,
         ) ?: Trace.of(listOf(ExplState.top()), listOf())
       result = SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
     } else {

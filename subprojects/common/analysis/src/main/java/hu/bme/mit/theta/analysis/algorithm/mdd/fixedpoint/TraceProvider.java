@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -98,6 +99,49 @@ public final class TraceProvider implements MddGraph.CleanupListener {
         }
 
         return Lists.reverse(states);
+    }
+
+    /**
+     * Backward breadth-first search: the sets of states at distance 0, 1, ... from {@code
+     * targetStates} (each minus the earlier ones), the last one cut to its initial states, reversed
+     * so the initial side comes first. A path picked forward through them is a shortest trace.
+     */
+    public List<MddHandle> computeBreadthFirst(
+            MddHandle targetStates,
+            AbstractNextStateDescriptor reversedNextStateRelation,
+            MddHandle initialStates,
+            MddVariableHandle highestAffectedVariable)
+            throws InterruptedException {
+
+        final List<MddHandle> layers = new ArrayList<>();
+        MddHandle current = targetStates;
+        MddHandle explored = targetStates;
+        layers.add(current);
+        MddHandle initHit = current.intersection(initialStates);
+
+        while (initHit.isTerminalZero()) {
+            if (Thread.interrupted()) {
+                System.out.println(
+                        "Trace computation interrupted after " + layers.size() + " layers.");
+                throw new InterruptedException();
+            }
+            final MddHandle next =
+                    singleStepProvider
+                            .compute(current, reversedNextStateRelation, highestAffectedVariable)
+                            .minus(explored);
+            if (next.isTerminalZero()) {
+                throw new IllegalStateException(
+                        "backward search exhausted the state space without reaching an initial"
+                                + " state");
+            }
+            explored = explored.union(next);
+            current = next;
+            layers.add(current);
+            initHit = current.intersection(initialStates);
+        }
+
+        layers.set(layers.size() - 1, initHit);
+        return Lists.reverse(layers);
     }
 
     @Override

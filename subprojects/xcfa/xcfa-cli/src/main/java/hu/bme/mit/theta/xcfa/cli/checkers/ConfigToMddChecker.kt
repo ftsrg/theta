@@ -64,6 +64,7 @@ fun getMddChecker(
       proofStrategy = mddConfig.proofStrategy,
       traceTimeout = mddConfig.traceTimeout,
       solverMeasurements = mddConfig.solverMeasurements,
+      traceSearch = mddConfig.traceSearch,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

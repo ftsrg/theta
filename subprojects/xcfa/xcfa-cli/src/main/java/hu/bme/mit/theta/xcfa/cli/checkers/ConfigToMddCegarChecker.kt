@@ -64,6 +64,7 @@ fun getMddCegarChecker(
       traceTimeout = mddCegarConfig.traceTimeout,
       lookAheadStrategy = mddCegarConfig.lookAheadStrategy,
       proofStrategy = mddCegarConfig.proofStrategy,
+      traceSearch = mddCegarConfig.traceSearch,
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

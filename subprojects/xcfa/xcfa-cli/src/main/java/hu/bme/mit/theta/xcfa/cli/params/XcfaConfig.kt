@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSe
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -596,6 +597,12 @@ data class MddConfig(
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
   @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.DFS,
+  @Parameter(
     names = ["--solver-measurements"],
     description = "Perform a structural rerun to estimate solver time overhead",
   )
@@ -647,6 +654,12 @@ data class MddCegarConfig(
     description = "Terminate saturation as soon as a violating state is reached",
   )
   var onTheFlyReachability: Boolean = false,
+  @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SpecBackendConfig
 
 data class Ic3Config(
