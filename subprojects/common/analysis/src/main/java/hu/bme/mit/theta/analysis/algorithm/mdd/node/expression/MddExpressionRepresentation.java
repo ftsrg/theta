@@ -48,7 +48,6 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.io.Closeable;
 import java.util.*;
-import java.util.Optional;
 
 public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNode> {
 
@@ -184,22 +183,71 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return lazyTraverser;
     }
 
-    /** Caches the edges along {@code model}, a model of {@link #getExpr()}. */
+    /** Seeds the explicit caches along {@code model}, which must satisfy {@link #getExpr()}. */
     public void cacheModel(Valuation model) {
-        final MddNode existingDefault = explicitRepresentation.getCacheView().defaultValue();
-        final MddExpressionRepresentation child;
-        if (existingDefault != null) {
-            child = childRepresentation(existingDefault);
-        } else {
-            final Optional<? extends LitExpr<?>> lit = model.eval(decl);
-            child =
-                    lit.isPresent()
-                            ? cacheChild(LitExprConverter.toInt(lit.get()), true)
-                            : cacheChild(0, false);
-        }
-        if (child != null) child.cacheModel(model);
+        cacheModel(model, null, new IdentityHashMap<>());
     }
 
+    /** Caches the known structure {@code source} into this node. */
+    public void cacheModel(Valuation prefix, MddNode source) {
+        cacheModel(prefix, source, new IdentityHashMap<>());
+    }
+
+    private void cacheModel(
+            Valuation prefix,
+            MddNode source,
+            IdentityHashMap<MddExpressionRepresentation, Set<MddNode>> done) {
+        while (source != null && source.getRepresentation() instanceof IdentityRepresentation) {
+            // an identity pair in source: this node's expression proves the same pair identical, so
+            // cacheChild has already unwrapped past both levels — the source follows suit
+            source = ((IdentityRepresentation) source.getRepresentation()).getContinuation();
+        }
+        if (source != null && source.isTerminal()) {
+            return;
+        }
+        final MddNode existingDefault = explicitRepresentation.getCacheView().defaultValue();
+        if (existingDefault != null) {
+            // already a skip level: descend its default, the source unchanged
+            final MddExpressionRepresentation child = childRepresentation(existingDefault);
+            if (child != null) child.cacheModel(prefix, source, done);
+            return;
+        }
+        final Optional<? extends LitExpr<?>> lit = prefix.eval(decl);
+        if (lit.isPresent()) {
+            final MddExpressionRepresentation child =
+                    cacheChild(LitExprConverter.toInt(lit.get()), true);
+            if (child != null) child.cacheModel(prefix, source, done);
+            return;
+        }
+        if (source == null) {
+            // plain valuation, unassigned level: don't-care, the level stays explorable
+            final MddExpressionRepresentation child = cacheChild(0, false);
+            if (child != null) child.cacheModel(prefix, null, done);
+            return;
+        }
+        // below the prefix: mirror source's structure, memoized so a shared sub-DAG (a compact MDD
+        // has
+        // exponentially many paths) is walked once per node, not once per path
+        if (!done.computeIfAbsent(this, k -> new HashSet<>()).add(source)) {
+            return;
+        }
+        for (var cursor = source.cursor(); cursor.moveNext(); ) {
+            final MddExpressionRepresentation child = cacheChild(cursor.key(), true);
+            if (child != null) child.cacheModel(prefix, (MddNode) cursor.value(), done);
+        }
+        final MddNode sourceDefault = source.defaultValue();
+        if (sourceDefault != null) {
+            // a don't-care level in source: keep this level explorable, descend
+            final MddExpressionRepresentation child = cacheChild(0, false);
+            if (child != null) child.cacheModel(prefix, sourceDefault, done);
+        }
+    }
+
+    /**
+     * Builds the explorable expression child for {@code key} (its expression substituted), caching
+     * the edge when {@code cacheEdge}; returns its representation, or null at a terminal/identity
+     * bottom.
+     */
     private MddExpressionRepresentation cacheChild(int key, boolean cacheEdge) {
         MddNode childNode = cacheEdge ? explicitRepresentation.getCacheView().get(key) : null;
         if (childNode == null) {
@@ -263,6 +311,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     @Override
     public boolean isEmpty() {
+        //        return false;
         return explicitRepresentation.isComplete() && size() == 0;
     }
 
@@ -333,7 +382,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         if (!mddVariable.isNullOrZero(childNode)) {
             explicitRepresentation.cacheNode(key, childNode);
         } else {
-            // remember the absence, so the key is not queried again
+            // also for the zero node of a non-bottom level: the absence must land in the
+            // explicit caches for later iterations' bounds to see it
             explicitRepresentation.cacheNegative(key);
         }
         completeIfBoolFullyCached();
@@ -417,6 +467,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public interface Explored {
         IntObjMapView<MddNode> knownEdges();
 
+        IntSetView knownAbsentKeys();
+
         boolean isComplete();
     }
 
@@ -453,6 +505,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return negativeCache.contains(key);
         }
 
+        public HashIntSet getNegativeKeys() {
+            return negativeCache;
+        }
+
         void cacheDefault(MddNode defaultValue) {
             Preconditions.checkState(!complete);
             this.defaultValue = defaultValue;
@@ -474,6 +530,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         @Override
         public IntObjMapView<MddNode> knownEdges() {
             return getCacheView();
+        }
+
+        @Override
+        public IntSetView knownAbsentKeys() {
+            return IntSetView.of(negativeCache);
         }
 
         public int getEdge(int index) {
@@ -707,6 +768,28 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 return childNode;
             } else return null;
         }
+
+        //        private void pushNegatedAssignments() {
+        //            solver.push();
+        //            final var negatedAssignments = new ArrayList<Expr<BoolType>>();
+        //            for (var cur =
+        // currentRepresentation.explicitRepresentation.getCacheView().cursor();
+        //                    cur.moveNext(); ) {
+        //                negatedAssignments.add(
+        //                        Neq(
+        //                                currentRepresentation.decl.getRef(),
+        //                                LitExprConverter.toLitExpr(
+        //                                        cur.key(),
+        // currentRepresentation.decl.getType())));
+        //                pushedNegatedAssignments++;
+        //            }
+        //            solver.add(And(negatedAssignments));
+        //        }
+
+        //        private void popNegatedAssignments() {
+        //            solver.pop();
+        //            pushedNegatedAssignments = 0;
+        //        }
 
         void cacheModel(Valuation valuation) {
             currentRepresentation.cacheModel(valuation);

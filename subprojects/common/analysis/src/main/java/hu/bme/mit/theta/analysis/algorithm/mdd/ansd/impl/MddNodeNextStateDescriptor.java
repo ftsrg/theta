@@ -31,7 +31,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-/** The full-relation (source and target) descriptor of an MDD node, two levels per key. */
+/**
+ * The full-relation (source and target) descriptor of an MDD node, descending two levels per key.
+ * Read through the handle's interpreter, so a node sitting below its variable handle floats down the
+ * don't-care prefix (default edges) until its own level.
+ */
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddHandle handle;
@@ -52,7 +56,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
             return AbstractNextStateDescriptor.terminalEmpty();
         if (node.isTerminal() && !variableHandle.isTerminal()) {
-            // a non-zero terminal above the bottom accepts everything below it
+            // a non-zero terminal above the bottom is a bound cut at the data boundary: accept below
             return AbstractNextStateDescriptor.terminalIdentity();
         }
         if (node.getRepresentation()
@@ -74,17 +78,13 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
         final RecursiveIntObjMapView<?> constraint = localStateSpace.toStructuralRepresentation();
-        // diagonal: target equals source, so index the source child by the same key (null =
-        // default)
+        // diagonal: target equals source, so index the source child by the same key (null = default)
         return new ConstrainedIntObjMapView<>(
                 new IntObjMapViews.Transforming<>(
                         handle,
                         (source, key) -> {
                             final MddHandle sourceHandle = (MddHandle) source;
-                            return of(
-                                    key == null
-                                            ? sourceHandle.defaultValue()
-                                            : sourceHandle.get(key));
+                            return of(key == null ? sourceHandle.defaultValue() : sourceHandle.get(key));
                         }),
                 constraint);
     }
