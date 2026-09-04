@@ -37,8 +37,8 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
     }
 
     public static AbstractNextStateDescriptor.Postcondition of(MddHandle handle) {
-        if (handle.isTerminalZero()) return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
-        // a non-zero terminal above the bottom is the data-boundary cut: floats, accepting below
+        if (handle.isTerminalZero())
+            return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
         return new MddNodePostcondition(handle);
     }
 
@@ -48,7 +48,8 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+            StateSpaceInfo localStateSpace) {
         return new IntObjMapViews.Transforming<>(handle, h -> of((MddHandle) h));
     }
 

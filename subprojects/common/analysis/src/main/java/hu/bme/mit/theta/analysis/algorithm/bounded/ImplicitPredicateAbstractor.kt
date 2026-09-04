@@ -43,12 +43,6 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
   private val literalToPredMap = LinkedHashMap<Decl<*>, Expr<BoolType>>()
   private lateinit var currentPrec: PredPrec
 
-  val literalToPred: Map<Decl<*>, Expr<BoolType>>
-    get() = literalToPredMap
-
-  val literalsInCreationOrder: List<VarDecl<BoolType>>
-    get() = predToLiteral.values.toList()
-
   /** Builds the abstract [MonolithicExpr] for [prec]; reports which literals were newly created. */
   fun abstractModel(prec: PredPrec): AbstractionResult {
     currentPrec = prec
