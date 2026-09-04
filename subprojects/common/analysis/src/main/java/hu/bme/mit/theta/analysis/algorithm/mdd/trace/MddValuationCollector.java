@@ -54,7 +54,9 @@ public class MddValuationCollector {
         return valuations;
     }
 
-    /** Streams every vector of the subtree to {@code consumer} without collecting them into a set. */
+    /**
+     * Streams every vector of the subtree to {@code consumer} without collecting them into a set.
+     */
     public static void collect(MddHandle node, Consumer<Valuation> consumer) {
         collect(node, new Stack<>(), consumer);
     }

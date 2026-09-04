@@ -21,13 +21,9 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -132,35 +128,32 @@ public class XstsAbstractMddCheckerTest {
                         "src/test/resources/property/on_off_statemachine2.prop",
                         true
                     },
-//                    {
-//                        "src/test/resources/model/on_off_statemachine.xsts",
-//                        "src/test/resources/property/on_off_statemachine3.prop",
-//                        false
-//                    },
+                    //                    {
+                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    //
+                    // "src/test/resources/property/on_off_statemachine3.prop",
+                    //                        false
+                    //                    },
                     {
                         "src/test/resources/model/counter50.xsts",
                         "src/test/resources/property/x_eq_5.prop",
                         false
                     },
-                                                            {
-
-                     "src/test/resources/model/counter50.xsts",
-
-                     "src/test/resources/property/x_eq_50.prop",
-                                                                false
-                                                            },
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_50.prop",
+                        false
+                    },
                     {
                         "src/test/resources/model/counter50.xsts",
                         "src/test/resources/property/x_eq_51.prop",
                         true
                     },
-                                                            {
-
-                     "src/test/resources/model/count_up_down.xsts",
-
-                     "src/test/resources/property/count_up_down.prop",
-                                                                false
-                                                            },
+                    {
+                        "src/test/resources/model/count_up_down.xsts",
+                        "src/test/resources/property/count_up_down.prop",
+                        false
+                    },
                     //                                                            {
                     //
                     //                     "src/test/resources/model/count_up_down.xsts",
@@ -268,11 +261,10 @@ public class XstsAbstractMddCheckerTest {
 
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final List<MonolithicExprPass<InvariantProof>> passes =
-                    List.of(
-                            /*new PredicateAbstractionMEPass<>(
+                    List.of(/*new PredicateAbstractionMEPass<>(
                                     ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
                                             Z3LegacySolverFactory.getInstance()),
-                                    mE -> PredPrec.of(mE.getPropExpr()))*/);
+                                    mE -> PredPrec.of(mE.getPropExpr()))*/ );
 
             SafetyChecker<
                             InvariantProof,
@@ -282,8 +274,14 @@ public class XstsAbstractMddCheckerTest {
                             new XstsPipelineChecker<>(
                                     xsts,
                                     monolithicExpr ->
-                                            new MddCegarChecker(monolithicExpr, solverPool, logger, ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
-                                                Z3LegacySolverFactory.getInstance())),
+                                            new MddCegarChecker(
+                                                    monolithicExpr,
+                                                    solverPool,
+                                                    logger,
+                                                    ExprTraceCheckerFactoriesKt
+                                                            .createSeqItpCheckerFactory(
+                                                                    Z3LegacySolverFactory
+                                                                            .getInstance())),
                                     passes);
             var status = checker.check();
             logger.mainStep(status.toString());

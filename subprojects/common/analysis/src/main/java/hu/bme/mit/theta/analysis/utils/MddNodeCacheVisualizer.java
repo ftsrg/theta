@@ -166,8 +166,7 @@ public class MddNodeCacheVisualizer {
                     var representation = node.getRepresentation();
                     Preconditions.checkState(representation instanceof MddExpressionRepresentation);
                     var expressionRepresentation = (MddExpressionRepresentation) representation;
-                    for (var cursor =
-                                    expressionRepresentation.explored().knownEdges().cursor();
+                    for (var cursor = expressionRepresentation.explored().knownEdges().cursor();
                             cursor.moveNext(); ) {
                         if (cursor.value() != null) {
                             traverse(graph, cursor.value(), traversed);
