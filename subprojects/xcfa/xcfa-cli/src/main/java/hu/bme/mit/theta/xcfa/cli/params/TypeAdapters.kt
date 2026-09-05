@@ -33,6 +33,7 @@ class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson) :
 
     writer.name("lbeLevel").value(value.lbeLevel.name)
     writer.name("loopUnroll").value(value.loopUnroll)
+    writer.name("enableDataRaceToReachability").value(value.enableDataRaceToReachability)
     writer.name("inputType").value(value.inputType.name)
     writer.name("specConfig")
     if (value.specConfig != null) {
@@ -59,6 +60,7 @@ class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson) :
       when (reader.nextName()) {
         "lbeLevel" -> instance.lbeLevel = LbePass.LbeLevel.valueOf(reader.nextString())
         "loopUnroll" -> instance.loopUnroll = reader.nextInt()
+        "enableDataRaceToReachability" -> instance.enableDataRaceToReachability = reader.nextBoolean()
         "inputType" -> instance.inputType = InputType.valueOf(reader.nextString())
         "specConfig" -> instance.specConfig = readSpecConfig(reader)
         else -> reader.skipValue()
