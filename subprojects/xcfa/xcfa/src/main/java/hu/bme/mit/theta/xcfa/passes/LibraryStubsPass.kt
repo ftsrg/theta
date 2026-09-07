@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
@@ -33,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
@@ -81,8 +81,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
        * Every pointer argument from [from] onwards.
        *
        * The `scanf` family is **variadic**, so a fixed set of indices silently ignores whatever the
-       * caller passed beyond it -- `fscanf(f, "%d %d %d %d %d", &a, &b, &c, &d, &e)` would leave `e`
-       * holding its old value while the program believes it was read. That is an
+       * caller passed beyond it -- `fscanf(f, "%d %d %d %d %d", &a, &b, &c, &d, &e)` would leave
+       * `e` holding its old value while the program believes it was read. That is an
        * under-approximation in the dangerous direction: a stale value is one specific value, and a
        * program that branches on it can be proved safe on the strength of it.
        */
@@ -93,8 +93,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
      * @param writes what the call stores through its arguments.
      * @param returns a fixed return value for a call that is assumed always to succeed, or null to
      *   havoc the return. A havoc'd return means the caller's error path is always reachable, which
-     *   invents failures the modelled program cannot have; where the standard assumption is success,
-     *   say so here instead.
+     *   invents failures the modelled program cannot have; where the standard assumption is
+     *   success, say so here instead.
      */
     private data class Stub(val writes: Writes = Writes.None, val returns: Long? = null)
 
@@ -160,7 +160,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       if (labels.none { it is InvokeLabel && it.stubbable(defined) }) continue
       val rewritten =
         labels.flatMap { label ->
-          if (label is InvokeLabel && label.stubbable(defined)) stub(label, builder) else listOf(label)
+          if (label is InvokeLabel && label.stubbable(defined)) stub(label, builder)
+          else listOf(label)
         }
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(SequenceLabel(rewritten, edge.label.metadata)))
@@ -170,8 +171,9 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
 
   /**
    * A call this pass may replace: a known stub, not defined in the XCFA, and **not flagged for
-   * specific handling**. The flag is the whole point of [InvokeLabel.isLibraryFunction] -- something
-   * downstream models this call properly, and a havoc here would silently replace that model.
+   * specific handling**. The flag is the whole point of [InvokeLabel.isLibraryFunction] --
+   * something downstream models this call properly, and a havoc here would silently replace that
+   * model.
    */
   private fun InvokeLabel.stubbable(defined: Set<String>) =
     name in STUBS && name !in defined && !isLibraryFunction
@@ -246,7 +248,9 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         out.add(StmtLabel(HavocStmt.of(ret), metadata = invoke.metadata))
       } else {
         val type = CComplexType.getType(ret.ref, parseContext)
-        out.add(AssignStmtLabel(ret, cast(type.getValue("$fixed"), ret.type), metadata = invoke.metadata))
+        out.add(
+          AssignStmtLabel(ret, cast(type.getValue("$fixed"), ret.type), metadata = invoke.metadata)
+        )
       }
     }
     return out

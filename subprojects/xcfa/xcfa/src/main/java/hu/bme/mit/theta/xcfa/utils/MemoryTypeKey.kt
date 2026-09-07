@@ -22,8 +22,8 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
  * The memory partition a dereference belongs to: the (array, offset, element) type triple.
  *
  * Every memory representation is partitioned by it -- `DereferenceToArrayPass` keeps one backing
- * array per triple, the OC encoding one memory declaration -- so accesses of different triples never
- * communicate.
+ * array per triple, the OC encoding one memory declaration -- so accesses of different triples
+ * never communicate.
  */
 data class MemoryTypeKey(val arrayType: Type, val offsetType: Type, val elemType: Type) {
 

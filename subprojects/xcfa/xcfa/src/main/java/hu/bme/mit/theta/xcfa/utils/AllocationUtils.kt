@@ -34,11 +34,11 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * The number of pointer-base residue classes: every memory object has a base id, and the id modulo
  * this says what kind of object it is.
  *
- * | residue | kind                          | minted by                                       |
- * |---------|-------------------------------|-------------------------------------------------|
- * | `3k+0`  | heap (`malloc`, `calloc`)     | `MallocFunctionPass`, from [mallocVar]          |
- * | `3k+1`  | static objects, and `alloca`  | the frontend builder, then `AllocaFunctionPass` |
- * | `3k+2`  | address-taken locals          | `ReferenceElimination`                          |
+ * | residue | kind                         | minted by                                       |
+ * |---------|------------------------------|-------------------------------------------------|
+ * | `3k+0`  | heap (`malloc`, `calloc`)    | `MallocFunctionPass`, from [mallocVar]          |
+ * | `3k+1`  | static objects, and `alloca` | the frontend builder, then `AllocaFunctionPass` |
+ * | `3k+2`  | address-taken locals         | `ReferenceElimination`                          |
  *
  * The classes never overlap. Both runtime kinds take their ids from the single [mallocVar] counter,
  * which advances by 3 per allocation so each allocation consumes its own `k`, and
@@ -96,7 +96,9 @@ fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexTyp
     val oldEdges = proc.initLoc.outgoingEdges.toList()
     val newEdges =
       oldEdges.map {
-        it.withLabel(SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata))
+        it.withLabel(
+          SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata)
+        )
       }
     oldEdges.forEach(proc::removeEdge)
     newEdges.forEach(proc::addEdge)
@@ -105,8 +107,8 @@ fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexTyp
 
 /**
  * The C type the first allocation call matching [predicate] writes its base into, or null when this
- * procedure performs no such allocation. Lets the counter be seeded before the rewrite loop, without
- * needing an allocation site in hand.
+ * procedure performs no such allocation. Lets the counter be seeded before the rewrite loop,
+ * without needing an allocation site in hand.
  */
 fun XcfaProcedureBuilder.firstAllocationRetType(
   parseContext: ParseContext,

@@ -30,17 +30,17 @@ import java.math.BigInteger
 
 /**
  * Lowers `calloc(n, s)` into `malloc(n * s)` plus a `memset(p, 0, n * s)`, so it runs before
- * [MallocFunctionPass], which mints the base and records the size, and before [MemoryFunctionsPass],
- * which spells out the zero-fill over the object's cells.
+ * [MallocFunctionPass], which mints the base and records the size, and before
+ * [MemoryFunctionsPass], which spells out the zero-fill over the object's cells.
  *
  * The fill is inserted **after** the assignment that consumes the call, not at the call itself:
  * `calloc` returns `void *`, so at the call the destination has no pointee type and
  * [MemoryFunctionsPass] cannot know what a cell is, while the typed pointer the result is bound to
  * (`int *p = calloc(4, sizeof *p)`) carries the real `cType`.
  *
- * The count has to be statically known, for the same reason `memset` insists on it. A `calloc` whose
- * count is not known, or whose result is not bound to a typed pointer in the same block, is left as
- * it was: failing loudly beats handing back a block that is silently not zeroed.
+ * The count has to be statically known, for the same reason `memset` insists on it. A `calloc`
+ * whose count is not known, or whose result is not bound to a typed pointer in the same block, is
+ * left as it was: failing loudly beats handing back a block that is silently not zeroed.
  */
 class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 

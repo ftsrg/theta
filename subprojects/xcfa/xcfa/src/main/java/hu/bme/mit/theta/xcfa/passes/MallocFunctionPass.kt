@@ -32,9 +32,9 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
  * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
  * residue class (see `POINTER_BASE_CLASSES`).
  *
- * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old
- * base and the object's size becomes the new one. A program must use realloc's return value whether
- * or not the block moved, so returning the same base preserves the observable contents exactly and
+ * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
+ * and the object's size becomes the new one. A program must use realloc's return value whether or
+ * not the block moved, so returning the same base preserves the observable contents exactly and
  * still gives the new bound to the memsafety size domain. What it does not model is the
  * invalidation of the old pointer, the same imprecision the analysis already has around frees;
  * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize.

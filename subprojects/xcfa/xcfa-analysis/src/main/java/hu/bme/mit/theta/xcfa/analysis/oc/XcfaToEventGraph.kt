@@ -414,7 +414,6 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
             }
           }
         }
-
       }
 
       if (waitList.isNotEmpty())

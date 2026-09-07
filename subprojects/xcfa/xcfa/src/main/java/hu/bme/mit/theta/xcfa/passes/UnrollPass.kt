@@ -41,8 +41,8 @@ import kotlin.math.max
  * Unrolls loops where the number of loop executions can be determined statically. The UNROLL_LIMIT
  * refers to the number of loop executions: loops that are executed more times than this limit are
  * not unrolled. Loops with unknown number of iterations are unrolled to FORCE_UNROLL_LIMIT
- * iterations (this way a safe result might not be valid). Recursive calls are expanded the same way,
- * to UNROLL_RECURSION_LIMIT.
+ * iterations (this way a safe result might not be valid). Recursive calls are expanded the same
+ * way, to UNROLL_RECURSION_LIMIT.
  *
  * @param substituteLoopVar when true, each unrolled copy has the loop variable replaced by its
  *   constant value for that iteration (`&t[i]` becomes `&t[0]`, `&t[1]`, …). Only the loop variable

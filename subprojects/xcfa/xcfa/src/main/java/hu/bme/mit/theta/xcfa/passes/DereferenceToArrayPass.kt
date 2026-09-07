@@ -45,9 +45,9 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  *
  * There is exactly ONE array per [MemoryTypeKey]: a finer, per-dereference partition is unsound,
  * because the same cell can be reached both through a global pointer variable and through its
- * constant-folded base literal, and the two dereferences would then read and write different arrays.
- * The array starts havoced -- stack and heap cells are garbage until written, and a global's
- * initialization is materialized as ordinary writes in the init procedure.
+ * constant-folded base literal, and the two dereferences would then read and write different
+ * arrays. The array starts havoced -- stack and heap cells are garbage until written, and a
+ * global's initialization is materialized as ordinary writes in the init procedure.
  */
 class DereferenceToArrayPass : ProcedurePass {
 

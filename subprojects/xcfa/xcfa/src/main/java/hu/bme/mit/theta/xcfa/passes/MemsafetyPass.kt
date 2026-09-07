@@ -299,8 +299,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
           .also { builder.parent.addVar(it) }
           .wrappedVar
-    val mallocBase =
-      Mul(anyBase.ref, pointerType.getValue("$POINTER_BASE_CLASSES")) // 3k+0: malloc
+    val mallocBase = Mul(anyBase.ref, pointerType.getValue("$POINTER_BASE_CLASSES")) // 3k+0: malloc
     val stillAllocated =
       Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
 
