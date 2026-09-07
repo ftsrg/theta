@@ -12,7 +12,7 @@
 // easily as invent one. That havoc is guarded on `count * w == n`, so the exact case (which is what
 // `memset(p, 0, n * sizeof *p)` is) keeps full precision.
 //
-// ⚠️ This runs after LoopUnrollPass, so the loop is never unrolled: CEGAR must find an invariant for
+// ⚠️ This runs after UnrollPass, so the loop is never unrolled: CEGAR must find an invariant for
 // it and currently times out, while KIND/BMC/IMC answer it. The fixture is therefore SAFE-expected
 // via the portfolio, which reaches a loop-capable configuration.
 extern void abort(void);
