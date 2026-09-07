@@ -36,7 +36,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.passes.UnusedLocRemovalPass
@@ -111,21 +111,18 @@ class XcfaOcChecker(
    * a safe result is unreliable.
    */
   private fun check(forceUnrollBound: Int): Pair<SafetyResult<EmptyProof, Cex>, Boolean> {
-    // force loop unroll for BMC
-    // UnusedLocRemovalPass after the unroll: force unrolling leaves behind copies past the bound
-    // that nothing can reach, including whole dead cycles. Those are invisible to the traversal
-    // below but not to the incoming-edge *counts* it waits on, so a live merge point would sit
-    // forever waiting for a predecessor that can never execute -- reported as "loops".
+    // Force loop unroll for BMC. Re-running the pass per bound is the point: each escalation
+    // expands loops -- and recursive calls, which need parseContext for the parameter assignments
+    // -- one level deeper, which inlining, a one-shot pass, cannot do.
     val xcfa =
       xcfa.optimizeFurther(
         ProcedurePassManager(
           listOf(
-            // parseContext is what lets the pass expand recursive calls (it needs the C types to
-            // build the parameter assignments); whether it does so is the --force-unroll-recursion
-            // setting. Re-running it per bound is the point: each escalation expands the recursion
-            // one level deeper, which inlining -- a one-shot, all-or-nothing pass -- cannot do.
-            LoopUnrollPass(forceUnrollBound, parseContext = parseContext),
-            UnusedLocRemovalPass(),
+            UnrollPass(
+              forceUnrollBound,
+              parseContext = parseContext,
+              alwaysUnrollRecursion = forceUnrollBound,
+            )
           )
         )
       )

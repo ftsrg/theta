@@ -194,7 +194,7 @@ class PassTests {
         ),
         PassTestData(
           global = { "x" type Int() init "0" },
-          passes = listOf(LoopUnrollPass()),
+          passes = listOf(UnrollPass()),
           input = {
             (init to "L1") { "x".assign("0") }
             ("L1" to "L2") {
@@ -693,7 +693,7 @@ class PassTests {
     println("Trying to run $passes on input...")
     val originalGlobalVars = input.parent.getVars().toSet()
     val actualOutput =
-      passes.fold(input) { acc, procedurePass -> procedurePass.run(acc) }.build(dummyXcfa)
+      passes.fold(input) { acc, procedurePass -> procedurePass.runChecked(acc) }.build(dummyXcfa)
     if (output != null) {
       val expectedOutput = output.build(dummyXcfa)
       val varLookUp =

@@ -336,7 +336,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * partially covered cell that kept its old value would hold one specific value the program never
    * wrote, which can hide a bug as easily as invent one. Unconstrained over-approximates it.
    *
-   * ⚠️ Runs after [LoopUnrollPass], so this reaches the analyses as a real loop and is never
+   * ⚠️ Runs after [UnrollPass], so this reaches the analyses as a real loop and is never
    * unrolled -- deliberate, since unrolling 81,920 iterations is not a better answer but no answer.
    */
   private fun nondetFillLoop(
@@ -565,7 +565,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * is an over-approximation and safe, so the tail cell is havoc'd, guarded by `count * w != n` so
    * the common exact case keeps its precision.
    *
-   * ⚠️ This runs after [LoopUnrollPass], so the loop is never unrolled and reaches the analyses as
+   * ⚠️ This runs after [UnrollPass], so the loop is never unrolled and reaches the analyses as
    * a real loop. That is deliberate: the alternative here is not a better answer but no answer at
    * all.
    */

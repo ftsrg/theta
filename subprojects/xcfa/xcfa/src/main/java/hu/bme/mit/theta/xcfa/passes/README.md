@@ -11,7 +11,7 @@ particular position. The comments there give the reason for each group; the recu
 - **Copies before havocs.** `MemoryFunctionsPass` spells out `memcpy`/`memset` before anything havocs
   the same objects: a havoc would leave the destination holding what it held before, which is not
   what a copy does.
-- **`LoopUnrollPass` runs early**, so a loop a later pass *emits* (a symbolic-length fill, a
+- **`UnrollPass` runs early**, so a loop a later pass *emits* (a symbolic-length fill, a
   nondet fill over a large region) is never unrolled and reaches the analyses as a real loop. That is
   deliberate: unrolling those is not a better answer but no answer at all.
 - **The memory-model passes run last.** `FlatMemoryPass` folds `(base, offset)` to one flat address

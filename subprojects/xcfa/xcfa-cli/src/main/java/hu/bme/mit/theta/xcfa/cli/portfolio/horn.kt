@@ -25,7 +25,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 
 fun hornPortfolio(
   xcfa: XCFA,
@@ -51,7 +51,7 @@ fun hornPortfolio(
       frontendConfig =
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           enableDataRaceToReachability =
             portfolioConfig.inputConfig.property.verifiedProperty == DATA_RACE,

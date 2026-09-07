@@ -31,13 +31,13 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * an array of them, `pthread_t t[N]; for (i) pthread_create(&t[i], …)`, needs one distinct key per
  * element, so the index has to be a compile-time constant when [CLibraryFunctionsPass] runs. That
  * pass runs before [ReferenceElimination] (which would rewrite `&t[i]` into the base/offset memory
- * model, losing the handle) and hence before the ordinary [LoopUnrollPass], so the create/join
+ * model, losing the handle) and hence before the ordinary [UnrollPass], so the create/join
  * loops are still rolled and `&t[i]` carries the loop variable as its offset.
  *
  * This pass fills the gap: on a procedure that actually creates or joins threads through an array
- * element -- and only such a procedure, so nothing else is touched -- it runs [LoopUnrollPass]
+ * element -- and only such a procedure, so nothing else is touched -- it runs [UnrollPass]
  * early, turning `&t[i]` into `&t[0]`, `&t[1]`, … before the handles are read. It sits right before
- * [CLibraryFunctionsPass] in [CPasses]; the later [LoopUnrollPass] then finds these loops already
+ * [CLibraryFunctionsPass] in [CPasses]; the later [UnrollPass] then finds these loops already
  * unrolled and leaves them.
  */
 class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : ProcedurePass {
@@ -69,7 +69,7 @@ class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : Pro
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder =
     if (usesArrayElementHandle(builder))
-      LoopUnrollPass(substituteLoopVar = true, parseContext = parseContext).run(builder)
+      UnrollPass(substituteLoopVar = true, parseContext = parseContext).runChecked(builder)
     else builder
 
   private fun usesArrayElementHandle(builder: XcfaProcedureBuilder): Boolean =

@@ -29,7 +29,7 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
  * Splicing a called procedure's body into its caller, shared by the two places that need it:
- * [InlineProceduresPass], which inlines a whole program up front, and [LoopUnrollPass], which
+ * [InlineProceduresPass], which inlines a whole program up front, and [UnrollPass], which
  * expands recursive calls to a bound and can therefore be re-run at a larger bound.
  */
 

@@ -131,10 +131,11 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     }
   }
 
-  LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
-  LoopUnrollPass.FORCE_UNROLL_LIMIT =
+  UnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
+  UnrollPass.FORCE_UNROLL_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
-  LoopUnrollPass.UNROLL_RECURSION = !config.frontendConfig.noForceUnrollRecursion
+  UnrollPass.UNROLL_RECURSION_LIMIT =
+    if (config.inputConfig.witness == null) config.frontendConfig.forceUnrollRecursion else -1
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
