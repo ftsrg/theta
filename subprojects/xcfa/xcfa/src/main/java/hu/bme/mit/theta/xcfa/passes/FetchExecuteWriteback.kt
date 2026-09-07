@@ -62,7 +62,7 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
         builder.addEdge(edge.withLabel(edge.label.replaceDerefs(builder)))
       }
 
-      return DeterministicPass().run(NormalizePass().run(builder))
+      return DeterministicPass().runChecked(NormalizePass().runChecked(builder))
     }
 
     return builder

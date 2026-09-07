@@ -49,7 +49,7 @@ class LibraryStubsTest {
           DeterministicPass(),
           LibraryStubsPass(parseContext, NullLogger.getInstance()),
         )
-        .fold(procedureBuilder) { acc, pass -> pass.run(acc) }
+        .fold(procedureBuilder) { acc, pass -> pass.runChecked(acc) }
     return result.getEdges().flatMap { (it.label as SequenceLabel).labels }
   }
 

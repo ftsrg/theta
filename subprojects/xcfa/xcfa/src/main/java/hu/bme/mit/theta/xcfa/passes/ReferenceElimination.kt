@@ -150,7 +150,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       }
 
     if (simpleChanged || complexChanged) {
-      return DeterministicPass().run(NormalizePass().run(builder))
+      return DeterministicPass().runChecked(NormalizePass().runChecked(builder))
     }
     return builder
   }
