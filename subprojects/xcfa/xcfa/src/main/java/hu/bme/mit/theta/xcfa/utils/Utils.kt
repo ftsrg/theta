@@ -195,18 +195,7 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
     is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
 
-    is FenceLabel -> {
-      val simplifiedLock = ExprUtils.simplify(lock, valuation)
-      when (this) {
-        is AtomicFenceLabel -> this
-        is MutexLockLabel -> copy(lock = simplifiedLock)
-        is MutexTryLockLabel -> copy(lock = simplifiedLock)
-        is MutexUnlockLabel -> copy(lock = simplifiedLock)
-        is RWLockReadLockLabel -> copy(lock = simplifiedLock)
-        is RWLockWriteLockLabel -> copy(lock = simplifiedLock)
-        is RWLockUnlockLabel -> copy(lock = simplifiedLock)
-      }
-    }
+    is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
 
     else -> this
   }

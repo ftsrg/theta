@@ -194,6 +194,8 @@ sealed class FenceLabel(
 
   protected abstract val label: String
 
+  abstract fun withLock(newLock: Expr<*>): FenceLabel
+
   open fun preLabel(s: State): XcfaLabel = NopLabel
 
   override fun toString(): String = "F[$label(${lock})]"
@@ -216,6 +218,8 @@ data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
   override val acquiredMutexes = setOf(ATOMIC_MUTEX)
   override val label = "ATOMIC_BEGIN"
 
+  override fun withLock(newLock: Expr<*>): AtomicBeginLabel = this
+
   override fun toString(): String = super.toString()
 
   companion object {
@@ -232,6 +236,8 @@ data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
 
 data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
   AtomicFenceLabel(metadata) {
+
+  override fun withLock(newLock: Expr<*>): AtomicEndLabel = this
 
   override val releasedMutexes = setOf(ATOMIC_MUTEX)
   override val label = "ATOMIC_END"
@@ -293,6 +299,8 @@ data class MutexLockLabel(
 
   override val label = LABEL
 
+  override fun withLock(newLock: Expr<*>): MutexLockLabel = copy(lock = newLock)
+
   override fun toString(): String = super.toString()
 
   companion object {
@@ -315,6 +323,8 @@ data class MutexUnlockLabel(
 
   override val releasedMutexes = setOf(SimpleMutexLock.of(lock))
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): MutexUnlockLabel = copy(lock = newLock)
 
   override fun toString(): String = super.toString()
 
@@ -342,6 +352,8 @@ data class MutexTryLockLabel(
     setOf(SimpleMutexLock.of(lockExpr))
 
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): MutexTryLockLabel = copy(lock = newLock)
 
   override fun toString(): String = "F[$label(${lock}, ${successVar.name})]"
 
@@ -371,6 +383,8 @@ data class RWLockReadLockLabel(
 
   override val label = LABEL
 
+  override fun withLock(newLock: Expr<*>): RWLockReadLockLabel = copy(lock = newLock)
+
   override fun toString(): String = super.toString()
 
   companion object {
@@ -391,6 +405,8 @@ data class RWLockWriteLockLabel(
   override val metadata: MetaData = EmptyMetaData,
   override val lockVar: VarDecl<*>? = getLockVar(lock),
 ) : LockLabel(lock, metadata, lockVar) {
+
+  override fun withLock(newLock: Expr<*>): RWLockWriteLockLabel = copy(lock = newLock)
 
   override fun lockedMutexes(lockExpr: Expr<*>): Set<MutexLock> =
     setOf(ReadWriteMutexLock.of(lockExpr, WRITE))
@@ -419,7 +435,10 @@ data class RWLockUnlockLabel(
 
   override val releasedMutexes =
     setOf(ReadWriteMutexLock.of(lock, READ), ReadWriteMutexLock.of(lock, WRITE))
+
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): RWLockUnlockLabel = copy(lock = newLock)
 
   override fun toString(): String = super.toString()
 
