@@ -15,11 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlList
-import com.charleskorn.kaml.YamlMap
-import com.charleskorn.kaml.YamlNode
-import com.charleskorn.kaml.YamlScalar
+import com.charleskorn.kaml.*
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
@@ -43,9 +39,11 @@ import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
+import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
+import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
@@ -72,6 +70,7 @@ fun getXcfa(
 
       InputType.C -> {
         parseC(
+          config.frontendConfig.specConfig as CFrontendConfig,
           config.inputConfig.input!!,
           config.inputConfig.property,
           parseContext,
@@ -161,13 +160,14 @@ private fun CFA.toXcfa(): XCFA {
 }
 
 private fun parseC(
+  frontendConfig: CFrontendConfig,
   input: File,
   property: XcfaProperty,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
-  val input =
+  var input =
     if (input.name.endsWith(".yml")) {
       try {
         val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
@@ -199,6 +199,35 @@ private fun parseC(
     } else {
       input
     }
+
+  input =
+    if (frontendConfig.useCir2c) {
+      val temp = createTempDirectory()
+      val copied = temp.resolve("input.${input.extension}").toFile()
+      var curlyBraceCount = 0
+      input.readLines().forEach { line ->
+        line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
+        val newLine =
+          if (curlyBraceCount == 0 && '{' !in line) {
+            "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
+          } else {
+            line
+          }
+        copied.appendText(newLine)
+        copied.appendText(System.lineSeparator())
+      }
+      val transformed = temp.resolve("input-transformed.c").toFile()
+
+      // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess ->
+      // cir2c) and finds its own toolchain relative to the script, so we only pass the
+      // source and the desired C output path.
+      "./run-cir2c.sh ${copied.absolutePath} ${transformed.absolutePath}"
+        .runCommand(frontendConfig.cir2cDir, logger)
+      transformed
+    } else {
+      input
+    }
+
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
@@ -281,4 +310,13 @@ private fun parseBTOR2(
   val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
   logger.write(Logger.Level.VERBOSE, xcfa.toDot())
   return xcfa
+}
+
+private fun String.runCommand(wd: File, logger: Logger, level: Logger.Level = Logger.Level.INFO) {
+  val process =
+    ProcessBuilder(*split(" ").toTypedArray()).directory(wd).redirectErrorStream(true).start()
+  process.inputStream.bufferedReader().useLines { lines ->
+    lines.forEach { logger.write(level, "%s%n", it) }
+  }
+  process.waitFor(15, TimeUnit.MINUTES)
 }

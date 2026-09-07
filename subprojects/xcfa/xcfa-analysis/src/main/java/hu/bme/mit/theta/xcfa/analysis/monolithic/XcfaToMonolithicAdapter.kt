@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.NO_ASSERTION_VIOLATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -68,7 +69,9 @@ abstract class XcfaToMonolithicAdapter(
   protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
 
   init {
-    check(property.verifiedProperty in listOf(ERROR_LOCATION, TERMINATION)) {
+    check(
+      property.verifiedProperty in listOf(ERROR_LOCATION, TERMINATION, NO_ASSERTION_VIOLATION)
+    ) {
       "Unsupported property for monolithic conversion: ${property.verifiedProperty}"
     }
   }

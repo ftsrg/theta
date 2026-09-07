@@ -13,6 +13,7 @@ dest/
 .classpath
 
 # Intellij
+.run/**
 .idea/**
 *.iml
 *.iws

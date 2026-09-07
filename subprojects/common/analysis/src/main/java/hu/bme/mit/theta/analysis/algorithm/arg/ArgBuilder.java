@@ -42,6 +42,14 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
         this.excludeBottom = excludeBottom;
     }
 
+    public Analysis<S, ? super A, ? super P> getAnalysis() {
+        return analysis;
+    }
+
+    public Predicate<? super S> getTarget() {
+        return target;
+    }
+
     public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
             final LTS<? super S, A> lts,
             final Analysis<S, ? super A, ? super P> analysis,

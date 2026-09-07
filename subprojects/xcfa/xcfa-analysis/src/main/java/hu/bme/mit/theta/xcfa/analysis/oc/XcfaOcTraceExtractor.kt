@@ -26,9 +26,11 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
@@ -45,6 +47,28 @@ internal class XcfaOcTraceExtractor(
   private val violations: List<Violation> = eventGraph.violations
   private val pos: List<R> = eventGraph.pos
 
+  // Per-thread renaming of procedure-local variables (params + locals) to thread-instance-specific
+  // decls (`T<pid>::_::name`). The event graph already distinguishes thread instances internally
+  // (see `threadVar` in XcfaToEventGraph), but the extracted trace is rebuilt from the raw XCFA
+  // edges, whose labels carry the bare, instance-agnostic decls. Without this renaming two
+  // concurrent instances of the same procedure (e.g. a thread spawned in a loop) would share one
+  // local in the linearized trace, so one instance's write clobbers the other's and the sequential
+  // re-check in XcfaTraceConcretizer reports a spurious "Infeasible trace". The `T<pid>::_::`
+  // prefix
+  // matches the convention used by the interleaving analysis and stripped by the witness writer.
+  private val pidLookups: Map<Int, Map<VarDecl<*>, VarDecl<*>>> =
+    threads.associate { it.pid to it.procedure.createLookup("T${it.pid}") }
+
+  /**
+   * Returns [this] edge with its label rewritten to use thread [pid]'s instance-specific local
+   * vars.
+   */
+  private fun XcfaEdge.renamedFor(pid: Int): XcfaEdge {
+    val lookup = pidLookups[pid]
+    if (lookup.isNullOrEmpty()) return this
+    return XcfaEdge(source, target, label.changeVars(lookup), metadata)
+  }
+
   internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
     get() {
       check(ocChecker.solver.status.isSat)
@@ -55,13 +79,13 @@ internal class XcfaOcTraceExtractor(
       val (eventTrace, violation) = getEventTrace(model)
 
       val processes =
-        threads.associate { t ->
-          t.pid to
+        mapOf(
+          0 to
             XcfaProcessState(
-              locs = LinkedList(listOf(t.procedure.initLoc)),
+              locs = LinkedList(listOf(threads.find { it.pid == 0 }!!.procedure.initLoc)),
               varLookup = LinkedList(listOf()),
             )
-        }
+        )
       var explState = PtrState(ExplState.of(ImmutableValuation.from(mapOf())))
       stateList.add(XcfaState(xcfa, processes, explState))
       var lastEdge: XcfaEdge = eventTrace[0].edge
@@ -79,10 +103,28 @@ internal class XcfaOcTraceExtractor(
           explState = PtrState(ExplState.of(ImmutableValuation.from(newVal)))
         }
 
-        val nextEdge = eventTrace.getOrNull(index + 1)?.edge
-        if (nextEdge != lastEdge) {
-          val state = stateList.last()
-          actionList.add(XcfaAction(event.pid, lastEdge))
+        var state = stateList.last()
+        val startedThread = threads.find { it.startEvent == event }
+        if (startedThread != null) {
+          state =
+            state.copy(
+              processes =
+                state.processes.toMutableMap().apply {
+                  put(
+                    startedThread.pid,
+                    XcfaProcessState(
+                      locs = LinkedList(listOf(startedThread.procedure.initLoc)),
+                      varLookup = LinkedList(emptyList()),
+                    ),
+                  )
+                }
+            )
+        }
+
+        val nextEvent = eventTrace.getOrNull(index + 1)
+        val nextEdge = nextEvent?.edge
+        if (nextEvent?.pid != event.pid || nextEdge != lastEdge) {
+          actionList.add(XcfaAction(event.pid, lastEdge.renamedFor(event.pid)))
           stateList.add(
             state.copy(
               processes =
@@ -115,52 +157,76 @@ internal class XcfaOcTraceExtractor(
     }
 
   private fun getEventTrace(model: Valuation): Pair<List<E>, Violation> {
-    val valuation = model.toMap()
     val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
     val relations = ocChecker.getHappensBefore()!!
     val reverseRelations =
       Array(relations.size) { i -> Array(relations.size) { j -> relations[j, i] } }
     val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
+    val posByClk = pos.filter { it.from.clkId == it.to.clkId }.groupBy { it.from.clkId }
 
-    val lastEvents = violation.lastEvents.filter { it.enabled(model) == true }.toMutableList()
-    val finished = mutableListOf<E>() // topological order
-    while (lastEvents.isNotEmpty()) { // DFS from startEvents as root nodes
-      val stack = Stack<StackItem>()
-      stack.push(StackItem(lastEvents.removeAt(0)))
-      while (stack.isNotEmpty()) {
-        val top = stack.peek()
-        if (top.eventsToVisit == null) {
-          val previous =
-            reverseRelations[top.event.clkId]
-              .flatMapIndexed { i, r -> if (r == null) listOf() else eventsByClk[i] ?: listOf() }
-              .filter { it.enabled(model) == true } union
-              pos
-                .filter {
-                  it.to == top.event &&
-                    it.enabled(valuation) == true &&
-                    it.from.enabled(model) == true
-                }
-                .map { it.from }
-          top.eventsToVisit = previous.toMutableList()
-        }
+    val lastEvent = violation.lastEvents.first { it.enabled(model) == true }
+    val finished = mutableListOf<Int>() // topological order
+    val stack = Stack<StackItem>()
+    stack.push(StackItem(lastEvent.clkId))
+    while (stack.isNotEmpty()) {
+      val top = stack.peek()
+      if (top.eventsToVisit == null) {
+        val previous =
+          reverseRelations[top.clk].mapIndexedNotNull { i, r -> if (r == null) null else i }
+        top.eventsToVisit = previous.toMutableList()
+      }
 
-        if (top.eventsToVisit!!.isEmpty()) {
-          stack.pop()
-          finished.add(top.event)
-          continue
-        }
+      if (top.eventsToVisit!!.isEmpty()) {
+        stack.pop()
+        finished.add(top.clk)
+        continue
+      }
 
-        val visiting =
-          top.eventsToVisit!!.find { it.clkId == top.event.clkId } ?: top.eventsToVisit!!.first()
-        top.eventsToVisit!!.remove(visiting)
-        if (visiting !in finished) {
-          stack.push(StackItem(visiting))
-        }
+      val visiting = top.eventsToVisit!!.find { it == top.clk - 1 } ?: top.eventsToVisit!!.first()
+      top.eventsToVisit!!.remove(visiting)
+      if (visiting !in finished) {
+        stack.push(StackItem(visiting))
       }
     }
-    return finished to violation
+
+    val eventTrace =
+      finished.flatMap { clk ->
+        val blockPos = posByClk[clk]?.filter { it.enabled(model) }?.toMutableSet() ?: mutableSetOf()
+        val deque: Deque<E> = LinkedList()
+        val event =
+          eventsByClk[clk]?.firstOrNull { it.enabled(model) == true } ?: return@flatMap emptyList()
+        deque.add(event)
+
+        while (blockPos.isNotEmpty()) {
+          blockPos
+            .find { it.to == deque.first }
+            ?.let {
+              blockPos.remove(it)
+              deque.addFirst(it.from)
+            }
+            ?: blockPos
+              .find { it.from == deque.last }
+              ?.let {
+                blockPos.remove(it)
+                deque.addLast(it.to)
+              }
+            ?: break
+        }
+
+        deque
+      }
+
+    return eventTrace to violation
   }
+
+  private data class StackItem(val clk: Int) {
+
+    var eventsToVisit: MutableList<Int>? = null
+  }
+
+  private fun R.enabled(model: Valuation): Boolean =
+    from.enabled(model) == true && to.enabled(model) == true
 
   private fun extend(
     state: XcfaState<PtrState<ExplState>>,
@@ -173,7 +239,10 @@ internal class XcfaOcTraceExtractor(
     var currentState = state
 
     // extend the trace until the target location is reached
-    while (currentState.processes[pid]!!.locs.peek() != to) {
+    while (
+      currentState.processes[pid]!!.locs.peek() != to ||
+        (currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid) != pid
+    ) {
       // finish atomic block first
       val stepPid = currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid
       val edge =
@@ -181,7 +250,7 @@ internal class XcfaOcTraceExtractor(
       check(stepPid == pid || edge.label.collectVars().isEmpty()) {
         "Atomic mutex is held by another thread which still has events in its atomic block."
       }
-      actions.add(XcfaAction(stepPid, edge))
+      actions.add(XcfaAction(stepPid, edge.renamedFor(stepPid)))
       currentState =
         currentState.copy(
           processes =

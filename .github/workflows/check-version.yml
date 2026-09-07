@@ -2,9 +2,10 @@ name: Check version
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:
 
 concurrency: 
-  group: version-${{ github.ref }}
+  group: version-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -47,6 +48,7 @@ jobs:
           mode: 'recreate'
           message: |
             :exclamation: Please modify `build.gradle.kts` to contain a later version than ${{ steps.master_version.outputs.version }}. Current version is ${{ steps.new_version.outputs.version }}.
+            You can add a new comment with `/version-bump <patch|minor|major>` to let the bot do it for you.
 
       - name: Delete Comment
         if: github.event_name == 'pull_request'

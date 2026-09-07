@@ -85,11 +85,11 @@ class InputOptions :
 
   fun getPetrinetProperty(): PropType = pnProperty ?: PropType.fromFilename(property)
 
-  fun loadXsts(): XSTS {
+  fun loadXsts(defaultProperty: String? = null): XSTS {
+    val inlineProp = inlineProperty ?: defaultProperty
     val propertyStream =
       property?.inputStream()
-        ?: if (inlineProperty != null)
-          ByteArrayInputStream("prop { $inlineProperty }".toByteArray())
+        ?: if (inlineProp != null) ByteArrayInputStream("prop { $inlineProp }".toByteArray())
         else null
     if (isPnml()) {
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)

@@ -159,7 +159,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
           else -> throw UnsupportedOperationException("Unsupported pruning strategy")
         }
 
-        val refinedPrec = (prec as XcfaPrec<P>).copy()
+        val refinedPrec = (prec as XcfaPrec<P>).copy(noPop = prec.noPop.toMutableList())
         refinedPrec.noPop.add(state)
         RefinerResult.spurious(refinedPrec as P?)
       } ?: refinerResult

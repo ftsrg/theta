@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
@@ -112,25 +113,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
-import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpExprs;
-import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -544,10 +527,15 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
+    // (as const (Array I E)) e: ArrayLitExpr needs a literal element, which only model terms
+    // guarantee; interpolants can name a constant array over an arbitrary term
     @SuppressWarnings("unchecked")
     private <I extends Type, E extends Type> Expr<?> createArrayLitExpr(
             final Expr<?> elze, final ArrayType<I, E> type) {
-        return Array(Collections.emptyList(), (Expr<E>) elze, type);
+        if (elze instanceof LitExpr<?>) {
+            return Array(Collections.emptyList(), (Expr<E>) elze, type);
+        }
+        return ArrayInit(Collections.emptyList(), (Expr<E>) elze, type);
     }
 
     private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(
@@ -757,6 +745,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             case "Array":
                 assert ctx.sort().size() == 2;
                 return Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
+            case "FloatingPoint":
+                assert ctx.identifier().index().size() == 2;
+                return FpType.of(
+                        Integer.parseInt(ctx.identifier().index(0).getText()),
+                        Integer.parseInt(ctx.identifier().index(1).getText()));
             default:
                 throw new SmtLibSolverException("");
         }

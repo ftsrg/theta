@@ -19,7 +19,6 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
@@ -28,11 +27,11 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*
-import java.util.concurrent.TimeUnit
 
 class XstsCliCegar :
   XstsCliBaseCommand(
@@ -101,7 +100,7 @@ class XstsCliCegar :
     val sw = Stopwatch.createStarted()
     val result = config.check()
     sw.stop()
-    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsedMillis())
     writeCex(result, xsts)
     writeVisualStatus(result)
   }

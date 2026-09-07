@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,21 +17,21 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
+import hu.bme.mit.theta.analysis.utils.PrecCache;
 import hu.bme.mit.theta.analysis.utils.ProofVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.common.stopwatch.Stopwatch;
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation, that uses an Abstractor
@@ -81,9 +81,9 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
     @Override
     public SafetyResult<Pr, C> check(final P initPrec) {
         logger.write(Level.INFO, "Configuration: %s%n", this);
-        final Stopwatch stopwatch = Stopwatch.createStarted();
-        long abstractorTime = 0;
-        long refinerTime = 0;
+        final Stopwatch algorithmTime = Stopwatch.createStarted();
+        final Stopwatch abstractorTime = Stopwatch.createUnstarted();
+        final Stopwatch refinerTime = Stopwatch.createUnstarted();
         RefinerResult<P, C> refinerResult = null;
         AbstractorResult abstractorResult;
         P prec = initPrec;
@@ -94,9 +94,9 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
 
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
-            final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            abstractorTime.start();
             abstractorResult = abstractor.check(proof, prec);
-            abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
+            abstractorTime.stop();
             logger.write(
                     Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
@@ -112,9 +112,9 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
 
                 P lastPrec = prec;
                 logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
-                final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+                refinerTime.start();
                 refinerResult = refiner.refine(proof, prec);
-                refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
+                refinerTime.stop();
                 logger.write(
                         Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
 
@@ -134,15 +134,17 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
                 }
             }
 
+            PrecCache.INSTANCE.store(prec);
+
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
-        stopwatch.stop();
+        algorithmTime.stop();
         SafetyResult<Pr, C> cegarResult = null;
         final CegarStatistics stats =
                 new CegarStatistics(
-                        stopwatch.elapsed(TimeUnit.MILLISECONDS),
-                        abstractorTime,
-                        refinerTime,
+                        algorithmTime.elapsedMillis(),
+                        abstractorTime.elapsedMillis(),
+                        refinerTime.elapsedMillis(),
                         iteration);
 
         assert abstractorResult.isSafe() || refinerResult.isUnsafe();
@@ -156,6 +158,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         assert cegarResult != null;
         logger.write(Level.MAINSTEP, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
+
         return cegarResult;
     }
 

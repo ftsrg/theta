@@ -7,21 +7,11 @@
   <rundefinition name="Theta-software-Integration-Test">
     <tasks name="unreach-call">
       <propertyfile>properties/unreach-call.prp</propertyfile>
-      <include>svcomp25/btor2c-lazyMod.bit-vector.c.yml</include>
-      <include>svcomp25/Dubois-015.c.yml</include>
-      <include>svcomp25/integerpromotion-2.c.yml</include>
-      <include>svcomp25/integerpromotion-3.c.yml</include>
-      <include>svcomp25/interleave_bits.i.yml</include>
-      <include>svcomp25/modulus-2.i.yml</include>
-      <include>svcomp25/num_conversion_1.c.yml</include>
-      <include>svcomp25/num_conversion_2.c.yml</include>
       <include>svcomp25/test_locks_14-2.c.yml</include>
       <include>svcomp25/test_locks_15-1.c.yml</include>
       <include>svcomp25/test_locks_5.c.yml</include>
       <include>svcomp25/test_locks_6.c.yml</include>
       <include>svcomp25/test_locks_7.c.yml</include>
-      <include>svcomp25/test_locks_8.c.yml</include>
-      <include>svcomp25/test_locks_9.c.yml</include>
       <include>svcomp25/test_while_int.c_1.i.yml</include>
       <include>svcomp25/test_while_int.i.yml</include>
       <include>svcomp25/trex02-1.c.yml</include>
@@ -32,32 +22,83 @@
       <include>svcomp25/trex04.c.yml</include>
       <include>svcomp25/underapprox_1-1.c.yml</include>
       <include>svcomp25/while_infinite_loop_1.c.yml</include>
+      <include>svcomp25/singleton.i.yml</include>
+      <include>svcomp25/stack-1.i.yml</include>
     </tasks>
 
     <tasks name="termination">
       <propertyfile>properties/termination.prp</propertyfile>
-      <include>svcomp25/AlternKonv.c.yml</include>
       <include>svcomp25/Division-2.c.yml</include>
-      <include>svcomp25/LeikeHeizmann-WST2014-Ex9.c.yml</include>
       <include>svcomp25/NO_01.c.yml</include>
-      <include>svcomp25/Thun-2.c.yml</include>
-      <include>svcomp25/b.05.c.yml</include>
       <include>svcomp25/dijkstra1-both-nt.c.yml</include>
       <include>svcomp25/dijkstra2-both-nt.c.yml</include>
-      <include>svcomp25/ex3a.c.yml</include>
-      <include>svcomp25/ComplInterv2.c.yml</include>
-      <include>svcomp25/ConvLower.c.yml</include>
-      <include>svcomp25/Ex02.c.yml</include>
-      <include>svcomp25/Ex03.c.yml</include>
       <include>svcomp25/Ex06.c.yml</include>
       <include>svcomp25/Flip.c.yml</include>
-      <include>svcomp25/Flip2.c.yml</include>
-      <include>svcomp25/GCD-1.c.yml</include>
-      <include>svcomp25/GCD2.c.yml</include>
       <include>svcomp25/IntPath.c.yml</include>
       <include>svcomp25/Loop-2.c.yml</include>
-      <include>svcomp25/MinusBuiltIn.c.yml</include>
-      <include>svcomp25/MirrorIntervSim.c.yml</include>
+    </tasks>
+
+    <tasks name="dataraces">
+      <propertyfile>properties/no-data-race.prp</propertyfile>
+      <include>svcomp25/00-sanity_09-include.yml</include>
+      <include>svcomp25/02-base_24-malloc_races.yml</include>
+      <include>svcomp25/02-base_25-malloc_race_cp.yml</include>
+      <include>svcomp25/03-practical_07-nonterm.yml</include>
+      <include>svcomp25/03-practical_08-nonterm1.yml</include>
+      <include>svcomp25/04-mutex_01-simple_rc.yml</include>
+      <include>svcomp25/04-mutex_02-simple_nr.yml</include>
+      <include>svcomp25/04-mutex_05-lockfuns.yml</include>
+      <include>svcomp25/04-mutex_06-ps_rc.yml</include>
+      <include>svcomp25/04-mutex_07-ps_nr.yml</include>
+      <include>svcomp25/04-mutex_11-ptr_rc.yml</include>
+      <include>svcomp25/04-mutex_12-ptr_nr.yml</include>
+      <include>svcomp25/04-mutex_14-funarg_rc.yml</include>
+      <include>svcomp25/04-mutex_15-funarg_nr.yml</include>
+      <include>svcomp25/04-mutex_16-ps_add1_rc.yml</include>
+      <include>svcomp25/04-mutex_17-ps_add1_nr.yml</include>
+      <include>svcomp25/04-mutex_18-glob_guards.yml</include>
+      <include>svcomp25/04-mutex_20-stdfun_rc.yml</include>
+      <include>svcomp25/04-mutex_22-deref_read.yml</include>
+      <include>svcomp25/04-mutex_25-single_acc.yml</include>
+      <include>svcomp25/04-mutex_37-indirect_rc.yml</include>
+      <include>svcomp25/04-mutex_38-indexing_malloc.yml</include>
+      <include>svcomp25/04-mutex_41-pt_rwlock.yml</include>
+      <include>svcomp25/04-mutex_43-thread_create_nr.yml</include>
+      <include>svcomp25/04-mutex_46-escape_nr.yml</include>
+      <include>svcomp25/04-mutex_47-fun_write.yml</include>
+      <include>svcomp25/04-mutex_54-pt_rwlock_ww.yml</include>
+      <include>svcomp25/04-mutex_55-pt_rwlock_rr.yml</include>
+      <include>svcomp25/05-lval_ls_05-glob_idx_rc.yml</include>
+      <include>svcomp25/05-lval_ls_07-glob_fld_rc.yml</include>
+      <include>svcomp25/05-lval_ls_08-glob_fld_2_rc.yml</include>
+      <include>svcomp25/05-lval_ls_14-idxunknown_access.yml</include>
+      <include>svcomp25/10-synch_01-thread_unique.yml</include>
+      <include>svcomp25/10-synch_03-two_unique.yml</include>
+      <include>svcomp25/13-privatized_01-priv_nr_true.yml</include>
+      <include>svcomp25/13-privatized_18-first-reads_true.yml</include>
+      <include>svcomp25/race-1_2b-join.yml</include>
+      <include>svcomp25/race-1_3b-join.yml</include>
+      <include>svcomp25/pthread-demo-datarace-1.yml</include>
+      <include>svcomp25/lamport.yml</include>
+      <include>svcomp25/arithmetic_prog_bad.yml</include>
+      <include>svcomp25/arithmetic_prog_ok.yml</include>
+      <include>svcomp25/ring_1w1r-1.yml</include>
+      <include>svcomp25/ring_1w1r-2.yml</include>
+      <include>svcomp25/fkp2013-1.yml</include>
+      <include>svcomp25/fkp2013-2.yml</include>
+      <include>svcomp25/mix004.oepc.yml</include>
+      <include>svcomp25/mix017.oepc.yml</include>
+      <include>svcomp25/mix037.opt.yml</include>
+      <include>svcomp25/mix038_power.oepc_pso.oepc_rmo.oepc.yml</include>
+      <include>svcomp25/safe002_power.oepc.yml</include>
+      <include>svcomp25/safe003_power.oepc_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml</include>
+      <include>svcomp25/safe011_power.oepc_pso.oepc_rmo.oepc_rmo.opt.yml</include>
+      <include>svcomp25/safe025_rmo.yml</include>
+      <include>svcomp25/fib_safe-7-racy.yml</include>
+      <include>svcomp25/fib_unsafe-11-racy.yml</include>
+      <include>svcomp25/singleton-b.yml</include>
+      <include>svcomp25/singleton_with-uninit-problems-b.yml</include>
+      <include>svcomp25/chl-poker-hand-subst.wvr.yml</include>
     </tasks>
   </rundefinition>
 

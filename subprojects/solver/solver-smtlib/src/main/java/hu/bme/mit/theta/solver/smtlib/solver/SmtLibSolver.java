@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -263,7 +263,8 @@ public class SmtLibSolver implements UCSolver, Solver {
         assert model == null;
 
         solverBinary.issueCommand("(get-model)");
-        final var res = parseResponse(solverBinary.readResponse());
+        final var rawModelResponse = solverBinary.readResponse();
+        final var res = parseResponse(rawModelResponse);
         if (res.isError()) {
             throw new SmtLibSolverException(res.getReason());
         } else if (res.isSpecific()) {
@@ -274,7 +275,8 @@ public class SmtLibSolver implements UCSolver, Solver {
                     termTransformer,
                     getModelResponse.getModel());
         } else {
-            throw new AssertionError();
+            throw new SmtLibSolverException(
+                    "Solver returned an unparsable response to (get-model): " + rawModelResponse);
         }
     }
 

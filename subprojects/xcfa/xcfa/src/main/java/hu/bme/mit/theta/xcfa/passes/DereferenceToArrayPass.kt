@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,6 +61,11 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  */
 class DereferenceToArrayPass : ProcedurePass {
 
+  companion object {
+    /** Zero every memory array; a decision-diagram fixpoint needs finite initial states. */
+    var zeroInitialized: Boolean = false
+  }
+
   private lateinit var arraysByType:
     Map<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>
 
@@ -104,7 +109,7 @@ class DereferenceToArrayPass : ProcedurePass {
     val decl =
       Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}_${isGlobal}", arrayType)
     val (globalDecl, initLabel) =
-      if (isGlobal) {
+      if (isGlobal || zeroInitialized) {
         val defaultValue =
           ArrayLitExpr.of(
             listOf(),

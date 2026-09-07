@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
@@ -165,7 +166,13 @@ private fun labelToEdge(
           if (splitName[0].matches(Regex("T[0-9]*")))
             splitName.subList(2, splitName.size).joinToString("::")
           else varDecl.name
-        if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent && eval.isPresent)
+        if (
+          parseContext.metadata.getMetadataValue(rootName, "cName").isPresent &&
+            eval.isPresent &&
+            // exclude non-scalar synchronization objects (e.g. pthread_mutex_t): their integer
+            // encoding is not a valid C expression over the original program
+            !parseContext.metadata.getMetadataValue(rootName, SYNC_VAR_METADATA_KEY).isPresent
+        )
           "${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
                     printLit(eval.get())
                 }"

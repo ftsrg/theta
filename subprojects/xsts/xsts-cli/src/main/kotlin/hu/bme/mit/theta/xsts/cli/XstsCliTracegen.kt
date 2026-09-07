@@ -18,13 +18,13 @@ package hu.bme.mit.theta.xsts.cli
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import com.google.common.base.Stopwatch
 import com.google.common.io.Files
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
@@ -38,7 +38,6 @@ import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenBuilder
 import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenConfig
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
-import java.util.concurrent.TimeUnit
 
 class XstsCliTracegen :
   XstsCliBaseCommand(
@@ -186,7 +185,7 @@ class XstsCliTracegen :
 
       filesToDelete?.forEach { file -> file.delete() }
     } else {
-      traceDirPath.mkdir()
+      traceDirPath.mkdirs()
     }
 
     val propStream = ByteArrayInputStream(("prop {\n" + "\ttrue\n" + "}\n").toByteArray())
@@ -206,6 +205,6 @@ class XstsCliTracegen :
     val summary = result.summary as AbstractTraceSet
 
     sw.stop()
-    printResult(summary, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath, xsts)
+    printResult(summary, sw.elapsedMillis(), traceDirPath, xsts)
   }
 }

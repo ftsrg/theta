@@ -1,0 +1,63 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: "2.2"
+    uuid: "b1c2d3e4-f5a6-4789-abcd-ef0123456789"
+    creation_time: "2026-06-12T12:00:00Z"
+    producer:
+      name: "Handcrafted"
+      version: "1.0"
+    task:
+      input_files:
+        - "concurrent-unreach.i"
+      input_file_hashes:
+        "concurrent-unreach.i": "0000000000000000000000000000000000000000000000000000000000000000"
+      specification: "G ! call(reach_error())"
+      data_model: "ILP32"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        # registers writer as thread 1 (1st function_enter'd pthread_create)
+        type: function_enter
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-unreach.i"
+          line: 22
+          function: "main"
+  - segment:
+    - waypoint:
+        # thread 1 has performed its write: at its return (sequence point
+        # after x = 1) the value of x is 1
+        type: assumption
+        action: follow
+        thread_id: 1
+        constraint:
+          value: "x == 1"
+          format: c_expression
+        location:
+          file_name: "concurrent-unreach.i"
+          line: 17
+          function: "writer"
+  - segment:
+    - waypoint:
+        # main observes x == 1, so the branch is taken
+        type: assumption
+        action: follow
+        thread_id: 0
+        constraint:
+          value: "x == 1"
+          format: c_expression
+        location:
+          file_name: "concurrent-unreach.i"
+          line: 23
+          function: "main"
+  - segment:
+    - waypoint:
+        type: target
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-unreach.i"
+          line: 24
+          function: "main"

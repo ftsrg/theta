@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.CursorRelationalProductProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.RelationalProductProviderImpl;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
@@ -72,7 +72,7 @@ public final class GeneralizedSaturationTest {
 
         GeneralizedSaturationProvider gs =
                 new GeneralizedSaturationProvider(
-                        variableOrder, new CursorRelationalProductProvider(variableOrder));
+                        variableOrder, new RelationalProductProviderImpl(variableOrder));
 
         final MddHandle stateSpace =
                 gs.compute(

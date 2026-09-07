@@ -9,4 +9,4 @@ ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/"
 
 ADD subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-*-all.jar /theta-xcfa-cli.jar
 
-ENTRYPOINT ["java", "-jar", "theta-xcfa-cli.jar"]
+ENTRYPOINT ["java", "-jar", "/theta-xcfa-cli.jar"]
