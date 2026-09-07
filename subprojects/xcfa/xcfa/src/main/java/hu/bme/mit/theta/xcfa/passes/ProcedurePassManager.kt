@@ -57,7 +57,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
-      ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
     ),
     listOf(
@@ -166,7 +165,6 @@ class NontermValidationPasses(
       // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
-      ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
     ),
     listOf(

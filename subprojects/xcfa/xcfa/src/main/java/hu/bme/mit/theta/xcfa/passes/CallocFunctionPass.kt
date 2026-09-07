@@ -29,26 +29,18 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 
 /**
- * `calloc`, which nothing modelled: it reached the analysis as a call to a procedure that does not
- * exist and brought it down with "No such method calloc".
+ * Lowers `calloc(n, s)` into `malloc(n * s)` plus a `memset(p, 0, n * s)`, so it runs before
+ * [MallocFunctionPass], which mints the base and records the size, and before [MemoryFunctionsPass],
+ * which spells out the zero-fill over the object's cells.
  *
- * It is lowered into the two operations that already have careful implementations rather than being
- * open-coded: `calloc(n, s)` becomes `malloc(n * s)` plus a `memset(p, 0, n * s)`. This pass runs
- * before [MallocFunctionPass], which mints the base and records the size, and before
- * [MemoryFunctionsPass], which spells out the zero-fill over the object's cells.
+ * The fill is inserted **after** the assignment that consumes the call, not at the call itself:
+ * `calloc` returns `void *`, so at the call the destination has no pointee type and
+ * [MemoryFunctionsPass] cannot know what a cell is, while the typed pointer the result is bound to
+ * (`int *p = calloc(4, sizeof *p)`) carries the real `cType`.
  *
- * **Where the fill goes is the whole trick.** `calloc` returns `void *`, so at the call itself the
- * destination has no pointee type and [MemoryFunctionsPass] cannot know what a cell is -- a
- * `memset` emitted there gives up, and the task merely fails on `memset` instead of on `calloc`.
- * But the result is immediately bound to a properly typed pointer (`int *p = calloc(4, sizeof
- * *p)`), and *that* expression carries the real `cType` in the frontend metadata. So the fill is
- * inserted **after** the assignment that consumes the call, against the typed destination, where
- * the cell layout is known exactly.
- *
- * The count still has to be statically known, for the same reason `memset` insists on it: a
- * symbolic one wants a loop over a bound this cannot see. A `calloc` whose count is not known, or
- * whose result is not bound to a typed pointer in the same block, is left exactly as it was -- it
- * still fails loudly, which is much better than handing back a block that is silently not zeroed.
+ * The count has to be statically known, for the same reason `memset` insists on it. A `calloc` whose
+ * count is not known, or whose result is not bound to a typed pointer in the same block, is left as
+ * it was: failing loudly beats handing back a block that is silently not zeroed.
  */
 class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 

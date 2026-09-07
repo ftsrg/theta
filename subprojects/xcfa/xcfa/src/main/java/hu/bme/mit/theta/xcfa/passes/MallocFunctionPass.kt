@@ -15,113 +15,40 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
+import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
+import hu.bme.mit.theta.xcfa.utils.mallocVar
 
 /**
- * Transforms mallocs into address assignments. Requires the ProcedureBuilder be `deterministic`.
+ * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
+ * residue class (see `POINTER_BASE_CLASSES`).
+ *
+ * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old
+ * base and the object's size becomes the new one. A program must use realloc's return value whether
+ * or not the block moved, so returning the same base preserves the observable contents exactly and
+ * still gives the new bound to the memsafety size domain. What it does not model is the
+ * invalidation of the old pointer, the same imprecision the analysis already has around frees;
+ * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize.
+ *
+ * Requires the ProcedureBuilder be `deterministic`.
  */
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
-
-  companion object {
-    private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
-
-    /**
-     * [XcfaBuilder.metaData] key under which the frontend publishes the first compile-time base id
-     * it did *not* hand out to a global. The allocation counter starts at or above it, so a runtime
-     * block can never be given the address of a static object. Absent (older/synthetic builders)
-     * means no compile-time bases were minted, and the counter starts at zero as it always did.
-     */
-    const val STATIC_BASE_LIMIT = "staticBaseLimit"
-
-    /**
-     * Where the allocation counter starts: the smallest multiple of three at or above the
-     * compile-time high-water mark.
-     *
-     * A multiple of three, because the residue class *is* the memory kind -- `3k+0` heap, `3k+1`
-     * stack, `3k+2` address-taken (see [AllocaFunctionPass]) -- and seeding off-class would file
-     * every allocation under the wrong one. At or above the mark, because `alloca` shares the
-     * `3k+1` class with the frontend's static bases: from zero, the first stack object took base 4,
-     * which the second global already owned.
-     */
-    private fun XcfaBuilder.allocationSeed(): Int {
-      val limit = (metaData[STATIC_BASE_LIMIT] as? Int) ?: 0
-      return ((limit + 2) / 3) * 3
-    }
-
-    /**
-     * The allocation counter. [AllocaFunctionPass] hands out addresses from the *same* counter, so
-     * that a heap block and a stack block can never be given the same base.
-     */
-    fun XcfaBuilder.mallocVar(parseContext: ParseContext): VarDecl<*> =
-      mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
-
-    /**
-     * Creates the shared allocation counter and seeds it to null in the init procedure, once per
-     * XCFA. Does nothing if the counter already exists.
-     *
-     * ⚠️ Must be called *before* a pass starts iterating a snapshot of its own edges. Seeding
-     * replaces every outgoing edge of the init procedure's `initLoc` with a new instance carrying
-     * the prepended assignment, so any edge captured in a snapshot beforehand is stale. Removing
-     * such an edge later dies with "Cannot remove edge if it wasn't already present!" — which is
-     * exactly what [AllocaFunctionPass] did on the `*-amalgamation` NN tasks, where `main` allocas
-     * and no `malloc` ran first to create the counter.
-     */
-    fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexType) {
-      val mallocVar = mallocVar(parseContext)
-      if (getVars().any { it.wrappedVar == mallocVar }) return
-      val seed = retType.getValue(allocationSeed().toString())
-      addVar(XcfaGlobalVar(mallocVar, seed))
-      val initProc = getInitProcedures().map { it.first }
-      check(initProc.size == 1) { "Multiple start procedure are not handled well" }
-      initProc.forEach { proc ->
-        val initAssign =
-          StmtLabel(Assign(cast(mallocVar, mallocVar.type), cast(seed, mallocVar.type)))
-        val oldEdges = proc.initLoc.outgoingEdges.toList()
-        val newEdges =
-          oldEdges.map {
-            it.withLabel(
-              SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata)
-            )
-          }
-        oldEdges.forEach(proc::removeEdge)
-        newEdges.forEach(proc::addEdge)
-      }
-    }
-
-    /**
-     * The C type the first allocation call matching [predicate] writes its base into, or null when
-     * this procedure performs no such allocation. Lets the counter be seeded before the rewrite
-     * loop, without needing an allocation site in hand.
-     */
-    fun XcfaProcedureBuilder.firstAllocationRetType(
-      parseContext: ParseContext,
-      predicate: (XcfaLabel) -> Boolean,
-    ): CComplexType? =
-      getEdges()
-        .asSequence()
-        .flatMap { it.getFlatLabels().asSequence() }
-        .filter(predicate)
-        .map { CComplexType.getType((it as InvokeLabel).params[0], parseContext) }
-        .firstOrNull()
-  }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
     // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
-    // snapshot's init-procedure edges (see [ensureMallocVar]).
-    builder.firstAllocationRetType(parseContext, this::predicate)?.let {
+    // snapshot's init-procedure edges (see ensureMallocVar).
+    builder.firstAllocationRetType(parseContext, this::isMalloc)?.let {
       builder.parent.ensureMallocVar(parseContext, it)
     }
     for (edge in ArrayList(builder.getEdges())) {
@@ -132,47 +59,72 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       ) {
         builder.removeEdge(edge)
         edges.forEach { e ->
-          if (predicate((e.label as SequenceLabel).labels[0])) {
-            val invokeLabel = e.label.labels[0] as InvokeLabel
-            val ret = invokeLabel.params[0] as RefExpr<*>
-            val arg = invokeLabel.params[1]
-            val assign1 =
-              AssignStmtLabel(
-                mallocVar,
-                Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
-                ret.type,
-                EmptyMetaData,
-              )
-            val assign2 =
-              AssignStmtLabel(
-                ret,
-                cast(
-                  FlatMemoryPass.flatBaseExpr(
-                    mallocVar.ref,
-                    CComplexType.getType(ret, parseContext),
-                    parseContext,
-                  ),
-                  ret.type,
-                ),
-              )
-            val labels =
-              if (MemsafetyPass.enabled) {
-                val assign3 = builder.parent.allocate(parseContext, ret, arg)
-                listOf(assign1, assign2, assign3)
-              } else {
-                listOf(assign1, assign2)
-              }
-            builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-          } else {
+          val head = (e.label as SequenceLabel).labels[0]
+          if (!predicate(head)) {
             builder.addEdge(e)
+            return@forEach
           }
+          val invokeLabel = head as InvokeLabel
+          val labels =
+            if (isMalloc(invokeLabel)) allocate(builder, invokeLabel, mallocVar)
+            else reallocate(builder, invokeLabel)
+          builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
         }
       }
     }
     return builder
   }
 
-  private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name == "malloc"
+  private fun allocate(
+    builder: XcfaProcedureBuilder,
+    invokeLabel: InvokeLabel,
+    mallocVar: VarDecl<*>,
+  ): List<XcfaLabel> {
+    val ret = invokeLabel.params[0] as RefExpr<*>
+    val arg = invokeLabel.params[1]
+    val bump =
+      AssignStmtLabel(
+        mallocVar,
+        Add(
+          mallocVar.ref,
+          CComplexType.getType(ret, parseContext).getValue("$POINTER_BASE_CLASSES"),
+        ),
+        ret.type,
+        EmptyMetaData,
+      )
+    val assignRet =
+      AssignStmtLabel(
+        ret,
+        cast(
+          FlatMemoryPass.flatBaseExpr(
+            mallocVar.ref,
+            CComplexType.getType(ret, parseContext),
+            parseContext,
+          ),
+          ret.type,
+        ),
+      )
+    return if (MemsafetyPass.enabled) {
+      listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))
+    } else {
+      listOf(bump, assignRet)
+    }
   }
+
+  private fun reallocate(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): List<XcfaLabel> {
+    val ret = invokeLabel.params[0] as RefExpr<*>
+    val oldPtr = invokeLabel.params[1]
+    val newSize = invokeLabel.params[2]
+    val keepBase = AssignStmtLabel(ret, cast(oldPtr, ret.type))
+    return if (MemsafetyPass.enabled) {
+      listOf(keepBase, builder.parent.allocate(parseContext, ret, newSize))
+    } else {
+      listOf(keepBase)
+    }
+  }
+
+  private fun isMalloc(it: XcfaLabel): Boolean = it is InvokeLabel && it.name == "malloc"
+
+  private fun predicate(it: XcfaLabel): Boolean =
+    it is InvokeLabel && (it.name == "malloc" || it.name == "realloc")
 }

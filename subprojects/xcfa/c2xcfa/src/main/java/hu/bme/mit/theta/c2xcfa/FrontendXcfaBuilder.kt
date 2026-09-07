@@ -77,7 +77,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
-import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass
+import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -92,7 +92,7 @@ class FrontendXcfaBuilder(
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   // Counts up, uses 3k+1 -- compile-time bases, for single-instance globals. Read through [ptrCnt],
   // which hands out the current value and advances; read directly only to report the high-water
-  // mark to the allocation counter (see [MallocFunctionPass.STATIC_BASE_LIMIT]).
+  // mark to the allocation counter (see [ALLOCATION_STATIC_BASE_LIMIT]).
   private var staticBaseCursor = 1
   private val ptrCnt: Int
     get() = staticBaseCursor.also { staticBaseCursor += 3 }
@@ -344,7 +344,7 @@ class FrontendXcfaBuilder(
     // globals (or one global struct, whose array field gets a subobject of its own) and one local
     // array therefore had two distinct C objects sharing one address, and initialising the local
     // silently overwrote the global. That is a wrong-`false` on programs with no pointers in sight.
-    builder.metaData[MallocFunctionPass.STATIC_BASE_LIMIT] = staticBaseCursor
+    builder.metaData[ALLOCATION_STATIC_BASE_LIMIT] = staticBaseCursor
     // A function whose address is taken gets a variable holding its id, so that assigning it to a
     // function pointer (`fp = f`) stores the id that FunctionPointerCallsPass dispatches on. This
     // is

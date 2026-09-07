@@ -62,6 +62,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -88,8 +89,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
 
-    private var cnt = 2 // counts upwards, uses 3k+2
-      get() = field.also { field += 3 }
+    private var cnt = 2 // counts upwards, uses 3k+2 (see POINTER_BASE_CLASSES)
+      get() = field.also { field += POINTER_BASE_CLASSES }
 
     private val ptrVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
@@ -285,9 +286,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           // under flat and three raw ids apart under multi (the 3k+2 residue class).
           val step =
             if (parseContext.memoryModel.flatAddressing()) {
-              ptrType.getValue((3L * FlatMemoryPass.FLAT_STRIDE).toString())
+              ptrType.getValue((POINTER_BASE_CLASSES * FlatMemoryPass.FLAT_STRIDE).toString())
             } else {
-              ptrType.getValue("3")
+              ptrType.getValue("$POINTER_BASE_CLASSES")
             }
           val assign1 = AssignStmtLabel(ptrVar, Add(ptrVar.ref, step), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
