@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd
 import com.google.common.base.Preconditions
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
+import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.Trace
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
@@ -67,6 +69,7 @@ constructor(
   private val proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   private val solverMeasurements: Boolean = false,
+  private val approximation: MddApproximation = MddApproximation.exact(),
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
@@ -76,6 +79,11 @@ constructor(
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     mddGraph2.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    mddGraph.setAttribute(MddExpressionRepresentation.APPROXIMATION, approximation)
+    mddGraph2.setAttribute(MddExpressionRepresentation.APPROXIMATION, approximation)
+    val onWiden = Runnable { approximation.overApproximate() }
+    mddGraph.setAttribute(MddStructuralTemplate.ON_WIDEN, onWiden)
+    mddGraph2.setAttribute(MddStructuralTemplate.ON_WIDEN, onWiden)
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
     val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
@@ -197,6 +205,14 @@ constructor(
     if (solverMeasurements) {
       stateSpaceProvider.clear()
       structuralRerun(transNodes, transSig, initNode, stateSig, ssgTime.elapsedMillis())
+    }
+
+    if (
+      violatingSize != 0L && approximation.isOverApproximated ||
+        violatingSize == 0L && approximation.isUnderApproximated
+    ) {
+      logger.write(Logger.Level.RESULT, "Cannot justify the verdict under %s\n", approximation)
+      return SafetyResult.unknown(statistics)
     }
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>

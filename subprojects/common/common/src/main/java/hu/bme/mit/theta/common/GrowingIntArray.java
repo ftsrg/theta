@@ -51,6 +51,10 @@ public class GrowingIntArray {
         lastIndex++;
     }
 
+    public void clear() {
+        lastIndex = -1;
+    }
+
     private void grow() {
         int[] newArray = new int[array.length + growingAmount];
         System.arraycopy(array, 0, newArray, 0, array.length);

@@ -123,11 +123,11 @@ public class MddToExprVariableLevel implements MddToExpr {
                 final IntStatistics statistics = nodeInterpreter.statistics();
                 currentBounds.lower = statistics.lowestValue();
                 currentBounds.upper = statistics.highestValue();
-
-                for (var cur = nodeInterpreter.cursor(); cur.moveNext(); ) {
-                    if (cur.value() != null) {
-                        childBounds.add(traverse(cur.value(), variable.getLower().orElse(null)));
-                    }
+            }
+            // a node with a default may still have explicit children
+            for (var cur = nodeInterpreter.cursor(); cur.moveNext(); ) {
+                if (cur.value() != null) {
+                    childBounds.add(traverse(cur.value(), variable.getLower().orElse(null)));
                 }
             }
 

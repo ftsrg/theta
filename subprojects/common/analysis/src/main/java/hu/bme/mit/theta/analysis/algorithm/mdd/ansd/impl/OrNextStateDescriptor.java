@@ -18,8 +18,12 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 import com.koloboke.collect.map.IntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
 import com.koloboke.collect.map.hash.HashObjObjMaps;
+import com.koloboke.collect.set.hash.HashIntSet;
+import com.koloboke.collect.set.hash.HashIntSets;
+import hu.bme.mit.delta.collections.IntCursor;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.delta.collections.impl.MapUniqueTable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
@@ -62,7 +66,6 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
             List<IntObjMapView<AbstractNextStateDescriptor>> diagonals = new ArrayList<>();
 
             private IntObjMap<AbstractNextStateDescriptor> cache = HashIntObjMaps.newUpdatableMap();
-            private AbstractNextStateDescriptor defaultValue = null;
 
             Diagonal(List<AbstractNextStateDescriptor> operands, StateSpaceInfo localStateSpace) {
                 this.localStateSpace = localStateSpace;
@@ -121,11 +124,9 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
                 return ret;
             }
 
+            // Not cached: an operand explored lazily can widen a level into a skip later on.
             @Override
             public AbstractNextStateDescriptor defaultValue() {
-                if (defaultValue != null) {
-                    return defaultValue;
-                }
                 List<AbstractNextStateDescriptor> results = new ArrayList<>();
                 for (IntObjMapView<AbstractNextStateDescriptor> diagonal : diagonals) {
                     final AbstractNextStateDescriptor value = diagonal.defaultValue();
@@ -134,17 +135,26 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
                     }
                 }
 
-                AbstractNextStateDescriptor ret;
-
                 if (results.isEmpty()) {
-                    ret = AbstractNextStateDescriptor.terminalEmpty();
+                    return AbstractNextStateDescriptor.terminalEmpty();
                 } else if (results.size() == 1) {
-                    ret = results.get(0);
+                    return results.get(0);
                 } else {
-                    ret = OrNextStateDescriptor.create(results);
+                    return OrNextStateDescriptor.create(results);
                 }
-                defaultValue = ret;
-                return ret;
+            }
+
+            // Collected rather than unioned as views: a map with a default reports every key as
+            // contained, which would make a view union drop the other operands' keys.
+            @Override
+            public IntSetView keySet() {
+                final HashIntSet keys = HashIntSets.newUpdatableSet();
+                for (IntObjMapView<AbstractNextStateDescriptor> diagonal : diagonals) {
+                    for (IntCursor c = diagonal.keySet().cursor(); c.moveNext(); ) {
+                        keys.add(c.elem());
+                    }
+                }
+                return IntSetView.of(keys);
             }
 
             @Override

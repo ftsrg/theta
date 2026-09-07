@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceChecke
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.ForceEvents
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
@@ -671,6 +672,18 @@ data class MddConfig(
     description = "Perform a structural rerun to estimate solver time overhead",
   )
   var solverMeasurements: Boolean = false,
+  @Parameter(
+    names = ["--edge-cap-strategy"],
+    description =
+      "What to do with a decision diagram node that exceeds --edge-limit: NONE gives up (verification stuck), OVER drops the constraint on the level and keeps only a safe verdict, UNDER keeps the edges found so far and keeps only an unsafe verdict",
+  )
+  var edgeCapStrategy: MddApproximation.Strategy = MddApproximation.Strategy.NONE,
+  @Parameter(
+    names = ["--edge-limit"],
+    description =
+      "Explicit edges allowed on a single decision diagram node before --edge-cap-strategy applies",
+  )
+  var edgeLimit: Int = MddApproximation.DEFAULT_EDGE_LIMIT,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

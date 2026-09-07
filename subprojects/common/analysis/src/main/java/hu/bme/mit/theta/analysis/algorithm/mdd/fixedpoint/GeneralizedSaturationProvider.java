@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
-import com.google.common.base.Preconditions;
 import com.koloboke.collect.set.hash.HashObjSets;
+import hu.bme.mit.delta.collections.IntCursor;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
@@ -115,7 +115,6 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         if (n.isTerminal()
                 || d == AbstractNextStateDescriptor.terminalIdentity()
                 || d == AbstractNextStateDescriptor.terminalEmpty()) {
-            // TODO this does not handle level skips
             return n;
         }
 
@@ -135,12 +134,17 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         MddUnsafeTemplateBuilder templateBuilder =
                 JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
-        for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
+        final IntObjMapView<AbstractNextStateDescriptor> diagonal = d.getDiagonal(stateSpaceInfo);
+        // a skipped level stands for the values the relation names as well
+        final IntObjMapView<? extends MddNode> children =
+                n.defaultValue() != null ? n.trim(diagonal.keySet()) : n;
+
+        for (IntObjCursor<? extends MddNode> cFrom = children.cursor(); cFrom.moveNext(); ) {
 
             MddNode s =
                     saturate(
                             cFrom.value(),
-                            d.getDiagonal(stateSpaceInfo).get(cFrom.key()),
+                            diagonal.get(cFrom.key()),
                             variable.getLower().orElse(null),
                             cache.getLower());
 
@@ -148,6 +152,21 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                     cFrom.key(),
                     terminalZeroToNull(
                             unionChildren(templateBuilder.get(cFrom.key()), s, variable)));
+        }
+
+        // the rest of a skipped level continues through the relation's default
+        final MddNode skipped = n.defaultValue();
+        if (skipped != null) {
+            final AbstractNextStateDescriptor rest = diagonal.defaultValue();
+            templateBuilder.setDefault(
+                    terminalZeroToNull(
+                            AbstractNextStateDescriptor.isNullOrEmpty(rest)
+                                    ? skipped
+                                    : saturate(
+                                            skipped,
+                                            rest,
+                                            variable.getLower().orElse(null),
+                                            cache.getLower())));
         }
 
         MddNode nsat =
@@ -257,44 +276,44 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                     variable.getNodeInterpreter(
                             n); // using the interpreter might cause a performance overhead
         }
+        MddNode skipped = null;
+
         for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
-            for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo =
-                            offDiagonal.get(cFrom.key()).cursor();
-                    cTo.moveNext(); ) {
-                if (cFrom.key() == cTo.key()) {
-                    continue;
-                }
+            skipped =
+                    fire(
+                            cFrom.value(),
+                            dsat,
+                            cFrom.key(),
+                            offDiagonal.get(cFrom.key()),
+                            variable,
+                            cache,
+                            stateSpaceInfo,
+                            templateBuilder,
+                            skipped);
+        }
 
-                if (verbose) {
-                    System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-                }
+        // The values the state does not name fire through the relation's default source.
+        final MddNode skipSource =
+                variable.isBounded() ? null : lhsSkipped ? n : n.defaultValue();
+        if (skipSource != null) {
+            skipped =
+                    fire(
+                            skipSource,
+                            dsat,
+                            null,
+                            offDiagonal.defaultValue(),
+                            variable,
+                            cache,
+                            stateSpaceInfo,
+                            templateBuilder,
+                            skipped);
+        }
 
-                assert cFrom.value() != terminalZeroNode;
-                assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-
-                MddNode s =
-                        relProd(
-                                cFrom.value(),
-                                dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
-                                cTo.value(),
-                                variable.getLower().orElse(null),
-                                cache.getLower());
-
-                if (s != terminalZeroNode) {
-                    confirm(variable, cTo.key());
-
-                    templateBuilder.set(
-                            cTo.key(),
-                            terminalZeroToNull(
-                                    unionChildren(templateBuilder.get(cTo.key()), s, variable)));
-                }
-            }
+        if (skipped != null) {
+            templateBuilder.setDefault(terminalZeroToNull(skipped));
         }
 
         final var template = templateBuilder.buildAndReset();
-        if (!template.isEmpty())
-            Preconditions.checkArgument(
-                    n.defaultValue() == null, "Default value is not supported with explicit edges");
         MddNode ret = variable.checkInNode(MddStructuralTemplate.of(template));
 
         if (verbose) {
@@ -369,6 +388,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                     variable.getNodeInterpreter(
                             n); // using the interpreter might cause a performance overhead
         }
+        MddNode skipped = null;
+
         for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
             // Identity step
             final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
@@ -396,43 +417,55 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 }
             }
 
-            for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo =
-                            offDiagonal.get(cFrom.key()).cursor();
-                    cTo.moveNext(); ) {
-                if (cFrom.key() == cTo.key()) {
-                    continue;
-                }
+            skipped =
+                    fire(
+                            cFrom.value(),
+                            dsat,
+                            cFrom.key(),
+                            offDiagonal.get(cFrom.key()),
+                            variable,
+                            cache,
+                            stateSpaceInfo,
+                            templateBuilder,
+                            skipped);
+        }
 
-                if (verbose) {
-                    System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-                }
-
-                assert cFrom.value() != terminalZeroNode;
-                assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-
-                MddNode s =
-                        relProd(
-                                cFrom.value(),
-                                dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
-                                cTo.value(),
-                                variable.getLower().orElse(null),
-                                cache.getLower());
-
-                if (s != terminalZeroNode) {
-                    confirm(variable, cTo.key());
-
-                    templateBuilder.set(
-                            cTo.key(),
-                            terminalZeroToNull(
-                                    unionChildren(templateBuilder.get(cTo.key()), s, variable)));
-                }
+        // The values the state does not name keep their value through the relation's default and
+        // fire through its default source.
+        final MddNode skipSource =
+                variable.isBounded() ? null : lhsSkipped ? n : n.defaultValue();
+        if (skipSource != null) {
+            final AbstractNextStateDescriptor rest = diagonal.defaultValue();
+            if (!AbstractNextStateDescriptor.isNullOrEmpty(rest)) {
+                skipped =
+                        unionChildren(
+                                skipped,
+                                relProd(
+                                        skipSource,
+                                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
+                                        rest,
+                                        variable.getLower().orElse(null),
+                                        cache.getLower()),
+                                variable);
             }
+            skipped =
+                    fire(
+                            skipSource,
+                            dsat,
+                            null,
+                            offDiagonal.defaultValue(),
+                            variable,
+                            cache,
+                            stateSpaceInfo,
+                            templateBuilder,
+                            skipped);
+        }
+
+        if (skipped != null) {
+            templateBuilder.setDefault(terminalZeroToNull(skipped));
         }
 
         final var template = templateBuilder.buildAndReset();
-        if (!template.isEmpty())
-            Preconditions.checkArgument(
-                    n.defaultValue() == null, "Default value is not supported with explicit edges");
         ret = variable.checkInNode(MddStructuralTemplate.of(template));
 
         ret = saturate(ret, dsat, variable, cache);
@@ -447,6 +480,90 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
         return ret;
+    }
+
+    /**
+     * Fires the steps from n, the child of the source value from (null for the values the state
+     * does not name), into the template: its explicit targets to, and a target level widened into a
+     * skip, whose shared child every value receives, saturated for the values the relation names
+     * with what the relation does there. The default is read after the cursor, because enumerating
+     * the targets is what widens the level.
+     *
+     * @return {@code skipped} extended with what every value receives
+     */
+    private MddNode fire(
+            final MddNode n,
+            final AbstractNextStateDescriptor d,
+            final Integer from,
+            final IntObjMapView<AbstractNextStateDescriptor> to,
+            final MddVariable variable,
+            final CacheManager<SaturationCache>.CacheHolder cache,
+            final MddStateSpaceInfo stateSpaceInfo,
+            final MddUnsafeTemplateBuilder templateBuilder,
+            MddNode skipped) {
+        if (to == null) {
+            return skipped;
+        }
+        for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = to.cursor();
+                cTo.moveNext(); ) {
+            if (from != null && cTo.key() == from) {
+                continue;
+            }
+
+            if (verbose) {
+                System.out.println("Potential step: " + from + "->" + cTo.key());
+            }
+
+            assert n != terminalZeroNode;
+            assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
+
+            MddNode s =
+                    relProd(
+                            n,
+                            d.getDiagonal(stateSpaceInfo).get(cTo.key()),
+                            cTo.value(),
+                            variable.getLower().orElse(null),
+                            cache.getLower());
+
+            if (s != terminalZeroNode) {
+                confirm(variable, cTo.key());
+
+                templateBuilder.set(
+                        cTo.key(),
+                        terminalZeroToNull(
+                                unionChildren(templateBuilder.get(cTo.key()), s, variable)));
+            }
+        }
+
+        final AbstractNextStateDescriptor widened = to.defaultValue();
+        if (AbstractNextStateDescriptor.isNullOrEmpty(widened)) {
+            return skipped;
+        }
+        final IntObjMapView<AbstractNextStateDescriptor> continuation =
+                d.getDiagonal(stateSpaceInfo);
+        for (IntCursor t = continuation.keySet().cursor(); t.moveNext(); ) {
+            templateBuilder.set(
+                    t.elem(),
+                    terminalZeroToNull(
+                            unionChildren(
+                                    templateBuilder.get(t.elem()),
+                                    relProd(
+                                            n,
+                                            continuation.get(t.elem()),
+                                            widened,
+                                            variable.getLower().orElse(null),
+                                            cache.getLower()),
+                                    variable)));
+        }
+        return unionChildren(
+                skipped,
+                relProd(
+                        n,
+                        continuation.defaultValue(),
+                        widened,
+                        variable.getLower().orElse(null),
+                        cache.getLower()),
+                variable);
     }
 
     private void confirm(final MddVariable variable, final int key) {}
