@@ -194,15 +194,15 @@ class DataRaceToReachabilityPass(
             val vars = racingVars(label, potentialRacingVars)
             val dereferences = racingDereferences(label, builder)
 
-            if (vars.isEmpty() && dereferences.isEmpty()) return@mapIndexed listOf(label) to null
-            anyChange = true
-
             if (branching && firstLabel) {
               (vars.values + dereferences.values).forEach { access ->
                 check(!access.isWritten && access.isRead)
               }
-              // Clears what the edge into the branch flagged, which is the aggregate of all the
-              // branch conditions, not just this one's.
+              if (allVarsToCheck.isEmpty() && allDereferencesToCheck.isEmpty())
+                return@mapIndexed listOf(label) to null
+              anyChange = true
+              // Clears what the edge into the branch flagged, which is the aggregate of every
+              // branch condition -- this branch's own accesses may be only part of it.
               return@mapIndexed getNewLabelsForAccesses(
                 allVarsToCheck.associateWith { READ },
                 allDereferencesToCheck.associateWith { READ },
@@ -211,6 +211,8 @@ class DataRaceToReachabilityPass(
               )
             }
 
+            if (vars.isEmpty() && dereferences.isEmpty()) return@mapIndexed listOf(label) to null
+            anyChange = true
             getNewLabelsForAccesses(vars, dereferences, label)
           }
 
