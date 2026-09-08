@@ -184,8 +184,17 @@ public final class BvLitExpr extends NullaryExpr<BvType>
 
     public BvLitExpr udiv(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger div =
-                unsignedBvLitExprToBigInteger(this).divide(unsignedBvLitExprToBigInteger(that));
+        final BigInteger divisor = unsignedBvLitExprToBigInteger(that);
+        // SMT-LIB leaves nothing undefined here: bvudiv by zero is all ones, bvurem by zero is the
+        // dividend. Folding has to agree with the solver, or the same expression means one thing
+        // when a constant reaches it and another when it does not -- and, as it stood, threw
+        // instead of meaning anything.
+        if (divisor.signum() == 0) {
+            final boolean[] ones = new boolean[getType().getSize()];
+            Arrays.fill(ones, true);
+            return Bv(ones);
+        }
+        BigInteger div = unsignedBvLitExprToBigInteger(this).divide(divisor);
         div = fitBigIntegerIntoUnsignedDomain(div, getType().getSize());
         return bigIntegerToUnsignedBvLitExpr(div, getType().getSize());
     }
@@ -319,9 +328,16 @@ public final class BvLitExpr extends NullaryExpr<BvType>
     public BvLitExpr urem(final BvLitExpr that) {
         // Semantics:
         // 5 rem 3 = 2
-        BigInteger thisInt = signedBvLitExprToBigInteger(this);
-        BigInteger thatInt = signedBvLitExprToBigInteger(that);
-        return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+        // Read unsigned, like udiv above: with a signed reading a divisor whose sign bit is set
+        // becomes negative, and BigInteger.mod then throws "modulus not positive" instead of
+        // computing anything -- which is how an unsigned remainder by, say, 0x80000000 used to kill
+        // the whole analysis.
+        checkArgument(this.getType().equals(that.getType()));
+        final BigInteger divisor = unsignedBvLitExprToBigInteger(that);
+        if (divisor.signum() == 0) return this; // bvurem by zero, see udiv
+        BigInteger rem = unsignedBvLitExprToBigInteger(this).mod(divisor);
+        rem = fitBigIntegerIntoUnsignedDomain(rem, getType().getSize());
+        return bigIntegerToUnsignedBvLitExpr(rem, getType().getSize());
     }
 
     public BvLitExpr srem(final BvLitExpr that) {

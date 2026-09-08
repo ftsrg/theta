@@ -480,6 +480,34 @@ public class ExprSimplifierTest {
                                 Bv(new boolean[] {false, true, false, false}),
                                 Bv(new boolean[] {false, false, true, true}))));
         assertEquals(Bv(new boolean[] {false, false, false, false}), simplify(BvExprs.URem(e, e)));
+        // Both operands read unsigned. Reading them signed used to throw "modulus not positive" on
+        // a divisor whose sign bit is set (5 rem 8 below), and to answer 0 instead of 1 where the
+        // dividend's is (10 rem 3).
+        assertEquals(
+                Bv(new boolean[] {false, true, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {true, false, false, false}))));
+        assertEquals(
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, false, true, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        // By zero, as SMT-LIB defines it: the dividend for bvurem, all ones for bvudiv.
+        assertEquals(
+                Bv(new boolean[] {false, true, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {false, false, false, false}))));
+        assertEquals(
+                Bv(new boolean[] {true, true, true, true}),
+                simplify(
+                        BvExprs.UDiv(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {false, false, false, false}))));
     }
 
     @Test
