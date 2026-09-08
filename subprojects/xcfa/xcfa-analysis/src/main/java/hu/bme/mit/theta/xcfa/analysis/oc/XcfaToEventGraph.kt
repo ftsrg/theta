@@ -35,7 +35,6 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
@@ -98,16 +97,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
   /**
    * One memory declaration per [MemoryTypeKey], typed with the partition's element type.
    *
-   * A single, [IntType]-typed declaration cannot stand for every dereference: the const of a memory
-   * event is substituted back into the surrounding expression, where it must carry the
-   * dereference's real element type, and there is no expression converting an `Int` const back to a
-   * `Bv`. The partitioning matches `DereferenceToArrayPass`, so the OC backend makes the same
-   * aliasing assumptions as the CEGAR backends.
+   * Partitioning memory declarations by array type, offset type, and expression type as there
+   * should never be data flow between events where any of these differ.
    */
   private val memoryDecls: Map<MemoryTypeKey, VarDecl<Type>> = createMemoryDecls()
   private val memoryDeclSet: Set<VarDecl<*>> = memoryDecls.values.toSet()
 
-  // the values of these declarations are not constrained
+  /**
+   * Declarations for initial memory garbage: the values of these declarations are not constrained
+   */
   private val memoryGarbages: Map<MemoryTypeKey, IndexedConstDecl<Type>> =
     memoryDecls
       .mapValues { (_, decl) -> decl.getNewIndexed() }

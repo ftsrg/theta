@@ -120,7 +120,7 @@ class XcfaOcChecker(
             UnrollPass(
               forceUnrollBound,
               parseContext = parseContext,
-              alwaysUnrollRecursion = forceUnrollBound,
+              specificRecursionUnrollLimit = forceUnrollBound,
             )
           )
         )

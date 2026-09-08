@@ -19,12 +19,13 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 interface ProcedurePass {
 
+  /** Prefer to use [runChecked] in most cases. */
   fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder
-}
 
-/**
- * Runs a pass and checks that the procedure it produced is still well formed. Prefer this over
- * calling [ProcedurePass.run] directly, wherever a pass is run outside a [ProcedurePassManager].
- */
-fun ProcedurePass.runChecked(builder: XcfaProcedureBuilder): XcfaProcedureBuilder =
-  run(builder).also { it.checkEdgesHaveLocations(this) }
+  /**
+   * Runs a pass and checks that the procedure it produced is still well-formed. Prefer this over
+   * calling [run] directly, wherever a pass is run outside a [ProcedurePassManager].
+   */
+  fun runChecked(builder: XcfaProcedureBuilder): XcfaProcedureBuilder =
+    run(builder).also { it.checkEdgesHaveLocations(this) }
+}

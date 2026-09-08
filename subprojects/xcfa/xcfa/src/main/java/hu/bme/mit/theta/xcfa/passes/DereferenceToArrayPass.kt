@@ -54,13 +54,12 @@ class DereferenceToArrayPass : ProcedurePass {
   private lateinit var arraysByType: Map<MemoryTypeKey, VarDecl<out ArrayType2D>>
 
   /** Returns an array from the pre-generated lookup of types */
-  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
-    xcfa: XcfaBuilder
-  ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
-    val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
-
-    return cast(arraysByType[memoryTypeKey]!!, arrayType)
-  }
+  private val <A : Type, O : Type, T : Type> Dereference<A, O, T>.arrays:
+    VarDecl<ArrayType<A, ArrayType<O, T>>>
+    get() {
+      val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
+      return cast(arraysByType[memoryTypeKey]!!, arrayType)
+    }
 
   /** Creates arrays from dereference types */
   private fun createArray(key: MemoryTypeKey, xcfa: XcfaBuilder): VarDecl<out ArrayType2D> {
@@ -119,7 +118,7 @@ class DereferenceToArrayPass : ProcedurePass {
               val deref = stmt.deref
               val arrayType =
                 ArrayType.of(deref.array.type, ArrayType.of(deref.offset.type, deref.type))
-              val arrays = deref.getArrays(xcfa)
+              val arrays = deref.arrays
               AssignStmt.of(
                 cast(arrays, arrayType),
                 cast(
@@ -182,7 +181,7 @@ class DereferenceToArrayPass : ProcedurePass {
       // -> ArrayRead(ArrayRead(arrays, array), offset)
       ArrayReadExpr.of(
         ArrayReadExpr.of(
-          cast(this.getArrays(xcfa).ref, arrayType),
+          cast(this.arrays.ref, arrayType),
           cast(this.array.getArrayReads(xcfa), this.array.type),
         ),
         cast(this.offset.getArrayReads(xcfa), this.offset.type),

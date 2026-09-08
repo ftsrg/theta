@@ -50,10 +50,10 @@ import kotlin.math.max
  *   ReferenceElimination -- which is why this may safely run before it. Requires [parseContext].
  */
 class UnrollPass(
-  alwaysForceUnroll: Int = -1,
+  specificForceUnrollLimit: Int = -1,
   private val substituteLoopVar: Boolean = false,
   private val parseContext: ParseContext? = null,
-  alwaysUnrollRecursion: Int = -1,
+  specificRecursionUnrollLimit: Int = -1,
 ) : ProcedurePass {
 
   companion object {
@@ -91,9 +91,9 @@ class UnrollPass(
     }
   }
 
-  private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, alwaysForceUnroll)
+  private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, specificForceUnrollLimit)
 
-  private val recursionUnrollLimit = max(UNROLL_RECURSION_LIMIT, alwaysUnrollRecursion)
+  private val recursionUnrollLimit = max(UNROLL_RECURSION_LIMIT, specificRecursionUnrollLimit)
 
   /** Seeded so that the same input explores loops the same way on every run. */
   private val exploration = java.util.Random(EXPLORATION_SEED)

@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.runChecked
 import java.util.*
 
 @DslMarker annotation class XcfaDsl
@@ -290,15 +289,14 @@ constructor(
 
   /**
    * Asserts the basic well-formedness every consumer assumes: each edge runs between two locations
-   * this procedure actually lists. Called by [runChecked] after every pass, so a pass that breaks
-   * it is named instead of surfacing much later as a `!!` in `XcfaProcedure.deepCopy`.
+   * this procedure actually lists. Called by [ProcedurePass.runChecked] after every pass, so a pass
+   * that breaks it is named instead of surfacing much later as a `!!` in `XcfaProcedure.deepCopy`.
    */
   internal fun checkEdgesHaveLocations(pass: ProcedurePass) {
     // Identity, not equality: XcfaLocation is a data class, so a different instance with the same
     // name and flags compares equal and satisfies `in locs`, while owning its own (empty) adjacency
     // sets. Edges attached to such a twin are invisible to every traversal that walks adjacency.
-    val registered =
-      java.util.Collections.newSetFromMap(java.util.IdentityHashMap<XcfaLocation, Boolean>())
+    val registered = Collections.newSetFromMap(IdentityHashMap<XcfaLocation, Boolean>())
     registered.addAll(locs)
     val dangling = edges.filter { it.source !in registered || it.target !in registered }
     check(dangling.isEmpty()) {
