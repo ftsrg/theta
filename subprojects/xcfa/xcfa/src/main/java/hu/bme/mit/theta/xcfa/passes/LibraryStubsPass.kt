@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -190,6 +191,21 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     val out = mutableListOf<XcfaLabel>()
     val spec = STUBS.getValue(invoke.name)
     val written = writtenIndices(spec, invoke)
+
+    // The call reads every argument it is given, and replacing the InvokeLabel with havocs would
+    // drop those expressions along with it -- so `fprintf(f, "%d", shared)` would stop being an
+    // access to `shared` at all, and a data race on it would go unreported. Materialise each
+    // argument as a read into a fresh variable first, the way CLibraryFunctionsPass models
+    // `printf`. This is the argument *value*; what a pointer argument points AT is a separate
+    // question, answered (for the written buffers only) below.
+    for (i in 1 until invoke.params.size) {
+      val arg = invoke.params[i]
+      if (arg is LitExpr<*>) continue // a constant reads nothing
+      val read = Var("__stub_${invoke.name}_arg_${counter++}", arg.type)
+      builder.addVar(read)
+      out.add(AssignStmtLabel(read, arg, metadata = invoke.metadata))
+    }
+
     uniqueWarningLogger.write(
       Logger.Level.INFO,
       "WARNING: %s is stubbed -- its return value is %s%s.\n",

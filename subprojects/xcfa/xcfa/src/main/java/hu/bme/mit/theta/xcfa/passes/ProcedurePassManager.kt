@@ -51,6 +51,11 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       CLibraryFunctionsPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
+      // also before ReferenceElimination: the pointer arguments it writes through are still `&x`
+      // here, and once they are folded to a bare base id their pointee type is unrecoverable and
+      // the stub would silently model no write at all. Ahead of the instrumentation passes too,
+      // so those writes are checked for races and memory safety.
+      LibraryStubsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
       ReferenceElimination(parseContext),
@@ -120,10 +125,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // spells out the mem* copies before anything below havocs the same objects
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     // last of the passes consuming specific calls: everything left is havoced here
-    listOf(
-      LibraryStubsPass(parseContext, uniqueWarningLogger),
-      UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger),
-    ),
+    listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
     // the memory-model passes, downstream of everything that creates or rewrites a dereference
     listOf(FlatMemoryPass(parseContext)),
     listOf(ByteMemoryPass(parseContext)),
