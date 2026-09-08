@@ -151,5 +151,58 @@ val canaryTest by
         }
     }
 
-// Keep the long sweep out of the ordinary test task.
-tasks.named<Test>("test") { filter { excludeTestsMatching("*CanarySuiteTest*") } }
+// The feature-guard fixtures, which are the fast half of the canary gate: minimal programs that
+// each isolate one change, so reverting that change flips the fixture. Separate from `canaryTest`
+// because it needs no sv-benchmarks *tasks*, only the property files, and runs in a couple of
+// minutes rather than twenty.
+val fixtureTest by
+    tasks.registering(Test::class) {
+        group = "verification"
+        description =
+            "Runs the feature-guard fixtures against the built Theta-svcomp distribution. Needs a " +
+            "local sv-benchmarks checkout for the property files; it never downloads one."
+
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        filter { includeTestsMatching("*FixtureSuiteTest*") }
+
+        dependsOn("buildArchiveTheta-svcomp")
+        dependsOn(tasks.named("testClasses"))
+
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
+        systemProperty(
+            "theta.canary.dist",
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
+        )
+        (project.findProperty("theta.canary.svBenchmarks"))?.let {
+            systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+
+        // Depends on the benchmarks and the built archive, not only on this project's inputs.
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events("failed", "skipped")
+            showStandardStreams = false
+        }
+    }
+
+// The fixtures are part of the canary gate, so one command still runs both.
+canaryTest { dependsOn(fixtureTest) }
+
+// Keep the long sweeps out of the ordinary test task.
+tasks.named<Test>("test") {
+    filter {
+        excludeTestsMatching("*CanarySuiteTest*")
+        excludeTestsMatching("*FixtureSuiteTest*")
+    }
+}
