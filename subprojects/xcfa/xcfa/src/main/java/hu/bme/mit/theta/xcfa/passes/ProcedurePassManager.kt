@@ -84,6 +84,11 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
+      // Only now, with the bodies spliced in, is a waiting loop analysable: before inlining its
+      // condition is a call, and a call's effect on the caller's variables (its return value above
+      // all) is not something the collapse can see. The earlier instance of this pass leaves such a
+      // loop alone; this one, which does nothing but collapse busy waits, gets it after inlining.
+      UnrollPass(busyWaitsOnly = true),
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property),
       UnusedLocRemovalPass(),

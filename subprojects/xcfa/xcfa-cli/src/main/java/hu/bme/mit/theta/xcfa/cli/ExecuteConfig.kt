@@ -136,6 +136,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   UnrollPass.UNROLL_RECURSION_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnrollRecursion else -1
+  UnrollPass.COLLAPSE_BUSY_WAITS = config.frontendConfig.collapseBusyWaits
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }

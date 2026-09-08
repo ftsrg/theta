@@ -137,6 +137,12 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var forceUnroll: Int = -1,
   @Parameter(
+    names = ["--collapse-busy-waits"],
+    description =
+      "Replace a loop that only waits for a condition with a single iteration of itself. Exact for reachability, but it drops the run that spins forever, so it does not preserve termination.",
+  )
+  var collapseBusyWaits: Boolean = false,
+  @Parameter(
     names = ["--force-unroll-recursion"],
     description =
       "Number of times a recursive procedure call left over after inlining is expanded; calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe (use -1 to disable). Lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
