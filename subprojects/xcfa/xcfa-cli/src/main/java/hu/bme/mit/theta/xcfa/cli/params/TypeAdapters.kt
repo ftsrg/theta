@@ -60,7 +60,8 @@ class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson) :
       when (reader.nextName()) {
         "lbeLevel" -> instance.lbeLevel = LbePass.LbeLevel.valueOf(reader.nextString())
         "loopUnroll" -> instance.loopUnroll = reader.nextInt()
-        "enableDataRaceToReachability" -> instance.enableDataRaceToReachability = reader.nextBoolean()
+        "enableDataRaceToReachability" ->
+          instance.enableDataRaceToReachability = reader.nextBoolean()
         "inputType" -> instance.inputType = InputType.valueOf(reader.nextString())
         "specConfig" -> instance.specConfig = readSpecConfig(reader)
         else -> reader.skipValue()

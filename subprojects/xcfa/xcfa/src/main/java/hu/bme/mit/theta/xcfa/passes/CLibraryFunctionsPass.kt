@@ -139,30 +139,32 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             when (invokeLabel.name) {
               "printf" -> {
                 val printfCounter = printfCounter++
-                addSeq((2 until invokeLabel.params.size)
-                  .mapIndexed { index, param ->
-                    val expr = invokeLabel.params[param]
-                    val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
-                    builder.addVar(arg)
-                    AssignStmtLabel(arg, expr)
-                  }
-                  .run { ifEmpty { listOf(NopLabel) } })
+                addSeq(
+                  (2 until invokeLabel.params.size)
+                    .mapIndexed { index, param ->
+                      val expr = invokeLabel.params[param]
+                      val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
+                      builder.addVar(arg)
+                      AssignStmtLabel(arg, expr)
+                    }
+                    .run { ifEmpty { listOf(NopLabel) } }
+                )
               }
 
               "scanf" -> {
                 check(invokeLabel.params.size >= 3) {
                   "At least two parameters (format string and one variable) expected in scanf"
                 }
-                addSeq((2 until invokeLabel.params.size).map { index ->
-                  val param = invokeLabel.getParam(index)
-                  StmtLabel(HavocStmt.of(param), metadata = metadata)
-                })
+                addSeq(
+                  (2 until invokeLabel.params.size).map { index ->
+                    val param = invokeLabel.getParam(index)
+                    StmtLabel(HavocStmt.of(param), metadata = metadata)
+                  }
+                )
               }
 
               "strcpy" -> {
-                check(invokeLabel.params.size == 3) {
-                  "Two parameters expected for strcpy"
-                }
+                check(invokeLabel.params.size == 3) { "Two parameters expected for strcpy" }
                 val copySource = invokeLabel.params[2]
                 val copyTarget = invokeLabel.params[1]
 
@@ -177,7 +179,8 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                 val continueAssume = StmtLabel(AssumeStmt.of(NeqExpr.create2(sourceDeref, Int(0))))
                 val copyCurrent = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
-                val increment = AssignStmtLabel(indexVar.ref, AddExpr.create2(listOf(indexVar.ref, Int(1))))
+                val increment =
+                  AssignStmtLabel(indexVar.ref, AddExpr.create2(listOf(indexVar.ref, Int(1))))
                 val copyLabel = SequenceLabel(listOf(continueAssume, copyCurrent, increment))
                 val copyEdge = XcfaEdge(loc, loc, copyLabel, metadata)
                 builder.addEdge(copyEdge)
@@ -198,7 +201,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                       zeroOf(invokeLabel.params[0]),
                       metadata,
                     ),
-                  ),
+                  )
                 )
               }
 
@@ -219,7 +222,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                       zeroOf(invokeLabel.params[0]),
                       metadata,
                     ),
-                  ),
+                  )
                 )
               }
 
@@ -282,9 +285,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                 builder.parent.getProcedures().forEach { proc ->
                   proc.getEdges().forEach { e ->
-                    if (
-                      e.getFlatLabels().any { l -> l is InvokeLabel && l.name == builder.name }
-                    ) {
+                    if (e.getFlatLabels().any { l -> l is InvokeLabel && l.name == builder.name }) {
                       error("pthread_exit is not supported in invoked procedures")
                     }
                   }

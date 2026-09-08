@@ -197,10 +197,11 @@ private sealed class GlobalAccessWithMutexes(
   val blockingMutexes: Set<String>,
   val precedingAssumes: List<AssumeStmt>,
 ) {
-  val precondition: Expr<BoolType> get() =
-    precedingAssumes.fold<AssumeStmt, Expr<BoolType>>(True()) { acc, assume ->
-      And(acc, assume.cond)
-    }
+  val precondition: Expr<BoolType>
+    get() =
+      precedingAssumes.fold<AssumeStmt, Expr<BoolType>>(True()) { acc, assume ->
+        And(acc, assume.cond)
+      }
 }
 
 /**
@@ -373,7 +374,10 @@ private fun mayBeSameMemoryLocation(
   return partition1 == partition2
 }
 
-private fun Decl<*>.belongsTo(partition: Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>, state: XcfaState<*>): Boolean {
+private fun Decl<*>.belongsTo(
+  partition: Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>,
+  state: XcfaState<*>,
+): Boolean {
   if (this in partition.first) return true
   for ((_, procState) in state.processes) {
     for (lookUp in procState.varLookup) {

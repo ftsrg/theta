@@ -39,7 +39,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -333,22 +332,24 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
 
     /**
      * The array declaration a string literal used as a *value* stands for: {@code char <name>[n] =
-     * "...";} for the decoded bytes of [ctx] (with the terminating NUL) -- built through exactly the
-     * array-with-initializer machinery {@code char a[] = "..."} already goes through. Callers run the
-     * result the way any other local array declaration is run (allocation + initialization); see
-     * {@code FunctionVisitor#declareStringLiteral}, which is what actually executes it.
+     * "...";} for the decoded bytes of [ctx] (with the terminating NUL) -- built through exactly
+     * the array-with-initializer machinery {@code char a[] = "..."} already goes through. Callers
+     * run the result the way any other local array declaration is run (allocation +
+     * initialization); see {@code FunctionVisitor#declareStringLiteral}, which is what actually
+     * executes it.
      */
     public CDeclaration stringLiteralDeclaration(
-        CParser.PrimaryExpressionStringsContext ctx, String name) {
+            CParser.PrimaryExpressionStringsContext ctx, String name) {
         final List<Integer> bytes = stringLiteralBytes(ctx);
         final CSimpleType simpleType = NamedType("char", parseContext, uniqueWarningLogger);
         simpleType.setSigned(true);
         final CDeclaration declaration = new CDeclaration(name);
         declaration.setType(simpleType);
         declaration.addArrayDimension(
-            new CExpr(
-                CComplexType.getSignedInt(parseContext).getValue(String.valueOf(bytes.size())),
-                parseContext));
+                new CExpr(
+                        CComplexType.getSignedInt(parseContext)
+                                .getValue(String.valueOf(bytes.size())),
+                        parseContext));
         declaration.setInitExpr(stringInitializerListFromBytes(bytes, declaration.getActualType()));
         return declaration;
     }
@@ -373,13 +374,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     }
 
     /**
-     * The byte-to-{@link CInitializerList} tail of {@link #stringInitializerList}, factored out so a
-     * caller that already has the decoded bytes (rather than a source assignment expression to detect
-     * and decode) can build the identical list -- keeping the char-over-127 sign handling in exactly
-     * one place instead of two that could drift apart.
+     * The byte-to-{@link CInitializerList} tail of {@link #stringInitializerList}, factored out so
+     * a caller that already has the decoded bytes (rather than a source assignment expression to
+     * detect and decode) can build the identical list -- keeping the char-over-127 sign handling in
+     * exactly one place instead of two that could drift apart.
      */
     private CInitializerList stringInitializerListFromBytes(
-        List<Integer> bytes, CComplexType containerType) {
+            List<Integer> bytes, CComplexType containerType) {
         final CArray arrayType = (CArray) containerType;
         final CInteger element = (CInteger) arrayType.getEmbeddedType();
         final Integer dimension = ObjectLayout.constantDimension(arrayType);
@@ -387,12 +388,12 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         final CInitializerList list = new CInitializerList(containerType, parseContext);
         for (int index = 0; index < cells; index++) {
             final int value =
-                element.isSsigned() && bytes.get(index) > 127
-                    ? bytes.get(index) - 256
-                    : bytes.get(index);
+                    element.isSsigned() && bytes.get(index) > 127
+                            ? bytes.get(index) - 256
+                            : bytes.get(index);
             list.addStatement(
-                new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(index)), parseContext),
-                new CExpr(element.getValue(String.valueOf(value)), parseContext));
+                    new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(index)), parseContext),
+                    new CExpr(element.getValue(String.valueOf(value)), parseContext));
         }
         return list;
     }

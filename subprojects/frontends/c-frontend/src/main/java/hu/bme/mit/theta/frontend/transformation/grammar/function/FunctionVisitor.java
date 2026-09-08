@@ -1518,8 +1518,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     public CDeclaration declareStringLiteral(
-        CParser.PrimaryExpressionStringsContext ctx,
-        CCompound preStatement) {
+            CParser.PrimaryExpressionStringsContext ctx, CCompound preStatement) {
         final String name = "__theta_str" + anonCnt++;
         final CDeclaration declaration = declarationVisitor.stringLiteralDeclaration(ctx, name);
         createVars(declaration);
@@ -1533,11 +1532,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return declaration;
     }
 
-    private void visitDeclaration(CDeclaration declaration,
-                                  CCompound compound,
-                                  CCompound preCompound,
-                                  CCompound postCompound,
-                                  ParserRuleContext ctx) {
+    private void visitDeclaration(
+            CDeclaration declaration,
+            CCompound compound,
+            CCompound preCompound,
+            CCompound postCompound,
+            ParserRuleContext ctx) {
         if (declaration.getType().isStaticStorage()) {
             promoteStaticLocal(declaration);
             return;
@@ -1553,11 +1553,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // double-free
             // for a returned-and-reused block and a bogus leak when the scope was a loop body.
             parseContext
-                .getMetadata()
-                .create(
-                    "alloca",
-                    "cType",
-                    new CPointer(null, cArray.getEmbeddedType(), parseContext));
+                    .getMetadata()
+                    .create(
+                            "alloca",
+                            "cType",
+                            new CPointer(null, cArray.getEmbeddedType(), parseContext));
             // The block has to span the array's *flat cells*, not its element count: `a[i].f`
             // is addressed as `a[i * unitCount + f]` (see ExpressionVisitor#rowOf), so an
             // element occupying several cells makes the object that many times longer. Passing
@@ -1580,31 +1580,30 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // An element *count*, so the scaling below converts it to cells like any other.
                 final CComplexType countType = CComplexType.getUnsignedLong(parseContext);
                 allocaSize =
-                    new CExpr(
-                        countType.getValue(
-                            String.valueOf(
-                                initializerElements(
-                                    declaration.getInitExpr()))),
-                        parseContext);
+                        new CExpr(
+                                countType.getValue(
+                                        String.valueOf(
+                                                initializerElements(declaration.getInitExpr()))),
+                                parseContext);
             }
             if (elementCells != 1) {
                 final var dimExpr = allocaSize.getExpression();
                 final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
                 final var scaled =
-                    AbstractExprs.Mul(
-                        dimType.castTo(dimExpr),
-                        dimType.getValue(String.valueOf(elementCells)));
+                        AbstractExprs.Mul(
+                                dimType.castTo(dimExpr),
+                                dimType.getValue(String.valueOf(elementCells)));
                 parseContext.getMetadata().create(scaled, "cType", dimType);
                 allocaSize = new CExpr(scaled, parseContext);
             }
             final var alloca = new CCall("alloca", List.of(allocaSize), parseContext);
             preCompound.addCStatement(alloca);
             CAssignment cAssignment =
-                new CAssignment(
-                    declaration.getVarDecls().get(0).getRef(),
-                    new CExpr(alloca.getRet().getRef(), parseContext),
-                    "=",
-                    parseContext);
+                    new CAssignment(
+                            declaration.getVarDecls().get(0).getRef(),
+                            new CExpr(alloca.getRet().getRef(), parseContext),
+                            "=",
+                            parseContext);
             recordMetadata(ctx, cAssignment);
             compound.addCStatement(cAssignment);
             registerScoped(declaration.getVarDecls().get(0));
@@ -1613,31 +1612,31 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (declaration.getActualType() instanceof CStruct) {
                 if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
                     initializeObject(
-                        declaration.getVarDecls().get(0).getRef(),
-                        declaration.getActualType(),
-                        initializerList,
-                        CComplexType.getUnsignedLong(parseContext),
-                        compound,
-                        ctx);
+                            declaration.getVarDecls().get(0).getRef(),
+                            declaration.getActualType(),
+                            initializerList,
+                            CComplexType.getUnsignedLong(parseContext),
+                            compound,
+                            ctx);
                 } else {
                     Expr<?> expression = declaration.getInitExpr().getExpression();
                     final var initType = CComplexType.getType(expression, parseContext);
                     if (expression instanceof RefExpr<?>
-                        || expression instanceof Dereference<?, ?, ?>
-                        || initType instanceof CStruct) {
+                            || expression instanceof Dereference<?, ?, ?>
+                            || initType instanceof CStruct) {
                         // A struct value is its base id, whether read from a variable or out of
                         // another object's cell: `struct S s = *p;` and `= o.field` copy the
                         // same
                         // way `= other;` does.
                         checkState(
-                            initType instanceof CStruct,
-                            "Initializer type not handled for structs: " + expression);
+                                initType instanceof CStruct,
+                                "Initializer type not handled for structs: " + expression);
                         checkState(
-                            initType.equals(declaration.getActualType()),
-                            "Mismatching types: "
-                                + initType
-                                + " vs. "
-                                + declaration.getActualType());
+                                initType.equals(declaration.getActualType()),
+                                "Mismatching types: "
+                                        + initType
+                                        + " vs. "
+                                        + declaration.getActualType());
                         // Checking the types is not initialising the variable: this branch used
                         // to stop here, so `struct S s = other;` declared `s` and then quietly
                         // never copied anything into it, leaving every field of `s`
@@ -1650,8 +1649,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         // struct
                         // and false-alarmed. The plain statement form (`s = other;`) always
                         // worked, so emit exactly that, as the non-struct branch below does.
-                        emitInitAssignment(
-                            ctx, declaration, compound, preCompound, postCompound);
+                        emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
                     } else {
                         // A struct/union initialised with a *scalar* (`union U u = raw;`, the
                         // register-overlay idiom the intel-tdx-module firmware uses): C
@@ -1663,29 +1661,29 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         final var ptrType = CComplexType.getUnsignedLong(parseContext);
                         final LitExpr<?> zero = ptrType.getNullValue();
                         final var deref =
-                            Exprs.Dereference(
-                                cast(varDecl.getRef(), zero.getType()),
-                                cast(zero, zero.getType()),
-                                expression.getType());
+                                Exprs.Dereference(
+                                        cast(varDecl.getRef(), zero.getType()),
+                                        cast(zero, zero.getType()),
+                                        expression.getType());
                         CAssignment cAssignment =
-                            new CAssignment(
-                                deref, declaration.getInitExpr(), "=", parseContext);
+                                new CAssignment(
+                                        deref, declaration.getInitExpr(), "=", parseContext);
                         recordMetadata(ctx, cAssignment);
                         compound.addCStatement(cAssignment);
                     }
                 }
             } else {
                 checkState(
-                    declaration.getVarDecls().size() == 1,
-                    "non-struct declarations shall only have one variable!");
+                        declaration.getVarDecls().size() == 1,
+                        "non-struct declarations shall only have one variable!");
                 if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
                     initializeObject(
-                        declaration.getVarDecls().get(0).getRef(),
-                        declaration.getActualType(),
-                        initializerList,
-                        CComplexType.getUnsignedLong(parseContext),
-                        compound,
-                        ctx);
+                            declaration.getVarDecls().get(0).getRef(),
+                            declaration.getActualType(),
+                            initializerList,
+                            CComplexType.getUnsignedLong(parseContext),
+                            compound,
+                            ctx);
                 } else {
                     emitInitAssignment(ctx, declaration, compound, preCompound, postCompound);
                 }
@@ -1696,13 +1694,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (declaration.getActualType() instanceof CStruct) {
                 for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                     if (!(varDecl.getType() instanceof ArrayType)
-                        && !(varDecl.getType()
-                        instanceof
-                        BoolType)) { // BoolType is either well-defined true/false,
+                            && !(varDecl.getType()
+                                    instanceof
+                                    BoolType)) { // BoolType is either well-defined true/false,
                         // or a struct in disguise
                         AssumeStmt assumeStmt =
-                            CComplexType.getType(varDecl.getRef(), parseContext)
-                                .limit(varDecl.getRef());
+                                CComplexType.getType(varDecl.getRef(), parseContext)
+                                        .limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
                         recordMetadata(ctx, cAssume);
                         cAssume.setFunctionName("NotC");
@@ -1714,12 +1712,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             } else {
                 VarDecl<?> varDecl = declaration.getVarDecls().get(0);
                 if (!(varDecl.getType() instanceof ArrayType)
-                    && !(varDecl.getType() instanceof BoolType)
-                    && !(CComplexType.getType(varDecl.getRef(), parseContext)
-                    instanceof CVoid)) {
+                        && !(varDecl.getType() instanceof BoolType)
+                        && !(CComplexType.getType(varDecl.getRef(), parseContext)
+                                instanceof CVoid)) {
                     AssumeStmt assumeStmt =
-                        CComplexType.getType(varDecl.getRef(), parseContext)
-                            .limit(varDecl.getRef());
+                            CComplexType.getType(varDecl.getRef(), parseContext)
+                                    .limit(varDecl.getRef());
                     CAssume cAssume = new CAssume(assumeStmt, parseContext);
                     recordMetadata(ctx, cAssume);
                     cAssume.setFunctionName("NotC");
