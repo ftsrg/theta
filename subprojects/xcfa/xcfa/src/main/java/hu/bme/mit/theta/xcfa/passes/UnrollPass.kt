@@ -41,19 +41,19 @@ import kotlin.math.max
  * Unrolls loops where the number of loop executions can be determined statically. The UNROLL_LIMIT
  * refers to the number of loop executions: loops that are executed more times than this limit are
  * not unrolled. Loops with unknown number of iterations are unrolled to FORCE_UNROLL_LIMIT
- * iterations (this way a safe result might not be valid).
- */
-/**
+ * iterations (this way a safe result might not be valid). Recursive calls are expanded the same
+ * way, to UNROLL_RECURSION_LIMIT.
+ *
  * @param substituteLoopVar when true, each unrolled copy has the loop variable replaced by its
  *   constant value for that iteration (`&t[i]` becomes `&t[0]`, `&t[1]`, …). Only the loop variable
  *   is substituted, so address-of expressions of other variables (`&x`) are left for
  *   ReferenceElimination -- which is why this may safely run before it. Requires [parseContext].
  */
-class LoopUnrollPass(
-  alwaysForceUnroll: Int = -1,
+class UnrollPass(
+  specificForceUnrollLimit: Int = -1,
   private val substituteLoopVar: Boolean = false,
   private val parseContext: ParseContext? = null,
-  unrollRecursion: Boolean? = null,
+  specificRecursionUnrollLimit: Int = -1,
 ) : ProcedurePass {
 
   companion object {
@@ -62,22 +62,18 @@ class LoopUnrollPass(
     var FORCE_UNROLL_LIMIT = -1
 
     /**
-     * Expand recursive calls to the force-unroll bound, the same way loops are expanded to it.
+     * How deep recursive calls left over after inlining are expanded (-1 to leave them alone).
      *
      * This lives here rather than in [InlineProceduresPass] on purpose. Inlining runs once, up
      * front, and gives up entirely on a procedure that (transitively) reaches recursion --
      * `canInline` is all-or-nothing, so one recursive callee leaves *every* call in that procedure
-     * un-inlined. A backend that raises its bound and re-runs (the OC checker escalates
-     * `forceUnrollBound` until a safe result is no longer bound-limited) therefore gets no benefit
-     * from it. Expanding here means each new bound re-expands the recursion to the new depth, and
-     * the result is marked unsafe-unroll exactly like a force-unrolled loop, so a `safe` verdict
-     * stays flagged as bound-limited.
-     *
-     * On by default: it only ever fires where a force-unroll bound is already in effect, and a
-     * program without recursion has nothing for it to expand, so the programs it changes are
-     * exactly the ones a call-free-CFA backend used to reject outright.
+     * un-inlined. A backend that raises its bound and re-runs (the OC checker escalates its bound
+     * until a safe result is no longer bound-limited) therefore gets no benefit from it. Expanding
+     * here means each new bound re-expands the recursion to the new depth, and the result is marked
+     * unsafe-unroll exactly like a force-unrolled loop, so a `safe` verdict stays flagged as
+     * bound-limited.
      */
-    var UNROLL_RECURSION = true
+    var UNROLL_RECURSION_LIMIT = -1
 
     /**
      * Seed for the order [findLoop] explores edges in.
@@ -95,14 +91,16 @@ class LoopUnrollPass(
     }
   }
 
-  private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, alwaysForceUnroll)
+  private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, specificForceUnrollLimit)
 
-  private val unrollRecursion = unrollRecursion ?: UNROLL_RECURSION
+  private val recursionUnrollLimit = max(UNROLL_RECURSION_LIMIT, specificRecursionUnrollLimit)
 
   /** Seeded so that the same input explores loops the same way on every run. */
   private val exploration = java.util.Random(EXPLORATION_SEED)
 
   private val testedLoops = mutableSetOf<Loop>()
+
+  private val unusedLocRemovalPass = UnusedLocRemovalPass()
 
   /**
    * Which procedures are recursive, decided once for the whole program.
@@ -308,18 +306,21 @@ class LoopUnrollPass(
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     // Before the loops: a spliced-in body brings its own loops with it, and those still have to be
     // taken apart by the search below.
-    if (forceUnrollLimit != -1 && unrollRecursion) unrollRecursiveCalls(builder)
+    if (recursionUnrollLimit != -1) unrollRecursiveCalls(builder)
     while (true) {
-      val loop = findLoop(builder.initLoc) ?: break
+      val loop = findLoop(builder) ?: break
       loop.unroll(builder)
       testedLoops.add(loop)
     }
     if (forceUnrollLimit != -1) cutRemainingBackEdges(builder)
-    return builder
+    // Force unrolling leaves behind copies past the bound that nothing can reach, including whole
+    // dead cycles. Their edges still land on live merge points, so drop them here rather than
+    // leaving every caller of this pass to remember to.
+    return unusedLocRemovalPass.runChecked(builder)
   }
 
   /**
-   * Expands the calls left over after inlining, capping recursive ones at [forceUnrollLimit].
+   * Expands the calls left over after inlining, capping recursive ones at [recursionUnrollLimit].
    *
    * [InlineProceduresPass] refuses a procedure that (transitively) reaches recursion, and it
    * refuses it *whole*: `canInline` is all-or-nothing, so a single recursive callee leaves every
@@ -365,7 +366,7 @@ class LoopUnrollPass(
           val callee = checkNotNull(builder.calleeOf(invokeLabel))
           val bounded = callee.name in recursive
           val used = expansions.getOrDefault(callee.name, 0)
-          if (bounded && used >= forceUnrollLimit) {
+          if (bounded && used >= recursionUnrollLimit) {
             // Past the bound: drop the path rather than expand it again.
             builder.setUnsafeUnroll()
             return@forEach
@@ -442,10 +443,10 @@ class LoopUnrollPass(
     return null
   }
 
-  private fun findLoop(initLoc: XcfaLocation): Loop? { // DFS
+  private fun findLoop(builder: XcfaProcedureBuilder): Loop? { // DFS
     val stack = Stack<XcfaLocation>()
     val explored = mutableSetOf<XcfaEdge>()
-    stack.push(initLoc)
+    stack.push(builder.initLoc)
     while (stack.isNotEmpty()) {
       val current = stack.peek()
       val edgesToExplore = current.outgoingEdges subtract explored
@@ -456,7 +457,7 @@ class LoopUnrollPass(
         // it comes from are linked), so indexing it with a seeded source repeats exactly.
         val edge = edgesToExplore.elementAt(exploration.nextInt(edgesToExplore.size))
         if (edge.target in stack) { // loop found
-          getLoop(edge)?.let {
+          getLoop(builder, edge)?.let {
             return it
           }
         } else {
@@ -469,7 +470,7 @@ class LoopUnrollPass(
   }
 
   /** Find a loop from the given start location that can be unrolled. */
-  private fun getLoop(backEdge: XcfaEdge): Loop? {
+  private fun getLoop(builder: XcfaProcedureBuilder, backEdge: XcfaEdge): Loop? {
     val loopStart = backEdge.target
     var properlyUnrollable = true
     var loopCondStart = loopStart
@@ -588,7 +589,11 @@ class LoopUnrollPass(
         exitEdges = exits,
         properlyUnrollable = properlyUnrollable,
         forceUnrollLimit = forceUnrollLimit,
-        substituteLoopVar = substituteLoopVar,
+        // Never for a global loop variable: another thread could write it, so its per-iteration
+        // value is not a constant of the copy, and baking one in would hide a race or a
+        // memory-safety violation on whatever the loop indexes.
+        substituteLoopVar =
+          substituteLoopVar && builder.parent.getVars().none { it.wrappedVar == loopVar },
         parseContext = parseContext,
       )
       .also { if (it in testedLoops) return null }

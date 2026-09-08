@@ -15,12 +15,14 @@
  */
 package hu.bme.mit.theta.xcfa.utils
 
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -30,6 +32,13 @@ import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.xcfa.model.MetaData
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import java.math.BigInteger
 import org.kframework.mpfr.BigFloat
 
@@ -57,3 +66,34 @@ val Type.defaultValue: LitExpr<out Type>
         )
       else -> error("No default value for type $this")
     }
+
+/**
+ * States that a havoced value is one its C type can actually hold.
+ *
+ * A havoc on its own is unbounded, and under integer arithmetic that is not the same as a C value:
+ * a `long long` becomes an arbitrary mathematical integer, with nothing saying it is at most
+ * `LLONG_MAX`. (Under bitvector arithmetic the width does this for us, so the limit visitor yields
+ * `true` there and this costs nothing.)
+ */
+fun withinTypeRange(
+  value: Expr<*>,
+  parseContext: ParseContext,
+  metadata: MetaData,
+): List<XcfaLabel> {
+  // Only when the C type is actually known: without it, `getType` guesses from the SMT type.
+  val cType =
+    parseContext.metadata.getMetadataValue(value, "cType").orElse(null) as? CComplexType
+      ?: return listOf()
+  // The integer limit visitor has no catch-all and throws on anything else (a pointer, a struct),
+  // so a type it does not know simply goes unconstrained.
+  val assume =
+    try {
+      cType.accept(getLimitVisitor(parseContext), value)
+    } catch (e: UnsupportedFrontendElementException) {
+      return listOf()
+    }
+  if (assume.cond is TrueExpr) {
+    return listOf()
+  }
+  return listOf(StmtLabel(assume, metadata = metadata))
+}

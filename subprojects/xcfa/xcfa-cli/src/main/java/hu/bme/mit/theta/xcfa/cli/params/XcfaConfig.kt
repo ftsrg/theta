@@ -37,7 +37,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
@@ -129,7 +129,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
-  var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
+  var loopUnroll: Int = UnrollPass.UNROLL_LIMIT,
   @Parameter(
     names = ["--force-unroll"],
     description =
@@ -137,11 +137,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var forceUnroll: Int = -1,
   @Parameter(
-    names = ["--no-force-unroll-recursion"],
+    names = ["--force-unroll-recursion"],
     description =
-      "Disable expanding recursive procedure calls to the depth loops are force-unrolled to. Expansion is on wherever a force-unroll bound is in effect: calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe, and it lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
+      "Number of times a recursive procedure call left over after inlining is expanded; calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe (use -1 to disable). Lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
   )
-  var noForceUnrollRecursion: Boolean = false,
+  var forceUnrollRecursion: Int = -1,
   @Parameter(
     names = ["--datarace-to-reachability"],
     description =

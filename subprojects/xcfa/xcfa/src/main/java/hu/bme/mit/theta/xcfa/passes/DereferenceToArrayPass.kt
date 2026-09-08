@@ -29,7 +29,9 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 
 private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type>>
 
@@ -41,37 +43,26 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  * element. Upon each write to the memory location, the corresponding global array is also updated
  * to reflect the change.
  *
- * There is exactly ONE array per type triple: any per-dereference partition (an earlier version
- * split on a syntactic is-the-base-a-global test) is unsound, because the same cell can be reached
- * both through a global pointer variable and through its constant-folded base literal — the two
- * dereferences would then read and write different arrays, and BMC-style checkers happily pick
- * inconsistent values for them (false counterexamples on ldv-regression, among others). The array
- * starts havoced: stack and heap cells are garbage until written, and globals do not need the
- * array's default value because their zero/explicit initialization is materialized as ordinary
- * writes in the init procedure.
+ * There is exactly ONE array per [MemoryTypeKey]: a finer, per-dereference partition is unsound,
+ * because the same cell can be reached both through a global pointer variable and through its
+ * constant-folded base literal, and the two dereferences would then read and write different
+ * arrays. The array starts havoced -- stack and heap cells are garbage until written, and a
+ * global's initialization is materialized as ordinary writes in the init procedure.
  */
 class DereferenceToArrayPass : ProcedurePass {
 
-  private lateinit var arraysByType: Map<Triple<Type, Type, Type>, VarDecl<out ArrayType2D>>
-
-  /** Maps a dereference to an identifying type key */
-  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey():
-    Triple<Type, Type, Type> = Triple(array.type, offset.type, type)
+  private lateinit var arraysByType: Map<MemoryTypeKey, VarDecl<out ArrayType2D>>
 
   /** Returns an array from the pre-generated lookup of types */
-  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
-    xcfa: XcfaBuilder
-  ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
-    val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
-
-    return cast(arraysByType[getTypeKey()]!!, arrayType)
-  }
+  private val <A : Type, O : Type, T : Type> Dereference<A, O, T>.arrays:
+    VarDecl<ArrayType<A, ArrayType<O, T>>>
+    get() {
+      val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
+      return cast(arraysByType[memoryTypeKey]!!, arrayType)
+    }
 
   /** Creates arrays from dereference types */
-  private fun createArray(
-    key: Triple<Type, Type, Type>,
-    xcfa: XcfaBuilder,
-  ): VarDecl<out ArrayType2D> {
+  private fun createArray(key: MemoryTypeKey, xcfa: XcfaBuilder): VarDecl<out ArrayType2D> {
     val (derefArrayType, derefOffsetType, derefType) = key
     val arrayType = ArrayType.of(derefArrayType, ArrayType.of(derefOffsetType, derefType))
 
@@ -90,11 +81,11 @@ class DereferenceToArrayPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!::arraysByType.isInitialized) {
-      val arrays = mutableMapOf<Triple<Type, Type, Type>, VarDecl<out ArrayType2D>>()
-      val types = mutableSetOf<Triple<Type, Type, Type>>()
+      val arrays = mutableMapOf<MemoryTypeKey, VarDecl<out ArrayType2D>>()
+      val types = mutableSetOf<MemoryTypeKey>()
       builder.parent.getProcedures().forEach { p ->
         p.getEdges().forEach { e ->
-          e.label.dereferences.forEach { deref -> types.add(deref.getTypeKey()) }
+          e.label.dereferences.forEach { deref -> types.add(deref.memoryTypeKey) }
         }
       }
       types.forEach { arrays[it] = createArray(it, builder.parent) }
@@ -127,7 +118,7 @@ class DereferenceToArrayPass : ProcedurePass {
               val deref = stmt.deref
               val arrayType =
                 ArrayType.of(deref.array.type, ArrayType.of(deref.offset.type, deref.type))
-              val arrays = deref.getArrays(xcfa)
+              val arrays = deref.arrays
               AssignStmt.of(
                 cast(arrays, arrayType),
                 cast(
@@ -190,7 +181,7 @@ class DereferenceToArrayPass : ProcedurePass {
       // -> ArrayRead(ArrayRead(arrays, array), offset)
       ArrayReadExpr.of(
         ArrayReadExpr.of(
-          cast(this.getArrays(xcfa).ref, arrayType),
+          cast(this.arrays.ref, arrayType),
           cast(this.array.getArrayReads(xcfa), this.array.type),
         ),
         cast(this.offset.getArrayReads(xcfa), this.offset.type),

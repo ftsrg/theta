@@ -45,35 +45,28 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so
-      // the
-      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and
-      // must
-      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too
-      // late.
+      // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
+      // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
-      // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
-      // turns their dereferences into the base/offset memory model, like any other `*p`.
+      // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
     ),
     listOf(
       ReferenceElimination(parseContext),
-      // `calloc` lowers to malloc + a typed memset, so it precedes both of their passes.
+      // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
-      ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
     ),
     listOf(
       // optimizing
       SimplifyExprsPass(parseContext, property),
-      LoopUnrollPass(),
+      UnrollPass(),
       EmptyEdgeRemovalPass(),
     ),
     listOf(
-      // Expand calls through function pointers into a dispatch over their candidate set, so that
-      // the direct calls it produces can be inlined below. No-op without indirect calls.
+      // makes indirect calls direct, so that inlining below can see them
       FunctionPointerCallsPass(parseContext, uniqueWarningLogger)
     ),
     listOf(
@@ -86,13 +79,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlinedProcedureRemovalPass()
     ),
     listOf(
-      // Inlining binds a `&(deref B O)` call argument (e.g. `&atomic_var` passed to a helper) to
-      // the
-      // callee's parameter as an assignment only now -- and the group-2 ReferenceElimination, which
-      // eliminates the complex `&(deref …)` form only from assignments and runs before inlining,
-      // never
-      // saw it. Run it again so no reference survives into the analyses (the OC checker rejects any
-      // residual reference outright); it is a no-op on procedures that have none.
+      // again: inlining turns `&(deref B O)` call arguments into assignments the earlier run of
+      // this pass could not see, and no reference may survive into the analyses
       ReferenceElimination(parseContext)
     ),
     listOf(
@@ -104,8 +92,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(StaticCoiPass()),
     listOf(
-      // Constrain narrow cell reads before the memsafety/overflow guards are built, so those
-      // guards see a `char` cell that can only hold char values.
+      // before the memsafety/overflow guards, so those see cells constrained to their C type
       NarrowCellRangePass(parseContext),
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
@@ -130,27 +117,15 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     } ?: emptyList(),
     listOf(DataRaceToReachabilityPass(property, parseContext)),
     listOf(OverflowDetectionPass(property, parseContext)),
-    // Spell out the mem* copies before anything havocs them: a havoc would leave the destination
-    // holding whatever it held before, which is not what a copy does.
+    // spells out the mem* copies before anything below havocs the same objects
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
-    // Havoc remaining calls to unresolved external functions with integer-scalar signatures
-    // (all passes that consume specific calls -- free, malloc, pthread_*, nondet -- have
-    // already run), so they do not crash the analysis later with "No such method ...".
+    // last of the passes consuming specific calls: everything left is havoced here
     listOf(
-      // Stub the known stdio/string library functions before the generic havoc pass, which refuses
-      // anything taking a pointer.
       LibraryStubsPass(parseContext, uniqueWarningLogger),
       UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger),
     ),
-    // Flat memory model: collapse every (base, offset) dereference to the single flat address
-    // (deref 0 (+ base offset)). Runs last, downstream of every pass that creates or rewrites a
-    // dereference (memsafety, overflow, data-race, mem*), so all three memory backends see already
-    // flattened addresses. A no-op under the default multi model.
+    // the memory-model passes, downstream of everything that creates or rewrites a dereference
     listOf(FlatMemoryPass(parseContext)),
-    // Byte-granular memory model: split every wide dereference into its one-byte cells (Concat on
-    // read, Extract-and-store on write). Runs right after FlatMemoryPass so it also byte-splits the
-    // flat-folded addresses, and before any backend consumes the derefs. A no-op unless the bytes
-    // model is selected.
     listOf(ByteMemoryPass(parseContext)),
     listOf(
       // Final cleanup
@@ -178,24 +153,18 @@ class NontermValidationPasses(
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      // Unroll thread create/join loops over an array of handles (`pthread_create(&t[i], …)`) so
-      // the
-      // element index is constant before CLibraryFunctionsPass reads the handle -- it must, and
-      // must
-      // run before ReferenceElimination rewrites `&t[i]`, so the ordinary LoopUnrollPass is too
-      // late.
+      // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
+      // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
-      // Lowers the __atomic_*/atomic_* builtins into atomic blocks before ReferenceElimination
-      // turns their dereferences into the base/offset memory model, like any other `*p`.
+      // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
     ),
     listOf(
       ReferenceElimination(parseContext),
-      // `calloc` lowers to malloc + a typed memset, so it precedes both of their passes.
+      // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
-      ReallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
     ),
     listOf(

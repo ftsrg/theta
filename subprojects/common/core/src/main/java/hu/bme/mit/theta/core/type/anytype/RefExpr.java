@@ -50,8 +50,6 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
     @Override
     public LitExpr<DeclType> eval(final Valuation val) {
-        // Name the unbound variable: `.get()` would throw a bare "No value present", which says
-        // nothing about which declaration the valuation failed to cover.
         return val.eval(decl)
                 .orElseThrow(
                         () ->

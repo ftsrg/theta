@@ -42,6 +42,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fits
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
 /**
@@ -134,18 +135,15 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                   // be
                   // a different, narrower type under bitvector arithmetic.
                   Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
-                  // Only the heap may be freed. Pointer bases are partitioned by residue mod 3 --
-                  // `3k+0` malloc, `3k+1` alloca, `3k+2` an address-taken local -- and only the
-                  // first came from an allocator. The size check above cannot catch the others: an
-                  // alloca'd block records a *real* size (it has to, or reads through it would look
-                  // out of bounds), so `free(alloca(n))` sailed through as a perfectly good free.
+                  // Only the heap (`3k+0`, see POINTER_BASE_CLASSES) may be freed; the size check
+                  // above cannot catch the rest, since an alloca'd block records a real size too.
                   // `Rem`, not `Mod`: pointer types are unsigned bitvectors and Theta's `Mod` is
-                  // signed-only ("Unsigned BvType cannot be used here"). The two agree on the
-                  // non-negative values an address can take. This only ever surfaced once the flat
-                  // model started being reached for these tasks -- under flat the residue class
-                  // still identifies the allocator, since a base is `id * 65536` and 65536 = 1 mod
-                  // 3.
-                  Neq(Rem(argument, pointerType.getValue("3")), pointerType.nullValue),
+                  // signed-only. The residue class survives flat addressing, where a base is
+                  // `id * FLAT_STRIDE` and FLAT_STRIDE = 1 mod 3.
+                  Neq(
+                    Rem(argument, pointerType.getValue("$POINTER_BASE_CLASSES")),
+                    pointerType.nullValue,
+                  ),
                 ),
               )
 
@@ -301,7 +299,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
           .also { builder.parent.addVar(it) }
           .wrappedVar
-    val mallocBase = Mul(anyBase.ref, pointerType.getValue("3")) // 3k+0: malloc
+    val mallocBase = Mul(anyBase.ref, pointerType.getValue("$POINTER_BASE_CLASSES")) // 3k+0: malloc
     val stillAllocated =
       Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
 

@@ -352,7 +352,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
    * -- `pthread_t t[3]` with `pthread_create(&t[i], …)` / `pthread_join(t[i], …)` -- needs a
    * distinct one per element, and `&t[i]` and `t[i]` for the same constant `i` must resolve to the
    * *same* key. The element index has to be a compile-time constant, which is why the create/join
-   * loops are unrolled before this pass runs (see the extra [LoopUnrollPass] in [CPasses]).
+   * loops are unrolled before this pass runs (see the extra [UnrollPass] in [CPasses]).
    */
   private val arrayElementHandles = mutableMapOf<Pair<VarDecl<*>, BigInteger>, VarDecl<*>>()
 
