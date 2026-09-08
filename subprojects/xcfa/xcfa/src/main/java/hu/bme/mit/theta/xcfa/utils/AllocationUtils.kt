@@ -88,7 +88,7 @@ fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexTyp
   val mallocVar = mallocVar(parseContext)
   if (getVars().any { it.wrappedVar == mallocVar }) return
   val seed = retType.getValue(allocationSeed().toString())
-  addVar(XcfaGlobalVar(mallocVar, seed))
+  addVar(XcfaGlobalVar(mallocVar, seed, atomic = true))
   val initProc = getInitProcedures().map { it.first }
   check(initProc.size == 1) { "Multiple start procedure are not handled well" }
   initProc.forEach { proc ->
