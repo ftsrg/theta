@@ -35,7 +35,6 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.simplify
 import java.util.*
-import kotlin.math.max
 
 /**
  * Unrolls loops where the number of loop executions can be determined statically. The UNROLL_LIMIT
@@ -60,10 +59,10 @@ import kotlin.math.max
  *   therefore means giving handles an identity that survives re-basing, not reordering passes.
  */
 class UnrollPass(
-  specificForceUnrollLimit: Int = -1,
+  specificForceUnrollLimit: Int? = null,
+  specificRecursionUnrollLimit: Int? = null,
   private val substituteLoopVar: Boolean = false,
   private val parseContext: ParseContext? = null,
-  specificRecursionUnrollLimit: Int = -1,
 ) : ProcedurePass {
 
   companion object {
@@ -86,6 +85,14 @@ class UnrollPass(
     var UNROLL_RECURSION_LIMIT = -1
 
     /**
+     * Replace a loop that only waits for a condition with a single iteration of itself.
+     *
+     * Off by default: it is exact for reachability but not for termination (see [Loop.isBusyWait]),
+     * and a program without a waiting loop has nothing for it to change.
+     */
+    var COLLAPSE_BUSY_WAITS = false
+
+    /**
      * Seed for the order [findLoop] explores edges in.
      *
      * Which loop the search happens to reach first decides which loops get taken apart and which
@@ -101,12 +108,17 @@ class UnrollPass(
     }
   }
 
-  private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, specificForceUnrollLimit)
+  private val forceUnrollLimit = specificForceUnrollLimit ?: FORCE_UNROLL_LIMIT
 
-  private val recursionUnrollLimit = max(UNROLL_RECURSION_LIMIT, specificRecursionUnrollLimit)
+  private val recursionUnrollLimit = specificRecursionUnrollLimit ?: UNROLL_RECURSION_LIMIT
+
+  private val collapseBusyWaits = COLLAPSE_BUSY_WAITS
+
+  /** The program's global variables, i.e. the ones another thread can observe. */
+  private var globalVars: Set<VarDecl<*>> = emptySet()
 
   /** Seeded so that the same input explores loops the same way on every run. */
-  private val exploration = java.util.Random(EXPLORATION_SEED)
+  private val exploration = Random(EXPLORATION_SEED)
 
   private val testedLoops = mutableSetOf<Loop>()
 
@@ -136,6 +148,8 @@ class UnrollPass(
     val forceUnrollLimit: Int,
     val substituteLoopVar: Boolean = false,
     val parseContext: ParseContext? = null,
+    val collapseBusyWaits: Boolean = false,
+    val globalVars: Set<VarDecl<*>> = emptySet(),
   ) {
 
     /** The loop variable's value at each iteration, filled by [count] when [substituteLoopVar]. */
@@ -149,14 +163,17 @@ class UnrollPass(
       override fun getStmts() = listOf(stmt)
     }
 
-    fun unroll(builder: XcfaProcedureBuilder) {
+    fun unroll(builder: XcfaProcedureBuilder, forceLimit: Int = forceUnrollLimit): Boolean {
       val c = count()
       if (c != null) {
         unroll(builder, c, true)
-      } else if (forceUnrollLimit != -1) {
+        return true
+      } else if (forceLimit != -1) {
         builder.setUnsafeUnroll()
-        unroll(builder, forceUnrollLimit, false)
+        unroll(builder, forceLimit, false)
+        return true
       }
+      return false
     }
 
     fun unroll(builder: XcfaProcedureBuilder, count: Int, removeCond: Boolean) {
@@ -314,19 +331,50 @@ class UnrollPass(
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    globalVars = builder.parent.getVars().mapTo(mutableSetOf()) { it.wrappedVar }
+    runUnroll(builder)
+    // force unrolling leaves behind copies past the bound that nothing can reach
+    return unusedLocRemovalPass.runChecked(builder)
+  }
+
+  private fun runUnroll(builder: XcfaProcedureBuilder) {
     // Before the loops: a spliced-in body brings its own loops with it, and those still have to be
     // taken apart by the search below.
     if (recursionUnrollLimit != -1) unrollRecursiveCalls(builder)
+
+    // First, try to unroll without forcing (even if force unroll is allowed)
+    if (forceUnrollLimit != -1) {
+      val loopStarts = mutableSetOf<XcfaLocation>()
+      var arbitraryLoop: Loop? = null
+      while (true) {
+        val loop = findLoop(builder) ?: break
+        if (arbitraryLoop == null) arbitraryLoop = loop
+        if (loop.unroll(builder, -1)) {
+          arbitraryLoop = null
+          loopStarts.clear()
+        } else {
+          loopStarts.add(loop.loopStart)
+        }
+      }
+
+      // Spare one loop finding iteration
+      if (arbitraryLoop == null) {
+        // Exit if there is no loops at all
+        cutRemainingBackEdges(builder)
+        return
+      }
+      arbitraryLoop.unroll(builder)
+    }
+
     while (true) {
       val loop = findLoop(builder) ?: break
       loop.unroll(builder)
       testedLoops.add(loop)
     }
-    if (forceUnrollLimit != -1) cutRemainingBackEdges(builder)
-    // Force unrolling leaves behind copies past the bound that nothing can reach, including whole
-    // dead cycles. Their edges still land on live merge points, so drop them here rather than
-    // leaving every caller of this pass to remember to.
-    return unusedLocRemovalPass.runChecked(builder)
+
+    if (forceUnrollLimit != -1) {
+      cutRemainingBackEdges(builder)
+    }
   }
 
   /**
@@ -606,6 +654,8 @@ class UnrollPass(
         substituteLoopVar =
           substituteLoopVar && builder.parent.getVars().none { it.wrappedVar == loopVar },
         parseContext = parseContext,
+        collapseBusyWaits = collapseBusyWaits,
+        globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }
   }

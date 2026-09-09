@@ -89,6 +89,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
+      UnrollPass(busyWaitsOnly = true, specificRecursionUnrollLimit = -1),
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property),
       UnusedLocRemovalPass(),
