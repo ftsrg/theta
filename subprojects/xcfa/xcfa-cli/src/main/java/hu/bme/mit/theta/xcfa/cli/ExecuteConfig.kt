@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
@@ -34,6 +33,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
@@ -60,7 +60,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 fun runConfig(
@@ -88,6 +87,12 @@ fun runConfig(
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.defaultLevel = config.frontendConfig.lbeLevel
+  DereferenceToArrayPass.zeroInitialized =
+    when (config.frontendConfig.memoryInit) {
+      MemoryInit.ZERO -> true
+      MemoryInit.UNCONSTRAINED -> false
+      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+    }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
@@ -354,7 +359,7 @@ private fun buildFrontend(
 
   logger.benchmark(
     "%s",
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)",
+    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)",
   )
 
   logger.benchmark("ParsingResult Success")
@@ -459,7 +464,7 @@ private fun backend(
               }
             }
 
-        logger.info("%s", "Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
+        logger.info("%s", "Backend finished (in ${stopwatch.elapsedMillis()} ms)")
         result
       }
     }
@@ -489,7 +494,7 @@ private fun tracegenBackend(
   logger.info(
     "%s",
     "Backend finished (in ${
-      stopwatch.elapsed(TimeUnit.MILLISECONDS)
+      stopwatch.elapsedMillis()
     } ms)\n",
   )
 

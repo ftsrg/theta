@@ -101,6 +101,7 @@ enum class Backend {
   PORTFOLIO,
   TRACEGEN,
   MDD,
+  MDD_CEGAR,
   IC3,
   NONE,
 }
@@ -834,4 +835,12 @@ enum class WitnessLevel {
   NONE,
   SVCOMP,
   ALL,
+}
+
+/** Initial value of the dereference memory arrays. */
+enum class MemoryInit {
+  /** ZERO for the MDD backend, UNCONSTRAINED otherwise. */
+  AUTO,
+  ZERO,
+  UNCONSTRAINED,
 }

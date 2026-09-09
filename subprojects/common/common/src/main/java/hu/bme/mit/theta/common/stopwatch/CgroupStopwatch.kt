@@ -29,8 +29,9 @@ import java.util.concurrent.TimeUnit
  */
 class CgroupStopwatch : Stopwatch {
   private val cgroupDir: File?
+  private var isRunning: Boolean = false
   private var startUsage: Long = 0
-  private var endUsage: Long = 0
+  private var elapsedUsage: Long = 0
   private val version: Int
 
   init {
@@ -39,14 +40,28 @@ class CgroupStopwatch : Stopwatch {
   }
 
   override fun start() {
+    check(!isRunning) { "The stopwatch is already running." }
+    isRunning = true
     startUsage = readCpuUsageNanos()
   }
 
   override fun stop() {
-    endUsage = readCpuUsageNanos()
+    val endUsage = readCpuUsageNanos()
+    check(isRunning) { "The stopwatch is already stopped." }
+    isRunning = false
+    elapsedUsage += endUsage - startUsage
   }
 
-  override fun elapsedNanos(): Long = (endUsage - startUsage).coerceAtLeast(0)
+  override fun reset() {
+    isRunning = false
+    elapsedUsage = 0L
+  }
+
+  override fun isRunning() = isRunning
+
+  override fun elapsedNanos(): Long =
+    (if (isRunning) (readCpuUsageNanos() - startUsage + elapsedUsage) else elapsedUsage)
+      .coerceAtLeast(0)
 
   override fun elapsedMillis(): Long = TimeUnit.NANOSECONDS.toMillis(elapsedNanos())
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * The wrapped relation with early termination: once an image state lies under {@code target}, a
+ * shared kill switch empties every image. Sound only for deciding reachability of {@code target}.
+ */
 public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final AbstractNextStateDescriptor wrapped;
