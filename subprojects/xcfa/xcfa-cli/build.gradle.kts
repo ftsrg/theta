@@ -133,10 +133,16 @@ val canaryTest by
                 .asFile.absolutePath,
         )
         systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
-        // The sweep runs PARALLEL_JOBS tasks at once (script default 4). Lowering it trades wall
-        // time for memory headroom on a shared machine. The largest canaries need several GB each,
-        // so this is pressure relief, not a substitute for enough memory.
-        (project.findProperty("theta.canary.jobs"))?.let { environment("PARALLEL_JOBS", it.toString()) }
+        // The sweep runs this many tasks at once (default 4). Lowering it trades wall time for
+        // memory headroom on a shared machine. The largest canaries need several GB each, so this
+        // is pressure relief, not a substitute for enough memory.
+        (project.findProperty("theta.canary.jobs"))?.let {
+            systemProperty("theta.canary.jobs", it.toString())
+        }
+        // Point `full` mode at a subset; the whole list is far too slow to verify end to end.
+        (project.findProperty("theta.canary.tsv"))?.let {
+            systemProperty("theta.canary.tsv", it.toString())
+        }
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())
         }

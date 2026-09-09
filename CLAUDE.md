@@ -30,5 +30,5 @@ suites appear to wedge on one task; it is not the task being slow.
   is silently reused.
 - Parse-only smoke test: `--svcomp --backend NONE --loglevel RESULT --property <prp> --architecture ILP32|LP64`
   (success marker: `ParsingResult Success`).
-- Canary suite: `subprojects/xcfa/xcfa-cli/canaries/` (README + `run_canaries.sh` header
-  comment for the traps). Run it as `./gradlew :theta-xcfa-cli:canaryTest`.
+- Canary suite: `subprojects/xcfa/xcfa-cli/canaries/` (see its README). Run it as
+  `./gradlew :theta-xcfa-cli:canaryTest`; the fixtures alone are `:theta-xcfa-cli:fixtureTest`.

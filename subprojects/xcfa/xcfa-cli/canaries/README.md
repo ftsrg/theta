@@ -12,18 +12,22 @@ fix nothing will protect: when you add one, check that it *fails* before your ch
 after, or it guards nothing.
 
 Fast checks run after a Theta-svcomp build to catch frontend/analysis regressions before a
-full benchmark. Point them at an extracted `Theta-svcomp` dir (or let them auto-extract the
-sibling `Theta-svcomp.zip`). Java 21+ must be on `PATH` (the launcher uses `theta-start.sh`).
+full benchmark. The task extracts the sibling `Theta-svcomp.zip` when the directory is missing and
+restores the execute bits a zip cannot carry, so it needs nothing but a JVM. Java 21+ must be on
+`PATH`.
 
-## `run_canaries.sh [THETA_DIR] [parse|full] [TSV]`
+## Modes
 
 - **parse** (default): frontend-only smoke test (`--backend NONE`) over `canaries.tsv` — 268
   real sv-benchmarks tasks, one PASS per `ParsingResult Success`. The frontend *builds the
-  XCFA* under `--backend NONE`, so this catches c2xcfa regressions, not just ANTLR ones. In
-  this mode it also runs the feature-guard fixtures (below) and folds their result into the
-  exit status.
-- **full**: real `--portfolio STABLE` run comparing the printed verdict against
-  `expected_verdict`. Slow — pass a small `TSV` subset rather than the whole list.
+  XCFA* under `--backend NONE`, so this catches c2xcfa regressions, not just ANTLR ones.
+- **full** (`-Ptheta.canary.mode=full`): real `--portfolio STABLE` run comparing the printed
+  verdict against `expected_verdict`. Slow — point `-Ptheta.canary.tsv=<file>` at a small subset
+  rather than the whole list.
+
+Both suites are plain JUnit (`CanarySuiteTest`, `FixtureSuiteTest`) sharing `SuiteSupport`, so they
+run wherever Gradle does. They invoke the shipped `theta-start.sh` — the entry point SV-COMP itself
+uses — and fall back to launching `theta.jar` directly where there is no POSIX shell.
 
 `canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a
 given task only *happens* to exercise a feature. That is what the fixtures are for.

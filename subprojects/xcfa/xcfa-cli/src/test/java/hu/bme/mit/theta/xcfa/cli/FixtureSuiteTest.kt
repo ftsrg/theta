@@ -16,8 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import java.io.File
-import java.util.concurrent.TimeUnit
-import java.util.zip.ZipFile
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
@@ -82,7 +80,7 @@ class FixtureSuiteTest {
       }
     if (missing != null) return listOf(DynamicTest.dynamicTest("fixtures") { fail(missing) })
 
-    val theta = ensureDistribution(distDir)
+    val theta = SuiteSupport.ensureDistribution(distDir)
     if (theta == null) {
       return listOf(
         DynamicTest.dynamicTest("fixtures") {
@@ -134,9 +132,7 @@ class FixtureSuiteTest {
       )
     check(property.isFile) { "property file not found: $property" }
 
-    val command = buildList {
-      add(File(theta, "theta-start.sh").absolutePath)
-      add(input.absolutePath)
+    val options = buildList {
       add("--svcomp")
       addAll(if (isVerdictFixture) listOf("--portfolio", "STABLE") else listOf("--backend", "NONE"))
       addAll(listOf("--loglevel", "RESULT"))
@@ -144,8 +140,9 @@ class FixtureSuiteTest {
       addAll(listOf("--architecture", architecture))
       addAll(listOf("--arithmetic", arithmetic))
     }
+    val command = SuiteSupport.thetaCommand(theta, input, options)
     val timeout = if (isVerdictFixture) VERDICT_TIMEOUT_SECONDS else PARSE_TIMEOUT_SECONDS
-    val output = execute(command, theta, timeout)
+    val output = SuiteSupport.execute(command, theta, timeout).output
 
     if (!isVerdictFixture) {
       return when {
@@ -172,52 +169,9 @@ class FixtureSuiteTest {
    * timeout leaves that JVM running and holding the pipe -- the read would then block forever, long
    * after the timeout. Destroying the whole process tree is what actually releases it.
    */
-  private fun execute(command: List<String>, workingDir: File, timeoutSeconds: Long): String {
-    val process = ProcessBuilder(command).directory(workingDir).redirectErrorStream(true).start()
-    // Drain on a thread of its own: the pipe has to keep moving while we wait, or a chatty run
-    // fills it and blocks the child before the timeout can fire.
-    val output = StringBuilder()
-    val collector = Thread {
-      process.inputStream.bufferedReader().forEachLine { output.appendLine(it) }
-    }
-    collector.isDaemon = true
-    collector.start()
-    if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
-      process.descendants().forEach { it.destroyForcibly() }
-      process.destroyForcibly()
-      process.waitFor(10, TimeUnit.SECONDS)
-      collector.join(10_000)
-      return "$output\nTIMEOUT after ${timeoutSeconds}s"
-    }
-    collector.join(30_000)
-    return output.toString()
-  }
 
   /**
    * The extracted distribution, extracting the archive next to it when only that is present, or
    * null when neither exists. Also restores the exec bit, which a plain unzip drops.
    */
-  private fun ensureDistribution(distDir: File): File? {
-    val start = File(distDir, "theta-start.sh")
-    if (!start.isFile) {
-      val zip = File(distDir.parentFile, "${distDir.name}.zip")
-      if (!zip.isFile) return null
-      ZipFile(zip).use { archive ->
-        archive.entries().asSequence().forEach { entry ->
-          val target = File(distDir.parentFile, entry.name)
-          if (entry.isDirectory) {
-            target.mkdirs()
-          } else {
-            target.parentFile.mkdirs()
-            archive.getInputStream(entry).use { input ->
-              target.outputStream().use { output -> input.copyTo(output) }
-            }
-          }
-        }
-      }
-    }
-    if (!start.isFile) return null
-    start.setExecutable(true)
-    return distDir
-  }
 }
