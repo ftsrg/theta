@@ -125,7 +125,7 @@ class XcfaOcChecker(
           )
         )
       )
-    logger.info("  -> unsafe unroll ${if (xcfa.unsafeUnrollUsed) "" else "NOT"} used")
+    logger.info("  -> unsafe unroll ${if (xcfa.unsafeUnrollUsed) "" else "NOT "}used")
 
     logger.mainStep("Creating event graph...")
     val eg = XcfaToEventGraph(xcfa, parseContext).create()

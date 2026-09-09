@@ -132,6 +132,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // the memory-model passes, downstream of everything that creates or rewrites a dereference
     listOf(FlatMemoryPass(parseContext)),
     listOf(ByteMemoryPass(parseContext)),
+    listOf(CloneProcedureForStaticThreadsPass()),
+    listOf(InlinedProcedureRemovalPass()),
+    listOf(SimplifyExprsPass(parseContext, property)),
     listOf(
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),

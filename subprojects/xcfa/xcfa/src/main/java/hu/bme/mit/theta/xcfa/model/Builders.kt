@@ -79,7 +79,6 @@ constructor(
   val manager: ProcedurePassManager,
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
   private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
-  private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
@@ -143,9 +142,8 @@ constructor(
     }
   }
 
-  fun optimize(
-    phase: Int
-  ): Boolean { // true, if optimization is finished (no more phases to execute)
+  /** Returns true, if optimization is finished (no more phases to execute) */
+  fun optimize(phase: Int): Boolean {
     if (this::optimized.isInitialized || phase >= manager.passes.size) return true
     if (phase <= lastOptimized) return lastOptimized >= manager.passes.size - 1
     check(phase == lastOptimized + 1) { "Wrong optimization phase!" }
@@ -193,13 +191,6 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     vars.add(toAdd)
-  }
-
-  fun setAtomic(v: VarDecl<*>) {
-    check(!this::optimized.isInitialized) {
-      "Cannot add/remove/modify elements after optimization passes!"
-    }
-    atomicVars.add(v)
   }
 
   fun removeVar(toRemove: VarDecl<*>) {
@@ -374,6 +365,42 @@ constructor(
 
   fun setUnsafeUnroll() {
     unsafeUnrollUsed = true
+  }
+
+  fun deepCopy(identifier: String = ""): XcfaProcedureBuilder {
+    val newLocs =
+      locs.associateWith {
+        if (identifier.isEmpty()) it.copy() else it.copy(name = "${it.name}_$identifier")
+      }
+    return XcfaProcedureBuilder(
+      name = name,
+      manager = manager,
+      params = getParams().toMutableList(),
+      vars = getVars().toMutableSet(),
+      locs = getLocs().map { newLocs[it]!! }.toMutableSet(),
+      edges =
+        getEdges()
+          .map {
+            val source = newLocs[it.source]!!
+            val target = newLocs[it.target]!!
+            val edge = it.withSource(source).withTarget(target)
+            source.outgoingEdges.add(edge)
+            target.incomingEdges.add(edge)
+            edge
+          }
+          .toMutableSet(),
+      metaData = metaData.toMutableMap(),
+      unsafeUnrollUsed = unsafeUnrollUsed,
+      prop = prop,
+    )
+      .also { proc ->
+        proc.lastOptimized = lastOptimized
+        proc.copyMetaLocs(
+          newLocs[initLoc]!!,
+          finalLoc.map { newLocs[it] },
+          errorLoc.map { newLocs[it] },
+        )
+      }
   }
 
   override fun toString(): String = name
