@@ -31,7 +31,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
       val edge =
         builder.getEdges().find {
           it.label.isNop() &&
-            !it.metadata.isSubstantial() &&
+//            !it.metadata.isSubstantial() &&
             !it.target.error &&
             !it.target.final &&
             !it.source.initial &&

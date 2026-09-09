@@ -412,7 +412,7 @@ class FrontendXcfaBuilder(
   ): XcfaProcedureBuilder {
     locationLut.clear()
     val flatVariables = function.flatVariables
-    val isAtomic = function.atomicVariables::contains
+//    val isAtomic = function.atomicVariables::contains
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
@@ -448,9 +448,9 @@ class FrontendXcfaBuilder(
 
     for (flatVariable in flatVariables) {
       builder.addVar(flatVariable)
-      if (isAtomic(flatVariable)) {
-        builder.setAtomic(flatVariable)
-      }
+//      if (isAtomic(flatVariable)) {
+//        builder.setAtomic(flatVariable)
+//      }
       val type = CComplexType.getType(flatVariable.ref, parseContext)
       if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
         allocateStackStruct(flatVariable.ref, type, initStmtList)
