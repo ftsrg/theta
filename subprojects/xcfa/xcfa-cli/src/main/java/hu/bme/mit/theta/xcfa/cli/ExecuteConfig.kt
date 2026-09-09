@@ -357,10 +357,7 @@ private fun buildFrontend(
     uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
   }
 
-  logger.benchmark(
-    "%s",
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)",
-  )
+  logger.benchmark("%s", "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)")
 
   logger.benchmark("ParsingResult Success")
   logger.benchmark(
