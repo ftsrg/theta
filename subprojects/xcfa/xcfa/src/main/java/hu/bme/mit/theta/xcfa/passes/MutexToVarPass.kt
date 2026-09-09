@@ -58,7 +58,7 @@ class MutexToVarPass : ProcedurePass {
       }
     }
 
-    mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, False())) }
+    mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, False(), atomic = true)) }
     builder.parent.getInitProcedures().forEach { (proc, _) ->
       mutexVars.forEach { (_, v) ->
         val initEdge = proc.initLoc.outgoingEdges.first()

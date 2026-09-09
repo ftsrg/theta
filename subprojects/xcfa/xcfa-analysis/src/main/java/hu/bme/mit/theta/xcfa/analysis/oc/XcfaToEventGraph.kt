@@ -598,9 +598,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
             exit("pthread_key_create with non-null destructor")
           }
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
-          val key = (params[1] as RefExpr<*>).decl as VarDecl<*>
           repeat(maxPid) { i ->
-            val deref = Dereference.of(key.ref, Int(i), Int())
+            val deref = Dereference.of(params[1], Int(i), Int())
             val default = MemoryAssignStmt.of(deref, Int(0))
             default.process()
           }
