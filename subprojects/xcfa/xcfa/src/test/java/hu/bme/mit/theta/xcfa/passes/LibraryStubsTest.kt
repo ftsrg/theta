@@ -135,6 +135,47 @@ class LibraryStubsTest {
   }
 
   @Test
+  fun printfMaterialisesItsArgumentReads() {
+    // printf moved here from CLibraryFunctionsPass. It writes nothing, but it must keep reading its
+    // arguments, or a data race on one of them stops being visible.
+    val parseContext = ParseContext()
+    val labels =
+      labelsAfter(parseContext) {
+        intVar(parseContext, "ret")
+        intVar(parseContext, "fmt")
+        intVar(parseContext, "x")
+        (init to "L1") { "printf"("ret", "fmt", "x") }
+      }
+    assertTrue(
+      labels.count { it is StmtLabel && it.stmt is AssignStmt<*> } >= 1,
+      "printf must read its arguments",
+    )
+    assertTrue(
+      labels.none { it is StmtLabel && it.stmt is MemoryAssignStmt<*, *, *> },
+      "printf writes nothing",
+    )
+  }
+
+  @Test
+  fun scanfWritesEveryArgument() {
+    // scanf moved here too; every pointer argument it is given must be written.
+    val parseContext = ParseContext()
+    val labels =
+      labelsAfter(parseContext) {
+        intVar(parseContext, "ret")
+        intVar(parseContext, "fmt")
+        ptrVar(parseContext, "a")
+        ptrVar(parseContext, "b")
+        (init to "L1") { "scanf"("ret", "fmt", "a", "b") }
+      }
+    assertEquals(
+      2,
+      labels.count { it is StmtLabel && it.stmt is MemoryAssignStmt<*, *, *> },
+      "both scanf arguments must be written",
+    )
+  }
+
+  @Test
   fun readOnlyCallOnlyProducesAReturn() {
     val parseContext = ParseContext()
     val labels =

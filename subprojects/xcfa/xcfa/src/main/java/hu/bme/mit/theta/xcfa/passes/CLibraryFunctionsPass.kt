@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -58,8 +57,6 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
   private val supportedFunctions =
     setOf(
-      "printf",
-      "scanf",
       "pthread_join",
       "pthread_detach",
       "pthread_create",
@@ -81,7 +78,6 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     )
 
   companion object {
-    private var printfCounter = 0
 
     /**
      * Metadata flag (keyed by a variable's name, like `cName`) marking a global variable that
@@ -121,28 +117,6 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             var target = it.target
             val labels: List<XcfaLabel> =
               when (invokeLabel.name) {
-                "printf" -> {
-                  val printfCounter = printfCounter++
-                  (2 until invokeLabel.params.size)
-                    .mapIndexed { index, param ->
-                      val expr = invokeLabel.params[param]
-                      val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
-                      builder.addVar(arg)
-                      AssignStmtLabel(arg, expr)
-                    }
-                    .run { ifEmpty { listOf(NopLabel) } }
-                }
-
-                "scanf" -> {
-                  check(invokeLabel.params.size >= 3) {
-                    "At least two parameters (format string and one variable) expected in scanf"
-                  }
-                  (2 until invokeLabel.params.size).map { index ->
-                    val param = invokeLabel.getParam(index)
-                    StmtLabel(HavocStmt.of(param), metadata = metadata)
-                  }
-                }
-
                 "pthread_join" -> {
                   val handle = invokeLabel.getParam(1)
                   listOf(

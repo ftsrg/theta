@@ -346,8 +346,6 @@ class PassTests {
             (init to "L2") { "pthread_join"("ret", "pid") }
             (init to "L3") { "pthread_mutex_lock"("0", "x") }
             (init to "L4") { "pthread_mutex_unlock"("0", "x") }
-            (init to "L5") { "printf"("ret", "x = %d, y = %d\n", "x", "y") }
-            (init to "L6") { "scanf"("ret", "x = %d, y = %d\n", "(ref x Int)", "(ref y Int)") }
           },
           output = {
             (init to "L1") {
@@ -360,16 +358,6 @@ class PassTests {
             }
             (init to "L3") { mutex_lock("x") }
             (init to "L4") { mutex_unlock("x") }
-            val printfArg1 = "__printf_arg_0_0" type Int()
-            val printfArg2 = "__printf_arg_0_1" type Int()
-            (init to "L5") {
-              printfArg1.assign("x")
-              printfArg2.assign("y")
-            }
-            (init to "L6") {
-              havoc("x")
-              havoc("y")
-            }
           },
           // `pthread_create`'s start routine must resolve to a real procedure:
           // CLibraryFunctionsPass

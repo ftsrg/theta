@@ -191,24 +191,11 @@ echo "$results" | cut -f1 | sort | uniq -c | sort -rn
 n_fail=$(echo "$results" | cut -f1 | grep -c '^FAIL$')
 n_error=$(echo "$results" | cut -f1 | grep -c '^ERROR$')
 
-# In parse mode, also run the feature-guard fixtures (each isolates one frontend/grammar
-# modification, so a reverted fix turns them red). Only when the default TSV is used, so a
-# targeted `run_canaries.sh <dir> parse subset.tsv` stays focused.
-fixtures_failed=0
-if [[ "$MODE" == "parse" && "$TSV_FILE" == "$SCRIPT_DIR/canaries.tsv"
-      && -x "$SCRIPT_DIR/run_fixtures.sh" ]]; then
-  echo
-  echo "=== feature-guard fixtures ==="
-  if ! THETA_DIR="$THETA_DIR" "$SCRIPT_DIR/run_fixtures.sh" "$THETA_DIR"; then
-    fixtures_failed=1
-  fi
-fi
+# The feature-guard fixtures are a separate Gradle task now: `gradle :theta-xcfa-cli:fixtureTest`.
 
-if [[ "$n_fail" -gt 0 || "$n_error" -gt 0 || "$fixtures_failed" -ne 0 ]]; then
+if [[ "$n_fail" -gt 0 || "$n_error" -gt 0 ]]; then
   echo
-  msg="RESULT: $((n_fail + n_error)) task(s) FAILed/ERRORed"
-  [[ "$fixtures_failed" -ne 0 ]] && msg="$msg; feature-guard fixtures diverged"
-  echo "$msg." >&2
+  echo "RESULT: $((n_fail + n_error)) task(s) FAILed/ERRORed." >&2
   exit 1
 fi
 

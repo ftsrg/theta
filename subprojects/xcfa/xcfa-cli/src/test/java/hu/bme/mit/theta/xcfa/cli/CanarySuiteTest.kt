@@ -25,9 +25,10 @@ import org.junit.jupiter.api.fail
 /**
  * The canary suite, as ordinary JUnit tests.
  *
- * `canaries/run_canaries.sh` runs a sample of real SV-COMP tasks and a set of feature-guard
- * fixtures against a built `Theta-svcomp` distribution. This wrapper turns each row of its output
- * into one dynamic test, so a failure names the task that failed rather than "the suite exited 1".
+ * `canaries/run_canaries.sh` runs a sample of real SV-COMP tasks against a built `Theta-svcomp`
+ * distribution. This wrapper turns each row of its output into one dynamic test, so a failure names
+ * the task that failed rather than "the suite exited 1". The feature-guard fixtures are their own
+ * task, [FixtureSuiteTest].
  *
  * **The script is invoked, not reimplemented.** It carries the parallelism, the mode handling and a
  * number of hard-won details -- extracting the distribution when the directory is stale, the exec
@@ -50,16 +51,6 @@ class CanarySuiteTest {
   private companion object {
     /** Rows look like `PASS c/foo/bar.yml unreach-call ILP32 ok` (space-padded). */
     val CANARY_ROW = Regex("""^(PASS|FAIL|ERROR|UNKNOWN|TIMEOUT)\s+(\S+)\s+(\S+)\s+(\S+)\s*(.*)$""")
-
-    /**
-     * Fixture rows: `PASS some_fixture.c what it guards`, or `FAIL some_fixture.c expected=X
-     * actual=Y -- what it guards`.
-     *
-     * Both shapes must match. An earlier version required a bracketed field that only the PASS line
-     * carried, so a FAILING fixture matched nothing and was skipped -- the one outcome this class
-     * exists to report.
-     */
-    val FIXTURE_ROW = Regex("""^(PASS|FAIL)\s+(\S+\.c)\s+(.*)$""")
 
     /** The suite is a sweep over hundreds of tasks; it is minutes, not seconds. */
     const val TIMEOUT_MINUTES = 90L
@@ -111,18 +102,10 @@ class CanarySuiteTest {
     }
 
     val tests = mutableListOf<DynamicTest>()
-    var inFixtures = false
     for (line in output.lineSequence()) {
-      if (line.startsWith("=== feature-guard fixtures")) {
-        inFixtures = true
-        continue
-      }
-      val row =
-        (if (inFixtures) FIXTURE_ROW else CANARY_ROW).matchEntire(line.trimEnd()) ?: continue
+      val row = CANARY_ROW.matchEntire(line.trimEnd()) ?: continue
       val status = row.groupValues[1]
-      val name =
-        if (inFixtures) "fixture ${row.groupValues[2]}"
-        else "${row.groupValues[2]} [${row.groupValues[3]}]"
+      val name = "${row.groupValues[2]} [${row.groupValues[3]}]"
       val detail = row.groupValues.last()
       tests.add(
         DynamicTest.dynamicTest(name) {

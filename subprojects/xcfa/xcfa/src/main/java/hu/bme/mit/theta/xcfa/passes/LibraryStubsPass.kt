@@ -105,7 +105,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "fgets" to Stub(Writes.At(setOf(1))),
         "fscanf" to Stub(Writes.VariadicFrom(3)), // (ret, stream, fmt, &a, &b, ...)
         "__isoc99_fscanf" to Stub(Writes.VariadicFrom(3)),
-        "__isoc99_scanf" to Stub(Writes.VariadicFrom(2)), // (ret, fmt, &a, &b, ...)
+        "scanf" to Stub(Writes.VariadicFrom(2)), // (ret, fmt, &a, &b, ...)
+        "__isoc99_scanf" to Stub(Writes.VariadicFrom(2)),
         "sscanf" to Stub(Writes.VariadicFrom(3)),
         "__isoc99_sscanf" to Stub(Writes.VariadicFrom(3)),
         "read" to Stub(Writes.At(setOf(2))),
@@ -115,6 +116,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "fopen" to Stub(),
         "fclose" to Stub(),
         "fflush" to Stub(),
+        "printf" to Stub(),
         "fprintf" to Stub(),
         "puts" to Stub(),
         "fputs" to Stub(),

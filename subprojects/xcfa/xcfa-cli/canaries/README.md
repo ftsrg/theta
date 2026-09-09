@@ -28,17 +28,14 @@ sibling `Theta-svcomp.zip`). Java 21+ must be on `PATH` (the launcher uses `thet
 `canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a
 given task only *happens* to exercise a feature. That is what the fixtures are for.
 
-## `run_fixtures.sh [THETA_DIR]` — feature guards
+## Feature guards — `gradle :theta-xcfa-cli:fixtureTest`
 
-Each file under `fixtures/` is a minimal program that isolates one frontend/grammar
-modification, so it builds **iff** that modification is present; reverting the fix flips its
-outcome and the suite goes red. `fixtures/fixtures.tsv` maps each fixture to its arithmetic,
-architecture, expected outcome (`PARSE-OK` / `FRONTEND-FAIL`), and the feature it guards. Run
-directly, or automatically as part of `run_canaries.sh ... parse`.
+Each file under `fixtures/` is a minimal program that isolates one frontend/grammar modification,
+so it builds **iff** that modification is present; reverting the fix flips its outcome and the task
+goes red. `fixtures/fixtures.tsv` maps each fixture to its arithmetic, architecture, expected
+outcome (`PARSE-OK` / `FRONTEND-FAIL` / `SAFE` / `UNSAFE`, optionally `:property`) and the feature
+it guards.
 
 Add a fixture whenever a change adds a frontend/grammar capability: write the smallest program that
 needs it, confirm it *fails* before the change and passes after, and add a row. A fixture that does
 not discriminate guards nothing.
-
-For a verdict-level bug — where a fix changes the *answer* rather than whether the program builds —
-a fixture with a `SAFE`/`UNSAFE` expectation is the right home; it runs in full mode.
