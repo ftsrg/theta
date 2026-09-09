@@ -118,7 +118,7 @@ class XcfaOcChecker(
         ProcedurePassManager(
           listOf(
             UnrollPass(
-              forceUnrollBound,
+              specificForceUnrollLimit = forceUnrollBound,
               parseContext = parseContext,
               specificRecursionUnrollLimit = forceUnrollBound,
             )

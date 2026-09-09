@@ -88,7 +88,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // condition is a call, and a call's effect on the caller's variables (its return value above
       // all) is not something the collapse can see. The earlier instance of this pass leaves such a
       // loop alone; this one, which does nothing but collapse busy waits, gets it after inlining.
-      UnrollPass(busyWaitsOnly = true),
+      UnrollPass(busyWaitsOnly = true, specificRecursionUnrollLimit = -1),
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property),
       UnusedLocRemovalPass(),
