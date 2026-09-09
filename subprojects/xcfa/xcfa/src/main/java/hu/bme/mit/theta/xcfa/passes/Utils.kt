@@ -29,9 +29,17 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
-/** XcfaEdge must be in a `deterministic` ProcedureBuilder */
+/**
+ * Splits the edge around the labels [function] accepts.
+ *
+ * A single label counts as a sequence of one. `DeterministicPass` does leave every edge with a
+ * `SequenceLabel`, which is what the check here relied on, but the passes that splice bodies in --
+ * inlining, and recursion expansion in [LoopUnrollPass] -- create edges afterwards that need not
+ * have one, and on those the check turned `--force-unroll` on a recursive program into a frontend
+ * crash.
+ */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
-  check(label is SequenceLabel)
+  val label = if (label is SequenceLabel) label else SequenceLabel(listOf(label), metadata)
   val newLabels = ArrayList<SequenceLabel>()
   var current = ArrayList<XcfaLabel>()
 
