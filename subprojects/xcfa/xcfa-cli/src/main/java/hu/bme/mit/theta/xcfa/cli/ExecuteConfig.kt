@@ -137,6 +137,17 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   UnrollPass.UNROLL_RECURSION_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnrollRecursion else -1
   UnrollPass.COLLAPSE_BUSY_WAITS = config.frontendConfig.collapseBusyWaits
+  // A saturation fixpoint enumerates the initial states, and an unconstrained memory array is not
+  // a finite set of them, so MDD cannot start at all on a program that takes the address of a
+  // variable. MDD_CEGAR is deliberately excluded even though it also builds diagrams, because
+  // there the array is an ordinary data variable that predicate abstraction quantifies away rather
+  // than a level of its own; it was never blocked, and zeroing only narrows its initial states.
+  DereferenceToArrayPass.zeroInitialized =
+    when (config.frontendConfig.memoryInit) {
+      MemoryInit.ZERO -> true
+      MemoryInit.UNCONSTRAINED -> false
+      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+    }
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }

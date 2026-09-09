@@ -835,3 +835,17 @@ enum class WitnessLevel {
   SVCOMP,
   ALL,
 }
+
+/** How the dereference memory array starts out. */
+enum class MemoryInit {
+  /**
+   * Zero for MDD, whose fixpoint enumerates every variable and so needs a finite set of initial
+   * states, and unconstrained for the rest, including MDD_CEGAR, where the array is abstracted
+   * away.
+   */
+  AUTO,
+  /** Zero, as C guarantees for globals; uninitialized stack and heap then read as zeroed too. */
+  ZERO,
+  /** Unconstrained, the faithful choice for stack and heap. */
+  UNCONSTRAINED,
+}

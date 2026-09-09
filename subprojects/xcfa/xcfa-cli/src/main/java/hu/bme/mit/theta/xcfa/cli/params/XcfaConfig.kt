@@ -137,6 +137,12 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var forceUnroll: Int = -1,
   @Parameter(
+    names = ["--memory-init"],
+    description =
+      "How the dereference memory array starts: ZERO, UNCONSTRAINED, or AUTO, which is ZERO for the MDD backend, whose fixpoint needs a finite set of initial states, and UNCONSTRAINED otherwise",
+  )
+  var memoryInit: MemoryInit = MemoryInit.AUTO,
+  @Parameter(
     names = ["--collapse-busy-waits"],
     description =
       "Replace a loop that only waits for a condition with a single iteration of itself. Exact for reachability, but it drops the run that spins forever, so it does not preserve termination.",
