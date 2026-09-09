@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -208,8 +209,7 @@ public final class ExprSimplifier {
                     // Reference
 
                     .addCase(Dereference.class, this::simplifyDereference)
-
-                    //            .addCase(Reference.class, this::simplifyReference)
+                    .addCase(Reference.class, this::simplifyReference)
 
                     // Default
 
@@ -289,6 +289,20 @@ public final class ExprSimplifier {
 
     private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
         return expr.map(it -> simplify(it, val));
+    }
+
+    /**
+     * A reference designates storage, not a value, so the operand naming that storage must survive
+     * substitution: `&x` is an address, and rewriting it to `&1` names nothing. Only the index of
+     * an array element is a value, so `&t[i]` may still fold to `&t[0]`.
+     */
+    private Expr<?> simplifyReference(final Reference<?, ?> expr, final Valuation val) {
+        if (!(expr.getExpr() instanceof Dereference<?, ?, ?> deref)) {
+            return expr;
+        }
+        final List<Expr<?>> ops = new ArrayList<>(deref.getOps());
+        ops.set(1, simplify(deref.getOffset(), val));
+        return expr.withOps(List.of(deref.withOps(ops)));
     }
 
     private Expr<?> simplifyArrayRead(final ArrayReadExpr<?, ?> expr, final Valuation val) {
