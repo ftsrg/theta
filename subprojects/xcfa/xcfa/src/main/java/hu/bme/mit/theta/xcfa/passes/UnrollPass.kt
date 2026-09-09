@@ -48,6 +48,16 @@ import kotlin.math.max
  *   constant value for that iteration (`&t[i]` becomes `&t[0]`, `&t[1]`, …). Only the loop variable
  *   is substituted, so address-of expressions of other variables (`&x`) are left for
  *   ReferenceElimination -- which is why this may safely run before it. Requires [parseContext].
+ *
+ *   This duplicates constant propagation, and could be dropped if [SimplifyExprsPass] ran after
+ *   [PthreadArrayHandleUnrollPass] instead -- but no pass order allows that. Simplification has to
+ *   come after [ReferenceElimination], or it folds the variable naming an object into that object's
+ *   base id and every later pass that matches on the variable stops recognising the object.
+ *   [ReferenceElimination] in turn has to come after [AtomicFunctionsPass], [LibraryStubsPass] and
+ *   [CLibraryFunctionsPass], which all read `&x` arguments as references. [CLibraryFunctionsPass]
+ *   cannot move after it at all: an address-taken local is re-based onto a runtime counter, leaving
+ *   a thread handle with no static identity to match a create to its join. Removing this parameter
+ *   therefore means giving handles an identity that survives re-basing, not reordering passes.
  */
 class UnrollPass(
   specificForceUnrollLimit: Int = -1,
