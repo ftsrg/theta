@@ -75,6 +75,8 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   private fun generateMetamodel(): String {
     return """
             import builtin::strategy.
+            import builtin::theory::ibex.
+            
             abstract class Event {
                 int value
             }
@@ -142,16 +144,26 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
                 rfDisabledOrNotEqual(w, r).
             
             propagation rule rfVal(Write w, Read r) <->
-                rf(w, r) ==> guard(w), guard(r), assert value(w) == value(r).
+                rf(w, r)
+            ==>
+                guard(w), guard(r),
+                value(w): value(r), value(r): value(w),
+                assert value(w) == value(r).
+            
+            propagation rule notRf1(Write w, Read r) <->
+                !guard(w) ==> !rf(w, r).
+            
+            propagation rule notRf2(Write w, Read r) <->
+                !guard(r) ==> !rf(w, r).
+            
+            propagation rule notRf3(Write w, Read r) <->
+                value(w) != value(r) ==> !rf(w, r).
             
             error pred readFromSeveralWriters(Read r, Write w1, Write w2) <->
                 rf(w1, r), rf(w2, r), w1 != w2.
             
-            propagation rule readFromSeveralWritesProp2(Read r, Write w2) <->
+            propagation rule readFromSeveralWritesProp(Read r, Write w2) <->
                 rf(w1, r), w1 != w2 ==> !rf(w2, r).
-            
-            propagation rule noRfForDisabledRead(Write w, Read r) <->
-                !guard(r), may(rf(w, r)) ==> !rf(w, r).
                 
             error pred rfSome(Read r) <->
                 guard(r), !rf(_, r).
@@ -159,8 +171,14 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
             error pred fromReadViolation(Write w1, Write w2, Read r) <->
                 rf(w1, r), ws(w1, w2), hb(w2, r).
             
-            propagation rule fromReadPropagation(Write w2, Read r) <->
+            propagation rule fromReadPropagation1(Write w2, Read r) <->
                 rf(w1, r), ws(w1, w2) ==> hb(r, w2).
+            
+            propagation rule fromReadPropagation2(Write w1, Write w2) <->
+                rf(w1, r), hb(w2, r) ==> !ws(w1, w2).
+            
+            propagation rule fromReadPropagation3(Write w1, Read r) <->
+                ws(w1, w2), hb(w2, r) ==> !rf(w1, r).
         """.trimIndent()
   }
 
@@ -168,62 +186,82 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     val sb = StringBuilder("\n% Events\n")
     val rfPredicatesSb = StringBuilder("\n% Possible Read-From Predicates\n")
     eg.events.values.flatMap { it.values }.flatten().forEach { event ->
-      val helperScripts = mutableSetOf<String>()
       val valueExpr = event.assignment
-
+      val helperScripts = mutableSetOf<String>()
+      val default = {
+        sb.appendLine("error pred ${event.refineryId}ValueError() <->\n" +
+          "\t!(${valueExpr!!.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
+          "propagation rule ${event.refineryId}ValueRule() <->\n" +
+          "\ttrue\n" +
+          "==>\n" +
+          "\tassert ${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}.")
+      }
       when(valueExpr) {
-        null -> sb.appendLine("value(${event.refineryId}): unknown.")
+        null, is TrueExpr -> {}
         is EqExpr<*> -> {
-          val constantValue = when {
-            valueExpr.rightOp is IntLitExpr -> (valueExpr.rightOp as IntLitExpr).value.toString()
-            valueExpr.leftOp is IntLitExpr -> (valueExpr.leftOp as IntLitExpr).value.toString()
-            valueExpr.rightOp is BoolLitExpr -> if ((valueExpr.rightOp as BoolLitExpr).value) "1" else "0"
-            valueExpr.leftOp is BoolLitExpr -> if ((valueExpr.leftOp as BoolLitExpr).value) "1" else "0"
-            else -> null
-          }
-
+          val constantValue = valueExpr.getBinaryRefConstantRelationConstant(event)
           if (constantValue != null) {
             sb.appendLine("value(${event.refineryId}): $constantValue.")
           } else {
-            sb.appendLine("error pred ${event.refineryId}ValueError() <-> !(${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
-              "propagation rule ${event.refineryId}ValueRule() <->\n" +
-              "\ttrue\n" +
-              "==>\n" +
-              "\tassert ${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}.")
-            helperScripts.forEach {
-              sb.appendLine(it)
+            default()
+          }
+        }
+        is AndExpr -> {
+          var added = false
+          if (valueExpr.ops.size == 2) {
+            val geq = valueExpr.ops.find { it is GeqExpr<*> } as? GeqExpr<*>
+            val leq = valueExpr.ops.find { it is LeqExpr<*> } as? LeqExpr<*>
+            if (geq != null && leq != null) {
+              val geqConst = geq.getBinaryRefConstantRelationConstant(event)
+              val leqConst = leq.getBinaryRefConstantRelationConstant(event)
+              if (geqConst != null && leqConst != null) {
+                sb.appendLine("value(${event.refineryId}): ${geqConst}..${leqConst}.")
+                added = true
+              }
             }
           }
+          if (!added) default()
         }
-        is TrueExpr -> {}
-        else -> {
-          sb.appendLine("error pred ${event.refineryId}ValueError() <-> !(${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
-            "propagation rule ${event.refineryId}ValueRule() <->\n" +
-            "\ttrue\n" +
-            "==>\n" +
-            "\tassert ${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}.")
-          helperScripts.forEach {
-            sb.appendLine(it)
-          }
-        }
+        else -> default()
       }
 
-      val guardString = event.guard.joinToString(" && ") { it.toRefineryExpr(eg.events, helperScripts, event.refineryId) }
-
-      val type = if (event.type == EventType.READ) "true" else "false"
-
-      if (event.type == EventType.READ) sb.appendLine("Read(${event.refineryId}).") else sb.appendLine("Write(${event.refineryId}).")
+      sb.appendLine("${if (event.type == EventType.READ) "Read" else "Write" }(${event.refineryId}).")
 
       sb.appendLine("atom ${event.refineryId}.")
-      //sb.appendLine("value(${event.refineryId}): $valueExprToString.")
 
       if (event.guard.isEmpty()) {
         sb.appendLine("guard(${event.refineryId}).")
-      }
-      else {
+      } else {
+        val (guardString, assertGuard, assertNotGuard) =
+          if (event.guard.size == 1) {
+            event.guard.first().toRefineryExpr(eg.events, helperScripts, event.refineryId).let {
+              Triple(it, "assert $it", "assert !($it)")
+            }
+          } else {
+            val helperScriptName = "${event.refineryId}_guard_helper"
+            sb.appendLine(
+              """
+                |pred $helperScriptName() <->
+                |${'\t'}${event.guard.joinToString(" ,\n|\t") {
+                  it.toRefineryExpr(eg.events, helperScripts, event.refineryId)
+                }}.
+              """.trimMargin()
+            )
+            "${helperScriptName}()".let { Triple(it, it, "!$it") }
+          }
         sb.appendLine("error pred guard${event.refineryId}() <->\n" +
-                      "\t!(guard(${event.refineryId})) , ($guardString);\n" +
-                      "\t(guard(${event.refineryId})) , !($guardString).")
+                      "\t!guard(${event.refineryId}) , ($guardString);\n" +
+                      "\tguard(${event.refineryId}) , !($guardString).")
+        // propagation rule, as well:
+        sb.appendLine("propagation rule guard${event.refineryId}_pos() <->\n" +
+                      "\tguard(${event.refineryId}) ==> $assertGuard." +
+                      "\npropagation rule guard${event.refineryId}_neg() <->\n" +
+                      "\t!guard(${event.refineryId}) ==> $assertNotGuard."
+                      )
+      }
+
+      helperScripts.forEach {
+        sb.appendLine(it)
       }
     }
 
@@ -282,12 +320,13 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       val errorId = "err${index}_pid${violation.pid}"
       errorNames.add(errorId)
       val helperScripts = mutableSetOf<String>()
-      val guardExpr = violation.guard.toRefineryExpr(eg.events, helperScripts, currentEventId = errorId)
-      sb.appendLine("pred $errorId() <-> $guardExpr.")
+      val guardExpr = violation.guard.toTopLevelRefineryExpr(eg.events, helperScripts, identifier = errorId)
+      sb.appendLine("pred $errorId() <->\n\t$guardExpr.")
+      helperScripts.forEach {
+        sb.appendLine(it)
+      }
     }
-    sb.appendLine("\npred errorReached() <-> ${errorNames.joinToString(" ; ") { "$it()" }}.")
-
-    sb.appendLine("error pred violationNotFound() <-> !errorReached().")
+    sb.appendLine("error pred violationNotFound() <-> ${errorNames.joinToString(" , ") { "!$it()" }}.")
 
     return sb.toString()
   }
@@ -342,10 +381,46 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
 
   private fun String.toRefineryString() = replace(":", "_")
 
+  private fun Expr<*>.getBinaryRefConstantRelationConstant(event: XcfaEvent): String? {
+    if (ops.size != 2) return null
+    val left = ops[0]
+    val right = ops[1]
+    return left.asConstant?.takeIf { right == event.const.ref }
+      ?: right.asConstant?.takeIf { left == event.const.ref }
+  }
+
+  private val Expr<*>.asConstant: String? get() =
+    when (this) {
+      is PosExpr<*> -> op.asConstant
+      is IntLitExpr -> value.toString()
+      is BoolLitExpr -> if (value) "1" else "0"
+      else -> null
+    }
+
+  private fun Expr<*>.toTopLevelRefineryExpr(
+    events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
+    helperScripts: MutableSet<String>,
+    identifier: String,
+  ): String = when (this) {
+    is AndExpr ->
+      if (ops.size == 1) {
+        ops.first().toTopLevelRefineryExpr(events, helperScripts, identifier)
+      } else {
+        ops.joinToString(" ,\n\t") { it.toRefineryExpr(events, helperScripts, identifier) }
+      }
+    is OrExpr ->
+      if (ops.size == 1) {
+        ops.first().toTopLevelRefineryExpr(events, helperScripts, identifier)
+      } else {
+        ops.joinToString(" ;\n\t") { it.toRefineryExpr(events, helperScripts, identifier) }
+      }
+    else -> toRefineryExpr(events, helperScripts, identifier)
+  }
+
   private fun Expr<*>.toRefineryExpr(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     helperScripts: MutableSet<String>,
-    currentEventId: String
+    identifier: String,
   ): String = when (this) {
     is IntLitExpr -> value.toString()
     is BoolLitExpr -> value.toString()
@@ -353,24 +428,24 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       val constDecl = decl as IndexedConstDecl<*>
       "value(${events[constDecl.varDecl]!!.values.firstNotNullOf { it.find { it.const == constDecl }}.refineryId})"
     }
-    is OrExpr -> ops.joinToString("||") { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
-    is AndExpr -> ops.joinToString("&&") { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
-    is NotExpr -> "!(${op.toRefineryExpr(events, helperScripts, currentEventId)})"
-    is EqExpr<*> -> "${leftOp.toRefineryExpr(events, helperScripts,currentEventId)} == ${rightOp.toRefineryExpr(events, helperScripts, currentEventId)}"
-    is NeqExpr<*> -> ops.joinToString("!=") { it.toRefineryExpr(events, helperScripts, currentEventId)}
-    is AddExpr<*> -> ops.joinToString("+")  { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
-    is LtExpr<*> -> ops.joinToString("<") { it.toRefineryExpr(events, helperScripts, currentEventId)}
-    is LeqExpr<*> -> ops.joinToString("<=") { it.toRefineryExpr(events, helperScripts, currentEventId)}
-    is GtExpr<*> -> ops.joinToString(">") { it.toRefineryExpr(events, helperScripts, currentEventId)}
-    is GeqExpr<*> -> ops.joinToString(">=") { it.toRefineryExpr(events, helperScripts, currentEventId)}
-    is SubExpr<*> -> ops.joinToString("-")  { "(${it.toRefineryExpr(events, helperScripts, currentEventId)})" }
+    is OrExpr -> ops.joinToString("||") { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
+    is AndExpr -> ops.joinToString("&&") { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
+    is NotExpr -> "!(${op.toRefineryExpr(events, helperScripts, identifier)})"
+    is EqExpr<*> -> "${leftOp.toRefineryExpr(events, helperScripts, identifier)} == ${rightOp.toRefineryExpr(events, helperScripts, identifier)}"
+    is NeqExpr<*> -> ops.joinToString("!=") { it.toRefineryExpr(events, helperScripts, identifier)}
+    is AddExpr<*> -> ops.joinToString("+")  { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
+    is LtExpr<*> -> ops.joinToString("<") { it.toRefineryExpr(events, helperScripts, identifier)}
+    is LeqExpr<*> -> ops.joinToString("<=") { it.toRefineryExpr(events, helperScripts, identifier)}
+    is GtExpr<*> -> ops.joinToString(">") { it.toRefineryExpr(events, helperScripts, identifier)}
+    is GeqExpr<*> -> ops.joinToString(">=") { it.toRefineryExpr(events, helperScripts, identifier)}
+    is SubExpr<*> -> ops.joinToString("-")  { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
     is IteExpr<*> -> {
       val currentHelperId = ++helperCount
-      val helperName = "${currentEventId}_helper_$currentHelperId"
+      val helperName = "${identifier}_helper_$currentHelperId"
 
-      val condStr = cond.toRefineryExpr(events, helperScripts, currentEventId)
-      val thenStr = then.toRefineryExpr(events, helperScripts, currentEventId)
-      val elseStr = `else`.toRefineryExpr(events, helperScripts, currentEventId)
+      val condStr = cond.toRefineryExpr(events, helperScripts, identifier)
+      val thenStr = then.toRefineryExpr(events, helperScripts, identifier)
+      val elseStr = `else`.toRefineryExpr(events, helperScripts, identifier)
 
       val helperDef = """
             int $helperName() = 
@@ -381,7 +456,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       helperScripts.add(helperDef)
       "$helperName()"
     }
-    is PosExpr<*> -> op.toRefineryExpr(events, helperScripts, currentEventId)
+    is PosExpr<*> -> op.toRefineryExpr(events, helperScripts, identifier)
     else -> throw UnsupportedOperationException("Unsupported expression $this in refinery expression conversion.")
   }
 }
