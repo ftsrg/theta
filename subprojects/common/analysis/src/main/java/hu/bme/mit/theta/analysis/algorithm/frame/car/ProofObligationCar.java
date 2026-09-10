@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,26 +13,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import java.util.Set;
+package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
-public class ProofObligation {
-    private Set<Expr<BoolType>> expressions;
+public class ProofObligationCar {
     private int time;
 
-    ProofObligation(Set<Expr<BoolType>> expressions, int time) {
-        this.expressions = expressions;
+    private Node node;
+
+    ProofObligationCar(Node node, int time) {
+        this.node = node;
         this.time = time;
+    }
+
+    public Node getNode() {
+        return node;
     }
 
     public int getTime() {
         return time;
-    }
-
-    public Set<Expr<BoolType>> getExpressions() {
-        return expressions;
     }
 }
