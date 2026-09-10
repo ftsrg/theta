@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
@@ -683,9 +684,22 @@ data class MddConfig(
   var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
+enum class MddCegarRefinement {
+  SEQ_ITP,
+  FW_BIN_ITP,
+  BW_BIN_ITP,
+}
+
 data class MddCegarConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
+  @Parameter(
+    names = ["--refinement-solver"],
+    description = "Solver for the trace check / interpolation (defaults to --solver)",
+  )
+  var refinementSolver: String = "",
+  @Parameter(names = ["--refinement"], description = "Trace checker used for refinement")
+  var refinement: MddCegarRefinement = MddCegarRefinement.SEQ_ITP,
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
@@ -712,22 +726,22 @@ data class MddCegarConfig(
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
   @Parameter(
-    names = ["--reach-constraint"],
-    description = "Constrain each iteration's saturation to the previous iteration's reach set",
-    arity = 1,
-  )
-  var reachConstraint: Boolean = false,
-  @Parameter(
     names = ["--on-the-fly-reachability"],
     description = "Terminate saturation as soon as a violating state is reached",
   )
   var onTheFlyReachability: Boolean = false,
   @Parameter(
+    names = ["--literal-placement"],
+    description =
+      "Where the literal levels go in the MDD orders: FORCE (the FORCE ordering of ctrl vars and literals, rebuilt every iteration) or TOP (each new literal on top of the existing levels)",
+  )
+  var literalPlacement: LiteralPlacement = LiteralPlacement.FORCE,
+  @Parameter(
     names = ["--trace-search"],
     description =
-      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+      "Search for the abstract counterexample: BFS (forward layers then one backward step per layer: shortest counterexample), BFS_BACKWARD (backward layers from all violating states) or DFS (backward, one predecessor per step, order-dependent length)",
   )
-  var traceSearch: TraceSearch = TraceSearch.DFS,
+  var traceSearch: TraceSearch = TraceSearch.BFS,
 ) : SpecBackendConfig
 
 data class Ic3Config(
