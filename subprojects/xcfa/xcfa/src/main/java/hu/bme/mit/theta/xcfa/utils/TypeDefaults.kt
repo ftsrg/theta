@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
@@ -65,6 +66,13 @@ val Type.defaultValue: LitExpr<out Type>
           ArrayType.of(indexType, elemType),
         )
       else -> error("No default value for type $this")
+    }
+
+fun Type.integerOf(value: Int): LitExpr<out Type> =
+    when (this) {
+      is IntType -> Int(value)
+      is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), size)
+      else -> error("Cannot create an integer value of type $this")
     }
 
 /**
