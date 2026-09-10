@@ -67,6 +67,13 @@ val Type.defaultValue: LitExpr<out Type>
       else -> error("No default value for type $this")
     }
 
+fun Type.integerOf(value: Int): LitExpr<out Type> =
+  when (this) {
+    is IntType -> Int(value)
+    is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), size)
+    else -> error("Cannot create an integer value of type $this")
+  }
+
 /**
  * States that a havoced value is one its C type can actually hold.
  *
