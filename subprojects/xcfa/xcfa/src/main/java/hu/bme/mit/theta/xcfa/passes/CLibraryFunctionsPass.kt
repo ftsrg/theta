@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -38,7 +37,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.defaultValue
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import hu.bme.mit.theta.xcfa.utils.isWritten
@@ -151,7 +149,10 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val sourceDeref = Dereference.of(copySource, indexVar.ref, copySource.type)
                 val targetDeref = Dereference.of(copyTarget, indexVar.ref, copyTarget.type)
 
-                val continueAssume = StmtLabel(AssumeStmt.of(NeqExpr.create2(sourceDeref, copySource.type.integerOf(0))))
+                val continueAssume =
+                  StmtLabel(
+                    AssumeStmt.of(NeqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                  )
                 val copyCurrent = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
                 val increment =
                   AssignStmtLabel(indexVar.ref, Add(listOf(indexVar.ref, type.integerOf(1))))
@@ -159,7 +160,10 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val copyEdge = XcfaEdge(loc, loc, copyLabel, metadata)
                 builder.addEdge(copyEdge)
 
-                val exitAssume = StmtLabel(AssumeStmt.of(EqExpr.create2(sourceDeref, copySource.type.integerOf(0))))
+                val exitAssume =
+                  StmtLabel(
+                    AssumeStmt.of(EqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                  )
                 val exitLabel = SequenceLabel(listOf(exitAssume))
                 val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
                 builder.addEdge(exitEdge)
