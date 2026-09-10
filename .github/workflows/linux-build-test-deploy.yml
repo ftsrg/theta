@@ -189,6 +189,51 @@ jobs:
           if-no-files-found: error
 
 
+  canary-test:
+    needs: create-archives
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Setup Java 21
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
+        name: Get the Theta-svcomp archive
+        with:
+          name: release-Theta-svcomp
+          path: subprojects/xcfa/xcfa-cli/build/distributions/
+      # Only the files the two registries name: a full checkout is several GB, and the suite reads
+      # nothing else. `blob:none` keeps the clone metadata-only until the sparse paths are resolved.
+      - name: Fetch the referenced sv-benchmarks tasks
+        run: |
+          canaries=subprojects/xcfa/xcfa-cli/canaries/canaries.tsv
+          awk -F'\t' 'NR==1 { for (i = 1; i <= NF; i++) c[$i] = i; next }
+                      { print $c["input_file_relpath"]; print $c["property_file_relpath"] }' \
+            "$canaries" | sort -u > /tmp/sparse-paths
+          echo 'c/properties/*' >> /tmp/sparse-paths
+          git clone --filter=blob:none --no-checkout --depth 1 \
+            https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git ../sv-benchmarks
+          cd ../sv-benchmarks
+          git sparse-checkout init --no-cone
+          git sparse-checkout set --stdin < /tmp/sparse-paths
+          git checkout
+      # The archive is already built above, so skip the task that would rebuild it; the suite
+      # unpacks the downloaded zip itself.
+      - name: Run the canary and fixture suites
+        run: ./gradlew :theta-xcfa-cli:canaryTest -x buildArchiveTheta-svcomp -Ptheta.canary.jobs=2
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
+        with:
+          name: CanarySuiteReport
+          path: subprojects/xcfa/xcfa-cli/build/reports/tests/
+          if-no-files-found: ignore
+
+
   javadoc:
     needs: [build, check-release]
     runs-on: ubuntu-24.04

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -199,6 +199,8 @@ final class Z3ExprTransformer {
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
                         .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                         .addCase(FpToBvExpr.class, this::transformFpToBv)
+                        .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
+                        .addCase(FpToIeeeBvExpr.class, this::transformFpToIeeeBv)
                         .addCase(FpToFpExpr.class, this::transformFpToFp)
 
                         // Functions
@@ -983,6 +985,21 @@ final class Z3ExprTransformer {
         final FPExpr op = (FPExpr) toTerm(expr.getOp());
 
         return context.mkFPToBV(transformFpRoundingMode(expr.getRoundingMode()), op, size, sgn);
+    }
+
+    private com.microsoft.z3.Expr transformFpToIeeeBv(final FpToIeeeBvExpr expr) {
+        // The raw encoding, not a numeric cast -- mkFPToIEEEBV, no rounding mode.
+        final FPExpr op = (FPExpr) toTerm(expr.getOp());
+        return context.mkFPToIEEEBV(op);
+    }
+
+    private com.microsoft.z3.Expr transformFpFromIeeeBv(final FpFromIeeeBvExpr expr) {
+        // The 2-argument mkFPToFP (bitvector, sort) is the bit reinterpretation; the rounding-mode
+        // overload used by transformFpFromBv would instead round the integer value.
+        final BitVecExpr val = (BitVecExpr) toTerm(expr.getOp());
+        final FPSort fpSort =
+                context.mkFPSort(expr.getFpType().getExponent(), expr.getFpType().getSignificand());
+        return context.mkFPToFP(val, fpSort);
     }
 
     /*

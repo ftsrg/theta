@@ -22,7 +22,16 @@ fun XcfaProcedure.deepCopy(
   unsafeUnrollUsed: Boolean = false,
   identifier: String = "",
 ): XcfaProcedureBuilder {
-  val newLocs = locs.associateWith { it.copy(name = "${it.name}_$identifier") }
+  // The suffix is what tells two copies of the same procedure apart (the OC checker copies one per
+  // thread, keyed by pid). With no identifier there is nothing to tell apart, and appending a bare
+  // `_` only corrupts the name: `__THETA_bad_deref` became `__THETA_bad_deref_`, which the
+  // memsafety
+  // subproperty is looked up by, so every memsafety violation found by a monolithic backend threw
+  // "Could not determine subproperty from location name".
+  val newLocs =
+    locs.associateWith {
+      if (identifier.isEmpty()) it.copy() else it.copy(name = "${it.name}_$identifier")
+    }
   return XcfaProcedureBuilder(
       name = name,
       manager = passManager,

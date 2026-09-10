@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibDereferenceDecls;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpMarker;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
@@ -112,6 +113,9 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         checkArgument(markers.toCollection().contains(marker));
 
         final var consts = ExprUtils.getConstants(assertion);
+        // Declare the `deref` uninterpreted function (per signature) alongside the ordinary
+        // constants; it has no ConstDecl in the assertion of its own (see SmtLibDereferenceDecls).
+        consts.addAll(SmtLibDereferenceDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
         enumStrategy.declareDatatypes(

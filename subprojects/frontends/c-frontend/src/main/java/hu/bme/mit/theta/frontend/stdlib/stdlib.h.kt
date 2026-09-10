@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ extern void srand(unsigned int seed);
 extern void *calloc(size_t nmemb, size_t size);
 extern void free(void *ptr);
 extern void *malloc(size_t size);
+extern void *alloca(size_t size);
 extern void *realloc(void *ptr, size_t size);
 extern void abort(void);
 extern int atexit(void (*func)(void));

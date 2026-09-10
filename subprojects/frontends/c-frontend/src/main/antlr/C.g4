@@ -29,6 +29,115 @@
 /** C 2011 grammar built from the C11 Spec */
 grammar C;
 
+@parser::members {
+    /**
+     * The typedef names seen so far. An identifier is a type name only if it is in here: without
+     * this, *any* identifier can start a type, and the grammar cannot tell `(a) * b` (a cast of a
+     * dereference) from `(a) * b` (a multiplication), nor `void *malloc(size_t);` (a function) from
+     * a declaration of two variables named `malloc` and `size_t`.
+     */
+    public final java.util.Set<String> typedefNames = new java.util.LinkedHashSet<String>();
+
+    /**
+     * When set, every identifier is accepted as a type name -- the behaviour the grammar had before
+     * it knew about typedefs. The first, name-collecting parse runs in this mode, and it is also the
+     * fallback for anything the type-aware parse cannot handle.
+     */
+    public boolean permissiveTypeNames = true;
+
+    public boolean isTypeName(String name) {
+        return permissiveTypeNames || typedefNames.contains(name);
+    }
+
+    /** Everything a type can begin with, other than a typedef name. */
+    private static final java.util.Set<String> TYPE_STARTERS =
+            new java.util.HashSet<String>(java.util.Arrays.asList(
+                    "void", "char", "short", "int", "long", "float", "double", "signed", "unsigned",
+                    "_Bool", "_Complex", "__int128", "__float128", "__m128", "__m128d", "__m128i", "__extension__",
+                    "struct", "union", "enum", "const", "volatile", "restrict", "_Atomic",
+                    "__const", "__restrict", "__restrict__", "__volatile__", "__thread",
+                    "typeof", "__typeof", "__typeof__", "static", "extern", "register", "auto", "inline",
+                    "_Alignas", "__inline__", "__attribute__"));
+
+    public boolean isTypeStart(org.antlr.v4.runtime.Token token) {
+        if (permissiveTypeNames) {
+            return true;
+        }
+        if (token.getType() == Identifier) {
+            return typedefNames.contains(token.getText());
+        }
+        return TYPE_STARTERS.contains(token.getText());
+    }
+
+    /**
+     * Whether a `for`'s first clause declares something, rather than being an expression.
+     *
+     * `typeSpecifierPointer` leaves its type specifier optional -- it has to, so that the `*` in
+     * `unsigned *p` can follow a specifier that is already there -- and that makes a *bare* `*` a
+     * declaration specifier all on its own. Nothing in C begins a declaration with `*`, but
+     * `for (*p = 0; ...)` begins an *expression* with one, and `forDeclaration` is the first
+     * alternative: without this, an assignment through a pointer is read as a declaration of a
+     * fresh, null `p` that shadows the real one for the whole loop -- every `*p` in the body then
+     * dereferences NULL. (`blockItem` is already guarded this way, which is why the same assignment
+     * as a plain statement was always fine.)
+     */
+    public boolean startsForDeclaration() {
+        String first = _input.LT(1).getText();
+        if ("*".equals(first) || "^".equals(first)) {
+            return false;
+        }
+        return isTypeStart(_input.LT(1));
+    }
+
+    /**
+     * Whether a `(` here opens a cast rather than a parenthesized expression -- decided by what
+     * follows it.
+     *
+     * The predicate has to sit on the cast alternative itself, not merely inside `typedefName`:
+     * ANTLR only uses a predicate to *choose* an alternative if it can reach it without consuming a
+     * token, and the one in `typedefName` lies past the `(`. Left where it was, prediction would
+     * assume it true, commit to the cast, and only then find out -- turning `(a) * b` from a
+     * mis-parse into a parse error.
+     */
+    public boolean startsCast() {
+        int i = 1;
+        if ("__extension__".equals(_input.LT(i).getText())) {
+            i++;
+        }
+        if (!"(".equals(_input.LT(i).getText())) {
+            return false;
+        }
+        return isTypeStart(_input.LT(i + 1));
+    }
+
+    /**
+     * Whether a block item is a declaration rather than a statement.
+     *
+     * Inside a block, `S * p;` is a declaration if `S` names a type and a multiplication if it names
+     * a variable -- the same ambiguity as `(a) * b`, and C settles it the same way: if a block item
+     * *can* be read as a declaration, it *is* one. ANTLR instead settles it by alternative order, so
+     * `statement` (listed first) used to win and every `S *p;` became a multiplication whose result
+     * is discarded; the declared variable then did not exist, and `S` reached the expression visitor
+     * as a value ("No such variable or macro: S"). Only *typedef* names were affected -- `int *p;`
+     * and `struct T *p;` are safe because a keyword cannot begin an expression, and at file scope
+     * there is no statement to compete with.
+     *
+     * This may only be asked when the type names are actually known. The name-collecting pass runs
+     * permissively, where *every* identifier is a "type name" -- there, `f(x);` would answer yes and
+     * be read as declaring an `x` of type `f`, turning ordinary calls into declarations.
+     */
+    public boolean startsDeclaration() {
+        if (permissiveTypeNames) {
+            return false;
+        }
+        if (!isTypeStart(_input.LT(1))) {
+            return false;
+        }
+        // `L: ...` is a labelled statement, even where L happens to also name a type.
+        return !":".equals(_input.LT(2).getText());
+    }
+}
+
 
 primaryExpression
     :   PRETTY_FUNC                                                         # gccPrettyFunc
@@ -37,15 +146,35 @@ primaryExpression
     |   StringLiteral+                                                      # primaryExpressionStrings
     |   '(' expression ')'                                                  # primaryExpressionBraceExpression
     |   '(' compoundStatement ')'                                           # primaryExpressionCompoundStatement // GNU C extension?
-    |   '(' castDeclarationSpecifierList ')' initializer                    # primaryExpressionTypeInitializer
+    // A compound literal `(T){ ... }` -- the initializer must be BRACED. Allowing a bare
+    // `assignmentExpression` here (which `initializer` also permits) makes `(T)expr` ambiguous with a
+    // plain cast, and for an assignment LHS `*(T*)p = v` the type-initializer alternative greedily
+    // swallows `p = v` as its initializer, so the whole deref operand parses to null and NPEs. A cast
+    // is the correct reading of the unbraced form, so require the braces that a compound literal has.
+    |   '(' castDeclarationSpecifierList ')' bracedPrimaryExpression        # primaryExpressionTypeInitializer
     //|   genericSelection                                                    # primaryExpressionGenericSelection
     |   '__extension__'? '(' compoundStatement ')'                          # primaryExpressionGccExtension
-    //|   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
-    //|   '__builtin_offsetof' '(' typeName ',' unaryExpression ')'           # primaryExpressionBuiltinOffsetof
+    |   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'             # primaryExpressionBuiltinVaArg
+    |   '__builtin_offsetof' '(' typeName ',' offsetofMemberDesignator ')'  # primaryExpressionBuiltinOffsetof
+    // The arguments are types (typically `typeof(expr)`), so this cannot be left to the
+    // function-call production, whose arguments are expressions.
+    |   '__builtin_types_compatible_p' '(' typeName ',' typeName ')'        # primaryExpressionBuiltinTypesCompatible
+    // The pointee object size is not modelled; a compile-time-unknown size is the conservative
+    // answer (gcc's own fallback), so the first argument is parsed but never evaluated -- like
+    // sizeof, it has no side effects.
+    |   '__builtin_object_size' '(' assignmentExpression ',' constantExpression ')'  # primaryExpressionBuiltinObjectSize
     ;
 
 bracedPrimaryExpression
-    :   '{' initializerList ','? '}'
+    // The list may be empty: `struct t arr[] = { };` is a GNU extension (and legal C23).
+    :   '{' initializerList? ','? '}'
+    ;
+
+// The member argument of __builtin_offsetof: a field, possibly nested (`a.b`) and possibly
+// indexed (`a[3].b`). Kept as its own rule so the visitor sees the designator structurally
+// instead of re-parsing an expression that would otherwise be read as a value.
+offsetofMemberDesignator
+    :   Identifier ('.' Identifier | '[' constantExpression ']')*
     ;
 
 //genericSelection
@@ -122,7 +251,10 @@ unaryExpressionCast
     :   unaryOperator castExpression
     ;
 unaryExpressionSizeOrAlignOf
-    :   ('sizeof' | '_Alignof' | '__alignof__') '(' (typeName | expression) ')'
+    :   ('sizeof' | '_Alignof' | '__alignof__' | '__alignof') '(' (typeName | expression) ')'
+    // `sizeof` takes an expression without parentheses too -- `sizeof *p`, `sizeof x`. The
+    // parenthesized form is tried first, so `sizeof (int)` still reads as a type.
+    |   'sizeof' unaryExpression
     ;
 //unaryExpressionAddressof
 //    :   '&&' Identifier
@@ -133,7 +265,7 @@ unaryOperator
     ;
 
 castExpression
-    :   '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
+    :   {startsCast()}? '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
     |   unaryExpression                                     #castExpressionUnaryExpression
 //    |   DigitSequence                                       #castExpressionDigitSequence
     ;
@@ -179,7 +311,8 @@ logicalOrExpression
     ;
 
 conditionalExpression
-    :   logicalOrExpression ('?' ifTrue=expression ':' ifFalse=expression)?
+    // GNU `a ?: b` omits the middle operand: the guard itself is the true-branch value.
+    :   logicalOrExpression ('?' ifTrue=expression? ':' ifFalse=expression)?
     ;
 
 assignmentExpression
@@ -214,8 +347,12 @@ declarationSpecifiers2
     ;
 
 // otherwise, (y*y)-2 is considered a cast
+// The trailing abstractDeclarator admits casts to pointer-to-array and (nested) function-pointer
+// types -- `(float(*)[4])e`, `(int(**)(void))e`, `(void*const(*)(int))e` -- which the two
+// specifier slots alone cannot spell. Semantically every pointer level it contains is folded onto
+// the base type (see TypeVisitor.visitCastDeclarationSpecifierList).
 castDeclarationSpecifierList
-    : spec1+=castDeclarationSpecifier* spec2=typeSpecifierPointer?
+    : spec1+=castDeclarationSpecifier* spec2=typeSpecifierPointer? dec=abstractDeclarator?
     ;
 
 castDeclarationSpecifier
@@ -265,7 +402,11 @@ typeSpecifier
     |   '__int128'
     |   '__m128'
     |   '__m128d'
+    |   '__signed'
+    |   '__signed__'
+    |   '__float128'
     |   '__m128i')                                                  # typeSpecifierSimple
+    |   '__builtin_va_list'                                         # typeSpecifierVaList
     |   '__thread'                                                  # typeSpecifierGccThread
     |   'float'                                                     # typeSpecifierFloat
     |   'double'                                                    # typeSpecifierDouble
@@ -274,8 +415,11 @@ typeSpecifier
     |   structOrUnionSpecifier                                      # typeSpecifierCompound
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
-    |   ('__typeof__' | 'typeof') '(' constantExpression ')'        # typeSpecifierTypeof
-    |   typeSpecifier '*'? '(' '*' ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
+    // Like sizeof: the type-name form is tried first, so `__typeof__(unsigned long)` reads as a
+    // type; a bare identifier only matches typeName via the predicate-guarded typedefName, so
+    // `typeof(expr)` still falls through to the expression form.
+    |   ('__typeof__' | '__typeof' | 'typeof') '(' (typeName | constantExpression) ')'        # typeSpecifierTypeof
+    |   typeSpecifier '*'? '(' pointer ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;
 
@@ -284,8 +428,12 @@ typeSpecifierPointer
     ;
 
 structOrUnionSpecifier
-    :   structOrUnion Identifier? '{' structDeclarationList '}'     # compoundDefinition
-    |   structOrUnion Identifier                                    # compoundUsage
+    // GCC allows attributes right after the `struct` / `union` keyword, e.g.
+    // `typedef union __attribute__ ((__transparent_union__)) { ... } u;`. They say nothing about the
+    // *values* the type holds -- only about its layout, which is not modeled -- so they are matched
+    // and ignored, as attributes are everywhere else in this grammar.
+    :   structOrUnion gccAttributeSpecifier* Identifier? '{' structDeclarationList '}'  # compoundDefinition
+    |   structOrUnion gccAttributeSpecifier* Identifier                                 # compoundUsage
     ;
 
 structOrUnion
@@ -298,7 +446,15 @@ structDeclarationList
     ;
 
 structDeclaration
-    :   specifierQualifierList structDeclaratorList? ';'
+    // GCC allows attributes at the start of a member declaration, e.g.
+    // `__attribute__ ((aligned(4))) uint32_t num_tdcx;`. Like everywhere else in this grammar they
+    // describe layout, which is not modeled, so they are matched and ignored.
+    // The attribute may also sit between the specifier and the declarator:
+    // `struct kern_ipc_perm __attribute__((aligned(64))) sem_perm;` or
+    // `struct { ... } __attribute__((packed)) isa;`.
+    // CIL also emits bare `;` members (empty declarations) inside struct bodies.
+    :   gccAttributeSpecifier* specifierQualifierList gccAttributeSpecifier* structDeclaratorList? ';'
+    |   ';'
 //    |   staticAssertDeclaration                             #structDeclarationStatic
     ;
 
@@ -317,8 +473,8 @@ structDeclaratorList
     ;
 
 structDeclarator
-    :   declarator                          #structDeclaratorSimple
-    |   declarator? ':' constantExpression  #structDeclaratorConstant
+    :   declarator                                                  #structDeclaratorSimple
+    |   declarator? ':' constantExpression gccAttributeSpecifier*   #structDeclaratorConstant
     ;
 
 enumSpecifier
@@ -344,14 +500,19 @@ atomicTypeSpecifier
 
 typeQualifier
     :   'const'
+    |   '__const'        // GCC spelling
     |   'restrict'
+    |   '__restrict'     // GCC spellings
+    |   '__restrict__'
     |   'volatile'
+    |   '__volatile__'   // GCC spelling
     |   '_Atomic'
     ;
 
 functionSpecifier
     :   ('inline'
     |   '_Noreturn'
+    |   '__inline'   // GCC extension
     |   '__inline__' // GCC extension
     |   '__stdcall')
     |   gccAttributeSpecifier
@@ -363,12 +524,14 @@ alignmentSpecifier
     ;
 
 declarator
-    :   pointer? directDeclarator gccDeclaratorExtension*
+    // The attribute may follow the stars and appertain to the pointer:
+    // `void (*__attribute__((section(...))) interrupt[224])(void);`
+    :   pointer? gccAttributeSpecifier* directDeclarator gccDeclaratorExtension*
     ;
 
 directDeclarator
     :   Identifier                                                                  # directDeclaratorId
-    |   '(' declarator ')'                                                          # directDeclaratorBraces
+    |   '(' gccAttributeSpecifier* declarator ')'                                   # directDeclaratorBraces
     |   directDeclarator '[' typeQualifierList? assignmentExpression? ']'           # directDeclaratorArray1
     |   directDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'   # directDeclaratorArray2
     |   directDeclarator '[' typeQualifierList 'static' assignmentExpression ']'    # directDeclaratorArray3
@@ -389,7 +552,8 @@ inlineAssembly
     ;
 
 gccAttributeSpecifier
-    :   '__attribute__' '(' '(' gccAttributeList ')' ')'
+    // GCC accepts `__attribute` as an alternate spelling of `__attribute__` (CIL emits it).
+    :   ('__attribute__' | '__attribute') '(' '(' gccAttributeList ')' ')'
     ;
 
 gccAttributeList
@@ -456,7 +620,7 @@ directAbstractDeclarator
     ;
 
 typedefName
-    :   Identifier
+    :   {isTypeName(_input.LT(1).getText())}? Identifier
     ;
 
 initializer
@@ -510,8 +674,8 @@ blockItemList
     ;
 
 blockItem
-    :   statement       # bodyStatement
-    |   declaration     # bodyDeclaration
+    :   {!startsDeclaration()}? statement       # bodyStatement
+    |   declaration                             # bodyDeclaration
     ;
 
 expressionStatement
@@ -537,7 +701,7 @@ forCondition
 	;
 
 forInit
-    :  forDeclaration
+    :  {startsForDeclaration()}? forDeclaration
     |  expression?
     ;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,5 +19,13 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 interface ProcedurePass {
 
+  /** Prefer to use [runChecked] in most cases. */
   fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder
+
+  /**
+   * Runs a pass and checks that the procedure it produced is still well-formed. Prefer this over
+   * calling [run] directly, wherever a pass is run outside a [ProcedurePassManager].
+   */
+  fun runChecked(builder: XcfaProcedureBuilder): XcfaProcedureBuilder =
+    run(builder).also { it.checkEdgesHaveLocations(this) }
 }

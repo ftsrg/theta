@@ -39,3 +39,7 @@ xcfa-*.smt2
 witness.yml
 invariants.txt
 *.salive
+
+__pycache__/
+*.pyc
+.vscode/

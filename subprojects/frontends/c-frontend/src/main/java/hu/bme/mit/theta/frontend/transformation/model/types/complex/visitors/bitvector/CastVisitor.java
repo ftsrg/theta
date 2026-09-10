@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -28,6 +29,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -67,6 +70,15 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
         }
+        param = inBitvectorForm(that, param);
+        if (that instanceof CVoid) {
+            // A void expression has no value, and C forbids reading one -- but one still reaches
+            // here through the standard assert expansion `cond ? (void)0 : fail()`, whose two arms
+            // are both void, so the frontend unifies them into a common type. Since the value can
+            // never be read, any value of the target type will do. (Under integer arithmetic this
+            // never surfaced: there the conversion ignores the source type entirely.)
+            return type.getNullValue();
+        }
         if (that instanceof CReal) {
             //noinspection unchecked
             return FpExprs.ToBv(
@@ -91,7 +103,13 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), true));
                 } else {
-                    return param;
+                    // Nothing to convert -- but the *caller* records the target C type on whatever
+                    // comes back, and types are keyed by the expression itself. Handing back
+                    // `param`
+                    // therefore rewrites the operand's own type: `a[j]` used to make `j` an array.
+                    // So the no-op gets a wrapper of its own to carry the new type, exactly as the
+                    // integer cast visitor already does.
+                    return Pos(param);
                 }
             }
         } else {
@@ -104,6 +122,15 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
+        }
+        param = inBitvectorForm(that, param);
+        if (that instanceof CVoid) {
+            // A void expression has no value, and C forbids reading one -- but one still reaches
+            // here through the standard assert expansion `cond ? (void)0 : fail()`, whose two arms
+            // are both void, so the frontend unifies them into a common type. Since the value can
+            // never be read, any value of the target type will do. (Under integer arithmetic this
+            // never surfaced: there the conversion ignores the source type entirely.)
+            return type.getNullValue();
         }
         if (that instanceof CReal) {
             //noinspection unchecked
@@ -129,13 +156,39 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
-                    return param;
+                    return Pos(param); // see above: the no-op needs its own expression to be typed
                 }
             }
         } else {
             throw new UnsupportedFrontendElementException(
                     "Compound types are not directly supported!");
         }
+    }
+
+    /**
+     * Re-issues [param] in [that]'s bitvector representation when it still carries an integer SMT
+     * type.
+     *
+     * <p>Under bitvector arithmetic every integer value is a bitvector, but a few expressions are
+     * built without ever going through a semantic cast -- an array subscript or a synthesized array
+     * dimension arrives as a bare {@code Int} literal -- while every conversion below operates on
+     * the source's bitvector form and casts to it unchecked. That mismatch surfaced far from its
+     * cause, as {@code ClassCastException: IntType cannot be cast to BvType} inside a perfectly
+     * ordinary {@code castTo}.
+     *
+     * <p>Only a literal can be re-issued: its value is known, so the bitvector of [that]'s width
+     * holding the same value is exactly equivalent. A non-literal integer expression has no such
+     * image here and is left alone, so it still fails loudly rather than being silently mistyped.
+     */
+    private Expr<?> inBitvectorForm(CComplexType that, Expr<?> param) {
+        if (!(that instanceof CInteger) || param.getType() instanceof BvType) {
+            return param;
+        }
+        final Expr<?> simplified = ExprUtils.simplify(param);
+        if (simplified instanceof IntLitExpr lit) {
+            return that.getValue(lit.getValue().toString());
+        }
+        return param;
     }
 
     private Expr<FpType> handleFp(CReal type, Expr<?> param) {
@@ -173,7 +226,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(Fitsall type, Expr<?> param) {
-        return handleSignedConversion(type, param);
+        // Fitsall is unsigned -- that is what its SMT type and its literals are built from -- so a
+        // cast *to* it must produce an unsigned-typed expression. Sign-extending here instead left
+        // the result signed, contradicting the type it was cast to; comparing it against anything
+        // genuinely unsigned then unified a signed with an unsigned bitvector, which yields a
+        // signedness-less ("neutral") type that cannot be compared at all.
+        return handleUnsignedConversion(type, param);
     }
 
     @Override

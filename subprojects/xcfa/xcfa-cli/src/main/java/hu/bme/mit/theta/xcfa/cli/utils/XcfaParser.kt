@@ -24,6 +24,7 @@ import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -36,6 +37,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -49,11 +51,26 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
+/**
+ * Builds the XCFA for the configured input.
+ *
+ * Failures here do not propagate: they are logged and the process exits, so a caller cannot simply
+ * wrap this in a `try`. The two failure modes a caller CAN recover from are therefore handed back
+ * untouched when it asks for them, and only then:
+ * - [rethrowPointerSplitLimitation]: the base/offset pointer splitting of `--memory-model multi`
+ *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat`.
+ * - [rethrowByteGranularityLimitation]: a construct that needs byte granularity
+ *   ([RequiresByteAddressedMemoryException]), recoverable under `--memory-model bytes`.
+ *
+ * Every other failure is reported and exits as before.
+ */
 fun getXcfa(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
+  rethrowPointerSplitLimitation: Boolean = false,
+  rethrowByteGranularityLimitation: Boolean = false,
 ) =
   try {
     when (config.frontendConfig.inputType) {
@@ -115,12 +132,50 @@ fun getXcfa(
       }
     }
   } catch (e: Exception) {
+    // Give the caller its chance to retry under a memory model that has no pointer splitting at
+    // all, before anything is logged as a failure -- this build attempt is not the last word.
+    if (rethrowPointerSplitLimitation) {
+      e.pointerSplitLimitation()?.let { throw it }
+    }
+    if (rethrowByteGranularityLimitation) {
+      e.byteGranularityLimitation()?.let { throw it }
+    }
     if (config.debugConfig.stacktrace) e.printStackTrace()
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
-    logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
+    logger.write(Logger.Level.RESULT, "%s", "Frontend failed! ($location, $e)\n")
     exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
+
+/**
+ * The [UnsupportedPointerSplitException] in this throwable's cause chain, or null if the failure is
+ * something else entirely. The chain has to be walked because the frontend wraps failures on its
+ * way out (e.g. the retry-with-bitvector-arithmetic path in [parseC]).
+ */
+private fun Throwable.pointerSplitLimitation(): UnsupportedPointerSplitException? {
+  val seen = mutableSetOf<Throwable>()
+  var current: Throwable? = this
+  while (current != null && seen.add(current)) {
+    if (current is UnsupportedPointerSplitException) return current
+    current = current.cause
+  }
+  return null
+}
+
+/**
+ * The [RequiresByteAddressedMemoryException] in this throwable's cause chain, or null if the
+ * failure is something else. Walked for the same reason as [pointerSplitLimitation]: the frontend
+ * wraps failures on their way out.
+ */
+private fun Throwable.byteGranularityLimitation(): RequiresByteAddressedMemoryException? {
+  val seen = mutableSetOf<Throwable>()
+  var current: Throwable? = this
+  while (current != null && seen.add(current)) {
+    if (current is RequiresByteAddressedMemoryException) return current
+    current = current.cause
+  }
+  return null
+}
 
 private fun CFA.toXcfa(): XCFA {
   val xcfaBuilder = XcfaBuilder("chc")
@@ -175,25 +230,25 @@ private fun parseC(
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
               val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             is YamlScalar -> {
               val inputFile = Path(input.parent).resolve(files.content).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             else -> {
-              logger.info("Unexpected yml content: $files")
+              logger.info("%s", "Unexpected yml content: $files")
               input
             }
           }
         } else {
-          logger.info("Unexpected yml content: $parsedYaml")
+          logger.info("%s", "Unexpected yml content: $parsedYaml")
           input
         }
       } catch (ex: Exception) {
-        logger.info("Could not parse YAML data: ${ex.message}")
+        logger.info("%s", "Could not parse YAML data: ${ex.message}")
         input
       }
     } else {
@@ -233,7 +288,18 @@ private fun parseC(
       val stream = FileInputStream(input)
       getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
     } catch (e: Throwable) {
-      if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+      // The retry used to require `efficient`, which it never saw: FunctionVisitor resolves
+      // `efficient` into integer or bitvector before the parse gets far enough to fail, so by the
+      // time an exception arrives the arithmetic always reads as an explicit choice. The fallback
+      // was therefore dead for exactly the programs it was written for -- one whose bit
+      // manipulation the checker missed would fail with "only modelled over bitvectors" and never
+      // be retried. An automatically chosen encoding may be revised; an explicitly requested one
+      // may not.
+      val revisable =
+        parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient ||
+          (parseContext.isArithmeticAutoSelected &&
+            parseContext.arithmetic != ArchitectureConfig.ArithmeticType.bitvector)
+      if (revisable) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
@@ -245,7 +311,7 @@ private fun parseC(
         throw e
       }
     }
-  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
+  logger.benchmark("%s", "Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 
@@ -308,7 +374,7 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
-  logger.write(Logger.Level.VERBOSE, xcfa.toDot())
+  logger.write(Logger.Level.VERBOSE, "%s", xcfa.toDot())
   return xcfa
 }
 

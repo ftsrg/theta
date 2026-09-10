@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,34 +15,42 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
+import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
+import hu.bme.mit.theta.xcfa.utils.mallocVar
 
 /**
- * Transforms mallocs into address assignments. Requires the ProcedureBuilder be `deterministic`.
+ * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
+ * residue class (see `POINTER_BASE_CLASSES`).
+ *
+ * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
+ * and the object's size becomes the new one. A program must use realloc's return value whether or
+ * not the block moved, so returning the same base preserves the observable contents exactly and
+ * still gives the new bound to the memsafety size domain. What it does not model is the
+ * invalidation of the old pointer, the same imprecision the analysis already has around frees;
+ * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize.
+ *
+ * Requires the ProcedureBuilder be `deterministic`.
  */
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
-
-  companion object {
-    private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
-
-    private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
-      mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
-  }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
+    // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
+    // snapshot's init-procedure edges (see ensureMallocVar).
+    builder.firstAllocationRetType(parseContext, this::isMalloc)?.let {
+      builder.parent.ensureMallocVar(parseContext, it)
+    }
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
       if (
@@ -51,68 +59,72 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       ) {
         builder.removeEdge(edge)
         edges.forEach { e ->
-          if (predicate((e.label as SequenceLabel).labels[0])) {
-            val invokeLabel = e.label.labels[0] as InvokeLabel
-            val ret = invokeLabel.params[0] as RefExpr<*>
-            val arg = invokeLabel.params[1]
-            if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
-              builder.parent.addVar(
-                XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
-              )
-              if (MemsafetyPass.enabled) {
-                builder.parent.addVar(
-                  XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
-                )
-              }
-              val initProc = builder.parent.getInitProcedures().map { it.first }
-              check(initProc.size == 1) { "Multiple start procedure are not handled well" }
-              initProc.forEach { proc ->
-                val initAssign =
-                  StmtLabel(
-                    Assign(
-                      cast(mallocVar, mallocVar.type),
-                      cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type),
-                    )
-                  )
-                val newEdges =
-                  proc.initLoc.outgoingEdges.map {
-                    it.withLabel(
-                      SequenceLabel(
-                        listOf(initAssign) + it.label.getFlatLabels(),
-                        it.label.metadata,
-                      )
-                    )
-                  }
-                proc.initLoc.outgoingEdges.forEach(proc::removeEdge)
-                newEdges.forEach(proc::addEdge)
-              }
-            }
-            val assign1 =
-              AssignStmtLabel(
-                mallocVar,
-                Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
-                ret.type,
-                EmptyMetaData,
-              )
-            val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
-            val labels =
-              if (MemsafetyPass.enabled) {
-                val assign3 = builder.parent.allocate(parseContext, ret, arg)
-                listOf(assign1, assign2, assign3)
-              } else {
-                listOf(assign1, assign2)
-              }
-            builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-          } else {
+          val head = (e.label as SequenceLabel).labels[0]
+          if (!predicate(head)) {
             builder.addEdge(e)
+            return@forEach
           }
+          val invokeLabel = head as InvokeLabel
+          val labels =
+            if (isMalloc(invokeLabel)) allocate(builder, invokeLabel, mallocVar)
+            else reallocate(builder, invokeLabel)
+          builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
         }
       }
     }
     return builder
   }
 
-  private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name == "malloc"
+  private fun allocate(
+    builder: XcfaProcedureBuilder,
+    invokeLabel: InvokeLabel,
+    mallocVar: VarDecl<*>,
+  ): List<XcfaLabel> {
+    val ret = invokeLabel.params[0] as RefExpr<*>
+    val arg = invokeLabel.params[1]
+    val bump =
+      AssignStmtLabel(
+        mallocVar,
+        Add(
+          mallocVar.ref,
+          CComplexType.getType(ret, parseContext).getValue("$POINTER_BASE_CLASSES"),
+        ),
+        ret.type,
+        EmptyMetaData,
+      )
+    val assignRet =
+      AssignStmtLabel(
+        ret,
+        cast(
+          FlatMemoryPass.flatBaseExpr(
+            mallocVar.ref,
+            CComplexType.getType(ret, parseContext),
+            parseContext,
+          ),
+          ret.type,
+        ),
+      )
+    return if (MemsafetyPass.enabled) {
+      listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))
+    } else {
+      listOf(bump, assignRet)
+    }
   }
+
+  private fun reallocate(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): List<XcfaLabel> {
+    val ret = invokeLabel.params[0] as RefExpr<*>
+    val oldPtr = invokeLabel.params[1]
+    val newSize = invokeLabel.params[2]
+    val keepBase = AssignStmtLabel(ret, cast(oldPtr, ret.type))
+    return if (MemsafetyPass.enabled) {
+      listOf(keepBase, builder.parent.allocate(parseContext, ret, newSize))
+    } else {
+      listOf(keepBase)
+    }
+  }
+
+  private fun isMalloc(it: XcfaLabel): Boolean = it is InvokeLabel && it.name == "malloc"
+
+  private fun predicate(it: XcfaLabel): Boolean =
+    it is InvokeLabel && (it.name == "malloc" || it.name == "realloc")
 }

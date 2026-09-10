@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -39,9 +34,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
     while (true) {
       var foundOne = false
       for (edge in ArrayList(builder.getEdges())) {
-        val pred: (XcfaLabel) -> Boolean = { it ->
-          it is InvokeLabel && builder.parent.getProcedures().any { p -> p.name == it.name }
-        }
+        val pred: (XcfaLabel) -> Boolean = { builder.callsKnownProcedure(it) }
         val edges = edge.splitIf(pred)
         if (
           edges.size > 1 || (edges.size == 1 && pred((edges[0].label as SequenceLabel).labels[0]))
@@ -50,87 +43,22 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
           edges.forEach { e ->
             if (pred((e.label as SequenceLabel).labels[0])) {
               foundOne = true
-              val source = e.source
-              val target = e.target
               val invokeLabel: InvokeLabel = e.label.labels[0] as InvokeLabel
-              val procedure =
-                builder.parent.getProcedures().find { p -> p.name == invokeLabel.name }
-              checkNotNull(procedure)
+              val procedure = checkNotNull(builder.calleeOf(invokeLabel))
               val inlineIndex =
                 builder.manager.passes.indexOfFirst { phase ->
                   phase.any { pass -> pass is InlineProceduresPass }
                 }
               procedure.optimize(inlineIndex)
-
-              val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
-              procedure.getLocs().forEach { newLocs[it] = it.inlinedCopy() }
-              procedure.getVars().forEach { builder.addVar(it) }
-              procedure.getParams().forEach { builder.addVar(it.first) }
-              procedure.getEdges().forEach {
-                builder.addEdge(
-                  it
-                    .withSource(checkNotNull(newLocs[it.source]))
-                    .withTarget(checkNotNull(newLocs[it.target]))
-                )
-              }
-
-              val inStmts: MutableList<XcfaLabel> = ArrayList()
-              val outStmts: MutableList<XcfaLabel> = ArrayList()
-              for ((i, param) in procedure.getParams().withIndex()) {
-                if (param.second != ParamDirection.OUT) {
-                  val stmt =
-                    AssignStmt.of(
-                      cast(param.first, param.first.type),
-                      cast(
-                        CComplexType.getType(param.first.ref, parseContext)
-                          .castTo(invokeLabel.params[i]),
-                        param.first.type,
-                      ),
-                    )
-                  inStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
-                }
-
-                if (param.second != ParamDirection.IN) {
-                  val varDecl = (invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>
-                  val stmt =
-                    AssignStmt.of(
-                      cast(varDecl, param.first.type),
-                      cast(
-                        CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
-                        param.first.type,
-                      ),
-                    )
-                  outStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
-                }
-              }
-
-              val initLoc = procedure.initLoc
-              val finalLoc = procedure.finalLoc
-              val errorLoc = procedure.errorLoc
-
-              builder.addEdge(
-                XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts), e.metadata)
+              inlineCallSite(
+                builder = builder,
+                source = e.source,
+                target = e.target,
+                invokeLabel = invokeLabel,
+                callee = procedure.snapshotBody(),
+                parseContext = parseContext,
+                metadata = e.metadata,
               )
-              if (finalLoc.isPresent)
-                builder.addEdge(
-                  XcfaEdge(
-                    checkNotNull(newLocs[finalLoc.get()]),
-                    target,
-                    SequenceLabel(outStmts),
-                    EmptyMetaData,
-                  )
-                )
-              if (errorLoc.isPresent) {
-                if (builder.errorLoc.isEmpty) builder.createErrorLoc()
-                builder.addEdge(
-                  XcfaEdge(
-                    checkNotNull(newLocs[errorLoc.get()]),
-                    builder.errorLoc.get(),
-                    SequenceLabel(listOf(NopLabel)),
-                    EmptyMetaData,
-                  )
-                )
-              }
             } else {
               builder.addEdge(e)
             }
@@ -141,14 +69,5 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
         return builder
       }
     }
-  }
-
-  private fun XcfaLocation.inlinedCopy(): XcfaLocation {
-    return copy(
-      name = name + XcfaLocation.uniqueCounter(),
-      initial = false,
-      final = false,
-      error = false,
-    )
   }
 }

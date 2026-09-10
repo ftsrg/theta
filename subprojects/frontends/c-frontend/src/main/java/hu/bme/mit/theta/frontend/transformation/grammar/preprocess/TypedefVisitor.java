@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,11 +47,48 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                 .findFirst();
     }
 
+    /** The names this translation unit typedefs, for the parser to recognize as type names. */
+    public Set<String> getTypedefNames() {
+        return declarations.stream()
+                .map(CDeclaration::getName)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+    }
+
     public Optional<CSimpleType> getSimpleType(String id) {
         return declarations.stream()
                 .filter(cDeclaration -> cDeclaration.getName().equals(id))
                 .map(CDeclaration::getType)
                 .findFirst();
+    }
+
+    /**
+     * `typedef int (*handler)(int)` -- carries the function-pointer-ness on the TYPE, so that
+     * variables later declared with the typedef name are recognized as callable function pointers.
+     */
+    private static void markFunctionPointerTypedefs(List<CDeclaration> declarations) {
+        for (CDeclaration declaration : declarations) {
+            if (declaration.isFuncPointer()) {
+                declaration.getType().setFunctionPointer(true);
+            }
+        }
+    }
+
+    /**
+     * `typedef int arr_t[2]` -- carries the dimensions on the TYPE, so that variables later
+     * declared with the typedef name are arrays rather than scalars.
+     *
+     * <p>Exactly the same shape as {@link #markFunctionPointerTypedefs}: a declarator's brackets
+     * belong to the declaration that wrote them, and `arr_t a;` writes none of its own. Until this
+     * ran, such a variable was built as a scalar with no `alloca` behind it, so it had no size and
+     * its first element read was reported as an invalid dereference.
+     */
+    private static void markArrayTypedefs(List<CDeclaration> declarations) {
+        for (CDeclaration declaration : declarations) {
+            if (!declaration.getArrayDimensions().isEmpty()) {
+                declaration.getType().setTypedefArrayDimensions(declaration.getArrayDimensions());
+            }
+        }
     }
 
     @Override
@@ -61,6 +98,8 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
             List<CDeclaration> declarations =
                     declarationVisitor.getDeclarations(
                             ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+            markFunctionPointerTypedefs(declarations);
+            markArrayTypedefs(declarations);
             this.declarations.addAll(declarations);
             ret.addAll(declarations);
             return ret;
@@ -105,6 +144,8 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                     declarationVisitor.getDeclarations(
                             ctx.declaration().declarationSpecifiers(),
                             ctx.declaration().initDeclaratorList());
+            markFunctionPointerTypedefs(declarations);
+            markArrayTypedefs(declarations);
             ret.addAll(declarations);
             this.declarations.addAll(declarations);
             return ret;

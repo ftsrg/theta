@@ -38,7 +38,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
@@ -130,7 +130,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
-  var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
+  var loopUnroll: Int = UnrollPass.UNROLL_LIMIT,
   @Parameter(
     names = ["--memory-init"],
     description =
@@ -143,6 +143,12 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)",
   )
   var forceUnroll: Int = -1,
+  @Parameter(
+    names = ["--force-unroll-recursion"],
+    description =
+      "Number of times a recursive procedure call left over after inlining is expanded; calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe (use -1 to disable). Lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
+  )
+  var forceUnrollRecursion: Int = -1,
   @Parameter(
     names = ["--datarace-to-reachability"],
     description =
@@ -186,6 +192,17 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
+  @Parameter(
+    names = ["--memory-model"],
+    description =
+      "Pointer memory model: multi = 2-D arrays[base][offset] (default), flat = one flat address" +
+        " line as if every base were 0 (a pointer is a single scalar address), bytes = the flat" +
+        " line but byte-granular (every cell is one byte; wider scalars Concat/Extract). bytes" +
+        " requires bitvector arithmetic. Left unset, the model is multi, but the frontend may" +
+        " fall back to flat for programs multi cannot represent; passing this flag explicitly" +
+        " disables that fallback.",
+  )
+  var memoryModel: ArchitectureConfig.MemoryModelType? = null,
   @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
   var useCir2c: Boolean = false,
   @Parameter(
@@ -193,7 +210,25 @@ data class CFrontendConfig(
     description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
   )
   var cir2cDir: File = File("./cir2c"),
-) : SpecFrontendConfig
+  @Parameter(
+    names = ["--enable-signed-wraparound"],
+    description =
+      "Model signed integer overflow as modular (two's complement) wraparound. Signed overflow is" +
+        " undefined behavior before C23, so this is off by default; it is incompatible with" +
+        " overflow detection (no-overflow).",
+  )
+  var enableSignedWraparound: Boolean = false,
+) : SpecFrontendConfig {
+
+  /**
+   * The memory model actually in effect. [memoryModel] is null exactly when the user did not pass
+   * `--memory-model` at all, which is the only case in which the frontend is allowed to swap the
+   * model on its own (see the flat fallback in `frontend()`); an explicitly requested model -- even
+   * if it is the default `multi` -- is always honoured as given.
+   */
+  val effectiveMemoryModel: ArchitectureConfig.MemoryModelType
+    get() = memoryModel ?: ArchitectureConfig.MemoryModelType.multi
+}
 
 /** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
 enum class ChcCategory {

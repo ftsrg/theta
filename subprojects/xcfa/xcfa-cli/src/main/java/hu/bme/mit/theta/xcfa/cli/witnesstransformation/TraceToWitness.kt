@@ -62,7 +62,7 @@ fun traceToWitness(
   val isError =
     if (property.verifiedProperty == ErrorDetection.TERMINATION) {
       Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-    } else getXcfaErrorDetector(property.verifiedProperty)
+    } else getXcfaErrorDetector(property.verifiedProperty, parseContext)
 
   var lastNode: WitnessNode? = null
 

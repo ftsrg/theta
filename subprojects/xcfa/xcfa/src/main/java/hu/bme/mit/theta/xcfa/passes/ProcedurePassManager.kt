@@ -45,23 +45,48 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
+      // rewrites `&t[i]`
+      PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // must run before ReferenceElimination
+      AtomicFunctionsPass(parseContext),
+      // also before ReferenceElimination: the pointer arguments it writes through are still `&x`
+      // here, and once they are folded to a bare base id their pointee type is unrecoverable and
+      // the stub would silently model no write at all. Ahead of the instrumentation passes too,
+      // so those writes are checked for races and memory safety.
+      LibraryStubsPass(parseContext, uniqueWarningLogger),
     ),
-    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
+    listOf(
+      ReferenceElimination(parseContext),
+      // lowers to malloc + memset, so it precedes both
+      CallocFunctionPass(parseContext),
+      MallocFunctionPass(parseContext),
+      AllocaFunctionPass(parseContext),
+    ),
     listOf(
       // optimizing
       SimplifyExprsPass(parseContext, property),
-      LoopUnrollPass(),
+      UnrollPass(),
       EmptyEdgeRemovalPass(),
+    ),
+    listOf(
+      // makes indirect calls direct, so that inlining below can see them
+      FunctionPointerCallsPass(parseContext, uniqueWarningLogger)
     ),
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
-      NondetFunctionPass(),
+      NondetFunctionPass(parseContext),
     ),
     listOf(
       // Clean up procedures after inlining
       InlinedProcedureRemovalPass()
+    ),
+    listOf(
+      // again: inlining turns `&(deref B O)` call arguments into assignments the earlier run of
+      // this pass could not see, and no reference may survive into the analyses
+      ReferenceElimination(parseContext)
     ),
     listOf(
       EmptyEdgeRemovalPass(),
@@ -72,6 +97,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(StaticCoiPass()),
     listOf(
+      // before the memsafety/overflow guards, so those see cells constrained to their C type
+      NarrowCellRangePass(parseContext),
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
@@ -90,11 +117,18 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
         LbePass(parseContext),
         NormalizePass(), // needed after lbe, TODO
         DeterministicPass(), // needed after lbe, TODO
-        SimplifyExprsPass(parseContext),
+        SimplifyExprsPass(parseContext, property),
       )
     } ?: emptyList(),
-    listOf(DataRaceToReachabilityPass(property)),
+    listOf(DataRaceToReachabilityPass(property, parseContext)),
     listOf(OverflowDetectionPass(property, parseContext)),
+    // spells out the mem* copies before anything below havocs the same objects
+    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
+    // last of the passes consuming specific calls: everything left is havoced here
+    listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
+    // the memory-model passes, downstream of everything that creates or rewrites a dereference
+    listOf(FlatMemoryPass(parseContext)),
+    listOf(ByteMemoryPass(parseContext)),
     listOf(
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),
@@ -121,9 +155,20 @@ class NontermValidationPasses(
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
+      // rewrites `&t[i]`
+      PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // must run before ReferenceElimination
+      AtomicFunctionsPass(parseContext),
     ),
-    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
+    listOf(
+      ReferenceElimination(parseContext),
+      // lowers to malloc + memset, so it precedes both
+      CallocFunctionPass(parseContext),
+      MallocFunctionPass(parseContext),
+      AllocaFunctionPass(parseContext),
+    ),
     listOf(
       // optimizing
       UnusedLocRemovalPass()
@@ -137,7 +182,7 @@ class NontermValidationPasses(
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      NondetFunctionPass(),
+      NondetFunctionPass(parseContext),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),

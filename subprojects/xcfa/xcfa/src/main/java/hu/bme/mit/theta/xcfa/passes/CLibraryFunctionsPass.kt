@@ -18,15 +18,22 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -44,13 +51,20 @@ import java.math.BigInteger
  * their valuations (e.g. `m == 0`) are not legal C expressions over the original program; consumers
  * that emit C-expression constraints (e.g. violation witnesses) use this flag to exclude them.
  */
-class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : ProcedurePass {
+class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+
+  /**
+   * The C zero of the variable's own type. The pthread functions return `int`, which is the SMT
+   * `Int` only under integer arithmetic -- under bitvector arithmetic it is a `Bv`, and a hardcoded
+   * `Int(0)` is then a type error.
+   */
+  private fun zeroOf(expr: Expr<*>): Expr<*> = CComplexType.getType(expr, parseContext).nullValue
 
   private val supportedFunctions =
     setOf(
-      "printf",
-      "scanf",
+      "strcpy",
       "pthread_join",
+      "pthread_detach",
       "pthread_create",
       "pthread_mutex_lock",
       "pthread_mutex_unlock",
@@ -70,7 +84,6 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
     )
 
   companion object {
-    private var printfCounter = 0
 
     /**
      * Metadata flag (keyed by a variable's name, like `cName`) marking a global variable that
@@ -83,7 +96,7 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
 
   /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
   private fun markSynchronizationObject(handle: VarDecl<*>) {
-    parseContext?.metadata?.create(handle.name, SYNC_VAR_METADATA_KEY, true)
+    parseContext.metadata?.create(handle.name, SYNC_VAR_METADATA_KEY, true)
   }
 
   /** Best-effort tagging of the synchronization object referenced by parameter [index], if any. */
@@ -108,129 +121,158 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
             val invokeLabel = it.label.labels[0] as InvokeLabel
             val metadata = invokeLabel.metadata
             var target = it.target
-            val labels: List<XcfaLabel> =
-              when (invokeLabel.name) {
-                "printf" -> {
-                  val printfCounter = printfCounter++
-                  (2 until invokeLabel.params.size)
-                    .mapIndexed { index, param ->
-                      val expr = invokeLabel.params[param]
-                      val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
-                      builder.addVar(arg)
-                      AssignStmtLabel(arg, expr)
-                    }
-                    .run { ifEmpty { listOf(NopLabel) } }
-                }
 
-                "scanf" -> {
-                  check(invokeLabel.params.size >= 3) {
-                    "At least two parameters (format string and one variable) expected in scanf"
-                  }
-                  (2 until invokeLabel.params.size).map { index ->
-                    val param = invokeLabel.getParam(index)
-                    StmtLabel(HavocStmt.of(param), metadata = metadata)
-                  }
-                }
+            val addSingle = { label: XcfaLabel ->
+              builder.addEdge(XcfaEdge(it.source, target, SequenceLabel(listOf(label)), metadata))
+            }
+            val addSeq = { labels: List<XcfaLabel> ->
+              XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
+                .splitIf { label -> label is MutexUnlockLabel || label is MutexLockLabel }
+                .forEach(builder::addEdge)
+            }
 
-                "pthread_join" -> {
-                  val handle = invokeLabel.getParam(1)
+            // list of edges, where an edge consists of a list of labels (for a SequenceLabel)
+            when (invokeLabel.name) {
+              "strcpy" -> {
+                check(invokeLabel.params.size == 3) { "Two parameters expected for strcpy" }
+                val copySource = invokeLabel.params[2]
+                val copyTarget = invokeLabel.params[1]
+
+                val indexVar = Decls.Var("__strcpy_index_var", Int())
+                val initLabel = AssignStmtLabel(indexVar, Int(0))
+                val loc = XcfaLocation("${it.source.name}_strcpy", metadata = it.source.metadata)
+                val initEdge = XcfaEdge(it.source, loc, SequenceLabel(listOf(initLabel)), metadata)
+                builder.addEdge(initEdge)
+
+                val sourceDeref = Dereference.of(copySource, indexVar.ref, Int())
+                val targetDeref = Dereference.of(copyTarget, indexVar.ref, Int())
+
+                val continueAssume = StmtLabel(AssumeStmt.of(NeqExpr.create2(sourceDeref, Int(0))))
+                val copyCurrent = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
+                val increment =
+                  AssignStmtLabel(indexVar.ref, AddExpr.create2(listOf(indexVar.ref, Int(1))))
+                val copyLabel = SequenceLabel(listOf(continueAssume, copyCurrent, increment))
+                val copyEdge = XcfaEdge(loc, loc, copyLabel, metadata)
+                builder.addEdge(copyEdge)
+
+                val exitAssume = StmtLabel(AssumeStmt.of(EqExpr.create2(sourceDeref, Int(0))))
+                val exitLabel = SequenceLabel(listOf(exitAssume))
+                val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
+                builder.addEdge(exitEdge)
+              }
+
+              "pthread_join" -> {
+                val handle = invokeLabel.getParam(1)
+                addSeq(
                   listOf(
                     JoinLabel(handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
                   )
-                }
+                )
+              }
 
-                "pthread_create" -> {
-                  val handle = invokeLabel.getParam(1)
-                  val funcptr = invokeLabel.getParam(3)
-                  check(builder.parent.getProcedures().any { it.name == funcptr.name }) {
-                    "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
-                      "Only direct function symbols are supported as thread entry points."
-                  }
-                  val param = invokeLabel.params[4]
-                  // int(0) to solve StartLabel not handling return params
+              "pthread_create" -> {
+                val handle = invokeLabel.getParam(1)
+                val funcptr = invokeLabel.getParam(3)
+                check(builder.parent.getProcedures().any { it.name == funcptr.name }) {
+                  "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
+                    "Only direct function symbols are supported as thread entry points."
+                }
+                val param = invokeLabel.params[4]
+                // int(0) to solve StartLabel not handling return params
+                addSeq(
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0)),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
                   )
-                }
+                )
+              }
 
-                "pthread_mutex_lock" -> {
-                  val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(MutexLockLabel(handle, metadata))
-                }
+              "pthread_mutex_lock" -> {
+                val handle = invokeLabel.getMutexHandle(builder)
+                addSingle(MutexLockLabel(handle, metadata))
+              }
 
-                "pthread_mutex_unlock" -> {
-                  val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(MutexUnlockLabel(handle, metadata))
-                }
+              "pthread_mutex_unlock" -> {
+                val handle = invokeLabel.getMutexHandle(builder)
+                addSingle(MutexUnlockLabel(handle, metadata))
+              }
 
-                "pthread_mutex_trylock" -> {
-                  val handle = invokeLabel.getMutexHandle(builder)
-                  val ret = invokeLabel.getParam(0)
-                  listOf(MutexTryLockLabel(handle, ret, metadata))
-                }
+              "pthread_mutex_trylock" -> {
+                val handle = invokeLabel.getMutexHandle(builder)
+                val ret = invokeLabel.getParam(0)
+                addSingle(MutexTryLockLabel(handle, ret, metadata))
+              }
 
-                "pthread_rwlock_rdlock" -> {
-                  val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(RWLockReadLockLabel(handle, metadata))
-                }
+              "pthread_rwlock_rdlock" -> {
+                val handle = invokeLabel.getMutexHandle(builder)
+                addSingle(RWLockReadLockLabel(handle, metadata))
+              }
 
-                "pthread_rwlock_wrlock" -> {
-                  val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(RWLockWriteLockLabel(handle, metadata))
-                }
+              "pthread_rwlock_wrlock" -> {
+                val handle = invokeLabel.getMutexHandle(builder)
+                addSingle(RWLockWriteLockLabel(handle, metadata))
+              }
 
-                "pthread_rwlock_unlock" -> {
-                  val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(RWLockUnlockLabel(handle, metadata))
-                }
+              "pthread_rwlock_unlock" -> {
+                val handle = invokeLabel.getMutexHandle(builder)
+                addSingle(RWLockUnlockLabel(handle, metadata))
+              }
 
-                "pthread_cond_wait" -> {
-                  invokeLabel.markSyncParam(1) // the condition variable (non-scalar source type)
-                  val handle = invokeLabel.getMutexHandle(builder, 2)
-                  // Due to spurious wakeup, it is basically equivalent to unlock+lock
-                  listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata))
-                }
+              "pthread_cond_wait" -> {
+                invokeLabel.markSyncParam(1) // the condition variable (non-scalar source type)
+                val handle = invokeLabel.getMutexHandle(builder, 2)
+                // Due to spurious wakeup, it is basically equivalent to unlock+lock
+                addSeq(listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata)))
+              }
 
-                "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
-                "pthread_cond_signal", // No need for special handling due to spurious wakeup
-                "pthread_mutex_init",
-                "pthread_cond_init" -> {
-                  invokeLabel.markSyncParam(
-                    1
-                  ) // the mutex/condition object (non-scalar source type)
-                  listOf(NopLabel)
-                }
+              // Detaching only makes a thread unjoinable; it neither starts nor stops it, so it
+              // has no effect on what may race. Left unmodelled it survived as a call to a
+              // procedure that does not exist and brought down the race analysis' own procedure
+              // classifier ("Unknown procedure: pthread_detach", DataRaceUtils#
+              // getMultipleThreadsPerProcedure) -- which is reached only on the
+              // datarace-to-reachability path, so it never showed up in ordinary runs.
+              "pthread_detach",
+              "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
+              "pthread_cond_signal", // No need for special handling due to spurious wakeup
+              "pthread_mutex_init",
+              "pthread_cond_init" -> {
+                // the mutex/condition object (non-scalar source type)
+                invokeLabel.markSyncParam(1)
+                addSingle(NopLabel)
+              }
 
-                "pthread_exit" -> {
-                  target = builder.finalLoc.get()
+              "pthread_exit" -> {
+                target = builder.finalLoc.get()
 
-                  builder.parent.getProcedures().forEach { proc ->
-                    proc.getEdges().forEach { e ->
-                      if (
-                        e.getFlatLabels().any { l -> l is InvokeLabel && l.name == builder.name }
-                      ) {
-                        error("pthread_exit is not supported in invoked procedures")
-                      }
+                builder.parent.getProcedures().forEach { proc ->
+                  proc.getEdges().forEach { e ->
+                    if (e.getFlatLabels().any { l -> l is InvokeLabel && l.name == builder.name }) {
+                      error("pthread_exit is not supported in invoked procedures")
                     }
                   }
-
-                  listOf(NopLabel)
                 }
 
-                "pthread_key_create",
-                "pthread_getspecific",
-                "pthread_setspecific" -> {
-                  invokeLabel.isLibraryFunction = true
-                  listOf(invokeLabel)
-                }
-
-                else -> error("Unsupported library function ${invokeLabel.name}")
+                addSingle(NopLabel)
               }
-            XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
-              .splitIf { label -> label is MutexUnlockLabel || label is MutexLockLabel }
-              .forEach(builder::addEdge)
+
+              "pthread_key_create",
+              "pthread_getspecific",
+              "pthread_setspecific" -> {
+                invokeLabel.isLibraryFunction = true
+                addSingle(invokeLabel)
+              }
+
+              else -> error("Unsupported library function ${invokeLabel.name}")
+            }
           } else {
             builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
           }
@@ -257,12 +299,33 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
 
-  private fun Expr<*>.isLiteralZero(): Boolean =
+  private fun Expr<*>.asConstant(): BigInteger? =
     when (this) {
-      is IntLitExpr -> value == BigInteger.ZERO
-      is BvLitExpr -> value.all { !it }
-      else -> false
+      is IntLitExpr -> value
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
+      // A constant that has not been folded yet is still a constant. Unrolling substitutes the
+      // index but leaves the unsigned-wraparound wrapper the frontend put around it, so the offset
+      // of `&t[4]` arrives as `(mod 4 4294967296)` -- matching only a bare literal rejected the
+      // handle as "non-constant dereference offset" even though its value is perfectly known.
+      else ->
+        ExprUtils.simplify(this).let { simplified ->
+          when (simplified) {
+            is IntLitExpr -> simplified.value
+            is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(simplified)
+            else -> null
+          }
+        }
     }
+
+  /**
+   * A distinct thread/mutex handle per array element `t[i]`. A pthread handle is an identity key (a
+   * [VarDecl] the analysis maps to a thread id, matching a start to its join); an array of handles
+   * -- `pthread_t t[3]` with `pthread_create(&t[i], …)` / `pthread_join(t[i], …)` -- needs a
+   * distinct one per element, and `&t[i]` and `t[i]` for the same constant `i` must resolve to the
+   * *same* key. The element index has to be a compile-time constant, which is why the create/join
+   * loops are unrolled before this pass runs (see the extra [UnrollPass] in [CPasses]).
+   */
+  private val arrayElementHandles = mutableMapOf<Pair<VarDecl<*>, BigInteger>, VarDecl<*>>()
 
   private fun InvokeLabel.getParam(index: Int): VarDecl<*> {
     var param = params[index]
@@ -277,12 +340,22 @@ class CLibraryFunctionsPass(private val parseContext: ParseContext? = null) : Pr
         check(param.array is RefExpr<*>) {
           "Unsupported library parameter: expected reference base variable, got ${param.array}"
         }
-        check(param.offset.isLiteralZero()) {
-          "Unsupported library parameter: non-zero dereference offsets are not supported (${param.offset})"
-        }
-        val base = param.array as RefExpr<*>
-        check(base.decl is VarDecl<*>)
-        base.decl as VarDecl<*>
+        val base = (param.array as RefExpr<*>).decl
+        check(base is VarDecl<*>)
+        val offset =
+          checkNotNull(param.offset.asConstant()) {
+            // A non-constant offset is a not-yet-unrolled loop handle (`&t[i]`); the create/join
+            // loops are unrolled and their index folded (PthreadArrayHandleUnrollPass + the
+            // SimplifyExprsPass after it) before this pass runs.
+            "Unsupported library parameter: non-constant dereference offset (${param.offset})"
+          }
+        // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
+        // single-object cases -- while every higher element gets its own synthetic handle.
+        if (offset == BigInteger.ZERO) base
+        else
+          arrayElementHandles.getOrPut(base to offset) {
+            Decls.Var("${base.name}_$offset", base.type)
+          }
       }
 
       else -> error("Unsupported library parameter expression: $param")

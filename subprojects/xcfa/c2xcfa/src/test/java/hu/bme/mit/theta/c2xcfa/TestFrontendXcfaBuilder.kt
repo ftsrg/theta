@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,6 +55,10 @@ class TestFrontendXcfaBuilder {
         arrayOf("/22nondet.c"),
         arrayOf("/23exotic.c"),
         arrayOf("/24initializer.c"),
+        arrayOf("/25enum.c"),
+        arrayOf("/27selfrefstruct.c"),
+        arrayOf("/28heapstruct.c"),
+        arrayOf("/29builtins.c"),
       )
     }
   }

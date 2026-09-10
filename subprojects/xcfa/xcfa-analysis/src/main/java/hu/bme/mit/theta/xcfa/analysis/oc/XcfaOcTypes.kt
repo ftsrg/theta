@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -69,7 +69,8 @@ internal class XcfaEvent(
 
     internal fun uniqueClkId(): Int = clkCnt++
 
-    internal var memoryGarbage: IndexedConstDecl<*>? = null
+    /** The unconstrained initial write of each memory partition (see `XcfaToEventGraph`). */
+    internal var memoryGarbages: Set<IndexedConstDecl<*>> = setOf()
   }
 
   // A (memory) event is only considered enabled if the array and offset expressions are also known
@@ -94,7 +95,8 @@ internal class XcfaEvent(
   override fun sameMemory(other: Event): Boolean {
     other as XcfaEvent
     if (!super.sameMemory(other)) return false
-    if (const == memoryGarbage || other.const == memoryGarbage) return true
+    // (the partition is already known to be the same: super compares the declarations)
+    if (const in memoryGarbages || other.const in memoryGarbages) return true
     if (arrayLit != other.arrayLit) return false
     if (offsetLit != other.offsetLit) return false
     return potentialSameMemory(other)
@@ -102,7 +104,7 @@ internal class XcfaEvent(
 
   fun potentialSameMemory(other: XcfaEvent): Boolean {
     if (!super.sameMemory(other)) return false
-    if (const == memoryGarbage || other.const == memoryGarbage) return true
+    if (const in memoryGarbages || other.const in memoryGarbages) return true
     if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic)
       return false
     if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic)

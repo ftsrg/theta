@@ -20,12 +20,19 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Sub
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -33,20 +40,25 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.DereferenceAccessMap
 import hu.bme.mit.theta.xcfa.utils.READ
 import hu.bme.mit.theta.xcfa.utils.VarAccessMap
+import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.getPotentialRacingVars
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
+import java.math.BigInteger
 
 /**
  * Reduces data race checking to reachability checking by adding write access flags for each global
  * variable write access, and checks for multiple access and each global variable access (writes and
  * reads).
  */
-class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Boolean? = null) :
-  ProcedurePass {
+class DataRaceToReachabilityPass(
+  private val property: XcfaProperty,
+  private val parseContext: ParseContext? = null,
+  enabled: Boolean? = null,
+) : ProcedurePass {
 
   private val enabled: Boolean = enabled ?: Companion.enabled
 
@@ -55,6 +67,11 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
 
     private val potentialRacingVars = mutableMapOf<XcfaBuilder, Set<VarDecl<*>>>()
 
+    /**
+     * How many threads are currently accessing the variable. A counter, not a flag: several threads
+     * may hold a read at once, and with a flag the first of them to finish would clear it while the
+     * others are still reading, so a concurrent write would no longer see a conflict.
+     */
     private val writeFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
     private val readFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
     private val VarDecl<*>.writeFlag: VarDecl<IntType>
@@ -63,21 +80,67 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
     private val VarDecl<*>.readFlag: VarDecl<IntType>
       get() = readFlagVars[this]!!
 
-    private val derefArrayWriteFlagVar = Decls.Var("_deref_array_write", Int())
-    private val derefOffsetWriteFlagVar = Decls.Var("_deref_offset_write", Int())
-    private val derefArrayReadFlagVar = Decls.Var("_deref_array_read", Int())
-    private val derefOffsetReadFlagVar = Decls.Var("_deref_offset_read", Int())
-    private val Expr<*>.derefArrayWriteFlag: VarDecl<IntType>
-      get() = derefArrayWriteFlagVar.also { check(type == Int()) }
+    /**
+     * A dereference flag holds the array (or offset) value a thread is currently accessing, with a
+     * sentinel meaning "no access in flight". The components of a pointer are not always IntType --
+     * bitvector architectures and the non-default memory models produce BvType ones -- so a flag is
+     * kept per component type rather than a single IntType one.
+     */
+    private val derefFlagVars = mutableMapOf<Pair<String, Type>, VarDecl<*>>()
 
-    private val Expr<*>.derefOffsetWriteFlag: VarDecl<IntType>
-      get() = derefOffsetWriteFlagVar.also { check(type == Int()) }
+    private fun derefFlagVar(kind: String, type: Type): VarDecl<*> =
+      derefFlagVars.getOrPut(kind to type) {
+        val suffix = type.toString().filter { it.isLetterOrDigit() }
+        Decls.Var("_deref_${kind}_$suffix", type)
+      }
 
-    private val Expr<*>.derefArrayReadFlag: VarDecl<IntType>
-      get() = derefArrayReadFlagVar.also { check(type == Int()) }
+    /** A value no real address takes, marking "this thread is not accessing anything". */
+    private fun <T : Type> noAccess(type: T): LitExpr<T> {
+      @Suppress("UNCHECKED_CAST")
+      return when (type) {
+        is IntType -> Int(-1) as LitExpr<T>
+        is BvType ->
+          BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.valueOf(-1), type.size) as LitExpr<T>
+        else -> error("Cannot detect races on dereferences with component type $type")
+      }
+    }
 
-    private val Expr<*>.derefOffsetReadFlag: VarDecl<IntType>
-      get() = derefOffsetReadFlagVar.also { check(type == Int()) }
+    private fun clearFlag(flag: VarDecl<*>): XcfaLabel = AssignStmtLabel(flag, noAccess(flag.type))
+
+    /**
+     * The flags this program needs, one per (kind, component type) pair actually dereferenced. They
+     * have to exist before the init edge is built, so the whole builder is scanned up front instead
+     * of letting them appear lazily as each procedure is processed.
+     */
+    private fun derefFlags(xcfaBuilder: XcfaBuilder): List<VarDecl<*>> =
+      xcfaBuilder
+        .getProcedures()
+        .asSequence()
+        .flatMap { it.getEdges() }
+        .flatMap { it.getFlatLabels() }
+        .flatMap { it.dereferencesWithAccessType.keys }
+        .flatMap { deref ->
+          listOf(
+            deref.array.derefArrayWriteFlag,
+            deref.offset.derefOffsetWriteFlag,
+            deref.array.derefArrayReadFlag,
+            deref.offset.derefOffsetReadFlag,
+          )
+        }
+        .distinct()
+        .toList()
+
+    private val Expr<*>.derefArrayWriteFlag: VarDecl<*>
+      get() = derefFlagVar("array_write", type)
+
+    private val Expr<*>.derefOffsetWriteFlag: VarDecl<*>
+      get() = derefFlagVar("offset_write", type)
+
+    private val Expr<*>.derefArrayReadFlag: VarDecl<*>
+      get() = derefFlagVar("array_read", type)
+
+    private val Expr<*>.derefOffsetReadFlag: VarDecl<*>
+      get() = derefFlagVar("offset_read", type)
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -98,6 +161,17 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
       val branching = loc.outgoingEdges.size > 1
       val allVarsToCheck = mutableSetOf<VarDecl<*>>()
       val allDereferencesToCheck = mutableSetOf<Dereference<*, *, *>>()
+      // A branching location flags the accesses of *every* branch condition once, on the edge into
+      // the branch, so each branch has to clear exactly that set again -- collect it up front, or a
+      // branch would leave the accesses only its siblings mention flagged forever.
+      if (branching && !initialPhase) {
+        loc.outgoingEdges.forEach { edge ->
+          edge.getFlatLabels().firstOrNull()?.let { label ->
+            allVarsToCheck.addAll(racingVars(label, potentialRacingVars).keys)
+            allDereferencesToCheck.addAll(racingDereferences(label, builder).keys)
+          }
+        }
+      }
 
       loc.outgoingEdges.toSet().forEachIndexed { index0, edge ->
         var atomic = incomingAtomic
@@ -117,29 +191,28 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
             if (label is AtomicBeginLabel) atomic = true
             if (label is AtomicEndLabel) atomic = false
 
-            val vars = label.collectVarsWithAccessType().filter { it.key in potentialRacingVars }
-            val dereferences = label.dereferencesWithAccessType
-
-            if (vars.isEmpty() && dereferences.isEmpty()) return@mapIndexed listOf(label) to null
-            anyChange = true
+            val vars = racingVars(label, potentialRacingVars)
+            val dereferences = racingDereferences(label, builder)
 
             if (branching && firstLabel) {
-              vars.forEach { (v, access) ->
+              (vars.values + dereferences.values).forEach { access ->
                 check(!access.isWritten && access.isRead)
-                allVarsToCheck.add(v)
               }
-              dereferences.forEach { (dereference, access) ->
-                check(!access.isWritten && access.isRead)
-                allDereferencesToCheck.add(dereference)
-              }
+              if (allVarsToCheck.isEmpty() && allDereferencesToCheck.isEmpty())
+                return@mapIndexed listOf(label) to null
+              anyChange = true
+              // Clears what the edge into the branch flagged, which is the aggregate of every
+              // branch condition -- this branch's own accesses may be only part of it.
               return@mapIndexed getNewLabelsForAccesses(
-                vars,
-                dereferences,
+                allVarsToCheck.associateWith { READ },
+                allDereferencesToCheck.associateWith { READ },
                 label,
                 skipPreLabels = true,
               )
             }
 
+            if (vars.isEmpty() && dereferences.isEmpty()) return@mapIndexed listOf(label) to null
+            anyChange = true
             getNewLabelsForAccesses(vars, dereferences, label)
           }
 
@@ -181,6 +254,22 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
     return builder
   }
 
+  private fun racingVars(label: XcfaLabel, potentialRacingVars: Set<VarDecl<*>>): VarAccessMap =
+    label.collectVarsWithAccessType().filter { it.key in potentialRacingVars }
+
+  /**
+   * `_Atomic` data cannot be raced on, so an access through a pointer that addresses it is not a
+   * conflicting access and must not be instrumented. (Variables are filtered by
+   * `potentialRacingVars` instead.)
+   */
+  private fun racingDereferences(
+    label: XcfaLabel,
+    builder: XcfaProcedureBuilder,
+  ): DereferenceAccessMap =
+    label.dereferencesWithAccessType.filterKeys { deref ->
+      parseContext == null || !deref.addressesAtomicData(builder.parent.getVars(), parseContext)
+    }
+
   private fun getNewLabelsForAccesses(
     vars: VarAccessMap,
     dereferences: DereferenceAccessMap,
@@ -217,26 +306,26 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
     val unsetLabels = mutableListOf<XcfaLabel>()
     vars.forEach { (v, access) ->
       if (access.isWritten) {
-        setLabels.add(AssignStmtLabel(v.writeFlag, Int(1)))
-        unsetLabels.add(AssignStmtLabel(v.writeFlag, Int(0)))
+        setLabels.add(AssignStmtLabel(v.writeFlag, Add(v.writeFlag.ref, Int(1))))
+        unsetLabels.add(AssignStmtLabel(v.writeFlag, Sub(v.writeFlag.ref, Int(1))))
       }
       if (access.isRead) {
-        setLabels.add(AssignStmtLabel(v.readFlag, Int(1)))
-        unsetLabels.add(AssignStmtLabel(v.readFlag, Int(0)))
+        setLabels.add(AssignStmtLabel(v.readFlag, Add(v.readFlag.ref, Int(1))))
+        unsetLabels.add(AssignStmtLabel(v.readFlag, Sub(v.readFlag.ref, Int(1))))
       }
     }
     dereferences.forEach { (deref, access) ->
       if (access.isWritten) {
         setLabels.add(AssignStmtLabel(deref.array.derefArrayWriteFlag, deref.array))
         setLabels.add(AssignStmtLabel(deref.offset.derefOffsetWriteFlag, deref.offset))
-        unsetLabels.add(AssignStmtLabel(deref.array.derefArrayWriteFlag, Int(-1)))
-        unsetLabels.add(AssignStmtLabel(deref.offset.derefOffsetWriteFlag, Int(-1)))
+        unsetLabels.add(clearFlag(deref.array.derefArrayWriteFlag))
+        unsetLabels.add(clearFlag(deref.offset.derefOffsetWriteFlag))
       }
       if (access.isRead) {
         setLabels.add(AssignStmtLabel(deref.array.derefArrayReadFlag, deref.array))
         setLabels.add(AssignStmtLabel(deref.offset.derefOffsetReadFlag, deref.offset))
-        unsetLabels.add(AssignStmtLabel(deref.array.derefArrayReadFlag, Int(-1)))
-        unsetLabels.add(AssignStmtLabel(deref.offset.derefOffsetReadFlag, Int(-1)))
+        unsetLabels.add(clearFlag(deref.array.derefArrayReadFlag))
+        unsetLabels.add(clearFlag(deref.offset.derefOffsetReadFlag))
       }
     }
 
@@ -336,17 +425,10 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
             StmtLabel(AssignStmt.of(v.writeFlag, Int(0))),
             StmtLabel(AssignStmt.of(v.readFlag, Int(0))),
           )
-        } +
-          listOf(
-            StmtLabel(AssignStmt.of(derefArrayWriteFlagVar, Int(-1))),
-            StmtLabel(AssignStmt.of(derefOffsetWriteFlagVar, Int(-1))),
-            StmtLabel(AssignStmt.of(derefArrayReadFlagVar, Int(-1))),
-            StmtLabel(AssignStmt.of(derefOffsetReadFlagVar, Int(-1))),
-          )
-      xcfaBuilder.addVar(XcfaGlobalVar(derefArrayWriteFlagVar, Int(-1), atomic = true))
-      xcfaBuilder.addVar(XcfaGlobalVar(derefOffsetWriteFlagVar, Int(-1), atomic = true))
-      xcfaBuilder.addVar(XcfaGlobalVar(derefArrayReadFlagVar, Int(-1), atomic = true))
-      xcfaBuilder.addVar(XcfaGlobalVar(derefOffsetReadFlagVar, Int(-1), atomic = true))
+        } + derefFlags(xcfaBuilder).map { clearFlag(it) }
+      derefFlags(xcfaBuilder).forEach {
+        xcfaBuilder.addVar(XcfaGlobalVar(it, noAccess(it.type), atomic = true))
+      }
 
       val newLoc =
         XcfaLocation("${initProcedure.initLoc.name}_dr", metadata = initProcedure.initLoc.metadata)

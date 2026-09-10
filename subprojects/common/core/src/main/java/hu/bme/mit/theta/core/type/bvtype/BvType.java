@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,6 +70,15 @@ public class BvType
 
     public boolean getSigned() {
         return signed != null && signed;
+    }
+
+    /**
+     * The signedness as declared, which may be {@code null}: a "neutral" bitvector carries no
+     * signedness at all and cannot be compared (see {@link #Lt}). Unlike {@link #getSigned()}, this
+     * does not collapse "neutral" into "unsigned".
+     */
+    public Boolean getSignedness() {
+        return signed;
     }
 
     @Override

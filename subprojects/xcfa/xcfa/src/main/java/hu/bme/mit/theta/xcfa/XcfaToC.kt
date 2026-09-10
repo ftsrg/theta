@@ -21,6 +21,11 @@ import hu.bme.mit.theta.core.type.*
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr
@@ -51,6 +56,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cboo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CLongLong
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
@@ -310,6 +316,12 @@ private fun CComplexType.toC(): String =
     is CUnsignedInt -> "unsigned int"
     is CChar -> "char"
     is CBool -> "_Bool"
+    // `typeName` is the type's *internal* canonical name -- the key the architecture's width table
+    // is keyed on -- and it is not always C: `long long` is spelled `longlong` there. Printed
+    // verbatim it yielded a file that does not parse. It went unnoticed only because the parser
+    // used
+    // to fall back to a permissive mode, which took `longlong` for a typedef'd type name.
+    is CLongLong -> "long long"
     else -> this.typeName
   }
 
@@ -481,6 +493,10 @@ fun Expr<*>.cOperator() =
     is NotExpr -> "!"
     // is ModExpr<*> -> "%" // handled above
     is DivExpr<*> -> "/"
+    // Unary plus, whatever the type. Only the integer one happens to label itself "+"; the
+    // bitvector one says "bvpos", which is not C -- and falling through to `operatorLabel` below
+    // would emit it verbatim and produce a file that does not parse.
+    is PosExpr<*> -> "+"
 
     is UnaryExpr<*, *> -> operatorLabel
     is BinaryExpr<*, *> -> operatorLabel
