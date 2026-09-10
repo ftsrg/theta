@@ -93,6 +93,8 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
      * such variables, as their integer encoding (e.g. `m == 0`) is not a valid C expression.
      */
     const val SYNC_VAR_METADATA_KEY = "synchronizationObject"
+
+    private var uniqueCounter = 0
   }
 
   /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
@@ -140,7 +142,8 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val copyTarget = invokeLabel.params[1]
 
                 val type = copySource.type
-                val indexVar = Decls.Var("__strcpy_index_var", type)
+                val indexVar = Decls.Var("__theta_strcpy_index_var_${uniqueCounter++}", type)
+                builder.addVar(indexVar)
                 val initLabel = AssignStmtLabel(indexVar, type.integerOf(0))
                 val loc = XcfaLocation("${it.source.name}_strcpy", metadata = it.source.metadata)
                 val initEdge = XcfaEdge(it.source, loc, SequenceLabel(listOf(initLabel)), metadata)
