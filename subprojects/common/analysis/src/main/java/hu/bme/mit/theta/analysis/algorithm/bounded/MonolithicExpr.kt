@@ -38,8 +38,9 @@ constructor(
   val ctrlVars: Collection<VarDecl<*>> = listOf(),
   val events: List<Event<VarDecl<*>>> =
     splitTransExpr(transExpr).map { MonolithicExprEvent(it, transOffsetIndex) },
+  val explicitSplit: List<Expr<BoolType>>? = null,
 ) {
-  val split: List<Expr<BoolType>> by lazy { splitTransExpr(transExpr) }
+  val split: List<Expr<BoolType>> by lazy { explicitSplit ?: splitTransExpr(transExpr) }
 }
 
 fun MonolithicExpr.action() =
