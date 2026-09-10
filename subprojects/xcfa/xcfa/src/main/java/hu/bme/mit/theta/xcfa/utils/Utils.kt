@@ -174,7 +174,7 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     is StartLabel ->
       StartLabel(
         name,
-        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
+        params.map { ExprUtils.simplify(it, valuation).withCTypeOf(parseContext, it) },
         pidVar,
         metadata,
         tempLookup,
@@ -189,7 +189,7 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
         // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
         // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
         // SMT type instead -- carry it over, as the statement branches above do.
-        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
+        params.map { ExprUtils.simplify(it, valuation).withCTypeOf(parseContext, it) },
         metadata,
         tempLookup,
         isLibraryFunction,
@@ -199,6 +199,24 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
     else -> this
   }
+
+/**
+ * [metadataSource]'s C type, recorded on this expression when it has none of its own.
+ *
+ * Unlike [withMetadata] this never wraps: a call argument is matched syntactically by the passes
+ * that lower the call (`MemoryFunctionsPass` looks for the pointer of a `memset`), and a wrapper
+ * makes the argument unrecognizable, so the call is left as an `InvokeLabel` that later stages
+ * refuse outright.
+ */
+private fun <T : Type> Expr<T>.withCTypeOf(
+  parseContext: ParseContext,
+  metadataSource: Expr<*>,
+): Expr<T> {
+  if (!parseContext.metadata.getMetadataValue(metadataSource, "cType").isPresent) return this
+  if (parseContext.metadata.getMetadataValue(this, "cType").isPresent) return this
+  parseContext.metadata.create(this, "cType", CComplexType.getType(metadataSource, parseContext))
+  return this
+}
 
 private fun <T : Type> Expr<T>.withMetadata(
   parseContext: ParseContext,
