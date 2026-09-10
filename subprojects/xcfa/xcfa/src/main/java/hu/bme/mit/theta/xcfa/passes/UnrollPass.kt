@@ -566,7 +566,11 @@ class UnrollPass(
           val inEdge = inEdges.first()
           val vars = inEdge.label.collectVarsWithAccessType()
           if (vars[loopVar].isWritten) {
-            if (vars.size > 1) return@run null
+            // Other variables on the same edge are fine: [count] replays the whole edge from an
+            // empty state, so they are assigned along the way, and a loop variable whose value
+            // stays unknown makes the count give up on its own. Demanding the edge touch nothing
+            // else lost every loop whose initialization shares an edge with an unrelated one --
+            // a global counter beside the allocation counter, say.
             loopVarInit = inEdge
             break
           }
