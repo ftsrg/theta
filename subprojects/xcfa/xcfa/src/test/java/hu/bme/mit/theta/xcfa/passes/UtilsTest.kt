@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,6 +57,43 @@ class UtilsTest {
     val simplified = label.simplify(MutableValuation(), parseContext) as InvokeLabel
 
     Assertions.assertEquals(p.ref, simplified.params[0])
+  }
+
+  /** A folded argument takes the C type the original argument carried. */
+  @Test
+  fun simplifyCarriesTheCTypeOntoAFoldedArgument() {
+    val parseContext = ParseContext()
+    val n = Var("n", Int())
+    val signed = CSignedInt(null, parseContext)
+    val argument = Add(listOf(n.ref, Int(1)))
+    parseContext.metadata.create(argument, "cType", signed)
+    val valuation = MutableValuation()
+    valuation.put(n, Int(5))
+    val label = InvokeLabel("f", listOf(argument), EmptyMetaData, mapOf())
+
+    val simplified = (label.simplify(valuation, parseContext) as InvokeLabel).params[0]
+
+    Assertions.assertEquals(Int(6), simplified)
+    Assertions.assertEquals(
+      signed,
+      parseContext.metadata.getMetadataValue(simplified, "cType").get(),
+    )
+  }
+
+  /** Without a recorded C type on the original there is nothing to carry over. */
+  @Test
+  fun simplifyLeavesAnUntypedArgumentUntyped() {
+    val parseContext = ParseContext()
+    val n = Var("n", Int())
+    val argument = Add(listOf(n.ref, Int(1)))
+    val valuation = MutableValuation()
+    valuation.put(n, Int(5))
+    val label = StartLabel("t", listOf(argument), Var("pid", Int()), EmptyMetaData)
+
+    val simplified = (label.simplify(valuation, parseContext) as StartLabel).params[0]
+
+    Assertions.assertEquals(Int(6), simplified)
+    Assertions.assertFalse(parseContext.metadata.getMetadataValue(simplified, "cType").isPresent)
   }
 
   companion object {
