@@ -43,11 +43,6 @@ import hu.bme.mit.theta.xcfa.utils.isRead
  */
 class StringLiteralInitPass : ProcedurePass {
 
-  private companion object {
-    /** The frontend names each string literal's storage `__theta_str<n>`. */
-    val STRING_LITERAL = Regex("""__theta_str\d+$""")
-  }
-
   private var unread: Set<VarDecl<*>>? = null
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -142,6 +137,7 @@ class StringLiteralInitPass : ProcedurePass {
     }
 }
 
+/** The frontend names each string literal's storage `__theta_str<n>`. */
 private val STRING_LITERAL_NAME = Regex("""__theta_str\d+$""")
 
 private fun VarDecl<*>.isStringLiteral() = STRING_LITERAL_NAME.containsMatchIn(name)
