@@ -167,7 +167,11 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   StmtLabel(
                     AssumeStmt.of(EqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
                   )
-                val exitLabel = SequenceLabel(listOf(exitAssume))
+                // strcpy copies the terminating null byte as well; leaving it out left the
+                // destination unterminated, so reading the byte past the copied characters gave
+                // whatever was there before. `sourceDeref` is the zero the assume just pinned.
+                val copyTerminator = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
+                val exitLabel = SequenceLabel(listOf(exitAssume, copyTerminator))
                 val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
                 builder.addEdge(exitEdge)
               }
