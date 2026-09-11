@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,16 +18,83 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.Stmts.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.simplify
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 class UtilsTest {
+
+  /**
+   * The passes that lower a call match its arguments syntactically, so simplification must hand
+   * back the argument itself rather than a wrapper carrying the same C type. A wrapped pointer made
+   * `memset` unrecognizable, and the `InvokeLabel` left behind was refused by the monolithic
+   * backends.
+   */
+  @Test
+  fun simplifyKeepsCallArgumentsUnwrapped() {
+    val parseContext = ParseContext()
+    val p = Var("p", Int())
+    val signed = CSignedInt(null, parseContext)
+    parseContext.metadata.create(p.ref, "cType", signed)
+    // An argument that folds back to `p`, but whose own recorded type differs from `p`'s: this is
+    // what used to make the carried-over type wrap the result instead of just labelling it.
+    val argument = Add(listOf(p.ref, Int(0)))
+    parseContext.metadata.create(argument, "cType", CPointer(null, signed, parseContext))
+    val label = InvokeLabel("memset", listOf(argument), EmptyMetaData, mapOf())
+
+    val simplified = label.simplify(MutableValuation(), parseContext) as InvokeLabel
+
+    Assertions.assertEquals(p.ref, simplified.params[0])
+  }
+
+  /** A folded argument takes the C type the original argument carried. */
+  @Test
+  fun simplifyCarriesTheCTypeOntoAFoldedArgument() {
+    val parseContext = ParseContext()
+    val n = Var("n", Int())
+    val signed = CSignedInt(null, parseContext)
+    val argument = Add(listOf(n.ref, Int(1)))
+    parseContext.metadata.create(argument, "cType", signed)
+    val valuation = MutableValuation()
+    valuation.put(n, Int(5))
+    val label = InvokeLabel("f", listOf(argument), EmptyMetaData, mapOf())
+
+    val simplified = (label.simplify(valuation, parseContext) as InvokeLabel).params[0]
+
+    Assertions.assertEquals(Int(6), simplified)
+    Assertions.assertEquals(
+      signed,
+      parseContext.metadata.getMetadataValue(simplified, "cType").get(),
+    )
+  }
+
+  /** Without a recorded C type on the original there is nothing to carry over. */
+  @Test
+  fun simplifyLeavesAnUntypedArgumentUntyped() {
+    val parseContext = ParseContext()
+    val n = Var("n", Int())
+    val argument = Add(listOf(n.ref, Int(1)))
+    val valuation = MutableValuation()
+    valuation.put(n, Int(5))
+    val label = StartLabel("t", listOf(argument), Var("pid", Int()), EmptyMetaData)
+
+    val simplified = (label.simplify(valuation, parseContext) as StartLabel).params[0]
+
+    Assertions.assertEquals(Int(6), simplified)
+    Assertions.assertFalse(parseContext.metadata.getMetadataValue(simplified, "cType").isPresent)
+  }
 
   companion object {
 
