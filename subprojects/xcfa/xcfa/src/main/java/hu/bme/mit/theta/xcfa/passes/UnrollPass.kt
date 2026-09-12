@@ -603,13 +603,41 @@ class UnrollPass(
         exitEdges = exits,
         properlyUnrollable = properlyUnrollable,
         forceUnrollLimit = forceUnrollLimit,
-        // Never for a global loop variable: another thread could write it, so its per-iteration
-        // value is not a constant of the copy, and baking one in would hide a race or a
-        // memory-safety violation on whatever the loop indexes.
-        substituteLoopVar =
-          substituteLoopVar && builder.parent.getVars().none { it.wrappedVar == loopVar },
+        substituteLoopVar = substituteLoopVar && builder.substitutes(loopVar),
         parseContext = parseContext,
       )
       .also { if (it in testedLoops) return null }
   }
+
+  /**
+   * Whether [loopVar] holds a value each unrolled copy can bake in.
+   *
+   * A global that another thread writes does not: its per-iteration value is not a constant of the
+   * copy, and substituting one would hide a race or a memory-safety violation on whatever the loop
+   * indexes. No other thread can write it when the loop sits in an init procedure -- which runs
+   * once -- and no other procedure writes the variable at all. Thread-creation loops index their
+   * handle array with exactly such a counter (`pthread_create(&t[i], ...)` with a file-scope `i`),
+   * and CLibraryFunctionsPass needs the index folded to a constant to key a handle on it.
+   */
+  private fun XcfaProcedureBuilder.substitutes(loopVar: VarDecl<*>?): Boolean {
+    if (parent.getVars().none { it.wrappedVar == loopVar }) return true
+    if (parent.getInitProcedures().none { it.first.name == name }) return false
+    val elsewhere =
+      writtenElsewhere
+        ?: parent
+          .getProcedures()
+          .filter { it.name != name }
+          .flatMapTo(mutableSetOf<VarDecl<*>>()) { procedure ->
+            procedure.getEdges().flatMap { edge ->
+              edge.label.collectVarsWithAccessType().filterValues { it.isWritten }.keys
+            }
+          }
+          .also { writtenElsewhere = it }
+    return loopVar !in elsewhere
+  }
+
+  /**
+   * Globals written outside the procedure being unrolled; scanned once, it is a whole-XCFA walk.
+   */
+  private var writtenElsewhere: Set<VarDecl<*>>? = null
 }
