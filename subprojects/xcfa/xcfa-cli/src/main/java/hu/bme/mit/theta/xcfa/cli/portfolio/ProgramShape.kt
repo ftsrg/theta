@@ -22,11 +22,11 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 /**
  * Whether a bounded engine can *finish* on this program, rather than only look for a bug.
  *
- * Two things have to hold. No procedure's control-flow graph may contain a cycle, so every execution
- * is finite and a bounded check that reaches the longest path has proved safety outright rather than
- * guessed at it. And the unrolling that produced this XCFA has to have been exhaustive: a
- * force-unrolled loop is cycle-free only because the executions past the bound were dropped, and the
- * checkers already refuse a `safe` verdict in that case, so leading with a bounded engine would
+ * Two things have to hold. No procedure's control-flow graph may contain a cycle, so every
+ * execution is finite and a bounded check that reaches the longest path has proved safety outright
+ * rather than guessed at it. And the unrolling that produced this XCFA has to have been exhaustive:
+ * a force-unrolled loop is cycle-free only because the executions past the bound were dropped, and
+ * the checkers already refuse a `safe` verdict in that case, so leading with a bounded engine would
  * spend the slice on an answer that cannot be returned.
  *
  * Only the shape of the graph is read, never the name of anything in it.

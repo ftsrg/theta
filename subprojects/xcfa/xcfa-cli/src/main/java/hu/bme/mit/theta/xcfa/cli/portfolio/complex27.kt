@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -33,6 +34,8 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.PTR
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.TERMINATION
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
 /**
@@ -204,6 +207,54 @@ fun complex27(
       )
     }
 
+    /**
+     * The leading configuration again, but with the program re-read under bitvector arithmetic.
+     *
+     * `efficient` resolves to integer wherever integer can express the program, and that is the
+     * right first bet: on the tasks both encodings can parse, integer solves more than bitvector in
+     * every algorithm measured, and solves it faster. It is not a free win though -- bitvector
+     * still decides several hundred tasks per algorithm that integer cannot -- so once the integer
+     * attempt is spent, the last slice pays for a re-parse and tries the other encoding.
+     *
+     * Interpolation has to move with the encoding: Z3's legacy API refuses to interpolate
+     * bitvectors, so this configuration interpolates on MathSAT whatever the rest of the chain
+     * uses.
+     */
+    fun bitvectorRetry(timeout: Long, solver: String): ConfigNode {
+      val adapted =
+        baseCegarConfig.adaptConfig(
+          inProcess = inProcess,
+          domain = PRED_CART,
+          refinement = Refinement.BW_BIN_ITP,
+          exprSplitter = ExprSplitterOptions.WHOLE,
+          timeoutMs = timeout,
+          abstractionSolver = solver,
+          refinementSolver = solver,
+        )
+      return ConfigNode(
+        "PRED_CART-BW_BIN_ITP-bitvector-$solver-$inProcess",
+        XcfaConfig<CFrontendConfig, CegarConfig>(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx = null, // re-read the program: the parsed one is integer-encoded
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
+            ),
+          frontendConfig =
+            FrontendConfig(
+              lbeLevel = LbePass.defaultLevel,
+              loopUnroll = UnrollPass.UNROLL_LIMIT,
+              inputType = InputType.C,
+              specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
+            ),
+          backendConfig = adapted.backendConfig.copy(parseInProcess = true),
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
+    }
+
     val complex =
       ConfigNode(
         "Complex-$inProcess",
@@ -312,15 +363,22 @@ fun complex27(
     val bmcAlt: String
     when (mainTrait) {
       FLOAT -> {
-        itpSolver = "cvc5:1.2.0"; itpAlt = "Z3"; bmcSolver = "cvc5:1.2.0"; bmcAlt = "Z3:new"
+        itpSolver = "cvc5:1.2.0"
+        itpAlt = "Z3"
+        bmcSolver = "cvc5:1.2.0"
+        bmcAlt = "Z3:new"
       }
       BITWISE -> {
-        itpSolver = "mathsat:5.6.12"; itpAlt = "mathsat:5.6.10"
-        bmcSolver = "Z3:new"; bmcAlt = "mathsat:5.6.12"
+        itpSolver = "mathsat:5.6.12"
+        itpAlt = "mathsat:5.6.10"
+        bmcSolver = "Z3:new"
+        bmcAlt = "mathsat:5.6.12"
       }
       else -> {
-        itpSolver = "Z3"; itpAlt = "mathsat:5.6.12"
-        bmcSolver = "Z3:new"; bmcAlt = "mathsat:5.6.12"
+        itpSolver = "Z3"
+        itpAlt = "mathsat:5.6.12"
+        bmcSolver = "Z3:new"
+        bmcAlt = "mathsat:5.6.12"
       }
     }
 
@@ -352,11 +410,14 @@ fun complex27(
 
             wire(steps)
 
-            // Whatever budget is left goes back to the strongest configuration rather than to a
-            // sixth algorithm: past this point the measured marginal gain of another algorithm is
-            // in the tens of tasks, while the leader still has answers arriving well beyond its
-            // first slice.
-            val lastResort = lead(RETRY_SLICE_MS, itpAlt)
+            // The last slice changes the encoding rather than the algorithm. Past this point
+            // another algorithm is worth tens of tasks, while the encoding the frontend did not
+            // pick is worth several hundred per algorithm. It is skipped where it cannot pay:
+            // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
+            // reproduce the same XCFA, and a float program has no bitvector encoding at all.
+            val lastResort =
+              if (mainTrait == BITWISE || mainTrait == FLOAT) lead(RETRY_SLICE_MS, itpAlt)
+              else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
             steps.last().first then lastResort
             steps.last().second then lastResort
 

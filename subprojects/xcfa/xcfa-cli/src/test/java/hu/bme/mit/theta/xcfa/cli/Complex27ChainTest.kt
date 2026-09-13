@@ -18,8 +18,10 @@ package hu.bme.mit.theta.xcfa.cli
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode
 import hu.bme.mit.theta.xcfa.cli.portfolio.Node
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
@@ -33,8 +35,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * The COMPLEX27 chain is ordered and budgeted from measurement, so these lock in the properties that
- * measurement paid for: which configuration runs first, that the slices fit the competition's
+ * The COMPLEX27 chain is ordered and budgeted from measurement, so these lock in the properties
+ * that measurement paid for: which configuration runs first, that the slices fit the competition's
  * limit, and that a solver failure is absorbed by a different solver rather than by skipping ahead.
  */
 class Complex27ChainTest {
@@ -72,9 +74,7 @@ class Complex27ChainTest {
       program,
       emptySet(),
       parseContext,
-      XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(
-        debugConfig = DebugConfig(debug = true)
-      ),
+      XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(debugConfig = DebugConfig(debug = true)),
       NullLogger.getInstance(),
       NullLogger.getInstance(),
     )
@@ -171,5 +171,44 @@ class Complex27ChainTest {
       val family = { n: String -> n.substringBeforeLast("-").substringBeforeLast("-") }
       assertEquals(family(node.name), family(twin.name), "twin changes more than the solver")
     }
+  }
+
+  private fun arithmeticOf(node: ConfigNode): ArithmeticType? =
+    (node.config.frontendConfig.specConfig as? CFrontendConfig)?.arithmetic
+
+  @Test
+  fun theLastSliceRetriesUnderTheOtherEncoding() {
+    // `efficient` resolves to integer wherever integer can express the program, and on the tasks
+    // both encodings can parse integer solves more in every algorithm measured. Bitvector still
+    // decides several hundred per algorithm that integer cannot, so the final slice re-reads the
+    // program under it rather than spending the budget on a sixth algorithm.
+    val stm = stmFor(looping())
+    // The COMPLEX portfolio is appended after the chain as a catch-all; the encoding retry is the
+    // last configuration this portfolio chooses itself.
+    val lastOwn = chain(stm).last { !it.startsWith("Complex") }
+    val last = nodesOf(stm).first { it.name == lastOwn }
+    assertEquals(ArithmeticType.bitvector, arithmeticOf(last), "last slice was ${last.name}")
+    assertTrue(last.config.inputConfig.xcfaWCtx == null, "the retry must re-parse, not reuse")
+    assertTrue(last.name.contains("mathsat"), "bitvector interpolation needs MathSAT: ${last.name}")
+  }
+
+  @Test
+  fun aBitwiseProgramDoesNotPayForAnEncodingRetry() {
+    // `efficient` has already resolved to bitvector for a bitwise program, so re-parsing under
+    // bitvector would rebuild the same XCFA and spend the slice for nothing.
+    val ctx = ParseContext().apply { addArithmeticTrait(ArithmeticTrait.BITWISE) }
+    val stm = stmFor(looping(), ctx)
+    assertTrue(
+      nodesOf(stm).none { arithmeticOf(it) == ArithmeticType.bitvector },
+      "a bitwise program should not re-parse under bitvector",
+    )
+  }
+
+  @Test
+  fun aFloatProgramDoesNotRetryUnderBitvector() {
+    // Floats have no bitvector encoding to fall back to.
+    val ctx = ParseContext().apply { addArithmeticTrait(ArithmeticTrait.FLOAT) }
+    val stm = stmFor(looping(), ctx)
+    assertTrue(nodesOf(stm).none { arithmeticOf(it) == ArithmeticType.bitvector })
   }
 }
