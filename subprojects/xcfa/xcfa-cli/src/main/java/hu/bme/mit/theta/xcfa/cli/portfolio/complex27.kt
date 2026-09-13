@@ -352,23 +352,35 @@ fun complex27(
 
     // Which solver each kind of configuration runs on, and what it falls back to.
     //
-    // Interpolation is the binding constraint. Z3's legacy API is the only Z3 that interpolates at
-    // all, and it refuses bitvectors outright ("theory not supported by interpolation"), so a
-    // bitwise program has to interpolate on MathSAT from the first step rather than rediscover this
-    // one configuration at a time. Floats are the mirror image: cvc5 decides them, so it leads and
-    // Z3 backs it up.
+    // This is decided by the theories the program actually contains, not by which chain it takes.
+    // The two are independent: `mainTrait` picks the *order* of algorithms, but the encoding comes
+    // from the frontend, and a pointer-manipulating program full of bitwise operators is encoded
+    // over bitvectors while still being routed down the pointer chain. Keying the solver off the
+    // chain sent exactly those programs to Z3, whose legacy API is the only Z3 that interpolates
+    // and which refuses bitvectors outright ("theory not supported by interpolation").
+    //
+    // Floats outrank bitvectors here: MathSAT rejects the combination with
+    // "FP<->BV combination unsupported by the current configuration", so a program with both has to
+    // go to cvc5, which decides them together.
+    val bitvectorEncoded =
+      parseContext.arithmetic == ArithmeticType.bitvector ||
+        ArithmeticTrait.BITWISE in parseContext.arithmeticTraits
+    val hasFloats = ArithmeticTrait.FLOAT in parseContext.arithmeticTraits
+
     val itpSolver: String
     val itpAlt: String
     val bmcSolver: String
     val bmcAlt: String
-    when (mainTrait) {
-      FLOAT -> {
+    when {
+      hasFloats -> {
         itpSolver = "cvc5:1.2.0"
-        itpAlt = "Z3"
+        // Falling back to MathSAT is only safe while there are no bitvectors to combine floats
+        // with; when there are, stay inside the family that decides the combination at all.
+        itpAlt = if (bitvectorEncoded) "cvc5:1.0.8" else "mathsat:5.6.12"
         bmcSolver = "cvc5:1.2.0"
         bmcAlt = "Z3:new"
       }
-      BITWISE -> {
+      bitvectorEncoded -> {
         itpSolver = "mathsat:5.6.12"
         itpAlt = "mathsat:5.6.10"
         bmcSolver = "Z3:new"
@@ -416,7 +428,7 @@ fun complex27(
             // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
             // reproduce the same XCFA, and a float program has no bitvector encoding at all.
             val lastResort =
-              if (mainTrait == BITWISE || mainTrait == FLOAT) lead(RETRY_SLICE_MS, itpAlt)
+              if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
               else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
             steps.last().first then lastResort
             steps.last().second then lastResort

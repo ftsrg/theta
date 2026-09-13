@@ -69,6 +69,19 @@ class Complex27ChainTest {
       main.start()
     }
 
+  /** Dereferences something, so the trait chain resolves to PTR rather than BITWISE. */
+  private fun pointerProgram() =
+    xcfa("") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          (init to "L0") { "x".assign("(deref 1 0 Int)") }
+          ("L0" to "L0") { "x".assign("(+ x 1)") }
+          ("L0" to final) { assume("(= x 3)") }
+        }
+      main.start()
+    }
+
   private fun stmFor(program: XCFA, parseContext: ParseContext = ParseContext()): STM =
     complex27(
       program,
@@ -140,6 +153,47 @@ class Complex27ChainTest {
     listOf(looping(), loopFree()).forEach { program ->
       val total = timeouts(stmFor(program)).sum()
       assertTrue(total <= budgetMs, "chain budget was $total ms for $program")
+    }
+  }
+
+  /**
+   * A program with pointers *and* bitwise operators takes the pointer chain but is encoded over
+   * bitvectors, and `PTR` is tested before `BITWISE`, so this is the common case rather than a
+   * corner one. Z3's legacy API is the only Z3 that interpolates and it refuses bitvectors, so
+   * keying the solver off the chain instead of the encoding wasted every interpolating slice.
+   */
+  @Test
+  fun aPointerProgramWithBitwiseOpsStillInterpolatesOnMathSat() {
+    val ctx =
+      ParseContext().apply {
+        addArithmeticTrait(ArithmeticTrait.BITWISE)
+        arithmetic = ArithmeticType.bitvector
+      }
+    val interpolating =
+      nodesOf(stmFor(pointerProgram(), ctx)).filter { "ITP" in it.name && "BMC" !in it.name }
+    assertTrue(interpolating.isNotEmpty(), "no interpolating configuration in the chain")
+    interpolating.forEach {
+      assertTrue(it.name.contains("mathsat"), "interpolating on a non-MathSAT solver: ${it.name}")
+    }
+  }
+
+  /**
+   * MathSAT refuses floats and bitvectors together ("FP<->BV combination unsupported"), so a
+   * program carrying both has to go to cvc5 even though bitvectors alone would pick MathSAT.
+   */
+  @Test
+  fun floatsAndBitvectorsTogetherGoToCvc5() {
+    val ctx =
+      ParseContext().apply {
+        addArithmeticTrait(ArithmeticTrait.FLOAT)
+        addArithmeticTrait(ArithmeticTrait.BITWISE)
+        arithmetic = ArithmeticType.bitvector
+      }
+    val interpolating =
+      nodesOf(stmFor(pointerProgram(), ctx)).filter { "ITP" in it.name && "BMC" !in it.name }
+    assertTrue(interpolating.isNotEmpty())
+    interpolating.forEach {
+      assertTrue(it.name.contains("cvc5"), "float+bitvector must use cvc5: ${it.name}")
     }
   }
 
