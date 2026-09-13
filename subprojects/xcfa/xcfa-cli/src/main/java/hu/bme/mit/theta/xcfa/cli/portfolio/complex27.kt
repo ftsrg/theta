@@ -35,6 +35,19 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
+/**
+ * Per-configuration slices of the 900 s budget.
+ *
+ * Sized from a 16-configuration sweep of the whole suite: 80 % of every configuration's correct
+ * answers arrive within 16 s and 95 % within 25-120 s, so a long slice buys very little while a
+ * configuration that never gets a slice costs everything it would have solved. Breadth first, and
+ * only the leader gets an extended second attempt. The previous chain spent 300+300+200+150 ms =
+ * 950 s of slices inside a 900 s limit, so its last configuration could never run at all.
+ */
+private const val LEAD_SLICE_MS = 150_000L
+private const val NEXT_SLICE_MS = 100_000L
+private const val RETRY_SLICE_MS = 200_000L
+
 fun complex27(
   xcfa: XCFA,
   mcm: MCM,
@@ -50,7 +63,7 @@ fun complex27(
   val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
 
-  fun getStm(mainTrait: MainTrait, inProcess: Boolean): STM {
+  fun getStm(mainTrait: MainTrait, loopFree: Boolean, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
 
     fun cegar(
@@ -270,128 +283,100 @@ fun complex27(
       return node
     }
 
+    /**
+     * One step of the chain: a configuration and the same configuration on a different solver.
+     *
+     * A solver failure says nothing about whether the *next algorithm* would work -- it is a
+     * property of the solver, not of the program -- so it must not consume the next step's slice.
+     * The twin absorbs it and rejoins the chain where the primary left off.
+     */
+    fun step(make: (Long, String) -> ConfigNode, ms: Long, solver: String, alt: String) =
+      make(ms, solver) to make(ms, alt)
+
+    fun wire(steps: List<Pair<ConfigNode, ConfigNode>>) {
+      steps.zipWithNext { (primary, _), (next, _) -> primary then next }
+      steps.forEach { (primary, twin) -> primary onSolverError twin }
+      steps.zipWithNext { (_, twin), (next, _) -> twin then next }
+    }
+
+    // Which solver each kind of configuration runs on, and what it falls back to.
+    //
+    // Interpolation is the binding constraint. Z3's legacy API is the only Z3 that interpolates at
+    // all, and it refuses bitvectors outright ("theory not supported by interpolation"), so a
+    // bitwise program has to interpolate on MathSAT from the first step rather than rediscover this
+    // one configuration at a time. Floats are the mirror image: cvc5 decides them, so it leads and
+    // Z3 backs it up.
+    val itpSolver: String
+    val itpAlt: String
+    val bmcSolver: String
+    val bmcAlt: String
+    when (mainTrait) {
+      FLOAT -> {
+        itpSolver = "cvc5:1.2.0"; itpAlt = "Z3"; bmcSolver = "cvc5:1.2.0"; bmcAlt = "Z3:new"
+      }
+      BITWISE -> {
+        itpSolver = "mathsat:5.6.12"; itpAlt = "mathsat:5.6.10"
+        bmcSolver = "Z3:new"; bmcAlt = "mathsat:5.6.12"
+      }
+      else -> {
+        itpSolver = "Z3"; itpAlt = "mathsat:5.6.12"
+        bmcSolver = "Z3:new"; bmcAlt = "mathsat:5.6.12"
+      }
+    }
+
+    val lead = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.BW_BIN_ITP) }
+    val explSeq = { ms: Long, solver: String -> cegar(ms, solver, EXPL, Refinement.SEQ_ITP) }
+    val predSeq = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.SEQ_ITP) }
+
     val (startingConfig, endConfig) =
       if (xcfa.isInlined) {
         when (mainTrait) {
-          BITWISE -> {
+          MULTITHREAD -> multithread to multithread
+          TERMINATION -> termination to termination
+          else -> {
+            val predCartBw = step(lead, LEAD_SLICE_MS, itpSolver, itpAlt)
+            val boundedBmc = step(bmc, NEXT_SLICE_MS, bmcSolver, bmcAlt)
+            val explicitSeq = step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
+            val boundedKind = step(kind, NEXT_SLICE_MS, bmcSolver, bmcAlt)
+            val predCartSeq = step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
 
-            val kind = kind(300_000, "Z3:new")
-            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmc = bmc(150_000, "Z3:new")
+            // Bounded engines lead when they are the ones that can *finish*: with no cycle in any
+            // procedure every execution is finite, so a bounded check that reaches the longest path
+            // has proved safety. Non-linear arithmetic leads with them for the opposite reason --
+            // interpolation over non-linear terms is where the refinement loop stalls, so the
+            // engines that never interpolate get their slice before the ones that do.
+            val steps =
+              if (loopFree || mainTrait == NONLIN_INT)
+                listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+              else listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
 
-            val kindMS = kind(300_000, "mathsat:5.6.12")
-            val pred_bwMS =
-              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
+            wire(steps)
 
-            kind then pred_bw then expl then bmc
+            // Whatever budget is left goes back to the strongest configuration rather than to a
+            // sixth algorithm: past this point the measured marginal gain of another algorithm is
+            // in the tens of tasks, while the leader still has answers arriving well beyond its
+            // first slice.
+            val lastResort = lead(RETRY_SLICE_MS, itpAlt)
+            steps.last().first then lastResort
+            steps.last().second then lastResort
 
-            kindMS onSolverError kind
-            pred_bwMS onSolverError pred_bw
-            explMS onSolverError expl
-
-            kindMS then pred_bwMS then explMS then bmcMS
-
-            kindMS to bmcMS
-          }
-          FLOAT -> {
-            // CVC by default, Z3 as fallback
-
-            val kind = kind(300_000, "Z3:new")
-            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmc = bmc(150_000, "Z3:new")
-
-            val kindCVC = kind(300_000, "cvc5:1.2.0")
-            val pred_bwCVC = cegar(300_000, "cvc5:1.2.0", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explCVC = cegar(200_000, "cvc5:1.2.0", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcCVC = bmc(150_000, "cvc5:1.2.0")
-
-            kind then pred_bw then expl then bmc
-
-            kindCVC onSolverError kind
-            pred_bwCVC onSolverError pred_bw
-            explCVC onSolverError expl
-            bmcCVC onSolverError bmc
-
-            kindCVC then pred_bwCVC then explCVC then bmcCVC
-
-            kindCVC to bmcCVC
-          }
-          PTR,
-          ARR,
-          NONLIN_INT,
-          LIN_INT -> {
-            val kind = kind(300_000, "Z3:new")
-            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmc = bmc(150_000, "Z3:new")
-
-            val kindMS = kind(300_000, "mathsat:5.6.12")
-            val pred_bwMS =
-              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
-
-            if (parseContext.memoryModel.byteAddressed()) {
-              // The byte-granular memory model lowers every wide access to a Concat/Extract of
-              // one-byte cells. Z3's CEGAR interpolation and its native BMC both time out on that
-              // memory (n array selects + a Concat per access), but a MathSAT BMC decides it in
-              // seconds -- once n-ary Concat is nested for SMT-LIB. In the stock chain BMC-MathSAT
-              // sits behind three long-timeout Z3 configs and is never reached, so here it runs
-              // first, with the Z3 CEGAR chain kept as the fallback for whatever BMC cannot bound.
-              bmcMS then kind then pred_bw then expl then bmc
-
-              kind onSolverError kindMS
-              pred_bw onSolverError pred_bwMS
-              expl onSolverError explMS
-
-              kindMS then pred_bwMS then explMS
-
-              bmcMS to bmc
-            } else {
-              kind then pred_bw then expl then bmc
-
-              kind onSolverError kindMS
-              pred_bw onSolverError pred_bwMS
-              expl onSolverError explMS
-
-              kindMS then pred_bwMS then explMS then bmcMS
-
-              kind to bmc
-            }
-          }
-
-          MULTITHREAD -> {
-            multithread to multithread
-          }
-          TERMINATION -> {
-            termination to termination
+            steps.first().first to lastResort
           }
         }
       } else {
-        val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-        val expl = cegar(300_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-        val pred_seq = cegar(150_000, "Z3", Domain.PRED_CART, Refinement.SEQ_ITP)
-        val expl_seq = cegar(150_000, "Z3", Domain.EXPL, Refinement.SEQ_ITP)
-
-        val pred_bwMS = cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-        val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-        val pred_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.SEQ_ITP)
-        val expl_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.EXPL, Refinement.SEQ_ITP)
-
-        pred_bw then expl then pred_seq then expl_seq
-
-        pred_bw onSolverError pred_bwMS
-        expl onSolverError explMS
-        pred_seq onSolverError pred_seqMS
-        expl_seq onSolverError expl_seqMS
-
-        pred_bwMS then explMS then pred_seqMS then expl_seqMS
-
-        pred_bw to expl_seq
+        // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
+        // CEGAR configurations are applicable.
+        val steps =
+          listOf(
+            step(lead, LEAD_SLICE_MS, itpSolver, itpAlt),
+            step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+            step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+          )
+        wire(steps)
+        val lastResort = lead(RETRY_SLICE_MS, itpAlt)
+        steps.last().first then lastResort
+        steps.last().second then lastResort
+        steps.first().first to lastResort
       }
 
     endConfig then complex
@@ -414,14 +399,17 @@ fun complex27(
 
   logger.benchmark("Using portfolio: $mainTrait\n")
 
-  val inProcessStm = getStm(mainTrait, true)
-  val notInProcessStm = getStm(mainTrait, false)
+  val loopFree = xcfa.boundedIsComplete
+  logger.benchmark("Bounded engines complete: $loopFree\n")
+
+  val inProcessStm = getStm(mainTrait, loopFree, true)
+  val notInProcessStm = getStm(mainTrait, loopFree, false)
 
   val inProcess = HierarchicalNode("InProcess", inProcessStm)
   val notInProcess = HierarchicalNode("NotInprocess", notInProcessStm)
 
   val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
 
-  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, false)
+  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, loopFree, false)
   else STM(inProcess, setOf(fallbackEdge))
 }
