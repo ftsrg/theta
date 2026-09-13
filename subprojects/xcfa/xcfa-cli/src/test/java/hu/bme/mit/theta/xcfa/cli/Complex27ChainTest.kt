@@ -20,6 +20,8 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode
@@ -82,12 +84,19 @@ class Complex27ChainTest {
       main.start()
     }
 
-  private fun stmFor(program: XCFA, parseContext: ParseContext = ParseContext()): STM =
+  private fun stmFor(
+    program: XCFA,
+    parseContext: ParseContext = ParseContext(),
+    property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
+  ): STM =
     complex27(
       program,
       emptySet(),
       parseContext,
-      XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(debugConfig = DebugConfig(debug = true)),
+      XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(
+        inputConfig = InputConfig(property = XcfaProperty(property)),
+        debugConfig = DebugConfig(debug = true),
+      ),
       NullLogger.getInstance(),
       NullLogger.getInstance(),
     )
@@ -264,5 +273,24 @@ class Complex27ChainTest {
     val ctx = ParseContext().apply { addArithmeticTrait(ArithmeticTrait.FLOAT) }
     val stm = stmFor(looping(), ctx)
     assertTrue(nodesOf(stm).none { arithmeticOf(it) == ArithmeticType.bitvector })
+  }
+
+  /**
+   * Measured over the whole suite, the property separates the algorithms better than any syntactic
+   * trait: on memory safety the explicit domain solves nearly twice what the strongest predicate
+   * configuration does, because a memory-safety proof turns on the concrete cells an access can
+   * reach.
+   */
+  @Test
+  fun memorySafetyLeadsWithTheExplicitDomain() {
+    val order = chain(stmFor(looping(), property = ErrorDetection.MEMSAFETY))
+    assertTrue(order.first().startsWith("EXPL-SEQ_ITP"), "first was ${order.first()}")
+  }
+
+  /** Reachability keeps the predicate leader, which is the strongest configuration there. */
+  @Test
+  fun reachabilityKeepsThePredicateLeader() {
+    val order = chain(stmFor(looping(), property = ErrorDetection.ERROR_LOCATION))
+    assertTrue(order.first().startsWith("PRED_CART-BW_BIN_ITP"), "first was ${order.first()}")
   }
 }

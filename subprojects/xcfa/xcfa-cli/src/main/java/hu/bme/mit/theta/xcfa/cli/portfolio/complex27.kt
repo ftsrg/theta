@@ -394,6 +394,9 @@ fun complex27(
       }
     }
 
+    val isMemsafety =
+      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.MEMSAFETY
+
     val lead = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.BW_BIN_ITP) }
     val explSeq = { ms: Long, solver: String -> cegar(ms, solver, EXPL, Refinement.SEQ_ITP) }
     val predSeq = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.SEQ_ITP) }
@@ -410,15 +413,28 @@ fun complex27(
             val boundedKind = step(kind, NEXT_SLICE_MS, bmcSolver, bmcAlt)
             val predCartSeq = step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
 
-            // Bounded engines lead when they are the ones that can *finish*: with no cycle in any
-            // procedure every execution is finite, so a bounded check that reaches the longest path
-            // has proved safety. Non-linear arithmetic leads with them for the opposite reason --
-            // interpolation over non-linear terms is where the refinement loop stalls, so the
-            // engines that never interpolate get their slice before the ones that do.
+            // What the program is being checked *for* turns out to separate the algorithms better
+            // than anything about its syntax: measured over the whole suite, choosing per property
+            // is worth roughly twice what choosing per benchmark family is worth, with a fraction
+            // of the freedom to overfit.
+            //
+            // Memory safety is where it pays. The explicit domain solves nearly twice what the
+            // strongest predicate configuration does there -- a memory-safety proof turns on the
+            // concrete cells an access can reach, which explicit tracking represents directly and
+            // predicate abstraction has to rediscover one predicate at a time.
+            //
+            // Loop-freeness still outranks it: a bounded engine that can reach the longest path
+            // does not merely do well, it *finishes*. Non-linear arithmetic leads with the bounded
+            // engines for the opposite reason -- interpolation over non-linear terms is where the
+            // refinement loop stalls.
             val steps =
-              if (loopFree || mainTrait == NONLIN_INT)
-                listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
-              else listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
+              when {
+                loopFree -> listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+                isMemsafety -> listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
+                mainTrait == NONLIN_INT ->
+                  listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+                else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
+              }
 
             wire(steps)
 
@@ -457,6 +473,16 @@ fun complex27(
     return STM(startingConfig, edges)
   }
 
+  // Only three of these values still change what the portfolio does: TERMINATION and MULTITHREAD
+  // hand the program to a different portfolio, and NONLIN_INT reorders the chain. PTR, ARR, FLOAT,
+  // BITWISE and LIN_INT all fall through to the same chain now.
+  //
+  // They used to select the solver, which was actively wrong: PTR is tested before BITWISE and
+  // almost every real program dereferences something, so a bitwise program took the pointer branch
+  // and interpolated on a Z3 that refuses bitvectors. The solver now comes from the theories the
+  // program actually contains, and the ordering from the property and the shape of the control
+  // flow -- measured over the suite, the property separates the algorithms about twice as well as
+  // the benchmark family does, and the family barely beats picking one algorithm for everything.
   val mainTrait =
     when {
       portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION ->
