@@ -43,6 +43,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisi
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.SourceTraitCollector;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
@@ -498,6 +499,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
         List<CParser.ExternalDeclarationContext> globalUsages =
                 globalDeclUsageVisitor.getGlobalUsages(ctx);
+
+        SourceTraitCollector.collect(parseContext, globalUsages);
 
         // if arithemetic is set on efficient, we change it to either bv or int arithmetic here
         if (parseContext.getArithmetic()
