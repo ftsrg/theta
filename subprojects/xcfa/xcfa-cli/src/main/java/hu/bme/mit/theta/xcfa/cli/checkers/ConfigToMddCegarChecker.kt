@@ -23,6 +23,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.MddCegarChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.refinement.createBwBinItpCheckerFactory
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.expr.refinement.createSeqItpCheckerFactory
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
@@ -36,6 +38,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.MddCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.MddCegarRefinement
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -52,18 +55,32 @@ fun getMddCegarChecker(
 
   val solverPool = SolverPool(solverFactory)
 
+  val refinementSolverFactory: SolverFactory =
+    if (
+      mddCegarConfig.refinementSolver.isEmpty() ||
+        mddCegarConfig.refinementSolver == mddCegarConfig.solver
+    )
+      solverFactory
+    else getSolver(mddCegarConfig.refinementSolver, mddCegarConfig.validateSolver)
+  val traceCheckerFactory =
+    when (mddCegarConfig.refinement) {
+      MddCegarRefinement.SEQ_ITP -> createSeqItpCheckerFactory(refinementSolverFactory)
+      MddCegarRefinement.FW_BIN_ITP -> createFwBinItpCheckerFactory(refinementSolverFactory)
+      MddCegarRefinement.BW_BIN_ITP -> createBwBinItpCheckerFactory(refinementSolverFactory)
+    }
+
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     MddCegarChecker(
       monolithicExpr,
       solverPool,
       logger,
-      createSeqItpCheckerFactory(solverFactory),
+      traceCheckerFactory,
       iterationStrategy = mddCegarConfig.iterationStrategy,
-      useReachConstraint = mddCegarConfig.reachConstraint,
       useOnTheFlyReachability = mddCegarConfig.onTheFlyReachability,
       traceTimeout = mddCegarConfig.traceTimeout,
       lookAheadStrategy = mddCegarConfig.lookAheadStrategy,
       proofStrategy = mddCegarConfig.proofStrategy,
+      literalPlacement = mddCegarConfig.literalPlacement,
       traceSearch = mddCegarConfig.traceSearch,
     )
   }

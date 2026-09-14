@@ -64,6 +64,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public static final MddGraph.Key<MddToExprStrategy> LOOK_AHEAD =
             new MddGraph.Key<>("lookAheadStrategy");
 
+    public static final MddGraph.Key<MddApproximation> APPROXIMATION =
+            new MddGraph.Key<>("approximation");
+
     public enum MddToExprStrategy {
         NONE {
             @Override
@@ -229,7 +232,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     && !explicitRepresentation.isComplete()
                     && explicitRepresentation.getCacheView().defaultValue() == null
                     && !mddVariable.isNullOrZero(childNode)) {
-                explicitRepresentation.cacheNode(key, childNode);
+                cacheExploredEdge(key, childNode);
                 completeIfBoolFullyCached();
             }
         }
@@ -246,6 +249,26 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             repr = cont.getRepresentation();
         }
         return (MddExpressionRepresentation) repr;
+    }
+
+    private void cacheExploredEdge(final int key, final MddNode childNode) {
+        final MddApproximation approximation = approximation();
+        if (explicitRepresentation.getSize() < approximation.getEdgeLimit()) {
+            explicitRepresentation.cacheNode(key, childNode);
+            return;
+        }
+        switch (approximation.getStrategy()) {
+            case NONE -> throw new NotSolvableException();
+            case UNDER -> {
+                explicitRepresentation.setComplete();
+                approximation.reportUnderApproximated();
+            }
+        }
+    }
+
+    private MddApproximation approximation() {
+        final var configured = mddVariable.getMddGraph().getAttribute(APPROXIMATION);
+        return configured == null ? MddApproximation.exact() : configured;
     }
 
     /** A bool decl has exactly the keys 0 and 1, so deciding both makes the node complete. */
@@ -331,7 +354,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             }
         }
         if (!mddVariable.isNullOrZero(childNode)) {
-            explicitRepresentation.cacheNode(key, childNode);
+            cacheExploredEdge(key, childNode);
         } else {
             // remember the absence, so the key is not queried again
             explicitRepresentation.cacheNegative(key);
@@ -438,9 +461,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         void cacheNode(int key, MddNode node) {
             Preconditions.checkState(!complete);
             Preconditions.checkState(defaultValue == null);
-            if (this.cache.size() > 1000) {
-                throw new NotSolvableException();
-            }
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
         }
@@ -677,10 +697,20 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         extendedModel.put(decl, literal);
                         modelToCache = extendedModel;
                     }
+                    cacheModel(modelToCache);
+                    final int key = LitExprConverter.toInt(literal);
+                    if (currentRepresentation.explicitRepresentation.isComplete()
+                            && !currentRepresentation
+                                    .explicitRepresentation
+                                    .getCacheView()
+                                    .containsKey(key)) {
+                        // the edge limit closed the level instead of taking this edge
+                        stopEnumeration();
+                        return QueryResult.failed();
+                    }
                     // Incrementally add negation for the newly found edge
                     solver.add(Neq(currentRepresentation.decl.getRef(), literal));
-                    cacheModel(modelToCache);
-                    return QueryResult.singleEdge(LitExprConverter.toInt(literal));
+                    return QueryResult.singleEdge(key);
                 } else {
                     stopEnumeration();
                     if (constraintApplied && !Objects.equals(constraint, True())) {
