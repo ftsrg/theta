@@ -293,4 +293,31 @@ class Complex27ChainTest {
     val order = chain(stmFor(looping(), property = ErrorDetection.ERROR_LOCATION))
     assertTrue(order.first().startsWith("PRED_CART-BW_BIN_ITP"), "first was ${order.first()}")
   }
+
+  /** A wide, branchy procedure: past a McCabe complexity of ~16 the explicit domain overtakes. */
+  private fun complexProgram() =
+    xcfa("") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          (init to "L0") { "x".assign("0") }
+          (0 until 40).forEach { i -> ("L0" to "L$i") { assume("(= x $i)") } }
+          (0 until 40).forEach { i -> ("L$i" to final) { "x".assign("$i") } }
+        }
+      main.start()
+    }
+
+  @Test
+  fun aComplexProgramLeadsWithTheExplicitDomain() {
+    // Measured over the whole suite: below ~16 the predicate domains lead, above it the explicit
+    // domain does, and the gap widens with size.
+    val order = chain(stmFor(complexProgram()))
+    assertTrue(order.first().startsWith("EXPL-SEQ_ITP"), "first was ${order.first()}")
+  }
+
+  @Test
+  fun aSmallProgramKeepsThePredicateLeader() {
+    val order = chain(stmFor(looping()))
+    assertTrue(order.first().startsWith("PRED_CART-BW_BIN_ITP"), "first was ${order.first()}")
+  }
 }

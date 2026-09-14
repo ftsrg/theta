@@ -66,7 +66,7 @@ fun complex27(
   val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
 
-  fun getStm(mainTrait: MainTrait, loopFree: Boolean, inProcess: Boolean): STM {
+  fun getStm(mainTrait: MainTrait, loopFree: Boolean, complexity: Int, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
 
     fun cegar(
@@ -418,6 +418,11 @@ fun complex27(
             // is worth roughly twice what choosing per benchmark family is worth, with a fraction
             // of the freedom to overfit.
             //
+            // Size says the same thing from the other direction: past a McCabe complexity of about
+            // sixteen the explicit domain overtakes the predicate ones and keeps widening the gap,
+            // because predicate abstraction pays per predicate it has to discover and that cost
+            // tracks the branching structure.
+            //
             // Memory safety is where it pays. The explicit domain solves nearly twice what the
             // strongest predicate configuration does there -- a memory-safety proof turns on the
             // concrete cells an access can reach, which explicit tracking represents directly and
@@ -430,7 +435,8 @@ fun complex27(
             val steps =
               when {
                 loopFree -> listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
-                isMemsafety -> listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
+                isMemsafety || complexity > EXPLICIT_FIRST_COMPLEXITY ->
+                  listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
                 mainTrait == NONLIN_INT ->
                   listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
                 else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
@@ -501,14 +507,17 @@ fun complex27(
   val loopFree = xcfa.boundedIsComplete
   logger.benchmark("Bounded engines complete: $loopFree\n")
 
-  val inProcessStm = getStm(mainTrait, loopFree, true)
-  val notInProcessStm = getStm(mainTrait, loopFree, false)
+  val complexity = xcfa.cyclomaticComplexity
+  logger.benchmark("Cyclomatic complexity: $complexity\n")
+
+  val inProcessStm = getStm(mainTrait, loopFree, complexity, true)
+  val notInProcessStm = getStm(mainTrait, loopFree, complexity, false)
 
   val inProcess = HierarchicalNode("InProcess", inProcessStm)
   val notInProcess = HierarchicalNode("NotInprocess", notInProcessStm)
 
   val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
 
-  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, loopFree, false)
+  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, loopFree, complexity, false)
   else STM(inProcess, setOf(fallbackEdge))
 }

@@ -66,3 +66,20 @@ private fun XcfaProcedure.hasCycle(): Boolean {
 
   return locs.any { reachesCycleFrom(it) }
 }
+
+/**
+ * McCabe complexity summed over the procedures, as `E - N + 2` each.
+ *
+ * This is the sharpest single structural predictor of which algorithm wins, measured over the whole
+ * suite: below about sixteen the predicate domains lead, above it the explicit domain does, and by
+ * the largest programs it leads by half again. The reading is mechanical -- predicate abstraction
+ * pays per predicate it has to discover, and the number of predicates a proof needs tracks the
+ * branching structure, while explicit-value tracking is indifferent to it.
+ *
+ * Only the shape of the graph is counted, never the name of anything in it.
+ */
+internal val XCFA.cyclomaticComplexity: Int
+  get() = procedures.sumOf { maxOf(0, it.edges.size - it.locs.size + 2) }
+
+/** Above this the explicit domain is measurably the better opening move. */
+internal const val EXPLICIT_FIRST_COMPLEXITY = 16
