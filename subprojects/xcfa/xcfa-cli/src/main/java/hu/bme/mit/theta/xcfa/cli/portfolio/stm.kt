@@ -62,7 +62,7 @@ fun XcfaConfig<*, *>.visualize(): String =
 
 class ConfigNode(
   name: String,
-  private val config: XcfaConfig<*, *>,
+  internal val config: XcfaConfig<*, *>,
   private val check: (config: XcfaConfig<*, *>) -> Result<*>,
 ) : Node(name) {
 

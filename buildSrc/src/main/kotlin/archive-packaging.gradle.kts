@@ -110,6 +110,11 @@ afterEvaluate {
 					dependsOn(":theta-solver-smtlib-cli:shadowJar")
 				}
 				
+				// Which solvers were asked for is an input: without it Gradle judges the task
+				// up to date from the output directory alone, so editing the list silently
+				// packages the previous set.
+				inputs.property("solvers", solvers)
+
 				// Declare outputs
 				outputs.dir(solversDirPath)
 				

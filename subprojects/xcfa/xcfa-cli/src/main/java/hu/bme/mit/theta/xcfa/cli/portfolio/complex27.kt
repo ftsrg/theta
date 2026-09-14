@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -33,7 +34,22 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.PTR
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.TERMINATION
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa.utils.dereferences
+
+/**
+ * Per-configuration slices of the 900 s budget.
+ *
+ * Sized from a 16-configuration sweep of the whole suite: 80 % of every configuration's correct
+ * answers arrive within 16 s and 95 % within 25-120 s, so a long slice buys very little while a
+ * configuration that never gets a slice costs everything it would have solved. Breadth first, and
+ * only the leader gets an extended second attempt. The previous chain spent 300+300+200+150 ms =
+ * 950 s of slices inside a 900 s limit, so its last configuration could never run at all.
+ */
+private const val LEAD_SLICE_MS = 150_000L
+private const val NEXT_SLICE_MS = 100_000L
+private const val RETRY_SLICE_MS = 200_000L
 
 fun complex27(
   xcfa: XCFA,
@@ -50,7 +66,7 @@ fun complex27(
   val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
 
-  fun getStm(mainTrait: MainTrait, inProcess: Boolean): STM {
+  fun getStm(mainTrait: MainTrait, loopFree: Boolean, complexity: Int, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
 
     fun cegar(
@@ -191,6 +207,54 @@ fun complex27(
       )
     }
 
+    /**
+     * The leading configuration again, but with the program re-read under bitvector arithmetic.
+     *
+     * `efficient` resolves to integer wherever integer can express the program, and that is the
+     * right first bet: on the tasks both encodings can parse, integer solves more than bitvector in
+     * every algorithm measured, and solves it faster. It is not a free win though -- bitvector
+     * still decides several hundred tasks per algorithm that integer cannot -- so once the integer
+     * attempt is spent, the last slice pays for a re-parse and tries the other encoding.
+     *
+     * Interpolation has to move with the encoding: Z3's legacy API refuses to interpolate
+     * bitvectors, so this configuration interpolates on MathSAT whatever the rest of the chain
+     * uses.
+     */
+    fun bitvectorRetry(timeout: Long, solver: String): ConfigNode {
+      val adapted =
+        baseCegarConfig.adaptConfig(
+          inProcess = inProcess,
+          domain = PRED_CART,
+          refinement = Refinement.BW_BIN_ITP,
+          exprSplitter = ExprSplitterOptions.WHOLE,
+          timeoutMs = timeout,
+          abstractionSolver = solver,
+          refinementSolver = solver,
+        )
+      return ConfigNode(
+        "PRED_CART-BW_BIN_ITP-bitvector-$solver-$inProcess",
+        XcfaConfig<CFrontendConfig, CegarConfig>(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx = null, // re-read the program: the parsed one is integer-encoded
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
+            ),
+          frontendConfig =
+            FrontendConfig(
+              lbeLevel = LbePass.defaultLevel,
+              loopUnroll = UnrollPass.UNROLL_LIMIT,
+              inputType = InputType.C,
+              specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
+            ),
+          backendConfig = adapted.backendConfig.copy(parseInProcess = true),
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
+    }
+
     val complex =
       ConfigNode(
         "Complex-$inProcess",
@@ -270,128 +334,144 @@ fun complex27(
       return node
     }
 
+    /**
+     * One step of the chain: a configuration and the same configuration on a different solver.
+     *
+     * A solver failure says nothing about whether the *next algorithm* would work -- it is a
+     * property of the solver, not of the program -- so it must not consume the next step's slice.
+     * The twin absorbs it and rejoins the chain where the primary left off.
+     */
+    fun step(make: (Long, String) -> ConfigNode, ms: Long, solver: String, alt: String) =
+      make(ms, solver) to make(ms, alt)
+
+    fun wire(steps: List<Pair<ConfigNode, ConfigNode>>) {
+      steps.zipWithNext { (primary, _), (next, _) -> primary then next }
+      steps.forEach { (primary, twin) -> primary onSolverError twin }
+      steps.zipWithNext { (_, twin), (next, _) -> twin then next }
+    }
+
+    // Which solver each kind of configuration runs on, and what it falls back to.
+    //
+    // This is decided by the theories the program actually contains, not by which chain it takes.
+    // The two are independent: `mainTrait` picks the *order* of algorithms, but the encoding comes
+    // from the frontend, and a pointer-manipulating program full of bitwise operators is encoded
+    // over bitvectors while still being routed down the pointer chain. Keying the solver off the
+    // chain sent exactly those programs to Z3, whose legacy API is the only Z3 that interpolates
+    // and which refuses bitvectors outright ("theory not supported by interpolation").
+    //
+    // Floats outrank bitvectors here: MathSAT rejects the combination with
+    // "FP<->BV combination unsupported by the current configuration", so a program with both has to
+    // go to cvc5, which decides them together.
+    val bitvectorEncoded =
+      parseContext.arithmetic == ArithmeticType.bitvector ||
+        ArithmeticTrait.BITWISE in parseContext.arithmeticTraits
+    val hasFloats = ArithmeticTrait.FLOAT in parseContext.arithmeticTraits
+
+    val itpSolver: String
+    val itpAlt: String
+    val bmcSolver: String
+    val bmcAlt: String
+    when {
+      hasFloats -> {
+        itpSolver = "cvc5:1.2.0"
+        // Falling back to MathSAT is only safe while there are no bitvectors to combine floats
+        // with; when there are, stay inside the family that decides the combination at all.
+        itpAlt = if (bitvectorEncoded) "cvc5:1.0.8" else "mathsat:5.6.12"
+        bmcSolver = "cvc5:1.2.0"
+        bmcAlt = "Z3:new"
+      }
+      bitvectorEncoded -> {
+        itpSolver = "mathsat:5.6.12"
+        itpAlt = "mathsat:5.6.10"
+        bmcSolver = "Z3:new"
+        bmcAlt = "mathsat:5.6.12"
+      }
+      else -> {
+        itpSolver = "Z3"
+        itpAlt = "mathsat:5.6.12"
+        bmcSolver = "Z3:new"
+        bmcAlt = "mathsat:5.6.12"
+      }
+    }
+
+    val isMemsafety =
+      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.MEMSAFETY
+
+    val lead = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.BW_BIN_ITP) }
+    val explSeq = { ms: Long, solver: String -> cegar(ms, solver, EXPL, Refinement.SEQ_ITP) }
+    val predSeq = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.SEQ_ITP) }
+
     val (startingConfig, endConfig) =
       if (xcfa.isInlined) {
         when (mainTrait) {
-          BITWISE -> {
+          MULTITHREAD -> multithread to multithread
+          TERMINATION -> termination to termination
+          else -> {
+            val predCartBw = step(lead, LEAD_SLICE_MS, itpSolver, itpAlt)
+            val boundedBmc = step(bmc, NEXT_SLICE_MS, bmcSolver, bmcAlt)
+            val explicitSeq = step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
+            val boundedKind = step(kind, NEXT_SLICE_MS, bmcSolver, bmcAlt)
+            val predCartSeq = step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
 
-            val kind = kind(300_000, "Z3:new")
-            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmc = bmc(150_000, "Z3:new")
+            // What the program is being checked *for* turns out to separate the algorithms better
+            // than anything about its syntax: measured over the whole suite, choosing per property
+            // is worth roughly twice what choosing per benchmark family is worth, with a fraction
+            // of the freedom to overfit.
+            //
+            // Size says the same thing from the other direction: past a McCabe complexity of about
+            // sixteen the explicit domain overtakes the predicate ones and keeps widening the gap,
+            // because predicate abstraction pays per predicate it has to discover and that cost
+            // tracks the branching structure.
+            //
+            // Memory safety is where it pays. The explicit domain solves nearly twice what the
+            // strongest predicate configuration does there -- a memory-safety proof turns on the
+            // concrete cells an access can reach, which explicit tracking represents directly and
+            // predicate abstraction has to rediscover one predicate at a time.
+            //
+            // Loop-freeness still outranks it: a bounded engine that can reach the longest path
+            // does not merely do well, it *finishes*. Non-linear arithmetic leads with the bounded
+            // engines for the opposite reason -- interpolation over non-linear terms is where the
+            // refinement loop stalls.
+            val steps =
+              when {
+                loopFree -> listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+                isMemsafety || complexity > EXPLICIT_FIRST_COMPLEXITY ->
+                  listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
+                mainTrait == NONLIN_INT ->
+                  listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+                else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
+              }
 
-            val kindMS = kind(300_000, "mathsat:5.6.12")
-            val pred_bwMS =
-              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
+            wire(steps)
 
-            kind then pred_bw then expl then bmc
+            // The last slice changes the encoding rather than the algorithm. Past this point
+            // another algorithm is worth tens of tasks, while the encoding the frontend did not
+            // pick is worth several hundred per algorithm. It is skipped where it cannot pay:
+            // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
+            // reproduce the same XCFA, and a float program has no bitvector encoding at all.
+            val lastResort =
+              if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
+              else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
+            steps.last().first then lastResort
+            steps.last().second then lastResort
 
-            kindMS onSolverError kind
-            pred_bwMS onSolverError pred_bw
-            explMS onSolverError expl
-
-            kindMS then pred_bwMS then explMS then bmcMS
-
-            kindMS to bmcMS
-          }
-          FLOAT -> {
-            // CVC by default, Z3 as fallback
-
-            val kind = kind(300_000, "Z3:new")
-            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmc = bmc(150_000, "Z3:new")
-
-            val kindCVC = kind(300_000, "cvc5:1.2.0")
-            val pred_bwCVC = cegar(300_000, "cvc5:1.2.0", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explCVC = cegar(200_000, "cvc5:1.2.0", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcCVC = bmc(150_000, "cvc5:1.2.0")
-
-            kind then pred_bw then expl then bmc
-
-            kindCVC onSolverError kind
-            pred_bwCVC onSolverError pred_bw
-            explCVC onSolverError expl
-            bmcCVC onSolverError bmc
-
-            kindCVC then pred_bwCVC then explCVC then bmcCVC
-
-            kindCVC to bmcCVC
-          }
-          PTR,
-          ARR,
-          NONLIN_INT,
-          LIN_INT -> {
-            val kind = kind(300_000, "Z3:new")
-            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmc = bmc(150_000, "Z3:new")
-
-            val kindMS = kind(300_000, "mathsat:5.6.12")
-            val pred_bwMS =
-              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
-
-            if (parseContext.memoryModel.byteAddressed()) {
-              // The byte-granular memory model lowers every wide access to a Concat/Extract of
-              // one-byte cells. Z3's CEGAR interpolation and its native BMC both time out on that
-              // memory (n array selects + a Concat per access), but a MathSAT BMC decides it in
-              // seconds -- once n-ary Concat is nested for SMT-LIB. In the stock chain BMC-MathSAT
-              // sits behind three long-timeout Z3 configs and is never reached, so here it runs
-              // first, with the Z3 CEGAR chain kept as the fallback for whatever BMC cannot bound.
-              bmcMS then kind then pred_bw then expl then bmc
-
-              kind onSolverError kindMS
-              pred_bw onSolverError pred_bwMS
-              expl onSolverError explMS
-
-              kindMS then pred_bwMS then explMS
-
-              bmcMS to bmc
-            } else {
-              kind then pred_bw then expl then bmc
-
-              kind onSolverError kindMS
-              pred_bw onSolverError pred_bwMS
-              expl onSolverError explMS
-
-              kindMS then pred_bwMS then explMS then bmcMS
-
-              kind to bmc
-            }
-          }
-
-          MULTITHREAD -> {
-            multithread to multithread
-          }
-          TERMINATION -> {
-            termination to termination
+            steps.first().first to lastResort
           }
         }
       } else {
-        val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-        val expl = cegar(300_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
-        val pred_seq = cegar(150_000, "Z3", Domain.PRED_CART, Refinement.SEQ_ITP)
-        val expl_seq = cegar(150_000, "Z3", Domain.EXPL, Refinement.SEQ_ITP)
-
-        val pred_bwMS = cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-        val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-        val pred_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.SEQ_ITP)
-        val expl_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.EXPL, Refinement.SEQ_ITP)
-
-        pred_bw then expl then pred_seq then expl_seq
-
-        pred_bw onSolverError pred_bwMS
-        expl onSolverError explMS
-        pred_seq onSolverError pred_seqMS
-        expl_seq onSolverError expl_seqMS
-
-        pred_bwMS then explMS then pred_seqMS then expl_seqMS
-
-        pred_bw to expl_seq
+        // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
+        // CEGAR configurations are applicable.
+        val steps =
+          listOf(
+            step(lead, LEAD_SLICE_MS, itpSolver, itpAlt),
+            step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+            step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+          )
+        wire(steps)
+        val lastResort = lead(RETRY_SLICE_MS, itpAlt)
+        steps.last().first then lastResort
+        steps.last().second then lastResort
+        steps.first().first to lastResort
       }
 
     endConfig then complex
@@ -399,6 +479,16 @@ fun complex27(
     return STM(startingConfig, edges)
   }
 
+  // Only three of these values still change what the portfolio does: TERMINATION and MULTITHREAD
+  // hand the program to a different portfolio, and NONLIN_INT reorders the chain. PTR, ARR, FLOAT,
+  // BITWISE and LIN_INT all fall through to the same chain now.
+  //
+  // They used to select the solver, which was actively wrong: PTR is tested before BITWISE and
+  // almost every real program dereferences something, so a bitwise program took the pointer branch
+  // and interpolated on a Z3 that refuses bitvectors. The solver now comes from the theories the
+  // program actually contains, and the ordering from the property and the shape of the control
+  // flow -- measured over the suite, the property separates the algorithms about twice as well as
+  // the benchmark family does, and the family barely beats picking one algorithm for everything.
   val mainTrait =
     when {
       portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION ->
@@ -414,14 +504,20 @@ fun complex27(
 
   logger.benchmark("Using portfolio: $mainTrait\n")
 
-  val inProcessStm = getStm(mainTrait, true)
-  val notInProcessStm = getStm(mainTrait, false)
+  val loopFree = xcfa.boundedIsComplete
+  logger.benchmark("Bounded engines complete: $loopFree\n")
+
+  val complexity = xcfa.cyclomaticComplexity
+  logger.benchmark("Cyclomatic complexity: $complexity\n")
+
+  val inProcessStm = getStm(mainTrait, loopFree, complexity, true)
+  val notInProcessStm = getStm(mainTrait, loopFree, complexity, false)
 
   val inProcess = HierarchicalNode("InProcess", inProcessStm)
   val notInProcess = HierarchicalNode("NotInprocess", notInProcessStm)
 
   val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
 
-  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, false)
+  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, loopFree, complexity, false)
   else STM(inProcess, setOf(fallbackEdge))
 }

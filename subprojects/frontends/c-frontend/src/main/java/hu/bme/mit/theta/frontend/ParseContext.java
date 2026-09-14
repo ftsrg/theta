@@ -68,6 +68,10 @@ public class ParseContext {
     // the
     // frontend builder, address-taken objects in ReferenceElimination) and looked up by value here.
     private final Set<BigInteger> fullyAtomicObjects = new LinkedHashSet<>();
+    // Which C constructs the program's own code uses, collected once by SourceTraitCollector.
+    // Diagnostics only: nothing downstream reads it, it is emitted for offline study.
+    private Map<String, Integer> sourceTraits = new LinkedHashMap<>();
+
     private final Map<BigInteger, Set<Integer>> atomicObjectCells = new LinkedHashMap<>();
 
     // A struct-typed field is a subobject with a base id of its own, kept in the parent's cell. So
@@ -76,6 +80,14 @@ public class ParseContext {
     // dereference yields the subobject's base. This maps (parent base, field offset) -> subobject
     // base so the race check can follow that chain to the object the atomicity is recorded against.
     private final Map<BigInteger, Map<Integer, BigInteger>> subObjectCells = new LinkedHashMap<>();
+
+    public Map<String, Integer> getSourceTraits() {
+        return sourceTraits;
+    }
+
+    public void setSourceTraits(Map<String, Integer> sourceTraits) {
+        this.sourceTraits = sourceTraits;
+    }
 
     public boolean isCheckMemsafety() {
         return checkMemsafety;
