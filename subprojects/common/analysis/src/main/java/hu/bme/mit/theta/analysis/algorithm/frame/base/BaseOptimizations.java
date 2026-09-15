@@ -25,15 +25,16 @@ public abstract class BaseOptimizations {
     private final boolean propertyOpt;
     private final boolean generalizeOpt;
     private final boolean unsatPropagateOpt;
+    private final boolean monotonoousFrames;
 
     protected BaseOptimizations(
-            boolean unSatOpt,
-            boolean notBOpt,
-            boolean propagateOpt,
-            boolean filterOpt,
-            boolean propertyOpt,
-            boolean generalizeOpt,
-            boolean unsatPropagateOpt) {
+        boolean unSatOpt,
+        boolean notBOpt,
+        boolean propagateOpt,
+        boolean filterOpt,
+        boolean propertyOpt,
+        boolean generalizeOpt,
+        boolean unsatPropagateOpt, boolean monotonoousFrames) {
         this.unSatOpt = unSatOpt;
         this.notBOpt = notBOpt;
         this.propagateOpt = propagateOpt;
@@ -41,6 +42,11 @@ public abstract class BaseOptimizations {
         this.propertyOpt = propertyOpt;
         this.generalizeOpt = generalizeOpt;
         this.unsatPropagateOpt = unsatPropagateOpt;
+      this.monotonoousFrames = monotonoousFrames;
+    }
+
+    public boolean isMonotonoousFrames() {
+        return monotonoousFrames;
     }
 
     public boolean isUnSatOpt() {

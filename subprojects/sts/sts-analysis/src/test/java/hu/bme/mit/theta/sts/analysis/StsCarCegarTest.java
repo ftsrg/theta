@@ -105,7 +105,7 @@ public class StsCarCegarTest {
                                         ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                                                 Z3LegacySolverFactory.getInstance()),
                                         new CarOptimizations(
-                                                true, true, true, true, true, true, true, true),
+                                                true, true, true, true, true, true, true, true, false),
                                         logger),
                         List.of(),
                         List.of(),

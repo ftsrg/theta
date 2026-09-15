@@ -191,7 +191,8 @@ public class StsCli {
                                         stsCli.ic3FilterOpt,
                                         stsCli.ic3GeneralizeOpt,
                                         stsCli.ic3PropertyOpt,
-                                        stsCli.ic3UnsatPropagateOpt),
+                                        stsCli.ic3UnsatPropagateOpt,
+                                    true),
                                 logger));
             }
         },
@@ -223,7 +224,7 @@ public class StsCli {
                                 ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                                         Z3LegacySolverFactory.getInstance()),
                                 new CarOptimizations(
-                                        true, true, true, true, true, true, true, true),
+                                        true, true, true, true, true, true, true, true, false),
                                 logger));
             }
         },

@@ -27,7 +27,8 @@ public class IC3Optimizations extends BaseOptimizations {
             boolean filterOpt,
             boolean generalizeOpt,
             boolean propertyOpt,
-            boolean unsatPropagateOpt) {
+            boolean unsatPropagateOpt,
+            boolean monotonoousFrames) {
         super(
                 unSatOpt,
                 notBOpt,
@@ -35,6 +36,7 @@ public class IC3Optimizations extends BaseOptimizations {
                 filterOpt,
                 propertyOpt,
                 generalizeOpt,
-                unsatPropagateOpt);
+                unsatPropagateOpt,
+            monotonoousFrames);
     }
 }

@@ -56,7 +56,7 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
         this(
                 monolithicExpr,
                 solverFactory,
-                new IC3Optimizations(true, true, true, true, true, true, true),
+                new IC3Optimizations(true, true, true, true, true, true, true, true),
                 logger);
     }
 
@@ -87,7 +87,7 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
                     return SafetyResult.unsafe(trace, PredState.of(True()));
                 }
             } else {
-                var propagateResult = propagateForward(Frame::equalsAllParents);
+                var propagateResult = propagateForward();
                 if (propagateResult > 0) {
                     return SafetyResult.safe(
                             PredState.of(frames.get(propagateResult).getExpression()));
@@ -169,7 +169,7 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
                 Cube blockedCube = proofObligation.getCube();
                 if (optimizations.isUnSatOpt()) {
                     blockedCube =
-                            removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, false);
+                            removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore);
                 }
 
                 if (optimizations.isGeneralizeOpt()) {

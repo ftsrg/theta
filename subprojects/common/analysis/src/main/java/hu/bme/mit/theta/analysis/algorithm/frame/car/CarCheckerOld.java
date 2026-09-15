@@ -85,7 +85,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
         this(
                 monolithicExpr,
                 solverFactory,
-                new CarOptimizations(true, true, true, true, true, true, true, true),
+                new CarOptimizations(true, true, true, true, true, true, true, true, false),
                 logger);
     }
 
@@ -150,7 +150,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
             Node node = getNotCheckedNode();
             if (node == null) {
                 noNodeIsVisited();
-                var propagateResult = propagateForward(Frame::equalsAllParents);
+                var propagateResult = propagateForward();
                 if (propagateResult > 0) {
                     return SafetyResult.safe(
                         PredState.of(frames.get(propagateResult).getExpression()));
@@ -283,7 +283,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
 
                 if (optimizations.isUnSatOpt()) {
                     blockedCube =
-                        removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, true);
+                        removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore);
                 }
 
                 if (optimizations.isGeneralizeOpt()) {
@@ -430,7 +430,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
                                 var unsatCore = solver.getUnsatCore();
                                 blockedCube =
                                         removeRedundantExpressionsUsingUnsatCore(
-                                                blockedCube, unsatCore, false);
+                                                blockedCube, unsatCore);
 
                                 if (blockedCube.getLiterals().size()
                                         < clause.getLiterals().size()) {

@@ -30,7 +30,8 @@ public class CarOptimizations extends BaseOptimizations {
             boolean filterOpt,
             boolean generalizeOpt,
             boolean unsatPropagateOpt,
-            boolean coverOpt) {
+            boolean coverOpt,
+            boolean monotonoousFrames) {
         super(
                 unSatOpt,
                 notBOpt,
@@ -38,7 +39,8 @@ public class CarOptimizations extends BaseOptimizations {
                 filterOpt,
                 propertyOpt,
                 generalizeOpt,
-                unsatPropagateOpt);
+                unsatPropagateOpt,
+            monotonoousFrames);
         this.coverOpt = coverOpt;
     }
 

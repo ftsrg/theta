@@ -84,7 +84,8 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
     }
 
     protected Cube removeRedundantExpressionsUsingUnsatCore(
-            Cube expressions, Collection<Expr<BoolType>> unSatCore, boolean canIntersectInit) {
+            Cube expressions, Collection<Expr<BoolType>> unSatCore) {
+        final boolean canIntersectInit = !optimizations.isMonotonoousFrames();
         final Set<Expr<BoolType>> minimalExpressions = new HashSet<>();
         minimalExpressions.addAll(expressions.getLiterals());
         for (Expr<BoolType> expr : expressions.getLiterals()) {
@@ -159,7 +160,14 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
         return new ProofObligation(Cube.of(interSection), currentFrameNumber);
     }
 
-    protected int propagateForward(Predicate<Frame> equalityCheck) {
+    protected int propagateForward() {
+        Predicate<Frame> equalityCheck;
+        if(optimizations.isMonotonoousFrames()) {
+            equalityCheck = Frame::equalsParent;
+        } else {
+            equalityCheck = Frame::equalsAllParents;
+        }
+
         frames.add(
                 new Frame(frames.get(currentFrameNumber), solver, monolithicExpr, optimizations));
         currentFrameNumber++;
@@ -187,7 +195,7 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
                                 var unsatCore = solver.getUnsatCore();
                                 blockedCube =
                                         removeRedundantExpressionsUsingUnsatCore(
-                                                blockedCube, unsatCore, false);
+                                                blockedCube, unsatCore);
 
                                 if (blockedCube.getLiterals().size()
                                         < clause.getLiterals().size()) {
@@ -256,7 +264,7 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
                     if (!isSat) {
                         minimalCube =
                                 removeRedundantExpressionsUsingUnsatCore(
-                                        minimalCube, unSatCore, canIntersectInit);
+                                        minimalCube, unSatCore);
                         done = false;
                     } else {
                         minimalCube.addLiteral(expr);
