@@ -86,7 +86,8 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         this(
                 monolithicExpr,
                 solverFactory,
-                new CarOptimizations(true, true, true, true, true, true, true, true, false),
+                new CarOptimizations(
+                        true, true, true, true, true, true, true, true, false, true, true),
                 logger);
     }
 
@@ -107,6 +108,21 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                         optimizations.isCoverOpt(),
                         solver);
         currentlyVisited = CollectionUtil.createMap();
+    }
+
+    private void resetFrames() {
+        frames.clear();
+        frames.add(new Frame(null, solver, monolithicExpr, optimizations));
+    }
+
+    private void resetNodes() {
+        currentlyVisited.clear();
+        root =
+                new Node(
+                        Not(monolithicExpr.getPropExpr()),
+                        null,
+                        optimizations.isCoverOpt(),
+                        solver);
     }
 
     private Node getNotCheckedNode() {
@@ -134,6 +150,12 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
         if (!curFrameopt) {
             currentFrameNumber = 0;
+        }
+        if (!optimizations.isStoreFrames()) {
+            resetFrames();
+        }
+        if (!optimizations.isStoreNodes()) {
+            resetNodes();
         }
         noNodeIsVisited();
         pruneLength = 0;
@@ -207,6 +229,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
             delete(previousNode);
             errorNode = errorNode.getParent();
         }
+
     }
 
     Node tryBlock(ProofObligationCar mainProofObligation) {

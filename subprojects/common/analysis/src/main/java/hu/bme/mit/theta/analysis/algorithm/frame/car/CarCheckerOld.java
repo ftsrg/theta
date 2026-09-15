@@ -85,7 +85,8 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
         this(
                 monolithicExpr,
                 solverFactory,
-                new CarOptimizations(true, true, true, true, true, true, true, true, false),
+                new CarOptimizations(
+                        true, true, true, true, true, true, true, true, false, true, true),
                 logger);
     }
 

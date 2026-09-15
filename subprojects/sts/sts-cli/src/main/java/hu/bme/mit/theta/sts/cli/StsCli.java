@@ -205,7 +205,12 @@ public class StsCli {
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
                     getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
-                return (monolithicExpr -> new CarChecker(monolithicExpr, solverFactory, logger));
+                return (monolithicExpr ->
+                        new CarChecker(
+                                monolithicExpr,
+                                solverFactory,
+                                stsCli.getCarOptimizations(),
+                                logger));
             }
         },
         CARCEGAR {
@@ -223,8 +228,7 @@ public class StsCli {
                                 solverFactory,
                                 ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                                         Z3LegacySolverFactory.getInstance()),
-                                new CarOptimizations(
-                                        true, true, true, true, true, true, true, true, false),
+                                stsCli.getCarOptimizations(),
                                 logger));
             }
         },
@@ -346,6 +350,76 @@ public class StsCli {
     Boolean ic3UnsatPropagateOpt = true;
 
     @Parameter(
+            names = {"--car-unsat-opt"},
+            description = "CAR: minimize blocked cube using UNSAT core",
+            arity = 1)
+    Boolean carUnSatOpt = true;
+
+    @Parameter(
+            names = {"--car-notb-opt"},
+            description = "CAR: add NOT(B) to the transition query",
+            arity = 1)
+    Boolean carNotBOpt = true;
+
+    @Parameter(
+            names = {"--car-propagate-opt"},
+            description = "CAR: propagate clauses forward during push phase",
+            arity = 1)
+    Boolean carPropagateOpt = true;
+
+    @Parameter(
+            names = {"--car-property-opt"},
+            description = "CAR: use property-aware frame initialization",
+            arity = 1)
+    Boolean carPropertyOpt = true;
+
+    @Parameter(
+            names = {"--car-filter-opt"},
+            description = "CAR: filter redundant variables from the SAT model",
+            arity = 1)
+    Boolean carFilterOpt = true;
+
+    @Parameter(
+            names = {"--car-generalize-opt"},
+            description = "CAR: generalize blocked cubes (MIC)",
+            arity = 1)
+    Boolean carGeneralizeOpt = true;
+
+    @Parameter(
+            names = {"--car-unsat-propagate-opt"},
+            description = "CAR: use UNSAT core when propagating clauses during push phase",
+            arity = 1)
+    Boolean carUnsatPropagateOpt = true;
+
+    @Parameter(
+            names = {"--car-cover-opt"},
+            description = "CAR: use covering to prune subsumed nodes",
+            arity = 1)
+    Boolean carCoverOpt = true;
+
+    @Parameter(
+            names = {"--car-monotonous-frames"},
+            description = "CAR: keep frames monotonous",
+            arity = 1)
+    Boolean carMonotonousFrames = false;
+
+    @Parameter(
+            names = {"--car-store-frames"},
+            description =
+                    "CARCEGAR: keep accumulated frames across CEGAR iterations instead of"
+                            + " rebuilding them from scratch each iteration",
+            arity = 1)
+    Boolean carStoreFrames = true;
+
+    @Parameter(
+            names = {"--car-store-nodes"},
+            description =
+                    "CARCEGAR: keep the explored counterexample node tree across CEGAR"
+                            + " iterations instead of rebuilding it from scratch each iteration",
+            arity = 1)
+    Boolean carStoreNodes = true;
+
+    @Parameter(
             names = {"--smt-home"},
             description = "Solver installation directory")
     String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
@@ -459,6 +533,21 @@ public class StsCli {
             printError(ex);
             System.exit(1);
         }
+    }
+
+    private CarOptimizations getCarOptimizations() {
+        return new CarOptimizations(
+                carUnSatOpt,
+                carNotBOpt,
+                carPropagateOpt,
+                carPropertyOpt,
+                carFilterOpt,
+                carGeneralizeOpt,
+                carUnsatPropagateOpt,
+                carCoverOpt,
+                carMonotonousFrames,
+                carStoreFrames,
+                carStoreNodes);
     }
 
     private void registerSolverManagers() throws IOException {

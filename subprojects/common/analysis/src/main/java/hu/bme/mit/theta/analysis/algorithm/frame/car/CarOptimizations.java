@@ -21,6 +21,8 @@ import hu.bme.mit.theta.analysis.algorithm.frame.base.BaseOptimizations;
 public class CarOptimizations extends BaseOptimizations {
 
     private final boolean coverOpt;
+    private final boolean storeFrames;
+    private final boolean storeNodes;
 
     public CarOptimizations(
             boolean unSatOpt,
@@ -31,7 +33,9 @@ public class CarOptimizations extends BaseOptimizations {
             boolean generalizeOpt,
             boolean unsatPropagateOpt,
             boolean coverOpt,
-            boolean monotonoousFrames) {
+            boolean monotonoousFrames,
+            boolean storeFrames,
+            boolean storeNodes) {
         super(
                 unSatOpt,
                 notBOpt,
@@ -42,9 +46,29 @@ public class CarOptimizations extends BaseOptimizations {
                 unsatPropagateOpt,
             monotonoousFrames);
         this.coverOpt = coverOpt;
+        this.storeFrames = storeFrames;
+        this.storeNodes = storeNodes;
     }
 
     public boolean isCoverOpt() {
         return coverOpt;
+    }
+
+    /**
+     * Whether accumulated frames (overapproximation invariants) are kept across CARCEGAR
+     * iterations. When {@code false}, frames are discarded and rebuilt from scratch at the start
+     * of every CEGAR iteration.
+     */
+    public boolean isStoreFrames() {
+        return storeFrames;
+    }
+
+    /**
+     * Whether the explored counterexample/proof-obligation node tree is kept across CARCEGAR
+     * iterations. When {@code false}, the node tree is discarded and rebuilt from scratch at the
+     * start of every CEGAR iteration.
+     */
+    public boolean isStoreNodes() {
+        return storeNodes;
     }
 }

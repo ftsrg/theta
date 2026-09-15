@@ -86,7 +86,7 @@ public class Node {
         this.solver = solver;
         this.coverOpt = coverOpt;
         if (parent != null) {
-            covered = parent.isCoveredBy(expr);
+            covered = parent.isCoveredBy(expr); //todo optimization, which checks only parent?
         } else {
             covered = false;
         }
