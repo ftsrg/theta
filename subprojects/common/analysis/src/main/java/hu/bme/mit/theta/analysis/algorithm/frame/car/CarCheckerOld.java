@@ -50,6 +50,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 
@@ -108,21 +109,20 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
     }
 
     private Node getNotCheckedNode() {
-        if (currentlyVisited.size() == 0) {
+        if (currentlyVisited.isEmpty()) { //todo maybe not needed here
             root =
-                    new Node(
-                            Not(monolithicExpr.getPropExpr()),
-                            null,
-                            optimizations.isCoverOpt(),
-                            solver);
+                new Node(
+                    Not(monolithicExpr.getPropExpr()),
+                    null,
+                    optimizations.isCoverOpt(),
+                    solver);
             currentlyVisited.put(root, false);
         }
         for (Node node :
-                currentlyVisited
-                        .keySet()) { // todo can be more faster if the nodes visited in a more
+            currentlyVisited
+                .keySet()) { // todo can be more faster if the nodes visited in a more
             // specific order
             if (!currentlyVisited.get(node)) {
-
                 return node;
             }
         }
@@ -147,41 +147,35 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
             return result;
         }
         while (true) {
-            while (true) {
-                Node node = getNotCheckedNode();
-                if (node == null) {
-                    break;
+            Node node = getNotCheckedNode();
+            if (node == null) {
+                noNodeIsVisited();
+                var propagateResult = propagateForward(Frame::equalsAllParents);
+                if (propagateResult > 0) {
+                    return SafetyResult.safe(
+                        PredState.of(frames.get(propagateResult).getExpression()));
                 }
-                /*
-                Node counterExampleNode;
-                var counterExampleProof = checkCurrentFrameForInterSections(And(node.getExprs()));
-                if (counterExampleProof == null) {
-                  counterExampleNode = null;
-                } else {
-                  counterExampleNode = new Node(counterExampleProof.getCube().toExpr(), node, optimizations.isCoverOpt(),solver);
-                  currentlyVisited.put(counterExampleNode,false);
-                }*/
-                Node counterExampleNode = checkCurrentFrame(node);
-                if (counterExampleNode != null) {
-                    var faultyNode =
+            } else {
+
+                    Node counterExampleNode = checkCurrentFrame(node);
+                    if (counterExampleNode != null) {
+
+                        var faultyNode =
                             tryBlock(
-                                    new ProofObligationCar(counterExampleNode, currentFrameNumber));
-                    if (faultyNode != null) {
-                        var trace = makeTrace(faultyNode);
-                        if (trace != null) {
-                            final var result = SafetyResult.unsafe(trace, PredState.of(True()));
-                            logger.writeln(Logger.Level.RESULT, result.toString());
-                            return result;
+                                new ProofObligationCar(counterExampleNode, currentFrameNumber));
+                        if (faultyNode != null) {
+                            var trace = makeTrace(faultyNode);
+                            if (trace != null) {
+                                final var result = SafetyResult.unsafe(trace, PredState.of(True()));
+                                logger.writeln(Logger.Level.RESULT, result.toString());
+                                return result;
+                            }
                         }
+                    } else {
+                        currentlyVisited.put(node, true);
                     }
-                } else {
-                    currentlyVisited.put(node, true);
                 }
-            }
-            var propagateResult = propagate();
-            if (propagateResult > 0) {
-                return SafetyResult.safe(PredState.of(frames.get(propagateResult).getExpression()));
-            }
+
         }
     }
 
@@ -210,9 +204,10 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
 
     Node tryBlock(ProofObligationCar mainProofObligation) {
         final LinkedList<ProofObligationCar> proofObligationsQueue =
-                new LinkedList<ProofObligationCar>();
+            new LinkedList<ProofObligationCar>();
         proofObligationsQueue.add(mainProofObligation);
         while (!proofObligationsQueue.isEmpty()) {
+
             final ProofObligationCar proofObligation = proofObligationsQueue.getLast();
 
             if (proofObligation.getTime() == 0) {
@@ -220,111 +215,84 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
             }
 
             final Collection<Expr<BoolType>> b;
+            final SolverStatus solverStatus;
             final Collection<Expr<BoolType>> unSatCore;
+            final Valuation model;
+
             try (var wpp = new WithPushPop(solver)) {
+
                 frames.get(proofObligation.getTime() - 1)
-                        .addFrameToSolver(VarIndexingFactory.indexing(0));
+                    .addFrameToSolver(VarIndexingFactory.indexing(0));
+
                 if (optimizations.isNotBOpt()) {
                     solver.track(
-                            PathUtils.unfold(Not(And(proofObligation.getNode().getExprs())), 0));
+                        PathUtils.unfold(Not(And(proofObligation.getNode().getExprs())), 0));
                 }
-                /*
-                if (proofObligation.getTime() > 2 && formerFramesOpt) { // lehet, hogy 1, vagy 2??
-                  solver.track(
-                      PathUtils.unfold(
-                          Not(And(forwardOverFrames.get(proofObligation.getTime() - 2).getExprs())),
-                          monolithicExpr
-                              .getTransOffsetIndex())); // 2 vel korábbi frame-ban
-                  // levő dolgok
-                }*/
 
                 getConjuncts(monolithicExpr.getTransExpr())
-                        .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                    .forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+
                 proofObligation
-                        .getNode()
-                        .getExprs()
-                        .forEach(
-                                ex ->
-                                        solver.track(
-                                                PathUtils.unfold(
-                                                        ex, monolithicExpr.getTransOffsetIndex())));
-
-                if (solver.check().isSat()) {
-                    final Valuation model = solver.getModel();
-
-                    final MutableValuation filteredModel = new MutableValuation();
-                    monolithicExpr.getVars().stream()
-                            .map(varDecl -> varDecl.getConstDecl(0))
-                            .filter(model.toMap()::containsKey)
-                            .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                    if (optimizations.isFilterOpt()) {
-                        var vars = CollectionUtil.createSet(filteredModel.toMap().keySet());
-                        for (var var : vars) {
-                            if (!(var.getType() instanceof BoolType)) {
-                                continue;
-                            }
-                            var origValue = model.eval(var).get();
-                            var negatedValue =
-                                    BoolLitExpr.of(!((BoolLitExpr) origValue).getValue());
-                            filteredModel.put(var, negatedValue);
-                            try (var wpp2 = new WithPushPop(solver)) {
-                                solver.track(PathUtils.unfold(filteredModel.toExpr(), 0));
-                                if (solver.check().isSat()) {
-                                    filteredModel.remove(var);
-                                } else {
-                                    filteredModel.put(var, origValue);
-                                }
-                            }
-                        }
-                    }
-                    b =
-                            getConjuncts(
-                                    PathUtils.foldin(
-                                            PathUtils.extractValuation(filteredModel, 0).toExpr(),
-                                            0));
+                    .getNode()
+                    .getExprs()
+                    .forEach(
+                        ex ->
+                            solver.track(
+                                PathUtils.unfold(
+                                    ex, monolithicExpr.getTransOffsetIndex())));
+                solverStatus = solver.check();
+                if (solverStatus.isSat()) {
+                    model = solver.getModel();
                     unSatCore = null;
                 } else {
-                    b = null;
+                    model = null;
                     unSatCore = solver.getUnsatCore();
                 }
             }
-            if (b == null) {
 
-                final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
-                newCore.addAll(proofObligation.getNode().getExprs());
-                if (optimizations.isUnSatOpt()) {
-                    for (Expr<BoolType> i : proofObligation.getNode().getExprs()) {
-                        if (!unSatCore.contains(
-                                PathUtils.unfold(i, monolithicExpr.getTransOffsetIndex()))) {
-                            newCore.remove(i);
-                            final boolean isSat;
-                            try (var wpp = new WithPushPop(solver)) {
-                                for (Expr<BoolType> solverex : newCore) {
-                                    solver.track(PathUtils.unfold(solverex, 0));
-                                }
-                                solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
-                                isSat = solver.check().isSat();
-                            }
-                            if (isSat) {
-                                newCore.add(i);
-                            }
-                        }
-                    }
+            if (solverStatus.isSat()) {
+
+                final MutableValuation filteredModel;
+                if (optimizations.isFilterOpt()) {
+                    filteredModel =
+                        removeRedundantVariablesFromProofObligation(
+                            model, Cube.of(proofObligation.getNode().getExprs()));
+                } else {
+                    filteredModel = MutableValuation.copyOf(model);
                 }
-                for (int i = 1; i <= proofObligation.getTime(); ++i) {
-                    frames.get(i).refine(Cube.of(newCore));
-                }
-                proofObligationsQueue.removeLast();
-            } else {
+
+                final Collection<Expr<BoolType>> reachableExprInFormerFrame =
+                    getConjuncts(
+                        PathUtils.foldin(
+                            PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
                 Node newNode =
-                        new Node(
-                                And(b),
-                                proofObligation.getNode(),
-                                optimizations.isCoverOpt(),
-                                solver);
+                    new Node(
+                        And(reachableExprInFormerFrame),
+                        proofObligation.getNode(),
+                        optimizations.isCoverOpt(),
+                        solver);
                 currentlyVisited.put(newNode, false);
                 proofObligationsQueue.add(
-                        new ProofObligationCar(newNode, proofObligation.getTime() - 1));
+                    new ProofObligationCar(newNode, proofObligation.getTime() - 1));
+
+            } else {
+                final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
+
+                newCore.addAll(proofObligation.getNode().getExprs());
+                Cube blockedCube = Cube.of(proofObligation.getNode().getExprs());
+
+                if (optimizations.isUnSatOpt()) {
+                    blockedCube =
+                        removeRedundantExpressionsUsingUnsatCore(blockedCube, unSatCore, true);
+                }
+
+                if (optimizations.isGeneralizeOpt()) {
+                    blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), true);
+                }
+
+                frames.get(proofObligation.getTime()).refine(blockedCube);
+
+                proofObligationsQueue.removeLast();
             }
         }
         return null;
@@ -334,27 +302,27 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
         if (optimizations.isPropertyOpt()) {
             try (var wpp = new WithPushPop(solver)) {
                 solver.track(
-                        PathUtils.unfold(
-                                monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
+                    PathUtils.unfold(
+                        monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
                 solver.track(
-                        PathUtils.unfold(
-                                monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)));
+                    PathUtils.unfold(
+                        monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)));
                 solver.track(
-                        PathUtils.unfold(
-                                Not(monolithicExpr.getPropExpr()),
-                                monolithicExpr.getTransOffsetIndex()));
+                    PathUtils.unfold(
+                        Not(monolithicExpr.getPropExpr()),
+                        monolithicExpr.getTransOffsetIndex()));
                 if (solver.check().isSat()) {
                     final Valuation model = solver.getModel();
                     final MutableValuation filteredModel = new MutableValuation();
                     monolithicExpr.getVars().stream()
-                            .map(varDecl -> varDecl.getConstDecl(0))
-                            .filter(model.toMap()::containsKey)
-                            .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                        .map(varDecl -> varDecl.getConstDecl(0))
+                        .filter(model.toMap()::containsKey)
+                        .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
 
                     var counterExample = getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
 
                     Node newNode =
-                            new Node(And(counterExample), root, optimizations.isCoverOpt(), solver);
+                        new Node(And(counterExample), root, optimizations.isCoverOpt(), solver);
 
                     currentlyVisited.put(newNode, false);
 
@@ -371,10 +339,6 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
 
     public Node checkCurrentFrame(Node target) {
         if (optimizations.isPropertyOpt()) {
-            var interSection =
-                    convertValuationToExpression(
-                            frames.get(currentFrameNumber)
-                                    .checkIfTargetIsReachableValuation(And(target.getExprs())));
             try (var wpp = new WithPushPop(solver)) {
                 frames.get(currentFrameNumber).addFrameToSolver(VarIndexingFactory.indexing(0));
                 getConjuncts(monolithicExpr.getTransExpr())
@@ -525,16 +489,16 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
             currentNode = currentNode.getParent();
         }
         logger.write(
-                Logger.Level.VERBOSE, "\tFound trace curframenumber: %s\n", currentFrameNumber);
+            Logger.Level.VERBOSE, "\tFound trace curframenumber: %s\n", currentFrameNumber);
         logger.write(Logger.Level.VERBOSE, "\tFound trace tracelength: %s\n", errorLength);
 
         final ExprTraceChecker<ItpRefutation> checker =
-                ExprTraceFwBinItpChecker.create(
-                        monolithicExpr.getInitExpr(),
-                        Not(monolithicExpr.getPropExpr()),
-                        solverFactory.createItpSolver());
+            ExprTraceFwBinItpChecker.create(
+                monolithicExpr.getInitExpr(),
+                Not(monolithicExpr.getPropExpr()),
+                solverFactory.createItpSolver());
         ExprTraceStatus<ItpRefutation> status =
-                checker.check(Trace.of(abstractStates, abstractActions));
+            checker.check(Trace.of(abstractStates, abstractActions));
         if (status.isInfeasible()) {
             final var ref = status.asInfeasible().getRefutation();
             if (pruneOpt) {
@@ -544,7 +508,7 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
                 return null;
             } else {
                 prune(ref.getPruneIndex(), true);
-                errorNode.addExpr(ref.get(ref.getPruneIndex())); // todo maybe prune children?
+                errorNode.addExpr(ref.get(ref.getPruneIndex()));
                 noNodeIsVisited();
                 return null;
             }
@@ -554,24 +518,24 @@ public class CarCheckerOld<S extends ExprState, A extends ExprAction>
         Trace<Valuation, ? extends Action> trace = status.asFeasible().getValuations();
         valuations = new ArrayList<>();
         valuations =
-                trace.getStates().stream()
-                        .map(
-                                it -> {
-                                    final MutableValuation newValuation = new MutableValuation();
-                                    it.toMap().entrySet().stream()
-                                            .filter(
-                                                    entry ->
-                                                            monolithicExpr
-                                                                    .getVars()
-                                                                    .contains(entry.getKey()))
-                                            .forEach(
-                                                    entry ->
-                                                            newValuation.put(
-                                                                    entry.getKey(),
-                                                                    entry.getValue()));
-                                    return newValuation;
-                                })
-                        .toList();
+            trace.getStates().stream()
+                .map(
+                    it -> {
+                        final MutableValuation newValuation = new MutableValuation();
+                        it.toMap().entrySet().stream()
+                            .filter(
+                                entry ->
+                                    monolithicExpr
+                                        .getVars()
+                                        .contains(entry.getKey()))
+                            .forEach(
+                                entry ->
+                                    newValuation.put(
+                                        entry.getKey(),
+                                        entry.getValue()));
+                        return newValuation;
+                    })
+                .toList();
         final List<ExplState> states = new ArrayList<>();
         final List<ExprAction> actions = new ArrayList<>();
         for (int i = 0; i < valuations.size(); ++i) {

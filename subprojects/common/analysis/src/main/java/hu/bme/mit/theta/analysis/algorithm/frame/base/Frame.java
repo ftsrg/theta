@@ -35,7 +35,7 @@ public class Frame {
 
     private final UCSolver solver;
     private final BaseOptimizations optimizations;
-    private final MonolithicExpr monolithicExpr;
+    private MonolithicExpr monolithicExpr;
 
     public Frame(
             final Frame parent,
@@ -47,6 +47,10 @@ public class Frame {
         this.monolithicExpr = monolithicExpr;
         this.optimizations = optimizations;
         clauses = new ArrayList<>();
+    }
+
+    public void setMonolithicExpr(MonolithicExpr monolithicExpr) {
+        this.monolithicExpr = monolithicExpr;
     }
 
     public List<Clause> getClauses() {

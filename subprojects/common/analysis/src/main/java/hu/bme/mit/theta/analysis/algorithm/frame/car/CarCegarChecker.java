@@ -57,7 +57,7 @@ public class CarCegarChecker
     public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
         AbstractHelper helper = new AbstractHelper(traceCheckerFactory);
         MonolithicExpr abstractModel = helper.createPrec(monolithicExpr);
-        var checker = new CarCheckerOld<>(abstractModel, solverFactory, optimizations, logger);
+        var checker = new CarChecker<>(abstractModel, solverFactory, optimizations, logger);
         while (true) {
             logger.write(Logger.Level.SUBSTEP, "Current prec: %s\n", helper.currentPrec);
             var result = checker.check();

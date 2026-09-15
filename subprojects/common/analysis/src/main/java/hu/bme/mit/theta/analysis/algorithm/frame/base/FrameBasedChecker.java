@@ -75,8 +75,12 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
     }
 
     protected Valuation filterModel(Valuation model) {
-        return PathUtils.extractValuation(
-                model, VarIndexingFactory.indexing(0), monolithicExpr.getVars());
+        final MutableValuation filteredModel = new MutableValuation();
+        monolithicExpr.getVars().stream()
+            .map(varDecl -> varDecl.getConstDecl(0))
+            .filter(model.toMap()::containsKey)
+            .forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+        return filteredModel;
     }
 
     protected Cube removeRedundantExpressionsUsingUnsatCore(

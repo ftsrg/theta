@@ -57,6 +57,9 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         extends FrameBasedChecker<CarOptimizations> {
     public void setMonolithicExpr(MonolithicExpr monolithicExpr) {
         this.monolithicExpr = monolithicExpr;
+        for(var f : frames){
+            f.setMonolithicExpr(monolithicExpr);
+        }
     }
 
     private final boolean curFrameopt = false;
@@ -107,7 +110,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
 
     private Node getNotCheckedNode() {
-        if (currentlyVisited.size() == 0) {
+        if (currentlyVisited.isEmpty()) { //todo maybe not needed here
             root =
                     new Node(
                             Not(monolithicExpr.getPropExpr()),
@@ -121,7 +124,6 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                         .keySet()) { // todo can be more faster if the nodes visited in a more
             // specific order
             if (!currentlyVisited.get(node)) {
-
                 return node;
             }
         }
@@ -136,7 +138,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         noNodeIsVisited();
         pruneLength = 0;
 
-        root.setExprs(Not(monolithicExpr.getPropExpr()));
+        root.setExprs(Not(monolithicExpr.getPropExpr())); //todo: use smartboolexpr everywhere
 
         var faultyNodeInit = checkFirstCar();
         if (faultyNodeInit != null) {
@@ -157,6 +159,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
             } else {
                 var counterExample = checkCurrentFrameForInterSections(And(node.getExprs()));
                 if (counterExample != null) {
+
                     Node counterExampleNode =
                             new Node(
                                     counterExample.getCube().toExpr(),
@@ -164,6 +167,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                                     optimizations.isCoverOpt(),
                                     solver);
                     currentlyVisited.put(counterExampleNode, false);
+
                     var faultyNode =
                             tryBlock(
                                     new ProofObligationCar(counterExampleNode, currentFrameNumber));
