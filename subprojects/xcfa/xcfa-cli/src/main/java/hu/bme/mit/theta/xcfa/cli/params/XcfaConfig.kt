@@ -18,8 +18,9 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -37,7 +38,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
@@ -129,7 +130,13 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
-  var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
+  var loopUnroll: Int = UnrollPass.UNROLL_LIMIT,
+  @Parameter(
+    names = ["--memory-init"],
+    description =
+      "Initial value of the dereference memory arrays: ZERO, UNCONSTRAINED or AUTO (ZERO for the MDD backend, whose fixpoint needs a finite set of initial states)",
+  )
+  var memoryInit: MemoryInit = MemoryInit.AUTO,
   @Parameter(
     names = ["--force-unroll"],
     description =
@@ -137,11 +144,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   )
   var forceUnroll: Int = -1,
   @Parameter(
-    names = ["--no-force-unroll-recursion"],
+    names = ["--force-unroll-recursion"],
     description =
-      "Disable expanding recursive procedure calls to the depth loops are force-unrolled to. Expansion is on wherever a force-unroll bound is in effect: calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe, and it lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
+      "Number of times a recursive procedure call left over after inlining is expanded; calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe (use -1 to disable). Lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
   )
-  var noForceUnrollRecursion: Boolean = false,
+  var forceUnrollRecursion: Int = -1,
   @Parameter(
     names = ["--datarace-to-reachability"],
     description =
@@ -312,6 +319,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.TRACEGEN -> TracegenConfig() as T
         Backend.MDD -> MddConfig() as T
+        Backend.MDD_CEGAR -> MddCegarConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
       }
@@ -657,6 +665,12 @@ data class MddConfig(
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
   @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.DFS,
+  @Parameter(
     names = ["--solver-measurements"],
     description = "Perform a structural rerun to estimate solver time overhead",
   )
@@ -667,6 +681,53 @@ data class MddConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+data class MddCegarConfig(
+  @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
+  var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver", "--validate-mdd-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--iteration-strategy"],
+    description = "Iteration strategy for the MDD checker",
+  )
+  var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(
+    names = ["--look-ahead-strategy"],
+    description = "MDD to expression conversion strategy",
+  )
+  var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NONE,
+  @Parameter(
+    names = ["--proof-strategy"],
+    description = "MDD to expression conversion strategy for the proof invariant",
+  )
+  var proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
+  var traceTimeout: Long = 10,
+  @Parameter(
+    names = ["--reach-constraint"],
+    description = "Constrain each iteration's saturation to the previous iteration's reach set",
+    arity = 1,
+  )
+  var reachConstraint: Boolean = false,
+  @Parameter(
+    names = ["--on-the-fly-reachability"],
+    description = "Terminate saturation as soon as a violating state is reached",
+  )
+  var onTheFlyReachability: Boolean = false,
+  @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.DFS,
 ) : SpecBackendConfig
 
 data class Ic3Config(

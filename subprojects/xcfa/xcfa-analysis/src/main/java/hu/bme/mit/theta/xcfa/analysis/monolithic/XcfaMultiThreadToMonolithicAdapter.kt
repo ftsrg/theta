@@ -66,7 +66,7 @@ class XcfaMultiThreadToMonolithicAdapter(
     property,
     ProcedurePassManager(
       listOfNotNull(
-        if (forceUnroll) LoopUnrollPass(2) else null,
+        if (forceUnroll) UnrollPass(2) else null,
         EliminateSelfLoops(),
         RemoveAbortBranchesPass(),
         if (property.verifiedProperty == ErrorDetection.DATA_RACE)

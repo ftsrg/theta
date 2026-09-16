@@ -13,16 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
+package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
+import com.google.common.collect.MapMaker;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.model.BasicExprSubstitution;
@@ -41,6 +42,10 @@ import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 public class MddExpressionTemplate implements MddNode.Template {
@@ -51,13 +56,46 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final boolean transExpr;
     private final boolean knownSat;
 
-    private static UnaryOperationCache<Expr<BoolType>, Boolean> satCache =
-            new UnaryOperationCache();
+    public static final MddGraph.Key<UnaryOperationCache<Expr<BoolType>, Optional<Valuation>>>
+            SAT_CACHE = new MddGraph.Key<>("satCache");
 
-    private static Valuation checkSat(Expr<BoolType> expr, SolverPool solverPool) {
-        Boolean cached = satCache.getOrNull(expr);
+    // simplify outputs are fixed points: a memoized expression is not simplified again
+    private static final MddGraph.Key<Set<Expr<BoolType>>> SIMPLIFIED =
+            new MddGraph.Key<>("simplifiedExprs");
+
+    private static Set<Expr<BoolType>> newSimplifiedSet() {
+        final ConcurrentMap<Expr<BoolType>, Boolean> weakIdentityMap =
+                new MapMaker().weakKeys().makeMap();
+        return Collections.newSetFromMap(weakIdentityMap);
+    }
+
+    static Expr<BoolType> simplify(final Expr<BoolType> expr, final MddGraph<?> graph) {
+        final Set<Expr<BoolType>> known =
+                graph.getAttribute(SIMPLIFIED, MddExpressionTemplate::newSimplifiedSet);
+        if (known.contains(expr)) {
+            return expr;
+        }
+        final Expr<BoolType> result = ExprUtils.simplify(expr);
+        known.add(result);
+        return result;
+    }
+
+    static Expr<BoolType> simplify(
+            final Expr<BoolType> expr, final Valuation valuation, final MddGraph<?> graph) {
+        final Set<Expr<BoolType>> known =
+                graph.getAttribute(SIMPLIFIED, MddExpressionTemplate::newSimplifiedSet);
+        final Expr<BoolType> result = ExprUtils.simplify(expr, valuation);
+        known.add(result);
+        return result;
+    }
+
+    private static Valuation checkSat(
+            Expr<BoolType> expr,
+            SolverPool solverPool,
+            UnaryOperationCache<Expr<BoolType>, Optional<Valuation>> satCache) {
+        Optional<Valuation> cached = satCache.getOrNull(expr);
         if (cached != null) {
-            return cached ? ImmutableValuation.empty() : null;
+            return cached.orElse(null);
         }
         final var solver = solverPool.requestSolver();
         final Valuation model;
@@ -67,7 +105,7 @@ public class MddExpressionTemplate implements MddNode.Template {
         } finally {
             solverPool.returnSolver(solver);
         }
-        satCache.addToCache(expr, model != null);
+        satCache.addToCache(expr, Optional.ofNullable(model));
         return model;
     }
 
@@ -105,45 +143,42 @@ public class MddExpressionTemplate implements MddNode.Template {
         return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true);
     }
 
+    private MddExpressionTemplate knownChild(Expr<BoolType> childExpr) {
+        return ofKnownSat(childExpr, o -> (Decl) o, solverPool, transExpr);
+    }
+
     @Override
     public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(
             MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
         final Decl decl = extractDecl.apply(mddVariable.getTraceInfo());
+        final var satCache =
+                mddVariable.getMddGraph().getAttribute(SAT_CACHE, UnaryOperationCache::new);
 
-        final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
+        final Expr<BoolType> simplifiedExpr = simplify(expr, mddVariable.getMddGraph());
 
         // Check if terminal 0
         final Valuation satModel;
         if (knownSat) {
             satModel = null;
-        } else if (canonizedExpr instanceof FalseExpr) {
+        } else if (simplifiedExpr instanceof FalseExpr) {
             return null;
         } else {
-            satModel = checkSat(canonizedExpr, solverPool);
+            satModel = checkSat(ExprUtils.canonize(simplifiedExpr), solverPool, satCache);
             if (satModel == null) return null;
         }
 
         // Check if default
         if (mddVariable.getDomainSize() == 0
-                && !ExprUtils.getConstants(canonizedExpr).contains(decl)) {
+                && !ExprUtils.getConstants(simplifiedExpr).contains(decl)) {
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
-                childNode =
-                        mddVariable
-                                .getLower()
-                                .get()
-                                .checkInNode(
-                                        MddExpressionTemplate.ofKnownSat(
-                                                canonizedExpr,
-                                                o -> (Decl) o,
-                                                solverPool,
-                                                transExpr));
+                childNode = mddVariable.getLower().get().checkInNode(knownChild(simplifiedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                childNode = mddGraph.getNodeFor(canonizedExpr);
+                childNode = mddGraph.getNodeFor(simplifiedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
-                    canonizedExpr, decl, mddVariable, solverPool, childNode, transExpr);
+                    simplifiedExpr, decl, mddVariable, solverPool, childNode, transExpr);
         }
 
         if (transExpr
@@ -170,7 +205,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                     decl.getRef())
                             .build();
             final Expr<BoolType> overApproxExpr =
-                    ExprUtils.simplify(overApproxSub.apply(canonizedExpr));
+                    simplify(overApproxSub.apply(simplifiedExpr), mddVariable.getMddGraph());
 
             boolean identityNeeded = false;
 
@@ -180,7 +215,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                 if (underConstants.contains(decl) || underConstants.contains(nextDecl)) {
                     // Check if expr and not(x' = x) is sat
                     final var andExpr = And(expr, Neq(decl.getRef(), nextDecl.getRef()));
-                    if (checkSat(andExpr, solverPool) == null) {
+                    if (checkSat(andExpr, solverPool, satCache) == null) {
                         identityNeeded = true;
                     }
                 } else {
@@ -212,37 +247,30 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
         }
 
-        final LitExpr<?> determinedValue = findDeterminedValue(canonizedExpr, decl);
+        final LitExpr<?> determinedValue = findDeterminedValue(simplifiedExpr, decl);
         if (determinedValue != null) {
             final int key = LitExprConverter.toInt(determinedValue);
+
             final Expr<BoolType> substitutedExpr =
-                    ExprUtils.simplify(
-                            canonizedExpr,
-                            ImmutableValuation.builder().put(decl, determinedValue).build());
+                    simplify(
+                            simplifiedExpr,
+                            ImmutableValuation.builder().put(decl, determinedValue).build(),
+                            mddVariable.getMddGraph());
 
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
-                childNode =
-                        mddVariable
-                                .getLower()
-                                .get()
-                                .checkInNode(
-                                        MddExpressionTemplate.ofKnownSat(
-                                                substitutedExpr,
-                                                o -> (Decl) o,
-                                                solverPool,
-                                                transExpr));
+                childNode = mddVariable.getLower().get().checkInNode(knownChild(substitutedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(substitutedExpr);
             }
 
             return MddExpressionRepresentation.ofDetermined(
-                    canonizedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
+                    simplifiedExpr, decl, mddVariable, solverPool, key, childNode, transExpr);
         }
 
         return MddExpressionRepresentation.of(
-                canonizedExpr, decl, mddVariable, solverPool, transExpr, satModel);
+                simplifiedExpr, decl, mddVariable, solverPool, transExpr, satModel);
     }
 
     private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package hu.bme.mit.theta.xsts.analysis;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.MddValuationCollector;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;

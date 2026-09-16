@@ -35,14 +35,15 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.references
 
 internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext: ParseContext) {
@@ -94,39 +95,18 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
 
   /**
-   * Identifies a *memory partition*: the set of dereferences sharing an (array, offset, element)
-   * type triple.
+   * One memory declaration per [MemoryTypeKey], typed with the partition's element type.
    *
-   * A single, [IntType]-typed memory declaration cannot represent the value of every dereference:
-   * the const standing for a memory event is substituted back into the surrounding expression (see
-   * [with]), where it must have the dereference's real element type. Bitvector-typed accesses (a C
-   * program analysed with bitvector arithmetic) therefore failed with a `ClassCastException`, and
-   * there is no expression converting an `Int` const back to a `Bv` (only `Bv -> Int` exists), so
-   * the value has to be tracked at the accessed type in the first place.
-   *
-   * This is exactly the partitioning the rest of Theta's memory model uses:
-   * `DereferenceToArrayPass` allocates one backing array (`__arrays_<A>_<O>_<T>`) per such triple,
-   * so accesses of different types never communicate there either. Keeping the OC encoding in sync
-   * means the OC backend makes the same aliasing assumptions as the CEGAR backends rather than
-   * inventing new ones.
-   *
-   * Note that the partitioning cannot hide a data race: races are detected by the instrumentation
-   * of `DataRaceToReachabilityPass` (ordinary flag variables holding the racing address), not by
-   * the read-from relation. Splitting only removes read-from edges, and since every partition keeps
-   * its own unconstrained "garbage" initial write, a read that loses a cross-type source falls back
-   * to an arbitrary value -- i.e. the encoding gains behaviours, never loses them.
+   * Partitioning memory declarations by array type, offset type, and expression type as there
+   * should never be data flow between events where any of these differ.
    */
-  private data class MemoryKey(val arrayType: Type, val offsetType: Type, val elemType: Type)
-
-  private val Dereference<*, *, *>.memoryKey: MemoryKey
-    get() = MemoryKey(array.type, offset.type, type)
-
-  /** One memory declaration per partition, typed with the partition's element type. */
-  private val memoryDecls: Map<MemoryKey, VarDecl<Type>> = createMemoryDecls()
+  private val memoryDecls: Map<MemoryTypeKey, VarDecl<Type>> = createMemoryDecls()
   private val memoryDeclSet: Set<VarDecl<*>> = memoryDecls.values.toSet()
 
-  // the values of these declarations are not constrained
-  private val memoryGarbages: Map<MemoryKey, IndexedConstDecl<Type>> =
+  /**
+   * Declarations for initial memory garbage: the values of these declarations are not constrained
+   */
+  private val memoryGarbages: Map<MemoryTypeKey, IndexedConstDecl<Type>> =
     memoryDecls
       .mapValues { (_, decl) -> decl.getNewIndexed() }
       .also { XcfaEvent.memoryGarbages = it.values.toSet() }
@@ -149,19 +129,17 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
   }
 
   /**
-   * Collects every dereference type triple occurring in the XCFA and creates a memory declaration
-   * for each.
+   * Collects the partitions occurring in the XCFA and creates a memory declaration for each.
    *
-   * This has to happen up front (rather than lazily, on first access): every partition needs an
-   * unconstrained initial write that is program-order-before all other events, and such an event
-   * can only be created while the entry thread is being set up. A read with no read-from source at
-   * all would be left with a completely free value, which would be unsound.
+   * Up front rather than lazily: every partition needs an unconstrained initial write that is
+   * program-order-before all other events, and such an event can only be created while the entry
+   * thread is being set up.
    */
-  private fun createMemoryDecls(): Map<MemoryKey, VarDecl<Type>> {
-    val keys = mutableSetOf<MemoryKey>()
+  private fun createMemoryDecls(): Map<MemoryTypeKey, VarDecl<Type>> {
+    val keys = mutableSetOf<MemoryTypeKey>()
     xcfa.procedures.forEach { procedure ->
       procedure.edges.forEach { edge ->
-        edge.label.dereferences.forEach { keys.add(it.memoryKey) }
+        edge.label.dereferences.forEach { keys.add(it.memoryTypeKey) }
         edge.getFlatLabels().filterIsInstance<InvokeLabel>().forEach { label ->
           pthreadSpecificKey(label)?.let { keys.add(it) }
         }
@@ -172,7 +150,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     return keys
       .sortedBy { it.toString() }
       .associateWith { key ->
-        var name = "__oc_memory_declaration__${key.suffix}"
+        var name = "__oc_memory_declaration__${key.sanitizedName}"
         while (!names.add(name)) name += "_" // types with equal sanitized names (should not happen)
         Decls.Var(name, key.elemType)
       }
@@ -183,7 +161,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
    * in [ThreadProcessor.process] that are not present in the XCFA itself, so their partitions have
    * to be registered separately.
    */
-  private fun pthreadSpecificKey(label: InvokeLabel): MemoryKey? {
+  private fun pthreadSpecificKey(label: InvokeLabel): MemoryTypeKey? {
     val keyType =
       when (label.name) {
         "pthread_getspecific",
@@ -194,19 +172,13 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
 
         else -> null
       } ?: return null
-    return MemoryKey(keyType, Int(), Int())
+    return MemoryTypeKey(keyType, Int(), Int())
   }
 
-  /** Alphanumeric rendering of the triple (const names must stay parseable, see reason parser) */
-  private val MemoryKey.suffix: String
+  private val Dereference<*, *, *>.memoryDecl: VarDecl<Type>
     get() =
-      listOf(arrayType, offsetType, elemType).joinToString("_") {
-        it.toString().replace(Regex("[^A-Za-z0-9]"), "")
-      }
-
-  private fun memoryDeclOf(deref: Dereference<*, *, *>): VarDecl<Type> =
-    memoryDecls[deref.memoryKey]
-      ?: exit("dereference of an unregistered type: ${deref.memoryKey} ($deref)")
+      memoryDecls[memoryTypeKey]
+        ?: exit("dereference of an unregistered type: $memoryTypeKey ($this)")
 
   private fun addCrossThreadRelations() {
     for ((v, map) in events) {
@@ -229,7 +201,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     private var last = listOf<E>()
     private var guard = setOf<Expr<BoolType>>()
     private lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
-    private val memoryWrites = mutableMapOf<MemoryKey, MutableSet<E>>()
+    private val memoryWrites = mutableMapOf<MemoryTypeKey, MutableSet<E>>()
     private lateinit var edge: XcfaEdge
     private var inEdge = false
     private var atomicBlock: Int? = null
@@ -279,8 +251,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       useProvidedConst: Boolean = false,
     ): List<E> {
       check(!inEdge || last.size == 1)
-      val key = deref.memoryKey
-      val decl = memoryDeclOf(deref)
+      val key = deref.memoryTypeKey
+      val decl = deref.memoryDecl
       val array = deref.array.with(consts)
       val offset = deref.offset.with(consts)
       val clkId =
@@ -299,7 +271,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
-        // only same-partition writes can be observed (see MemoryKey)
+        // only same-partition writes can be observed (see MemoryTypeKey)
         READ -> memoryWrites[key]?.forEach { rfs.add(RelationType.RF, it, e) }
         WRITE -> memoryWrites.getOrPut(key) { mutableSetOf() }.add(e)
       }
@@ -326,13 +298,6 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     fun process() {
       threads.add(thread)
       val waitList = mutableSetOf<SearchItem>()
-      val visited = mutableSetOf<XcfaLocation>()
-      /**
-       * Items let through with fewer incoming edges than the location has, because the missing ones
-       * can never fire (see [releasableFrom]); their per-edge collections are correspondingly
-       * shorter, so the arity checks below must not demand the full count for them.
-       */
-      val releasedEarly = mutableSetOf<SearchItem>()
       val toVisit =
         mutableSetOf(
           SearchItem(thread.procedure.initLoc).apply {
@@ -346,8 +311,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       while (toVisit.isNotEmpty()) {
         val current = toVisit.first()
         toVisit.remove(current)
-        visited.add(current.loc)
-        check(current.incoming == current.loc.incomingEdges.size || current in releasedEarly)
+
+        check(current.incoming == current.loc.incomingEdges.size)
         check(current.incoming == current.guards.size || current.loc.initial)
         // lastEvents intentionally skipped
         check(current.incoming == current.lastWrites.size || current.loc.initial)
@@ -447,53 +412,14 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
             }
           }
         }
-
-        // The frontier can drain with items still waiting, because loop unrolling leaves behind
-        // copies past the unroll bound that nothing can reach. An edge out of such a location can
-        // never fire, so waiting for it would strand a perfectly ordinary merge point forever --
-        // that is the "dangling edges" half of the old error. Let those items through with the
-        // predecessors they did get. A real loop is unaffected: its head is blocked by its own
-        // back edge, whose source is reachable from the head itself, so it is never releasable and
-        // still reports below.
-        if (toVisit.isEmpty() && waitList.isNotEmpty()) {
-          val releasable = releasableFrom(waitList, visited)
-          if (releasable.isEmpty()) {
-            if (System.getenv("THETA_OC_LOOP_DEBUG") != null) {
-              System.err.println("=== OC loop stall: ${waitList.size} waiting item(s)")
-              val fromInit = mutableSetOf(thread.procedure.initLoc)
-              val q = mutableListOf(thread.procedure.initLoc)
-              while (q.isNotEmpty()) q.removeLast().outgoingEdges.forEach {
-                if (fromInit.add(it.target)) q.add(it.target)
-              }
-              waitList.forEach { item ->
-                val downstream = mutableSetOf(item.loc)
-                val q2 = mutableListOf(item.loc)
-                while (q2.isNotEmpty()) q2.removeLast().outgoingEdges.forEach {
-                  if (downstream.add(it.target)) q2.add(it.target)
-                }
-                val missing = item.loc.incomingEdges.filter { it.source !in visited }
-                System.err.println(
-                  "  ${item.loc.name}[${item.incoming}/${item.loc.incomingEdges.size}]" +
-                    " missing-from=" +
-                    missing.joinToString(",", limit = 8) { e ->
-                      val reachInit = if (e.source in fromInit) "reachable" else "DEAD"
-                      val cyc = if (e.source in downstream) "CYCLE" else "acyclic"
-                      "${e.source.name}($reachInit,$cyc)"
-                    }
-                )
-              }
-            }
-            exit(
-              "loops (stuck at ${waitList.joinToString(", ", limit = 5) { item ->
-                "${item.loc.name}[${item.incoming}/${item.loc.incomingEdges.size}]"
-              }})"
-            )
-          }
-          releasedEarly.addAll(releasable)
-          waitList.removeAll(releasable)
-          toVisit.addAll(releasable)
-        }
       }
+
+      if (waitList.isNotEmpty())
+        exit(
+          "loops and dangling edges (stuck at ${waitList.joinToString(", ", limit = 5) { item ->
+            "${item.loc.name}[${item.incoming}/${item.loc.incomingEdges.size}]"
+          }})"
+        )
     }
 
     /**
@@ -522,29 +448,6 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       return edge.label.getFlatLabels().all { it is NopLabel } && edge.target.isTerminalSink(seen)
     }
 
-    /**
-     * The waiting items whose still-missing incoming edges can never be delivered: no location that
-     * an execution could still get to (a waiting location, or anything downstream of one) is their
-     * source. Returns an empty set when every waiting item is blocked by something still live --
-     * i.e. when the blockage is a genuine cycle.
-     */
-    private fun releasableFrom(
-      waitList: Set<SearchItem>,
-      visited: Set<XcfaLocation>,
-    ): Set<SearchItem> {
-      val stillLive = mutableSetOf<XcfaLocation>()
-      val stack = waitList.mapTo(mutableListOf()) { it.loc }
-      stillLive.addAll(stack)
-      while (stack.isNotEmpty()) {
-        stack.removeLast().outgoingEdges.forEach {
-          if (stillLive.add(it.target)) stack.add(it.target)
-        }
-      }
-      return waitList.filterTo(mutableSetOf()) { item ->
-        item.loc.incomingEdges.none { it.source !in visited && it.source in stillLive }
-      }
-    }
-
     private fun AssignStmt<*>.process() {
       val consts = this.expr.toEvents()
       last = event(this.varDecl, WRITE)
@@ -557,7 +460,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     ) {
       val consts =
         this.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) } +
-          this.cond.dereferences.associateWith { memoryDeclOf(it).getNewIndexed(true) }
+          this.cond.dereferences.associateWith { it.memoryDecl.getNewIndexed(true) }
       val condWithConsts = this.cond.with(consts)
       val asAssign =
         consts.size == 1 &&

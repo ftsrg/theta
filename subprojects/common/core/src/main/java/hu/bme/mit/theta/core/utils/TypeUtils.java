@@ -99,8 +99,6 @@ public final class TypeUtils {
             final Expr<T> result = (Expr<T>) expr;
             return result;
         } else {
-            // Types first, expression last: an expression pretty-prints over many lines, so
-            // leading with it pushes the only useful part of the message out of sight.
             throw new ClassCastException(
                     "Expected type "
                             + type

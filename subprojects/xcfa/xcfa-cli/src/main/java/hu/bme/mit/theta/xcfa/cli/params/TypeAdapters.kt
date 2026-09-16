@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson) :
       when (reader.nextName()) {
         "lbeLevel" -> instance.lbeLevel = LbePass.LbeLevel.valueOf(reader.nextString())
         "loopUnroll" -> instance.loopUnroll = reader.nextInt()
-        "enableDataRaceToReachability" -> instance.enableDataRaceToReachability = reader.nextBoolean()
+        "enableDataRaceToReachability" ->
+          instance.enableDataRaceToReachability = reader.nextBoolean()
         "inputType" -> instance.inputType = InputType.valueOf(reader.nextString())
         "specConfig" -> instance.specConfig = readSpecConfig(reader)
         else -> reader.skipValue()

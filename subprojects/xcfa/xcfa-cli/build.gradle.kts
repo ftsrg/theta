@@ -133,10 +133,16 @@ val canaryTest by
                 .asFile.absolutePath,
         )
         systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
-        // The sweep runs PARALLEL_JOBS tasks at once (script default 4). Lowering it trades wall
-        // time for memory headroom on a shared machine. The largest canaries need several GB each,
-        // so this is pressure relief, not a substitute for enough memory.
-        (project.findProperty("theta.canary.jobs"))?.let { environment("PARALLEL_JOBS", it.toString()) }
+        // The sweep runs this many tasks at once (default 4). Lowering it trades wall time for
+        // memory headroom on a shared machine. The largest canaries need several GB each, so this
+        // is pressure relief, not a substitute for enough memory.
+        (project.findProperty("theta.canary.jobs"))?.let {
+            systemProperty("theta.canary.jobs", it.toString())
+        }
+        // Point `full` mode at a subset; the whole list is far too slow to verify end to end.
+        (project.findProperty("theta.canary.tsv"))?.let {
+            systemProperty("theta.canary.tsv", it.toString())
+        }
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())
         }
@@ -151,5 +157,58 @@ val canaryTest by
         }
     }
 
-// Keep the long sweep out of the ordinary test task.
-tasks.named<Test>("test") { filter { excludeTestsMatching("*CanarySuiteTest*") } }
+// The feature-guard fixtures, which are the fast half of the canary gate: minimal programs that
+// each isolate one change, so reverting that change flips the fixture. Separate from `canaryTest`
+// because it needs no sv-benchmarks *tasks*, only the property files, and runs in a couple of
+// minutes rather than twenty.
+val fixtureTest by
+    tasks.registering(Test::class) {
+        group = "verification"
+        description =
+            "Runs the feature-guard fixtures against the built Theta-svcomp distribution. Needs a " +
+            "local sv-benchmarks checkout for the property files; it never downloads one."
+
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        filter { includeTestsMatching("*FixtureSuiteTest*") }
+
+        dependsOn("buildArchiveTheta-svcomp")
+        dependsOn(tasks.named("testClasses"))
+
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
+        systemProperty(
+            "theta.canary.dist",
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
+        )
+        (project.findProperty("theta.canary.svBenchmarks"))?.let {
+            systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+
+        // Depends on the benchmarks and the built archive, not only on this project's inputs.
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events("failed", "skipped")
+            showStandardStreams = false
+        }
+    }
+
+// The fixtures are part of the canary gate, so one command still runs both.
+canaryTest { dependsOn(fixtureTest) }
+
+// Keep the long sweeps out of the ordinary test task.
+tasks.named<Test>("test") {
+    filter {
+        excludeTestsMatching("*CanarySuiteTest*")
+        excludeTestsMatching("*FixtureSuiteTest*")
+    }
+}

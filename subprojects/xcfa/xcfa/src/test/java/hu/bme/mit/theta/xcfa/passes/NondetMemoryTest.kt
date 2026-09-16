@@ -38,7 +38,7 @@ class NondetMemoryTest {
     return listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
       procedureBuilder
     ) { acc, pass ->
-      pass.run(acc)
+      pass.runChecked(acc)
     }
   }
 
@@ -74,7 +74,7 @@ class NondetMemoryTest {
       listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
         ctx.builder
       ) { acc, pass ->
-        pass.run(acc)
+        pass.runChecked(acc)
       }
     val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
     assertTrue(labels.any { it is InvokeLabel && it.name == "__VERIFIER_nondet_memory" })
@@ -98,7 +98,7 @@ class NondetMemoryTest {
       listOf(NormalizePass(), DeterministicPass(), NondetFunctionPass(parseContext)).fold(
         ctx.builder
       ) { acc, pass ->
-        pass.run(acc)
+        pass.runChecked(acc)
       }
     val labels = result.getEdges().flatMap { (it.label as SequenceLabel).labels }
     assertTrue(

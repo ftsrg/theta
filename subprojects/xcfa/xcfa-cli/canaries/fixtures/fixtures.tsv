@@ -72,3 +72,5 @@ global_struct_brace_elision.c	efficient	LP64	SAFE	brace elision: { 0 } over an a
 union_aggregate_assign.c	efficient	LP64	SAFE	a union is assigned by copying its storage, through both member views
 nondet_memory_symbolic_size.c	efficient	LP64	UNSAFE	__VERIFIER_nondet_memory with a symbolic size is lowered to a loop that havocs every cell
 nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only the region it was given, not the whole object
+stub_write_race.c	efficient	LP64	UNSAFE:no-data-race	a library stub writing through a pointer argument stays visible to the data-race instrumentation
+stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps the reads of its arguments (a race on one of them is still reported)
