@@ -17,6 +17,7 @@ package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
@@ -47,13 +48,19 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.ItpMarkerTree;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -132,52 +139,45 @@ public final class Z3ItpSolverTest {
         final ItpMarker I3 = solver.createMarker();
         final ItpMarker I4 = solver.createMarker();
         final ItpMarker I5 = solver.createMarker();
-        final ItpPattern pattern = solver.createSeqPattern(ImmutableList.of(I1, I2, I3, I4, I5));
+        final List<ItpMarker> markers = ImmutableList.of(I1, I2, I3, I4, I5);
+        final ItpPattern pattern = solver.createSeqPattern(markers);
 
-        solver.add(I1, Eq(a, Int(0)));
-        solver.add(I2, Eq(a, b));
-        solver.add(I3, Eq(c, d));
-        solver.add(I4, Eq(d, Int(1)));
-        solver.add(I5, Eq(b, c));
+        final Map<ItpMarker, List<Expr<BoolType>>> segments = new LinkedHashMap<>();
+        segments.put(I1, List.of(Eq(a, Int(0))));
+        segments.put(I2, List.of(Eq(a, b)));
+        segments.put(I3, List.of(Eq(c, d)));
+        segments.put(I4, List.of(Eq(d, Int(1))));
+        segments.put(I5, List.of(Eq(b, c)));
+        segments.forEach((m, es) -> es.forEach(e -> solver.add(m, e)));
 
         solver.check();
         Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-        final Interpolant itp = solver.getInterpolant(pattern);
 
-        System.out.println(itp.eval(I1));
-        System.out.println(itp.eval(I2));
-        System.out.println(itp.eval(I3));
-        System.out.println(itp.eval(I4));
-        System.out.println(itp.eval(I5));
-        System.out.println("----------");
+        assertInterpolantTree(solver.getInterpolant(pattern), chain(markers), segments);
     }
 
-    // @Test
+    @Test
     public void testTreeInterpolation() {
         final ItpMarker I1 = solver.createMarker();
         final ItpMarker I2 = solver.createMarker();
         final ItpMarker I3 = solver.createMarker();
         final ItpMarker I4 = solver.createMarker();
         final ItpMarker I5 = solver.createMarker();
-        final ItpPattern pattern =
-                solver.createTreePattern(Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
+        final ItpMarkerTree<ItpMarker> tree = Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2));
+        final ItpPattern pattern = solver.createTreePattern(tree);
 
-        solver.add(I1, Eq(a, Int(0)));
-        solver.add(I2, Eq(a, b));
-        solver.add(I3, Eq(c, d));
-        solver.add(I4, Eq(d, Int(1)));
-        solver.add(I5, Eq(b, c));
+        final Map<ItpMarker, List<Expr<BoolType>>> segments = new LinkedHashMap<>();
+        segments.put(I1, List.of(Eq(a, Int(0))));
+        segments.put(I2, List.of(Eq(a, b)));
+        segments.put(I3, List.of(Eq(c, d)));
+        segments.put(I4, List.of(Eq(d, Int(1))));
+        segments.put(I5, List.of(Eq(b, c)));
+        segments.forEach((m, es) -> es.forEach(e -> solver.add(m, e)));
 
         solver.check();
         Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-        final Interpolant itp = solver.getInterpolant(pattern);
 
-        System.out.println(itp.eval(I1));
-        System.out.println(itp.eval(I2));
-        System.out.println(itp.eval(I3));
-        System.out.println(itp.eval(I4));
-        System.out.println(itp.eval(I5));
-        System.out.println("----------");
+        assertInterpolantTree(solver.getInterpolant(pattern), tree, segments);
     }
 
     //    @Test
@@ -342,5 +342,101 @@ public final class Z3ItpSolverTest {
         bCheck.add(itp);
         Assertions.assertEquals(
                 SolverStatus.UNSAT, bCheck.check(), "The interpolant is consistent with B: " + itp);
+    }
+
+    /**
+     * The chain {@link ItpSolver#createSeqPattern} builds: the first marker is the deepest leaf.
+     */
+    private static ItpMarkerTree<ItpMarker> chain(final List<ItpMarker> markers) {
+        ItpMarkerTree<ItpMarker> current = Leaf(markers.get(0));
+        for (int i = 1; i < markers.size(); i++) {
+            current = Tree(markers.get(i), current);
+        }
+        return current;
+    }
+
+    /**
+     * Checks the tree-interpolant contract at every node: the node's own subtree entails it, it
+     * contradicts the rest of the pattern, it follows from its children plus the node's own
+     * assertions, and it only mentions constants the two sides share. A sequence pattern is the
+     * chain case of this, and a binary pattern the two-node chain.
+     */
+    private static void assertInterpolantTree(
+            final Interpolant itp,
+            final ItpMarkerTree<ItpMarker> root,
+            final Map<ItpMarker, List<Expr<BoolType>>> segments) {
+        checkNode(itp, root, root, segments);
+    }
+
+    private static void checkNode(
+            final Interpolant itp,
+            final ItpMarkerTree<ItpMarker> node,
+            final ItpMarkerTree<ItpMarker> root,
+            final Map<ItpMarker, List<Expr<BoolType>>> segments) {
+        for (final ItpMarkerTree<ItpMarker> child : node.getChildren()) {
+            checkNode(itp, child, root, segments);
+        }
+
+        final Set<ItpMarker> subtree = new LinkedHashSet<>();
+        collectMarkers(node, subtree);
+        final List<Expr<BoolType>> sub = assertionsOf(subtree, segments);
+        final Set<ItpMarker> others = new LinkedHashSet<>(segments.keySet());
+        others.removeAll(subtree);
+        final List<Expr<BoolType>> rest = assertionsOf(others, segments);
+
+        final Expr<BoolType> current = itp.eval(node.getMarker());
+        Assertions.assertNotNull(current, "No interpolant for a marker of the pattern");
+
+        assertUnsat(
+                concat(sub, List.of(Not(current))),
+                "The subtree does not entail its interpolant: " + current);
+        assertUnsat(
+                concat(rest, List.of(current)),
+                "The interpolant is consistent with the rest of the pattern: " + current);
+
+        final List<Expr<BoolType>> inductive = new ArrayList<>();
+        for (final ItpMarkerTree<ItpMarker> child : node.getChildren()) {
+            inductive.add(itp.eval(child.getMarker()));
+        }
+        inductive.addAll(segments.get(node.getMarker()));
+        inductive.add(Not(current));
+        assertUnsat(inductive, "The interpolant does not follow from its children: " + current);
+
+        final Set<ConstDecl<?>> scope = new LinkedHashSet<>(ExprUtils.getConstants(And(sub)));
+        scope.retainAll(ExprUtils.getConstants(And(rest)));
+        Assertions.assertTrue(
+                scope.containsAll(ExprUtils.getConstants(current)),
+                "The interpolant is out of scope: " + current + " not within " + scope);
+    }
+
+    private static void collectMarkers(
+            final ItpMarkerTree<ItpMarker> node, final Set<ItpMarker> into) {
+        into.add(node.getMarker());
+        node.getChildren().forEach(child -> collectMarkers(child, into));
+    }
+
+    private static List<Expr<BoolType>> assertionsOf(
+            final Set<ItpMarker> markers, final Map<ItpMarker, List<Expr<BoolType>>> segments) {
+        final List<Expr<BoolType>> result = new ArrayList<>();
+        segments.forEach(
+                (marker, exprs) -> {
+                    if (markers.contains(marker)) {
+                        result.addAll(exprs);
+                    }
+                });
+        return result;
+    }
+
+    private static List<Expr<BoolType>> concat(
+            final List<Expr<BoolType>> a, final List<Expr<BoolType>> b) {
+        final List<Expr<BoolType>> result = new ArrayList<>(a);
+        result.addAll(b);
+        return result;
+    }
+
+    private static void assertUnsat(final List<Expr<BoolType>> exprs, final String message) {
+        final Solver checker = Z3SolverFactory.getInstance().createSolver();
+        exprs.forEach(checker::add);
+        Assertions.assertEquals(SolverStatus.UNSAT, checker.check(), message);
     }
 }

@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,7 +29,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
@@ -49,7 +47,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 class Z3Solver implements UCSolver, Solver, ItpSolver {
 
@@ -311,43 +308,18 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
     public Interpolant getInterpolant(ItpPattern pattern) {
         checkState(status == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
         if (pattern instanceof Z3ItpPattern z3ItpPattern) {
-            List<Z3ItpMarker> markers = z3ItpPattern.getSequence();
-            List<AndExpr> terms =
-                    markers.stream()
-                            .map(z3ItpMarker -> z3ItpMarker.getTerms().stream().toList())
-                            .map(AndExpr::create)
-                            .toList();
-
-            List<InterpolationMetadata> itpTasks =
-                    IntStream.range(1, terms.size())
-                            .mapToObj(
-                                    i ->
-                                            new InterpolationMetadata(
-                                                    transformationManager,
-                                                    terms.subList(0, i),
-                                                    terms.subList(i, terms.size())))
-                            .toList();
-
-            List<BoolExpr> itps =
-                    itpTasks.stream()
-                            .map(
-                                    (InterpolationMetadata i) -> {
-                                        final BoolExpr itp = i.interpolate(z3Context);
-                                        if (itp == null) {
-                                            // Spacer cannot always answer the Horn query the
-                                            // interpolant is derived from (uninterpreted functions,
-                                            // for one): there is no interpolant to hand back.
-                                            throw new NotSolvableException();
-                                        }
-                                        return itp;
-                                    })
-                            .toList();
-
-            Map<ItpMarker, Expr<BoolType>> itpMap = new LinkedHashMap<>();
-            for (int i = 0; i < itps.size(); i++) {
-                itpMap.put(markers.get(i), (Expr<BoolType>) termTransformer.toExpr(itps.get(i)));
+            final Map<Z3ItpMarker, BoolExpr> itps =
+                    new InterpolationMetadata(transformationManager, z3ItpPattern.getRoot())
+                            .interpolate(z3Context);
+            if (itps == null) {
+                // Spacer cannot always answer the Horn query the interpolants are derived from
+                // (uninterpreted functions, for one): there is nothing to hand back.
+                throw new NotSolvableException();
             }
-            itpMap.put(markers.get(markers.size() - 1), False());
+            final Map<ItpMarker, Expr<BoolType>> itpMap = new LinkedHashMap<>();
+            itps.forEach(
+                    (marker, term) ->
+                            itpMap.put(marker, (Expr<BoolType>) termTransformer.toExpr(term)));
             return new Z3Interpolant(itpMap);
         } else {
             throw new UnsupportedOperationException("Unsupported pattern: " + pattern);
