@@ -18,13 +18,11 @@ package hu.bme.mit.theta.solver.z3;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import com.google.common.collect.Sets;
-import com.google.common.collect.Streams;
 import com.microsoft.z3.*;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 record InterpolationMetadata(
         BoolExpr a,
@@ -75,17 +73,44 @@ record InterpolationMetadata(
         hornSolver.add(rule4);
 
         Status result = hornSolver.check();
-        if (result == Status.SATISFIABLE) {
-            final var interp = hornSolver.getModel().getFuncInterp(itp);
-            final var values =
-                    Streams.concat(
-                            Arrays.stream(interp.getEntries()).map(FuncInterp.Entry::getValue),
-                            Stream.of(interp.getElse()));
-            BoolExpr answer = ctx.mkOr(values.toArray(BoolExpr[]::new));
-            return (BoolExpr) answer.substituteVars(cSym);
-        } else {
+        if (result != Status.SATISFIABLE) {
             return null;
         }
+        final BoolExpr body = interpretation(ctx, hornSolver.getModel(), itp);
+        // The interpretation speaks about itp's arguments as de Bruijn variables; cSym[i] is
+        // argument i.
+        return cSym.length == 0 ? body : (BoolExpr) body.substituteVars(cSym);
+    }
+
+    /**
+     * The body of {@code itp}'s interpretation in {@code model}, over de Bruijn variables #0..#n-1
+     * standing for its arguments.
+     *
+     * <p>A zero-arity declaration is a constant, and {@link Model#getFuncInterp} refuses those.
+     * Otherwise the interpretation is an else branch plus point-wise entries, and every entry has
+     * to be guarded by the arguments it applies to -- its value alone says nothing about the
+     * function.
+     */
+    static BoolExpr interpretation(
+            final Context ctx, final Model model, final FuncDecl<BoolSort> itp) {
+        if (itp.getArity() == 0) {
+            final com.microsoft.z3.Expr<?> constInterp = model.getConstInterp(itp);
+            return constInterp == null ? ctx.mkFalse() : (BoolExpr) constInterp;
+        }
+        final FuncInterp<BoolSort> interp = model.getFuncInterp(itp);
+        if (interp == null) {
+            return ctx.mkFalse();
+        }
+        BoolExpr body = interp.getElse() == null ? ctx.mkFalse() : (BoolExpr) interp.getElse();
+        for (final FuncInterp.Entry<BoolSort> entry : interp.getEntries()) {
+            final com.microsoft.z3.Expr<?>[] args = entry.getArgs();
+            final BoolExpr[] match = new BoolExpr[args.length];
+            for (int i = 0; i < args.length; i++) {
+                match[i] = ctx.mkEq(ctx.mkBound(i, args[i].getSort()), args[i]);
+            }
+            body = (BoolExpr) ctx.mkITE(ctx.mkAnd(match), entry.getValue(), body);
+        }
+        return body;
     }
 
     private static Sort[] exprsToSorts(Expr[] exprs) {

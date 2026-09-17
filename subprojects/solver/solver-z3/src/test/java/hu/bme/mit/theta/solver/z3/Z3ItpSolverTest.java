@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
@@ -47,8 +49,11 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -295,7 +300,47 @@ public final class Z3ItpSolverTest {
         Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
         final Interpolant itp = solver.getInterpolant(pattern);
 
-        System.out.println(itp.eval(A));
-        System.out.println("----------");
+        // The pop took `a != c` off A; an interpolant computed over the popped assertion as well
+        // is not an interpolant of what is left.
+        assertInterpolant(itp.eval(A), List.of(Eq(a, b)), List.of(Eq(b, c), Neq(a, c)));
+    }
+
+    @Test
+    public void testInterpolationWithoutCommonConstants() {
+        final ItpMarker A = solver.createMarker();
+        final ItpMarker B = solver.createMarker();
+        final ItpPattern pattern = solver.createBinPattern(A, B);
+
+        // The two sides share no constant, so the interpolant ranges over none either.
+        solver.add(A, Lt(a, Int(0)));
+        solver.add(A, Gt(a, Int(0)));
+        solver.add(B, Eq(b, Int(1)));
+
+        solver.check();
+        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
+
+        assertInterpolant(
+                itp.eval(A), List.of(Lt(a, Int(0)), Gt(a, Int(0))), List.of(Eq(b, Int(1))));
+    }
+
+    /** Checks the defining property of an interpolant: A entails it, and it contradicts B. */
+    private static void assertInterpolant(
+            final Expr<BoolType> itp,
+            final Collection<Expr<BoolType>> aExprs,
+            final Collection<Expr<BoolType>> bExprs) {
+        Assertions.assertNotNull(itp);
+
+        final Solver aCheck = Z3SolverFactory.getInstance().createSolver();
+        aExprs.forEach(aCheck::add);
+        aCheck.add(Not(itp));
+        Assertions.assertEquals(
+                SolverStatus.UNSAT, aCheck.check(), "A does not entail the interpolant: " + itp);
+
+        final Solver bCheck = Z3SolverFactory.getInstance().createSolver();
+        bExprs.forEach(bCheck::add);
+        bCheck.add(itp);
+        Assertions.assertEquals(
+                SolverStatus.UNSAT, bCheck.check(), "The interpolant is consistent with B: " + itp);
     }
 }

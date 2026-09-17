@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.z3.*;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -140,6 +141,10 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
     public void push() {
         assertions.push();
         markers.push();
+        // The markers keep their own copy of what was asserted through them; that copy has to
+        // follow the solver stack, or an interpolation query built after a pop still sees the
+        // popped assertions.
+        markers.forEach(Z3ItpMarker::push);
         z3Solver.push();
     }
 
@@ -147,6 +152,7 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
     public void pop(final int n) {
         assertions.pop(n);
         markers.pop(n);
+        markers.forEach(marker -> marker.pop(n));
         z3Solver.pop(n);
         clearState();
     }
@@ -303,6 +309,7 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
 
     @Override
     public Interpolant getInterpolant(ItpPattern pattern) {
+        checkState(status == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
         if (pattern instanceof Z3ItpPattern z3ItpPattern) {
             List<Z3ItpMarker> markers = z3ItpPattern.getSequence();
             List<AndExpr> terms =
@@ -323,7 +330,17 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
 
             List<BoolExpr> itps =
                     itpTasks.stream()
-                            .map((InterpolationMetadata i) -> i.interpolate(z3Context))
+                            .map(
+                                    (InterpolationMetadata i) -> {
+                                        final BoolExpr itp = i.interpolate(z3Context);
+                                        if (itp == null) {
+                                            // Spacer cannot always answer the Horn query the
+                                            // interpolant is derived from (uninterpreted functions,
+                                            // for one): there is no interpolant to hand back.
+                                            throw new NotSolvableException();
+                                        }
+                                        return itp;
+                                    })
                             .toList();
 
             Map<ItpMarker, Expr<BoolType>> itpMap = new LinkedHashMap<>();
