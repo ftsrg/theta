@@ -24,6 +24,15 @@ Required env: `LD_LIBRARY_PATH=$PROJECT_DIR/lib/` (for native solvers). Some set
 
 If your local `.idea/workspace.xml` has IntelliJ run configurations (it's gitignored and per-developer — not in a fresh clone), they're a useful source of example invocations: read a config's main class + program args + JVM args and replicate on the command line.
 
+## Local verification loop
+
+⚠️ **`timeout N theta-start.sh …` does NOT kill the verifier.** The script does not `exec` — it launches a child JVM — so the timeout kills the *script* and leaves the JVM orphaned, still holding the pipe. Any caller reading that pipe (a `$(...)` capture, a `while read` loop) then hangs **forever**, long after the timeout should have fired, and the run looks stuck rather than timed out. Kill the JVM itself (`pkill -f 'theta.jar.*<input path>'`) to release it. This is why a batched local suite appears to wedge on one task — it is not the task being slow.
+
+- Fat jar for fast iteration: `./gradlew :theta-xcfa-cli:shadowJar` → `subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-<version>-all.jar`.
+- Running the jar directly needs `LD_LIBRARY_PATH=<dist>/lib` (legacy Z3) and `--smt-home <dist>/solvers`. The packaged `theta-start.sh` (template at `scripts/theta-start.sh`) sets these but hardcodes `-Xmx14210m -Xss120m`.
+- Full distribution: `./gradlew buildArchiveTheta-svcomp -x test` → `subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp.zip`. After any rebuild also `rm -rf subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp` — a stale extracted directory is silently reused.
+- Parse-only smoke test: `--svcomp --backend NONE --loglevel RESULT --property <prp> --architecture ILP32|LP64` (success marker: `ParsingResult Success`).
+
 ## Subproject map
 
 Theta is organized as `subprojects/<family>/<module>`. The Gradle project name is `:theta-<module>` (e.g. `:theta-xcfa-cli` — the family is not part of the name).
@@ -70,9 +79,25 @@ If a task has a trivial, direct need for a specific paper, the publication list 
 
 Spotless (google-java-format AOSP + ktfmt) is required but not run automatically: `./gradlew spotlessApply` locally, or comment `\format` on the GitHub PR. Every source file needs the copyright header (`doc/copyright-header.txt`).
 
+Spotless is configured `ratchetFrom("origin/master")` (`buildSrc/src/main/kotlin/java-common.gradle.kts`), so it only formats files that differ from `origin/master` — running `spotlessApply` is safe and does not reformat the whole repo. Do not defeat the ratchet to format everything.
+
+`checkCopyright` derives the expected year from a file's **last commit date** (`git log -1`), so run `applyCopyright` *after* committing, never before — otherwise it writes the previous year and the check then fails.
+
 ## Committing
 
 Only commit when explicitly asked. Commit messages: **short**, following the project's convention — and do **not** mention Claude/AI or add Claude co-author trailers.
+
+## Commenting Conventions
+
+A comment states what is not obvious from the code — a non-trivial decision or its justification. It is not a place for the history of a bug, a measurement, or a rationale essay.
+
+- Do NOT write more than 2-3 (reasonably long) lines of comment at one place (non-javadoc comments)
+- Do NOT write paragraphs longer than 5-6 lines 
+- Do write at most 2 paragraphs per method (javadoc style)
+- Do write at most 4 paragraphs per class (javadoc style)
+- Do write comments only about non-trivial development decisions and justifications
+- Do NOT write comments about basic functionality or irrelevant / temporary context
+- Never reference benchmark runs, batches, or dates in a comment
 
 ## On-demand deep docs
 
