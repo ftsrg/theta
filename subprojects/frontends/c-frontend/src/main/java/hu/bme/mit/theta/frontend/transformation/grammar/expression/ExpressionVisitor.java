@@ -3545,6 +3545,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         CStatement statement = ctx.accept(functionVisitor);
+        // Queue the statements for their side effects before checking for a value: a block that
+        // yields no value still runs its statements, and dropping them here made any reach_error()
+        // inside the block unreachable, reporting unsafe programs safe.
+        preStatements.add(statement);
         Expr<?> value;
         try {
             value = statement.getExpression();
@@ -3556,7 +3560,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     Level.INFO, "WARNING: statement expression yields no value\n");
             return null;
         }
-        preStatements.add(statement);
         return value;
     }
 
