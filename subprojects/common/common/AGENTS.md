@@ -1,6 +1,6 @@
 # common/common — notes for editing this module
 
-Gradle module: `:theta-common`. Build/tests: `./gradlew :theta-common:build` / `:theta-common:test`. Formatting/copyright: see root [CLAUDE.md](../../../CLAUDE.md).
+Gradle module: `:theta-common`. Build/tests: `./gradlew :theta-common:build` / `:theta-common:test`. Formatting/copyright: see root [AGENTS.md](../../../AGENTS.md).
 
 **Every other module depends on this one.** Public-API changes here ripple through the entire repo — prefer adding over changing signatures, and grep all of `subprojects/` before renaming anything.
 

@@ -13,7 +13,7 @@ Gradle module: `:theta-solver`. This is the **interface-only layer** — no back
 ## Change recipes
 
 - **New backend**: implement `SolverFactory` (+ `Solver`, and `UCSolver`/`ItpSolver`/`HornSolver` as supported) and a `SolverManager` subclass; register it from the CLIs' solver-registration utilities (e.g. `xcfa-cli/utils/SolverRegistration.kt`). Internally every existing backend follows an `{Expr,Term,Type}Transformer` structure — copy the nearest one.
-- **New expression/type in core** ripples here indirectly: every backend's transformers must learn it (verified precedent: the EnumType addition touched all four solver stacks — see `common/core`'s CLAUDE.md).
+- **New expression/type in core** ripples here indirectly: every backend's transformers must learn it (verified precedent: the EnumType addition touched all four solver stacks — see `common/core`'s AGENTS.md).
 - [validator/](src/main/java/hu/bme/mit/theta/solver/validator/) wraps a real solver behind the same interfaces for cross-checking — keep wrappers in sync when interfaces change (they don't inherit defaults usefully).
 
 ## Package map

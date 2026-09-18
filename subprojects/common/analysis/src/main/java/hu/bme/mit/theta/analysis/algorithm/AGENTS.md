@@ -1,6 +1,6 @@
 # analysis/algorithm — the checker landscape
 
-Supplements [analysis's CLAUDE.md](../../../../../../../../../CLAUDE.md) with algorithm-package detail. All claims verified against source (2026-07).
+Supplements [analysis's AGENTS.md](../../../../../../../../../AGENTS.md) with algorithm-package detail. All claims verified against source (2026-07).
 
 ## Checkers at a glance
 

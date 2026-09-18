@@ -1,6 +1,6 @@
 # Using theta-grammar — parsing core objects from text
 
-Counterpart of [CLAUDE.md](CLAUDE.md). Use this module when you need to round-trip core exprs/stmts/types through text (e.g. persisting models or results). The text format **is** core's `toString()` output — you don't need a writer, `expr.toString()` is the writer.
+Counterpart of [AGENTS.md](AGENTS.md). Use this module when you need to round-trip core exprs/stmts/types through text (e.g. persisting models or results). The text format **is** core's `toString()` output — you don't need a writer, `expr.toString()` is the writer.
 
 ```kotlin
 implementation(project(":theta-grammar"))
