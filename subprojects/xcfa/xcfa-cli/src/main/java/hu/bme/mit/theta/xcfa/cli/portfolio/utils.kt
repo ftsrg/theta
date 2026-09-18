@@ -44,7 +44,7 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.DFS
 import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 
 fun baseCegarConfig(
   xcfa: XCFA,
@@ -69,7 +69,7 @@ fun baseCegarConfig(
         if (serialize)
           FrontendConfig(
             lbeLevel = LbePass.defaultLevel,
-            loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+            loopUnroll = UnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
             specConfig = CFrontendConfig(arithmetic = efficient),
           )
@@ -221,7 +221,7 @@ fun baseAsgCegarConfig(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )
@@ -322,7 +322,7 @@ fun baseBoundedConfig(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )
@@ -366,7 +366,7 @@ fun baseMddConfig(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )
@@ -452,7 +452,7 @@ fun baseIc3Config(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )

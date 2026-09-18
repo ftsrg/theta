@@ -51,6 +51,8 @@ import org.junit.jupiter.params.provider.MethodSource
 
 class XcfaExplAnalysisTest {
 
+  private val parseContext = ParseContext()
+
   companion object {
 
     private val seed = 1001
@@ -95,7 +97,7 @@ class XcfaExplAnalysisTest {
 
     val lts = getXcfaLts()
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -152,7 +154,7 @@ class XcfaExplAnalysisTest {
 
     val lts = XcfaSporLts(xcfa)
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -210,7 +212,7 @@ class XcfaExplAnalysisTest {
 
     val lts = XcfaSporLts(xcfa)
 
-    val errorDetector = getXcfaErrorDetector(assertionProperty.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(assertionProperty.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -268,7 +270,7 @@ class XcfaExplAnalysisTest {
 
     val lts = XcfaDporLts(xcfa)
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -323,7 +325,7 @@ class XcfaExplAnalysisTest {
 
     val lts = XcfaAasporLts(xcfa, mutableMapOf())
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -385,7 +387,7 @@ class XcfaExplAnalysisTest {
 
     val lts = XcfaAadporLts(xcfa)
 
-    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =
       getXcfaAbstractor(
         analysis,

@@ -19,7 +19,7 @@ import hu.bme.mit.delta.java.mdd.BinaryOperationCache
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.MddVariable
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.type.Expr

@@ -174,11 +174,28 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     is StartLabel ->
       StartLabel(
         name,
-        params.map { ExprUtils.simplify(it, valuation) },
+        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
         pidVar,
         metadata,
         tempLookup,
       )
+
+    is InvokeLabel ->
+      // Fold known values into the arguments -- notably the array index of a thread/mutex handle
+      // `&t[i]`, so an unrolled create/join loop yields the constant `&t[0]`, `&t[1]`, … that
+      // CLibraryFunctionsPass keys each handle on.
+      InvokeLabel(
+        name,
+        // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
+        // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
+        // SMT type instead -- carry it over, as the statement branches above do.
+        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
+        metadata,
+        tempLookup,
+        isLibraryFunction,
+      )
+
+    is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
 
     else -> this
   }

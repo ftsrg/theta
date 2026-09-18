@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -79,8 +79,20 @@ public class CAssignment extends CStatement {
                 ret = AbstractExprs.Div(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "%=":
-                ret = AbstractExprs.Mod(type.castTo(lValue), type.castTo(rExpression));
-                break;
+                {
+                    // C's `%` is truncated remainder, not floored modulo: `Rem` (URem/SRem by
+                    // signedness) for bitvectors, matching the binary `%` operator. `Mod` mapped to
+                    // the signed-only SMod and threw ("Unsigned BvType cannot be used here") on an
+                    // unsigned `x %= y`.
+                    final Expr<?> modLeft = type.castTo(lValue);
+                    final Expr<?> modRight = type.castTo(rExpression);
+                    ret =
+                            (modLeft.getType() instanceof BvType
+                                            && modRight.getType() instanceof BvType)
+                                    ? AbstractExprs.Rem(modLeft, modRight)
+                                    : AbstractExprs.Mod(modLeft, modRight);
+                    break;
+                }
             case "+=":
                 ret = AbstractExprs.Add(type.castTo(lValue), type.castTo(rExpression));
                 break;
@@ -90,7 +102,14 @@ public class CAssignment extends CStatement {
             case "^=":
                 checkState(
                         lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
+                                && rExpression.getType() instanceof BvType,
+                        "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
+                                + " the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                        "^=",
+                        lValue.getType(),
+                        rExpression.getType());
                 ret =
                         BvExprs.Xor(
                                 List.of(
@@ -100,7 +119,14 @@ public class CAssignment extends CStatement {
             case "&=":
                 checkState(
                         lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
+                                && rExpression.getType() instanceof BvType,
+                        "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
+                                + " the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                        "&=",
+                        lValue.getType(),
+                        rExpression.getType());
                 ret =
                         BvExprs.And(
                                 List.of(
@@ -110,12 +136,60 @@ public class CAssignment extends CStatement {
             case "|=":
                 checkState(
                         lValue.getType() instanceof BvType
-                                && rExpression.getType() instanceof BvType);
+                                && rExpression.getType() instanceof BvType,
+                        "The compound bitwise assignment `%s` is only modelled over bitvectors, but"
+                                + " the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                        "|=",
+                        lValue.getType(),
+                        rExpression.getType());
                 ret =
                         BvExprs.Or(
                                 List.of(
                                         (Expr<BvType>) type.castTo(lValue),
                                         (Expr<BvType>) type.castTo(rExpression)));
+                break;
+            case ">>=":
+                {
+                    checkState(
+                            lValue.getType() instanceof BvType
+                                    && rExpression.getType() instanceof BvType,
+                            "The compound shift assignment `%s` is only modelled over bitvectors,"
+                                + " but the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                            ">>=",
+                            lValue.getType(),
+                            rExpression.getType());
+                    final Expr<BvType> left = (Expr<BvType>) type.castTo(lValue);
+                    final Expr<BvType> right = (Expr<BvType>) type.castTo(rExpression);
+                    // Right shift is arithmetic on a signed left operand and logical on an unsigned
+                    // one -- the same split `visitShiftExpression` makes for the non-assigning
+                    // `>>`.
+                    ret =
+                            left.getType().getSigned()
+                                    ? BvExprs.ArithShiftRight(left, right)
+                                    : BvExprs.LogicShiftRight(left, right);
+                }
+                break;
+            case "<<=":
+                {
+                    checkState(
+                            lValue.getType() instanceof BvType
+                                    && rExpression.getType() instanceof BvType,
+                            "The compound shift assignment `%s` is only modelled over bitvectors,"
+                                + " but the operands have types %s and %s. This is expected under"
+                                + " --arithmetic integer, which has no bit representation; use"
+                                + " --arithmetic bitvector or efficient.",
+                            "<<=",
+                            lValue.getType(),
+                            rExpression.getType());
+                    ret =
+                            BvExprs.ShiftLeft(
+                                    (Expr<BvType>) type.castTo(lValue),
+                                    (Expr<BvType>) type.castTo(rExpression));
+                }
                 break;
             default:
                 throw new UnsupportedFrontendElementException("Unsupported operator: " + operator);

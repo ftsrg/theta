@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,26 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import java.math.BigInteger
+
+/**
+ * The largest value of a signed C type, from the width the architecture actually gives it.
+ *
+ * These limits used to be written out as literals -- and as the C standard's *minimum guaranteed*
+ * magnitudes at that, i.e. the 16-bit ones: `INT_MAX` was 32767 on an architecture whose `int` is
+ * 32 bits wide. Code that guards an increment with `if (i == INT_MAX) return;` was then compared
+ * against the wrong constant, leaving the real overflow reachable and the task reported unsafe.
+ */
+private fun signedMax(t: CComplexType): String =
+  BigInteger.TWO.pow(t.width() - 1).subtract(BigInteger.ONE).toString()
+
+/** The most negative value of a signed C type: two's complement reaches one further down. */
+private fun signedMin(t: CComplexType): String =
+  BigInteger.TWO.pow(t.width() - 1).negate().toString()
+
+/** The largest value of an unsigned C type. */
+private fun unsignedMax(t: CComplexType): String =
+  BigInteger.TWO.pow(t.width()).subtract(BigInteger.ONE).toString()
 
 enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
 
@@ -27,6 +47,17 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   PTHREAD_RWLOCK_INITIALIZER("PTHREAD_RWLOCK_INITIALIZER", { UnsupportedInitializer() }),
   NULL("NULL", { CComplexType.getSignedInt(it).nullValue }),
   NULLPTR("nullptr", { CComplexType.getSignedInt(it).nullValue }),
+
+  // <stdatomic.h> memory orders. They constrain what may be *reordered* around an access; the
+  // analysis is sequentially consistent, so their values are never inspected -- only their names
+  // have to resolve. The numbering is the one every compiler uses.
+  MEMORY_ORDER_RELAXED("memory_order_relaxed", { CComplexType.getSignedInt(it).getValue("0") }),
+  MEMORY_ORDER_CONSUME("memory_order_consume", { CComplexType.getSignedInt(it).getValue("1") }),
+  MEMORY_ORDER_ACQUIRE("memory_order_acquire", { CComplexType.getSignedInt(it).getValue("2") }),
+  MEMORY_ORDER_RELEASE("memory_order_release", { CComplexType.getSignedInt(it).getValue("3") }),
+  MEMORY_ORDER_ACQ_REL("memory_order_acq_rel", { CComplexType.getSignedInt(it).getValue("4") }),
+  MEMORY_ORDER_SEQ_CST("memory_order_seq_cst", { CComplexType.getSignedInt(it).getValue("5") }),
+  ATOMIC_FLAG_INIT("ATOMIC_FLAG_INIT", { CComplexType.getSignedInt(it).nullValue }),
 
   // Integer characteristics
   CHAR_BIT("CHAR_BIT", { CComplexType.getSignedInt(it).getValue("8") }),
@@ -63,12 +94,18 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   FLT_ROUNDS("FLT_ROUNDS", { CComplexType.getSignedInt(it).getValue("1") }),
 
   // int, long, long long limits
-  INT_MAX("INT_MAX", { CComplexType.getSignedInt(it).getValue("32767") }),
-  INT_MIN("INT_MIN", { CComplexType.getSignedInt(it).getValue("-32767") }),
-  LONG_MAX("LONG_MAX", { CComplexType.getSignedLong(it).getValue("2147483647") }),
-  LONG_MIN("LONG_MIN", { CComplexType.getSignedLong(it).getValue("-2147483647") }),
-  LLONG_MAX("LLONG_MAX", { CComplexType.getSignedLongLong(it).getValue("9223372036854775807") }),
-  LLONG_MIN("LLONG_MIN", { CComplexType.getSignedLongLong(it).getValue("-9223372036854775807") }),
+  INT_MAX("INT_MAX", { CComplexType.getSignedInt(it).let { t -> t.getValue(signedMax(t)) } }),
+  INT_MIN("INT_MIN", { CComplexType.getSignedInt(it).let { t -> t.getValue(signedMin(t)) } }),
+  LONG_MAX("LONG_MAX", { CComplexType.getSignedLong(it).let { t -> t.getValue(signedMax(t)) } }),
+  LONG_MIN("LONG_MIN", { CComplexType.getSignedLong(it).let { t -> t.getValue(signedMin(t)) } }),
+  LLONG_MAX(
+    "LLONG_MAX",
+    { CComplexType.getSignedLongLong(it).let { t -> t.getValue(signedMax(t)) } },
+  ),
+  LLONG_MIN(
+    "LLONG_MIN",
+    { CComplexType.getSignedLongLong(it).let { t -> t.getValue(signedMin(t)) } },
+  ),
 
   // long double
   LDBL_DIG("LDBL_DIG", { CComplexType.getSignedInt(it).getValue("15") }),
@@ -110,18 +147,45 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   PRIxPTR("PRIxPTR", { CComplexType.getSignedInt(it).getValue("\"x\"") }),
 
   // signed and unsigned char / short / int
-  SCHAR_MAX("SCHAR_MAX", { CComplexType.getSignedInt(it).getValue("127") }),
-  SCHAR_MIN("SCHAR_MIN", { CComplexType.getSignedInt(it).getValue("-127") }),
-  SHRT_MAX("SHRT_MAX", { CComplexType.getSignedInt(it).getValue("32767") }),
-  SHRT_MIN("SHRT_MIN", { CComplexType.getSignedInt(it).getValue("-32767") }),
-  UCHAR_MAX("UCHAR_MAX", { CComplexType.getUnsignedInt(it).getValue("255") }),
-  UINT_MAX("UINT_MAX", { CComplexType.getUnsignedInt(it).getValue("65535") }),
+  SCHAR_MAX(
+    "SCHAR_MAX",
+    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedchar", it))) },
+  ),
+  SCHAR_MIN(
+    "SCHAR_MIN",
+    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedchar", it))) },
+  ),
+  SHRT_MAX(
+    "SHRT_MAX",
+    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedshort", it))) },
+  ),
+  SHRT_MIN(
+    "SHRT_MIN",
+    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedshort", it))) },
+  ),
+  UCHAR_MAX(
+    "UCHAR_MAX",
+    {
+      CComplexType.getUnsignedInt(it)
+        .getValue(unsignedMax(CComplexType.getType("unsignedchar", it)))
+    },
+  ),
+  UINT_MAX("UINT_MAX", { CComplexType.getUnsignedInt(it).let { t -> t.getValue(unsignedMax(t)) } }),
   ULLONG_MAX(
     "ULLONG_MAX",
-    { CComplexType.getUnsignedLongLong(it).getValue("18446744073709551615") },
+    { CComplexType.getUnsignedLongLong(it).let { t -> t.getValue(unsignedMax(t)) } },
   ),
-  ULONG_MAX("ULONG_MAX", { CComplexType.getUnsignedLong(it).getValue("4294967295") }),
-  USHRT_MAX("USHRT_MAX", { CComplexType.getUnsignedInt(it).getValue("65535") }),
+  ULONG_MAX(
+    "ULONG_MAX",
+    { CComplexType.getUnsignedLong(it).let { t -> t.getValue(unsignedMax(t)) } },
+  ),
+  USHRT_MAX(
+    "USHRT_MAX",
+    {
+      CComplexType.getUnsignedInt(it)
+        .getValue(unsignedMax(CComplexType.getType("unsignedshort", it)))
+    },
+  ),
 }
 
 fun fromName(s: String, parseContext: ParseContext): Expr<*>? =

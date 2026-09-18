@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -82,9 +82,16 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
               writeMemoryAccess[partition] = true
             }
 
-            val threads = threadsAccessingMemory[partition] + varAccessCount
-            val nonAtomic = nonAtomicMemoryAccess[partition]
-            val write = writeMemoryAccess[partition]
+            val threads =
+              varAccessCount +
+                if (partition == n) threadsAccessingMemory.sum()
+                else threadsAccessingMemory[partition] + threadsAccessingMemory[n]
+            val nonAtomic =
+              if (partition == n) nonAtomicMemoryAccess.any()
+              else nonAtomicMemoryAccess[partition] || nonAtomicMemoryAccess[n]
+            val write =
+              if (partition == n) writeMemoryAccess.any()
+              else writeMemoryAccess[partition] || writeMemoryAccess[n]
             if (threads > 1 && nonAtomic && write) {
               logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
               return true

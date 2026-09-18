@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/** The union of the operand relations: an image is the union of the operands' images. */
 public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
     private static final UniqueTable<OrNextStateDescriptor> uniqueTable = new MapUniqueTable<>();
 

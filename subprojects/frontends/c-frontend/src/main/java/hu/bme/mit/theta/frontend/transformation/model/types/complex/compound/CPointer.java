@@ -26,6 +26,22 @@ public class CPointer extends CInteger {
 
     private final CComplexType embeddedType;
 
+    /**
+     * True when this pointer holds a function's address (id) rather than a data-object address, so
+     * that a call through it is dispatched over the candidate set. Carried on the TYPE (not just on
+     * a variable) so that function pointers stored in struct fields, arrays and typedefs are
+     * recognized too.
+     */
+    private boolean functionPointer = false;
+
+    public boolean isFunctionPointer() {
+        return functionPointer;
+    }
+
+    public void setFunctionPointer(boolean functionPointer) {
+        this.functionPointer = functionPointer;
+    }
+
     public CPointer(CSimpleType origin, CComplexType embeddedType, ParseContext parseContext) {
         super(origin, parseContext);
         this.embeddedType = embeddedType;

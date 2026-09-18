@@ -39,6 +39,7 @@ import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
@@ -291,6 +292,29 @@ final class Z3TermTransformer {
                         throw new Z3Exception("Not supported: " + term);
                     }
                 });
+        // Z3 introduces `(_ bit2bool k) x` when it reasons about individual bits of a bitvector:
+        // the term is true exactly when bit k of x is set. It has no counterpart in theta's
+        // expression language, so back-transformation fell through to toFuncLitExpr, which needs a
+        // model and threw `NullPointerException: Unsupported function 'bit2bool'` when there was
+        // none -- a common failure of the bitvector encoding.
+        //
+        // The bit index is read from the term's own text, the way the `extract` case above does it.
+        this.environment.put(
+                Tuple2.of("bit2bool", 1),
+                (term, model, vars) -> {
+                    Pattern pattern = Pattern.compile("bit2bool ([0-9]+)");
+                    Matcher match = pattern.matcher(term.toString());
+                    if (match.find()) {
+                        int index = Integer.parseInt(match.group(1));
+                        Expr<BvType> op =
+                                (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+                        return AbstractExprs.Eq(
+                                BvExtractExpr.of(op, IntExprs.Int(index), IntExprs.Int(index + 1)),
+                                BvUtils.bigIntegerToNeutralBvLitExpr(java.math.BigInteger.ONE, 1));
+                    } else {
+                        throw new Z3Exception("Not supported: " + term);
+                    }
+                });
         this.environment.put(
                 Tuple2.of("zero_extend", 1),
                 (term, model, vars) -> {
@@ -344,9 +368,27 @@ final class Z3TermTransformer {
 
     public Expr<?> toFuncLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
-        checkNotNull(
-                model,
-                "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
+        // A symbol with no handler in `environment` lands here. When there is no model to
+        // interpret it against, the old `checkNotNull` reported it as a bare NullPointerException
+        // whose message named the symbol -- which read like a crash rather than a limitation, and
+        // hid *which* condition actually failed (the null model, not the symbol as such).
+        //
+        // The symbol that reaches this in practice is Z3's `array-ext`: the Skolem witness for
+        // array extensionality, i.e. an index at which two arrays differ
+        // (`a != b -> select(a, array-ext(a,b)) != select(b, array-ext(a,b))`). It is Z3-internal,
+        // not SMT-LIB, and it leaks out of interpolants over quantified array reasoning. Theta has
+        // no expression for an existential witness, and inventing a fresh index variable would
+        // change what an interpolant means -- turning a crash into a possible wrong answer. So it
+        // is refused, deliberately and by name.
+        if (model == null) {
+            throw new UnsupportedOperationException(
+                    "Unsupported function '"
+                            + funcDecl.getName()
+                            + "'/"
+                            + funcDecl.getArity()
+                            + " in Z3 back-transformation: no theta expression corresponds to it,"
+                            + " and there is no model to interpret it against.");
+        }
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
         if (funcInterp == null) {
             return null;
@@ -366,7 +408,7 @@ final class Z3TermTransformer {
         }
         final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
                 createEntryExprs(funcInterp, model, vars);
-        final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
+        final Expr<?> elseExpr = defaultingTransform(funcInterp.getElse(), model, vars);
 
         if (funcDecl.getRange() instanceof ArraySort sort) {
             return createArrayLitExpr(sort, entryExprs, elseExpr);
@@ -593,7 +635,7 @@ final class Z3TermTransformer {
             final List<Decl<?>> vars) {
         final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
                 createEntryExprs(funcInterp, model, vars);
-        final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
+        final Expr<?> elseExpr = defaultingTransform(funcInterp.getElse(), model, vars);
         return createNestedIteExpr(paramDecl, entryExprs, elseExpr);
     }
 
@@ -632,14 +674,41 @@ final class Z3TermTransformer {
             checkArgument(entry.getArgs().length >= 1);
             final List<Expr<?>> args = new ArrayList<>();
             for (com.microsoft.z3legacy.Expr argTerm : entry.getArgs()) {
-                final Expr<?> argExpr = transform(argTerm, model, vars);
-                args.add(argExpr);
+                args.add(defaultingTransform(argTerm, model, vars));
             }
             final com.microsoft.z3legacy.Expr term2 = entry.getValue();
-            final Expr<?> expr2 = transform(term2, model, vars);
-            builder.add(Tuple2.of(args, expr2));
+            builder.add(Tuple2.of(args, defaultingTransform(term2, model, vars)));
         }
         return builder.build();
+    }
+
+    /**
+     * {@link #transform} of a model term, but never null: a null means Z3 gave the term's function
+     * declaration no interpretation, i.e. left it unconstrained, so any witness of the right sort
+     * is a sound part of a counterexample. Substitute that sort's default.
+     *
+     * <p>Without this, extracting a model for the two-dimensional memory array ({@code
+     * arrays[base][offset]}) crashed: a function-interp entry whose value (or argument) is an
+     * unconstrained *inner array* transformed to null, and {@code Tuple2.of(args, null)} threw a
+     * bare NullPointerException out of Guava. That aborted every counterexample touching a byte
+     * array -- exactly what a byte-addressed union produces.
+     */
+    private Expr<?> defaultingTransform(
+            final com.microsoft.z3legacy.Expr term, final Model model, final List<Decl<?>> vars) {
+        final Expr<?> transformed = transform(term, model, vars);
+        return transformed != null ? transformed : defaultLiteral(term.getSort());
+    }
+
+    /**
+     * A default literal of [sort], recursing through array nesting ({@link TypeUtils} refuses it).
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private LitExpr<?> defaultLiteral(final com.microsoft.z3legacy.Sort sort) {
+        if (sort instanceof com.microsoft.z3legacy.ArraySort arraySort) {
+            final ArrayType arrayType = (ArrayType) transformSort(arraySort);
+            return (LitExpr<?>) Array(List.of(), defaultLiteral(arraySort.getRange()), arrayType);
+        }
+        return TypeUtils.getDefaultValue(transformSort(sort));
     }
 
     private Expr<?> transformQuantifier(

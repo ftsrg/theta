@@ -36,9 +36,9 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -110,8 +110,21 @@ class XcfaOcChecker(
    * a safe result is unreliable.
    */
   private fun check(forceUnrollBound: Int): Pair<SafetyResult<EmptyProof, Cex>, Boolean> {
-    // force loop unroll for BMC
-    val xcfa = xcfa.optimizeFurther(ProcedurePassManager(listOf(LoopUnrollPass(forceUnrollBound))))
+    // Force loop unroll for BMC. Re-running the pass per bound is the point: each escalation
+    // expands loops -- and recursive calls, which need parseContext for the parameter assignments
+    // -- one level deeper, which inlining, a one-shot pass, cannot do.
+    val xcfa =
+      xcfa.optimizeFurther(
+        ProcedurePassManager(
+          listOf(
+            UnrollPass(
+              forceUnrollBound,
+              parseContext = parseContext,
+              specificRecursionUnrollLimit = forceUnrollBound,
+            )
+          )
+        )
+      )
     logger.info("  -> unsafe unroll ${if (xcfa.unsafeUnrollUsed) "" else "NOT"} used")
 
     logger.mainStep("Creating event graph...")
@@ -211,9 +224,9 @@ class XcfaOcChecker(
         .forEach { (event, rels) ->
           rels.forEach { rel ->
             var conseq = And(rel.from.guardExpr, rel.to.guardExpr)
-            if (rel.from.const != eg.memoryGarbage) {
+            if (rel.from.const !in eg.memoryGarbages) {
               conseq = And(conseq, Eq(rel.from.const.ref, rel.to.const.ref))
-              if (v == eg.memoryDecl) {
+              if (v in eg.memoryDecls) {
                 conseq =
                   And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
               }
