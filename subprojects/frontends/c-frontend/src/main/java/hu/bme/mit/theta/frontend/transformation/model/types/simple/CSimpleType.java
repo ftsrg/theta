@@ -70,7 +70,7 @@ public abstract class CSimpleType {
      * a;` has a declarator of its own with no brackets in it. Without carrying them here the
      * array-ness was simply lost: the variable was created as a scalar and no `alloca` was emitted
      * for it, so the object had no size and the very first element read failed the valid-deref
-     * bound check (the run-86 `memsafety/test-021x` + `list-ext-properties` family).
+     * bound check.
      *
      * <p>Carried on the type for the same reason {@link #functionPointer} is -- see {@code
      * TypedefVisitor#markArrayTypedefs}.

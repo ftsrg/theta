@@ -168,10 +168,9 @@ class UnionPunningTest {
 
   @Test
   fun membersOfDifferentWidthsShareTheWordAsSlices() {
-    // AD7, the tractable half. A union's members all start at offset 0, so a narrower member is
-    // simply the low bits of the same word -- `u.raw = 0; u.half = 7` must leave `u.raw == 7`.
-    // This used to be refused outright as "members do not all share a representation", which is
-    // the single largest addressable frontend cluster (~1,029 tasks in the 2026-07-20 run).
+    // A union's members all start at offset 0, so a narrower member is simply the low bits of the
+    // same word -- `u.raw = 0; u.half = 7` must leave `u.raw == 7`. This used to be refused
+    // outright as "members do not all share a representation".
     // Both encodings: the slice is div/mod under integer arithmetic and Extract/Concat under
     // bitvector, and the cell is read at the *union's* width in either.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
@@ -255,8 +254,8 @@ class UnionPunningTest {
     // cells. Little-endian recombination (u.qwords[0] = 0x0102030405060708 => u.bytes[0] == 0x08,
     // u.bytes[7] == 0x01, u.dwords[0] == 0x05060708) is checked end to end by the actual analysis
     // under both encodings -- it proves Safe, and negating the assertion proves Unsafe, so the
-    // check is not vacuous -- the same pattern union_slice_punning.c documents for batch 56. This
-    // frontend-level test only pins that the shape keeps reaching the frontend at all.
+    // check is not vacuous. This frontend-level test only pins that the shape keeps reaching the
+    // frontend at all.
     for (arithmetic in listOf(ArithmeticType.efficient, ArithmeticType.bitvector)) {
       assertDoesNotThrow(
         {
@@ -411,9 +410,9 @@ class UnionPunningTest {
 
   @Test
   fun aFloatingPointMemberInsideAByteLaidOutUnionIsStillRefused() {
-    // The batch-59 NaN gate on fpToIEEEBV applies here too, not just to the word-sliceable path --
-    // the union still needs byte cells for `bytes`, so this must stay refused rather than reopen
-    // the unsound round-trip.
+    // The NaN gate on fpToIEEEBV applies here too, not just to the word-sliceable path -- the
+    // union still needs byte cells for `bytes`, so this must stay refused rather than reopen the
+    // unsound round trip.
     assertThrows(UnsupportedFrontendElementException::class.java) {
       build(
         """
@@ -430,9 +429,8 @@ class UnionPunningTest {
     // The FpToIeeeBv / FpFromIeeeBv machinery for float union punning exists and is correct on
     // finite values, but is GATED OFF: fpToIEEEBV is unspecified for NaN, and a NaN routed through
     // the integer view and back (`value = NaN; word = ...; value = word`, the newlib idiom) still
-    // yields a spurious non-NaN in the solver -- 14 wrong float-newlib results in the 2026-07-21
-    // run. Until the round-trip is sound the float union is refused, which scores 0 rather than a
-    // wrong answer's -16. (See PLAN.md batch 59.)
+    // yields a spurious non-NaN in the solver, which produced wrong verdicts. Until the round trip
+    // is sound the float union is refused: an error scores nothing, a wrong answer scores worse.
     assertThrows(UnsupportedFrontendElementException::class.java) {
       build(
         """

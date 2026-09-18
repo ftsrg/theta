@@ -77,9 +77,9 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
-import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import java.math.BigInteger
 
@@ -92,7 +92,7 @@ class FrontendXcfaBuilder(
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   // Counts up, uses 3k+1 -- compile-time bases, for single-instance globals. Read through [ptrCnt],
   // which hands out the current value and advances; read directly only to report the high-water
-  // mark to the allocation counter (see [MallocFunctionPass.STATIC_BASE_LIMIT]).
+  // mark to the allocation counter (see [ALLOCATION_STATIC_BASE_LIMIT]).
   private var staticBaseCursor = 1
   private val ptrCnt: Int
     get() = staticBaseCursor.also { staticBaseCursor += 3 }
@@ -167,9 +167,8 @@ class FrontendXcfaBuilder(
     // The cell is often reached through further NARROWINGS, not directly: reading a bitfield out
     // of a 64-bit cell slices the cell to 32 bits first, and the field is then extracted from
     // that. `extract(extract(X, a, b), c, d)` is just bits [a+c, a+d) of X, so fold the chain down
-    // to the cell rather than giving up on it. Without this every `ctls.some_bit = ...` in the
-    // intel-tdx-module sources was refused -- ~144 runs of the batch-94 parse sweep -- because the
-    // operand was an extract where this expected a dereference.
+    // to the cell rather than giving up on it. Without it a bitfield store reached through a
+    // narrowing is refused, because the operand is an extract where this expects a dereference.
     var depth = 0
     while (unit is BvExtractExpr && depth++ < 8) {
       val innerFrom = unit.from.value.toInt()
@@ -230,15 +229,7 @@ class FrontendXcfaBuilder(
   private fun cellSpliceType(cell: Expr<*>, recorded: CComplexType): CComplexType {
     if (recorded.smtType == cell.type) return recorded
     val bits = (cell.type as? BvType)?.size ?: return recorded
-    return listOf(
-        CUnsignedChar(null, parseContext),
-        CUnsignedShort(null, parseContext),
-        CComplexType.getUnsignedInt(parseContext),
-        CComplexType.getUnsignedLong(parseContext),
-        CComplexType.getUnsignedLongLong(parseContext),
-        CComplexType.getUnsigned128(parseContext),
-      )
-      .firstOrNull { it.width() == bits } ?: recorded
+    return unsignedTypeOfWidth(bits) ?: recorded
   }
 
   /** Peels the width/signedness wrappers a bitfield read and an integer promotion leave behind. */
@@ -353,7 +344,7 @@ class FrontendXcfaBuilder(
     // globals (or one global struct, whose array field gets a subobject of its own) and one local
     // array therefore had two distinct C objects sharing one address, and initialising the local
     // silently overwrote the global. That is a wrong-`false` on programs with no pointers in sight.
-    builder.metaData[MallocFunctionPass.STATIC_BASE_LIMIT] = staticBaseCursor
+    builder.metaData[ALLOCATION_STATIC_BASE_LIMIT] = staticBaseCursor
     // A function whose address is taken gets a variable holding its id, so that assigning it to a
     // function pointer (`fp = f`) stores the id that FunctionPointerCallsPass dispatches on. This
     // is
@@ -811,8 +802,8 @@ class FrontendXcfaBuilder(
    * pointer yields the element's *address*, and the cType riding on that address expression is the
    * pointer's rather than the pointee's. Reading only the outer type therefore saw `CPointer` where
    * the program meant `struct eni_free`, decided this was not a copy, and the whole file was
-   * refused with "Could not handle left-hand side of assignment" -- 80 runs of the batch-94 parse
-   * sweep, `*(list + index) = *(list + len)` in `eni_alloc_mem` being the archetype.
+   * refused with "Could not handle left-hand side of assignment". `*(list + index) = *(list + len)`
+   * is the archetype.
    *
    * The pointee is only accepted when the right-hand side is that same struct, so `p = q` between
    * two struct pointers is still an ordinary pointer assignment and not a copy.
@@ -824,10 +815,9 @@ class FrontendXcfaBuilder(
         is CPointer -> this.embeddedType as? CStruct
         else -> null
       } ?: return null
-    if (candidate.isUnion) return null
     // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
-    // (ntdrivers cdaudio/diskperf, 8 runs) fails here because the rhs element address loses its
-    // struct cType -- FrontendMetadata is identity-keyed -- and the frontend then derives
+    // fails here because the rhs element address loses its struct cType -- FrontendMetadata is
+    // identity-keyed -- and the frontend then derives
     // `CUnsignedInt` from the (Bv 32) sort. Accepting "the lvalue is a struct, so C says the rhs
     // must be too" was tried and reverted: a derived type is indistinguishable from a real one, so
     // the rule also swallowed pointer assignments and sent them into structCopy, which threw
@@ -855,6 +845,68 @@ class FrontendXcfaBuilder(
    * A flexible array member (no bound) has no element count to copy over, so it falls back to a
    * base assignment -- the pre-existing limitation for a member whose size the declaration omits.
    */
+  /** The unsigned integer C type whose storage is exactly [bits] wide, if there is one. */
+  private fun unsignedTypeOfWidth(bits: Int): CComplexType? =
+    listOf(
+        CUnsignedChar(null, parseContext),
+        CUnsignedShort(null, parseContext),
+        CComplexType.getUnsignedInt(parseContext),
+        CComplexType.getUnsignedLong(parseContext),
+        CComplexType.getUnsignedLongLong(parseContext),
+        CComplexType.getUnsigned128(parseContext),
+      )
+      .firstOrNull { it.width() == bits }
+
+  /**
+   * Copies a union by **re-initialising its storage** from the source's.
+   *
+   * A struct is copied member by member, but a union's members alias one region, so copying them
+   * one by one would write the same storage several times through different type views -- which is
+   * why unions were excluded from the copy path outright, and why `lookup_context->field_id =
+   * ...field_id` (a plain union assignment, `md_field_id_t` being a `uint64_t` overlaid with a
+   * bitfield struct) was refused as an unhandled left-hand side. It is ordinary C; only the
+   * representation makes it look odd, since an aggregate's value is its base address and so an
+   * aggregate lvalue arrives as `base + offset` rather than as a dereference.
+   *
+   * The cells copied here are exactly the ones `ExpressionVisitor` reads members out of: a
+   * word-sliceable union is ONE cell at offset 0, typed at the union's cell width (members are bit
+   * slices of it); a byte-laid-out one is its [unionCellCount] byte cells. Copying any other cell
+   * would write an array nothing reads -- a silent no-op rather than an error -- so this mirrors
+   * the reader rather than inventing a layout.
+   */
+  private fun unionCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel>? {
+    val width = type.unionCellWidth()
+    val cellType =
+      if (width != null) unsignedTypeOfWidth(width) ?: return null
+      else CUnsignedChar(null, parseContext)
+    val cells = if (width != null) 1 else unionCellCount(type)
+    return (0 until cells).map { i ->
+      val offset = offsetLiteral(i.toLong())
+      val to = Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
+      val from = Dereference(cast(source, source.type), cast(offset, source.type), cellType.smtType)
+      parseContext.metadata.create(to, "cType", cellType)
+      parseContext.metadata.create(from, "cType", cellType)
+      StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata)
+    }
+  }
+
+  /**
+   * Copies one aggregate object's contents into another: a union by storage, a struct by member.
+   */
+  private fun aggregateCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel>? =
+    if (type.isUnion) unionCopy(target, source, type, metadata)
+    else structCopy(target, source, type, metadata)
+
   private fun structCopy(
     target: Expr<*>,
     source: Expr<*>,
@@ -901,6 +953,7 @@ class FrontendXcfaBuilder(
   ): List<XcfaLabel> =
     when {
       type is CStruct && !type.isUnion -> structCopy(to, from, type, metadata)
+      type is CStruct -> unionCopy(to, from, type, metadata) ?: copyScalar(to, from, metadata)
       type is CArray -> arrayCopy(to, from, type, metadata)
       else -> copyScalar(to, from, metadata)
     }
@@ -996,9 +1049,8 @@ class FrontendXcfaBuilder(
       // translation unit, which is not part of this task, so the extent is not merely missing here,
       // it is unknowable. Every use the standard permits on an incomplete array (`&a`, `a` decaying
       // to `T *`, `a[i]`) needs only the *element* type; the ones that need the extent (`sizeof a`)
-      // are constraint violations a compiler rejects. Demanding one therefore refused valid C: 112
-      // runs of the run-94 parse sweep, all LDV, every one of them this shape (`extern unsigned
-      // char const _ctype[];`, `extern u32 const cx88_user_ctrls[];`, ...).
+      // are constraint violations a compiler rejects. Demanding one therefore refused valid C,
+      // e.g. `extern unsigned char const _ctype[];`.
       val extentUnknown =
         declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
       if (MemsafetyPass.enabled) {
@@ -1047,9 +1099,8 @@ class FrontendXcfaBuilder(
         // straight into the flat cells. Recursing per row -- the one-dimensional path below --
         // would give every row a base of its own and initialise *those* instead, storage no read
         // ever looks at, since accesses go to arrays[a][i*stride + j]. The array would come back
-        // uninitialised, silently. (This case used to be refused outright: "Not handling init
-        // expression of high dimsension array", 865 tasks, almost all neural-networks weight
-        // matrices and hardness.)
+        // uninitialised, silently. (This case used to be refused outright, as "Not handling init
+        // expression of high dimsension array".)
         //
         // The same is true of an array whose elements are (scalar-field) structs: `S a[N]` stores
         // each element inline at `a[i*unitCount + f]` (see flatArraySize /
@@ -1101,21 +1152,31 @@ class FrontendXcfaBuilder(
       )
       recordObjectAtomicity(objectBase, type)
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
-      // An initializer list is what initializeCompound is for; asking it for a single
-      // `.expression` throws. Anything else that has one is genuinely unsupported here.
-      if (
-        initExpr != null &&
-          initExpr !is CInitializerList &&
-          initExpr.expression !is UnsupportedInitializer
-      ) {
-        error("Unsupported initializer for global struct variable $globalDeclaration.")
-      }
       // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
       // struct every member is its own unit, so this is the historical field-indexed iteration.
       val unitTypes =
         (0 until type.unitCount).map { unit ->
           type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
         }
+      // **Brace elision.** `const fms_info_t x[6] = { 0 };` gives the whole array a single
+      // initializer, so its first element -- a struct -- receives a bare scalar rather than a list.
+      // C 6.7.10p17 says that scalar initialises the first member (recursively, the first scalar
+      // leaf) and every other member is zero. This was refused outright.
+      //
+      // Routing the scalar to unit 0 and `null` to the rest gets the whole rule right by recursion:
+      // a nested struct or array at unit 0 applies the same elision one level down, and every other
+      // unit takes the `null` path, which assigns its zero value. Bitfields pack from bit 0, so a
+      // packed unit receiving the scalar sets the first member and zeroes the others -- the same
+      // rule again. An UnsupportedInitializer still falls through to the zero path below.
+      if (initExpr != null && initExpr !is CInitializerList) {
+        for (unit in 0 until type.unitCount) {
+          val et = unitTypes[unit]
+          val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), et.smtType)
+          parseContext.metadata.create(cell, "cType", et)
+          initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
+        }
+        return
+      }
       if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
         // A brace initializer names members, which no longer map one-to-one onto cells.
         initializePackedStruct(
@@ -1624,20 +1685,41 @@ class FrontendXcfaBuilder(
           is Dereference<*, *, *> -> {
             val op = cast(target.array, target.array.type)
             val offset = cast(target.offset, op.type)
-            val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
-            val type = CComplexType.getType(castRExpression, parseContext)
+            // An aggregate member is a COPY, not a base assignment. A struct- or union-typed
+            // member's cell holds the sub-object's own base id (see giveStructObjectStorage), so
+            // storing the right-hand side's base here would make the two names denote one object --
+            // `h.id = src` followed by a write to `src` was read back through `h.id`. Copy into the
+            // storage the cell already points at instead, leaving its base intact. The same check
+            // exists on the RefExpr branch below for `t = a[i]`; a member lvalue arrives here.
+            val memberType = CComplexType.getType(target, parseContext)
+            if (memberType is CStruct && memberType.isCopiedStruct(rExpression)) {
+              SequenceLabel(
+                aggregateCopy(target, rExpression, memberType, getMetadata(statement))
+                  ?: error(unhandledLhs(lValue, target, rExpression)),
+                metadata = getMetadata(statement),
+              )
+            } else {
+              val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
+              val type = CComplexType.getType(castRExpression, parseContext)
 
-            val deref = Dereference(op, offset, type.smtType)
+              val deref = Dereference(op, offset, type.smtType)
 
-            val memassign = MemoryAssignStmt.create(deref, castRExpression)
+              val memassign = MemoryAssignStmt.create(deref, castRExpression)
 
-            parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
-            StmtLabel(memassign, metadata = getMetadata(statement))
+              parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
+              StmtLabel(memassign, metadata = getMetadata(statement))
+            }
           }
 
           is RefExpr<*> -> {
             val lhsType = CComplexType.getType(target, parseContext)
-            if (lhsType.isCopiedStruct(rExpression)) {
+            // Resolved, never cast: [copiedStructOrNull] accepts a **pointer to** the aggregate as
+            // well as the aggregate itself, so the lvalue's own type is not necessarily the CStruct
+            // being copied, so `lhsType as CStruct` threw ClassCastException as soon as a
+            // pointer-typed lvalue reached it. The Dereference branch above resolves the type the
+            // same way; the two agree.
+            val copiedAggregate = lhsType.copiedStructOrNull(rExpression)
+            if (copiedAggregate != null) {
               // Checked before the pointer-arithmetic rewrite below, because `t = a[i]` on an array
               // of structs satisfies both: the element is now an offset into the array (`a + i*k`),
               // so it *has* arithmetic, but assigning one struct to another of the same type is a
@@ -1645,7 +1727,8 @@ class FrontendXcfaBuilder(
               // alias of the element -- and left it a split variable, which then failed outright on
               // the next bare use of `t`.
               SequenceLabel(
-                structCopy(target, rExpression, lhsType as CStruct, getMetadata(statement)),
+                aggregateCopy(target, rExpression, copiedAggregate, getMetadata(statement))
+                  ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
             } else if (
@@ -1732,7 +1815,8 @@ class FrontendXcfaBuilder(
             val copied = CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
             if (copied != null) {
               SequenceLabel(
-                structCopy(target, rExpression, copied, getMetadata(statement)),
+                aggregateCopy(target, rExpression, copied, getMetadata(statement))
+                  ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
             } else {

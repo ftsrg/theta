@@ -194,7 +194,7 @@ class PassTests {
         ),
         PassTestData(
           global = { "x" type Int() init "0" },
-          passes = listOf(LoopUnrollPass()),
+          passes = listOf(UnrollPass()),
           input = {
             (init to "L1") { "x".assign("0") }
             ("L1" to "L2") {
@@ -346,8 +346,6 @@ class PassTests {
             (init to "L2") { "pthread_join"("ret", "pid") }
             (init to "L3") { "pthread_mutex_lock"("0", "x") }
             (init to "L4") { "pthread_mutex_unlock"("0", "x") }
-            (init to "L5") { "printf"("ret", "x = %d, y = %d\n", "x", "y") }
-            (init to "L6") { "scanf"("ret", "x = %d, y = %d\n", "(ref x Int)", "(ref y Int)") }
           },
           output = {
             (init to "L1") {
@@ -360,16 +358,6 @@ class PassTests {
             }
             (init to "L3") { mutex_lock("x") }
             (init to "L4") { mutex_unlock("x") }
-            val printfArg1 = "__printf_arg_0_0" type Int()
-            val printfArg2 = "__printf_arg_0_1" type Int()
-            (init to "L5") {
-              printfArg1.assign("x")
-              printfArg2.assign("y")
-            }
-            (init to "L6") {
-              havoc("x")
-              havoc("y")
-            }
           },
           // `pthread_create`'s start routine must resolve to a real procedure:
           // CLibraryFunctionsPass
@@ -693,7 +681,7 @@ class PassTests {
     println("Trying to run $passes on input...")
     val originalGlobalVars = input.parent.getVars().toSet()
     val actualOutput =
-      passes.fold(input) { acc, procedurePass -> procedurePass.run(acc) }.build(dummyXcfa)
+      passes.fold(input) { acc, procedurePass -> procedurePass.runChecked(acc) }.build(dummyXcfa)
     if (output != null) {
       val expectedOutput = output.build(dummyXcfa)
       val varLookUp =

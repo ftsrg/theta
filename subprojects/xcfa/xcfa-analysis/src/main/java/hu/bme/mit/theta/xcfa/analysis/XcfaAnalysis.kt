@@ -36,12 +36,10 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtTransFunc
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
-import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
-import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
-import hu.bme.mit.theta.analysis.unit.*
+import hu.bme.mit.theta.analysis.ptr.*
+import hu.bme.mit.theta.analysis.unit.UnitAnalysis
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
@@ -95,7 +93,7 @@ private fun getTmpVar(originalVar: VarDecl<*>, tmpCnt: Int) =
 fun getCoreXcfaLts() =
   LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
     s.processes
-      .map { proc ->
+      .flatMap { proc ->
         if (proc.value.locs.peek().final) {
           listOf(
             XcfaAction(
@@ -204,7 +202,7 @@ fun getCoreXcfaLts() =
           }
         }
       }
-      .flatten()
+      .shuffled()
       .toSet()
   }
 

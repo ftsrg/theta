@@ -137,7 +137,7 @@ constructor(
     if (!this::optimized.isInitialized) {
       var that = this
       for (pass in manager.passes.flatten()) {
-        that = pass.run(that)
+        that = pass.runChecked(that)
       }
       optimized = that
     }
@@ -152,8 +152,7 @@ constructor(
 
     var that = if (this::partlyOptimized.isInitialized) partlyOptimized else this
     for (pass in manager.passes[phase]) {
-      that = pass.run(that)
-      that.checkEdgesHaveLocations(pass)
+      that = pass.runChecked(that)
     }
 
     partlyOptimized = that
@@ -290,25 +289,14 @@ constructor(
 
   /**
    * Asserts the basic well-formedness every consumer assumes: each edge runs between two locations
-   * this procedure actually lists.
-   *
-   * [removeLoc] drops a location without touching the edges attached to it, so a pass that removes
-   * locations and edges in the wrong order -- or misses an edge coming in from outside the region
-   * it is rewriting -- leaves the two out of sync. Nothing notices until something maps the edges
-   * through `locs` much later (`XcfaProcedure.deepCopy` does, and dies on a `!!` with no indication
-   * of which pass broke it), so the check is done here, right after the pass that could have caused
-   * it, and names that pass.
+   * this procedure actually lists. Called by [ProcedurePass.runChecked] after every pass, so a pass
+   * that breaks it is named instead of surfacing much later as a `!!` in `XcfaProcedure.deepCopy`.
    */
-  private fun checkEdgesHaveLocations(pass: ProcedurePass) {
-    // Identity, not equality. XcfaLocation is a data class, so a *different instance* carrying the
-    // same name/flags/metadata compares equal and satisfies `in locs` -- while owning its own,
-    // separate incoming/outgoing sets. An edge attached to such a stray twin is invisible to every
-    // traversal that walks adjacency (which is all of them, including LoopUnrollPass's back-edge
-    // cut), yet XcfaProcedure.deepCopy resolves endpoints through a map keyed by equality and so
-    // silently re-points the edge onto the registered instance. A cycle hidden that way only
-    // materialises in the copy, where it surfaces as the OC checker rejecting the task for "loops".
-    val registered =
-      java.util.Collections.newSetFromMap(java.util.IdentityHashMap<XcfaLocation, Boolean>())
+  internal fun checkEdgesHaveLocations(pass: ProcedurePass) {
+    // Identity, not equality: XcfaLocation is a data class, so a different instance with the same
+    // name and flags compares equal and satisfies `in locs`, while owning its own (empty) adjacency
+    // sets. Edges attached to such a twin are invisible to every traversal that walks adjacency.
+    val registered = Collections.newSetFromMap(IdentityHashMap<XcfaLocation, Boolean>())
     registered.addAll(locs)
     val dangling = edges.filter { it.source !in registered || it.target !in registered }
     check(dangling.isEmpty()) {

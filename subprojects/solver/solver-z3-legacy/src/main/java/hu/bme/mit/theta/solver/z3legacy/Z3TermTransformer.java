@@ -296,8 +296,7 @@ final class Z3TermTransformer {
         // the term is true exactly when bit k of x is set. It has no counterpart in theta's
         // expression language, so back-transformation fell through to toFuncLitExpr, which needs a
         // model and threw `NullPointerException: Unsupported function 'bit2bool'` when there was
-        // none. That was the single largest failure of the bitvector encoding in the batch-88
-        // exploratory run -- 2,946 runs across 1,473 tasks in a dozen unrelated families.
+        // none -- a common failure of the bitvector encoding.
         //
         // The bit index is read from the term's own text, the way the `extract` case above does it.
         this.environment.put(

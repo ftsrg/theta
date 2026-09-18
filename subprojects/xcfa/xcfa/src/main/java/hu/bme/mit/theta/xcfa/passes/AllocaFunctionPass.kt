@@ -27,11 +27,12 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.ensureMallocVar
-import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.firstAllocationRetType
-import hu.bme.mit.theta.xcfa.passes.MallocFunctionPass.Companion.mallocVar
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
+import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.mallocVar
 
 /**
  * Turns `alloca(size)` into an address assignment, like [MallocFunctionPass] does for `malloc`, but
@@ -45,16 +46,10 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * the same for every activation of the procedure, so two recursive frames or two threads running it
  * would alias; a runtime base from the shared counter cannot.
  *
- * Pointer bases are partitioned by residue mod 3: `3k+0` is malloc'd heap memory, `3k+2` is
- * address-taken locals ([ReferenceElimination]). The memcleanup check
- * ([MemsafetyPass.annotateLost]) scans `3k+0` only, so a block that is *not* the program's
- * responsibility to free must not live there. Memory from `alloca` is released automatically when
- * the enclosing function returns, so reporting it as a leak would be wrong; it therefore gets the
- * free residue class, `3k+1`. It still records a real size in `__theta_ptr_size`, so out-of-bounds
- * accesses to it are caught exactly as they are for heap memory.
- *
- * The shared `__malloc` counter is bumped by 3 for every allocation of either kind, so each
- * allocation consumes its own `k` and no two blocks can alias.
+ * The block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`), which the memcleanup
+ * scan does not enumerate: `alloca` memory is released when the enclosing function returns, so
+ * reporting it as a leak would be wrong. It still records a real size in `__theta_ptr_size`, so
+ * out-of-bounds accesses to it are caught exactly as they are for heap memory.
  *
  * Known gaps (both are the pre-existing scope-lifetime limitation, not new to alloca): the block is
  * never invalidated at function return, so a dangling access to it afterwards is not caught, and
@@ -69,7 +64,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val allocated = mutableListOf<Expr<*>>()
     checkNotNull(builder.metaData["deterministic"])
     // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
-    // snapshot's init-procedure edges (see [ensureMallocVar]).
+    // snapshot's init-procedure edges (see ensureMallocVar).
     builder.firstAllocationRetType(parseContext, this::predicate)?.let {
       builder.parent.ensureMallocVar(parseContext, it)
     }
@@ -91,7 +86,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             val bump =
               AssignStmtLabel(
                 mallocVar,
-                Add(mallocVar.ref, retType.getValue("3")),
+                Add(mallocVar.ref, retType.getValue("$POINTER_BASE_CLASSES")),
                 ret.type,
                 EmptyMetaData,
               )

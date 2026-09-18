@@ -21,9 +21,11 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
@@ -93,7 +95,7 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, v1.label),
                   DataRaceAccess(process2.key, edge2, v2.label),
-                  True(),
+                  And(v1.precondition, v2.precondition),
                 )
             }
           }
@@ -112,7 +114,12 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, m1.label),
                   DataRaceAccess(process2.key, edge2, m2.label),
-                  And(Eq(m1.array, m2.array), Eq(m1.offset, m2.offset)),
+                  And(
+                    m1.precondition,
+                    m2.precondition,
+                    Eq(m1.array, m2.array),
+                    Eq(m1.offset, m2.offset),
+                  ),
                 )
               }
             }
@@ -188,7 +195,14 @@ private sealed class GlobalAccessWithMutexes(
   val access: AccessType,
   val acquiredMutexes: Set<String>,
   val blockingMutexes: Set<String>,
-)
+  val precedingAssumes: List<AssumeStmt>,
+) {
+  val precondition: Expr<BoolType>
+    get() =
+      precedingAssumes.fold<AssumeStmt, Expr<BoolType>>(True()) { acc, assume ->
+        And(acc, assume.cond)
+      }
+}
 
 /**
  * Represents a global variable access: stores the variable declaration, the access type
@@ -200,7 +214,8 @@ private class GlobalVarAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<String>,
   blockingMutexes: Set<String>,
-) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes)
+  precedingAssumes: List<AssumeStmt>,
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
 
 /**
  * Represents a memory access: stores the array expression, the offset expression, the access type
@@ -215,7 +230,8 @@ private class MemoryAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<String>,
   blockingMutexes: Set<String>,
-) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes)
+  precedingAssumes: List<AssumeStmt>,
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
 
 /**
  * Returns the global variable accesses of the label.
@@ -232,6 +248,7 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
   val acquiredMutexes = currentMutexes.toMutableSet()
   val blockingMutexes = mutableSetOf<String>()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
+  val precedingAssumes = mutableListOf<AssumeStmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
@@ -246,11 +263,14 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
+              precedingAssumes.toList(),
             )
           )
         }
       }
     }
+
+    ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
   }
   return accesses
 }
@@ -270,6 +290,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
   val blockingMutexes = mutableSetOf<String>()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
   val changedVars = mutableSetOf<VarDecl<*>>()
+  val precedingAssumes = mutableListOf<AssumeStmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
@@ -296,11 +317,13 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
+              precedingAssumes.toList(),
             )
           )
         }
       }
     }
+    ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
     label.collectVarsWithAccessType().forEach { (v, access) ->
       if (access.isWritten) changedVars.add(v)
     }
@@ -345,7 +368,27 @@ private fun mayBeSameMemoryLocation(
   val pointerPartitions = state.xcfa!!.getPointerPartitions()
   val a1 = (array1 as? RefExpr<*>)?.decl ?: return true // cannot decide
   val a2 = (array2 as? RefExpr<*>)?.decl ?: return true // cannot decide
-  return pointerPartitions.any { a1 in it.first && a2 in it.first }
+  val partition1 = pointerPartitions.indexOfFirst { a1.belongsTo(it, state) }
+  val partition2 = pointerPartitions.indexOfFirst { a2.belongsTo(it, state) }
+  if (partition1 == -1 || partition2 == -1) return true // cannot decide
+  return partition1 == partition2
+}
+
+private fun Decl<*>.belongsTo(
+  partition: Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>,
+  state: XcfaState<*>,
+): Boolean {
+  if (this in partition.first) return true
+  for ((_, procState) in state.processes) {
+    for (lookUp in procState.varLookup) {
+      for ((original, prefixed) in lookUp) {
+        if (prefixed == this) {
+          return original in partition.first
+        }
+      }
+    }
+  }
+  return false
 }
 
 private fun canExecuteConcurrently(

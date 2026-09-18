@@ -269,12 +269,9 @@ public class CStruct extends CInteger {
                 // fpToIEEEBV is unspecified for NaN, and while a canonical-NaN guard on the write
                 // fixes the direct cases, a NaN routed through the integer view and back
                 // (`value = NaN; word = ...; value = word`, the pervasive newlib idiom) still
-                // yields
-                // a spurious non-NaN in the solver and produced 14 wrong float-newlib results in
-                // the
-                // 2026-07-21 run. Failing loudly (ERROR, score 0) beats those wrong answers until
-                // the
-                // round-trip is made sound. See PLAN.md batch 59.
+                // yields a spurious non-NaN in the solver, which produced wrong verdicts on
+                // float-heavy tasks. Failing loudly beats a wrong answer until the round trip is
+                // made sound.
                 return null;
             } else if (fieldType instanceof CInteger) {
                 // CPointer is a CInteger here: a pointer value is a pointer-wide integer.

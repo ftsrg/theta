@@ -94,7 +94,7 @@ fun getExpressionFromC(
   checkOverflow: Boolean,
   warningLogger: Logger,
   vars: Iterable<VarDecl<*>>,
-): Expr<BoolType> {
+): Expr<*> {
   val input = CharStreams.fromString(value)
   val lexer = CLexer(input)
   val tokens = CommonTokenStream(lexer)
@@ -125,12 +125,26 @@ fun getExpressionFromC(
     )
 
   check(expr is Expr<*>)
+  return expr
+}
+
+fun getBoolExpressionFromC(
+  value: String,
+  parseContext: ParseContext,
+  collectStatistics: Boolean,
+  checkOverflow: Boolean,
+  warningLogger: Logger,
+  vars: Iterable<VarDecl<*>>,
+): Expr<BoolType> {
+  val expr =
+    getExpressionFromC(value, parseContext, collectStatistics, checkOverflow, warningLogger, vars)
   val signedType = CComplexType.getSignedInt(parseContext)
-  if (
+
+  return if (
     expr is IteExpr<*> && expr.then == signedType.unitValue && expr.`else` == signedType.nullValue
   ) {
-    return expr.cond
+    expr.cond
   } else {
-    return Neq(expr, signedType.nullValue)
+    Neq(expr, signedType.nullValue)
   }
 }

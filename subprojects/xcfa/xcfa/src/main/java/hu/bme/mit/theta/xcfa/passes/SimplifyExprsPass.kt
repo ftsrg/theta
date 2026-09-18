@@ -127,7 +127,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
         toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
       }
-      unusedLocRemovalPass.run(builder)
+      unusedLocRemovalPass.runChecked(builder)
 
       edges = LinkedHashSet(builder.getEdges())
     } while (lastEdges != edges)

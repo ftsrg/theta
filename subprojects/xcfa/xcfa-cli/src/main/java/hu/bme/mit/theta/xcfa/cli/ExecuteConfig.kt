@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
@@ -35,6 +34,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
@@ -49,6 +49,8 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
@@ -59,7 +61,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 fun runConfig(
@@ -87,6 +88,12 @@ fun runConfig(
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.defaultLevel = config.frontendConfig.lbeLevel
+  DereferenceToArrayPass.zeroInitialized =
+    when (config.frontendConfig.memoryInit) {
+      MemoryInit.ZERO -> true
+      MemoryInit.UNCONSTRAINED -> false
+      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+    }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
@@ -122,11 +129,20 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     WebDebuggerLogger.enableWebDebuggerLogger()
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
   }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (
+      cegarConfig.initPrec == InitPrec.REUSE ||
+        config.outputConfig.precOutputConfig.serializationMode != PrecSerializationMode.NEVER
+    ) {
+      PrecReuse.setDomain(cegarConfig.abstractorConfig.domain)
+    }
+  }
 
-  LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
-  LoopUnrollPass.FORCE_UNROLL_LIMIT =
+  UnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
+  UnrollPass.FORCE_UNROLL_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
-  LoopUnrollPass.UNROLL_RECURSION = !config.frontendConfig.noForceUnrollRecursion
+  UnrollPass.UNROLL_RECURSION_LIMIT =
+    if (config.inputConfig.witness == null) config.frontendConfig.forceUnrollRecursion else -1
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
@@ -216,8 +232,7 @@ private fun parseInputFiles(
  * it out as bytes by hand and run out of room (a pointer cannot cover several cells, a member whose
  * bytes must be recombined has no cell to read from), which is
  * [RequiresByteAddressedMemoryException]. `bytes` gives every object a run of byte cells and has
- * none of those limits, so that failure is retried there. Between its two messages it is the
- * largest frontend error family in the run-94 parse sweep. `bytes` is only defined over bitvectors,
+ * none of those limits, so that failure is retried there. `bytes` is only defined over bitvectors,
  * so the arithmetic moves with it. A *floating-point* member is excluded at the raise site: the
  * byte-addressed model refuses floats too, so retrying would only swap one refusal for another.
  *
@@ -328,6 +343,10 @@ private fun buildFrontend(
     } else {
       emptySet()
     }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (cegarConfig.initPrec == InitPrec.REUSE)
+      PrecReuse.load(cegarConfig.precFile, xcfa.collectVars(), parseContext, logger)
+  }
 
   if (
     parseContext.multiThreading &&
@@ -340,10 +359,7 @@ private fun buildFrontend(
     uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
   }
 
-  logger.benchmark(
-    "%s",
-    "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)",
-  )
+  logger.benchmark("%s", "Frontend finished: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)")
 
   logger.benchmark("ParsingResult Success")
   logger.benchmark(
@@ -447,7 +463,7 @@ private fun backend(
               }
             }
 
-        logger.info("%s", "Backend finished (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)")
+        logger.info("%s", "Backend finished (in ${stopwatch.elapsedMillis()} ms)")
         result
       }
     }
@@ -477,7 +493,7 @@ private fun tracegenBackend(
   logger.info(
     "%s",
     "Backend finished (in ${
-      stopwatch.elapsed(TimeUnit.MILLISECONDS)
+      stopwatch.elapsedMillis()
     } ms)\n",
   )
 

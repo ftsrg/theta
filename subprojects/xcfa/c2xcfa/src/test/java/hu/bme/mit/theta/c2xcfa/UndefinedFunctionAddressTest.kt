@@ -37,8 +37,7 @@ import org.junit.jupiter.api.Test
  * much later; it is using one as a *value* that had nowhere to point. It is not a rare shape:
  * preprocessed sources hand a whole table of library functions to an allocator struct, and the
  * initializer is evaluated at the position of the object's *tentative* declaration -- before the
- * prototype it names -- so even a plainly ordered file hits it (96 runs of the run-94 parse sweep,
- * 64 `malloc` and 32 `__VERIFIER_nondet_int`).
+ * prototype it names -- so even a plainly ordered file hits it.
  */
 class UndefinedFunctionAddressTest {
 

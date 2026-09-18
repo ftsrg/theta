@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
 import hu.bme.mit.theta.c2xcfa.getCMetaData
-import hu.bme.mit.theta.c2xcfa.getExpressionFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -146,7 +146,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           return@let
         }
         val inv =
-          getExpressionFromC(
+          getBoolExpressionFromC(
             it.value,
             parseContext,
             false,
@@ -517,7 +517,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         ) {
           "Not handled: $constraint"
         }
-        getExpressionFromC(
+        getBoolExpressionFromC(
           constraint.value,
           parseContext,
           false,
@@ -553,7 +553,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
             ) {
               "Not handled: $constraint"
             }
-            getExpressionFromC(
+            getBoolExpressionFromC(
               constraint.value.replace("\\result", cNameOpt.get() as String),
               parseContext,
               false,

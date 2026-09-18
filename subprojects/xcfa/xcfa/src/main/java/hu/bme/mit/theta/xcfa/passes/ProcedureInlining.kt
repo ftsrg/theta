@@ -29,8 +29,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
  * Splicing a called procedure's body into its caller, shared by the two places that need it:
- * [InlineProceduresPass], which inlines a whole program up front, and [LoopUnrollPass], which
- * expands recursive calls to a bound and can therefore be re-run at a larger bound.
+ * [InlineProceduresPass], which inlines a whole program up front, and [UnrollPass], which expands
+ * recursive calls to a bound and can therefore be re-run at a larger bound.
  */
 
 /** A fresh copy of this location for a spliced-in body; never initial, final or error. */
@@ -201,9 +201,8 @@ internal fun inlineCallSite(
   // walks `calleeParams` and indexes `invokeLabel.params[i]`, so that is the direction that runs
   // off
   // the end. A call site supplying *extra* arguments -- which is every variadic call, `printk(fmt,
-  // ...)` and friends -- indexes safely and simply ignores the surplus, exactly as it did before
-  // this guard existed. Refusing those too cost 713 LDV driver runs that used to build (`printk`
-  // 476, `dev_err` 158, `__dynamic_dev_dbg` 79), the bulk of the run-91 parse regression.
+  // ...)` and friends -- indexes safely and simply ignores the surplus. Refusing those too breaks
+  // every driver that calls `printk`, `dev_err` or `__dynamic_dev_dbg`.
   // A `void` procedure carries a SYNTHETIC return slot -- FrontendXcfaBuilder mints
   // `<name>_ret` for every procedure, void included, because the rest of the pipeline assumes a
   // return variable exists. A call site that discards the (nonexistent) result does not pass one,

@@ -103,9 +103,9 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
 
     /**
      * `__builtin_bswapN` reverses a value's bytes, which only means anything if the value *has*
-     * bytes -- so a program that calls it needs bitvectors, exactly as one that uses `&` or `<<`
-     * does. Without this the analysis could pick integer arithmetic and the builtin would have
-     * nothing to work on.
+     * bytes -- so a program that calls it needs bitvectors, exactly as one that uses {@code &} or
+     * {@code <<} does. Without this the analysis could pick integer arithmetic and the builtin
+     * would have nothing to work on.
      */
     @Override
     public Void visitPostfixExpression(CParser.PostfixExpressionContext ctx) {

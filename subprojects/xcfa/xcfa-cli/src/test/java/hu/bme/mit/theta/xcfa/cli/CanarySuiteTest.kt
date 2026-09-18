@@ -16,134 +16,145 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.Executors
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
 
 /**
- * The canary suite, as ordinary JUnit tests.
+ * The canary suite: a sample of real SV-COMP tasks run against a built `Theta-svcomp`.
  *
- * `benchmark-results/canaries/run_canaries.sh` runs a sample of real SV-COMP tasks and a set of
- * feature-guard fixtures against a built `Theta-svcomp` distribution. It has been the gate for
- * every frontend change for months, but it lived entirely outside Gradle, so it was only ever run
- * by someone remembering to run it. This turns each of its rows into a test, which is what makes a
- * green build mean something.
+ * `canaries/canaries.tsv` lists the tasks; each row becomes one dynamic test, so a failure names
+ * the task rather than "the suite exited 1". Two modes:
+ * - `parse` (default) -- frontend only (`--backend NONE`), checking that each task still builds an
+ *   XCFA. Fast, and what guards frontend changes.
+ * - `full` (`-Ptheta.canary.mode=full`) -- the real portfolio, comparing the verdict against the
+ *   task's expected one. Minutes per task; use a filtered TSV.
  *
- * **The script is invoked, not reimplemented.** It already carries the parallelism, the mode
- * handling and -- more importantly -- the traps learned the hard way: a distribution auto-extracted
- * from the zip when the directory is stale, the exec bit on `theta-start.sh`, and the fact that a
- * `timeout` around `theta-start.sh` does not kill the JVM it spawns. Rewriting that in Kotlin would
- * mean rediscovering all of it. The script runs once and every result row becomes one dynamic test,
- * so a failure names the task that failed rather than "the suite exited 1".
+ * The feature-guard fixtures are their own task, [FixtureSuiteTest].
  *
  * **It skips rather than fails when it cannot run.** The suite needs a built distribution and a
- * local sv-benchmarks checkout, neither of which exists on a fresh clone or in a sandboxed CI job.
- * A missing prerequisite is not evidence of a defect, so it is an assumption failure (skip), never
- * a test failure. What it must never do is pass silently, so an empty result set is a failure.
+ * local sv-benchmarks checkout, neither of which exists in a fresh clone or a sandboxed CI job. A
+ * missing prerequisite is an assumption failure, never a test failure. It must not pass silently
+ * either, so an empty task list is a failure.
  *
- * Not wired into `test`: a parse-mode sweep is ~20 minutes and needs several gigabytes of
- * benchmarks. It is registered as its own task -- `./gradlew :theta-xcfa-cli:canaryTest` -- and
- * `test` explicitly excludes it.
+ * Not wired into `test`; run it with `gradle :theta-xcfa-cli:canaryTest`.
  *
- * One row is flaky on a memory-constrained machine: `neural-networks/cartpole_0_safe` is large
- * enough to be OOM-killed, reported here as `nonzero exit 137`. Measured on a host with ~13 GB of
- * 62 free (the rest in use by other tenants), it failed at the default parallelism and at
- * `-Ptheta.canary.jobs=2`, and passed only at `PARALLEL_JOBS=1` -- and even alone it has failed
- * before. So it is the machine's free memory that decides, not the parallelism; `theta.canary.jobs`
- * lowers the pressure but is not a reliable remedy for it.
- *
- * It is deliberately NOT special-cased. A test that swallows `exit 137` would also swallow a
- * genuine memory regression, which is exactly the kind of thing this suite exists to catch.
+ * Large canaries need several GB each, so on a memory-constrained machine one may be OOM-killed and
+ * reported as a nonzero exit. That is deliberately not special-cased: a test that swallows it would
+ * also swallow a genuine memory regression, which is what this suite exists to catch.
  */
 class CanarySuiteTest {
 
   private companion object {
-    /** Rows look like `PASS c/foo/bar.yml unreach-call ILP32 ok` (space-padded). */
-    val CANARY_ROW = Regex("""^(PASS|FAIL|ERROR|UNKNOWN|TIMEOUT)\s+(\S+)\s+(\S+)\s+(\S+)\s*(.*)$""")
+    /** Parsing only; a task that needs longer than this has regressed. */
+    val PARSE_TIMEOUT_SECONDS = seconds("theta.canary.parseTimeout", 60L)
 
-    /** Fixture rows look like `PASS some_fixture.c [b94 ] what it guards`. */
-    val FIXTURE_ROW = Regex("""^(PASS|FAIL)\s+(\S+\.c)\s+\[([^]]*)]\s*(.*)$""")
+    /** Full mode runs the portfolio, which is allowed to think for a while. */
+    val FULL_TIMEOUT_SECONDS = seconds("theta.canary.fullTimeout", 90L)
 
-    /** The suite is a sweep over hundreds of tasks; it is minutes, not seconds. */
-    const val TIMEOUT_MINUTES = 90L
+    /** Each task is a separate JVM needing several GB, so this is memory-bound, not CPU-bound. */
+    val PARALLELISM = System.getProperty("theta.canary.jobs")?.toIntOrNull() ?: 4
+
+    private fun seconds(property: String, fallback: Long) =
+      System.getProperty(property)?.toLongOrNull() ?: fallback
   }
+
+  private data class Outcome(val status: String, val detail: String)
 
   @TestFactory
   fun canarySuite(): List<DynamicTest> {
     val repoRoot = File(System.getProperty("theta.canary.repoRoot") ?: ".").absoluteFile
-    val script = File(repoRoot, "benchmark-results/canaries/run_canaries.sh")
+    val home =
+      System.getProperty("theta.canary.home")?.let(::File)
+        ?: File(repoRoot, "subprojects/xcfa/xcfa-cli/canaries")
+    val tsv = System.getProperty("theta.canary.tsv")?.let(::File) ?: File(home, "canaries.tsv")
     val mode = System.getProperty("theta.canary.mode") ?: "parse"
-    val distDir = System.getProperty("theta.canary.dist")?.let(::File)
     val svBenchmarks =
       File(
         System.getProperty("theta.canary.svBenchmarks")
           ?: repoRoot.resolveSibling("sv-benchmarks").path
       )
+    val distDir =
+      System.getProperty("theta.canary.dist")?.let(::File)
+        ?: File(repoRoot, "subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp")
 
-    assumeTrue(script.canExecute(), "canary script not present or not executable: $script")
+    check(mode == "parse" || mode == "full") { "mode must be 'parse' or 'full', got: $mode" }
+    assumeTrue(tsv.isFile, "no canary registry at $tsv")
     assumeTrue(svBenchmarks.isDirectory, "sv-benchmarks checkout not found at $svBenchmarks")
+    val dist = SuiteSupport.ensureDistribution(distDir)
     assumeTrue(
-      distDir == null ||
-        distDir.isDirectory ||
-        File(distDir.parentFile, "${distDir.name}.zip").isFile,
-      "no built distribution at $distDir (run buildArchiveTheta-svcomp first)",
+      dist != null,
+      "no built distribution at $distDir (run `gradle :theta-xcfa-cli:buildArchiveTheta-svcomp`)",
     )
 
-    val command = buildList {
-      add(script.absolutePath)
-      add(distDir?.absolutePath ?: "")
-      add(mode)
-    }
-    val process =
-      ProcessBuilder(command)
-        .directory(script.parentFile)
-        .redirectErrorStream(true)
-        .apply { environment()["SV_BENCHMARKS_ROOT"] = svBenchmarks.absolutePath }
-        .start()
-    val output = process.inputStream.bufferedReader().readText()
-    if (!process.waitFor(TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
-      process.destroyForcibly()
-      return listOf(
-        DynamicTest.dynamicTest("canary suite") {
-          fail("the canary suite did not finish within $TIMEOUT_MINUTES minutes")
-        }
-      )
+    val rows = SuiteSupport.readTsv(tsv)
+    // A broken registry looks exactly like a clean sweep otherwise, which is the one outcome this
+    // must not allow.
+    if (rows.isEmpty()) {
+      return listOf(DynamicTest.dynamicTest("canary suite") { fail("no task rows in $tsv") })
     }
 
-    val tests = mutableListOf<DynamicTest>()
-    var inFixtures = false
-    for (line in output.lineSequence()) {
-      if (line.startsWith("=== feature-guard fixtures")) {
-        inFixtures = true
-        continue
+    val pool = Executors.newFixedThreadPool(PARALLELISM)
+    val outcomes =
+      try {
+        rows
+          .map { row -> row to pool.submit<Outcome> { run(row, dist!!, svBenchmarks, mode) } }
+          .map { (row, future) -> row to future.get() }
+      } finally {
+        pool.shutdown()
       }
-      val row =
-        (if (inFixtures) FIXTURE_ROW else CANARY_ROW).matchEntire(line.trimEnd()) ?: continue
-      val status = row.groupValues[1]
-      val name =
-        if (inFixtures) "fixture ${row.groupValues[2]}"
-        else "${row.groupValues[2]} [${row.groupValues[3]}]"
-      val detail = row.groupValues.last()
-      tests.add(
-        DynamicTest.dynamicTest(name) {
-          // UNKNOWN and TIMEOUT are not passes: the suite is a gate, and a task that
-          // stopped producing its expected answer is exactly what it exists to catch.
-          if (status != "PASS") fail("$status -- $detail")
-        }
-      )
+
+    return outcomes.map { (row, outcome) ->
+      val name = "${row["task_yml_relpath"]} [${row["property"]}]"
+      DynamicTest.dynamicTest(name) {
+        // UNKNOWN and TIMEOUT are not passes: the suite is a gate, and a task that stopped
+        // producing its expected answer is exactly what it exists to catch.
+        if (outcome.status != "PASS") fail("${outcome.status} -- ${outcome.detail}")
+      }
+    }
+  }
+
+  private fun run(row: Map<String, String>, dist: File, svBenchmarks: File, mode: String): Outcome {
+    val input = File(svBenchmarks, row.getValue("input_file_relpath"))
+    val property = File(svBenchmarks, row.getValue("property_file_relpath"))
+    val dataModel = row.getValue("data_model")
+    val expected = row.getValue("expected_verdict")
+
+    val options = buildList {
+      add("--svcomp")
+      addAll(if (mode == "parse") listOf("--backend", "NONE") else listOf("--portfolio", "STABLE"))
+      addAll(listOf("--loglevel", "RESULT"))
+      addAll(listOf("--property", property.absolutePath))
+      addAll(listOf("--architecture", dataModel))
+    }
+    val timeout = if (mode == "parse") PARSE_TIMEOUT_SECONDS else FULL_TIMEOUT_SECONDS
+    val result =
+      SuiteSupport.execute(SuiteSupport.thetaCommand(dist, input, options), dist, timeout)
+
+    if (mode == "parse") {
+      return when {
+        result.timedOut -> Outcome("TIMEOUT", "parse timeout (${timeout}s)")
+        result.output.contains("Frontend failed!") -> Outcome("FAIL", "Frontend failed!")
+        result.output.contains("ParsingResult Success") -> Outcome("PASS", "ok")
+        else -> Outcome("FAIL", "no ParsingResult Success in output")
+      }
     }
 
-    // An empty result set means the script produced nothing parseable -- a broken invocation
-    // looks identical to a clean sweep otherwise, which is the one outcome this must not allow.
-    if (tests.isEmpty()) {
-      return listOf(
-        DynamicTest.dynamicTest("canary suite") {
-          fail("the canary suite produced no parseable results:\n${output.take(4000)}")
-        }
-      )
+    if (result.timedOut) return Outcome("TIMEOUT", "full timeout (${timeout}s)")
+    val got =
+      when {
+        result.output.contains("(SafetyResult Safe)") -> "true"
+        result.output.contains("(SafetyResult Unsafe") -> "false"
+        result.output.contains("(SafetyResult Unknown)") -> "unknown"
+        else -> "error"
+      }
+    return when (got) {
+      expected -> Outcome("PASS", "expected=$expected got=$got")
+      "unknown" -> Outcome("UNKNOWN", "expected=$expected got=$got")
+      "error" -> Outcome("ERROR", "expected=$expected got=$got")
+      else -> Outcome("FAIL", "expected=$expected got=$got")
     }
-    return tests
   }
 }

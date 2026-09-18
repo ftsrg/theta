@@ -393,8 +393,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 // ignoring that is the safe direction, since it only lets *more* programs through
                 // rather than changing the meaning of any that compile.
                 //
-                // Refusing them killed the whole frontend on files that merely used the keyword:
-                // `register` alone accounts for ~52 of run 84's before-parsing failures.
+                // Refusing them killed the whole frontend on any file that merely used the
+                // keyword.
                 return null;
             case "_Thread_local":
                 // Genuinely different: thread-local storage gives every thread its own copy, which
