@@ -102,8 +102,8 @@ A comment states what is not obvious from the code — a non-trivial decision or
 ## On-demand deep docs
 
 Documented modules follow a two-file convention (stated once here — the module files don't repeat it):
-- `AGENTS.md` — how to **edit/extend** that module (invariants, change recipes). Auto-loads when you touch files there; never read it eagerly. Conceptual overviews stay in the module's `README.md`.
-- `USING.md` — how to **consume** that module's API from elsewhere (cookbook). Never auto-loads — read it explicitly when the task matches, via the pointers below.
+- `AGENTS.md` — how to **edit/extend** that module (invariants, change recipes). **Before editing files in a module, read that module's `AGENTS.md` first if it has one**, then keep it open while you work. Some agents auto-load it, others do not, so read it explicitly rather than relying on that. A few modules carry a deeper `AGENTS.md` for one package (e.g. `common/core/.../type/`, `common/analysis/.../algorithm/`) — read it too when you touch that package. Conceptual overviews stay in the module's `README.md`.
+- `USING.md` — how to **consume** that module's API from elsewhere (cookbook). Read it explicitly when the task matches, via the pointers below.
 
 Current pointers:
 - Building/manipulating core exprs, stmts, valuations, or talking to solvers from **any** module: `subprojects/common/core/USING.md`.
