@@ -72,3 +72,13 @@ The complex portfolio was used on SV-COMP 2022, the resulting tool paper can be 
 * We are planning on refactoring the portfolio to work with all formalisms and configuraitons of Theta
 * We also plan to introduce configuration files to make the creation of further portfolios easier
 * Theta might go through an architectural refactoring process to create a more modular, portfolio-centric architecture
+
+## Further reading
+
+The full publication list is at [theta.mit.bme.hu/publications](https://theta.mit.bme.hu/publications/).
+
+* [Theta: portfolio of CEGAR-based analyses with dynamic algorithm selection](https://doi.org/10.1007/978-3-030-99527-0_34) (SV-COMP 2022) — the portfolio with dynamic algorithm selection.
+* [Gazer-Theta: LLVM-based Verifier Portfolio with BMC/CEGAR](https://doi.org/10.1007/978-3-030-72013-1_27) (SV-COMP 2021) — an earlier, sequential portfolio (BMC, then explicit-value, then predicate abstraction).
+* [Theta: Abstraction Based Techniques for Verifying Concurrency](https://doi.org/10.1007/978-3-031-57256-2_30) (SV-COMP 2024) and [Theta: Various Approaches for Concurrent Program Verification](https://doi.org/10.1007/978-3-031-90660-2_22) (SV-COMP 2025) — later refinements of the portfolio architecture, solver choice and configuration ordering.
+* [Efficient techniques for formal verification of C programs](https://theta.mit.bme.hu/publications/adamzsBsc2021.pdf) (BSc, 2021) — automating configuration and algorithm selection.
+* [Enhancing Model Checking Portfolios in Theta through Partial Result Propagation](https://theta.mit.bme.hu/publications/imerikBsc2026.pdf) (BSc, 2026) — transferring partial results between portfolio configurations, and an online heuristic for predicting timeouts.
