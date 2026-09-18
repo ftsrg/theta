@@ -32,6 +32,7 @@ If your local `.idea/workspace.xml` has IntelliJ run configurations (it's gitign
 - Running the jar directly needs `LD_LIBRARY_PATH=<dist>/lib` (legacy Z3) and `--smt-home <dist>/solvers`. The packaged `theta-start.sh` (template at `scripts/theta-start.sh`) sets these but hardcodes `-Xmx14210m -Xss120m`.
 - Full distribution: `./gradlew buildArchiveTheta-svcomp -x test` → `subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp.zip`. After any rebuild also `rm -rf subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp` — a stale extracted directory is silently reused.
 - Parse-only smoke test: `--svcomp --backend NONE --loglevel RESULT --property <prp> --architecture ILP32|LP64` (success marker: `ParsingResult Success`).
+- Canary regression gate: `./gradlew :theta-xcfa-cli:canaryTest` builds the `Theta-svcomp` distribution and runs ~268 real sv-benchmarks tasks (parse-only by default — `--backend NONE` per task; `-Ptheta.canary.mode=full` checks verdicts instead) plus the feature-guard fixtures. The fixtures alone — the fast half, a few minutes — are `:theta-xcfa-cli:fixtureTest`. **Run this before any frontend or pass change lands.** For each new frontend/grammar capability add a `canaries/fixtures/` program that fails before your change and passes after, and a `fixtures/fixtures.tsv` row. See `subprojects/xcfa/xcfa-cli/canaries/README.md`.
 
 ## Subproject map
 
