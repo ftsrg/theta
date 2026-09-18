@@ -1,6 +1,6 @@
 # Using theta-solver — getting and driving SMT solvers
 
-Consumer-facing counterpart of [CLAUDE.md](CLAUDE.md). For *building the expressions* you feed solvers, see [core USING.md](../../common/core/USING.md) (especially the `PathUtils.unfold` round-trip — solvers only see constants, never `VarDecl`s).
+Consumer-facing counterpart of [AGENTS.md](AGENTS.md). For *building the expressions* you feed solvers, see [core USING.md](../../common/core/USING.md) (especially the `PathUtils.unfold` round-trip — solvers only see constants, never `VarDecl`s).
 
 ```kotlin
 implementation(project(":theta-solver"))            // interfaces
@@ -22,7 +22,7 @@ SolverFactory factory = SolverManager.resolveSolverFactory("Z3");
 
 Native backends (z3, z3-legacy) need `LD_LIBRARY_PATH=<repo>/lib/`. Call `SolverManager.closeAll()` when done — the registry is static. ⚠ Both Z3 backends name their manager `Z3SolverManager`; they differ only in package (`solver.z3legacy` vs `solver.z3`).
 
-Backend cheat-sheet (resolution strings verified): **`"Z3"`** → solver-z3-legacy — the historical default, native, tree-capable interpolation. **`"Z3:new"`** → solver-z3 — modern Z3; sequence-only (derived) interpolation, plus Horn. **`"JavaSMT:<SOLVER>"`** (a JavaSMT `Solvers` enum name, e.g. `JavaSMT:PRINCESS`) → solver-javasmt — many solvers behind one API; capabilities depend on the underlying solver. **`"<name>:<version>"`** (e.g. `mathsat:5.6.10`, `golem:latest`) → solver-smtlib — external processes installed under `~/.theta` via `theta-solver-smtlib-cli`; per-solver capability/interpolation matrix in [solver-smtlib's CLAUDE.md](../solver-smtlib/CLAUDE.md). **solver-eldarica** — in-JVM Horn solver (no factory; constructed directly).
+Backend cheat-sheet (resolution strings verified): **`"Z3"`** → solver-z3-legacy — the historical default, native, tree-capable interpolation. **`"Z3:new"`** → solver-z3 — modern Z3; sequence-only (derived) interpolation, plus Horn. **`"JavaSMT:<SOLVER>"`** (a JavaSMT `Solvers` enum name, e.g. `JavaSMT:PRINCESS`) → solver-javasmt — many solvers behind one API; capabilities depend on the underlying solver. **`"<name>:<version>"`** (e.g. `mathsat:5.6.10`, `golem:latest`) → solver-smtlib — external processes installed under `~/.theta` via `theta-solver-smtlib-cli`; per-solver capability/interpolation matrix in [solver-smtlib's AGENTS.md](../solver-smtlib/AGENTS.md). **solver-eldarica** — in-JVM Horn solver (no factory; constructed directly).
 
 ## Basic satisfiability
 

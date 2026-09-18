@@ -1,6 +1,6 @@
 # Using theta-analysis: verifying a formalism — API cookbook
 
-Consumer-facing counterpart of [CLAUDE.md](CLAUDE.md) (which covers *editing* this module). Read this when binding a formalism/model to Theta's checking algorithms. Every chain below is verified against a real consumer (cited).
+Consumer-facing counterpart of [AGENTS.md](AGENTS.md) (which covers *editing* this module). Read this when binding a formalism/model to Theta's checking algorithms. Every chain below is verified against a real consumer (cited).
 
 ```kotlin
 implementation(project(":theta-analysis"))
@@ -46,7 +46,7 @@ The same chain scales to the most complex consumer, `xcfa-cli/checkers/ConfigToC
 - **A custom abstractor** (subclasses `BasicArgAbstractor`, overriding the covering policy for multithreaded stack-covering) and **`XcfaSingleExprTraceRefiner`** in place of `SingleExprTraceRefiner`.
 - **Refiner decoration**: with `POR.AASPOR`, the finished refiner is wrapped — `AasporRefiner.create(refiner, pruneStrategy, ignoredVarRegistry)` — which re-expands ARG nodes whose partial-order-reduction assumptions the new precision invalidated. Orthogonal to the `NodePruner` (`AtomicNodePruner`) it also passes.
 - **Result post-processing**: the `ArgCegarChecker` is wrapped in an outer `SafetyChecker` that converts the `ARG` proof into `LocationInvariants` for witness output — a clean way to present a formalism-level proof without touching the CEGAR loop.
-- **Monitor registration** right after the checker is built (`MonitorCheckpoint.register(CexMonitor(...), "CegarChecker.unsafeARG")`), gated by config — see [CLAUDE.md](CLAUDE.md) on the checkpoint mechanism.
+- **Monitor registration** right after the checker is built (`MonitorCheckpoint.register(CexMonitor(...), "CegarChecker.unsafeARG")`), gated by config — see [AGENTS.md](AGENTS.md) on the checkpoint mechanism.
 
 ## Path B — BMC / k-induction / IMC / IC3 / MDD (reference: `sts-analysis/StsToMonolithicAdapter`)
 

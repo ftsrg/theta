@@ -1,6 +1,6 @@
 # Contributing to this wiki
 
-Documentation lives **next to the code it describes**. Add a `README.md`, `USING.md`, or `CLAUDE.md` to any subproject and it appears here automatically the next time the wiki is built — no wrapper page, no nav entry, nothing to register. Project-wide documents go in [`doc/`](https://github.com/ftsrg/theta/tree/master/doc) and show up under *Guides*.
+Documentation lives **next to the code it describes**. Add a `README.md`, `USING.md`, or `AGENTS.md` to any subproject and it appears here automatically the next time the wiki is built — no wrapper page, no nav entry, nothing to register. Project-wide documents go in [`doc/`](https://github.com/ftsrg/theta/tree/master/doc) and show up under *Guides*.
 
 ## What ends up where
 
@@ -8,10 +8,10 @@ Documentation lives **next to the code it describes**. Add a `README.md`, `USING
 |---|---|
 | `subprojects/<family>/<module>/README.md` | the module's page under *Modules* |
 | `subprojects/<family>/<module>/USING.md` | `USING.md`, under that module |
-| `subprojects/<family>/<module>/CLAUDE.md` | `CLAUDE.md`, under that module |
+| `subprojects/<family>/<module>/AGENTS.md` | `AGENTS.md`, under that module |
 | `doc/<name>.md` | a page under *Guides* |
 
-`CLAUDE.md` files deeper inside a module (e.g. `common/core/src/.../core/type/CLAUDE.md`) appear nested under the module, mirroring their place in the source tree.
+`AGENTS.md` files deeper inside a module (e.g. `common/core/src/.../core/type/AGENTS.md`) appear nested under the module, mirroring their place in the source tree.
 
 Links and images in these files are relative to the file itself, which is what makes them work on GitHub and in an IDE. They are rewritten to point at GitHub when the page is built, so write them as you normally would.
 

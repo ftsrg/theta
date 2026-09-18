@@ -1,6 +1,6 @@
 # Using theta-core from other modules — API cookbook
 
-Consumer-facing counterpart of [CLAUDE.md](CLAUDE.md) (which covers *extending* core). Read this when you build or manipulate exprs/stmts/valuations from any other module.
+Consumer-facing counterpart of [AGENTS.md](AGENTS.md) (which covers *extending* core). Read this when you build or manipulate exprs/stmts/valuations from any other module.
 
 ## Depend on it
 

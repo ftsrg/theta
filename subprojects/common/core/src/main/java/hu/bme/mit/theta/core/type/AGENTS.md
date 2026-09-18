@@ -1,6 +1,6 @@
 # core/type — the type-family pattern and its (verified) deviations
 
-Supplements [core's CLAUDE.md](../../../../../../../../../CLAUDE.md) with type-package detail. Everything here was verified against source.
+Supplements [core's AGENTS.md](../../../../../../../../../AGENTS.md) with type-package detail. Everything here was verified against source.
 
 ## Canonical pattern — adding to a family
 

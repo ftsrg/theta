@@ -1,6 +1,6 @@
 # Using theta-common — utility cookbook
 
-Consumer-facing counterpart of [CLAUDE.md](CLAUDE.md). Everything in Theta already depends on this module (`implementation(project(":theta-common"))`), so these are available everywhere.
+Consumer-facing counterpart of [AGENTS.md](AGENTS.md). Everything in Theta already depends on this module (`implementation(project(":theta-common"))`), so these are available everywhere.
 
 ## Logging
 

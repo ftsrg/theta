@@ -6,13 +6,13 @@ your module and it appears on the site the next time the wiki is built.
 
 Discovery rules
 ---------------
-1. Any ``README.md`` / ``USING.md`` / ``CLAUDE.md`` under ``subprojects/`` becomes a
+1. Any ``README.md`` / ``USING.md`` / ``AGENTS.md`` under ``subprojects/`` becomes a
    page under *Modules*, at a nav path mirroring the module it belongs to
    (``subprojects/common/core/USING.md`` -> *Modules / common / core / Using*).
    Docs nested deeper inside a module (e.g. in a Java package) keep the package
    tail in their nav path, with ``src/main/java/hu/bme/mit/theta/<module>`` stripped.
 2. Any ``*.md`` under ``doc/`` (except this wiki itself) becomes a page under
-   *Guides*, plus the repository-level ``CLAUDE.md``.
+   *Guides*, plus the repository-level ``AGENTS.md``.
 
 So: a doc that belongs to one module lives in that module; a doc that belongs to
 the project as a whole lives in ``doc/``. Both end up on the wiki.
@@ -45,7 +45,7 @@ GITHUB_RAW = "https://raw.githubusercontent.com/ftsrg/theta/master/"
 MODULE_DOCS = {
     "README.md": "index.md",
     "USING.md": "using.md",
-    "CLAUDE.md": "claude.md",
+    "AGENTS.md": "agents.md",
 }
 
 _BANNERS = {
@@ -56,8 +56,8 @@ _BANNERS = {
         "    than to prose.\n\n"
         "    Mirrored from [`{path}`]({url}) — edit it there, not here.\n"
     ),
-    "CLAUDE.md": (
-        '!!! info "`CLAUDE.md` — how to modify this module"\n'
+    "AGENTS.md": (
+        '!!! info "`AGENTS.md` — how to modify this module"\n'
         "    Invariants, conventions and change recipes for contributors — and for AI coding\n"
         "    assistants, which load this file automatically when editing the module. Largely\n"
         "    derived from the source and verified against it.\n\n"
@@ -71,9 +71,9 @@ _BANNERS = {
         '!!! info "Mirrored page"\n'
         "    Mirrored from [`{path}`]({url}) — edit it there, not here.\n"
     ),
-    "root-claude": (
-        '!!! info "`CLAUDE.md` — repository-wide orientation"\n'
-        "    The counterpart of the per-module `CLAUDE.md` files: how the repository is laid out,\n"
+    "root-agents": (
+        '!!! info "`AGENTS.md` — repository-wide orientation"\n'
+        "    The counterpart of the per-module `AGENTS.md` files: how the repository is laid out,\n"
         "    how to build, test and format it. Written for contributors — and for AI coding\n"
         "    assistants, which load it automatically.\n\n"
         "    Mirrored from [`{path}`]({url}) — edit it there, not here.\n"
@@ -151,20 +151,20 @@ def _discover(config):
                 (path, posixpath.join("Guides", path.relative_to(REPO_ROOT / "doc").as_posix()))
             )
 
-    # The repository-wide README and CLAUDE.md are top-level pages: the first is the project's
-    # front page, the second is a CLAUDE.md like any other — neither is a "guide".
+    # The repository-wide README and AGENTS.md are top-level pages: the first is the project's
+    # front page, the second is an AGENTS.md like any other — neither is a "guide".
     found.append((REPO_ROOT / "README.md", "about.md"))
-    root_claude = REPO_ROOT / "CLAUDE.md"
-    if root_claude.is_file():
-        found.append((root_claude, "claude.md"))
+    root_agents = REPO_ROOT / "AGENTS.md"
+    if root_agents.is_file():
+        found.append((root_agents, "agents.md"))
 
     return found
 
 
 def _page_source(path: Path, dest_uri: str) -> str:
     rel = path.relative_to(REPO_ROOT).as_posix()
-    if dest_uri == "claude.md":
-        banner = _BANNERS["root-claude"]
+    if dest_uri == "agents.md":
+        banner = _BANNERS["root-agents"]
     elif dest_uri.startswith("Modules/"):
         banner = _BANNERS.get(path.name, _BANNERS["README.md"])
     else:
@@ -174,8 +174,8 @@ def _page_source(path: Path, dest_uri: str) -> str:
     front_matter = [f'source_dir: "{posixpath.dirname(rel)}"']
     if dest_uri == "about.md":
         front_matter.append('title: "About Theta"')
-    elif dest_uri == "claude.md":
-        front_matter.append('title: "CLAUDE.md"')
+    elif dest_uri == "agents.md":
+        front_matter.append('title: "AGENTS.md"')
     elif path.name in MODULE_DOCS and dest_uri.startswith("Modules/"):
         front_matter.append(f'title: "{_title_for(path.relative_to(REPO_ROOT))}"')
 
