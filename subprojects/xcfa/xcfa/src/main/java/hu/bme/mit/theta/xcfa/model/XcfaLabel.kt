@@ -207,7 +207,9 @@ sealed class AtomicFenceLabel(override val metadata: MetaData = EmptyMetaData) :
   override fun toString(): String = "F[$label]"
 
   companion object {
-    val ATOMIC_MUTEX_EXPR: IntLitExpr = Int(0)
+    // cannot use 0 not to confuse with NULL pointer mutexes
+    // (locking on NULL is undefined behavior, so we should avoid it)
+    val ATOMIC_MUTEX_EXPR: IntLitExpr = Int(-1)
     val ATOMIC_MUTEX: FixedMutexLock = SimpleFixedMutexLock(ATOMIC_MUTEX_EXPR)
   }
 }

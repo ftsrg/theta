@@ -37,7 +37,9 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.FenceLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
@@ -47,55 +49,66 @@ class AmbiguousMutexPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     builder.getEdges().toSet().forEach { edge ->
-      var changed = false
-      val alternatives: List<List<XcfaLabel>> =
-        edge.getFlatLabels().fold(mutableListOf<MutableList<XcfaLabel>>()) { accumulated, label ->
-          var newAccumulated = accumulated
-          if (label is FenceLabel && label.lock !is LitExpr<*>) {
-            // lazy initialization of possible literal values for variables
-            if (!this::possibleLiteralValues.isInitialized) {
-              possibleLiteralValues = collectPossibleLiteralValues(builder)
-            }
+      builder.removeEdge(edge)
+      val split = edge.splitIf { it is FenceLabel && it.lock !is LitExpr<*> }
+      val namePrefix = "${edge.source.name}_${edge.target.name}_split"
+      var lastTarget: XcfaLocation? = null
+      split.forEachIndexed { index, l ->
+        val alternatives: List<List<XcfaLabel>> =
+          l.getFlatLabels().fold(mutableListOf<MutableList<XcfaLabel>>()) { accumulated, label ->
+            var newAccumulated = accumulated
+            if (label is FenceLabel && label.lock !is LitExpr<*>) {
+              // lazy initialization of possible literal values for variables
+              if (!this::possibleLiteralValues.isInitialized) {
+                possibleLiteralValues = collectPossibleLiteralValues(builder)
+              }
 
-            val simplifiedAlternatives: Set<Pair<Expr<BoolType>?, Expr<*>>> =
-              label.lock
-                .getPossibleValuations(possibleLiteralValues)
-                .map { possibleValuation: Valuation ->
-                  val simplified = ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
-                  val guard =
-                    simplified?.let {
-                      And(possibleValuation.toMap().map { (v, value) -> Eq(v.ref, value) })
-                    }
-                  guard to (simplified ?: label.lock)
-                }
-                .toSet()
-            val elseGuard = Not(Or(simplifiedAlternatives.mapNotNull { it.first }))
-            newAccumulated =
-              simplifiedAlternatives
-                .flatMap { (guard, simplifiedLock) ->
-                  val newLabels: List<XcfaLabel> =
-                    if (simplifiedLock != label.lock) {
-                      changed = true
-                      listOf(StmtLabel(AssumeStmt.of(guard)), label.withLock(simplifiedLock))
-                    } else {
-                      listOf(StmtLabel(AssumeStmt.of(elseGuard)), label)
-                    }
-                  if (newAccumulated.isEmpty()) {
-                    mutableListOf(newLabels.toMutableList())
-                  } else {
-                    newAccumulated.map { it.apply { addAll(newLabels) } }
+              val simplifiedAlternatives: Set<Pair<Expr<BoolType>?, Expr<*>>> =
+                label.lock
+                  .getPossibleValuations(possibleLiteralValues)
+                  .map { possibleValuation: Valuation ->
+                    val simplified = ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
+                    val guard =
+                      simplified?.let {
+                        And(possibleValuation.toMap().map { (v, value) -> Eq(v.ref, value) })
+                      }
+                    guard to (simplified ?: label.lock)
                   }
-                }
-                .toMutableList()
-          } else {
-            newAccumulated.forEach { it.add(label) }
+                  .toSet()
+              val elseGuard = Not(Or(simplifiedAlternatives.mapNotNull { it.first }))
+              newAccumulated =
+                simplifiedAlternatives
+                  .flatMap { (guard, simplifiedLock) ->
+                    val newLabels: List<XcfaLabel> =
+                      if (simplifiedLock != label.lock) {
+                        listOf(StmtLabel(AssumeStmt.of(guard)), label.withLock(simplifiedLock))
+                      } else {
+                        listOf(StmtLabel(AssumeStmt.of(elseGuard)), label)
+                      }
+                    if (newAccumulated.isEmpty()) {
+                      mutableListOf(newLabels.toMutableList())
+                    } else {
+                      newAccumulated.map { it.apply { addAll(newLabels) } }
+                    }
+                  }
+                  .toMutableList()
+            } else {
+              if (newAccumulated.isEmpty()) {
+                newAccumulated.add(mutableListOf(label))
+              } else {
+                newAccumulated.forEach { it.add(label) }
+              }
+            }
+            newAccumulated
           }
-          newAccumulated
-        }
-      if (changed) {
-        builder.removeEdge(edge)
+
+        val source = lastTarget ?: edge.source
+        val target =
+          if (index == split.size - 1) edge.target
+          else XcfaLocation("${namePrefix}_$index", metadata = edge.source.metadata)
+        lastTarget = target
         alternatives.forEach { alternative ->
-          builder.addEdge(edge.withLabel(SequenceLabel(alternative)))
+          builder.addEdge(XcfaEdge(source, target, SequenceLabel(alternative), edge.metadata))
         }
       }
     }
@@ -147,8 +160,8 @@ class AmbiguousMutexPass : ProcedurePass {
             interestingToProcess.addAll(vars.filter { it !in interestingVars })
           }
         }
-        val current = initialDependencyNodes.getOrDefault(v, DependencyNode(v))
-        initialDependencyNodes[v] = current.withDependencies(dependencies)
+        val current = initialDependencyNodes.getOrPut(v) { DependencyNode(v) }
+        current.dependencies.addAll(dependencies)
       }
     }
 
@@ -221,14 +234,10 @@ class AmbiguousMutexPass : ProcedurePass {
       }
   }
 
-  private data class DependencyNode(
+  private class DependencyNode(
     val variable: VarDecl<*>,
-    val dependencies: Set<DependencyEdge> = setOf(),
-  ) {
-
-    fun withDependencies(dependencies: Set<DependencyEdge>): DependencyNode =
-      DependencyNode(variable, this.dependencies + dependencies)
-  }
+    val dependencies: MutableSet<DependencyEdge> = mutableSetOf(),
+  )
 
   private data class DependencyEdge(
     val exprs: Set<Expr<*>>,

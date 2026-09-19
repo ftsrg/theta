@@ -19,16 +19,11 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.utils.WithPushPop
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
@@ -45,7 +40,6 @@ internal fun Expr<*>.lockToLiteral(s: State): LitExpr<*>? =
     ?: when (s) {
       is WrapperState -> lockToLiteral(s.wrappedState)
       is ExplState -> ExprUtils.simplify(this, s.`val`) as? LitExpr<*>
-      is ExprState -> FixedMutexLock.getEntailedMutexLockFor(s, this)
       else -> ExprUtils.simplify(this) as? LitExpr<*>
     }
 
@@ -63,34 +57,6 @@ sealed interface FixedMutexLock : MutexLock {
   abstract override val lock: LitExpr<*>
   override val blockingMutexLocks: Set<FixedMutexLock> get() = setOf(this)
   override fun toFixedMutexLock(s: State): FixedMutexLock = this
-
-  companion object {
-    private val solver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
-
-    private val mutexLocks: MutableSet<LitExpr<*>> = mutableSetOf()
-
-    // TODO register mutex initializations
-    fun registerMutexObject(lock: LitExpr<*>) {
-      mutexLocks.add(lock)
-    }
-
-    internal fun getEntailedMutexLockFor(state: ExprState, lock: Expr<*>): LitExpr<*>? {
-      val entailed = mutableSetOf<LitExpr<*>>()
-      mutexLocks.forEach { mutexLock ->
-        val notEntailed =
-          WithPushPop(solver).use {
-            solver.add(state.toExpr())
-            solver.add(Neq(lock, mutexLock))
-            solver.check().isSat
-          }
-        if (!notEntailed) {
-          entailed.add(mutexLock)
-          if (entailed.size > 1) return null
-        }
-      }
-      return if (entailed.size == 1) entailed.first() else null
-    }
-  }
 }
 
 sealed interface SimpleMutexLock : MutexLock {

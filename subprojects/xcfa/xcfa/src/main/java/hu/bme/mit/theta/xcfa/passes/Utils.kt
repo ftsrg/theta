@@ -31,7 +31,6 @@ import java.util.*
 
 /** XcfaEdge must be in a `deterministic` ProcedureBuilder */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
-  check(label is SequenceLabel)
   val newLabels = ArrayList<SequenceLabel>()
   var current = ArrayList<XcfaLabel>()
 
@@ -49,7 +48,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
     metadata
   }
 
-  for (label in label.labels) {
+  for (label in label.getFlatLabels()) {
     if (function(label)) {
       if (current.isNotEmpty()) {
         newLabels.add(SequenceLabel(current, singleMetadata()))
