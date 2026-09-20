@@ -47,15 +47,22 @@ class AmbiguousMutexPass : ProcedurePass {
 
   private lateinit var possibleLiteralValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
 
+  private val XcfaLabel.fenceToSimplify: Boolean
+    get() = this is FenceLabel && this.lock !is LitExpr<*>
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     builder.getEdges().toSet().forEach { edge ->
+      if (!edge.getFlatLabels().any { it.fenceToSimplify }) {
+        return@forEach
+      }
+
       builder.removeEdge(edge)
-      val split = edge.splitIf { it is FenceLabel && it.lock !is LitExpr<*> }
+      val split = edge.splitIf { it.fenceToSimplify }
       val namePrefix = "${edge.source.name}_${edge.target.name}_split"
       var lastTarget: XcfaLocation? = null
-      split.forEachIndexed { index, l ->
+      split.forEachIndexed { index, e ->
         val alternatives: List<List<XcfaLabel>> =
-          l.getFlatLabels().fold(mutableListOf<MutableList<XcfaLabel>>()) { accumulated, label ->
+          e.getFlatLabels().fold(mutableListOf<MutableList<XcfaLabel>>()) { accumulated, label ->
             var newAccumulated = accumulated
             if (label is FenceLabel && label.lock !is LitExpr<*>) {
               // lazy initialization of possible literal values for variables
