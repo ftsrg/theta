@@ -42,7 +42,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.CliUtils;
@@ -83,6 +85,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import kotlin.jvm.functions.Function1;
 
 /** A command line interface for running a CEGAR configuration on an STS. */
 public class StsCli {
@@ -226,7 +229,7 @@ public class StsCli {
                         new CarCegarChecker(
                                 monolithicExpr,
                                 solverFactory,
-                                ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                stsCli.carTraceCheckerType.create(
                                         Z3LegacySolverFactory.getInstance()),
                                 stsCli.getCarOptimizations(),
                                 logger));
@@ -239,6 +242,30 @@ public class StsCli {
                         SafetyChecker<
                                 ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
                 getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger);
+    }
+
+    /** Interpolating trace checker used by CARCEGAR to decide whether a CEX is spurious. */
+    enum TraceCheckerType {
+        FW_BIN_ITP(ExprTraceCheckerFactoriesKt::createFwBinItpCheckerFactory),
+        BW_BIN_ITP(ExprTraceCheckerFactoriesKt::createBwBinItpCheckerFactory),
+        SEQ_ITP(ExprTraceCheckerFactoriesKt::createSeqItpCheckerFactory),
+        ;
+
+        private final Function<SolverFactory, Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>>>
+                factory;
+
+        TraceCheckerType(
+                Function<
+                                SolverFactory,
+                                Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>>>
+                        factory) {
+            this.factory = factory;
+        }
+
+        Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> create(
+                SolverFactory solverFactory) {
+            return factory.apply(solverFactory);
+        }
     }
 
     @Parameter(
@@ -420,6 +447,11 @@ public class StsCli {
     Boolean carStoreNodes = true;
 
     @Parameter(
+            names = {"--car-trace-checker"},
+            description = "CARCEGAR: interpolating trace checker used for spuriousness checking")
+    TraceCheckerType carTraceCheckerType = TraceCheckerType.FW_BIN_ITP;
+
+    @Parameter(
             names = {"--smt-home"},
             description = "Solver installation directory")
     String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
@@ -506,7 +538,7 @@ public class StsCli {
                 if (cegar) {
                     passes.add(
                             new PredicateAbstractionMEPass<>(
-                                    ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
+                                    ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                                             solverFactory)));
                 }
                 if (reversed) {
