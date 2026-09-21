@@ -62,8 +62,6 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
         }
     }
 
-    private final boolean curFrameopt = false;
-
     private final Map<Node, Boolean> currentlyVisited;
 
     private Node root;
@@ -148,9 +146,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
     @Override
     public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
-        if (!curFrameopt) {
-            currentFrameNumber = 0;
-        }
+        currentFrameNumber = 0;
         if (!optimizations.isStoreFrames()) {
             resetFrames();
         }

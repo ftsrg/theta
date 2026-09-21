@@ -56,6 +56,12 @@ constructor(
   private lateinit var concreteModel: MonolithicExpr
   lateinit var currentPrec: PredPrec
 
+  // Activation literals already minted for a predicate are reused across CEGAR iterations
+  // (createAbstract is called again with a growing PredPrec every refinement round), so that
+  // frame/node content built from earlier iterations still refers to the same Var instances.
+  private val predToActivationLiteral = HashMap<Expr<BoolType>, VarDecl<BoolType>>()
+  private var nextActivationLiteralIndex = 0
+
   fun createPrec(monolithicExpr: MonolithicExpr): MonolithicExpr {
     concreteModel = monolithicExpr
     currentPrec = initPrec(concreteModel)
@@ -71,8 +77,11 @@ constructor(
 
     prec.preds
       .filter { !model.ctrlVars.containsAll(ExprUtils.getVars(it)) }
-      .forEachIndexed { index, expr ->
-        val v = Decls.Var("v$index", BoolType.getInstance())
+      .forEach { expr ->
+        val v =
+          predToActivationLiteral.getOrPut(expr) {
+            Decls.Var("v${nextActivationLiteralIndex++}", BoolType.getInstance())
+          }
         activationLiterals.add(v)
         literalToPred[v] = expr
         lambdaList.add(IffExpr.of(v.ref, expr))
