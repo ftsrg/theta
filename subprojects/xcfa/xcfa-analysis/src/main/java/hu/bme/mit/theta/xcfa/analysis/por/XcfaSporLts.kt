@@ -51,16 +51,15 @@ internal fun MemLoc.isLit() = first is LitExpr<*> && second is LitExpr<*>
  *
  * @param xcfa the XCFA of the verified program
  */
-open class XcfaSporLts(protected val xcfa: XCFA) :
+open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
   LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
 
   companion object {
 
     private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
-    var random: Random = Random.Default
   }
 
-  protected var simpleXcfaLts = getXcfaLts()
+  protected var simpleXcfaLts = getXcfaLts(random)
 
   /* CACHE COLLECTIONS */
 

@@ -57,6 +57,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
+import kotlin.random.Random
 
 open class XcfaAnalysis<S : ExprState, P : Prec>(
   private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
@@ -90,7 +91,7 @@ private fun getTmpVar(originalVar: VarDecl<*>, tmpCnt: Int) =
     Var("tmp${tmpCnt}_" + originalVar.name, originalVar.type)
   }
 
-fun getCoreXcfaLts() =
+fun getCoreXcfaLts(random: Random) =
   LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
     s.processes
       .flatMap { proc ->
@@ -202,12 +203,12 @@ fun getCoreXcfaLts() =
           }
         }
       }
-      .shuffled()
+      .shuffled(random)
       .toSet()
   }
 
-fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
-  val lts = getCoreXcfaLts()
+fun getXcfaLts(random: Random): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
+  val lts = getCoreXcfaLts(random)
   return LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
     lts.getEnabledActionsFor(s).filter { !s.apply(it).first.bottom }.toSet()
   }
@@ -557,7 +558,7 @@ fun getBoundedXcfaChecker(
   solver: Solver,
   isHavoc: Boolean = false,
 ): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
-  val lts = getXcfaLts()
+  val lts = getXcfaLts(Random(-1))
   return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc)
 }
 

@@ -68,18 +68,9 @@ private val Node.explored: Set<A>
  * @see <a href="https://doi.org/10.1145/3073408">Source Sets: A Foundation for Optimal Dynamic
  *   Partial Order Reduction</a>
  */
-open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
+open class XcfaDporLts(private val xcfa: XCFA, private val random: Random) : LTS<S, A> {
 
   companion object {
-
-    var random: Random = Random.Default
-
-    /** Simple LTS that returns the enabled actions in a state. */
-    private val simpleXcfaLts = getXcfaLts()
-
-    /** The enabled actions of a state. */
-    private val State.enabled: Collection<A>
-      get() = simpleXcfaLts.getEnabledActionsFor(this as S)
 
     /** Partial order of states considering sleep sets (unexplored behavior). */
     fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
@@ -89,6 +80,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
           s1.sleep.containsAll(s2.sleep - s2.explored)
       }
   }
+
+  /** Simple LTS that returns the enabled actions in a state. */
+  private val simpleXcfaLts = getXcfaLts(random)
+
+  /** The enabled actions of a state. */
+  private val S.enabled: Collection<A>
+    get() = simpleXcfaLts.getEnabledActionsFor(this)
 
   /** Represents an element of the DFS search stack. */
   private data class StackItem(
@@ -465,7 +463,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 /**
  * Abstraction-aware dynamic partial order reduction (AADPOR) algorithm for state space exploration.
  */
-class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
+class XcfaAadporLts(private val xcfa: XCFA, random: Random) : XcfaDporLts(xcfa, random) {
 
   /** The current precision of the abstraction. */
   private var prec: Prec? = null

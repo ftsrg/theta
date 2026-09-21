@@ -25,8 +25,9 @@ import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.pointsTo
+import kotlin.random.Random
 
-class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
+class XcfaCoiMultiThread(xcfa: XCFA, random: Random) : XcfaCoi(xcfa, random) {
 
   private val startThreads: MutableSet<XcfaEdge> = mutableSetOf()
   private val edgeToProcedure: MutableMap<XcfaEdge, XcfaProcedure> = mutableMapOf()

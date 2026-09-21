@@ -39,6 +39,7 @@ import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.pointsTo
 import java.util.*
 import kotlin.math.min
+import kotlin.random.Random
 
 internal typealias S = XcfaState<out PtrState<out ExprState>>
 
@@ -46,9 +47,9 @@ internal typealias A = XcfaAction
 
 internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
 
-abstract class XcfaCoi(protected val xcfa: XCFA) {
+abstract class XcfaCoi(protected val xcfa: XCFA, random: Random) {
 
-  var coreLts: LTS<S, A> = getXcfaLts()
+  var coreLts: LTS<S, A> = getXcfaLts(random)
   lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
 
   protected var lastPrec: Prec? = null

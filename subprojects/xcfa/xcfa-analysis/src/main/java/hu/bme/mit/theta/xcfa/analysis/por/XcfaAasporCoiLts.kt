@@ -24,12 +24,14 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.transFuncVersion
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import kotlin.random.Random
 
 class XcfaAasporCoiLts(
   xcfa: XCFA,
   ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
   coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
-) : XcfaAasporLts(xcfa, ignoredVarRegistry) {
+  random: Random,
+) : XcfaAasporLts(xcfa, ignoredVarRegistry, random) {
 
   init {
     simpleXcfaLts = coiLTS

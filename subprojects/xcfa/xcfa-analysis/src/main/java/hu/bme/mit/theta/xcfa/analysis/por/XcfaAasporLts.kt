@@ -22,11 +22,13 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
+import kotlin.random.Random
 
 open class XcfaAasporLts(
   xcfa: XCFA,
   private val ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
-) : XcfaSporLts(xcfa) {
+  random: Random,
+) : XcfaSporLts(xcfa, random) {
 
   override fun <P : Prec> getEnabledActionsFor(
     state: XcfaState<out PtrState<*>>,
