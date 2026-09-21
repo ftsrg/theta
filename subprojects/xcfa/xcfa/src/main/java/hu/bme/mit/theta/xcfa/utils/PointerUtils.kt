@@ -206,6 +206,9 @@ fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
  * with their points-to sets, and taking their Cartesian product.
  */
 fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
+  val simplified = ExprUtils.simplify(this) as? LitExpr<*>
+  if (simplified != null) return setOf(simplified)
+
   val results = mutableSetOf<LitExpr<*>>()
   var values = listOf<Map<Decl<*>, LitExpr<*>>>()
   val vars = ExprUtils.getVars(this)
