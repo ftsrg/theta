@@ -43,8 +43,11 @@ class MutexToVarPass : ProcedurePass {
       get() = mutexVars.getOrPut(this) { Decls.Var("__theta_mutex_flag_$this", Int()) }
 
     private val Expr<*>.mutexFlag
-      get() = (this as? IntLitExpr)?.mutexFlag
-        ?: throw UnsupportedOperationException("Unknown mutex not supported by mutex elimination.")
+      get() =
+        (this as? IntLitExpr)?.mutexFlag
+          ?: throw UnsupportedOperationException(
+            "Unknown mutex not supported by mutex elimination."
+          )
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {

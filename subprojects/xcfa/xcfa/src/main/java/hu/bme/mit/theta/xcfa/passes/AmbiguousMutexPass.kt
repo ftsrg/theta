@@ -74,7 +74,8 @@ class AmbiguousMutexPass : ProcedurePass {
                 label.lock
                   .getPossibleValuations(possibleLiteralValues)
                   .map { possibleValuation: Valuation ->
-                    val simplified = ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
+                    val simplified =
+                      ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
                     val guard =
                       simplified?.let {
                         And(possibleValuation.toMap().map { (v, value) -> Eq(v.ref, value) })
@@ -123,7 +124,9 @@ class AmbiguousMutexPass : ProcedurePass {
     return builder
   }
 
-  private fun collectPossibleLiteralValues(builder: XcfaProcedureBuilder): Map<VarDecl<*>, Set<LitExpr<*>?>> {
+  private fun collectPossibleLiteralValues(
+    builder: XcfaProcedureBuilder
+  ): Map<VarDecl<*>, Set<LitExpr<*>?>> {
     val assignments = mutableMapOf<VarDecl<*>, MutableSet<Expr<*>>>()
     val havocedVars = mutableSetOf<VarDecl<*>>()
     val interestingToProcess = mutableSetOf<VarDecl<*>>()
@@ -194,9 +197,7 @@ class AmbiguousMutexPass : ProcedurePass {
         node.dependencies.forEach { dependency ->
           if (dependency.target !in scc) {
             // if the dependency is outside the SCC, we can use the already computed values
-            dependency.exprs.forEach { expr ->
-              addPossibleValues(expr, node)
-            }
+            dependency.exprs.forEach { expr -> addPossibleValues(expr, node) }
           }
         }
       }
@@ -227,18 +228,16 @@ class AmbiguousMutexPass : ProcedurePass {
     return result
   }
 
-  private fun Expr<*>.getPossibleValuations(possibleValues: Map<VarDecl<*>, Set<LitExpr<*>?>>): Set<Valuation> {
-    return ExprUtils
-      .getVars(this)
-      .fold(setOf(MutableValuation())) { combinations, v ->
-        combinations.flatMapTo(mutableSetOf()) { combination ->
-          possibleValues[v]?.map { value ->
-            MutableValuation.copyOf(combination).also {
-              if (value != null) it.put(v, value)
-            }
-          } ?: listOf(combination)
-        }
+  private fun Expr<*>.getPossibleValuations(
+    possibleValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
+  ): Set<Valuation> {
+    return ExprUtils.getVars(this).fold(setOf(MutableValuation())) { combinations, v ->
+      combinations.flatMapTo(mutableSetOf()) { combination ->
+        possibleValues[v]?.map { value ->
+          MutableValuation.copyOf(combination).also { if (value != null) it.put(v, value) }
+        } ?: listOf(combination)
       }
+    }
   }
 
   private class DependencyNode(
@@ -246,14 +245,9 @@ class AmbiguousMutexPass : ProcedurePass {
     val dependencies: MutableSet<DependencyEdge> = mutableSetOf(),
   )
 
-  private data class DependencyEdge(
-    val exprs: Set<Expr<*>>,
-    val target: DependencyNode,
-  )
+  private data class DependencyEdge(val exprs: Set<Expr<*>>, val target: DependencyNode)
 
-  /**
-   * Compute SCCs, Tarjan's algorithm. Returns SCCs in topological order (root is last).
-   */
+  /** Compute SCCs, Tarjan's algorithm. Returns SCCs in topological order (root is last). */
   private fun getSCCs(nodes: Set<DependencyNode>): List<Set<DependencyNode>> {
     val indexMap = mutableMapOf<DependencyNode, Int>()
     val lowLinkMap = mutableMapOf<DependencyNode, Int>()
@@ -303,7 +297,8 @@ class AmbiguousMutexPass : ProcedurePass {
   private val Expr<*>.supportedInSccPropagation: Boolean
     get() =
       when (this) {
-        is LitExpr<*>, is RefExpr<*> -> true
+        is LitExpr<*>,
+        is RefExpr<*> -> true
         is PosExpr<*> -> op.supportedInSccPropagation
         is NegExpr<*> -> op.supportedInSccPropagation
         is ModExpr<*> -> leftOp.supportedInSccPropagation && rightOp.supportedInSccPropagation

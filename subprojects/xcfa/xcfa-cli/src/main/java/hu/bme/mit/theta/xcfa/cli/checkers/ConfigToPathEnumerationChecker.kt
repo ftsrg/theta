@@ -83,7 +83,7 @@ fun getPathEnumerationChecker(
       parseContext,
       pathEnumerationConfig.porLevel,
       ignoredVarRegistry,
-      random
+      random,
     )
 
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()

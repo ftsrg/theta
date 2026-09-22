@@ -332,9 +332,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
       .getFlatLabels()
       .flatMap { label -> label.collectVars().filter { it in globalVars } }
       .toSet() union
-      edge.acquiredEmbeddedMutexes.let { mutexes ->
-        if (mutexes.size <= 1) setOf() else mutexes
-      }
+      edge.acquiredEmbeddedMutexes.let { mutexes -> if (mutexes.size <= 1) setOf() else mutexes }
   }
 
   /**

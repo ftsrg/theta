@@ -41,7 +41,6 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.passes.getLoopElements
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 import java.util.*

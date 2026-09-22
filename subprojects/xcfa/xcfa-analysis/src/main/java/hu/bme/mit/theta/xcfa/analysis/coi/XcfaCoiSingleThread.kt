@@ -22,7 +22,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import kotlin.random.Random
 
-class XcfaCoiSingleThread(xcfa: XCFA,random: Random) : XcfaCoi(xcfa, random) {
+class XcfaCoiSingleThread(xcfa: XCFA, random: Random) : XcfaCoi(xcfa, random) {
 
   private var observed: Set<Pair<XcfaLocation, XcfaLocation>> = setOf()
 

@@ -237,7 +237,8 @@ fun complex27(
         checker,
       )
 
-    val multithread = multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+    val multithread =
+      multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
       edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))

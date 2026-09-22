@@ -152,7 +152,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
         is MutexTryLockLabel ->
           ExprUtils.getVars(lock).associateWith { READ } +
             (lockVar?.let { mapOf(it to WRITE) } ?: mapOf()) +
-              mapOf(successVar to WRITE)
+            mapOf(successVar to WRITE)
         is LockLabel ->
           ExprUtils.getVars(lock).associateWith { READ } +
             (lockVar?.let { mapOf(it to WRITE) } ?: mapOf())

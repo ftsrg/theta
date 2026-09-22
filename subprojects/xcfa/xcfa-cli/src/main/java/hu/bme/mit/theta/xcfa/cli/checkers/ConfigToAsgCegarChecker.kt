@@ -78,7 +78,8 @@ fun getAsgCegarChecker(
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
   val random = Random(config.backendConfig.randomSeed)
-  val lts = ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
+  val lts =
+    ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
 
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()
 

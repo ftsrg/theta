@@ -26,8 +26,11 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import kotlin.random.Random
 
-class XcfaSporCoiLts(xcfa: XCFA, coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>, random: Random) :
-  XcfaSporLts(xcfa, random) {
+class XcfaSporCoiLts(
+  xcfa: XCFA,
+  coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  random: Random,
+) : XcfaSporLts(xcfa, random) {
 
   init {
     simpleXcfaLts = coiLTS

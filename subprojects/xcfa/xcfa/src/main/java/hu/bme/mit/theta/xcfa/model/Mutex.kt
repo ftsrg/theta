@@ -27,12 +27,9 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 
+fun Collection<MutexLock>.unknown(): Set<MutexLock> = filter { !it.isKnown() }.toSet()
 
-fun Collection<MutexLock>.unknown(): Set<MutexLock> =
-  filter { !it.isKnown() }.toSet()
-
-fun Collection<MutexLock>.fixed(): Set<MutexLock> =
-  filter { it.isKnown() }.toSet()
+fun Collection<MutexLock>.fixed(): Set<MutexLock> = filter { it.isKnown() }.toSet()
 
 internal fun Expr<*>.simplify(s: State): LitExpr<*>? =
   this as? LitExpr<*>
@@ -45,10 +42,13 @@ internal fun Expr<*>.simplify(s: State): LitExpr<*>? =
 sealed interface MutexLock {
 
   val lock: Expr<*>
-  val blockingMutexLocks: Set<MutexLock> get() = setOf(this)
+  val blockingMutexLocks: Set<MutexLock>
+    get() = setOf(this)
 
   fun isKnown(): Boolean = lock is LitExpr<*>
-  fun simplify(s : State): MutexLock
+
+  fun simplify(s: State): MutexLock
+
   fun isEqual(other: MutexLock): Expr<BoolType>? = Eq(lock, other.lock)
 }
 
@@ -63,14 +63,12 @@ data class SimpleMutexLock(override val lock: Expr<*>) : MutexLock {
   }
 }
 
-data class ReadWriteMutexLock(
-  override val lock: Expr<*>,
-  val type: ReadWriteMutexLockType,
-) : MutexLock {
+data class ReadWriteMutexLock(override val lock: Expr<*>, val type: ReadWriteMutexLockType) :
+  MutexLock {
 
   enum class ReadWriteMutexLockType {
     READ,
-    WRITE
+    WRITE,
   }
 
   override fun simplify(s: State): ReadWriteMutexLock =

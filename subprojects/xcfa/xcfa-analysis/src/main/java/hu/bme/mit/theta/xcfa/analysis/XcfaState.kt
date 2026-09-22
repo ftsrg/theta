@@ -127,7 +127,7 @@ constructor(
                       Int(if (success) 1 else 0),
                       metadata = label.metadata,
                     ),
-                  metadata = label.metadata
+                  metadata = label.metadata,
                 )
               }
             }.let { it as? XcfaLabel }
@@ -283,7 +283,11 @@ constructor(
     return copy(processes = newProcesses)
   }
 
-  private fun enterMutex(label: FenceLabel, pid: Int, extraLabels: MutableList<XcfaLabel>): XcfaState<S> {
+  private fun enterMutex(
+    label: FenceLabel,
+    pid: Int,
+    extraLabels: MutableList<XcfaLabel>,
+  ): XcfaState<S> {
     val blockingMutexes = label.blockingMutexes(sGlobal)
     if (blockingMutexes.fixed().any { it in mutexes && pid !in mutexes[it]!! }) {
       return copy(bottom = true)
@@ -305,9 +309,7 @@ constructor(
 
     extraLabels.add(label.preLabel(sGlobal))
     val newMutexes = LinkedHashMap(mutexes)
-    label.acquiredMutexes(sGlobal).forEach {
-      newMutexes[it] = (newMutexes[it] ?: setOf()) + pid
-    }
+    label.acquiredMutexes(sGlobal).forEach { newMutexes[it] = (newMutexes[it] ?: setOf()) + pid }
 
     return copy(mutexes = newMutexes)
   }

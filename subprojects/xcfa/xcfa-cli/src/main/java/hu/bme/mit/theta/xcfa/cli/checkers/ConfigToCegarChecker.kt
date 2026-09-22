@@ -74,7 +74,8 @@ fun getCegarChecker(
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
   val random = Random(config.backendConfig.randomSeed)
-  val (coi, lts) = cegarConfig.coi.getLts(xcfa, parseContext, cegarConfig.por, ignoredVarRegistry, random)
+  val (coi, lts) =
+    cegarConfig.coi.getLts(xcfa, parseContext, cegarConfig.por, ignoredVarRegistry, random)
   val waitlist =
     if (cegarConfig.por.isDynamic) {
       (cegarConfig.coi.porLts as XcfaDporLts).waitlist

@@ -289,7 +289,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
   currentMutexes: Set<MutexLock>,
   xcfa: XCFA,
   parseContext: ParseContext,
-  state: State
+  state: State,
 ): List<MemoryAccessWithMutexes> {
   val acquiredMutexes = currentMutexes.toMutableSet()
   val blockingMutexes = mutableSetOf<MutexLock>()
@@ -412,17 +412,11 @@ private fun concurrentExecutionCondition(
     noCommon(access2.acquiredMutexes, access1.blockingMutexes),
   )
 
-private fun noCommon(
-  mutexes1: Set<MutexLock>,
-  mutexes2: Set<MutexLock>,
-): Expr<BoolType> =
+private fun noCommon(mutexes1: Set<MutexLock>, mutexes2: Set<MutexLock>): Expr<BoolType> =
   And(
     mutexes1.flatMap { m1 ->
       mutexes2.mapNotNull { m2 ->
-        if (!m1.isKnown() || !m2.isKnown())
-          NeqExpr.create2(m1.lock, m2.lock)
-        else
-          null
+        if (!m1.isKnown() || !m2.isKnown()) NeqExpr.create2(m1.lock, m2.lock) else null
       }
     }
   )

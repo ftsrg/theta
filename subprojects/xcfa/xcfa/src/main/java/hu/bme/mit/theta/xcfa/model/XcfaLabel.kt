@@ -176,10 +176,8 @@ constructor(
   }
 }
 
-sealed class FenceLabel(
-  open val lock: Expr<*>,
-  override val metadata: MetaData = EmptyMetaData,
-) : XcfaLabel(metadata) {
+sealed class FenceLabel(open val lock: Expr<*>, override val metadata: MetaData = EmptyMetaData) :
+  XcfaLabel(metadata) {
   open val acquiredMutexes: Set<MutexLock> = setOf()
   open val releasedMutexes: Set<MutexLock> = setOf()
   val blockingMutexes: Set<MutexLock> // note: atomic implicitly blocks everything
@@ -189,7 +187,9 @@ sealed class FenceLabel(
     map { it.simplify(s) }.toSet()
 
   open fun acquiredMutexes(s: State): Set<MutexLock> = acquiredMutexes.simplify(s)
+
   open fun releasedMutexes(s: State): Set<MutexLock> = releasedMutexes.simplify(s)
+
   open fun blockingMutexes(s: State): Set<MutexLock> = blockingMutexes.simplify(s)
 
   protected abstract val label: String
@@ -258,15 +258,12 @@ data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
   }
 }
 
-sealed class LockLabel(
-  lock: Expr<*>,
-  metadata: MetaData,
-  open val lockVar: VarDecl<*>?,
-) : FenceLabel(lock, metadata) {
+sealed class LockLabel(lock: Expr<*>, metadata: MetaData, open val lockVar: VarDecl<*>?) :
+  FenceLabel(lock, metadata) {
 
   override fun preLabel(s: State): XcfaLabel =
-      if (lockExpr.simplify(s) is LitExpr<*>) super.preLabel(s)
-      else AssignStmtLabel(lockVar!!.ref, lock)
+    if (lockExpr.simplify(s) is LitExpr<*>) super.preLabel(s)
+    else AssignStmtLabel(lockVar!!.ref, lock)
 
   protected val lockExpr: Expr<*> = lockVar?.ref ?: lock
 
@@ -285,8 +282,7 @@ sealed class LockLabel(
 
     @JvmStatic
     protected fun <T : Type> getLockVar(lock: Expr<T>): VarDecl<T>? =
-      if (lock is LitExpr<*>) null
-      else Decls.Var("__theta_lock_${lockCounter++}", lock.type)
+      if (lock is LitExpr<*>) null else Decls.Var("__theta_lock_${lockCounter++}", lock.type)
   }
 }
 
@@ -296,8 +292,7 @@ data class MutexLockLabel(
   override val lockVar: VarDecl<*>? = getLockVar(lock),
 ) : LockLabel(lock, metadata, lockVar) {
 
-  override fun lockedMutexes(lockExpr: Expr<*>): Set<MutexLock> =
-    setOf(SimpleMutexLock(lockExpr))
+  override fun lockedMutexes(lockExpr: Expr<*>): Set<MutexLock> = setOf(SimpleMutexLock(lockExpr))
 
   override val label = LABEL
 
@@ -350,8 +345,7 @@ data class MutexTryLockLabel(
   override val lockVar: VarDecl<*>? = getLockVar(lock),
 ) : LockLabel(lock, metadata, lockVar) {
 
-  override fun lockedMutexes(lockExpr: Expr<*>): Set<MutexLock> =
-    setOf(SimpleMutexLock(lockExpr))
+  override fun lockedMutexes(lockExpr: Expr<*>): Set<MutexLock> = setOf(SimpleMutexLock(lockExpr))
 
   override val label = LABEL
 

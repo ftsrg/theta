@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
