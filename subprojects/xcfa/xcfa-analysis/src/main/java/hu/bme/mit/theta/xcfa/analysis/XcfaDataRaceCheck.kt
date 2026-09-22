@@ -419,7 +419,7 @@ private fun noCommon(
   And(
     mutexes1.flatMap { m1 ->
       mutexes2.mapNotNull { m2 ->
-        if (m1 !is FixedMutexLock || m2 !is FixedMutexLock)
+        if (!m1.isKnown() || !m2.isKnown())
           NeqExpr.create2(m1.lock, m2.lock)
         else
           null

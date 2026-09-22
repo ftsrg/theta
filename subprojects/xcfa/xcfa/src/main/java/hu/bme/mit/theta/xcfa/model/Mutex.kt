@@ -24,21 +24,20 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 
 
 fun Collection<MutexLock>.unknown(): Set<MutexLock> =
-  filter { it !is FixedMutexLock }.toSet()
+  filter { !it.isKnown() }.toSet()
 
 fun Collection<MutexLock>.fixed(): Set<MutexLock> =
-  filterIsInstance<FixedMutexLock>().toSet()
+  filter { it.isKnown() }.toSet()
 
-internal fun Expr<*>.lockToLiteral(s: State): LitExpr<*>? =
+internal fun Expr<*>.simplify(s: State): LitExpr<*>? =
   this as? LitExpr<*>
     ?: when (s) {
-      is WrapperState -> lockToLiteral(s.wrappedState)
+      is WrapperState -> simplify(s.wrappedState)
       is ExplState -> ExprUtils.simplify(this, s.`val`) as? LitExpr<*>
       else -> ExprUtils.simplify(this) as? LitExpr<*>
     }
@@ -48,103 +47,45 @@ sealed interface MutexLock {
   val lock: Expr<*>
   val blockingMutexLocks: Set<MutexLock> get() = setOf(this)
 
-  fun toFixedMutexLock(s : State): FixedMutexLock?
+  fun isKnown(): Boolean = lock is LitExpr<*>
+  fun simplify(s : State): MutexLock
   fun isEqual(other: MutexLock): Expr<BoolType>? = Eq(lock, other.lock)
 }
 
-sealed interface FixedMutexLock : MutexLock {
+data class SimpleMutexLock(override val lock: Expr<*>) : MutexLock {
 
-  abstract override val lock: LitExpr<*>
-  override val blockingMutexLocks: Set<FixedMutexLock> get() = setOf(this)
-  override fun toFixedMutexLock(s: State): FixedMutexLock = this
-}
-
-sealed interface SimpleMutexLock : MutexLock {
-
-  override fun toFixedMutexLock(s: State): SimpleFixedMutexLock?
+  override fun simplify(s: State): SimpleMutexLock =
+    lock.simplify(s)?.let { SimpleMutexLock(it) } ?: this
 
   override fun isEqual(other: MutexLock): Expr<BoolType>? {
     if (other !is SimpleMutexLock) return null
     return super.isEqual(other)
   }
-
-  companion object {
-
-    fun of(lock: Expr<*>): SimpleMutexLock =
-      if (lock is LitExpr<*>) SimpleFixedMutexLock(lock)
-      else SimpleUnknownMutexLock(lock)
-  }
 }
 
-@ConsistentCopyVisibility
-data class SimpleUnknownMutexLock internal constructor(
+data class ReadWriteMutexLock(
   override val lock: Expr<*>,
-) : SimpleMutexLock {
-
-  override fun toFixedMutexLock(s: State): SimpleFixedMutexLock? =
-    lock.lockToLiteral(s)?.let { SimpleFixedMutexLock(it) }
-}
-
-@ConsistentCopyVisibility
-data class SimpleFixedMutexLock internal constructor(
-  override val lock: LitExpr<*>,
-) : SimpleMutexLock, FixedMutexLock {
-
-  override fun toFixedMutexLock(s: State): SimpleFixedMutexLock = this
-}
-
-sealed interface ReadWriteMutexLock : MutexLock {
-
-  val type: ReadWriteMutexLockType
+  val type: ReadWriteMutexLockType,
+) : MutexLock {
 
   enum class ReadWriteMutexLockType {
     READ,
     WRITE
   }
 
+  override fun simplify(s: State): ReadWriteMutexLock =
+    lock.simplify(s)?.let { ReadWriteMutexLock(it, type) } ?: this
+
   override val blockingMutexLocks: Set<ReadWriteMutexLock>
+    get() =
+      when (type) {
+        READ -> setOf(copy(type = WRITE))
+        WRITE -> setOf(this, copy(type = READ))
+      }
 
   override fun isEqual(other: MutexLock): Expr<BoolType>? {
     if (other !is ReadWriteMutexLock) return null
     if (type != other.type) return null
     return super.isEqual(other)
   }
-
-  companion object {
-
-    fun of(lock: Expr<*>, type: ReadWriteMutexLockType): ReadWriteMutexLock =
-      if (lock is LitExpr<*>) ReadWriteFixedMutexLock(lock, type)
-      else ReadWriteUnknownMutexLock(lock, type)
-  }
-}
-
-@ConsistentCopyVisibility
-data class ReadWriteUnknownMutexLock internal constructor(
-  override val lock: Expr<*>,
-  override val type: ReadWriteMutexLockType
-) : ReadWriteMutexLock {
-
-  override val blockingMutexLocks: Set<ReadWriteUnknownMutexLock>
-    get() =
-      when (type) {
-        READ -> setOf(copy(type = WRITE))
-        WRITE -> setOf(this, copy(type = READ))
-      }
-
-  override fun toFixedMutexLock(s: State): ReadWriteFixedMutexLock? =
-    lock.lockToLiteral(s)?.let { ReadWriteFixedMutexLock(it, type) }
-}
-
-@ConsistentCopyVisibility
-data class ReadWriteFixedMutexLock internal constructor(
-  override val lock: LitExpr<*>,
-  override val type: ReadWriteMutexLockType
-) : ReadWriteMutexLock, FixedMutexLock {
-
-  override val blockingMutexLocks: Set<ReadWriteFixedMutexLock>
-    get() =
-      when (type) {
-        READ -> setOf(copy(type = WRITE))
-        WRITE -> setOf(this, copy(type = READ))
-      }
 }

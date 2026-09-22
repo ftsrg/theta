@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
-import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -295,7 +294,7 @@ constructor(
     mutexes.forEach { (lockedMutex, owners) ->
       if (pid !in owners) {
         blockingMutexes.forEach { blockingMutex ->
-          if (blockingMutex !is FixedMutexLock || lockedMutex !is FixedMutexLock) {
+          if (!blockingMutex.isKnown() || !lockedMutex.isKnown()) {
             // a blocking mutex of the current label cannot be locked by another process
             val neq = NeqExpr.create2(blockingMutex.lock, lockedMutex.lock)
             extraLabels.add(StmtLabel(AssumeStmt.of(neq)))
