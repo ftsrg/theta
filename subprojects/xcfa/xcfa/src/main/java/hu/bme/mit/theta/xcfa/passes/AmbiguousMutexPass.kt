@@ -22,28 +22,38 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.BinaryExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.AndExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.NotExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.xcfa.model.FenceLabel
-import hu.bme.mit.theta.xcfa.model.SequenceLabel
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import java.math.BigInteger
+import kotlin.inc
+import kotlin.minus
 
 class AmbiguousMutexPass : ProcedurePass {
+
+  companion object {
+
+    // create at most this many valuations for a single havoced variable
+    private val HAVOC_ENUMERATION_LIMIT = BigInteger.valueOf(100)
+  }
 
   private lateinit var possibleLiteralValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
 
@@ -56,7 +66,6 @@ class AmbiguousMutexPass : ProcedurePass {
         return@forEach
       }
 
-      builder.removeEdge(edge)
       val split = edge.splitIf { it.fenceToSimplify }
       val namePrefix = "${edge.source.name}_${edge.target.name}_split"
       var lastTarget: XcfaLocation? = null
@@ -119,6 +128,7 @@ class AmbiguousMutexPass : ProcedurePass {
           builder.addEdge(XcfaEdge(source, target, SequenceLabel(alternative), edge.metadata))
         }
       }
+      builder.removeEdge(edge)
     }
 
     return builder
@@ -130,17 +140,78 @@ class AmbiguousMutexPass : ProcedurePass {
     val assignments = mutableMapOf<VarDecl<*>, MutableSet<Expr<*>>>()
     val havocedVars = mutableSetOf<VarDecl<*>>()
     val interestingToProcess = mutableSetOf<VarDecl<*>>()
+
+    data class VisitItem(
+      val pendingHavocs: Set<VarDecl<*>> = emptySet(),
+      val conditions: Map<VarDecl<*>, IteExpr<*>> = emptyMap(),
+      val anyFence: Boolean = false,
+    )
+
     builder.parent.getProcedures().forEach { proc ->
-      proc.getEdges().forEach { edge ->
-        edge.getFlatLabels().forEach { label ->
-          if (label is StmtLabel) {
-            if (label.stmt is AssignStmt<*>) {
-              assignments.getOrPut(label.stmt.varDecl) { mutableSetOf() }.add(label.stmt.expr)
-            } else if (label.stmt is HavocStmt<*>) {
-              havocedVars.add(label.stmt.varDecl)
+      // locations to visit with the set of "pending" havocs (havocs with no assumption afterwards)
+      val waitlist = mutableMapOf(proc.initLoc to VisitItem())
+      val visited = mutableSetOf<XcfaLocation>()
+      while (waitlist.isNotEmpty()) {
+        val loc = waitlist.keys.first()
+        val visitItem = waitlist[loc]!!
+        waitlist.remove(loc)
+        val (pendingHavocs, conditions, previousFence) =
+          if (loc.incomingEdges.size > 1) {
+            havocedVars.addAll(visitItem.pendingHavocs)
+            Triple(mutableSetOf(), mutableMapOf(), false)
+          } else {
+            Triple(
+              visitItem.pendingHavocs.toMutableSet(),
+              visitItem.conditions.toMutableMap(),
+              visitItem.anyFence
+            )
+          }
+        if (visited.add(loc)) {
+          if (loc.outgoingEdges.isEmpty() && previousFence) {
+            havocedVars.addAll(pendingHavocs)
+          }
+          loc.outgoingEdges.forEach { edge ->
+            edge.getFlatLabels().forEach { label ->
+              if (label is StmtLabel) {
+                when (val stmt = label.stmt) {
+                  is AssignStmt<*> -> {
+                    val e = stmt.expr
+                    if (e is RefExpr<*> && e.decl in pendingHavocs) {
+                      pendingHavocs.add(stmt.varDecl)
+                    } else {
+                      assignments.getOrPut(stmt.varDecl) { mutableSetOf() }.add(e)
+                    }
+
+                    if (e is IteExpr<*> && e.then is LitExpr<*> && e.`else` is LitExpr<*>) {
+                      conditions[stmt.varDecl] = e
+                    }
+                  }
+
+                  is HavocStmt<*> -> pendingHavocs.add(stmt.varDecl)
+                  is AssumeStmt -> {
+                    val (assumedVar, lowerBound, upperBound) =
+                      collectAssumptionValues(stmt.cond, Assumption(), conditions, pendingHavocs)
+                    if (assumedVar != null && lowerBound != null && upperBound != null) {
+                      if (upperBound - lowerBound + BigInteger.ONE <= HAVOC_ENUMERATION_LIMIT) {
+                        var i = lowerBound
+                        while (i <= upperBound) {
+                          val litExpr = i.litExpr(assumedVar.type)
+                          if (litExpr != null) {
+                            assignments.getOrPut(assumedVar) { mutableSetOf() }.add(litExpr)
+                          }
+                          i++
+                        }
+                        pendingHavocs.remove(assumedVar)
+                      }
+                    }
+                  }
+                }
+              } else if (label is FenceLabel) {
+                interestingToProcess.addAll(ExprUtils.getVars(label.lock))
+              }
             }
-          } else if (label is FenceLabel) {
-            interestingToProcess.addAll(ExprUtils.getVars(label.lock))
+            val isFence = previousFence || edge.getFlatLabels().any { it is FenceLabel }
+            waitlist[edge.target] = VisitItem(pendingHavocs.toSet(), conditions.toMap(), isFence)
           }
         }
       }
@@ -299,9 +370,176 @@ class AmbiguousMutexPass : ProcedurePass {
       when (this) {
         is LitExpr<*>,
         is RefExpr<*> -> true
+
         is PosExpr<*> -> op.supportedInSccPropagation
         is NegExpr<*> -> op.supportedInSccPropagation
         is ModExpr<*> -> leftOp.supportedInSccPropagation && rightOp.supportedInSccPropagation
         else -> false
       }
+
+  private data class Assumption(
+    val varDecl: VarDecl<*>? = null,
+    val lowerBound: BigInteger? = null,
+    val upperBound: BigInteger? = null,
+  ) {
+
+    fun with(
+      v: VarDecl<*>,
+      newLowerBound: BigInteger? = lowerBound,
+      newUpperBound: BigInteger? = upperBound,
+    ): Assumption =
+      if (varDecl == null || varDecl == v) {
+        Assumption(
+          v,
+          newLowerBound?.let { maxOf(lowerBound ?: it, it) } ?: lowerBound,
+          newUpperBound?.let { minOf(upperBound ?: it, it) } ?: upperBound,
+        )
+      } else this
+
+    fun with(
+      v: VarDecl<*>,
+      newLowerBound: (() -> BigInteger?)? = { lowerBound },
+      newUpperBound: (() -> BigInteger?)? = { upperBound },
+    ): Assumption =
+      if (varDecl == null || varDecl == v) {
+        with(v, newLowerBound?.let { it() }, newUpperBound?.let { it() })
+      } else this
+  }
+
+  private fun collectAssumptionValues(
+    cond: Expr<*>,
+    assumption: Assumption,
+    conditions: Map<VarDecl<*>, IteExpr<*>>,
+    havocs: Set<VarDecl<*>>,
+  ): Assumption =
+    when (cond) {
+      is EqExpr<*> -> {
+        val varAndValue =
+          pairOfVarAndValue(cond.leftOp, cond.rightOp)
+            ?: pairOfVarAndValue(cond.rightOp, cond.leftOp)
+        if (varAndValue != null) {
+          val (v, value) = varAndValue
+          val intVal = value.intValue
+          if (v in havocs && intVal != null) {
+            Assumption(v, value.intValue, value.intValue)
+          } else if (v in conditions && intVal != null) {
+            val ite = conditions[v]!!
+            collectIteAssumptions(intVal, ite, true, assumption, conditions, havocs)
+          } else assumption
+        } else assumption
+      }
+
+      is NeqExpr<*> -> collectIteOnlyNeq(cond, assumption, conditions, havocs)
+      is NotExpr -> {
+        if (cond.op is EqExpr<*>) {
+          collectIteOnlyNeq(cond.op as BinaryExpr<*, *>, assumption, conditions, havocs)
+        } else assumption
+      }
+
+      is GeqExpr<*> ->
+        getBounds(cond.leftOp, cond.rightOp, assumption, havocs, true)
+
+      is GtExpr<*> ->
+        getBounds(cond.leftOp, cond.rightOp, assumption, havocs, false)
+
+      is LeqExpr<*> ->
+        getBounds(cond.rightOp, cond.leftOp, assumption, havocs, true)
+
+      is LtExpr<*> ->
+        getBounds(cond.rightOp, cond.leftOp, assumption, havocs, false)
+
+      is AndExpr ->
+        cond.ops.fold(assumption) { a, op ->
+          collectAssumptionValues(op, a, conditions, havocs)
+        }
+
+      else -> assumption
+    }
+
+  private fun collectIteOnlyNeq(
+    cond: BinaryExpr<*, *>,
+    assumption: Assumption,
+    conditions: Map<VarDecl<*>, IteExpr<*>>,
+    havocs: Set<VarDecl<*>>,
+  ): Assumption {
+    val varAndValue =
+      pairOfVarAndValue(cond.leftOp, cond.rightOp)
+        ?: pairOfVarAndValue(cond.rightOp, cond.leftOp)
+    return if (varAndValue != null) {
+      val (v, value) = varAndValue
+      val intVal = value.intValue
+      if (v in conditions && intVal != null) {
+        val ite = conditions[v]!!
+        collectIteAssumptions(intVal, ite, false, assumption, conditions, havocs)
+      } else assumption
+    } else assumption
+  }
+
+  private fun collectIteAssumptions(
+    intVal: BigInteger,
+    ite: IteExpr<*>,
+    isThen: Boolean,
+    assumption: Assumption,
+    conditions: Map<VarDecl<*>, IteExpr<*>>,
+    havocs: Set<VarDecl<*>>,
+  ): Assumption {
+    val branch = if (isThen) ite.then else ite.`else`
+    return if (intVal == (branch as? LitExpr<*>)?.intValue) {
+      collectAssumptionValues(ite.cond, assumption, conditions, havocs)
+    } else assumption
+  }
+
+  private fun getBounds(
+    upper: Expr<*>,
+    lower: Expr<*>,
+    assumption: Assumption,
+    havocs: Set<VarDecl<*>>,
+    orEqual: Boolean,
+  ): Assumption {
+    val corrigation = if (orEqual) BigInteger.ZERO else BigInteger.ONE
+    val vnv1 = pairOfVarAndValue(upper, lower)
+    if (vnv1 != null) {
+      val (v, value) = vnv1
+      if (v in havocs) {
+        return assumption.with(v, newLowerBound = { value.intValue?.let { it + corrigation } })
+      }
+    } else {
+      val vnv2 = pairOfVarAndValue(lower, upper)
+      if (vnv2 != null) {
+        val (v, value) = vnv2
+        if (v in havocs) {
+          return assumption.with(v, newUpperBound = { value.intValue?.let { it - corrigation } })
+        }
+      }
+    }
+    return assumption
+  }
+
+  private fun pairOfVarAndValue(ref: Expr<*>, value: Expr<*>): Pair<VarDecl<*>, LitExpr<*>>? =
+    pairIfBothNotNull((ref as? RefExpr<*>)?.decl as? VarDecl<*>, value as? LitExpr<*>)
+
+  private fun <A, B> pairIfBothNotNull(first: A?, second: B?): Pair<A, B>? =
+    if (first != null && second != null) Pair(first, second) else null
+
+  private val LitExpr<*>.intValue: BigInteger?
+    get() =
+      when (this) {
+        is IntLitExpr -> value
+        is BvLitExpr -> BvToIntExpr.of(this).eval(MutableValuation()).intValue
+        else -> null
+      }
+
+  private fun <T : Type> BigInteger.litExpr(type: T): LitExpr<T>? {
+    return when (type) {
+      is IntType -> IntLitExpr.of(this)
+      is BvType ->
+        when (type.signedness) {
+          null -> BvUtils.bigIntegerToNeutralBvLitExpr(this, type.size)
+          true -> BvUtils.bigIntegerToSignedBvLitExpr(this, type.size)
+          false -> BvUtils.bigIntegerToUnsignedBvLitExpr(this, type.size)
+        }
+
+      else -> null
+    } as LitExpr<T>?
+  }
 }
