@@ -80,7 +80,6 @@ fun XcfaLabel.collectVars(): Collection<VarDecl<*>> =
       when (this) {
         is AtomicFenceLabel -> setOf()
         is MutexTryLockLabel -> ExprUtils.getVars(lock) + setOf(successVar)
-        is LockLabel -> ExprUtils.getVars(lock) + listOfNotNull(lockVar)
         else -> ExprUtils.getVars(lock)
       }
     else -> emptySet()
@@ -151,11 +150,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
         is AtomicFenceLabel -> mapOf()
         is MutexTryLockLabel ->
           ExprUtils.getVars(lock).associateWith { READ } +
-            (lockVar?.let { mapOf(it to WRITE) } ?: mapOf()) +
             mapOf(successVar to WRITE)
-        is LockLabel ->
-          ExprUtils.getVars(lock).associateWith { READ } +
-            (lockVar?.let { mapOf(it to WRITE) } ?: mapOf())
         else -> ExprUtils.getVars(lock).associateWith { READ }
       }
     }

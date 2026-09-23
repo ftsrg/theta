@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.xcfa.model.FenceLabel
 import hu.bme.mit.theta.xcfa.model.MutexLock
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.fixed
+import hu.bme.mit.theta.xcfa.model.known
 
 /** The set of mutexes acquired embedded into each other. */
 inline val XcfaEdge.acquiredEmbeddedMutexes: Set<MutexLock>
@@ -51,7 +51,7 @@ fun XcfaEdge.mutexOperations(mutexes: MutableSet<MutexLock>): Boolean {
   val acquiredLocks = mutableSetOf<MutexLock>()
   val releasedLocks = mutableSetOf<MutexLock>()
   edgeFlatLabels.filterIsInstance<FenceLabel>().forEach { fence ->
-    val released = fence.releasedMutexes.fixed()
+    val released = fence.releasedMutexes.known()
     releasedLocks.addAll(released)
     acquiredLocks.removeAll(released)
 

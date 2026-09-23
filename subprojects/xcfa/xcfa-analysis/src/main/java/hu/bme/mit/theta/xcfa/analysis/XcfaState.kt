@@ -19,10 +19,8 @@ import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -102,11 +100,7 @@ constructor(
               is AtomicBeginLabel,
               is MutexLockLabel,
               is RWLockReadLockLabel,
-              is RWLockWriteLockLabel -> {
-                val extraLabels = mutableListOf<XcfaLabel>()
-                changes.add { it.enterMutex(label, a.pid, extraLabels) }
-                SequenceLabel(extraLabels, metadata = label.metadata)
-              }
+              is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
 
               is AtomicEndLabel,
               is MutexUnlockLabel,
@@ -114,19 +108,14 @@ constructor(
 
               is MutexTryLockLabel -> {
                 var success = false
-                val extraLabels = mutableListOf<XcfaLabel>()
                 changes.add { state ->
-                  val newState = state.enterMutex(label, a.pid, extraLabels)
+                  val newState = state.enterMutex(label, a.pid)
                   success = !newState.isBottom
                   if (newState.isBottom) state else newState
                 }
-                SequenceLabel(
-                  extraLabels +
-                    AssignStmtLabel(
-                      label.successVar.ref,
-                      Int(if (success) 1 else 0),
-                      metadata = label.metadata,
-                    ),
+                AssignStmtLabel(
+                  label.successVar.ref,
+                  Int(if (success) 1 else 0),
                   metadata = label.metadata,
                 )
               }
@@ -283,33 +272,19 @@ constructor(
     return copy(processes = newProcesses)
   }
 
-  private fun enterMutex(
-    label: FenceLabel,
-    pid: Int,
-    extraLabels: MutableList<XcfaLabel>,
-  ): XcfaState<S> {
+  private fun enterMutex(label: FenceLabel, pid: Int,): XcfaState<S> {
     val blockingMutexes = label.blockingMutexes(sGlobal)
-    if (blockingMutexes.fixed().any { it in mutexes && pid !in mutexes[it]!! }) {
+    if (blockingMutexes.known().any { it in mutexes && pid !in mutexes[it]!! }) {
       return copy(bottom = true)
     }
 
-    // if either a blocking mutex or a locked mutex is not known, we have to add an assumption
-    // that the two mutexes are not equal
-    mutexes.forEach { (lockedMutex, owners) ->
-      if (pid !in owners) {
-        blockingMutexes.forEach { blockingMutex ->
-          if (!blockingMutex.isKnown() || !lockedMutex.isKnown()) {
-            // a blocking mutex of the current label cannot be locked by another process
-            val neq = NeqExpr.create2(blockingMutex.lock, lockedMutex.lock)
-            extraLabels.add(StmtLabel(AssumeStmt.of(neq)))
-          }
-        }
-      }
-    }
-
-    extraLabels.add(label.preLabel(sGlobal))
     val newMutexes = LinkedHashMap(mutexes)
-    label.acquiredMutexes(sGlobal).forEach { newMutexes[it] = (newMutexes[it] ?: setOf()) + pid }
+    label.acquiredMutexes(sGlobal).forEach {
+      if (!it.isKnown()) {
+        throw UnsupportedOperationException("Ambiguous mutex lock is not supported.")
+      }
+      newMutexes[it] = (newMutexes[it] ?: setOf()) + pid
+    }
 
     return copy(mutexes = newMutexes)
   }
@@ -318,26 +293,26 @@ constructor(
     val newMutexes = LinkedHashMap(mutexes)
     val releasedMutexes = label.releasedMutexes(sGlobal)
 
-    if (releasedMutexes.unknown().isEmpty() && mutexes.keys.unknown().isEmpty()) {
-      releasedMutexes.fixed().forEach {
-        val holders = newMutexes[it]
-        when {
-          holders == null || pid !in holders -> {}
-          holders.size == 1 -> newMutexes.remove(it)
-          else -> newMutexes[it] = holders - pid
-        }
+    releasedMutexes.known().forEach {
+      if (!it.isKnown()) {
+        // we do not know which mutex to release: this case is rather complicated...
+        // ideas:
+        // - the LTS could non-deterministically return all possible outcomes
+        //   (drawback: POR is only proved to be correct if the state space is action-deterministic)
+        // - release all mutexes of the current thread that is possibly the released one, and store
+        //   the ambiguously released mutexes in the successor states: later mutex locks should check
+        //   and add an assume label to ensure that only allowed lock is performed (either it was the
+        //   actually unlocked mutex in the ambiguous case, or it was not locked at all) that the
+        //   refiner also sees when checking the counterexample
+        // currently, we have AmbiguousMutexPass to account for many cases
+        throw UnsupportedOperationException("Ambiguous mutex release is not supported.")
       }
-    } else {
-      // we do not know which mutex to release: this case is rather complicated...
-      // ideas:
-      // - the LTS could non-deterministically return all possible outcomes
-      //   (drawback: POR is only proved to be correct if the state space is action-deterministic)
-      // - release all mutexes of the current thread that is possibly the released one, and store
-      //   the ambiguously released mutexes in the successor states: later mutex locks should check
-      //   and add an assume label to ensure that only allowed lock is performed (either it was the
-      //   actually unlocked mutex in the ambiguous case, or it was not locked at all) that the
-      //   refiner also sees when checking the counterexample
-      throw UnsupportedOperationException("Ambiguous mutex release is not supported.")
+      val holders = newMutexes[it]
+      when {
+        holders == null || pid !in holders -> {}
+        holders.size == 1 -> newMutexes.remove(it)
+        else -> newMutexes[it] = holders - pid
+      }
     }
 
     return copy(mutexes = newMutexes)

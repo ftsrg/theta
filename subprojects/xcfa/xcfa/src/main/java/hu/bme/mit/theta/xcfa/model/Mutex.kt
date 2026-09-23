@@ -27,9 +27,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 
-fun Collection<MutexLock>.unknown(): Set<MutexLock> = filter { !it.isKnown() }.toSet()
-
-fun Collection<MutexLock>.fixed(): Set<MutexLock> = filter { it.isKnown() }.toSet()
+fun Collection<MutexLock>.known(): Set<MutexLock> = filter { it.isKnown() }.toSet()
 
 internal fun Expr<*>.simplify(s: State): LitExpr<*>? =
   this as? LitExpr<*>
