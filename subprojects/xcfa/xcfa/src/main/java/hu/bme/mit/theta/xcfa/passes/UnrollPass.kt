@@ -537,11 +537,12 @@ class UnrollPass(
         val finalEdges = loopStart.incomingEdges.filter { it.source in loopLocations }
         if (finalEdges.size == 1) {
           edge = finalEdges.first()
-          necessaryLoopEdges.add(edge)
+          val finalPath = mutableListOf(edge)
           while (edge.source.incomingEdges.size == 1) {
             edge = edge.source.incomingEdges.first()
-            necessaryLoopEdges.add(edge)
+            finalPath.add(edge)
           }
+          necessaryLoopEdges.addAll(finalPath.reversed())
         }
 
         // find edges that modify the loop variable
@@ -573,7 +574,7 @@ class UnrollPass(
           loc = inEdge.source
         }
 
-        loopVarInit to loopVarModifiers
+        loopVarInit to loopVarModifiers.sortedBy(necessaryLoopEdges.toList()::indexOf)
       }
         ?: run {
           properlyUnrollable = false
