@@ -149,8 +149,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
       when (this) {
         is AtomicFenceLabel -> mapOf()
         is MutexTryLockLabel ->
-          ExprUtils.getVars(lock).associateWith { READ } +
-            mapOf(successVar to WRITE)
+          ExprUtils.getVars(lock).associateWith { READ } + mapOf(successVar to WRITE)
         else -> ExprUtils.getVars(lock).associateWith { READ }
       }
     }

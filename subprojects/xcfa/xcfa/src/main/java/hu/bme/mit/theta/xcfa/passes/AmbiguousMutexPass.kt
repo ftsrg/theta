@@ -163,7 +163,7 @@ class AmbiguousMutexPass : ProcedurePass {
             Triple(
               visitItem.pendingHavocs.toMutableSet(),
               visitItem.conditions.toMutableMap(),
-              visitItem.anyFence
+              visitItem.anyFence,
             )
           }
         if (visited.add(loc)) {
@@ -436,22 +436,16 @@ class AmbiguousMutexPass : ProcedurePass {
         } else assumption
       }
 
-      is GeqExpr<*> ->
-        getBounds(cond.leftOp, cond.rightOp, assumption, havocs, true)
+      is GeqExpr<*> -> getBounds(cond.leftOp, cond.rightOp, assumption, havocs, true)
 
-      is GtExpr<*> ->
-        getBounds(cond.leftOp, cond.rightOp, assumption, havocs, false)
+      is GtExpr<*> -> getBounds(cond.leftOp, cond.rightOp, assumption, havocs, false)
 
-      is LeqExpr<*> ->
-        getBounds(cond.rightOp, cond.leftOp, assumption, havocs, true)
+      is LeqExpr<*> -> getBounds(cond.rightOp, cond.leftOp, assumption, havocs, true)
 
-      is LtExpr<*> ->
-        getBounds(cond.rightOp, cond.leftOp, assumption, havocs, false)
+      is LtExpr<*> -> getBounds(cond.rightOp, cond.leftOp, assumption, havocs, false)
 
       is AndExpr ->
-        cond.ops.fold(assumption) { a, op ->
-          collectAssumptionValues(op, a, conditions, havocs)
-        }
+        cond.ops.fold(assumption) { a, op -> collectAssumptionValues(op, a, conditions, havocs) }
 
       else -> assumption
     }
@@ -463,8 +457,7 @@ class AmbiguousMutexPass : ProcedurePass {
     havocs: Set<VarDecl<*>>,
   ): Assumption {
     val varAndValue =
-      pairOfVarAndValue(cond.leftOp, cond.rightOp)
-        ?: pairOfVarAndValue(cond.rightOp, cond.leftOp)
+      pairOfVarAndValue(cond.leftOp, cond.rightOp) ?: pairOfVarAndValue(cond.rightOp, cond.leftOp)
     return if (varAndValue != null) {
       val (v, value) = varAndValue
       val intVal = value.intValue
@@ -540,6 +533,7 @@ class AmbiguousMutexPass : ProcedurePass {
         }
 
       else -> null
-    } as LitExpr<T>?
+    }
+      as LitExpr<T>?
   }
 }

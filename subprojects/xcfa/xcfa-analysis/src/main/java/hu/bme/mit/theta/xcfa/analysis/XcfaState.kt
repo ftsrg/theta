@@ -272,7 +272,7 @@ constructor(
     return copy(processes = newProcesses)
   }
 
-  private fun enterMutex(label: FenceLabel, pid: Int,): XcfaState<S> {
+  private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> {
     val blockingMutexes = label.blockingMutexes(sGlobal)
     if (blockingMutexes.known().any { it in mutexes && pid !in mutexes[it]!! }) {
       return copy(bottom = true)
@@ -300,8 +300,10 @@ constructor(
         // - the LTS could non-deterministically return all possible outcomes
         //   (drawback: POR is only proved to be correct if the state space is action-deterministic)
         // - release all mutexes of the current thread that is possibly the released one, and store
-        //   the ambiguously released mutexes in the successor states: later mutex locks should check
-        //   and add an assume label to ensure that only allowed lock is performed (either it was the
+        //   the ambiguously released mutexes in the successor states: later mutex locks should
+        // check
+        //   and add an assume label to ensure that only allowed lock is performed (either it was
+        // the
         //   actually unlocked mutex in the ambiguous case, or it was not locked at all) that the
         //   refiner also sees when checking the counterexample
         // currently, we have AmbiguousMutexPass to account for many cases
