@@ -39,6 +39,15 @@ val shadowJar = tasks.withType<ShadowJar> {
     }
     isZip64 = true
     entryCompression = ZipEntryCompression.DEFLATED
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    filesMatching("plugin.properties") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    mergeServiceFiles()
+    append("plugin.properties")
 }
 
 tasks.register("prepareDockerDistribution") {
