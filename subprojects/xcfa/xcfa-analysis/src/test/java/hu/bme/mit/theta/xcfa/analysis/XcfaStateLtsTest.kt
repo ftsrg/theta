@@ -28,6 +28,7 @@ import java.util.*
 import java.util.function.Predicate
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 class XcfaStateLtsTest {
 
@@ -35,7 +36,7 @@ class XcfaStateLtsTest {
   fun testApply() {
     val actionOrder: MutableList<(XcfaState<PtrState<ExplState>>) -> XcfaAction> = ArrayList()
     val expectations: MutableList<Predicate<XcfaState<PtrState<ExplState>>>> = ArrayList()
-    val lts = getXcfaLts()
+    val lts = getXcfaLts(Random(-1))
     lateinit var initState: XcfaState<PtrState<ExplState>>
     lateinit var xcfa: XCFA
 
@@ -73,8 +74,8 @@ class XcfaStateLtsTest {
         ),
         PtrState(ExplState.bottom()),
       )
-    val sporLts = XcfaSporLts(xcfa)
-    val aasporLts = XcfaAasporLts(xcfa, LinkedHashMap())
+    val sporLts = XcfaSporLts(xcfa, Random(-1))
+    val aasporLts = XcfaAasporLts(xcfa, LinkedHashMap(), Random(-1))
 
     actionOrder.add { XcfaAction(0, edges[1]) }
     expectations.add {

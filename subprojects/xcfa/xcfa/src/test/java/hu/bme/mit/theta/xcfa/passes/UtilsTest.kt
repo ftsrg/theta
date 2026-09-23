@@ -53,7 +53,7 @@ class UtilsTest {
           SequenceLabel(listOf(NopLabel), EmptyMetaData),
         ),
         Arguments.of(AtomicBeginLabel(), AtomicBeginLabel()),
-        Arguments.of(MutexLockLabel(x), MutexLockLabel(xPrime)),
+        Arguments.of(MutexLockLabel(x.ref), MutexLockLabel(xPrime.ref)),
         Arguments.of(
           StartLabel("", listOf(x.ref), y, EmptyMetaData),
           StartLabel("", listOf(xPrime.ref), y, EmptyMetaData),
