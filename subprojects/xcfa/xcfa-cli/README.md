@@ -49,6 +49,7 @@ entity  BackendConfig<T> << data >> {
    timeoutMs: Long
    specConfig: SpecBackendConfig
    solverHome: String
+   randomSeed: Int
 }
 entity  BoundedConfig << data >> {
    maxBound: Int
@@ -83,7 +84,6 @@ entity  CegarConfig << data >> {
    objects: Set<Config>
    initPrec: InitPrec
    abstractorConfig: CegarAbstractorConfig
-   porSeed: Int
    cexMonitor: CexMonitorOptions
 }
 entity  CegarRefinerConfig << data >> {

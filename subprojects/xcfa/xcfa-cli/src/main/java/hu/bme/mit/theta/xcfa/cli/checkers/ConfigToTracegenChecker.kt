@@ -37,6 +37,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
+import kotlin.random.Random
 
 fun getTracegenChecker(
   xcfa: XCFA,
@@ -48,8 +49,9 @@ fun getTracegenChecker(
   val tracegenConfig = config.backendConfig.specConfig as TracegenConfig
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
+  val random = Random(config.backendConfig.randomSeed)
   val (coi, lts) =
-    ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry)
+    ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
   val abstractionSolverFactory: SolverFactory =
     getSolver(
       tracegenConfig.abstractorConfig.abstractionSolver,

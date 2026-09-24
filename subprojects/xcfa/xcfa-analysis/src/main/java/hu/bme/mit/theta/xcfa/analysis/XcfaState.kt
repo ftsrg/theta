@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis
 
+import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -41,10 +42,10 @@ constructor(
   val xcfa: XCFA?,
   val processes: Map<Int, XcfaProcessState>,
   val sGlobal: S,
-  val mutexes: Map<String, Set<Int>> = mapOf(),
+  val mutexes: Map<MutexLock, Set<Int>> = emptyMap(),
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
-) : ExprState {
+) : ExprState, WrapperState {
 
   constructor(
     xcfa: XCFA,
@@ -55,12 +56,11 @@ constructor(
     processes =
       mapOf(0 to XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList())),
     sGlobal = state,
-    mutexes = emptyMap(),
   )
 
   init {
-    check((mutexes[ATOMIC_MUTEX.name]?.size ?: 0) <= 1) {
-      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX.name]} hold it."
+    check((mutexes[ATOMIC_MUTEX]?.size ?: 0) <= 1) {
+      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX]} hold it."
     }
     check(mutexes.values.all { it.isNotEmpty() }) {
       "No mutex can be held by an empty set of processes, but $mutexes contains empty mutexes."
@@ -75,9 +75,11 @@ constructor(
     return sGlobal.toExpr()
   }
 
+  override fun getWrappedState(): S = sGlobal
+
   fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-    if (mutexes[ATOMIC_MUTEX.name]?.any { it != a.pid } == true) {
+    if (mutexes[ATOMIC_MUTEX]?.any { it != a.pid } == true) {
       return Pair(copy(bottom = true), a.withLabel(SequenceLabel(listOf(NopLabel))))
     }
 
@@ -271,25 +273,50 @@ constructor(
   }
 
   private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> {
-    if (label.blockingMutexes.any { it.name in mutexes && pid !in mutexes[it.name]!! }) {
+    val blockingMutexes = label.blockingMutexes(sGlobal)
+    if (blockingMutexes.known().any { it in mutexes && pid !in mutexes[it]!! }) {
       return copy(bottom = true)
     }
 
     val newMutexes = LinkedHashMap(mutexes)
-    label.acquiredMutexes.forEach { newMutexes[it.name] = (newMutexes[it.name] ?: setOf()) + pid }
+    label.acquiredMutexes(sGlobal).forEach {
+      if (!it.isKnown()) {
+        throw UnsupportedOperationException("Ambiguous mutex lock is not supported.")
+      }
+      newMutexes[it] = (newMutexes[it] ?: setOf()) + pid
+    }
+
     return copy(mutexes = newMutexes)
   }
 
   private fun exitMutex(label: FenceLabel, pid: Int): XcfaState<S> {
     val newMutexes = LinkedHashMap(mutexes)
-    label.releasedMutexes.forEach {
-      val holders = newMutexes[it.name]
+    val releasedMutexes = label.releasedMutexes(sGlobal)
+
+    releasedMutexes.known().forEach {
+      if (!it.isKnown()) {
+        // we do not know which mutex to release: this case is rather complicated...
+        // ideas:
+        // - the LTS could non-deterministically return all possible outcomes
+        //   (drawback: POR is only proved to be correct if the state space is action-deterministic)
+        // - release all mutexes of the current thread that is possibly the released one, and store
+        //   the ambiguously released mutexes in the successor states: later mutex locks should
+        // check
+        //   and add an assume label to ensure that only allowed lock is performed (either it was
+        // the
+        //   actually unlocked mutex in the ambiguous case, or it was not locked at all) that the
+        //   refiner also sees when checking the counterexample
+        // currently, we have AmbiguousMutexPass to account for many cases
+        throw UnsupportedOperationException("Ambiguous mutex release is not supported.")
+      }
+      val holders = newMutexes[it]
       when {
         holders == null || pid !in holders -> {}
-        holders.size == 1 -> newMutexes.remove(it.name)
-        else -> newMutexes[it.name] = holders - pid
+        holders.size == 1 -> newMutexes.remove(it)
+        else -> newMutexes[it] = holders - pid
       }
     }
+
     return copy(mutexes = newMutexes)
   }
 
@@ -310,6 +337,10 @@ constructor(
 
   override fun toString(): String {
     return "$processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}}"
+  }
+
+  companion object {
+    private var unknownMutexLockCnt = 0
   }
 }
 

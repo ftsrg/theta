@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
-import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
@@ -25,10 +25,12 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
-import hu.bme.mit.theta.xcfa.model.RWLockReadLockLabel.Companion.readHandle
-import hu.bme.mit.theta.xcfa.model.RWLockWriteLockLabel.Companion.writeHandle
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {
@@ -170,26 +172,39 @@ constructor(
   }
 }
 
-sealed class FenceLabel(
-  open val handle: VarDecl<*>,
-  override val metadata: MetaData = EmptyMetaData,
-) : XcfaLabel(metadata) {
-  open val acquiredMutexes: Set<VarDecl<*>> = setOf()
-  open val releasedMutexes: Set<VarDecl<*>> = setOf()
-  open val blockingMutexes: Set<VarDecl<*>> = setOf() // atomic implicitly blocks everything
+sealed class FenceLabel(open val lock: Expr<*>, override val metadata: MetaData = EmptyMetaData) :
+  XcfaLabel(metadata) {
+  open val acquiredMutexes: Set<MutexLock> = setOf()
+  open val releasedMutexes: Set<MutexLock> = setOf()
+  val blockingMutexes: Set<MutexLock> // note: atomic implicitly blocks everything
+    get() = acquiredMutexes.flatMap { it.blockingMutexLocks }.toSet()
+
+  private fun Collection<MutexLock>.simplify(s: State): Set<MutexLock> =
+    map { it.simplify(s) }.toSet()
+
+  open fun acquiredMutexes(s: State): Set<MutexLock> = acquiredMutexes.simplify(s)
+
+  open fun releasedMutexes(s: State): Set<MutexLock> = releasedMutexes.simplify(s)
+
+  open fun blockingMutexes(s: State): Set<MutexLock> = blockingMutexes.simplify(s)
 
   protected abstract val label: String
 
-  override fun toString(): String = "F[$label(${handle.name})]"
+  abstract fun withLock(newLock: Expr<*>): FenceLabel
+
+  override fun toString(): String = "F[$label(${lock})]"
 }
 
 sealed class AtomicFenceLabel(override val metadata: MetaData = EmptyMetaData) :
-  FenceLabel(handle = ATOMIC_MUTEX, metadata) {
+  FenceLabel(lock = ATOMIC_MUTEX_EXPR, metadata) {
 
   override fun toString(): String = "F[$label]"
 
   companion object {
-    val ATOMIC_MUTEX: VarDecl<*> = Decls.Var("__theta_atomic_mutex__", Int())
+    // cannot use 0 not to confuse with NULL pointer mutexes
+    // (locking on NULL is undefined behavior, so we should avoid it)
+    val ATOMIC_MUTEX_EXPR: IntLitExpr = Int(-1)
+    val ATOMIC_MUTEX: MutexLock = SimpleMutexLock(ATOMIC_MUTEX_EXPR)
   }
 }
 
@@ -197,8 +212,9 @@ data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
   AtomicFenceLabel(metadata) {
 
   override val acquiredMutexes = setOf(ATOMIC_MUTEX)
-  override val blockingMutexes = setOf(ATOMIC_MUTEX)
   override val label = "ATOMIC_BEGIN"
+
+  override fun withLock(newLock: Expr<*>): AtomicBeginLabel = this
 
   override fun toString(): String = super.toString()
 
@@ -216,6 +232,8 @@ data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
 
 data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
   AtomicFenceLabel(metadata) {
+
+  override fun withLock(newLock: Expr<*>): AtomicEndLabel = this
 
   override val releasedMutexes = setOf(ATOMIC_MUTEX)
   override val label = "ATOMIC_END"
@@ -235,13 +253,15 @@ data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
 }
 
 data class MutexLockLabel(
-  override val handle: VarDecl<*>,
+  override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(handle, metadata) {
+) : FenceLabel(lock, metadata) {
 
-  override val acquiredMutexes = setOf(handle)
-  override val blockingMutexes = setOf(handle)
+  override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
+
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): MutexLockLabel = copy(lock = newLock)
 
   override fun toString(): String = super.toString()
 
@@ -251,20 +271,22 @@ data class MutexLockLabel(
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
-      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
-      return MutexLockLabel(mutexVar, metadata = metadata)
+      val (mutexHandle) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val expr = ExpressionWrapper(scope, mutexHandle).instantiate(env)
+      return MutexLockLabel(cast(expr, Int()), metadata = metadata)
     }
   }
 }
 
 data class MutexUnlockLabel(
-  override val handle: VarDecl<*>,
+  override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(handle, metadata) {
+) : FenceLabel(lock, metadata) {
 
-  override val releasedMutexes = setOf(handle)
+  override val releasedMutexes = setOf(SimpleMutexLock(lock))
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): MutexUnlockLabel = copy(lock = newLock)
 
   override fun toString(): String = super.toString()
 
@@ -274,23 +296,26 @@ data class MutexUnlockLabel(
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
-      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
-      return MutexUnlockLabel(mutexVar, metadata = metadata)
+      val (mutexHandle) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val expr = ExpressionWrapper(scope, mutexHandle).instantiate(env)
+      return MutexUnlockLabel(cast(expr, Int()), metadata = metadata)
     }
   }
 }
 
 data class MutexTryLockLabel(
-  override val handle: VarDecl<*>,
+  override val lock: Expr<*>,
   val successVar: VarDecl<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(handle, metadata) {
+) : FenceLabel(lock, metadata) {
 
-  override val acquiredMutexes = setOf(handle)
+  override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
+
   override val label = LABEL
 
-  override fun toString(): String = "F[$label(${handle.name}, ${successVar.name})]"
+  override fun withLock(newLock: Expr<*>): MutexTryLockLabel = copy(lock = newLock)
+
+  override fun toString(): String = "F[$label(${lock}, ${successVar.name})]"
 
   companion object {
 
@@ -298,23 +323,25 @@ data class MutexTryLockLabel(
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (mutexName, successVarName) =
+      val (mutexHandle, successVarName) =
         Regex("^F\\[$LABEL\\((.*), (.*)\\)]$").matchEntire(s)!!.destructured
-      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      val expr = ExpressionWrapper(scope, mutexHandle).instantiate(env)
       val successVar = env.eval(scope.resolve(successVarName).orElseThrow()) as VarDecl<*>
-      return MutexTryLockLabel(mutexVar, successVar, metadata = metadata)
+      return MutexTryLockLabel(cast(expr, Int()), successVar, metadata = metadata)
     }
   }
 }
 
 data class RWLockReadLockLabel(
-  override val handle: VarDecl<*>,
+  override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(handle, metadata) {
+) : FenceLabel(lock, metadata) {
 
-  override val acquiredMutexes = setOf(handle.readHandle)
-  override val blockingMutexes = setOf(handle.writeHandle)
+  override val acquiredMutexes: Set<MutexLock> = setOf(ReadWriteMutexLock(lock, READ))
+
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): RWLockReadLockLabel = copy(lock = newLock)
 
   override fun toString(): String = super.toString()
 
@@ -322,26 +349,24 @@ data class RWLockReadLockLabel(
 
     private const val LABEL = "rwlock_read_lock"
 
-    internal val readHandles: MutableMap<VarDecl<*>, VarDecl<*>> = mutableMapOf()
-    internal val VarDecl<*>.readHandle: VarDecl<*>
-      get() = readHandles.getOrPut(this) { Decls.Var("${this.name}__read_handle__", Int()) }
-
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
-      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
-      return RWLockReadLockLabel(mutexVar, metadata = metadata)
+      val (mutexHandle) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val expr = ExpressionWrapper(scope, mutexHandle).instantiate(env)
+      return RWLockReadLockLabel(cast(expr, Int()), metadata = metadata)
     }
   }
 }
 
 data class RWLockWriteLockLabel(
-  override val handle: VarDecl<*>,
+  override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(handle, metadata) {
+) : FenceLabel(lock, metadata) {
 
-  override val acquiredMutexes = setOf(handle.writeHandle)
-  override val blockingMutexes = setOf(handle.writeHandle, handle.readHandle)
+  override fun withLock(newLock: Expr<*>): RWLockWriteLockLabel = copy(lock = newLock)
+
+  override val acquiredMutexes: Set<MutexLock> = setOf(ReadWriteMutexLock(lock, WRITE))
+
   override val label = LABEL
 
   override fun toString(): String = super.toString()
@@ -350,26 +375,26 @@ data class RWLockWriteLockLabel(
 
     private const val LABEL = "rwlock_write_lock"
 
-    internal val writeHandles: MutableMap<VarDecl<*>, VarDecl<*>> = mutableMapOf()
-    internal val VarDecl<*>.writeHandle: VarDecl<*>
-      get() = writeHandles.getOrPut(this) { Decls.Var("${this.name}__write_handle__", this.type) }
-
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
-      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
-      return RWLockWriteLockLabel(mutexVar, metadata = metadata)
+      val (mutexHandle) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val expr = ExpressionWrapper(scope, mutexHandle).instantiate(env)
+      return RWLockWriteLockLabel(cast(expr, Int()), metadata = metadata)
     }
   }
 }
 
 data class RWLockUnlockLabel(
-  override val handle: VarDecl<*>,
+  override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(handle, metadata) {
+) : FenceLabel(lock, metadata) {
 
-  override val releasedMutexes = setOf(handle.readHandle, handle.writeHandle)
+  override val releasedMutexes =
+    setOf(ReadWriteMutexLock(lock, READ), ReadWriteMutexLock(lock, WRITE))
+
   override val label = LABEL
+
+  override fun withLock(newLock: Expr<*>): RWLockUnlockLabel = copy(lock = newLock)
 
   override fun toString(): String = super.toString()
 
@@ -379,9 +404,9 @@ data class RWLockUnlockLabel(
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
-      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
-      return RWLockUnlockLabel(mutexVar, metadata = metadata)
+      val (mutexHandle) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val expr = ExpressionWrapper(scope, mutexHandle).instantiate(env)
+      return RWLockUnlockLabel(cast(expr, Int()), metadata = metadata)
     }
   }
 }

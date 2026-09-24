@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 import java.util.function.Predicate
+import kotlin.random.Random
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -35,7 +36,7 @@ class XcfaStateLtsTest {
   fun testApply() {
     val actionOrder: MutableList<(XcfaState<PtrState<ExplState>>) -> XcfaAction> = ArrayList()
     val expectations: MutableList<Predicate<XcfaState<PtrState<ExplState>>>> = ArrayList()
-    val lts = getXcfaLts()
+    val lts = getXcfaLts(Random(-1))
     lateinit var initState: XcfaState<PtrState<ExplState>>
     lateinit var xcfa: XCFA
 
@@ -73,8 +74,8 @@ class XcfaStateLtsTest {
         ),
         PtrState(ExplState.bottom()),
       )
-    val sporLts = XcfaSporLts(xcfa)
-    val aasporLts = XcfaAasporLts(xcfa, LinkedHashMap())
+    val sporLts = XcfaSporLts(xcfa, Random(-1))
+    val aasporLts = XcfaAasporLts(xcfa, LinkedHashMap(), Random(-1))
 
     actionOrder.add { XcfaAction(0, edges[1]) }
     expectations.add {

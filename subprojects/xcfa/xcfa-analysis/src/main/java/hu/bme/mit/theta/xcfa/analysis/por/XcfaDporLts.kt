@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel
+import hu.bme.mit.theta.xcfa.model.MutexLock
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectIndirectGlobalVarAccesses
 import hu.bme.mit.theta.xcfa.utils.isWritten
@@ -67,18 +68,9 @@ private val Node.explored: Set<A>
  * @see <a href="https://doi.org/10.1145/3073408">Source Sets: A Foundation for Optimal Dynamic
  *   Partial Order Reduction</a>
  */
-open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
+open class XcfaDporLts(private val xcfa: XCFA, private val random: Random) : LTS<S, A> {
 
   companion object {
-
-    var random: Random = Random.Default
-
-    /** Simple LTS that returns the enabled actions in a state. */
-    private val simpleXcfaLts = getXcfaLts()
-
-    /** The enabled actions of a state. */
-    private val State.enabled: Collection<A>
-      get() = simpleXcfaLts.getEnabledActionsFor(this as S)
 
     /** Partial order of states considering sleep sets (unexplored behavior). */
     fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
@@ -89,6 +81,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
       }
   }
 
+  /** Simple LTS that returns the enabled actions in a state. */
+  private val simpleXcfaLts = getXcfaLts(random)
+
+  /** The enabled actions of a state. */
+  private val S.enabled: Collection<A>
+    get() = simpleXcfaLts.getEnabledActionsFor(this)
+
   /** Represents an element of the DFS search stack. */
   private data class StackItem(
     val node: Node, // the ARG node
@@ -97,7 +96,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     val lastDependents: Map<Int, Map<Int, Int>> =
       mutableMapOf(), // for each process p it stores the index of the last action of each process
     // that is dependent with the last actions of p
-    val mutexLocks: MutableMap<String, Int> =
+    val mutexLocks: MutableMap<MutexLock, Int> =
       mutableMapOf(), // for each locked mutex the index of the state on the stack where the mutex
     // has been locked
     private val _backtrack: MutableSet<A> = mutableSetOf(),
@@ -197,9 +196,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
           if (stack.size >= 2) {
             val lastButOne = stack[stack.size - 2]
             val mutexNeverReleased =
-              last.mutexLocks.containsKey(AtomicFenceLabel.ATOMIC_MUTEX.name) &&
+              last.mutexLocks.containsKey(AtomicFenceLabel.ATOMIC_MUTEX) &&
                 (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
-                  AtomicFenceLabel.ATOMIC_MUTEX.name
+                  AtomicFenceLabel.ATOMIC_MUTEX
                 )
             if (last.node.explored.isEmpty() || mutexNeverReleased) {
               // if a mutex is never released another action (practically all the others) have to be
@@ -464,7 +463,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 /**
  * Abstraction-aware dynamic partial order reduction (AADPOR) algorithm for state space exploration.
  */
-class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
+class XcfaAadporLts(private val xcfa: XCFA, random: Random) : XcfaDporLts(xcfa, random) {
 
   /** The current precision of the abstraction. */
   private var prec: Prec? = null

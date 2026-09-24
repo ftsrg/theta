@@ -79,8 +79,8 @@ fun XcfaLabel.collectVars(): Collection<VarDecl<*>> =
     is FenceLabel ->
       when (this) {
         is AtomicFenceLabel -> setOf()
-        is MutexTryLockLabel -> setOf(handle, successVar)
-        else -> setOf(handle)
+        is MutexTryLockLabel -> ExprUtils.getVars(lock) + setOf(successVar)
+        else -> ExprUtils.getVars(lock)
       }
     else -> emptySet()
   }
@@ -148,8 +148,9 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
     is FenceLabel -> {
       when (this) {
         is AtomicFenceLabel -> mapOf()
-        is MutexTryLockLabel -> mapOf(handle to READ) + mapOf(successVar to WRITE)
-        else -> mapOf(handle to READ)
+        is MutexTryLockLabel ->
+          ExprUtils.getVars(lock).associateWith { READ } + mapOf(successVar to WRITE)
+        else -> ExprUtils.getVars(lock).associateWith { READ }
       }
     }
     else -> emptyMap()
@@ -231,6 +232,7 @@ val XcfaLabel.references: List<Reference<*, *>>
       is NondetLabel -> labels.flatMap { it.references }
       is SequenceLabel -> labels.flatMap { it.references }
       is StartLabel -> params.flatMap { it.references }
+      is FenceLabel -> lock.references
       else -> emptyList()
     }
 
@@ -250,6 +252,7 @@ val XcfaLabel.dereferences: List<Dereference<*, *, *>>
       is NondetLabel -> labels.flatMap { it.dereferences }
       is SequenceLabel -> labels.flatMap { it.dereferences }
       is StartLabel -> params.flatMap { it.dereferences }
+      is FenceLabel -> lock.dereferences
       else -> emptyList()
     }
 
@@ -278,6 +281,7 @@ val XcfaLabel.dereferencesWithAccessType: DereferenceAccessMap
       is InvokeLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
       is StartLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
       is StmtLabel -> stmt.dereferencesWithAccessType
+      is FenceLabel -> lock.dereferences.associateWith { READ }
       else -> mapOf()
     }
 

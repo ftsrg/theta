@@ -197,6 +197,8 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
     is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
 
+    is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
+
     else -> this
   }
 

@@ -80,11 +80,11 @@ fun baseCegarConfig(
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
           parseInProcess = !serialize,
+          randomSeed = -1,
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
               por = NOPOR,
-              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =

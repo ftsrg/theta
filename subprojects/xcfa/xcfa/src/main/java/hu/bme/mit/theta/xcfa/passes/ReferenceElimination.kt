@@ -475,6 +475,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       is StartLabel ->
         StartLabel(name, params.map { it.flattenReferences() }, pidVar, metadata, tempLookup)
       is ReturnLabel -> ReturnLabel(enclosedLabel.flattenReferences())
+      is FenceLabel -> withLock(lock.flattenReferences())
       else -> this
     }
 
@@ -729,6 +730,23 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         SequenceLabel(stmts.map { StmtLabel(it, metadata = metadata, choiceType = choiceType) })
           .let { if (it.labels.size == 1) it.labels[0] else it }
       }
+      is FenceLabel -> {
+        val nestedLockRefs = lock.collectRefToDerefExprs()
+        if (nestedLockRefs.isEmpty()) {
+          this
+        } else {
+          val replacements = linkedMapOf<Reference<*, *>, Expr<*>>()
+          val preAssigns = mutableListOf<Stmt>()
+          nestedLockRefs.forEach { refExpr ->
+            val tmp = Var("__theta_ref_tmp_${tmpRefCnt++}", refExpr.type)
+            builder.addVar(tmp)
+            replacements[refExpr] = tmp.ref
+            preAssigns += AssignStmt.of(cast(tmp, tmp.type), cast(refExpr, tmp.type))
+          }
+          val newFenceLabel = withLock(lock.replaceRefExprs(replacements))
+          SequenceLabel(preAssigns.map { StmtLabel(it, metadata = metadata) } + newFenceLabel)
+        }
+      }
       else -> this
     }
 
@@ -832,6 +850,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             }
           )
           .let { if (it.labels.size == 1) it.labels[0] else it }
+      is FenceLabel -> withLock(lock.changeComplexReferredVars(splitVars))
       else -> this
     }
 
@@ -1291,6 +1310,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               }
             )
             .let { if (it.labels.size == 1) it.labels[0] else it }
+
+        is FenceLabel -> withLock(lock.changeReferredVars(varLut, parseContext))
 
         else -> this
       }

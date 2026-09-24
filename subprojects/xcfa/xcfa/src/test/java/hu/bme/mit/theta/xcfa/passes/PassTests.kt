@@ -344,8 +344,8 @@ class PassTests {
           input = {
             (init to "L1") { "pthread_create"("ret", "pid", "0", "thr1", "0") }
             (init to "L2") { "pthread_join"("ret", "pid") }
-            (init to "L3") { "pthread_mutex_lock"("0", "x") }
-            (init to "L4") { "pthread_mutex_unlock"("0", "x") }
+            (init to "L3") { "pthread_mutex_lock"("0", "(ref x Int)") }
+            (init to "L4") { "pthread_mutex_unlock"("0", "(ref x Int)") }
           },
           output = {
             (init to "L1") {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
+import hu.bme.mit.theta.analysis.WrapperState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.Objects;
 
-public final class XstsState<S extends ExprState> implements ExprState {
+public final class XstsState<S extends ExprState> implements ExprState, WrapperState {
 
     private final S state;
     private final boolean lastActionWasEnv;
@@ -58,6 +59,11 @@ public final class XstsState<S extends ExprState> implements ExprState {
     @Override
     public boolean isBottom() {
         return state.isBottom();
+    }
+
+    @Override
+    public S getWrappedState() {
+        return state;
     }
 
     @Override
