@@ -40,11 +40,14 @@ import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 
 class AbstractHelper
 @JvmOverloads
 constructor(
   val traceCheckerFactory: (MonolithicExpr) -> ExprTraceChecker<ItpRefutation>,
+  val logger: Logger = NullLogger.getInstance(),
   val initPrec: (MonolithicExpr) -> PredPrec = { monolithicExpr ->
     PredPrec.of(listOf(monolithicExpr.propExpr, monolithicExpr.initExpr))
   },
@@ -74,14 +77,35 @@ constructor(
     val lambdaPrimeList = ArrayList<IffExpr>()
     val activationLiterals = ArrayList<VarDecl<*>>()
     val literalToPred = HashMap<Decl<*>, Expr<BoolType>>()
+    var reusedCount = 0
+    var mintedCount = 0
 
     prec.preds
       .filter { !model.ctrlVars.containsAll(ExprUtils.getVars(it)) }
       .forEach { expr ->
+        val alreadyCached = predToActivationLiteral.containsKey(expr)
         val v =
           predToActivationLiteral.getOrPut(expr) {
             Decls.Var("v${nextActivationLiteralIndex++}", BoolType.getInstance())
           }
+        val singleLinePred = expr.toString().replace(Regex("\\s+"), " ").trim()
+        if (alreadyCached) {
+          reusedCount++
+          logger.write(
+            Logger.Level.VERBOSE,
+            "\tReusing activation literal %s for known predicate %s%n",
+            v.name,
+            singleLinePred,
+          )
+        } else {
+          mintedCount++
+          logger.write(
+            Logger.Level.VERBOSE,
+            "\tMinting new activation literal %s for new predicate %s%n",
+            v.name,
+            singleLinePred,
+          )
+        }
         activationLiterals.add(v)
         literalToPred[v] = expr
         lambdaList.add(IffExpr.of(v.ref, expr))
@@ -89,6 +113,15 @@ constructor(
           BoolExprs.Iff(Exprs.Prime(v.ref), ExprUtils.applyPrimes(expr, model.transOffsetIndex))
         )
       }
+
+    logger.write(
+      Logger.Level.INFO,
+      "Abstraction built with %d predicates (%d reused, %d newly minted); activation literal cache size: %d%n",
+      reusedCount + mintedCount,
+      reusedCount,
+      mintedCount,
+      predToActivationLiteral.size,
+    )
 
     this.literalToPred = literalToPred
 

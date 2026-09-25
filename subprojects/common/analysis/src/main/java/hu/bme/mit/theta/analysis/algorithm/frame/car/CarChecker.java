@@ -97,7 +97,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
         super(monolithicExpr, solverFactory, optimizations, logger);
 
-        frames.add(new Frame(null, solver, monolithicExpr, optimizations));
+        frames.add(new Frame(null, solver, monolithicExpr, optimizations, logger));
         valuations = new ArrayList<>();
         root =
                 new Node(
@@ -110,7 +110,8 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
     private void resetFrames() {
         frames.clear();
-        frames.add(new Frame(null, solver, monolithicExpr, optimizations));
+        frames.add(new Frame(null, solver, monolithicExpr, optimizations, logger));
+        currentFrameNumber = 0;
     }
 
     private void resetNodes() {
@@ -146,7 +147,15 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
 
     @Override
     public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
-        currentFrameNumber = 0;
+        //currentFrameNumber = 0;
+
+        logger.write(
+                Logger.Level.INFO,
+                "CarChecker.check() starting with %d carried-over frames (%d total clauses) and"
+                        + " %d carried-over nodes%n",
+                frames.size(),
+                frames.stream().mapToInt(f -> f.getClauses().size()).sum(),
+                currentlyVisited.size());
         if (!optimizations.isStoreFrames()) {
             resetFrames();
         }
@@ -171,8 +180,9 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                 noNodeIsVisited();
                 var propagateResult = propagateForward();
                 if (propagateResult > 0) {
+
                     return SafetyResult.safe(
-                            PredState.of(frames.get(propagateResult).getExpression()));
+                            PredState.of(frames.get(propagateResult).getExpression())); //todo, maybe add prop too?
                 }
             } else {
                 var counterExample = checkCurrentFrameForInterSections(And(node.getExprs()));
@@ -250,7 +260,7 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                 frames.get(proofObligation.getTime() - 1)
                         .addFrameToSolver(VarIndexingFactory.indexing(0));
 
-                if (optimizations.isNotBOpt()) {
+                if (optimizations.isNotBOpt() && optimizations.isMonotonoousFrames()) {
                     solver.track(
                             PathUtils.unfold(Not(And(proofObligation.getNode().getExprs())), 0));
                 }
@@ -313,10 +323,11 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
                 }
 
                 if (optimizations.isGeneralizeOpt()) {
-                    blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), true);
+                    blockedCube = generalizeIter(blockedCube, proofObligation.getTime(), !optimizations.isMonotonoousFrames());
                 }
 
                 frames.get(proofObligation.getTime()).refine(blockedCube);
+
 
                 proofObligationsQueue.removeLast();
             }
@@ -325,6 +336,17 @@ public class CarChecker<S extends ExprState, A extends ExprAction>
     }
 
     public Node checkFirstCar() {
+        // an initial state already violates the property (counterexample of length 0)
+        try (var wpp = new WithPushPop(solver)) {
+            solver.track(
+                    PathUtils.unfold(monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
+            solver.track(
+                    PathUtils.unfold(
+                            Not(monolithicExpr.getPropExpr()), VarIndexingFactory.indexing(0)));
+            if (solver.check().isSat()) {
+                return root;
+            }
+        }
         if (optimizations.isPropertyOpt()) {
             try (var wpp = new WithPushPop(solver)) {
                 solver.track(

@@ -19,6 +19,8 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -36,16 +38,29 @@ public class Frame {
     private final UCSolver solver;
     private final BaseOptimizations optimizations;
     private MonolithicExpr monolithicExpr;
+    private final Logger logger;
+    private final Expr<BoolType> originalProp;
 
     public Frame(
             final Frame parent,
             UCSolver solver,
             MonolithicExpr monolithicExpr,
             BaseOptimizations optimizations) {
+        this(parent, solver, monolithicExpr, optimizations, NullLogger.getInstance());
+    }
+
+    public Frame(
+            final Frame parent,
+            UCSolver solver,
+            MonolithicExpr monolithicExpr,
+            BaseOptimizations optimizations,
+            Logger logger) {
         this.parent = parent;
         this.solver = solver;
         this.monolithicExpr = monolithicExpr;
+        this.originalProp = monolithicExpr.getPropExpr();
         this.optimizations = optimizations;
+        this.logger = logger;
         clauses = new ArrayList<>();
     }
 
@@ -74,7 +89,7 @@ public class Frame {
             solver.track(PathUtils.unfold(clause.toExpr(), indexing));
         }
         if (optimizations.isPropertyOpt()) {
-            solver.track(PathUtils.unfold(monolithicExpr.getPropExpr(), indexing));
+            solver.track(PathUtils.unfold(originalProp, indexing));
         }
     }
 
@@ -88,7 +103,7 @@ public class Frame {
             exprs.add(clause.negate().toExpr());
         }
         if (optimizations.isPropertyOpt()) {
-            exprs.add(Not(monolithicExpr.getPropExpr()));
+            exprs.add(Not(originalProp));
         }
         solver.track(PathUtils.unfold(Or(exprs), indexing));
     }
@@ -102,12 +117,32 @@ public class Frame {
                 oldClause = clause;
             }
             if (newClause.subsumes(clause)) {
+                logger.write(
+                        Logger.Level.VERBOSE,
+                        "\tFrame: rejecting clause %s, already covered by existing stronger/equal"
+                                + " clause %s (frame still has %d clauses)%n",
+                        newClause,
+                        clause,
+                        clauses.size());
                 return;
             }
         }
 
         if (oldClause != null) {
             clauses.remove(oldClause);
+            logger.write(
+                    Logger.Level.VERBOSE,
+                    "\tFrame: replacing weaker clause %s with stronger clause %s (frame now has"
+                            + " %d clauses)%n",
+                    oldClause,
+                    newClause,
+                    clauses.size() + 1);
+        } else {
+            logger.write(
+                    Logger.Level.VERBOSE,
+                    "\tFrame: adding new clause %s (frame now has %d clauses)%n",
+                    newClause,
+                    clauses.size() + 1);
         }
         clauses.add(newClause);
     }

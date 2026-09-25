@@ -62,7 +62,7 @@ public abstract class BaseOptimizations {
     }
 
     public boolean isFilterOpt() {
-        return filterOpt;
+        return false; //todo check how to implement
     }
 
     public boolean isPropertyOpt() {
@@ -70,8 +70,8 @@ public abstract class BaseOptimizations {
     }
 
     public boolean isGeneralizeOpt() {
-        return generalizeOpt;
-    }
+        return false;
+    } //todo fix generalizeopt
 
     public boolean isUnsatPropagateOpt() {
         return unsatPropagateOpt;

@@ -71,11 +71,18 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
 
     @Override
     public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
-        // check if init violates prop
-        var proofObligations = checkFirst();
-        if (proofObligations != null) {
-            var trace = makeTrace(proofObligations);
+        // check if init violates prop (counterexample of length 0)
+        var initViolation = checkIfFaultyIntersectsInit();
+        if (initViolation != null) {
+            var trace = makeTrace(initViolation, false);
             return SafetyResult.unsafe(trace, PredState.of(True()));
+        }
+        if (optimizations.isPropertyOpt()) {
+            var oneStepViolation = checkIfFaultyReachableInOneStep();
+            if (oneStepViolation != null) {
+                var trace = makeTrace(oneStepViolation);
+                return SafetyResult.unsafe(trace, PredState.of(True()));
+            }
         }
         while (true) {
             final ProofObligation counterExample =
@@ -94,15 +101,6 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
                 }
             }
         }
-    }
-
-    protected LinkedList<ProofObligation> checkFirst() {
-        var proofObligationsQueue = checkIfFaultyIntersectsInit();
-        if (proofObligationsQueue != null) return proofObligationsQueue;
-        if (optimizations.isPropertyOpt()) {
-            return checkIfFaultyReachableInOneStep();
-        }
-        return null;
     }
 
     LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
@@ -185,6 +183,15 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
     }
 
     public Trace<ExplState, ExprAction> makeTrace(LinkedList<ProofObligation> proofObligations) {
+        return makeTrace(proofObligations, optimizations.isPropertyOpt());
+    }
+
+    /**
+     * @param appendBadState whether the last obligation is a predecessor of a bad state (the
+     *     obligations came from a one-step check), so a final step into the bad states is added
+     */
+    public Trace<ExplState, ExprAction> makeTrace(
+            LinkedList<ProofObligation> proofObligations, boolean appendBadState) {
         var abstractStates = new ArrayList<ExprState>();
         var abstractActions = new ArrayList<ExprAction>();
         while (!proofObligations.isEmpty()) {
@@ -195,7 +202,7 @@ public class Ic3Checker extends FrameBasedChecker<IC3Optimizations> {
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(currentProofObligation.getCube().getLiterals()));
         }
-        if (optimizations.isPropertyOpt()) { // this can fail, if error and init intersect
+        if (appendBadState) {
             abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(Not(monolithicExpr.getPropExpr())));
         }

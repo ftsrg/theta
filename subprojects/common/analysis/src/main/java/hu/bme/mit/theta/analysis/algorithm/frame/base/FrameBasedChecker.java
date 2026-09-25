@@ -169,7 +169,12 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
         }
 
         frames.add(
-                new Frame(frames.get(currentFrameNumber), solver, monolithicExpr, optimizations));
+                new Frame(
+                        frames.get(currentFrameNumber),
+                        solver,
+                        monolithicExpr,
+                        optimizations,
+                        logger));
         currentFrameNumber++;
         if (optimizations.isPropagateOpt()) {
             for (int j = 1; j < currentFrameNumber; j++) {
@@ -197,8 +202,9 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
                                         removeRedundantExpressionsUsingUnsatCore(
                                                 blockedCube, unsatCore);
 
-                                if (blockedCube.getLiterals().size()
-                                        < clause.getLiterals().size()) {
+                                if (optimizations.isMonotonoousFrames()
+                                        && blockedCube.getLiterals().size()
+                                                < clause.getLiterals().size()) {
                                     for (int k = 1; k <= j; k++) {
                                         frames.get(k).refine(blockedCube);
                                     }
@@ -272,7 +278,7 @@ public abstract class FrameBasedChecker<O extends BaseOptimizations>
                 }
             }
         }
-        return blockedCube;
+        return minimalCube;
     }
 
     protected MutableValuation removeRedundantVariablesFromProofObligation(

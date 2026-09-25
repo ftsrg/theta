@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.frame.car;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -30,6 +33,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import java.util.stream.Collectors;
 import kotlin.jvm.functions.Function1;
 
 public class CarCegarChecker
@@ -55,7 +59,7 @@ public class CarCegarChecker
 
     @Override
     public SafetyResult<PredState, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
-        AbstractHelper helper = new AbstractHelper(traceCheckerFactory);
+        AbstractHelper helper = new AbstractHelper(traceCheckerFactory, logger);
         MonolithicExpr abstractModel = helper.createPrec(monolithicExpr);
         var checker = new CarChecker<>(abstractModel, solverFactory, optimizations, logger);
         while (true) {
@@ -76,11 +80,31 @@ public class CarCegarChecker
                     return result; // todo add concrete result
                 } else {
                     final var ref = concretizationResult.asInfeasible().getRefutation();
-                    final var newPred = ref.get(ref.getPruneIndex());
                     checker.prune(ref.getPruneIndex(), false);
-                    final var newPrec = PredPrec.of(newPred);
-                    helper.currentPrec = helper.currentPrec.join(newPrec);
-                    logger.write(Logger.Level.INFO, "Added new predicate " + newPrec + "\n");
+                    // every non-trivial interpolant of the refutation (a binary refutation has
+                    // only one, a sequence refutation can have several)
+                    final var newPreds =
+                            ref.stream()
+                                    .filter(itp -> !itp.equals(True()) && !itp.equals(False()))
+                                    .collect(Collectors.toSet());
+                    final int predCountBefore = helper.currentPrec.getPreds().size();
+                    helper.currentPrec = helper.currentPrec.join(PredPrec.of(newPreds));
+                    final int predCountAfter = helper.currentPrec.getPreds().size();
+                    logger.write(
+                            Logger.Level.INFO,
+                            "Refinement predicates %s added %d new predicates (now %d)%n",
+                            newPreds,
+                            predCountAfter - predCountBefore,
+                            predCountAfter);
+                   /* if (predCountAfter == predCountBefore) {
+                        // the same abstraction would be rebuilt and the same spurious
+                        // counterexample found again, so CEGAR would never terminate
+                        throw new IllegalStateException(
+                                String.format(
+                                        "CEGAR refinement made no progress: interpolants %s are"
+                                                + " already in the precision",
+                                        newPreds));
+                    }*/ //todo check what happens in this case, is this a problem?
                     final var abstractMonolithicExpr =
                             helper.createAbstract(monolithicExpr, helper.currentPrec);
                     checker.setMonolithicExpr(abstractMonolithicExpr);
