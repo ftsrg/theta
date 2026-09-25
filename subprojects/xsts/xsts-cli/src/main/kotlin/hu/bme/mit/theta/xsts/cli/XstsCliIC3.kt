@@ -18,18 +18,20 @@ package hu.bme.mit.theta.xsts.cli
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
-import hu.bme.mit.theta.common.stopwatch.Stopwatch
+import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.IC3Optimizations
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker
 import hu.bme.mit.theta.solver.SolverManager
 
 class XstsCliIC3 :
   XstsCliMonolithicBaseCommand(name = "IC3", help = "Model checking using the IC3 algorithm.") {
 
-  private val formerFramesOpt: Boolean by option().boolean().default(true)
   private val unSatOpt: Boolean by option().boolean().default(true)
   private val notBOpt: Boolean by option().boolean().default(true)
   private val propagateOpt: Boolean by option().boolean().default(true)
   private val filterOpt: Boolean by option().boolean().default(true)
+  private val generalizeOpt: Boolean by option().boolean().default(true)
+  private val unsatPropagateOpt: Boolean by option().boolean().default(true)
 
   override fun doRun() {
     val solverFactory = SolverManager.resolveSolverFactory(solver)
@@ -40,12 +42,7 @@ class XstsCliIC3 :
         Ic3Checker(
           it,
           solverFactory,
-          formerFramesOpt,
-          unSatOpt,
-          notBOpt,
-          propagateOpt,
-          filterOpt,
-          true,
+          IC3Optimizations(unSatOpt, notBOpt, propagateOpt, filterOpt, generalizeOpt, true, unsatPropagateOpt),
           logger,
         )
       }
