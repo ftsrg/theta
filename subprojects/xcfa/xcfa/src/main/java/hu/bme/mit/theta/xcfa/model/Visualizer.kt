@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
-typealias LabelCustomizer = (XcfaEdge) -> String
+typealias LabelCustomizer = (String, XcfaEdge) -> String
 
 fun XCFA.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
   xcfaToDot(name, procedures.map { DottableProcedure(it) }, edgeLabelCustomizer)
@@ -43,6 +43,12 @@ private class DottableProcedure(
   fun toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
     procedure?.toDot(edgeLabelCustomizer) ?: procedureBuilder!!.toDot(edgeLabelCustomizer)
 }
+
+fun proceduresToDot(
+  name: String,
+  procedures: List<XcfaProcedure>,
+  edgeLabelCustomizer: LabelCustomizer? = null,
+): String = xcfaToDot(name, procedures.map { DottableProcedure(it) }, edgeLabelCustomizer)
 
 private fun xcfaToDot(
   name: String,
@@ -73,9 +79,9 @@ private fun xcfaProcedureToDot(
   builder.appendLine("label=\"$name\";")
   locs.forEach { builder.appendLine("${it.name}[];") }
   edges.forEach {
-    builder.appendLine(
-      "${it.source.name} -> ${it.target.name} [label=\"${it.getFlatLabels().joinToString("\\n")} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];"
-    )
+    val label = it.getFlatLabels().joinToString("\\n") { l -> l.toString().replace("\n", "\\n") }
+    val customLabel = edgeLabelCustomizer?.invoke(name, it) ?: ""
+    builder.appendLine("${it.source.name} -> ${it.target.name} [label=\"$label $customLabel\"];")
   }
   return builder.toString()
 }

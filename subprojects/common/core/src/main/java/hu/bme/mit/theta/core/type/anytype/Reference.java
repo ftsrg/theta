@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package hu.bme.mit.theta.core.type.anytype;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -67,12 +66,9 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Expr<A> withOps(List<? extends Expr<?>> ops) {
         checkState(ops.size() == 1);
-        checkState(
-                ops.get(0) instanceof RefExpr<?>
-                        && ((RefExpr) ops.get(0)).getDecl() instanceof VarDecl<?>,
-                "Don't transform references to constants.");
         return Reference.of((Expr<T>) ops.get(0), type);
     }
 

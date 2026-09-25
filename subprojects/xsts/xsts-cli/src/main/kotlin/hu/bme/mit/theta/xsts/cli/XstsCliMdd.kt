@@ -21,19 +21,19 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.long
-import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 class XstsCliMdd :
   XstsCliMonolithicBaseCommand(
@@ -49,10 +49,10 @@ class XstsCliMdd :
     option("--dump-ordering", help = "Dump the computed variable ordering to <model>.ordering")
       .flag()
 
-  private val iterationStrategy: MddChecker.IterationStrategy by
+  private val iterationStrategy: IterationStrategy by
     option(help = "The state space enumeration algorithm to use")
-      .enum<MddChecker.IterationStrategy>()
-      .default(MddChecker.IterationStrategy.GSAT)
+      .enum<IterationStrategy>()
+      .default(IterationStrategy.GSAT)
 
   private val lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy by
     option(help = "The MDD to expression conversion strategy")
@@ -138,7 +138,7 @@ class XstsCliMdd :
         checker.check(null)
       }
     sw.stop()
-    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsedMillis())
     writeCex(result, xsts)
   }
 

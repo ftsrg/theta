@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -126,11 +126,6 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     public final void propagateConsequence(
             final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
-        for (var expr : exprs) {
-            if (registeredTerms.get(expr) == null) {
-                System.err.println(expr);
-            }
-        }
         checkState(
                 Arrays.stream(terms).noneMatch(Objects::isNull),
                 "Registered terms failed to look up one or more expressions from %s. Registered"

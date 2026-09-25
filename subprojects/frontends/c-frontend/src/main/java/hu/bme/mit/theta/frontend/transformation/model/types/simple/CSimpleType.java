@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,13 +52,15 @@ public abstract class CSimpleType {
     }
 
     public CSimpleType apply(List<CSimpleType> newCtypes) {
+        CSimpleType acc = this;
         for (CSimpleType newCtype : newCtypes) {
-            newCtype.patch(this);
+            acc = newCtype.patch(acc);
         }
-        return this;
+        return acc;
     }
 
-    protected abstract void patch(CSimpleType cSimpleType);
+    // we return the patched csimpletype, which might be mutated
+    protected abstract CSimpleType patch(CSimpleType cSimpleType);
 
     public boolean isBool() {
         return bool;

@@ -19,10 +19,13 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 
 /**
  * Common interface for the abstractor component. It can create an initial ARG and check an ARG with
  * a given precision.
  */
 public interface ArgAbstractor<S extends State, A extends Action, P extends Prec>
-        extends Abstractor<P, ARG<S, A>> {}
+        extends Abstractor<P, ARG<S, A>> {
+    ArgBuilder<S, A, P> getArgBuilder();
+}

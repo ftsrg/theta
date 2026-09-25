@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,13 +90,37 @@ class AtomicReadsOneWritePass : ProcedurePass {
           localVersions.map { (v, local) ->
             StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
           }
-        val newLabels = edge.getFlatLabels().map { it.replaceAccesses(localVersions) }
+        val oldLabels = edge.getFlatLabels()
+        val newLabels = oldLabels.map { it.replaceAccesses(localVersions) }
         val finalAssigns =
           localVersions.map { (v, local) ->
             StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)))
           }
+        // The OC backend requires every outgoing edge of a branching location to start with an
+        // assume. Prepending the local copy-in (initialAssigns) in front of a leading branch-guard
+        // assume would violate that. Keep the leading assume(s) first and insert the copy-in right
+        // after them -- safe because such guards do not touch a localized variable (they have no
+        // accesses to `toReplace`), so reading the global into the local before or after them
+        // yields the same value.
+        val prefix =
+          oldLabels
+            .takeWhile { label ->
+              label is StmtLabel &&
+                label.stmt is AssumeStmt &&
+                label.collectVarsWithAccessType().none { (v, _) -> v in toReplace }
+            }
+            .size
         builder.removeEdge(edge)
-        builder.addEdge(edge.withLabel(SequenceLabel(initialAssigns + newLabels + finalAssigns)))
+        builder.addEdge(
+          edge.withLabel(
+            SequenceLabel(
+              newLabels.subList(0, prefix) +
+                initialAssigns +
+                newLabels.subList(prefix, newLabels.size) +
+                finalAssigns
+            )
+          )
+        )
       }
     }
     return builder

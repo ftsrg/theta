@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -148,8 +148,10 @@ constructor(
           is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
           is JoinLabel -> {
             changes.add { state ->
-              val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
-              if (joinedPid in state.processes) copy(bottom = true) else state
+              // joining a thread that was never started is a no-op (there is nothing to wait
+              // for); only block while a started thread is still running
+              val joinedPid = state.threadLookup[label.pidVar]
+              if (joinedPid != null && joinedPid in state.processes) copy(bottom = true) else state
             }
             null
           }

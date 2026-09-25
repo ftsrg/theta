@@ -117,7 +117,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         public synchronized boolean onStdinReady(final ByteBuffer buffer) {
             if (!inputQueue.isEmpty()) {
                 final var output = inputQueue.peek();
-                final var eol = "\n".getBytes(StandardCharsets.US_ASCII);
+                final var eol = System.lineSeparator().getBytes(StandardCharsets.US_ASCII);
                 final var cutoff =
                         min(buffer.remaining() - eol.length, output.length() - headDoneIndex);
                 buffer.put(
@@ -211,7 +211,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                         status = ReadProcessor.ReadStatus.PARENTHESES;
                     } else if (c == ';') {
                         status = ReadProcessor.ReadStatus.COMMENT;
-                    } else if (Character.isAlphabetic(c)) {
+                    } else if (c != '\r') { // Windows compatibility
                         sb.append(c);
                         status = ReadProcessor.ReadStatus.LINE;
                     }

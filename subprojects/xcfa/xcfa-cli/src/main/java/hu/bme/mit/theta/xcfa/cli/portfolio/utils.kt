@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.frontend.ParseContext
@@ -165,6 +165,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
+  search: Search = this.backendConfig.specConfig!!.abstractorConfig.search,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
@@ -183,6 +184,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
                   abstractionSolver = abstractionSolver,
                   validateAbstractionSolver = validateAbstractionSolver,
                   domain = domain,
+                  search = search,
                 ),
             refinerConfig =
               backendConfig.specConfig!!
@@ -380,7 +382,7 @@ fun baseMddConfig(
           MddConfig(
             solver = "Z3",
             validateSolver = false,
-            iterationStrategy = MddChecker.IterationStrategy.GSAT,
+            iterationStrategy = IterationStrategy.GSAT,
             reversed = false,
             cegar = false,
             initPrec = EMPTY,

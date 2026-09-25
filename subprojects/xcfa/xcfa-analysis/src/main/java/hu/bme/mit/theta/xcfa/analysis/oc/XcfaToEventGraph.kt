@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,37 +25,34 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
 
-internal class XcfaToEventGraph(private val xcfa: XCFA) {
+internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext: ParseContext) {
 
   init {
     if (xcfa.initProcedures.size > 1) exit("multiple entry points.")
   }
 
   data class EventGraph(
+    val name: String,
     val threads: Set<Thread>,
     val events: Map<VarDecl<*>, Map<Int, List<E>>>,
     val pos: List<R>, // not transitively closed!
@@ -65,7 +62,25 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     val branchingConditions: List<Expr<BoolType>>,
     val memoryDecl: VarDecl<IntType>,
     val memoryGarbage: IndexedConstDecl<IntType>,
-  )
+  ) {
+
+    override fun toString(): String =
+      proceduresToDot(name, threads.map { it.procedure }) { procedureName, edge ->
+        val thread = threads.find { it.procedure.name == procedureName }
+        " [${
+          events.values
+            .flatMap {
+              if (thread != null) {
+                it[thread.pid] ?: listOf()
+              } else {
+                it.flatMap { e -> e.value }
+              }
+            }
+            .filter { e -> e.pid == (thread?.pid ?: e.pid) && e.edge == edge }
+            .joinToString(",") { it.const.name }
+        }]"
+      }
+  }
 
   private val threads = mutableSetOf<Thread>()
   private var indexing = VarIndexingFactory.indexing(0)
@@ -83,9 +98,10 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     memoryDecl.getNewIndexed().also { XcfaEvent.memoryGarbage = it }
 
   fun create(): EventGraph {
-    ThreadProcessor(Thread(procedure = xcfa.initProcedures.first().first), true).process()
+    ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
     addCrossThreadRelations()
     return EventGraph(
+      xcfa.name,
       threads,
       events,
       pos,
@@ -316,6 +332,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           assumeConsts.forEach { (_, set) ->
             for ((i1, v1) in set.withIndex()) for ((i2, v2) in set.withIndex()) {
               if (i1 == i2) break
+              // the constants in the different branches must be equal
               branchingConditions.add(Eq(v1.ref, v2.ref))
             }
           }
@@ -341,15 +358,23 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
       val condWithConsts = this.cond.with(consts)
       val asAssign =
         consts.size == 1 &&
-          consts.keys.first().let { it is VarDecl<*> && it.threadVar(pid) !in lastWrites }
-      if (edge.source.outgoingEdges.size > 1 || !asAssign) {
+          consts.keys.first().let { c ->
+            c is VarDecl<*> &&
+              c.threadVar(pid).let { v ->
+                v !in lastWrites ||
+                  lastWrites[v]?.let { it.size == 1 && it.first().assignment == True() } == true
+              }
+          }
+
+      val outgoingEdgesSize = edge.source.outgoingEdges.size
+      if (outgoingEdgesSize > 1 || !asAssign) {
         guard = guard + condWithConsts
         if (firstLabel) {
           consts.forEach { (v, c) -> assumeConsts.getOrPut(v) { mutableListOf() }.add(c) }
         }
       }
       this.cond.toEvents(consts, true)
-      if ((edge.source.outgoingEdges.size == 1 || !firstLabel) && asAssign) {
+      if ((outgoingEdgesSize == 1 || !firstLabel) && asAssign) {
         last.first().assignment = condWithConsts
       }
     }
@@ -378,15 +403,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           ?: exit("unknown procedure name: ${this.name}")
       val newPid = Thread.uniqueId()
 
-      // assign parameter
-      val consts = this.params[1].toEvents()
-      procedure.params
-        .firstOrNull { it.second != ParamDirection.OUT }
-        ?.first
-        ?.let { arg ->
-          last = event(arg, WRITE, newPid)
-          last.first().assignment = Eq(last.first().const.ref, this.params[1].with(consts))
+      // assign parameters
+      procedure.params.forEachIndexed { index, param ->
+        if (param.second != ParamDirection.OUT) {
+          val consts = this.params[index].toEvents()
+          last = event(param.first, WRITE, newPid)
+          val e = last.first()
+          e.assignment = Eq(e.const.ref, this.params[index].with(consts))
         }
+      }
 
       last = event(this.pidVar, WRITE)
       val pidVar = this.pidVar.threadVar(pid)
@@ -394,7 +419,18 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
         multipleUsePidVars.add(pidVar)
       }
       val newHistory = thread.startHistory + thread.procedure.name
-      val newThread = Thread(newPid, procedure, guard, pidVar, last.first(), newHistory, lastWrites)
+      val newThread =
+        Thread.of(
+          procedure,
+          parseContext,
+          params,
+          newPid,
+          guard,
+          pidVar,
+          last.first(),
+          newHistory,
+          lastWrites,
+        )
       last.first().assignment = Eq(last.first().const.ref, Int(newPid))
       threadLookup[pidVar] = setOf(Pair(guard, newThread))
       ThreadProcessor(newThread).process()

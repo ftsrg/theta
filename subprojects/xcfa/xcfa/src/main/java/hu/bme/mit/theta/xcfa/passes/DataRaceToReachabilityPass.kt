@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!enabled || property.inputProperty != ErrorDetection.DATA_RACE) return builder
 
-    removeOriginalErrorEdges(builder)
+    removeOriginalErrors(builder)
     val potentialRacingVars = collectPotentialRacingVars(builder)
     val isInitialPhase = builder in builder.parent.getInitProcedures().map { it.first }
     val visitedLocations = mutableSetOf<XcfaLocation>()
@@ -300,7 +300,7 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
     }
   }
 
-  private fun removeOriginalErrorEdges(builder: XcfaProcedureBuilder) {
+  private fun removeOriginalErrors(builder: XcfaProcedureBuilder) {
     if (builder.errorLoc.isEmpty) return
     val errorLoc = builder.errorLoc.get()
     val newLoc = XcfaLocation("${errorLoc.name}_reachability", metadata = errorLoc.metadata)
@@ -316,6 +316,7 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
       builder.removeEdge(edge)
       builder.addEdge(edge.withTarget(newLoc).withLabel(newLabel))
     }
+    builder.removeLoc(errorLoc)
   }
 
   private fun collectPotentialRacingVars(builder: XcfaProcedureBuilder): Set<VarDecl<*>> {

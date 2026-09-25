@@ -1,0 +1,63 @@
+# Refuted violation witness (format 2.2) for concurrent-nondet.i: it pins the
+# writer's nondet value to 0, but reach_error() sits behind `if (x == 1)`, so the
+# claimed segment sequence is infeasible. Expected verdict: Safe.
+
+- entry_type: violation_sequence
+  metadata:
+    format_version: "2.2"
+    uuid: "f6a7b8c9-d0e1-4234-efab-234567890124"
+    creation_time: "2026-06-20T12:00:00Z"
+    producer:
+      name: "Handcrafted"
+      version: "1.0"
+    task:
+      input_files:
+        - "concurrent-nondet.i"
+      input_file_hashes:
+        "concurrent-nondet.i": "0000000000000000000000000000000000000000000000000000000000000000"
+      specification: "G ! call(reach_error())"
+      data_model: "ILP32"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        type: function_enter
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 23
+          function: "main"
+  - segment:
+    - waypoint:
+        type: assumption
+        action: follow
+        thread_id: 1
+        constraint:
+          value: "x == 0"
+          format: c_expression
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 18
+          function: "writer"
+  - segment:
+    - waypoint:
+        type: assumption
+        action: follow
+        thread_id: 0
+        constraint:
+          value: "x == 0"
+          format: c_expression
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 24
+          function: "main"
+  - segment:
+    - waypoint:
+        type: target
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 25
+          function: "main"

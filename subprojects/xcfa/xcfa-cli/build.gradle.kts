@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":theta-solver-z3"))
     implementation(project(":theta-solver-z3-legacy"))
     implementation(project(":theta-solver-smtlib"))
+    testImplementation(testFixtures(project(":theta-solver-smtlib")))
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))

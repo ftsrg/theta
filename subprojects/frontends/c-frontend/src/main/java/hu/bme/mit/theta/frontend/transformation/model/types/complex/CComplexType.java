@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,6 +102,9 @@ public abstract class CComplexType {
     }
 
     public Expr<?> castTo(Expr<?> expr) {
+        if (CComplexType.getType(expr, parseContext).equals(this)) {
+            return expr;
+        }
         Expr<?> accept = this.accept(getCastVisitor(parseContext), expr);
         parseContext.getMetadata().create(accept, "cType", this);
         return accept;

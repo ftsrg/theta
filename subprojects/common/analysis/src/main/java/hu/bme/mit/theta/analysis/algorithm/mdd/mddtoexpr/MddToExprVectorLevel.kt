@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr
 
 import hu.bme.mit.delta.java.mdd.MddHandle
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.MddValuationCollector
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or

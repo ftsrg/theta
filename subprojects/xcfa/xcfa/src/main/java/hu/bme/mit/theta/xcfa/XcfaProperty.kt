@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,7 +61,8 @@ enum class ErrorDetection(val ltl: (Any) -> String) {
   }),
   MEMCLEANUP({ _: Any -> "CHECK( init(main()), LTL(G valid-memcleanup) )" }),
   NO_ERROR({ _: Any -> "NONE" }),
-  TERMINATION({ _: Any -> "CHECK( init(main()), LTL(F end) )" });
+  TERMINATION({ _: Any -> "CHECK( init(main()), LTL(F end) )" }),
+  NO_ASSERTION_VIOLATION({ _: Any -> "CHECK( init(main()), LTL(G ! call(__assert_fail())) )" });
 
   companion object {
     enum class MemSafetyType {

@@ -1,0 +1,71 @@
+
+name: Slash Commands
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  pull-requests: write
+
+jobs:
+  slash-command:
+    if: >
+      github.event.issue.pull_request &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR') &&
+      startsWith(github.event.comment.body, '/')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Parse command
+        id: parse
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          first_line=$(echo "$COMMENT_BODY" | head -n1)
+          echo "command=$(echo "$first_line" | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "arg=$(echo "$first_line" | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+      - name: Get PR branch
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch=$(gh pr view ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --json headRefName -q '.headRefName')
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: React to comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method POST \
+            /repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            -f content='+1'
+
+      - name: Dispatch /version-bump
+        if: steps.parse.outputs.command == '/version-bump'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_TYPE: ${{ steps.parse.outputs.arg }}
+        run: |
+          if [[ "$VERSION_TYPE" != "major" && "$VERSION_TYPE" != "minor" && "$VERSION_TYPE" != "patch" ]]; then
+            echo "Unknown version type: '$VERSION_TYPE'. Must be major, minor, or patch."
+            exit 1
+          fi
+          gh workflow run version-bump.yml \
+            --repo ${{ github.repository }} \
+            --ref ${{ steps.pr.outputs.branch }} \
+            --field version_type=$VERSION_TYPE
+
+      - name: Dispatch /format
+        if: steps.parse.outputs.command == '/format'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run reformat-code.yml \
+            --repo ${{ github.repository }} \
+            --ref ${{ steps.pr.outputs.branch }} \
+            --field direct-commit=true

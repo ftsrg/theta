@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -74,5 +74,12 @@ public class CStruct extends CInteger {
                 (Tuple2<String, CComplexType> it) -> Tuple2.of(it.get1(), it.get2().getClass());
         return Objects.equals(
                 fields.stream().map(mapper).toList(), cStruct.fields.stream().map(mapper).toList());
+    }
+
+    @Override
+    public int hashCode() {
+        final Function<Tuple2<String, CComplexType>, Tuple2<String, Class<?>>> mapper =
+                (Tuple2<String, CComplexType> it) -> Tuple2.of(it.get1(), it.get2().getClass());
+        return Objects.hash(getClass(), fields.stream().map(mapper).toList());
     }
 }

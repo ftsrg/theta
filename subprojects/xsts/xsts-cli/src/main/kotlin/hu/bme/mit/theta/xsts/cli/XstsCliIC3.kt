@@ -22,7 +22,6 @@ import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.frame.ic3.IC3Optimizations
 import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker
 import hu.bme.mit.theta.solver.SolverManager
-import java.util.concurrent.TimeUnit
 
 class XstsCliIC3 :
   XstsCliMonolithicBaseCommand(name = "IC3", help = "Model checking using the IC3 algorithm.") {
@@ -49,7 +48,7 @@ class XstsCliIC3 :
       }
     val result = checker.check()
     sw.stop()
-    printBenchmarkResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printBenchmarkResult(result, xsts, sw.elapsedMillis())
     writeCex(result, xsts)
   }
 }

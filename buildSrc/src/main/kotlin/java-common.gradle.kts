@@ -65,6 +65,23 @@ tasks {
         systemProperty("java.library.path", libPath)
         enableAssertions = true
         failOnNoDiscoveredTests=false
+
+        // Tests that cannot install an SMT-LIB solver skip themselves and record why here;
+        // the root verifySolverInstallations task then fails the build, so such a run is
+        // never silently green. One file per test task, wiped up front so that a failure
+        // recorded by an earlier build cannot fail this one.
+        val failureReport = rootProject.layout.buildDirectory
+            .file("solver-install-failures/${project.path.replace(':', '_').trim('_')}-$name.txt")
+            .get().asFile
+        systemProperty("theta.solverInstallFailureReport", failureReport.absolutePath)
+        doFirst { failureReport.delete() }
+
+        // Forwarded explicitly so the tests can append to the GitHub job summary; relying on the
+        // daemon's inherited environment would depend on when the daemon happened to start.
+        val stepSummary = providers.environmentVariable("GITHUB_STEP_SUMMARY")
+        if (stepSummary.isPresent) {
+            environment("GITHUB_STEP_SUMMARY", stepSummary.get())
+        }
     }
 
     named<JacocoReport>("jacocoTestReport") {

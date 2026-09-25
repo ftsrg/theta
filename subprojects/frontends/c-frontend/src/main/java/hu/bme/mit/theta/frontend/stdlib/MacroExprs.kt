@@ -26,6 +26,7 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   PTHREAD_MUTEX_ERRORCHECK("PTHREAD_MUTEX_ERRORCHECK", { UnsupportedInitializer() }),
   PTHREAD_RWLOCK_INITIALIZER("PTHREAD_RWLOCK_INITIALIZER", { UnsupportedInitializer() }),
   NULL("NULL", { CComplexType.getSignedInt(it).nullValue }),
+  NULLPTR("nullptr", { CComplexType.getSignedInt(it).nullValue }),
 
   // Integer characteristics
   CHAR_BIT("CHAR_BIT", { CComplexType.getSignedInt(it).getValue("8") }),

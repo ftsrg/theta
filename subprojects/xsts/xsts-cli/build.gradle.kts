@@ -32,6 +32,7 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-ltl"))
     implementation(project(":theta-ltl-cli"))
+    implementation(project(":theta-ctl"))
     implementation(project(":theta-cfa"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-solver-z3-legacy"))
