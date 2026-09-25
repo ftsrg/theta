@@ -32,6 +32,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -130,6 +131,33 @@ class Complex27ChainTest {
   }
 
   @Test
+  fun aFloatProgramLeadsWithKInduction() {
+    // Over the float tasks k-induction solves about three times what the predicate lead does, and
+    // the predicate configurations add nothing on top of it -- the opposite of the whole-suite
+    // order, where k-induction is fourth.
+    val ctx = ParseContext().apply { addArithmeticTrait(ArithmeticTrait.FLOAT) }
+    val order = chain(stmFor(looping(), ctx))
+    assertTrue(order.first().startsWith("KIND"), "float chain led with ${order.first()}")
+    assertFalse(
+      order.take(3).any { it.startsWith("PRED_CART") },
+      "a predicate configuration still runs early on floats: $order",
+    )
+  }
+
+  @Test
+  fun aFloatProgramGivesKInductionTheLeadSlice() {
+    // The wins it picks up need 80-110s; at a later position it would only ever get the shorter
+    // follow-up slice.
+    val ctx = ParseContext().apply { addArithmeticTrait(ArithmeticTrait.FLOAT) }
+    val stm = stmFor(looping(), ctx)
+    val budgets = timeouts(stm)
+    assertTrue(
+      budgets.first() > budgets[1],
+      "the leading configuration did not get the lead slice: $budgets",
+    )
+  }
+
+  @Test
   fun theStrongestConfigurationRunsFirstAndBmcSecond() {
     // Measured marginal contribution over the whole suite, and identically in both the bitvector
     // and the integer half of the sweep: PRED_CART/BW_BIN_ITP alone solves the most, and BMC adds
@@ -172,7 +200,7 @@ class Complex27ChainTest {
    * keying the solver off the chain instead of the encoding wasted every interpolating slice.
    */
   @Test
-  fun aPointerProgramWithBitwiseOpsStillInterpolatesOnMathSat() {
+  fun aPointerProgramWithBitwiseOpsInterpolatesOnABitvectorCapableSolver() {
     val ctx =
       ParseContext().apply {
         addArithmeticTrait(ArithmeticTrait.BITWISE)
@@ -182,7 +210,11 @@ class Complex27ChainTest {
       nodesOf(stmFor(pointerProgram(), ctx)).filter { "ITP" in it.name && "BMC" !in it.name }
     assertTrue(interpolating.isNotEmpty(), "no interpolating configuration in the chain")
     interpolating.forEach {
-      assertTrue(it.name.contains("mathsat"), "interpolating on a non-MathSAT solver: ${it.name}")
+      // MathSAT and Bitwuzla both interpolate over bitvectors; the legacy Z3 API does not.
+      assertTrue(
+        it.name.contains("mathsat") || it.name.contains("bitwuzla"),
+        "interpolating on a solver that refuses bitvectors: ${it.name}",
+      )
     }
   }
 
@@ -216,7 +248,11 @@ class Complex27ChainTest {
       nodesOf(stmFor(looping(), ctx)).filter { "ITP" in it.name && "BMC" !in it.name }
     assertTrue(interpolating.isNotEmpty(), "no interpolating configuration in the chain")
     interpolating.forEach {
-      assertTrue(it.name.contains("mathsat"), "interpolating on a non-MathSAT solver: ${it.name}")
+      // MathSAT and Bitwuzla both interpolate over bitvectors; the legacy Z3 API does not.
+      assertTrue(
+        it.name.contains("mathsat") || it.name.contains("bitwuzla"),
+        "interpolating on a solver that refuses bitvectors: ${it.name}",
+      )
     }
   }
 

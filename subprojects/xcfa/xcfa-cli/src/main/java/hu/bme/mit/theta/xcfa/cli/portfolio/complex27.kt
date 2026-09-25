@@ -373,16 +373,17 @@ fun complex27(
     val bmcAlt: String
     when {
       hasFloats -> {
-        itpSolver = "cvc5:1.2.0"
-        // Falling back to MathSAT is only safe while there are no bitvectors to combine floats
-        // with; when there are, stay inside the family that decides the combination at all.
-        itpAlt = if (bitvectorEncoded) "cvc5:1.0.8" else "mathsat:5.6.12"
-        bmcSolver = "cvc5:1.2.0"
+        itpSolver = "cvc5:1.3.4"
+        // MathSAT rejects floats combined with bitvectors, and cvc5 is the only solver packaged
+        // that decides the combination, so there is no alternative to fall back to there.
+        itpAlt = if (bitvectorEncoded) itpSolver else "mathsat:5.6.12"
+        bmcSolver = "cvc5:1.3.4"
         bmcAlt = "Z3:new"
       }
       bitvectorEncoded -> {
         itpSolver = "mathsat:5.6.12"
-        itpAlt = "mathsat:5.6.10"
+        // The only other packaged solver that interpolates over bitvectors.
+        itpAlt = "bitwuzla:0.9.1"
         bmcSolver = "Z3:new"
         bmcAlt = "mathsat:5.6.12"
       }
@@ -407,11 +408,12 @@ fun complex27(
           MULTITHREAD -> multithread to multithread
           TERMINATION -> termination to termination
           else -> {
-            val predCartBw = step(lead, LEAD_SLICE_MS, itpSolver, itpAlt)
-            val boundedBmc = step(bmc, NEXT_SLICE_MS, bmcSolver, bmcAlt)
-            val explicitSeq = step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
-            val boundedKind = step(kind, NEXT_SLICE_MS, bmcSolver, bmcAlt)
-            val predCartSeq = step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt)
+            // Budgets go by position, not by algorithm: whatever leads gets the lead slice.
+            val predCartBw = { ms: Long -> step(lead, ms, itpSolver, itpAlt) }
+            val boundedBmc = { ms: Long -> step(bmc, ms, bmcSolver, bmcAlt) }
+            val explicitSeq = { ms: Long -> step(explSeq, ms, itpSolver, itpAlt) }
+            val boundedKind = { ms: Long -> step(kind, ms, bmcSolver, bmcAlt) }
+            val predCartSeq = { ms: Long -> step(predSeq, ms, itpSolver, itpAlt) }
 
             // What the program is being checked *for* turns out to separate the algorithms better
             // than anything about its syntax: measured over the whole suite, choosing per property
@@ -432,15 +434,22 @@ fun complex27(
             // does not merely do well, it *finishes*. Non-linear arithmetic leads with the bounded
             // engines for the opposite reason -- interpolation over non-linear terms is where the
             // refinement loop stalls.
-            val steps =
+            val order =
               when {
                 loopFree -> listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+                // Floats invert the usual order: measured over the float tasks, k-induction solves
+                // roughly three times what the predicate lead does, and the predicate
+                // configurations add nothing on top of it.
+                hasFloats -> listOf(boundedKind, explicitSeq, boundedBmc, predCartBw, predCartSeq)
                 isMemsafety || complexity > EXPLICIT_FIRST_COMPLEXITY ->
                   listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
                 mainTrait == NONLIN_INT ->
                   listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
                 else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
               }
+
+            val steps =
+              order.mapIndexed { i, make -> make(if (i == 0) LEAD_SLICE_MS else NEXT_SLICE_MS) }
 
             wire(steps)
 
