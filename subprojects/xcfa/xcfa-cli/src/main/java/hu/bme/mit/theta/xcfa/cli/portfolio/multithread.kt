@@ -200,8 +200,8 @@ fun multithreadPortfolio(
         multithreadCegarBaseConfig.adaptConfig(
           inProcess = inProcess,
           domain = EXPL,
-          abstractionSolver = "mathsat:5.6.10",
-          refinementSolver = "mathsat:5.6.10",
+          abstractionSolver = "mathsat:5.6.12",
+          refinementSolver = "mathsat:5.6.12",
           refinement = NWT_IT_WP,
           timeoutMs = 0,
         ),

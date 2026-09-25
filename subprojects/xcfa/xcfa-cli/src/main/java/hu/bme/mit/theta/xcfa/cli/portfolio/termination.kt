@@ -153,14 +153,14 @@ fun termination(
     val (startingConfig: ConfigNode, endConfig: ConfigNode) =
       if (xcfa.isInlined) {
         if (types.any { it is BvType }) {
-          val expl = expl(100_000, "cvc5:1.0.8")
-          val predcart = predcart(100_000, "cvc5:1.0.8")
-          val predbool = predbool(100_000, "cvc5:1.0.8")
+          val expl = expl(100_000, "cvc5:1.3.4")
+          val predcart = predcart(100_000, "cvc5:1.3.4")
+          val predbool = predbool(100_000, "cvc5:1.3.4")
           val bmc = bmc(100_000, "Z3:4.13")
           val kind = kind(300_000, "Z3:4.13")
-          val imcCVC5 = imc(300_000, "cvc5:1.0.8")
-          val imcMathSAT = imc(300_000, "mathsat:5.6.10")
-          val kindMathSAT = kind(300_000, "mathsat:5.6.10")
+          val imcCVC5 = imc(300_000, "cvc5:1.3.4")
+          val imcMathSAT = imc(300_000, "mathsat:5.6.12")
+          val kindMathSAT = kind(300_000, "mathsat:5.6.12")
 
           expl then
             predcart then
@@ -173,14 +173,14 @@ fun termination(
 
           Pair(expl, kindMathSAT)
         } else if (types.any { it is FpType }) {
-          val expl = expl(100_000, "cvc5:1.0.8")
-          val predcart = predcart(100_000, "cvc5:1.0.8")
-          val predbool = predbool(100_000, "cvc5:1.0.8")
-          val bmcCVC5 = bmc(100_000, "cvc5:1.0.8")
-          val kindCVC5 = kind(300_000, "cvc5:1.0.8")
-          val imcCVC5 = imc(300_000, "cvc5:1.0.8")
-          val imcMathSAT = imc(300_000, "mathsat:5.6.10")
-          val kindMathSAT = kind(300_000, "mathsat:5.6.10")
+          val expl = expl(100_000, "cvc5:1.3.4")
+          val predcart = predcart(100_000, "cvc5:1.3.4")
+          val predbool = predbool(100_000, "cvc5:1.3.4")
+          val bmcCVC5 = bmc(100_000, "cvc5:1.3.4")
+          val kindCVC5 = kind(300_000, "cvc5:1.3.4")
+          val imcCVC5 = imc(300_000, "cvc5:1.3.4")
+          val imcMathSAT = imc(300_000, "mathsat:5.6.12")
+          val kindMathSAT = kind(300_000, "mathsat:5.6.12")
 
           expl then
             predcart then
@@ -200,9 +200,9 @@ fun termination(
           val bmcLegacy = bmc(100_000, "Z3")
           val kind = kind(300_000, "Z3:4.13")
           val kindLegacy = kind(300_000, "Z3")
-          val imcCVC5 = imc(300_000, "cvc5:1.0.8")
-          val imcMathSAT = imc(300_000, "mathsat:5.6.10")
-          val kindMathSAT = kind(300_000, "mathsat:5.6.10")
+          val imcCVC5 = imc(300_000, "cvc5:1.3.4")
+          val imcMathSAT = imc(300_000, "mathsat:5.6.12")
+          val kindMathSAT = kind(300_000, "mathsat:5.6.12")
 
           (bmc or bmcLegacy) then
             (kind or kindLegacy).first() then
@@ -220,8 +220,8 @@ fun termination(
           val predbool = predbool(100_000, "Z3:4.13")
           val bmc = bmc(100_000, "Z3:4.13")
           val kind = kind(300_000, "Z3:4.13")
-          val imcCVC5 = imc(300_000, "cvc5:1.0.8")
-          val imcMathSAT = imc(300_000, "mathsat:5.6.10")
+          val imcCVC5 = imc(300_000, "cvc5:1.3.4")
+          val imcMathSAT = imc(300_000, "mathsat:5.6.12")
           val imc = kind(300_000, "Z3")
 
           expl then predcart then predbool then bmc then kind then imcCVC5 then imcMathSAT then imc

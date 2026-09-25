@@ -398,7 +398,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
   itpEnabled: Boolean = false,
   bmcSolver: String = "Z3",
   indSolver: String = "Z3",
-  itpSolver: String = "cvc5:1.0.8",
+  itpSolver: String = "cvc5:1.3.4",
   timeoutMs: Long = 0,
   inProcess: Boolean = this.backendConfig.inProcess,
   reversed: Boolean = false,

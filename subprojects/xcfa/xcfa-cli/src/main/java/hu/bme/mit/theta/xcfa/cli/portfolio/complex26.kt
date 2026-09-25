@@ -304,10 +304,10 @@ fun complex26(
             val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
             val bmc = bmc(150_000, "Z3:new")
 
-            val kindCVC = kind(300_000, "cvc5:1.2.0")
-            val pred_bwCVC = cegar(300_000, "cvc5:1.2.0", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explCVC = cegar(200_000, "cvc5:1.2.0", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcCVC = bmc(150_000, "cvc5:1.2.0")
+            val kindCVC = kind(300_000, "cvc5:1.3.4")
+            val pred_bwCVC = cegar(300_000, "cvc5:1.3.4", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explCVC = cegar(200_000, "cvc5:1.3.4", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcCVC = bmc(150_000, "cvc5:1.3.4")
 
             kind then pred_bw then expl then bmc
 
