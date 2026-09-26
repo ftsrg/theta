@@ -64,6 +64,9 @@ internal data class Violation(
   val lastEvents: List<XcfaEvent>,
 )
 
+/** A thread reaching an unroll exit location, i.e., a point where an unroll bound cut it off. */
+internal data class UnrollExit(val key: String, val pid: Int, val guard: Expr<BoolType>)
+
 @ConsistentCopyVisibility
 internal data class Thread
 private constructor(
@@ -84,6 +87,11 @@ private constructor(
     private var cnt: Int = 0
 
     fun uniqueId(): Int = cnt++
+
+    /** Pids restart for every event graph: the trace extractor expects the main thread at 0. */
+    fun resetIds() {
+      cnt = 0
+    }
 
     fun of(
       procedure: XcfaProcedure,

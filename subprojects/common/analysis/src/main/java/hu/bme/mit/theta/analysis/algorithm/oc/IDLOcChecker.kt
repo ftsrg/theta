@@ -28,20 +28,49 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
+import java.util.Collections
+import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
-class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = false) :
-  OcChecker<E>() {
-  override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
+/**
+ * @param sharedSolver a solver to use instead of a new one, e.g., to scope several checks on the
+ *   same event graph with push/pop
+ */
+class IDLOcChecker<E : Event>(
+  smtSolver: String,
+  private val isSc: Boolean = false,
+  sharedSolver: Solver? = null,
+) : OcChecker<E>() {
+  override val solver: Solver =
+    sharedSolver ?: SolverManager.resolveSolverFactory(smtSolver).createSolver()
 
-  private var clkGlobalCnt = 0
+  companion object {
+    // Checkers sharing a solver must use the same declarations: a solver maps each declaration
+    // (not name) to its own symbol, and refuses a second declaration of the same name.
+    private val clkGlobalDecls: MutableMap<Int, ConstDecl<IntType>> =
+      Collections.synchronizedMap(mutableMapOf())
+    private val clkAtomicDecls: MutableMap<Event, ConstDecl<IntType>> =
+      Collections.synchronizedMap(WeakHashMap())
+    private val hbDecls: MutableMap<Pair<Int, Int>, ConstDecl<BoolType>> =
+      Collections.synchronizedMap(mutableMapOf())
+    private val clkAtomicCnt = AtomicInteger()
+  }
+
   private val clkGlobalVars: MutableMap<Int, ConstDecl<IntType>> = mutableMapOf()
   private val Int.clkGlobalVar: ConstDecl<IntType>
-    get() = clkGlobalVars.getOrPut(this) { Decls.Const("__clk_global__${clkGlobalCnt++}", Int()) }
+    get() =
+      clkGlobalVars.getOrPut(this) {
+        clkGlobalDecls.getOrPut(this) { Decls.Const("__clk_global__$this", Int()) }
+      }
 
-  private var clkAtomicCnt = 0
   private val clkAtomicVars: MutableMap<E, ConstDecl<IntType>> = mutableMapOf()
   private val E.clkAtomicVar: ConstDecl<IntType>
-    get() = clkAtomicVars.getOrPut(this) { Decls.Const("__clk_atomic__${clkAtomicCnt++}", Int()) }
+    get() =
+      clkAtomicVars.getOrPut(this) {
+        clkAtomicDecls.getOrPut(this) {
+          Decls.Const("__clk_atomic__${clkAtomicCnt.getAndIncrement()}", Int())
+        }
+      }
 
   private lateinit var hbVars: Array<Array<ConstDecl<BoolType>?>> // happens-before variables
 
@@ -51,12 +80,25 @@ class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = fal
     check(i != j)
     if (isSc) return Lt(i.clkGlobalVar.ref, j.clkGlobalVar.ref)
     return hbVars[i][j]?.ref
-      ?: Decls.Const("__hb__${i}_${j}", Bool())
+      ?: hbDecls
+        .getOrPut(i to j) { Decls.Const("__hb__${i}_${j}", Bool()) }
         .also {
           hbVars[i][j] = it
           addLt(it.ref, i, j)
         }
         .ref
+  }
+
+  /**
+   * Whether the atomic units of [e1] and [e2] can be at neighbouring clock values, i.e., executed
+   * right after one another. As clock values are distinct integers, nothing fits between them then.
+   * Only meaningful under SC, where the global clocks order all atomic units totally.
+   */
+  fun adjacent(e1: E, e2: E): Expr<BoolType> {
+    check(isSc && e1.clkId != e2.clkId)
+    val clk1 = e1.clkId.clkGlobalVar.ref
+    val clk2 = e2.clkId.clkGlobalVar.ref
+    return Or(Eq(Add(clk1, Int(1)), clk2), Eq(Add(clk2, Int(1)), clk1))
   }
 
   private fun addImpl(cond: Expr<BoolType>?, expr: Expr<BoolType>) =
