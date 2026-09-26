@@ -1907,7 +1907,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         uniqueWarningLogger);
 
         Expr<?> iteExpr;
-        if (!ctx.expression().isEmpty()) {
+        if (ctx.ifFalse != null) {
             // GNU `a ?: b`: the middle operand is omitted, its value is the guard itself.
             CStatement ifTrue = ctx.ifTrue == null ? null : ctx.ifTrue.accept(this);
             CStatement ifFalse = ctx.ifFalse.accept(this);
