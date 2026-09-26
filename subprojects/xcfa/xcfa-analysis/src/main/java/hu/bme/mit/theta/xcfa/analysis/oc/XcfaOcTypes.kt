@@ -123,7 +123,8 @@ internal class XcfaEvent(
     return potentialSameMemory(other)
   }
 
-  fun potentialSameMemory(other: XcfaEvent): Boolean {
+  override fun potentialSameMemory(other: Event): Boolean {
+    other as XcfaEvent
     if (!super.sameMemory(other)) return false
     if (const in memoryGarbages || other.const in memoryGarbages) return true
     if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic)

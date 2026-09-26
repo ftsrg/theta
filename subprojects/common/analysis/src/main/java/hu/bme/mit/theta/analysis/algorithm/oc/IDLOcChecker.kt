@@ -180,7 +180,8 @@ class IDLOcChecker<E : Event>(
         writes.forEach { w2 ->
           if (w1 != w2) {
             vRfs.forEach { rf ->
-              if (w1 == rf.from) {
+              // a write to another cell of the same memory partition does not hide rf.from
+              if (w1 == rf.from && rf.to.potentialSameMemory(w2)) {
                 val wsExpr =
                   And(
                     w1.guardExpr,
@@ -191,7 +192,8 @@ class IDLOcChecker<E : Event>(
                       hbVar(w1.clkId, w2.clkId)
                     },
                   )
-                addHb(And(wsExpr, rf.declRef), rf.to, w2)
+                val sameCell = rf.to.interferenceCond(w2)
+                addHb(listOfNotNull(wsExpr, rf.declRef, sameCell).toAnd(), rf.to, w2)
               }
             }
           }

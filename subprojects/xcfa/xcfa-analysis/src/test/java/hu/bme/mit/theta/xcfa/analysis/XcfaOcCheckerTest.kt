@@ -50,7 +50,7 @@ class XcfaOcCheckerTest {
       )
     }
 
-    /** Loops whose trip count is unknown statically: verdicts depend on the unroll exits. */
+    /** Verdicts depending on the unroll exits and on cell-sensitive ordering constraints. */
     @JvmStatic
     fun unrollData(): Collection<Array<Any>> =
       listOf(OcDecisionProcedureType.IDL, OcDecisionProcedureType.BASIC).flatMap { dp ->
@@ -58,6 +58,7 @@ class XcfaOcCheckerTest {
           arrayOf("/13loop_bound_safe.c", dp, SafetyResult<*, *>::isSafe),
           arrayOf("/14sequential_loops_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/15sequential_loops_safe.c", dp, SafetyResult<*, *>::isSafe),
+          arrayOf("/20mutex_counter_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
         )
       }
 
