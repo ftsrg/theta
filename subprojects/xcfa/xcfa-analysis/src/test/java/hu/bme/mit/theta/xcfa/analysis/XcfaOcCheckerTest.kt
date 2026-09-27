@@ -77,6 +77,7 @@ class XcfaOcCheckerTest {
         arrayOf("/17norace_atomic_blocks.c", SafetyResult<*, *>::isSafe),
         arrayOf("/18race_after_loop.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/19norace_join.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/21race_atomic_abort_loop.c", SafetyResult<*, *>::isUnsafe),
       )
 
     @BeforeAll
