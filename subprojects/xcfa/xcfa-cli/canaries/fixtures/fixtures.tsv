@@ -83,3 +83,5 @@ global_nested_struct_array.c	efficient	ILP32	SAFE	a global struct array's nested
 global_nested_struct_array_init.c	efficient	ILP32	SAFE	a global struct array with nested struct/array fields is initialized in its inline cells
 global_inline_struct_array_init.c	efficient	ILP32	SAFE	global bitfield-struct and 2-D nested-struct arrays are initialized in their inline cells
 uninit_local_per_call.c	efficient	ILP32	UNSAFE	an uninitialized local gets a fresh value at each declaration, not the previous inlined call's
+short_circuit_postfix.c	efficient	LP64	SAFE	a postfix ++/-- in a && / || operand runs only if the operand does, before the next operand
+short_circuit_operand_value.c	efficient	LP64	SAFE	&& / || combine operand values taken before a later operand's side effect
