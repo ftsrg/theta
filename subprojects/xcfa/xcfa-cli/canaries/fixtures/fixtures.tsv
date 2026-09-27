@@ -79,3 +79,6 @@ ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-exp
 ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
 typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
 typeof_rvalue.c	efficient	LP64	SAFE	typeof over a literal or an arithmetic result
+global_nested_struct_array.c	efficient	ILP32	SAFE	a global struct array's nested-struct cells hold distinct bases, and its scalar cells are zero
+global_nested_struct_array_init.c	efficient	ILP32	SAFE	a global struct array with nested struct/array fields is initialized in its inline cells
+global_inline_struct_array_init.c	efficient	ILP32	SAFE	global bitfield-struct and 2-D nested-struct arrays are initialized in their inline cells
