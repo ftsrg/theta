@@ -524,18 +524,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
 
         // Introduce every function's name before any global declaration is processed. A function
-        // has
-        // file scope, so C guarantees it is visible wherever the source refers to it -- but the
-        // order these contexts are visited in is not the source order: a global that is declared
-        // early and *defined* later (`int (*p)(void);` ... `int (*p)(void) = f;`) keeps its
-        // original
-        // position while adopting the later context (see GlobalDeclUsageVisitor), so its
-        // initializer
-        // is evaluated here long before the `f` it names would be reached. That made whole driver
-        // families die with "No such variable or macro: <function>". Creating the names up front
+        // has file scope, so C guarantees it is visible wherever the source refers to it, even
+        // where the declaration introducing it is only visited later. Creating the names up front
         // costs nothing: these functions are visited below anyway, and each adopts the variable
-        // made
-        // here rather than making its own (the prototype-before-definition path).
+        // made here rather than making its own (the prototype-before-definition path).
         for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
             if (externalDeclarationContext
                     instanceof CParser.ExternalFunctionDefinitionContext funcDefCtx) {
@@ -563,13 +555,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 }
             } else if (externalDeclarationContext
                     instanceof CParser.GlobalDeclarationContext globalDeclCtx) {
-                // The same hazard, for a function this file only *declares*. Its address can be
-                // taken exactly like a defined function's -- `struct allocator a = { &malloc };` is
-                // how preprocessed coreutils/ldv sources write it -- and that initializer is
-                // evaluated at the position of the object's *tentative* declaration, which comes
-                // before the prototype it names. Without a name here the use died as "No such
-                // variable or macro: malloc". Registering it up front costs nothing for the same
-                // reason as above: the declaration is visited below anyway and finds it there.
+                // The same, for a function this file only *declares*. Its address can be taken
+                // exactly like a defined function's -- `struct allocator a = { &malloc };` is how
+                // preprocessed coreutils/ldv sources write it. Registering it up front costs
+                // nothing for the same reason as above: the declaration is visited below anyway
+                // and finds it there.
                 //
                 // The initializer expressions are deliberately not built here (getInitExpr =
                 // false): only the declared names are wanted, and the declaration below builds them
@@ -619,9 +609,25 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
         }
 
+        // A context listed twice is a global declared before its definition: the first occurrence
+        // only declares it (its initializer may name globals declared in between), see
+        // GlobalDeclUsageVisitor#getGlobalUsages.
+        Set<CParser.ExternalDeclarationContext> listed = new HashSet<>();
+        Set<CParser.ExternalDeclarationContext> listedTwice = new HashSet<>();
+        for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
+            if (!listed.add(externalDeclarationContext)) {
+                listedTwice.add(externalDeclarationContext);
+            }
+        }
+        Set<CParser.ExternalDeclarationContext> declaredAhead = new HashSet<>();
         CProgram program = new CProgram(parseContext);
         for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
-            CStatement accept = externalDeclarationContext.accept(this);
+            CStatement accept =
+                    externalDeclarationContext instanceof CParser.GlobalDeclarationContext g
+                                    && listedTwice.contains(g)
+                                    && declaredAhead.add(g)
+                            ? globalDeclaration(g, false)
+                            : externalDeclarationContext.accept(this);
             if (accept instanceof CFunction) {
                 program.getFunctions().add((CFunction) accept);
             } else if (accept instanceof CDecls) {
@@ -726,10 +732,21 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
+        return globalDeclaration(ctx, true);
+    }
+
+    /**
+     * Declares the globals of {@code ctx}. Without initializers it only brings them into scope
+     * ahead of their definition; their entries then mark where storage is allocated (see
+     * FrontendXcfaBuilder#buildXcfa).
+     */
+    private CStatement globalDeclaration(
+            CParser.GlobalDeclarationContext ctx, boolean withInitializers) {
         List<CDeclaration> declarations =
                 declarationVisitor.getDeclarations(
                         ctx.declaration().declarationSpecifiers(),
-                        ctx.declaration().initDeclaratorList());
+                        ctx.declaration().initDeclaratorList(),
+                        withInitializers);
         CDecls decls = new CDecls(parseContext);
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {

@@ -324,18 +324,32 @@ class FrontendXcfaBuilder(
         )
       )
     }
-    for (globalDeclaration in cProgram.globalDeclarations) {
-      initializeGlobalVariable(
-        builder,
-        globalDeclaration.get2().ref,
-        initStmtList,
-        globalDeclaration.get1().initExpr,
-        // The *variable* is atomic when its own type is -- its outermost level. `int * _Atomic p`
-        // is an atomic variable; `_Atomic int *p` is a plain variable that happens to point at
-        // atomic memory, and it is the memory, not `p`, that then cannot be raced on.
-        globalDeclaration.get1().actualType.isAtomic,
-        globalDeclaration.get1(),
-      )
+    // A global declared before its definition is listed at both places: its storage is allocated
+    // at the first entry, so initializers in between can take its address, and its (last) defining
+    // declaration is applied at the last, once everything that initializer names exists.
+    val globalDeclarations = cProgram.globalDeclarations
+    val lastEntry = HashMap<VarDecl<*>, Int>()
+    globalDeclarations.forEachIndexed { index, entry -> lastEntry[entry.get2()] = index }
+    val allocated = HashSet<VarDecl<*>>()
+    globalDeclarations.forEachIndexed { index, entry ->
+      val allocate = allocated.add(entry.get2())
+      val initialize = lastEntry[entry.get2()] == index
+      if (allocate || initialize) {
+        val declaration = globalDeclarations[lastEntry.getValue(entry.get2())].get1()
+        initializeGlobalVariable(
+          builder,
+          entry.get2().ref,
+          initStmtList,
+          declaration.initExpr,
+          // The *variable* is atomic when its own type is -- its outermost level:
+          // `int * _Atomic p` is an atomic variable, while `_Atomic int *p` is a plain variable
+          // pointing at atomic memory, and it is the memory, not `p`, that cannot be raced on.
+          declaration.actualType.isAtomic,
+          declaration,
+          allocate = allocate,
+          initialize = initialize,
+        )
+      }
     }
     // Every compile-time base has now been handed out (only globals take one), so publish the
     // high-water mark before any procedure is built: `alloca` mints its bases from the *runtime*
@@ -1005,12 +1019,14 @@ class FrontendXcfaBuilder(
     initExpr: CStatement? = null,
     isAtomic: Boolean = false,
     declaration: CDeclaration? = null,
+    allocate: Boolean = true,
+    initialize: Boolean = true,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
     if (type is CVoid) {
       return
     }
-    if (globalDeclaration is RefExpr<*>) {
+    if (allocate && globalDeclaration is RefExpr<*>) {
       // `_Atomic int *p` makes the *pointee* atomic, not p, so it is `pointsToAtomic` that the
       // declaration sets -- and it is what a memory access through p has to ask. Leaving it false
       // meant an access through a pointer declared to point at atomic data was checked for races
@@ -1035,14 +1051,17 @@ class FrontendXcfaBuilder(
       )
     }
     if (type is CArray) {
-      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(
-        AssignStmtLabel(
-          globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+      if (allocate) {
+        // Reading ptrCnt hands out this base and advances it -- capture once.
+        val objectBase = ptrCnt
+        initStmtList.add(
+          AssignStmtLabel(
+            globalDeclaration,
+            type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+          )
         )
-      )
-      recordObjectAtomicity(objectBase, type)
+        recordObjectAtomicity(objectBase, type)
+      }
       // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
       // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
       // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
@@ -1053,7 +1072,7 @@ class FrontendXcfaBuilder(
       // e.g. `extern unsigned char const _ctype[];`.
       val extentUnknown =
         declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
-      if (MemsafetyPass.enabled) {
+      if (allocate && MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
         // expression cannot be used directly: types registered by the early typedef pass carry
@@ -1088,6 +1107,9 @@ class FrontendXcfaBuilder(
         // is the honest encoding and the safe one: an unwritten cell is unconstrained, so a read of
         // it over-approximates whatever the real definition holds, where a zero would have been a
         // claim this file has no basis for.
+        return
+      }
+      if (!initialize) {
         return
       }
       val flatElement = type.embeddedType
@@ -1143,15 +1165,21 @@ class FrontendXcfaBuilder(
         globalDeclaration,
       )
     } else if (type is CStruct) {
-      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(
-        AssignStmtLabel(
-          globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+      if (allocate) {
+        // Reading ptrCnt hands out this base and advances it -- capture once.
+        val objectBase = ptrCnt
+        initStmtList.add(
+          AssignStmtLabel(
+            globalDeclaration,
+            type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+          )
         )
-      )
-      recordObjectAtomicity(objectBase, type)
-      giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+        recordObjectAtomicity(objectBase, type)
+        giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+      }
+      if (!initialize) {
+        return
+      }
       // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
       // struct every member is its own unit, so this is the historical field-indexed iteration.
       val unitTypes =
@@ -1197,7 +1225,7 @@ class FrontendXcfaBuilder(
           globalDeclaration,
         )
       }
-    } else {
+    } else if (initialize) {
       // C permits a scalar to be braced -- `int x = {5}`, and, more to the point, a scalar leaf of
       // a
       // deeply nested aggregate initializer like `{{{{{0U}}}}}` in the kernel headers. Now that

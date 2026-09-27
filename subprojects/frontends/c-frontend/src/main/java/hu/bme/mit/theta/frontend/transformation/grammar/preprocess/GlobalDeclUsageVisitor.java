@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,9 +47,12 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
     }
 
     private final Map<String, Set<String>> globalUsages = new LinkedHashMap<>();
-    private final List<Tuple2<String, CParser.ExternalDeclarationContext>> usedContexts =
-            new ArrayList<>();
+    private final List<Use> usedContexts = new ArrayList<>();
     private String current;
+
+    /** A global's place in source order; see {@link #getGlobalUsages}. */
+    private record Use(
+            String name, CParser.ExternalDeclarationContext ctx, boolean declarationOnly) {}
 
     @Override
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
@@ -64,14 +68,12 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                 // sources hit this routinely, where a header re-declares a `static inline` function
                 // it has already defined. Overwriting would silently turn the function into an
                 // undefined one (havoc'd return value, so false alarms) and would also drop the
-                // identifiers its body uses, pruning everything only it called. Overwriting stays
-                // correct for redeclared globals -- a tentative definition followed by the real
-                // initializer -- which is what this branch was written for.
+                // identifiers its body uses, pruning everything only it called.
                 if (usedContexts.stream()
                         .anyMatch(
                                 c ->
-                                        Objects.equals(c.get1(), declaration.getName())
-                                                && c.get2()
+                                        Objects.equals(c.name(), declaration.getName())
+                                                && c.ctx()
                                                         instanceof
                                                         CParser
                                                                 .ExternalFunctionDefinitionContext)) {
@@ -79,16 +81,22 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                 }
                 globalUsages.remove(declaration.getName());
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
-                if (usedContexts.stream()
-                        .anyMatch(c -> Objects.equals(c.get1(), declaration.getName()))) {
-                    usedContexts.replaceAll(
-                            c ->
-                                    Objects.equals(c.get1(), declaration.getName())
-                                            ? Tuple2.of(declaration.getName(), ctx)
-                                            : c); // keep the order, but overwrite the context
-                } else {
-                    usedContexts.add(Tuple2.of(declaration.getName(), ctx));
+                // A redeclaration (`struct S s;` ... `struct S s = {...};`) supersedes the earlier
+                // ones: the name stays declared from its first position, but is defined only here,
+                // where everything its initializer names has been declared.
+                boolean declaredBefore = false;
+                for (ListIterator<Use> it = usedContexts.listIterator(); it.hasNext(); ) {
+                    Use use = it.next();
+                    if (Objects.equals(use.name(), declaration.getName())) {
+                        if (declaredBefore) {
+                            it.remove();
+                        } else {
+                            it.set(new Use(declaration.getName(), ctx, true));
+                            declaredBefore = true;
+                        }
+                    }
                 }
+                usedContexts.add(new Use(declaration.getName(), ctx, false));
                 current = declaration.getName();
                 super.visitGlobalDeclaration(ctx);
                 current = null;
@@ -102,7 +110,7 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
             CParser.ExternalFunctionDefinitionContext ctx) {
         CDeclaration funcDecl = ctx.functionDefinition().declarator().accept(declarationVisitor);
         globalUsages.put(funcDecl.getName(), new LinkedHashSet<>());
-        usedContexts.add(Tuple2.of(funcDecl.getName(), ctx));
+        usedContexts.add(new Use(funcDecl.getName(), ctx, false));
         current = funcDecl.getName();
         super.visitExternalFunctionDefinition(ctx);
         current = null;
@@ -130,6 +138,14 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
         return null;
     }
 
+    /**
+     * The external declarations reachable from main, in source order.
+     *
+     * <p>A global declaration context may be listed twice. A global declared more than once is
+     * defined by its last declaration, which is listed at the position of the first one (from where
+     * the name has to be visible, only declared there) and again at its own (where its initializer
+     * runs).
+     */
     public List<CParser.ExternalDeclarationContext> getGlobalUsages(
             CParser.CompilationUnitContext ctx) {
         globalUsages.clear();
@@ -151,9 +167,10 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
             remaining.removeAll(ret);
         }
         return usedContexts.stream()
-                .filter(objects -> ret.contains(objects.get1()))
-                .map(Tuple2::get2)
+                .filter(use -> ret.contains(use.name()))
+                .map(use -> Tuple2.of(use.ctx(), use.declarationOnly()))
                 .distinct()
+                .map(Tuple2::get1)
                 .collect(Collectors.toList());
     }
 }
