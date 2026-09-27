@@ -1730,7 +1730,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // AtomicFunctionsPass can lower each into an atomic block. Only the return *type* is
         // decided
         // here (so the call's return variable is typed right); the semantics live in the pass.
-        Expr<?> atomic = atomicBuiltinCall(name, args);
+        Expr<?> atomic =
+                atomicBuiltinCall(
+                        getVar(name) == null ? SYNC_AS_ATOMIC.getOrDefault(name, name) : name,
+                        args);
         if (atomic != null) {
             return atomic;
         }
@@ -1925,13 +1928,24 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * ReallocFunctionPass}) and the `mem*` trio ({@code MemoryFunctionsPass}). A call to one of
      * these can be emitted with no declaration in sight, because the pass supplies the semantics.
      *
+     * <p>The `__builtin_` spellings of the `mem*` trio are listed too; the pass models them alike.
+     *
      * <p>`alloca` is deliberately absent: its return type is not carried in metadata the way
      * `malloc`'s is (see {@code FunctionVisitor#declareMallocReturnsPointer}), so a synthesized
      * call would default to an `int` return and truncate the pointer under LP64. It is declared in
      * our `<stdlib.h>` model instead, and `__builtin_alloca` is handled above.
      */
     private static final Set<String> MODELED_MEMORY_FUNCTIONS =
-            Set.of("malloc", "free", "realloc", "memcpy", "memmove", "memset");
+            Set.of(
+                    "malloc",
+                    "free",
+                    "realloc",
+                    "memcpy",
+                    "memmove",
+                    "memset",
+                    "__builtin_memcpy",
+                    "__builtin_memmove",
+                    "__builtin_memset");
 
     /**
      * Of those, the ones returning their first argument (`void *` aliasing the destination, or the
@@ -1940,7 +1954,36 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * returns `void`, so neither is listed.
      */
     private static final Set<String> RETURNS_FIRST_ARGUMENT_TYPE =
-            Set.of("realloc", "memcpy", "memmove", "memset");
+            Set.of(
+                    "realloc",
+                    "memcpy",
+                    "memmove",
+                    "memset",
+                    "__builtin_memcpy",
+                    "__builtin_memmove",
+                    "__builtin_memset");
+
+    /**
+     * GCC's legacy `__sync_*` builtins that are exactly an `__atomic_*` one under sequential
+     * consistency, the only ordering modelled. Their optional trailing arguments name no memory
+     * order and are ignored. The compare-and-swap forms differ in signature and are not listed.
+     */
+    private static final Map<String, String> SYNC_AS_ATOMIC =
+            Map.ofEntries(
+                    Map.entry("__sync_fetch_and_add", "__atomic_fetch_add"),
+                    Map.entry("__sync_fetch_and_sub", "__atomic_fetch_sub"),
+                    Map.entry("__sync_fetch_and_or", "__atomic_fetch_or"),
+                    Map.entry("__sync_fetch_and_and", "__atomic_fetch_and"),
+                    Map.entry("__sync_fetch_and_xor", "__atomic_fetch_xor"),
+                    Map.entry("__sync_fetch_and_nand", "__atomic_fetch_nand"),
+                    Map.entry("__sync_add_and_fetch", "__atomic_add_fetch"),
+                    Map.entry("__sync_sub_and_fetch", "__atomic_sub_fetch"),
+                    Map.entry("__sync_or_and_fetch", "__atomic_or_fetch"),
+                    Map.entry("__sync_and_and_fetch", "__atomic_and_fetch"),
+                    Map.entry("__sync_xor_and_fetch", "__atomic_xor_fetch"),
+                    Map.entry("__sync_nand_and_fetch", "__atomic_nand_fetch"),
+                    Map.entry("__sync_lock_test_and_set", "__atomic_exchange_n"),
+                    Map.entry("__sync_synchronize", "__atomic_thread_fence"));
 
     /**
      * Int-returning library classification/comparison functions that {@code FpFunctionsToExprsPass}
