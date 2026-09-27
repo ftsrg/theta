@@ -3545,8 +3545,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
         } else {
 
-            boolean negativeIsUnaryMinus = false;
-
             // Integer suffixes u and l come in any order (ul, lu, llu, ull, ...); one trailing 'l'
             // may already have been stripped for the shared long/float check above. Strip whatever
             // u/l remain, in any order -- otherwise a hex constant like `0xFFFLLU` reaches the
@@ -3566,8 +3564,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 text = text.substring(0, text.length() - 1);
             }
-            boolean isLongLong = longCount >= 2;
 
+            // C11 6.4.4.1p5: a hexadecimal, octal or binary constant may also take the unsigned
+            // type of each rank, a decimal one only with a u suffix.
+            boolean unsignedAllowed = isUnsigned;
             BigInteger bigInteger;
             if (isCharLiteral) {
                 // Every character constant -- plain, escaped, hex, octal, multi-character -- goes
@@ -3578,46 +3578,56 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 bigInteger = BigInteger.valueOf(charLiteralValue);
             } else if (text.startsWith("0x")) {
                 bigInteger = new BigInteger(text.substring(2), 16);
+                unsignedAllowed = true;
             } else if (text.startsWith("0b")) {
                 bigInteger = new BigInteger(text.substring(2), 2);
+                unsignedAllowed = true;
             } else if (text.startsWith("0") && text.length() > 1) {
                 bigInteger = new BigInteger(text.substring(1), 8);
+                unsignedAllowed = true;
             } else {
                 bigInteger = new BigInteger(text, 10);
-                negativeIsUnaryMinus = true; // -10 is -(10)
             }
 
-            final var size = bigInteger.bitLength();
+            // The candidate list of C11 6.4.4.1p5; the first one that can represent the value wins.
+            final List<CComplexType> candidates = new ArrayList<>();
+            if (longCount == 0) {
+                if (!isUnsigned) candidates.add(CComplexType.getSignedInt(parseContext));
+                if (unsignedAllowed) candidates.add(CComplexType.getUnsignedInt(parseContext));
+            }
+            if (longCount <= 1) {
+                if (!isUnsigned) candidates.add(CComplexType.getSignedLong(parseContext));
+                if (unsignedAllowed) candidates.add(CComplexType.getUnsignedLong(parseContext));
+            }
+            if (!isUnsigned) candidates.add(CComplexType.getSignedLongLong(parseContext));
+            if (unsignedAllowed) candidates.add(CComplexType.getUnsignedLongLong(parseContext));
 
-            CComplexType unsignedLongLong = CComplexType.getUnsignedLongLong(parseContext);
-            CComplexType signedLongLong = CComplexType.getSignedLongLong(parseContext);
-            CComplexType unsignedLong = CComplexType.getUnsignedLong(parseContext);
-            CComplexType signedLong = CComplexType.getSignedLong(parseContext);
-            CComplexType unsignedInt = CComplexType.getUnsignedInt(parseContext);
-            CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-
-            CComplexType type;
-            if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
-            else if (!isUnsigned
-                    && (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus))
-                type = signedLongLong;
-            else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (!isUnsigned && (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus))
-                type = signedLong;
-            else if (isUnsigned) type = unsignedInt;
-            else type = signedInt;
+            CComplexType type = candidates.get(candidates.size() - 1);
+            for (CComplexType candidate : candidates) {
+                if (canRepresent((CInteger) candidate, bigInteger)) {
+                    type = candidate;
+                    break;
+                }
+            }
+            final boolean signedType = ((CInteger) type).isSsigned();
 
             LitExpr<?> litExpr =
                     parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
-                            ? isUnsigned
-                                    ? BvUtils.bigIntegerToUnsignedBvLitExpr(
+                            ? signedType
+                                    ? BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
+                                    : BvUtils.bigIntegerToUnsignedBvLitExpr(
                                             bigInteger, type.width())
-                                    : BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
                             : Int(bigInteger);
 
             parseContext.getMetadata().create(litExpr, "cType", type);
             return litExpr;
         }
+    }
+
+    private static boolean canRepresent(CInteger type, BigInteger value) {
+        return type.isSsigned()
+                ? value.bitLength() < type.width()
+                : value.signum() >= 0 && value.bitLength() <= type.width();
     }
 
     @Override

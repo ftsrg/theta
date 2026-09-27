@@ -88,3 +88,5 @@ short_circuit_operand_value.c	efficient	LP64	SAFE	&& / || combine operand values
 recursive_struct_depth2.c	efficient	LP64	SAFE	a recursive struct is typed correctly beyond one hop through its self-pointer (p->next->next->data)
 recursive_struct_sizeof_depth2.c	efficient	LP64	SAFE	sizeof two hops through a recursive struct self-pointer is the struct size, not the int placeholder
 recursive_struct_byvalue_cycle.c	efficient	LP64	SAFE	a pointer cycle through a by-value member (A holds B, B points to A) is typed beyond one hop
+hex_literal_unsigned_add.c	efficient	LP64	SAFE:no-overflow	a hex constant that does not fit in int is unsigned int (no signed overflow on i + 0x80000000)
+hex_literal_values_bv.c	bitvector	LP64	SAFE	hex constants follow the C11 int/unsigned/long/... candidate list, width and sign kept in bitvector
