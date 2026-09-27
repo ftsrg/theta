@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,7 +75,9 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs
     val writes = events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
     vRfs.forEach { rf ->
       writes
-        .filter { rf.from != it && rf.from.potentialSameMemory(it) }
+        .filter {
+          rf.from != it && rf.from.potentialSameMemory(it) && rf.to.potentialSameMemory(it)
+        }
         .forEach { w ->
           findSimplePath(w, rf.to)?.let { wRfTo ->
             findSimplePath(rf.from, w)?.let { rfFromW ->
@@ -139,7 +141,9 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
           events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
         vRfs.forEach { rf ->
           writes
-            .filter { rf.from != it && rf.from.potentialSameMemory(it) }
+            .filter {
+              rf.from != it && rf.from.potentialSameMemory(it) && rf.to.potentialSameMemory(it)
+            }
             .forEach { w ->
               if ((rf to w) !in enabledWss) {
                 findPath(w, rf.to)?.let { wRfTo ->

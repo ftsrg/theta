@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
@@ -119,17 +120,17 @@ internal class XcfaEvent(
 
     var arrayEq: Expr<BoolType>? = Eq(array, other.array)
     if (arrayStatic != null && other.arrayStatic != null) {
-      if (arrayStatic != other.arrayStatic) return null
+      if (arrayStatic != other.arrayStatic) return False()
       arrayEq = null
     }
 
     var offsetEq: Expr<BoolType>? = Eq(offset, other.offset)
     if (offsetStatic != null && other.offsetStatic != null) {
-      if (offsetStatic != other.offsetStatic) return null
+      if (offsetStatic != other.offsetStatic) return False()
       offsetEq = null
     }
 
-    return listOfNotNull(arrayEq, offsetEq).toAnd()
+    return listOfNotNull(arrayEq, offsetEq).takeIf { it.isNotEmpty() }?.toAnd()
   }
 }
 

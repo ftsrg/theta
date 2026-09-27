@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -73,6 +73,10 @@ abstract class Event(
     return const.varDecl == other.const.varDecl
   }
 
+  /**
+   * The condition under which this event and [other], an event of the same variable, access the
+   * same memory location: null if they always do, False if they never do.
+   */
   open fun interferenceCond(other: Event): Expr<BoolType>? = null
 
   protected inline fun <T> tryOrNull(block: () -> T?): T? =
@@ -160,8 +164,10 @@ sealed class DerivedReason<E : Event>(
   private val name: String,
 ) : Reason() {
 
+  // The address condition is taken from the read: an rf from the initial memory-garbage write does
+  // not tie the read's address to the write's.
   override val expressions: List<Expr<BoolType>> =
-    listOfNotNull(rf.declRef, w.guardExpr, rf.from.interferenceCond(w)) + wRfRelation.exprs
+    listOfNotNull(rf.declRef, w.guardExpr, rf.to.interferenceCond(w)) + wRfRelation.exprs
 
   override fun toString(): String = "$name(${rf.decl.name}, ${w.const.name}, $wRfRelation)"
 

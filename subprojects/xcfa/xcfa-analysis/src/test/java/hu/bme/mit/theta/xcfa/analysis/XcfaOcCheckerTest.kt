@@ -47,6 +47,27 @@ class XcfaOcCheckerTest {
       )
     }
 
+    /** Reads whose feasibility depends on the address of a later write to the same partition. */
+    @JvmStatic
+    fun addressSensitiveData(): Collection<Array<Any?>> =
+      listOf(
+          "/13oc_static_offset.c" to true,
+          "/14oc_garbage_read.c" to true,
+          "/15oc_static_offset_safe.c" to false,
+          "/16oc_garbage_read_safe.c" to false,
+        )
+        .flatMap { (program, unsafe) ->
+          listOf(
+              Triple(OcDecisionProcedureType.PROPAGATOR, AutoConflictFinderConfig.NONE, null),
+              Triple(OcDecisionProcedureType.PROPAGATOR, AutoConflictFinderConfig.SIMPLE, null),
+              Triple(OcDecisionProcedureType.BASIC, AutoConflictFinderConfig.NONE, null),
+              Triple(OcDecisionProcedureType.BASIC, AutoConflictFinderConfig.GENERIC, 3),
+            )
+            .map { (procedure, conflictFinder, bound) ->
+              arrayOf<Any?>(program, unsafe, procedure, conflictFinder, bound)
+            }
+        }
+
     @BeforeAll
     @JvmStatic
     fun registerSolver() {
@@ -61,6 +82,30 @@ class XcfaOcCheckerTest {
     autoConflictFinderConfig: AutoConflictFinderConfig,
     autoConflictBound: Int?,
   ) {
+    Assertions.assertTrue(
+      verdict(check(program, decisionProcedure, autoConflictFinderConfig, autoConflictBound))
+    )
+  }
+
+  @ParameterizedTest
+  @MethodSource("addressSensitiveData")
+  fun testAddressSensitiveConflicts(
+    program: String,
+    unsafe: Boolean,
+    decisionProcedure: OcDecisionProcedureType,
+    autoConflictFinderConfig: AutoConflictFinderConfig,
+    autoConflictBound: Int?,
+  ) {
+    val result = check(program, decisionProcedure, autoConflictFinderConfig, autoConflictBound)
+    Assertions.assertTrue(if (unsafe) result.isUnsafe else result.isSafe)
+  }
+
+  private fun check(
+    program: String,
+    decisionProcedure: OcDecisionProcedureType,
+    autoConflictFinderConfig: AutoConflictFinderConfig,
+    autoConflictBound: Int?,
+  ): SafetyResult<*, *> {
     println(
       "Testing $program with ($decisionProcedure, $autoConflictFinderConfig${autoConflictBound.let{"($it)"}})..."
     )
@@ -83,7 +128,6 @@ class XcfaOcCheckerTest {
         autoConflictBound = autoConflictBound ?: -1,
       )
 
-    val safetyResult = ocChecker.check(null)
-    Assertions.assertTrue(verdict(safetyResult))
+    return ocChecker.check(null)
   }
 }

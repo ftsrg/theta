@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
@@ -129,22 +130,25 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
       if (w.guard.isNotEmpty()) userPropagator.registerExpression(w.guardExpr)
     }
 
+    // Read-write pairs, as derived reasons carry the read's address condition (see DerivedReason).
+    // A False condition is never registered, so such a pair never counts as interfering.
     val interferenceToEvents = mutableMapOf<Expr<BoolType>, MutableList<Pair<E, E>>>()
-    flatWrites.forEach { w1 ->
-      flatWrites.forEach { w2 ->
-        if (w1 != w2) {
-          w1.interferenceCond(w2)?.let {
-            userPropagator.registerExpression(it)
-            interferenceToEvents.getOrPut(it) { mutableListOf() }.add(w1 to w2)
-          }
+    flatRfs
+      .map { it.to }
+      .toSet()
+      .forEach { r ->
+        writes[r.const.varDecl]?.forEach { w ->
+          r.interferenceCond(w)
+            ?.takeIf { it !is FalseExpr }
+            ?.let { interferenceToEvents.getOrPut(it) { mutableListOf() }.add(r to w) }
         }
       }
-    }
+    interferenceToEvents.keys.forEach { userPropagator.registerExpression(it) }
     interferenceCondToEvents = interferenceToEvents
   }
 
-  private fun interferenceKnown(w1: E, w2: E) =
-    w1.interferenceCond(w2) == null || partialAssignment.any { it.interference == w1 to w2 }
+  private fun interferenceKnown(r: E, w: E) =
+    r.interferenceCond(w) == null || partialAssignment.any { it.interference == r to w }
 
   private fun propagate(expr: Expr<BoolType>): Boolean {
     flatRfs
@@ -158,7 +162,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         return propagate(ws)
       }
     flatWrites.filter { it.guardExpr == expr }.forEach { w -> if (propagate(w)) return true }
-    interferenceCondToEvents[expr]?.forEach { (w1, w2) -> if (propagate(w1, w2)) return true }
+    interferenceCondToEvents[expr]?.forEach { (r, w) -> if (propagate(r, w)) return true }
     return false
   }
 
@@ -172,7 +176,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         writes[rel.from.const.varDecl]!!
           .filter { w ->
             (w.guard.isEmpty() || partialAssignment.any { it.event == w }) &&
-              interferenceKnown(rel.from, w)
+              interferenceKnown(rel.to, w)
           }
           .forEach { w ->
             val reason = derive(assignment.rels, rel, w)
@@ -182,7 +186,11 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
       RelationType.WS -> {
         rfs[rel.from.const.varDecl]
-          ?.filter { rf -> rf.from == rel.from && partialAssignment.any { it.relation == rf } }
+          ?.filter { rf ->
+            rf.from == rel.from &&
+              partialAssignment.any { it.relation == rf } &&
+              interferenceKnown(rf.to, rel.to)
+          }
           ?.forEach { rf ->
             val reason = derive(assignment.rels, rf, rel.to)
             if (propagate(reason)) return true
@@ -200,9 +208,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     val assignment = PropagatorOcAssignment(partialAssignment, w, solverLevel)
 
     rfs[w.const.varDecl]
-      ?.filter { rf ->
-        partialAssignment.any { it.relation == rf } && interferenceKnown(rf.from, w)
-      }
+      ?.filter { rf -> partialAssignment.any { it.relation == rf } && interferenceKnown(rf.to, w) }
       ?.forEach { rf ->
         val reason = derive(assignment.rels, rf, w)
         if (propagate(reason)) return true
@@ -211,16 +217,15 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     return false
   }
 
-  private fun propagate(w1: E, w2: E): Boolean {
-    check(w1.type == EventType.WRITE && w2.type == EventType.WRITE)
-    val assignment = PropagatorOcAssignment(partialAssignment, w1 to w2, solverLevel)
-    if (partialAssignment.none { it.event == w1 } || partialAssignment.none { it.event == w2 })
-      return false
+  private fun propagate(r: E, w: E): Boolean {
+    check(r.type == EventType.READ && w.type == EventType.WRITE)
+    val assignment = PropagatorOcAssignment(partialAssignment, r to w, solverLevel)
+    if (w.guard.isNotEmpty() && partialAssignment.none { it.event == w }) return false
 
-    rfs[w1.const.varDecl]
-      ?.filter { rf -> rf.from == w1 && partialAssignment.any { it.relation == rf } }
+    rfs[r.const.varDecl]
+      ?.filter { rf -> rf.to == r && partialAssignment.any { it.relation == rf } }
       ?.forEach { rf ->
-        val reason = derive(assignment.rels, rf, w2)
+        val reason = derive(assignment.rels, rf, w)
         if (propagate(reason)) return true
       }
 
