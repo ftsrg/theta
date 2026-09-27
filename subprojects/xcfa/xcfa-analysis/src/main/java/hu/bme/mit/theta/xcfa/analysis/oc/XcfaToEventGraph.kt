@@ -476,7 +476,8 @@ internal class XcfaToEventGraph(
       if (final || outgoingEdges.isEmpty()) return true
       if (!seen.add(this)) return false
       val edge = outgoingEdges.singleOrNull() ?: return false
-      return edge.label.getFlatLabels().all { it is NopLabel } && edge.target.isTerminalSink(seen)
+      val doesNothing = { l: XcfaLabel -> l is NopLabel || (l is StmtLabel && l.stmt is SkipStmt) }
+      return edge.label.getFlatLabels().all(doesNothing) && edge.target.isTerminalSink(seen)
     }
 
     private fun AssignStmt<*>.process() {
