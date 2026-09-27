@@ -42,6 +42,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInt
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration> {
     private final ParseContext parseContext;
@@ -641,12 +642,36 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 "Type qualifiers inside array declarations are not yet implemented.");
 
         CDeclaration decl = ctx.directDeclarator().accept(this);
-        if (ctx.assignmentExpression() != null) {
-            decl.addArrayDimension(ctx.assignmentExpression().accept(functionVisitor));
-        } else {
+        if (ctx.assignmentExpression() == null) {
             decl.addArrayDimension(null);
+        } else if (isParameterOuterDimension(ctx)) {
+            // C adjusts the parameter to a pointer, so this dimension means nothing. It may name
+            // what is not in scope where the declarator is read: another parameter (`int x[n]`),
+            // or, in the pre-passes, a global. Unreadable, it is left unknown, as in `x[]`.
+            CStatement dimension;
+            try {
+                dimension = ctx.assignmentExpression().accept(functionVisitor);
+            } catch (RuntimeException e) {
+                dimension = null;
+            }
+            decl.addArrayDimension(dimension);
+        } else {
+            decl.addArrayDimension(ctx.assignmentExpression().accept(functionVisitor));
         }
         return decl;
+    }
+
+    /** Whether ctx is the outermost array dimension of a parameter declarator (`x[this][..]`). */
+    private static boolean isParameterOuterDimension(CParser.DirectDeclaratorArray1Context ctx) {
+        if (!(ctx.directDeclarator() instanceof CParser.DirectDeclaratorIdContext)) {
+            return false;
+        }
+        ParserRuleContext parent = ctx.getParent();
+        while (parent instanceof CParser.DirectDeclaratorArray1Context) {
+            parent = parent.getParent();
+        }
+        return parent instanceof CParser.DeclaratorContext
+                && parent.getParent() instanceof CParser.OrdinaryParameterDeclarationContext;
     }
 
     @Override
