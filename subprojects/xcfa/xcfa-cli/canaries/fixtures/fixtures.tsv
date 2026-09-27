@@ -85,3 +85,6 @@ global_inline_struct_array_init.c	efficient	ILP32	SAFE	global bitfield-struct an
 uninit_local_per_call.c	efficient	ILP32	UNSAFE	an uninitialized local gets a fresh value at each declaration, not the previous inlined call's
 short_circuit_postfix.c	efficient	LP64	SAFE	a postfix ++/-- in a && / || operand runs only if the operand does, before the next operand
 short_circuit_operand_value.c	efficient	LP64	SAFE	&& / || combine operand values taken before a later operand's side effect
+recursive_struct_depth2.c	efficient	LP64	SAFE	a recursive struct is typed correctly beyond one hop through its self-pointer (p->next->next->data)
+recursive_struct_sizeof_depth2.c	efficient	LP64	SAFE	sizeof two hops through a recursive struct self-pointer is the struct size, not the int placeholder
+recursive_struct_byvalue_cycle.c	efficient	LP64	SAFE	a pointer cycle through a by-value member (A holds B, B points to A) is typed beyond one hop

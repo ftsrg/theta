@@ -66,6 +66,12 @@ public class Struct extends NamedType {
     private boolean currentlyBeingBuilt;
 
     /**
+     * How many expansions of the *canonical* definition's fields are currently on the stack. A
+     * pointer to a struct in this state closes a cycle, so its pointee is resolved on access.
+     */
+    private int fieldExpansionsInProgress;
+
+    /**
      * Set while this tag's `{ ... }` body is being read, i.e. between the first member and the last
      * (see {@link #beginDefinition()}). A tag in that state is just as incomplete as one with no
      * body at all: expanding it yields whatever members have been seen so far, and the rest arrive
@@ -242,6 +248,17 @@ public class Struct extends NamedType {
 
     @Override
     public CComplexType getActualType() {
+        final Struct canonical = canonical();
+        if (getPointerLevel() > 0 && canonical.fieldExpansionsInProgress > 0) {
+            // A pointer back into a struct being expanded (`struct Node *next`). An eager pointee
+            // could only hold that unfinished expansion, cutting `p->next->next` off.
+            final CPointer backPointer =
+                    CPointer.resolvedOnAccess(this, this::backPointee, parseContext);
+            if (isAtomicPointer(getPointerLevel() - 1)) {
+                backPointer.setAtomic();
+            }
+            return backPointer;
+        }
         if (currentlyBeingBuilt) {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
@@ -252,7 +269,6 @@ public class Struct extends NamedType {
             return placeholder;
         }
         currentlyBeingBuilt = true;
-        final Struct canonical = canonical();
         // Expanding a tag whose body is not (fully) parsed yet yields a CStruct missing members --
         // unavoidable, they have not been read. Report it to the expansion in progress so that
         // whatever caches this result can be invalidated when the remaining members arrive. Both an
@@ -268,12 +284,14 @@ public class Struct extends NamedType {
             final java.util.Set<String> frame = new java.util.LinkedHashSet<>();
             expansionFrames.push(frame);
             final List<Tuple2<String, CComplexType>> expanded = new ArrayList<>();
+            canonical.fieldExpansionsInProgress++;
             try {
                 resolvedFields()
                         .forEach(
                                 (s, cDeclaration) ->
                                         expanded.add(Tuple2.of(s, cDeclaration.getActualType())));
             } finally {
+                canonical.fieldExpansionsInProgress--;
                 expansionFrames.pop();
             }
             canonical.cachedActualFields = expanded;
@@ -327,6 +345,18 @@ public class Struct extends NamedType {
         }
 
         return type;
+    }
+
+    /**
+     * What a back-pointer handed out by {@link #getActualType()} points to: this type with one
+     * pointer level removed, expanded from the canonical definition as it is at the time of access.
+     */
+    private CComplexType backPointee() {
+        if (canonical().fieldExpansionsInProgress > 0) {
+            // Accessed before the expansion that created it finished: there is no struct yet.
+            return CComplexType.getSignedInt(parseContext);
+        }
+        return ((CPointer) getActualType()).getEmbeddedType();
     }
 
     @Override
