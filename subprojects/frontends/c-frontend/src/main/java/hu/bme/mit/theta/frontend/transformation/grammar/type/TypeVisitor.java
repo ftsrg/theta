@@ -37,8 +37,22 @@ import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVis
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.C128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import java.util.*;
@@ -761,9 +775,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     /**
      * `typeof(expr)` for expressions that need no variable context -- which covers the macro idiom
      * it exists for: `container_of` expands to `typeof(((struct T*)0)->field)`, a member access on
-     * a null literal. The expression is built only to ask its type; it is never emitted. An
-     * expression that references variables (a plain `typeof(x)`) is out of reach here -- the type
-     * visitor has no scope -- and is reported as unsupported rather than mistyped.
+     * a null literal. The expression is built only to ask its type; it is never emitted. Variables
+     * resolve only inside a function (see {@link #scopedExpressionVisitor}).
      */
     @Override
     public CSimpleType visitTypeSpecifierTypeof(CParser.TypeSpecifierTypeofContext ctx) {
@@ -805,16 +818,83 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         for (java.util.function.Supplier<ExpressionVisitor> attempt : attempts) {
             try {
                 Expr<?> expr = ctx.constantExpression().accept(attempt.get());
-                CSimpleType origin = CComplexType.getType(expr, parseContext).getOrigin();
-                if (origin != null) {
-                    return origin.copyOf();
-                }
+                return simpleTypeOf(CComplexType.getType(expr, parseContext));
             } catch (RuntimeException e) {
                 // try the next scope, then fall through to the unsupported report below
             }
         }
         throw new UnsupportedFrontendElementException(
                 "typeof over an expression whose type could not be determined: " + ctx.getText());
+    }
+
+    /**
+     * The simple type spelling [type]. An origin is the declaration a type was built from, and
+     * every layer of `struct S *p` shares the origin `struct S *` -- so the `struct S` that `*p`
+     * yields keeps only as many of the origin's pointer levels as it has layers of its own.
+     *
+     * <p>Types the frontend makes up itself (for a literal, an arithmetic result, an address) have
+     * no origin, and are spelled from their own shape instead.
+     */
+    private CSimpleType simpleTypeOf(CComplexType type) {
+        if (type.getOrigin() != null) {
+            final CSimpleType copy = type.getOrigin().copyOf();
+            copy.keepInnermostPointers(indirections(type));
+            return copy;
+        }
+        final CComplexType pointee = pointeeOf(type);
+        if (pointee != null) {
+            final CSimpleType pointer = simpleTypeOf(pointee);
+            pointer.incrementPointer();
+            return pointer;
+        }
+        if (type instanceof CVoid) {
+            return NamedType("void", parseContext, uniqueWarningLogger);
+        } else if (type instanceof CFloat) {
+            return NamedType("float", parseContext, uniqueWarningLogger);
+        } else if (type instanceof CDouble || type instanceof CLongDouble) {
+            final CSimpleType real = NamedType("double", parseContext, uniqueWarningLogger);
+            real.setLong(type instanceof CLongDouble);
+            return real;
+        } else if (type instanceof CBool
+                || type instanceof CChar
+                || type instanceof CShort
+                || type instanceof CInt
+                || type instanceof CLong
+                || type instanceof CLongLong
+                || type instanceof C128) {
+            final CSimpleType integer =
+                    NamedType(
+                            type instanceof CChar ? "char" : "int",
+                            parseContext,
+                            uniqueWarningLogger);
+            integer.setSigned(((CInteger) type).isSsigned());
+            integer.setBool(type instanceof CBool);
+            integer.setShort(type instanceof CShort);
+            integer.setLong(type instanceof CLong);
+            integer.setLongLong(type instanceof CLongLong);
+            integer.set128(type instanceof C128);
+            return integer;
+        }
+        throw new UnsupportedFrontendElementException(
+                "typeof over an expression of type " + type.getClass().getSimpleName());
+    }
+
+    private static CComplexType pointeeOf(CComplexType type) {
+        if (type instanceof CPointer pointer) {
+            return pointer.getEmbeddedType();
+        } else if (type instanceof CArray array) {
+            return array.getEmbeddedType();
+        }
+        return null;
+    }
+
+    /** How many pointer (or array) layers [type] has before its base type. */
+    private static int indirections(CComplexType type) {
+        int layers = 0;
+        for (CComplexType t = pointeeOf(type); t != null; t = pointeeOf(t)) {
+            layers++;
+        }
+        return layers;
     }
 
     @Override
