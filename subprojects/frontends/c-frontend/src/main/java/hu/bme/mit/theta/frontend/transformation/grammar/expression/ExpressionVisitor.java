@@ -71,6 +71,8 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -1119,6 +1121,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitUnaryExpressionCast(CParser.UnaryExpressionCastContext ctx) {
         Expr<?> originalOperand = ctx.castExpression().accept(this);
+        if (ctx.unaryOperator().getText().equals("&")
+                && parseContext
+                        .getMetadata()
+                        .getMetadataValue(originalOperand, BitfieldSlice.PACKED_CELL)
+                        .isPresent()) {
+            // The member is bits of the union's word, not an object, so no pointer of the cell
+            // models can address it. Not a bytes-model retry: that model's struct copy still walks
+            // cell offsets, not byte offsets.
+            throw new UnsupportedFrontendElementException(
+                    "Taking the address of a union member stored packed into the union's word is"
+                            + " not supported.");
+        }
         CComplexType type = CComplexType.getType(originalOperand, parseContext);
         type = getSmallestCommonType(List.of(type), parseContext);
         Expr<?> promotedOperand = type.castTo(originalOperand);
@@ -2221,7 +2235,31 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 hu.bme.mit.theta.frontend.transformation.model.types.complex
                                         .compound.BitfieldSlice.PACKED_CELL)
                         .isPresent()) {
-            return sliceOf(base, structType.overlaySlotOf(memberName), embeddedType);
+            // When `base` is itself a slice (a nested or narrower packed struct), slice its cell at
+            // the combined offset instead, so that the member stays assignable like any bitfield.
+            final var outerCell =
+                    parseContext.getMetadata().getMetadataValue(base, BitfieldSlice.CELL);
+            final int outerOffset =
+                    outerCell.isPresent()
+                            ? ((Number)
+                                            parseContext
+                                                    .getMetadata()
+                                                    .getMetadataValue(base, BitfieldSlice.OFFSET)
+                                                    .orElseThrow())
+                                    .intValue()
+                            : 0;
+            final BitfieldLayout.Slot slot = structType.overlaySlotOf(memberName);
+            final Expr<?> slice =
+                    sliceOf(
+                            outerCell.isPresent() ? (Expr<?>) outerCell.get() : base,
+                            new BitfieldLayout.Slot(
+                                    0, outerOffset + slot.bitOffset(), slot.width(), true),
+                            embeddedType);
+            if (embeddedType instanceof CStruct) {
+                // A nested struct is more bits of the same word, not an object with a base id.
+                parseContext.getMetadata().create(slice, BitfieldSlice.PACKED_CELL, true);
+            }
+            return slice;
         }
 
         // A union whose members are not all stored alike is one word that each member slices; the

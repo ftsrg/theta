@@ -75,3 +75,8 @@ nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only 
 stub_write_race.c	efficient	LP64	UNSAFE:no-data-race	a library stub writing through a pointer argument stays visible to the data-race instrumentation
 stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps the reads of its arguments (a race on one of them is still reported)
 unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
+union_packed_member_copy.c	efficient	ILP32	SAFE	a struct copied into or out of a union member packed into the union word moves field bits, not a base address
+union_packed_member_copy_wrong_true.c	efficient	ILP32	UNSAFE	a struct copied into a packed union member reaches the member (no wrong TRUE)
+union_packed_member_copy_bv.c	bitvector	LP64	SAFE	packed union member copies under bitvector: word narrower than a pointer, a slice of the word, bitfields, nesting, signed, by-value argument
+union_packed_member_address.c	efficient	ILP32	FRONTEND-FAIL	the address of a packed union member is refused, not taken as the word value
+union_packed_nested_member.c	bitvector	ILP32	SAFE	a struct nested in a packed union member is read, copied and written as bits of the union word

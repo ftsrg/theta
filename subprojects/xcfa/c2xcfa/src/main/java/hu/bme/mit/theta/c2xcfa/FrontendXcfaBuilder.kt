@@ -69,6 +69,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort
@@ -913,17 +914,164 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel> =
-    // Bitfields sharing a storage unit map to the same cell, so the copy of that cell is simply
-    // repeated -- idempotent, and it carries all the packed fields at once.
+    if (isPackedCell(target) || isPackedCell(source)) {
+      packedFieldCopies(packedSide(target), packedSide(source), type, metadata)
+    } else {
+      // Bitfields sharing a storage unit map to the same cell, so the copy of that cell is simply
+      // repeated -- idempotent, and it carries all the packed fields at once.
+      type.fields.flatMap { field ->
+        val fieldType = field.get2()
+        val unit = type.unitOffsetOf(field.get1())
+        copySubobject(
+          subobjectCell(target, type, unit, fieldType),
+          subobjectCell(source, type, unit, fieldType),
+          fieldType,
+          metadata,
+        )
+      }
+    }
+
+  /**
+   * Whether [expr] is a union member stored as bits of the union's packed word
+   * ([CStruct.overlayWidth]) rather than as an object with a base address of its own.
+   */
+  private fun isPackedCell(expr: Expr<*>): Boolean =
+    parseContext.metadata.getMetadataValue(expr, BitfieldSlice.PACKED_CELL).isPresent
+
+  /**
+   * One side of a struct copy into or out of a packed union member: the bits of a packed word from
+   * [Word.bitOffset] on, or an ordinary struct object reached through its base address.
+   *
+   * A packed member arrives as the union's cell or a slice of it, and its fields are the bits at
+   * [CStruct.overlaySlotOf], so the copy moves each scalar field on its own: sliced out of the
+   * word, or spliced into it by a read-modify-write that keeps the bits of the union's other
+   * members.
+   */
+  private sealed interface PackedSide {
+    class Word(val word: Expr<*>, val bitOffset: Int) : PackedSide
+
+    class Object(val base: Expr<*>) : PackedSide
+  }
+
+  private fun packedSide(expr: Expr<*>): PackedSide {
+    if (!isPackedCell(expr)) return PackedSide.Object(expr)
+    // A slice is addressed through the cell it slices: its own value is typed as the struct, whose
+    // pointer-wide sort can be narrower than the bits it stands for.
+    val cell = parseContext.metadata.getMetadataValue(expr, BitfieldSlice.CELL).orElse(expr)
+    val offset = parseContext.metadata.getMetadataValue(expr, BitfieldSlice.OFFSET).orElse(0)
+    return PackedSide.Word(cell as Expr<*>, (offset as Number).toInt())
+  }
+
+  private fun packedFieldCopies(
+    target: PackedSide,
+    source: PackedSide,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
     type.fields.flatMap { field ->
+      val name = field.get1()
       val fieldType = field.get2()
-      val unit = type.unitOffsetOf(field.get1())
-      copySubobject(
-        subobjectCell(target, type, unit, fieldType),
-        subobjectCell(source, type, unit, fieldType),
-        fieldType,
-        metadata,
-      )
+      val bits =
+        type.overlaySlotOf(name)
+          ?: throw UnsupportedFrontendElementException(
+            "Member $name of a packed union member has no place in the union's word."
+          )
+      if (fieldType is CStruct) {
+        packedFieldCopies(
+          nestedPackedSide(target, type, name, fieldType, bits.bitOffset()),
+          nestedPackedSide(source, type, name, fieldType, bits.bitOffset()),
+          fieldType,
+          metadata,
+        )
+      } else {
+        val value = readPackedField(source, type, name, fieldType, bits.bitOffset(), bits.width())
+        listOf(
+          writePackedField(target, type, name, fieldType, bits.bitOffset(), bits.width(), value)
+            .let { StmtLabel(it, metadata = metadata) }
+        )
+      }
+    }
+
+  private fun nestedPackedSide(
+    side: PackedSide,
+    type: CStruct,
+    name: String,
+    fieldType: CStruct,
+    bitOffset: Int,
+  ): PackedSide =
+    when (side) {
+      is PackedSide.Word -> PackedSide.Word(side.word, side.bitOffset + bitOffset)
+      // In an ordinary object a nested struct is an object of its own, held by its base id.
+      is PackedSide.Object ->
+        PackedSide.Object(subobjectCell(side.base, type, type.unitOffsetOf(name), fieldType))
+    }
+
+  /**
+   * The value of scalar field [name], typed as [fieldType]; mirrors `ExpressionVisitor#sliceOf`.
+   */
+  private fun readPackedField(
+    side: PackedSide,
+    type: CStruct,
+    name: String,
+    fieldType: CComplexType,
+    bitOffset: Int,
+    width: Int,
+  ): Expr<*> {
+    val signed = (fieldType as? CInteger)?.isSsigned ?: false
+    return when (side) {
+      is PackedSide.Word ->
+        fieldType.castTo(BitfieldSlice.read(side.word, side.bitOffset + bitOffset, width, signed))
+      is PackedSide.Object -> {
+        val slot = type.slotOf(name)
+        val cell = subobjectCell(side.base, type, slot.unitIndex(), fieldType)
+        if (slot.bitfield() && slot.width() < fieldType.width())
+          fieldType.castTo(BitfieldSlice.read(cell, slot.bitOffset(), slot.width(), signed))
+        else cell
+      }
+    }
+  }
+
+  private fun writePackedField(
+    side: PackedSide,
+    type: CStruct,
+    name: String,
+    fieldType: CComplexType,
+    bitOffset: Int,
+    width: Int,
+    value: Expr<*>,
+  ): MemoryAssignStmt<*, *, *> =
+    when (side) {
+      is PackedSide.Word -> {
+        val cell =
+          side.word as? Dereference<*, *, *>
+            ?: throw UnsupportedFrontendElementException(
+              "Cannot store into packed union member bits of ${side.word}: it is not a memory cell."
+            )
+        // The cell's recorded type is the member struct's, whose sort is a pointer-width
+        // placeholder, so splice at the unsigned type of the cell's own width.
+        val storageType = (cell.type as? BvType)?.let { unsignedTypeOfWidth(it.size) }
+        val newCell =
+          BitfieldSlice.write(
+            cell,
+            storageType?.castTo(value) ?: value,
+            side.bitOffset + bitOffset,
+            width,
+          )
+        val op = cast(cell.array, cell.array.type)
+        val deref = Dereference(op, cast(cell.offset, op.type), cell.type)
+        val cellType = storageType ?: CComplexType.getType(cell, parseContext)
+        parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+        MemoryAssignStmt.create(deref, cast(newCell, deref.type))
+      }
+      is PackedSide.Object -> {
+        val slot = type.slotOf(name)
+        val cell = subobjectCell(side.base, type, slot.unitIndex(), fieldType)
+        val newCell =
+          if (slot.bitfield() && slot.width() < fieldType.width())
+            BitfieldSlice.write(cell, value, slot.bitOffset(), slot.width())
+          else value
+        MemoryAssignStmt.create(cell, cast(newCell, cell.type))
+      }
     }
 
   /** Copies an array object's elements into another, element by element. */
@@ -1571,7 +1719,21 @@ class FrontendXcfaBuilder(
     val byteUnionBase =
       parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.BASE).orElse(null) as? Expr<*>
     val label: XcfaLabel =
-      if (byteUnionBase != null) {
+      if (isPackedCell(lValue)) {
+        // A packed union member is bits of the union's word, so the only thing assignable to it is
+        // a struct of its own type, spliced in field by field (see [PackedSide]).
+        val packedType = CComplexType.getType(lValue, parseContext) as? CStruct
+        if (packedType == null || !packedType.isCopiedStruct(rExpression)) {
+          throw UnsupportedFrontendElementException(
+            "Cannot assign $rExpression to packed union member $lValue: it is not a struct of" +
+              " the member's type."
+          )
+        }
+        SequenceLabel(
+          structCopy(lValue, rExpression, packedType, getMetadata(statement)),
+          metadata = getMetadata(statement),
+        )
+      } else if (byteUnionBase != null) {
         val byteOffset =
           parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.OFFSET).orElseThrow()
             as Expr<*>
@@ -2324,6 +2486,12 @@ class FrontendXcfaBuilder(
     builder.addLoc(endLoc)
     val key: VarDecl<*> = builder.getParams()[0].first
     check(returnLoc != null)
+    // A struct is returned as its base address, which a packed union member does not have.
+    if (expr?.expression?.let { isPackedCell(it) } == true) {
+      throw UnsupportedFrontendElementException(
+        "Returning packed union member ${expr.expression} by value is not supported."
+      )
+    }
     val type = CComplexType.getType(key.ref, parseContext)
     val edge =
       XcfaEdge(
