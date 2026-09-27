@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts
@@ -1929,17 +1930,20 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
-    xcfaEdge =
-      XcfaEdge(
-        initLoc,
-        location,
-        StmtLabel(
-          statement.assumeStmt,
-          choiceType = ChoiceType.NONE,
-          metadata = getMetadata(statement),
-        ),
+    val assume =
+      StmtLabel(
+        statement.assumeStmt,
+        choiceType = ChoiceType.NONE,
         metadata = getMetadata(statement),
       )
+    val label =
+      statement.havocked
+        .map<XcfaLabel> {
+          val havoc = StmtLabel(HavocStmt.of(it), metadata = getMetadata(statement))
+          SequenceLabel(listOf(havoc, assume), metadata = getMetadata(statement))
+        }
+        .orElse(assume)
+    xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     return location
   }

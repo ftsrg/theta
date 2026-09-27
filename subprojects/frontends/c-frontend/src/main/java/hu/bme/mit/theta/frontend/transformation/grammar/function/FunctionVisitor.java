@@ -92,6 +92,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
+    private int loopDepth = 0;
+    private String currentFunction;
     private final Set<VarDecl<?>> atomicVariables;
     private int anonCnt = 0;
     private final List<VarDecl<?>> flatVariables;
@@ -785,6 +787,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        currentFunction = funcDecl.getName();
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
             if (functionParam.getName() != null) createVars(functionParam);
@@ -944,6 +947,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopWhileStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopWhileStatement(CParser.WhileStatementContext ctx) {
         parseContext.getCStmtCounter().incrementWhileLoops();
         pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
         final int whileMark = scopeMark();
@@ -959,6 +971,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopDoWhileStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
         final int doWhileMark = scopeMark();
         CDoWhile cDoWhile =
@@ -973,6 +994,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitForStatement(CParser.ForStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopForStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopForStatement(CParser.ForStatementContext ctx) {
         parseContext.getCStmtCounter().incrementForLoops();
         pushScope(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
         CStatement init = ctx.forCondition().forInit().accept(this);
@@ -1718,7 +1748,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     AssumeStmt assumeStmt =
                             CComplexType.getType(varDecl.getRef(), parseContext)
                                     .limit(varDecl.getRef());
-                    CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                    // A re-executed declaration (a loop body, or a callee that is inlined or
+                    // called again) must havoc, or it reads the previous activation's value. An
+                    // array variable holds its alloca base, assigned just above, so it keeps it.
+                    boolean mayRepeat = loopDepth > 0 || !"main".equals(currentFunction);
+                    CAssume cAssume =
+                            declaration.getActualType() instanceof CArray || !mayRepeat
+                                    ? new CAssume(assumeStmt, parseContext)
+                                    : new CAssume(varDecl, assumeStmt, parseContext);
                     recordMetadata(ctx, cAssume);
                     cAssume.setFunctionName("NotC");
                     // assumption is not in C file
