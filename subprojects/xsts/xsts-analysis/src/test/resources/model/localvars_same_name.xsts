@@ -1,0 +1,16 @@
+var x: integer = 0
+
+trans {
+    choice {
+        local var a: integer = 1;
+        x := x + a;
+    }
+    choice {
+        local var a: integer = 2;
+        x := x + a;
+    }
+}
+
+init {}
+
+env {}

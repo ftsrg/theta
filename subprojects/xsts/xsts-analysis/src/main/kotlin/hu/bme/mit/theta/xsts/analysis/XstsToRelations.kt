@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,9 +102,12 @@ fun XSTS.toRelations(): List<Relation> {
   val vars = vars.map { varChangeMap[it] ?: it }
 
   val types = vars.map { it.type }.toTypedArray()
-  val oldParams = vars.associateWith { Param("|" + it.name + "|", it.type) }
+  // Solvers identify bound params by name, and distinct vars may share one (e.g. same-name locals),
+  // so the var's position makes each name unique.
+  val oldParams = vars.withIndex().associate { (i, v) -> v to Param("|${v.name}_$i|", v.type) }
   val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
-  val newParams = vars.associateWith { Param("|" + it.name + "_new|", it.type) }
+  val newParams =
+    vars.withIndex().associate { (i, v) -> v to Param("|${v.name}_${i}_new|", v.type) }
 
   fun toRelation(
     rel: Relation,
