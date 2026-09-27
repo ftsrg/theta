@@ -59,11 +59,8 @@ import kotlin.math.max
  *   a thread handle with no static identity to match a create to its join. Removing this parameter
  *   therefore means giving handles an identity that survives re-basing, not reordering passes.
  *
- * @param cutBounds per-cut-point overrides of the force unroll and recursion bounds, keyed by
- *   [UnrollExits] keys, so that a caller can deepen some cut points while keeping the rest.
- * @param markUnrollExits when true, every continuation a bound cuts off (the next loop iteration,
- *   the next recursive call, a removed back edge) leads into an [unroll exit location][UnrollExits]
- *   instead of being dropped, so that its reachability can be queried afterwards.
+ * @param cutBounds per-cut-point overrides of the force unroll and recursion bounds
+ * @param markUnrollExits whether cut-off continuations lead into [UnrollExits] instead of nowhere
  */
 class UnrollPass(
   specificForceUnrollLimit: Int = -1,
@@ -133,9 +130,8 @@ class UnrollPass(
   private val tracker = CutTracker()
 
   /**
-   * Keeps loops identifiable across rounds: every location this pass copies maps (by identity) to
-   * the input location it stems from, so a copy of an inner loop gets the same [UnrollExits] key as
-   * the loop itself. Also creates the exit locations the cut continuations lead into.
+   * Maps every copied location (by identity) to its input location, so all copies of a loop share
+   * one [UnrollExits] key. Also creates the exit locations.
    */
   private inner class CutTracker {
 
@@ -152,7 +148,6 @@ class UnrollPass(
 
     fun bound(key: String, default: Int): Int = if (default == -1) -1 else cutBounds[key] ?: default
 
-    /** Adds an edge from [source] into the exit location of [key] for each of [labels]. */
     fun cut(
       builder: XcfaProcedureBuilder,
       key: String,
@@ -165,8 +160,7 @@ class UnrollPass(
       val exit =
         builder.getLocs().find { it.name == name }
           ?: XcfaLocation(name, metadata = EmptyMetaData).also(builder::addLoc)
-      // Only the condition of the cut-off step matters for reaching it; keeping its other effects
-      // would just add events to every query.
+      // only the condition of the cut-off step matters: its other effects would just add events
       labels.forEach { label ->
         val condition = label.getFlatLabels().takeWhile { it is StmtLabel && it.stmt is AssumeStmt }
         builder.addEdge(XcfaEdge(source, exit, SequenceLabel(condition), metadata))

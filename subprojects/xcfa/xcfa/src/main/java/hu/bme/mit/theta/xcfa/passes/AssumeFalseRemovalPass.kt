@@ -48,9 +48,8 @@ class AssumeFalseRemovalPass(private val property: XcfaProperty) : ProcedurePass
       unreachable = getUnreachable()
     }
 
-    // Also for a native data race check: unrolling merges the aborts of all iterations of a loop
-    // into
-    // one exit location, which the OC checker rejects when they abort different atomic blocks.
+    // also for native data race checks: unrolling merges the aborts of a loop's iterations, which
+    // the OC checker rejects when they abort different atomic blocks
     if (
       property.verifiedProperty == ErrorDetection.ERROR_LOCATION ||
         property.verifiedProperty == ErrorDetection.DATA_RACE

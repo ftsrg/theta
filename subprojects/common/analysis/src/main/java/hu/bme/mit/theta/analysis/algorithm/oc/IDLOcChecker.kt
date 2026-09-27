@@ -28,51 +28,25 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
-import java.util.Collections
-import java.util.WeakHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * @param sharedSolver a solver to use instead of a new one, e.g., to scope several checks on the
- *   same event graph with push/pop
- */
-class IDLOcChecker<E : Event>(
-  smtSolver: String,
-  private val isSc: Boolean = false,
-  sharedSolver: Solver? = null,
-) : OcChecker<E>() {
-  override val solver: Solver =
-    sharedSolver ?: SolverManager.resolveSolverFactory(smtSolver).createSolver()
+class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = false) :
+  OcChecker<E>() {
+  override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
 
-  companion object {
-    // Checkers sharing a solver must use the same declarations: a solver maps each declaration
-    // (not name) to its own symbol, and refuses a second declaration of the same name.
-    private val clkGlobalDecls: MutableMap<Int, ConstDecl<IntType>> =
-      Collections.synchronizedMap(mutableMapOf())
-    private val clkAtomicDecls: MutableMap<Event, ConstDecl<IntType>> =
-      Collections.synchronizedMap(WeakHashMap())
-    private val hbDecls: MutableMap<Pair<Int, Int>, ConstDecl<BoolType>> =
-      Collections.synchronizedMap(mutableMapOf())
-    private val clkAtomicCnt = AtomicInteger()
-  }
-
+  private var clkGlobalCnt = 0
   private val clkGlobalVars: MutableMap<Int, ConstDecl<IntType>> = mutableMapOf()
   private val Int.clkGlobalVar: ConstDecl<IntType>
-    get() =
-      clkGlobalVars.getOrPut(this) {
-        clkGlobalDecls.getOrPut(this) { Decls.Const("__clk_global__$this", Int()) }
-      }
+    get() = clkGlobalVars.getOrPut(this) { Decls.Const("__clk_global__${clkGlobalCnt++}", Int()) }
 
+  private var clkAtomicCnt = 0
   private val clkAtomicVars: MutableMap<E, ConstDecl<IntType>> = mutableMapOf()
   private val E.clkAtomicVar: ConstDecl<IntType>
-    get() =
-      clkAtomicVars.getOrPut(this) {
-        clkAtomicDecls.getOrPut(this) {
-          Decls.Const("__clk_atomic__${clkAtomicCnt.getAndIncrement()}", Int())
-        }
-      }
+    get() = clkAtomicVars.getOrPut(this) { Decls.Const("__clk_atomic__${clkAtomicCnt++}", Int()) }
 
   private lateinit var hbVars: Array<Array<ConstDecl<BoolType>?>> // happens-before variables
+
+  // kept across checks: a solver refuses a second declaration of the same name
+  private val hbDecls: MutableMap<Pair<Int, Int>, ConstDecl<BoolType>> = mutableMapOf()
 
   private lateinit var events: List<E>
 
@@ -89,11 +63,7 @@ class IDLOcChecker<E : Event>(
         .ref
   }
 
-  /**
-   * Whether the atomic units of [e1] and [e2] can be at neighbouring clock values, i.e., executed
-   * right after one another. As clock values are distinct integers, nothing fits between them then.
-   * Only meaningful under SC, where the global clocks order all atomic units totally.
-   */
+  /** Whether the atomic units of [e1] and [e2] are at neighbouring clock values. */
   fun adjacent(e1: E, e2: E): Expr<BoolType> {
     check(isSc && e1.clkId != e2.clkId)
     val clk1 = e1.clkId.clkGlobalVar.ref
@@ -180,7 +150,6 @@ class IDLOcChecker<E : Event>(
         writes.forEach { w2 ->
           if (w1 != w2) {
             vRfs.forEach { rf ->
-              // a write to another cell of the same memory partition does not hide rf.from
               if (w1 == rf.from && rf.to.potentialSameMemory(w2)) {
                 val wsExpr =
                   And(

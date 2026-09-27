@@ -48,7 +48,6 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.references
 
-/** @param trackRaces whether to mark the events that can take part in a data race */
 internal class XcfaToEventGraph(
   private val xcfa: XCFA,
   private val parseContext: ParseContext,
@@ -103,7 +102,6 @@ internal class XcfaToEventGraph(
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
   private val unrollExits: MutableList<UnrollExit> = mutableListOf()
 
-  /** Shared, non-`_Atomic` global variables: the variables whose accesses can race. */
   private val racingGlobals: Set<VarDecl<*>> =
     xcfa.globalVars.filter { !it.threadLocal && !it.atomic }.map { it.wrappedVar }.toSet()
 
@@ -223,7 +221,7 @@ internal class XcfaToEventGraph(
     private var atomicBlock: Int? = null
     private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
 
-    /** Set while modelling a library call, whose synthesised accesses are not program accesses. */
+    // accesses synthesised for a library call are not program accesses: they do not race
     private var inLibraryCall = false
 
     init {

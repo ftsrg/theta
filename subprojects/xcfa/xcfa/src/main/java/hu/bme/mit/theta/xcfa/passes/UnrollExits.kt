@@ -18,37 +18,27 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 /**
- * Unroll exit locations: where [UnrollPass] (with `markUnrollExits`) sends a continuation that an
- * unroll bound cut off, so that a backend can ask whether the bound was actually reached.
- *
- * An exit location is named after a key that identifies its cut point across unrolling rounds: the
- * procedure and the input location (loop head, recursive callee or back-edge target) it belongs to.
- * All copies of the same loop -- e.g. of an inner loop in each copy of the outer one -- share a
- * key, and with it a single exit location.
+ * Locations where [UnrollPass] sends the continuations an unroll bound cuts off. Their names carry
+ * a key identifying the cut point (procedure and input location) across unrolling rounds.
  */
 object UnrollExits {
 
   enum class Kind(internal val tag: String, val deepenable: Boolean) {
     LOOP("loop", true),
     RECURSION("rec", true),
-    /** A back edge of a loop the pass could not take apart: no bound governs how deep it goes. */
+    // a back edge of a loop the pass could not take apart: no bound to deepen
     BACK_EDGE("cut", false),
   }
 
   private const val PREFIX = "__unroll_exit__"
 
-  /**
-   * Ends the key in a location name: copies of an exit location get suffixes (a counter when a
-   * procedure body is spliced in, `_<pid>` in the per-thread copies), which must not change its
-   * key.
-   */
+  // ends the key: copies of an exit location get name suffixes (e.g. inlining counters, pids)
   private const val END = '$'
 
   fun key(kind: Kind, procedure: String, name: String): String = "${kind.tag}_${procedure}_$name"
 
   fun locationName(key: String): String = "$PREFIX$key$END"
 
-  /** The key of the exit location [loc] (or of a copy of one), or null if it is not one. */
   fun keyOf(loc: XcfaLocation): String? =
     loc.name
       .takeIf { it.startsWith(PREFIX) && END in it }

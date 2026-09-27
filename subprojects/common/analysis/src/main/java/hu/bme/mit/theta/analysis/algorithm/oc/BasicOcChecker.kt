@@ -22,11 +22,8 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-/** @param sharedSolver a solver to use instead of a new one (see [IDLOcChecker]) */
-class BasicOcChecker<E : Event>(smtSolver: String, sharedSolver: Solver? = null) :
-  OcCheckerBase<E>() {
-  override val solver: Solver =
-    sharedSolver ?: SolverManager.resolveSolverFactory(smtSolver).createSolver()
+class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
+  override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
   private var relations: GlobalRelation? = null
 
   override fun check(

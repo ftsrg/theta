@@ -35,7 +35,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -51,18 +50,8 @@ import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import kotlin.time.measureTime
 
 /**
- * Bounded ordering-consistency checking with iterative deepening of the unroll bounds.
- *
- * Every round unrolls the loops (and recursive calls) the bound cannot resolve statically, routing
- * each cut-off continuation into an [unroll exit location][UnrollExits]. When the property query of
- * a round finds no violation, a second query asks which exits a consistent execution can reach: if
- * none, the unrolling covered every execution and the safe result is final. Otherwise only the cut
- * points found reachable are unrolled deeper in the next round; the others keep their bound but
- * stay exits, since deeper unrolling elsewhere can make them reachable again.
- *
- * With the IDL decision procedure under SC, data races are checked natively: a race is a pair of
- * conflicting accesses of different threads that can be at neighbouring clock values, i.e., with
- * nothing (in particular, no synchronisation) executed between them.
+ * Bounded OC checking: a safe result is final when no [unroll exit][UnrollExits] is reachable,
+ * otherwise only the reachable ones are unrolled deeper. IDL under SC checks data races natively.
  */
 class XcfaOcChecker(
   xcfa: XCFA,
@@ -100,35 +89,35 @@ class XcfaOcChecker(
       ProcedurePassManager(listOf(AssumeFalseRemovalPass(property), MutexToVarPass()))
     )
 
-  /** Cuts made before this checker (e.g. by the frontend) have no exit locations to query. */
+  // cuts made before this checker (e.g. by the frontend) have no exit locations to query
   private val cutWithoutExits = this.xcfa.unsafeUnrollUsed
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> {
-    // A negative upper bound means "unbounded": keep deepening (BMC-style) until a reliable result
-    // is found or resources run out.
+    // A negative upper bound means "unbounded": keep deepening the force-unroll bound (BMC-style)
+    // until a reliable result is found or resources run out.
     val unbounded = forceUnrollBoundEnd < 0
     require(forceUnrollBoundStep > 0) { "Force unroll bound step must be positive." }
     require(unbounded || forceUnrollBoundStart <= forceUnrollBoundEnd) {
       "Empty unroll bound range: $forceUnrollBoundStart..$forceUnrollBoundEnd"
     }
-    // bounds of the cut points deepened so far; every other one is at forceUnrollBoundStart
     val bounds = mutableMapOf<String, Int>()
     while (true) {
       logger.mainStep(
         "\nChecking with force loop unroll bound: $forceUnrollBoundStart" +
           if (bounds.isEmpty()) "" else " (deepened: $bounds)"
       )
-      val round = Round(unroll(bounds))
-      val result = round.checkProperty()
-      logger.mainStep("OC checker result: $result")
-      if (!result.isSafe || !round.xcfa.unsafeUnrollUsed || acceptUnreliableSafe) {
-        return result
-      }
-
-      logger.mainStep("Incomplete loop unroll used: checking whether the bounds are reached...")
-      val reached = round.reachedExits()
+      val (result, reached) =
+        Round(unroll(bounds)).use { round ->
+          val result = round.checkProperty()
+          logger.mainStep("OC checker result: $result")
+          if (!result.isSafe || !round.xcfa.unsafeUnrollUsed || acceptUnreliableSafe) {
+            return result
+          }
+          logger.mainStep("Incomplete loop unroll used: checking whether the bounds are reached...")
+          result to round.reachedExits()
+        }
       if (reached.isEmpty() && !cutWithoutExits) {
         logger.mainStep("No unroll bound is reached: the safe result is reliable.")
         return result
@@ -147,12 +136,10 @@ class XcfaOcChecker(
     throw NotSolvableException()
   }
 
-  /**
-   * Force unrolls the XCFA for BMC. Re-running the pass per round is the point: each escalation
-   * expands loops -- and recursive calls, which need parseContext for the parameter assignments --
-   * one level deeper, which inlining, a one-shot pass, cannot do.
-   */
   private fun unroll(bounds: Map<String, Int>): XCFA {
+    // Force loop unroll for BMC. Re-running the pass per bound is the point: each escalation
+    // expands loops -- and recursive calls, which need parseContext for the parameter assignments
+    // -- one level deeper, which inlining, a one-shot pass, cannot do.
     val xcfa =
       xcfa.optimizeFurther(
         ProcedurePassManager(
@@ -172,7 +159,7 @@ class XcfaOcChecker(
   }
 
   /** The queries on the event graph of one unrolling of the XCFA. */
-  private inner class Round(val xcfa: XCFA) {
+  private inner class Round(val xcfa: XCFA) : AutoCloseable {
 
     private val eg: XcfaToEventGraph.EventGraph
 
@@ -180,17 +167,13 @@ class XcfaOcChecker(
 
     private val wss: Map<VarDecl<*>, Set<R>>
 
-    /** Constraints valid for every query on this event graph: known ordering conflicts. */
+    /** Ordering conflicts of this event graph, valid for every query of the round. */
     private val lemmas = mutableListOf<Expr<BoolType>>()
 
-    /**
-     * The solver of all queries of the round when the decision procedure can share one: scoping
-     * each query with push/pop keeps a round from leaving a solver (context) per query behind.
-     */
-    private val sharedSolver: Solver? =
-      if (decisionProcedure.sharesSolver)
-        SolverManager.resolveSolverFactory(smtSolver).createSolver()
-      else null
+    // The propagator does not reset its state between checks, so it gets a new checker per query.
+    private val roundChecker: OcChecker<E>? =
+      if (decisionProcedure == OcDecisionProcedureType.PROPAGATOR) null
+      else decisionProcedure.checker(smtSolver, memoryModel)
 
     init {
       logger.mainStep("Creating event graph...")
@@ -201,13 +184,17 @@ class XcfaOcChecker(
       }
     }
 
+    override fun close() {
+      roundChecker?.solver?.close()
+    }
+
     private fun <T> query(block: (OcChecker<E>) -> T): T {
-      sharedSolver?.push()
-      val checker = decisionProcedure.checker(smtSolver, memoryModel, sharedSolver)
+      val checker = roundChecker ?: decisionProcedure.checker(smtSolver, memoryModel)
+      roundChecker?.solver?.push()
       try {
         return block(checker)
       } finally {
-        if (sharedSolver != null) sharedSolver.pop() else checker.solver.close()
+        if (roundChecker != null) roundChecker.solver.pop() else checker.solver.close()
       }
     }
 
@@ -253,7 +240,6 @@ class XcfaOcChecker(
                 }.inWholeMilliseconds
               }"
             )
-          // theory lemmas of this event graph: they speed up the reachability query of the exits
           lemmas.addAll(checker.getPropagatedClauses().map { Not(it.expr) })
           SafetyResult.safe(EmptyProof.getInstance())
         }
@@ -289,10 +275,8 @@ class XcfaOcChecker(
     }
 
     /**
-     * The keys of the unroll exits that some consistent execution reaches. One model may reach
-     * several exits, so this asks again for the ones not seen yet, until none is left or a bounded
-     * number of queries; whatever is undecided then is assumed reachable, which only costs an
-     * unnecessary deepening.
+     * The keys of the unroll exits some consistent execution reaches. Undecided exits count as
+     * reached, which only costs an unnecessary deepening.
      */
     fun reachedExits(): Set<String> {
       val exitsByKey = eg.unrollExits.groupBy { it.key }
@@ -305,7 +289,6 @@ class XcfaOcChecker(
           break
         }
         val target = Or(remaining.flatMap { exitsByKey.getValue(it) }.map { it.guard })
-        // null: the query is undecided
         val found = query { checker ->
           val status: SolverStatus?
           val time = measureTime { status = solve(checker, target) }
@@ -316,9 +299,9 @@ class XcfaOcChecker(
               val model = checker.solver.model
               remaining
                 .filter { key -> exitsByKey.getValue(key).any { it.guard.holdsIn(model) } }
-                .ifEmpty { null } // the model should show one: do not trust it
+                .ifEmpty { null }
             }
-            else -> null
+            else -> null // undecided
           }
         }
         if (found == null) {

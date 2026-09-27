@@ -23,11 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-/**
- * The conflicting access pairs of two atomic units (clock ids) that can race, and the condition of
- * any of them racing: the units are at neighbouring clock values and one of the pairs is enabled
- * (and, for memory accesses, addresses the same cell).
- */
+/** The conflicting access pairs of two atomic units, racing when the units are adjacent. */
 internal class RaceCandidate(val pairs: List<Pair<E, E>>, adjacent: Expr<BoolType>) {
 
   fun pairCondition(e1: E, e2: E): Expr<BoolType> =
@@ -37,11 +33,8 @@ internal class RaceCandidate(val pairs: List<Pair<E, E>>, adjacent: Expr<BoolTyp
 }
 
 /**
- * Collects the pairs of race candidate events (see [XcfaEvent.raceCandidate]) of different threads
- * that access the same variable (or may access the same memory cell), at least one of them a write,
- * not both inside atomic blocks, and not ordered by the preserved program order [ppos]. The last
- * one matters beyond pruning: an access sharing its atomic unit with a thread start or join could
- * otherwise be neighbours with the other thread's first or last access without racing.
+ * Conflicting accesses of different threads, unordered by [ppos]: this also drops accesses in the
+ * atomic unit of a thread start or join, which are adjacent to the other thread without racing.
  */
 internal fun raceCandidates(
   eg: XcfaToEventGraph.EventGraph,

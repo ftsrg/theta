@@ -69,7 +69,6 @@ internal class XcfaOcTraceExtractor(
     return XcfaEdge(source, target, label.changeVars(lookup), metadata)
   }
 
-  /** The trace to the violation the model of the solver shows. */
   internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
     get() {
       val model = model()
@@ -82,10 +81,7 @@ internal class XcfaOcTraceExtractor(
       )
     }
 
-  /**
-   * The trace to the state in which the racing accesses [e1] and [e2] (neighbours in the execution
-   * the model of the solver shows) are both enabled.
-   */
+  /** The trace to the state in which the racing accesses [e1] and [e2] are both enabled. */
   internal fun raceTrace(e1: E, e2: E): Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
     val model = model()
     val first = if (ocChecker.getHappensBefore()!![e1.clkId, e2.clkId] != null) e1 else e2
@@ -186,10 +182,7 @@ internal class XcfaOcTraceExtractor(
     return Trace.of(stateList, actionList)
   }
 
-  /**
-   * The enabled events that happen before the atomic unit [startClk] (and those of the unit itself
-   * if [includeStart]), in an order consistent with the happens-before relation.
-   */
+  /** The enabled events up to the atomic unit [startClk], in happens-before order. */
   private fun getEventTrace(model: Valuation, startClk: Int, includeStart: Boolean): List<E> {
     val relations = ocChecker.getHappensBefore()!!
     val reverseRelations =
@@ -300,7 +293,7 @@ internal class XcfaOcTraceExtractor(
     return actions to states
   }
 
-  /** One empty frame: the labels are already instance-specific, but a frame has to be present. */
+  // the labels are already thread-specific, but findDataRace (witness writer) peeks a frame
   private fun noLookup() = LinkedList(listOf(mapOf<VarDecl<*>, VarDecl<*>>()))
 
   private fun Map<String, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<String, Set<Int>> {

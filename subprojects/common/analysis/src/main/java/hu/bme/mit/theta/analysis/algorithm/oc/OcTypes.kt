@@ -51,6 +51,10 @@ abstract class Event(
   companion object {
     var clkSize = 0
       private set
+
+    fun resetClkSize() {
+      clkSize = 0
+    }
   }
 
   init {
@@ -74,8 +78,8 @@ abstract class Event(
   }
 
   /**
-   * Whether [this] and [other] may access the same memory, judged without a model (unlike
-   * [sameMemory]). When they may, [interferenceCond] is the condition of them doing so.
+   * Whether [this] and [other] can access the same memory cell at all. If so, they do exactly when
+   * [interferenceCond] holds (null: always).
    */
   open fun potentialSameMemory(other: Event): Boolean = const.varDecl == other.const.varDecl
 

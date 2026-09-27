@@ -23,25 +23,16 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
-/**
- * @param checker creates a checker for an SMT solver name and a memory model; a given solver is
- *   used instead of a new one when [sharesSolver]
- */
 @Suppress("unused")
 enum class OcDecisionProcedureType(
-  internal val sharesSolver: Boolean,
-  internal val checker: (String, XcfaOcMemoryConsistencyModel, Solver?) -> OcChecker<E>,
+  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>
 ) {
 
-  IDL(
-    true,
-    { name, mcm, solver -> IDLOcChecker(name, mcm == XcfaOcMemoryConsistencyModel.SC, solver) },
-  ),
-  BASIC(true, { name, _, solver -> BasicOcChecker(name, solver) }),
-  PROPAGATOR(false, { _, _, _ -> UserPropagatorOcChecker() }),
+  IDL({ solver, mcm -> IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC) }),
+  BASIC({ solver, _ -> BasicOcChecker(solver) }),
+  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }),
 }
 
 internal class XcfaEvent(
@@ -61,10 +52,8 @@ internal class XcfaEvent(
   private var arrayLit: LitExpr<*>? = null
   private var offsetLit: LitExpr<*>? = null
 
-  /** Whether the event is inside an atomic block (two such events never race). */
   var inAtomicBlock: Boolean = false
 
-  /** Whether the event is a program access that can take part in a data race. */
   var raceCandidate: Boolean = false
 
   init {
@@ -84,10 +73,10 @@ internal class XcfaEvent(
 
     internal fun uniqueClkId(): Int = clkCnt++
 
-    /** Restarts the ids for a new event graph, so the clock matrices do not grow round by round. */
     internal fun resetIds() {
       idCnt = 0
       clkCnt = 0
+      Event.resetClkSize()
     }
 
     /** The unconstrained initial write of each memory partition (see `XcfaToEventGraph`). */
