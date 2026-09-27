@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
@@ -150,7 +151,10 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
       val foldedArray = array.foldFlat()
       val foldedOffset = offset.foldFlat()
       val baseType = foldedArray.type
-      val flatIndex = Add(cast(foldedArray, baseType), cast(foldedOffset, baseType))
+      // No SimplifyExprsPass runs after this pass, so a literal base plus a literal cell offset is
+      // folded here; addressesAtomicData, for one, only decodes a literal flat address.
+      val flatIndex =
+        ExprUtils.simplify(Add(cast(foldedArray, baseType), cast(foldedOffset, baseType)))
       Dereference.of(getDefaultValue(baseType), cast(flatIndex, baseType), type) as Expr<T>
     } else {
       withOps(ops.map { it.foldFlat() })
