@@ -624,6 +624,12 @@ data class OcConfig(
   )
   var forceUnrollBoundStep: Int = 1,
   @Parameter(
+    names = ["--oc-max-exit-queries"],
+    description =
+      "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
+  )
+  var maxExitQueries: Int = 0,
+  @Parameter(
     names = ["--oc-witness-optimizations"],
     description =
       "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",

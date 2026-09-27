@@ -62,6 +62,7 @@ fun getOcChecker(
       forceUnrollBoundStart = forceUnrollBoundStart,
       forceUnrollBoundEnd = forceUnrollBoundEnd,
       forceUnrollBoundStep = ocConfig.forceUnrollBoundStep,
+      maxExitQueries = ocConfig.maxExitQueries,
     )
   return SafetyChecker { ocChecker.check() }
 }

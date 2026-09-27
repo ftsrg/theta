@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
+import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
@@ -30,6 +31,7 @@ import hu.bme.mit.theta.xcfa.passes.RemoveDeadEnds
 import hu.bme.mit.theta.xcfa.passes.UnusedVarPass
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -124,6 +126,8 @@ class XcfaOcCheckerTest {
     program: String,
     property: XcfaProperty,
     decisionProcedure: OcDecisionProcedureType,
+    maxExitQueries: Int = -1,
+    forceUnrollBoundEnd: Int = -1,
   ): SafetyResult<*, *> {
     val stream = javaClass.getResourceAsStream(program)
     val parseContext = ParseContext()
@@ -157,7 +161,8 @@ class XcfaOcCheckerTest {
         nonPermissiveValidation = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,
         autoConflictBound = -1,
-        forceUnrollBoundEnd = -1,
+        forceUnrollBoundEnd = forceUnrollBoundEnd,
+        maxExitQueries = maxExitQueries,
       )
       .check(null)
   }
@@ -179,5 +184,19 @@ class XcfaOcCheckerTest {
     println("Testing $program for data races with IDL...")
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     Assertions.assertTrue(verdict(check(program, property, OcDecisionProcedureType.IDL)))
+  }
+
+  @Test
+  fun testNoExitQueries() {
+    // without exit queries, a force-unrolled loop never yields a safe verdict
+    Assertions.assertThrows(NotSolvableException::class.java) {
+      check("/13loop_bound_safe.c", property, OcDecisionProcedureType.IDL, 0, 4)
+    }
+  }
+
+  @Test
+  fun testSingleExitQuery() {
+    val result = check("/15sequential_loops_safe.c", property, OcDecisionProcedureType.IDL, 1)
+    Assertions.assertTrue(result.isSafe)
   }
 }

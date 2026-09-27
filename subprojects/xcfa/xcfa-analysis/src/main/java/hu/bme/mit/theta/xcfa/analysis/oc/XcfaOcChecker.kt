@@ -50,8 +50,8 @@ import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import kotlin.time.measureTime
 
 /**
- * Bounded OC checking: a safe result is final when no [unroll exit][UnrollExits] is reachable,
- * otherwise only the reachable ones are unrolled deeper. IDL under SC checks data races natively.
+ * Bounded OC checking; IDL under SC checks data races natively. With [maxExitQueries] != 0 (< 0: no
+ * limit), only the cut points whose [unroll exits][UnrollExits] are reachable are unrolled deeper.
  */
 class XcfaOcChecker(
   xcfa: XCFA,
@@ -70,6 +70,7 @@ class XcfaOcChecker(
   private val forceUnrollBoundStart: Int = 2,
   private val forceUnrollBoundEnd: Int = 2,
   private val forceUnrollBoundStep: Int = 1,
+  private val maxExitQueries: Int = 0,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   private val raceMode =
@@ -102,22 +103,29 @@ class XcfaOcChecker(
     require(unbounded || forceUnrollBoundStart <= forceUnrollBoundEnd) {
       "Empty unroll bound range: $forceUnrollBoundStart..$forceUnrollBoundEnd"
     }
+    var bound = forceUnrollBoundStart
     val bounds = mutableMapOf<String, Int>()
-    while (true) {
+    while (unbounded || bound <= forceUnrollBoundEnd) {
       logger.mainStep(
-        "\nChecking with force loop unroll bound: $forceUnrollBoundStart" +
+        "\nChecking with force loop unroll bound: $bound" +
           if (bounds.isEmpty()) "" else " (deepened: $bounds)"
       )
       val (result, reached) =
-        Round(unroll(bounds)).use { round ->
+        Round(unroll(bound, bounds)).use { round ->
           val result = round.checkProperty()
           logger.mainStep("OC checker result: $result")
           if (!result.isSafe || !round.xcfa.unsafeUnrollUsed || acceptUnreliableSafe) {
             return result
           }
+          if (maxExitQueries == 0) return@use result to null
           logger.mainStep("Incomplete loop unroll used: checking whether the bounds are reached...")
           result to round.reachedExits()
         }
+      if (reached == null) {
+        logger.mainStep("Incomplete loop unroll bound ($bound) used: safe result is unreliable.")
+        bound += forceUnrollBoundStep
+        continue
+      }
       if (reached.isEmpty() && !cutWithoutExits) {
         logger.mainStep("No unroll bound is reached: the safe result is reliable.")
         return result
@@ -136,7 +144,7 @@ class XcfaOcChecker(
     throw NotSolvableException()
   }
 
-  private fun unroll(bounds: Map<String, Int>): XCFA {
+  private fun unroll(bound: Int, bounds: Map<String, Int>): XCFA {
     // Force loop unroll for BMC. Re-running the pass per bound is the point: each escalation
     // expands loops -- and recursive calls, which need parseContext for the parameter assignments
     // -- one level deeper, which inlining, a one-shot pass, cannot do.
@@ -145,11 +153,11 @@ class XcfaOcChecker(
         ProcedurePassManager(
           listOf(
             UnrollPass(
-              forceUnrollBoundStart,
+              bound,
               parseContext = parseContext,
-              specificRecursionUnrollLimit = forceUnrollBoundStart,
+              specificRecursionUnrollLimit = bound,
               cutBounds = bounds,
-              markUnrollExits = true,
+              markUnrollExits = maxExitQueries != 0,
             )
           )
         )
@@ -284,7 +292,7 @@ class XcfaOcChecker(
       val reached = mutableSetOf<String>()
       var queries = 0
       while (remaining.isNotEmpty()) {
-        if (queries++ == MAX_EXIT_QUERIES) {
+        if (queries++ == maxExitQueries) {
           reached.addAll(remaining)
           break
         }
@@ -368,7 +376,5 @@ class XcfaOcChecker(
   companion object {
     /** The global segment counter introduced by the witness instrumentation (ApplyWitnessPass). */
     private const val SEGMENT_COUNTER = "__THETA__segment__counter__"
-
-    private const val MAX_EXIT_QUERIES = 8
   }
 }
