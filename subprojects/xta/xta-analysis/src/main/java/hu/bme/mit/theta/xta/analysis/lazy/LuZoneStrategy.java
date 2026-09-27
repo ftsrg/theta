@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
         final ZonePrec zonePrec = ZonePrec.of(system.getClockVars());
         analysis =
                 PrecMappingAnalysis.create(
-                        LuZoneAnalysis.create(XtaZoneAnalysis.getInstance()), p -> zonePrec);
+                        LuZoneAnalysis.create(XtaZoneAnalysis.create(system)), p -> zonePrec);
         projection = s -> unit();
     }
 
