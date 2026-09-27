@@ -816,14 +816,9 @@ class FrontendXcfaBuilder(
         is CPointer -> this.embeddedType as? CStruct
         else -> null
       } ?: return null
-    // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
-    // fails here because the rhs element address loses its struct cType -- FrontendMetadata is
-    // identity-keyed -- and the frontend then derives
-    // `CUnsignedInt` from the (Bv 32) sort. Accepting "the lvalue is a struct, so C says the rhs
-    // must be too" was tried and reverted: a derived type is indistinguishable from a real one, so
-    // the rule also swallowed pointer assignments and sent them into structCopy, which threw
-    // ClassCastException -- and it regressed tasks that had started building. The real fix is to
-    // keep the struct type on the rebuilt element address; until then this stays a loud refusal.
+    // NOT widened to an untyped right-hand side ("the lvalue is a struct, so C says the rhs must
+    // be too"): a derived type is indistinguishable from a real one, so that rule also swallowed
+    // pointer assignments and sent them into structCopy, which threw ClassCastException.
     return candidate.takeIf { it == CComplexType.getType(rExpression, parseContext) }
   }
 

@@ -48,6 +48,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -56,6 +57,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import java.util.*;
 import java.util.stream.Stream;
 import org.antlr.v4.runtime.*;
@@ -493,6 +496,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
+        // These registries are static, and one JVM can build the same input more than once (the
+        // memory-model and arithmetic fallbacks, the portfolio): each build starts from none.
+        Struct.resetRegistry();
+        Enum.resetRegistry();
+        FunctionIds.reset();
         declareMallocReturnsPointer();
 
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));

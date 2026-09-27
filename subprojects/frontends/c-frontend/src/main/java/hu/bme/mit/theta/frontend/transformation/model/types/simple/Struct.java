@@ -130,6 +130,18 @@ public class Struct extends NamedType {
 
     private static final Map<String, Struct> definedTypes = new LinkedHashMap<>();
 
+    /**
+     * Forget every tag seen so far; called at the start of each compilation unit. A registered
+     * struct is bound to its parse's ParseContext and cached expansion, so an in-process rebuild
+     * (the memory-model and arithmetic fallbacks) that still resolved tags to it would mix the
+     * previous build's types into the new one, and struct copies between the two then fail.
+     */
+    public static void resetRegistry() {
+        definedTypes.clear();
+        incompleteDependents.clear();
+        expansionFrames.clear();
+    }
+
     public static Struct getByName(String name) {
         return getByName(name, false);
     }
