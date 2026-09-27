@@ -41,6 +41,7 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
 
   private val predToLiteral = LinkedHashMap<Expr<BoolType>, VarDecl<BoolType>>()
   private val literalToPredMap = LinkedHashMap<Decl<*>, Expr<BoolType>>()
+  private val initCopies = LinkedHashMap<VarDecl<*>, VarDecl<*>>()
   private lateinit var currentPrec: PredPrec
 
   /** Builds the abstract [MonolithicExpr] for [prec]; reports which literals were newly created. */
@@ -72,19 +73,30 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
         )
       }
 
-    // transOffsetIndex: default offset 1, incremented only over non-ctrl concrete vars
+    val transExpr = And(And(lambdaList), And(lambdaPrimeList), concreteModel.transExpr)
+    val isConcrete = { v: VarDecl<*> -> v !in concreteModel.ctrlVars && v !in activationLiterals }
+
+    // All concrete vars, not only the state vars, get fresh constants in every step (offset one
+    // above their concrete offset): steps may share only literals and ctrl vars.
+    val concreteVars = (concreteModel.vars + ExprUtils.getVars(transExpr)).distinct()
     var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
-    concreteModel.vars
-      .filter { it !in concreteModel.ctrlVars }
-      .forEach { decl ->
-        repeat(concreteModel.transOffsetIndex[decl]) { indexingBuilder = indexingBuilder.inc(decl) }
-      }
+    concreteVars.filter(isConcrete).forEach { decl ->
+      repeat(concreteModel.transOffsetIndex[decl]) { indexingBuilder = indexingBuilder.inc(decl) }
+    }
     val transOffsetIndex = indexingBuilder.build()
+
+    // Init gets its own copies of the concrete vars; sharing them with the first step would make
+    // the initial state stronger than its literals, which loop-free path checking cannot see.
+    val initExpr = And(And(lambdaList), concreteModel.initExpr)
+    val initRenaming =
+      ExprUtils.getVars(initExpr).filter(isConcrete).associateWith {
+        initCopies.getOrPut(it) { Decls.Var("__init_" + it.name, it.type) }
+      }
 
     val model =
       MonolithicExpr(
-        initExpr = And(And(lambdaList), concreteModel.initExpr),
-        transExpr = And(And(lambdaList), And(lambdaPrimeList), concreteModel.transExpr),
+        initExpr = ExprUtils.changeDecls(initExpr, initRenaming),
+        transExpr = transExpr,
         propExpr = Not(And(And(lambdaList), Not(concreteModel.propExpr))),
         transOffsetIndex = transOffsetIndex,
         vars = activationLiterals + concreteModel.ctrlVars,
