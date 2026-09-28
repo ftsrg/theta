@@ -198,8 +198,7 @@ class XcfaOcChecker(
 
     private fun checkProperty(checker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
       val races =
-        if (property.verifiedProperty == DATA_RACE) raceCandidates(eg, ppos, checker)
-        else null
+        if (property.verifiedProperty == DATA_RACE) raceCandidates(eg, ppos, checker) else null
       val targets = races?.map { it.condition } ?: eg.violations.map { it.guard }
       if (targets.isEmpty()) return SafetyResult.safe(EmptyProof.getInstance())
 

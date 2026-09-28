@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,9 +56,7 @@ interface IOcChecker<E : Event> {
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus?
 
-  /**
-   * Returns the condition when the two events are racing.
-   */
+  /** Returns the condition when the two events are racing. */
   fun raceCondition(e1: E, e2: E): Expr<BoolType> =
     throw UnsupportedOperationException("Data race checking is not supported by this OC checker.")
 

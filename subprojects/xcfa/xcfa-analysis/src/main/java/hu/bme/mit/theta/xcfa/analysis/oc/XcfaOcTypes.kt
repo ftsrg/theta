@@ -39,14 +39,8 @@ enum class OcDecisionProcedureType(
     { solver, mcm -> IDLOcChecker(solver, mcm == SC) },
     { property, mcm -> property == ERROR_LOCATION || (property == DATA_RACE && mcm == SC) },
   ),
-  BASIC(
-    { solver, _ -> BasicOcChecker(solver) },
-    { property, _ -> property == ERROR_LOCATION },
-  ),
-  PROPAGATOR(
-    { _, _ -> UserPropagatorOcChecker() },
-    { property, _ -> property == ERROR_LOCATION },
-  ),
+  BASIC({ solver, _ -> BasicOcChecker(solver) }, { property, _ -> property == ERROR_LOCATION }),
+  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }, { property, _ -> property == ERROR_LOCATION }),
 }
 
 internal class XcfaEvent(

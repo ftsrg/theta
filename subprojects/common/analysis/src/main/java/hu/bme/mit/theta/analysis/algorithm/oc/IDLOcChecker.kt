@@ -63,9 +63,7 @@ class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = fal
         .ref
   }
 
-  /**
-   * Whether the atomic units of [e1] and [e2] are at neighbouring clock values.
-   */
+  /** Whether the atomic units of [e1] and [e2] are at neighbouring clock values. */
   override fun raceCondition(e1: E, e2: E): Expr<BoolType> {
     check(isSc && e1.clkId != e2.clkId)
     val clk1 = e1.clkId.clkGlobalVar.ref
