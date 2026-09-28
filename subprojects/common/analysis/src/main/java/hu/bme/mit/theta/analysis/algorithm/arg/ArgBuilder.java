@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -97,9 +97,15 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
         final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
         final S state = node.getState();
         final Collection<A> exploredActions =
-                node.getOutEdges().map(ArgEdge::getAction).collect(Collectors.toSet());
+                node.getOutEdges()
+                        .map(ArgEdge::getAction)
+                        .filter(a -> !node.prunedActions.contains(a))
+                        .collect(Collectors.toSet());
         final Collection<? extends A> actions =
                 lts.getEnabledActionsFor(state, exploredActions, prec);
+        if (!node.prunedActions.isEmpty()) {
+            node.prunedActions.removeAll(actions);
+        }
         final TransFunc<S, ? super A, ? super P> transFunc = analysis.getTransFunc();
         for (final A action : actions) {
             final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);

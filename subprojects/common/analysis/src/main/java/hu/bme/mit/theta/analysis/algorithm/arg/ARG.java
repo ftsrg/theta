@@ -139,6 +139,10 @@ public final class ARG<S extends State, A extends Action> implements Proof {
             final ArgEdge<S, A> edge = node.getInEdge().get();
             final ArgNode<S, A> parent = edge.getSource();
             parent.outEdges.remove(edge);
+            if (parent.prunedActions.isEmpty()) {
+                parent.prunedActions = CollectionUtil.createSet();
+            }
+            parent.prunedActions.add(edge.getAction());
             ARGWebDebugger.remove(edge);
             parent.expanded = false;
         } else {

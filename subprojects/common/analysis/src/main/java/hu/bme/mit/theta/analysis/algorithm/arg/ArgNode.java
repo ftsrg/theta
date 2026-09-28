@@ -24,6 +24,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -40,6 +41,11 @@ public final class ArgNode<S extends State, A extends Action> {
 
     Optional<ArgEdge<S, A>> inEdge; // Set by ARG
     final Collection<ArgEdge<S, A>> outEdges;
+
+    // Actions that lost a successor to pruning since they were last fired from this node. A
+    // sibling reached via the same action may survive, so such actions do not count as explored.
+    // Allocated by ARG on the first prune only, as most nodes never need it; ArgBuilder clears it.
+    Collection<A> prunedActions;
 
     Optional<ArgNode<S, A>> coveringNode; // Set by ARG
     final Collection<ArgNode<S, A>> coveredNodes;
@@ -59,6 +65,7 @@ public final class ArgNode<S extends State, A extends Action> {
         this.target = target;
         inEdge = Optional.empty();
         outEdges = new ArrayList<>();
+        prunedActions = Collections.emptySet();
         coveringNode = Optional.empty();
         coveredNodes = CollectionUtil.createSet();
         expanded = false;
