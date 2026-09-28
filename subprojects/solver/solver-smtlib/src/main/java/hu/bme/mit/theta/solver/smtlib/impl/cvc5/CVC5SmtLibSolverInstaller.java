@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -92,18 +92,11 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                                                         .toString())
                                         .getChannel()) {
                     outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
-                    installDir
-                            .resolve(getSolverBinaryName(version))
-                            .toFile()
-                            .setExecutable(true, true);
+                    makeExecutable(installDir.resolve(getSolverBinaryName(version)));
                 }
             } else {
                 Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
-                installDir
-                        .resolve("bin")
-                        .resolve(getSolverBinaryName(version))
-                        .toFile()
-                        .setExecutable(true, true);
+                makeExecutable(installDir.resolve("bin").resolve(getSolverBinaryName(version)));
             }
 
         } catch (IOException e) {

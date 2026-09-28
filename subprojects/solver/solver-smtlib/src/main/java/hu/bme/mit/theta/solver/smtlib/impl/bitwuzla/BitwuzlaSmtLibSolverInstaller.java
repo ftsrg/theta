@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,32 +57,19 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
         logger.write(Logger.Level.MAINSTEP, "Starting compilation\n");
 
-        installDir
-                .resolve("contrib")
-                .resolve("setup-cadical.sh")
-                .toFile()
-                .setExecutable(true, true);
+        makeExecutable(installDir.resolve("contrib").resolve("setup-cadical.sh"));
         executeCommand(installDir, "./contrib/setup-cadical.sh");
 
-        installDir
-                .resolve("contrib")
-                .resolve("setup-btor2tools.sh")
-                .toFile()
-                .setExecutable(true, true);
+        makeExecutable(installDir.resolve("contrib").resolve("setup-btor2tools.sh"));
         executeCommand(installDir, "./contrib/setup-btor2tools.sh");
 
-        installDir.resolve("contrib").resolve("setup-symfpu.sh").toFile().setExecutable(true, true);
+        makeExecutable(installDir.resolve("contrib").resolve("setup-symfpu.sh"));
         executeCommand(installDir, "./contrib/setup-symfpu.sh");
 
-        installDir.resolve("configure.sh").toFile().setExecutable(true, true);
+        makeExecutable(installDir.resolve("configure.sh"));
         executeCommand(installDir, "./configure.sh");
         executeCommand(installDir.resolve("build"), "make");
-        installDir
-                .resolve("build")
-                .resolve("bin")
-                .resolve("bitwuzla")
-                .toFile()
-                .setExecutable(true, true);
+        makeExecutable(installDir.resolve("build").resolve("bin").resolve("bitwuzla"));
 
         logger.write(Logger.Level.MAINSTEP, "Finished compilation\n");
     }
