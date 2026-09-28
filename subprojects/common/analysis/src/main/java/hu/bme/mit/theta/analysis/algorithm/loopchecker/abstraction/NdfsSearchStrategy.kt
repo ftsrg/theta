@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,11 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
 
+/**
+ * Both searches are iterative DFS: a shared path holds the edges from the initial node to the
+ * current one, and a stack the unvisited out-edges of each node on it, so the depth is not bounded
+ * by the call stack. The red search extends the blue path in place and restores it when it fails.
+ */
 object NdfsSearchStrategy : ILoopCheckerSearchStrategy {
 
   override fun <S : ExprState, A : ExprAction> search(
@@ -33,7 +38,7 @@ object NdfsSearchStrategy : ILoopCheckerSearchStrategy {
   ): Collection<ASGTrace<S, A>> {
     for (node in initNodes) {
       for (edge in expand(node)) {
-        val result = blueSearch(edge, emptyList(), mutableSetOf(), mutableSetOf(), target, expand)
+        val result = blueSearch(edge, mutableSetOf(), target, expand)
         if (!result.isEmpty()) return result
       }
     }
@@ -42,62 +47,72 @@ object NdfsSearchStrategy : ILoopCheckerSearchStrategy {
 
   private fun <S : ExprState, A : ExprAction> redSearch(
     seed: ASGNode<S, A>,
-    edge: ASGEdge<S, A>,
-    trace: List<ASGEdge<S, A>>,
-    redNodes: MutableSet<ASGNode<S, A>>,
+    initEdge: ASGEdge<S, A>,
+    path: MutableList<ASGEdge<S, A>>,
+    expand: NodeExpander<S, A>,
+  ): List<ASGEdge<S, A>>? {
+    val redNodes: MutableSet<ASGNode<S, A>> = mutableSetOf()
+    val stack = ArrayDeque<Iterator<ASGEdge<S, A>>>()
+    var edge: ASGEdge<S, A>? = initEdge
+    while (edge != null) {
+      val targetNode = edge.target
+      if (!targetNode.state.isBottom) {
+        if (targetNode == seed && path.isNotEmpty()) {
+          return path + edge
+        }
+        if (redNodes.add(targetNode)) {
+          path.add(edge)
+          stack.addLast(expand(targetNode).iterator())
+        }
+      }
+      edge = stack.nextEdge(path)
+    }
+    return null
+  }
+
+  private fun <S : ExprState, A : ExprAction> blueSearch(
+    initEdge: ASGEdge<S, A>,
+    blueNodes: MutableSet<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-  ): List<ASGEdge<S, A>> {
-    val targetNode = edge.target
-    if (targetNode.state.isBottom) {
-      return emptyList()
-    }
-    if (targetNode == seed && trace.isNotEmpty()) {
-      return trace + edge
-    }
-    if (redNodes.contains(targetNode)) {
-      return emptyList()
-    }
-    redNodes.add(edge.target)
-    for (nextEdge in expand(targetNode)) {
-      val redSearch: List<ASGEdge<S, A>> =
-        redSearch(seed, nextEdge, trace + edge, redNodes, target, expand)
-      if (redSearch.isNotEmpty()) return redSearch
+  ): Collection<ASGTrace<S, A>> {
+    val path: MutableList<ASGEdge<S, A>> = mutableListOf()
+    val stack = ArrayDeque<Iterator<ASGEdge<S, A>>>()
+    var edge: ASGEdge<S, A>? = initEdge
+    while (edge != null) {
+      val targetNode = edge.target
+      if (!targetNode.state.isBottom) {
+        path.add(edge)
+        if (target.test(Pair(targetNode.state, edge.action))) {
+          // Edge source can only be null artificially, and is only used when calling other search
+          // strategies
+          val accNode = if (targetNode.accepting) targetNode else edge.source!!
+          for (outEdge in expand(targetNode)) {
+            val redSearch = redSearch(accNode, outEdge, path, expand)
+            if (redSearch != null) return setOf(ASGTrace(redSearch, accNode))
+          }
+        }
+        if (blueNodes.add(targetNode)) {
+          stack.addLast(expand(targetNode).iterator())
+        } else {
+          path.removeAt(path.lastIndex)
+        }
+      }
+      edge = stack.nextEdge(path)
     }
     return emptyList()
   }
 
-  private fun <S : ExprState, A : ExprAction> blueSearch(
-    edge: ASGEdge<S, A>,
-    trace: List<ASGEdge<S, A>>,
-    blueNodes: MutableSet<ASGNode<S, A>>,
-    redNodes: Set<ASGNode<S, A>>,
-    target: AcceptancePredicate<S, A>,
-    expand: NodeExpander<S, A>,
-  ): Collection<ASGTrace<S, A>> {
-    val targetNode = edge.target
-    if (targetNode.state.isBottom) {
-      return emptyList()
+  /**
+   * Pops the exhausted nodes (and their incoming edge from [path]), returns the next edge, if any.
+   */
+  private fun <E> ArrayDeque<Iterator<E>>.nextEdge(path: MutableList<E>): E? {
+    while (isNotEmpty()) {
+      val outEdges = last()
+      if (outEdges.hasNext()) return outEdges.next()
+      removeLast()
+      path.removeAt(path.lastIndex)
     }
-    if (target.test(Pair(targetNode.state, edge.action))) {
-      // Edge source can only be null artificially, and is only used when calling other search
-      // strategies
-      val accNode = if (targetNode.accepting) targetNode else edge.source!!
-      for (outEdge in expand(edge.target)) {
-        val redSearch: List<ASGEdge<S, A>> =
-          redSearch(accNode, outEdge, trace + edge, mutableSetOf(), target, expand)
-        if (redSearch.isNotEmpty()) return setOf(ASGTrace(redSearch, accNode))
-      }
-    }
-    if (blueNodes.contains(targetNode)) {
-      return emptyList()
-    }
-    blueNodes.add(edge.target)
-    for (nextEdge in expand(targetNode)) {
-      val blueSearch: Collection<ASGTrace<S, A>> =
-        blueSearch(nextEdge, trace + edge, blueNodes, redNodes, target, expand)
-      if (blueSearch.isNotEmpty()) return blueSearch
-    }
-    return emptyList()
+    return null
   }
 }
