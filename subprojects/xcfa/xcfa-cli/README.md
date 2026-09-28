@@ -83,7 +83,6 @@ entity  CegarConfig << data >> {
    objects: Set<Config>
    initPrec: InitPrec
    abstractorConfig: CegarAbstractorConfig
-   porSeed: Int
    cexMonitor: CexMonitorOptions
 }
 entity  CegarRefinerConfig << data >> {

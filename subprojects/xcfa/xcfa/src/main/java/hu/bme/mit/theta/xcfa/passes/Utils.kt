@@ -31,7 +31,6 @@ import java.util.*
 
 /** XcfaEdge must be in a `deterministic` ProcedureBuilder */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
-  check(label is SequenceLabel)
   val newLabels = ArrayList<SequenceLabel>()
   var current = ArrayList<XcfaLabel>()
 
@@ -49,7 +48,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
     metadata
   }
 
-  for (label in label.labels) {
+  for (label in label.getFlatLabels()) {
     if (function(label)) {
       if (current.isNotEmpty()) {
         newLabels.add(SequenceLabel(current, singleMetadata()))
@@ -127,14 +126,14 @@ fun XcfaLabel.changeVars(
 
       is FenceLabel -> {
         when (this) {
-          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is AtomicFenceLabel,
+          is MutexLockLabel,
+          is MutexUnlockLabel,
+          is RWLockReadLockLabel,
+          is RWLockWriteLockLabel,
+          is RWLockUnlockLabel -> withLock(lock.changeVars(varLut))
           is MutexTryLockLabel ->
-            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
-          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
-          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
-          else -> this
+            MutexTryLockLabel(lock.changeVars(varLut), successVar.changeVars(varLut), metadata)
         }
       }
 
