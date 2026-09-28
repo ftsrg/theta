@@ -66,6 +66,7 @@ calloc_zeroes.c	efficient	LP64	SAFE	calloc is lowered to malloc+memset, with the
 memset_symbolic.c	efficient	LP64	SAFE	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
 compound_bitwise_encoding.c	efficient	ILP32	SAFE	compound bitwise assignment selects the bitvector encoding
 extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	extern array of unspecified extent is a declaration, not a sizing failure
+redeclaration_after_definition.c	efficient	ILP32	SAFE	a redeclaration without an initializer (extern, tentative, or in a multi-declarator list) does not replace the definition that has one
 union_wide_cell_halves.c	efficient	ILP32	SAFE	a 64-bit union cell is read at its full width under ILP32 (unsigned long is 32 there)
 union_bitfield_overlay_write.c	efficient	LP64	PARSE-OK	a bitfield write to a union splices at the cell width, not the aggregate placeholder
 global_struct_brace_elision.c	efficient	LP64	SAFE	brace elision: { 0 } over an array of structs zero-initialises every member
