@@ -32,10 +32,12 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -760,8 +762,11 @@ private fun isRaceFlagName(flagName: String): Boolean =
  */
 private fun AssignStmt<*>.isHeldFlagSet(raceFlagNames: Set<String>): Boolean {
   if (varDecl.name !in raceFlagNames) return false
-  val value = (expr as? LitExpr<*>)?.intValue
-  return if (varDecl.name.startsWith("_deref_")) value != -1 else value == 1
+  return if (varDecl.name.startsWith("_deref_")) {
+    (expr as? LitExpr<*>)?.intValue != -1
+  } else {
+    expr == Add(varDecl.ref, Int(1))
+  }
 }
 
 /**
