@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
@@ -40,6 +41,8 @@ import java.util.function.Predicate
 import kotlin.random.Random
 
 typealias MemLoc = Pair<Expr<*>, Expr<*>>
+
+typealias SharedObject = Pair<Set<VarDecl<*>>, Set<MutexLock>>
 
 internal fun MemLoc.isLit() = first is LitExpr<*> && second is LitExpr<*>
 
@@ -64,7 +67,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
   /* CACHE COLLECTIONS */
 
   /** Global variables used by an edge. */
-  private val usedObjects: MutableMap<XcfaEdge, Set<Any>> = mutableMapOf()
+  private val usedObjects: MutableMap<XcfaEdge, SharedObject> = mutableMapOf()
 
   private val usedMemLocs: MutableMap<XcfaEdge, Set<MemLoc>> = mutableMapOf()
 
@@ -72,7 +75,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
    * Global variables that are used by the key edge or by edges reachable from the current state via
    * a given edge.
    */
-  private val influencedObjects: MutableMap<XcfaEdge, Set<Any>> = mutableMapOf()
+  private val influencedObjects: MutableMap<XcfaEdge, SharedObject> = mutableMapOf()
   private val influencedMemLocs: MutableMap<XcfaEdge, Set<MemLoc>> = mutableMapOf()
 
   /** Backward edges in the CFA (an edge of a loop). */
@@ -234,7 +237,12 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
 
     val sourceSetActionVars = getCachedUsedObjects(getEdge(sourceSetAction), state)
     val influencedVars = getInfluencedObjects(getEdge(action))
-    if ((influencedVars intersect sourceSetActionVars).isNotEmpty()) return true
+
+    // shared variable
+    if ((influencedVars.first intersect sourceSetActionVars.first).isNotEmpty()) return true
+
+    // shared mutex use
+
 
     val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
     val influencedMemLocs = getInfluencedMemLocs(getEdge(action))
@@ -324,14 +332,14 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
    * variables are also considered to avoid running into a deadlock and stop exploration.
    *
    * @param edge whose global variables are to be returned
-   * @return the set of used global variables
+   * @return the set of used objects (global variables and mutex locks)
    */
-  private fun getDirectlyUsedObjects(edge: XcfaEdge): Set<Any> {
+  private fun getDirectlyUsedObjects(edge: XcfaEdge): SharedObject {
     val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar)
     return edge
       .getFlatLabels()
       .flatMap { label -> label.collectVars().filter { it in globalVars } }
-      .toSet() union
+      .toSet() to
       edge.acquiredEmbeddedMutexes.let { mutexes -> if (mutexes.size <= 1) setOf() else mutexes }
   }
 
@@ -355,19 +363,19 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
    * @param edge whose global variables are to be returned
    * @return the set of directly or indirectly used global variables
    */
-  protected fun getCachedUsedObjects(edge: XcfaEdge, state: State): Set<Any> {
+  protected fun getCachedUsedObjects(edge: XcfaEdge, state: State): SharedObject {
     if (edge in usedObjects) return usedObjects[edge]!!
     val flatLabels = edge.getFlatLabels()
     val mutexes =
       flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes(state) }.toMutableSet()
-    val vars =
+    val objects =
       if (mutexes.isEmpty()) {
         getDirectlyUsedObjects(edge)
       } else {
-        getObjectsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
+        getObjectsWithBFS(edge) { it.mutexOperations(mutexes) }
       }
-    usedObjects[edge] = vars
-    return vars
+    usedObjects[edge] = objects
+    return objects
   }
 
   /**
@@ -398,7 +406,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
    * @param edge whose successor edges' global variables are to be returned.
    * @return the set of influenced global variables
    */
-  protected fun getInfluencedObjects(edge: XcfaEdge): Set<Any> {
+  protected fun getInfluencedObjects(edge: XcfaEdge): SharedObject {
     if (edge in influencedObjects) return influencedObjects[edge]!!
     val vars = getObjectsWithBFS(edge) { true }
     influencedObjects[edge] = vars
@@ -427,14 +435,17 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
    *   edge
    * @return the set of encountered global variables
    */
-  private fun getObjectsWithBFS(startEdge: XcfaEdge, goFurther: Predicate<XcfaEdge>): Set<Any> {
-    val vars = mutableSetOf<Any>()
+  private fun getObjectsWithBFS(startEdge: XcfaEdge, goFurther: Predicate<XcfaEdge>): SharedObject {
+    val vars = mutableSetOf<VarDecl<*>>()
+    val mutexes = mutableSetOf<MutexLock>()
     val exploredEdges = mutableListOf<XcfaEdge>()
     val edgesToExplore = mutableListOf<XcfaEdge>()
     edgesToExplore.add(startEdge)
     while (edgesToExplore.isNotEmpty()) {
       val exploring = edgesToExplore.removeAt(0)
-      vars.addAll(getDirectlyUsedObjects(exploring))
+      val (v, m) = getDirectlyUsedObjects(exploring)
+      vars.addAll(v)
+      mutexes.addAll(m)
       if (goFurther.test(exploring)) {
         val successiveEdges = getSuccessiveEdges(exploring)
         for (newEdge in successiveEdges) {
@@ -445,7 +456,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
       }
       exploredEdges.add(exploring)
     }
-    return vars
+    return vars to mutexes
   }
 
   /**

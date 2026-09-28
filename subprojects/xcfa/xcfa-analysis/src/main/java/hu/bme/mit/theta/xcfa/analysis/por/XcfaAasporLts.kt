@@ -146,8 +146,8 @@ open class XcfaAasporLts(
       return true // memlocs aren't necessarily in the prec
 
     val precVars = prec.usedVars
-    for (varDecl in influencedVars) {
-      if (varDecl in sourceSetActionVars) {
+    for (varDecl in influencedVars.first) {
+      if (varDecl in sourceSetActionVars.first) {
         if (varDecl !in precVars) {
           // the actions would be dependent, but we can ignore it in the current abstraction
           if (varDecl is VarDecl<*>) {
