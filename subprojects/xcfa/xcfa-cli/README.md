@@ -49,7 +49,6 @@ entity  BackendConfig<T> << data >> {
    timeoutMs: Long
    specConfig: SpecBackendConfig
    solverHome: String
-   randomSeed: Int
 }
 entity  BoundedConfig << data >> {
    maxBound: Int

@@ -59,7 +59,6 @@ fun portfolio(
           backend = Backend.CEGAR,
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
-          randomSeed = -1,
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
