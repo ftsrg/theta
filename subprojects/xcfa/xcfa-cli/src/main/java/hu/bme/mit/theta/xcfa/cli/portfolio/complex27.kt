@@ -279,50 +279,10 @@ fun complex27(
       )
 
     val termination =
-      ConfigNode(
-        "Termination-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("TERMINATION")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
     val multithread =
-      ConfigNode(
-        "MultiThread-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("MULTITHREAD")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
       edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
@@ -405,8 +365,8 @@ fun complex27(
     val (startingConfig, endConfig) =
       if (xcfa.isInlined) {
         when (mainTrait) {
-          MULTITHREAD -> multithread to multithread
-          TERMINATION -> termination to termination
+          MULTITHREAD -> HierarchicalNode("MultiThread", multithread)
+          TERMINATION -> HierarchicalNode("Termination", termination)
           else -> {
             // Budgets go by position, not by algorithm: whatever leads gets the lead slice.
             val predCartBw = { ms: Long -> step(lead, ms, itpSolver, itpAlt) }
