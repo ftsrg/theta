@@ -238,7 +238,27 @@ fun complex27(
       )
 
     val multithread =
-      multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      ConfigNode(
+        "MultiThread-$inProcess",
+        XcfaConfig(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
+            ),
+          frontendConfig = portfolioConfig.frontendConfig,
+          backendConfig =
+            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
+              specConfig = PortfolioConfig("MULTITHREAD")
+            ),
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
 
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
       edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
@@ -250,7 +270,7 @@ fun complex27(
       return node
     }
 
-    val startingConfig =
+    val (startingConfig, endConfig) =
       if (xcfa.isInlined) {
         when (mainTrait) {
           BITWISE -> {
@@ -274,7 +294,7 @@ fun complex27(
 
             kindMS then pred_bwMS then explMS then bmcMS
 
-            kindMS
+            kindMS to bmcMS
           }
           FLOAT -> {
             // CVC by default, Z3 as fallback
@@ -298,7 +318,7 @@ fun complex27(
 
             kindCVC then pred_bwCVC then explCVC then bmcCVC
 
-            kindCVC
+            kindCVC to bmcCVC
           }
           PTR,
           ARR,
@@ -330,7 +350,7 @@ fun complex27(
 
               kindMS then pred_bwMS then explMS
 
-              bmcMS
+              bmcMS to bmc
             } else {
               kind then pred_bw then expl then bmc
 
@@ -340,15 +360,15 @@ fun complex27(
 
               kindMS then pred_bwMS then explMS then bmcMS
 
-              kind
+              kind to bmc
             }
           }
 
           MULTITHREAD -> {
-            HierarchicalNode("MultiThread", multithread)
+            multithread to multithread
           }
           TERMINATION -> {
-            termination // TODO we may want to do this the same way as the multithread
+            termination to termination
           }
         }
       } else {
@@ -371,8 +391,10 @@ fun complex27(
 
         pred_bwMS then explMS then pred_seqMS then expl_seqMS
 
-        pred_bw
+        pred_bw to expl_seq
       }
+
+    endConfig then complex
 
     return STM(startingConfig, edges)
   }
