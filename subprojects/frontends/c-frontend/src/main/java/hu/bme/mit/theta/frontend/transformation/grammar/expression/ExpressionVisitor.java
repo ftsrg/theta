@@ -1216,7 +1216,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
                 if ((ampType instanceof CStruct || ampType instanceof CArray)
                         && !(originalOperand instanceof RefExpr<?>)
-                        && !(originalOperand instanceof Dereference<?, ?, ?>)) {
+                        && (!(originalOperand instanceof Dereference<?, ?, ?>)
+                                || cellHoldsObjectBase(originalOperand))) {
                     final Expr<?> address = Pos(originalOperand);
                     parseContext
                             .getMetadata()
@@ -1327,6 +1328,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             expr = pos.getOp();
         }
         return expr;
+    }
+
+    /**
+     * Whether an aggregate-typed cell read (`p->in`, `s.arr`) holds the base id of an object of its
+     * own, which is then also what `&` of it yields. Under the cell memory models a struct's
+     * struct-, union- or array-typed member is such an object; not so under the bytes model, where
+     * aggregates lie inline, nor for a union's packed-word view (PACKED_CELL), whose cell is the
+     * member's storage itself.
+     */
+    private boolean cellHoldsObjectBase(Expr<?> cell) {
+        return cell instanceof Dereference<?, ?, ?>
+                && !byteAddressed()
+                && parseContext
+                        .getMetadata()
+                        .getMetadataValue(
+                                cell,
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
+                                        .compound.BitfieldSlice.PACKED_CELL)
+                        .isEmpty();
     }
 
     private static boolean isLiteralZero(Expr<?> expr) {
