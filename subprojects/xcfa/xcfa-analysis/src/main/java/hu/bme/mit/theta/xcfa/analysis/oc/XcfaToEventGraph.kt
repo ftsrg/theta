@@ -39,6 +39,8 @@ import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.UnrollExits
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
@@ -51,7 +53,7 @@ import hu.bme.mit.theta.xcfa.utils.references
 internal class XcfaToEventGraph(
   private val xcfa: XCFA,
   private val parseContext: ParseContext,
-  private val trackRaces: Boolean = false,
+  private val property: ErrorDetection,
 ) {
 
   init {
@@ -252,7 +254,7 @@ internal class XcfaToEventGraph(
         }
       val e = E(decl.getNewIndexed(), type, guard, pid, edge, clkId)
       e.inAtomicBlock = atomicBlock != null
-      e.raceCandidate = trackRaces && !inLibraryCall && d in racingGlobals
+      e.raceCandidate = property == DATA_RACE && !inLibraryCall && d in racingGlobals
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
@@ -289,7 +291,7 @@ internal class XcfaToEventGraph(
       val e = E(const, type, guard, pid, edge, clkId, array, offset)
       e.inAtomicBlock = atomicBlock != null
       e.raceCandidate =
-        trackRaces &&
+        property == DATA_RACE &&
           !inLibraryCall &&
           // an address that cannot be resolved is not known to be atomic: keep it as a candidate
           runCatching { !deref.addressesAtomicData(xcfa.globalVars, parseContext) }

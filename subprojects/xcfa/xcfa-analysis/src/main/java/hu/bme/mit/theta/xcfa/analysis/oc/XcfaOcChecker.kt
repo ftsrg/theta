@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
-import hu.bme.mit.theta.analysis.algorithm.oc.IDLOcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
@@ -36,17 +35,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
-import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
-import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.UnrollExits
-import hu.bme.mit.theta.xcfa.passes.UnrollPass
+import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
 
 /**
@@ -55,14 +50,12 @@ import kotlin.time.measureTime
  */
 class XcfaOcChecker(
   xcfa: XCFA,
-  property: XcfaProperty,
+  private val property: XcfaProperty,
   private val parseContext: ParseContext,
   private val decisionProcedure: OcDecisionProcedureType,
   private val smtSolver: String,
   private val logger: Logger,
-  private val conflictInput: String?,
   private val outputConflictClauses: Boolean,
-  private val nonPermissiveValidation: Boolean,
   autoConflictConfig: AutoConflictFinderConfig,
   autoConflictBound: Int,
   private val memoryModel: XcfaOcMemoryConsistencyModel = SC,
@@ -73,15 +66,10 @@ class XcfaOcChecker(
   private val maxExitQueries: Int = 0,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
-  private val raceMode =
-    property.verifiedProperty == ErrorDetection.DATA_RACE &&
-      decisionProcedure == OcDecisionProcedureType.IDL &&
-      memoryModel == SC
-
   init {
-    check(property.verifiedProperty == ErrorDetection.ERROR_LOCATION || raceMode) {
-      "Unsupported property by OC checker: $property. Consider using a specification " +
-        "transformation (data races are supported natively by the IDL decision procedure under SC)."
+    check(decisionProcedure.supportsProperty(property.verifiedProperty, memoryModel)) {
+      "Unsupported property by OC checker: $property. Consider using a specification" +
+        "transformation."
     }
   }
 
@@ -185,7 +173,7 @@ class XcfaOcChecker(
 
     init {
       logger.mainStep("Creating event graph...")
-      eg = XcfaToEventGraph(xcfa, parseContext, raceMode).create()
+      eg = XcfaToEventGraph(xcfa, parseContext, property.verifiedProperty).create()
       memoryModel.filter(eg.events, eg.pos, eg.wss).let { (ppos, wss) ->
         this.ppos = ppos
         this.wss = wss
@@ -208,11 +196,10 @@ class XcfaOcChecker(
 
     fun checkProperty(): SafetyResult<EmptyProof, Cex> = query { checkProperty(it) }
 
-    private fun checkProperty(ocChecker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
-      val checker =
-        if (conflictInput == null || raceMode) ocChecker
-        else XcfaOcCorrectnessValidator(ocChecker, conflictInput, !nonPermissiveValidation, logger)
-      val races = if (raceMode) raceCandidates(eg, ppos, checker as IDLOcChecker<E>) else null
+    private fun checkProperty(checker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
+      val races =
+        if (property.verifiedProperty == DATA_RACE) raceCandidates(eg, ppos, checker)
+        else null
       val targets = races?.map { it.condition } ?: eg.violations.map { it.guard }
       if (targets.isEmpty()) return SafetyResult.safe(EmptyProof.getInstance())
 
@@ -230,8 +217,7 @@ class XcfaOcChecker(
       logger.mainStep("Start checking...")
       val status: SolverStatus?
       val checkerTime = measureTime { status = solve(checker, Or(targets)) }
-      if (checker !is XcfaOcCorrectnessValidator)
-        logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+      logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
       logger.info("Propagated clauses: ${checker.getPropagatedClauses().size}")
       checker.solver.statistics.let {
         logger.info("Solver statistics:")
@@ -253,8 +239,6 @@ class XcfaOcChecker(
         }
 
         status?.isSat == true -> {
-          if (checker is XcfaOcCorrectnessValidator)
-            return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
           if (memoryModel == SC) {
             val trace =
               try {
@@ -371,10 +355,5 @@ class XcfaOcChecker(
           solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
         }
     }
-  }
-
-  companion object {
-    /** The global segment counter introduced by the witness instrumentation (ApplyWitnessPass). */
-    private const val SEGMENT_COUNTER = "__THETA__segment__counter__"
   }
 }

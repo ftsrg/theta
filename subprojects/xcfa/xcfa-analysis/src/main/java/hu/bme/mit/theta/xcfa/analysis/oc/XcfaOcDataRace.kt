@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType.WRITE
-import hu.bme.mit.theta.analysis.algorithm.oc.IDLOcChecker
+import hu.bme.mit.theta.analysis.algorithm.oc.IOcChecker
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
@@ -39,7 +39,7 @@ internal class RaceCandidate(val pairs: List<Pair<E, E>>, adjacent: Expr<BoolTyp
 internal fun raceCandidates(
   eg: XcfaToEventGraph.EventGraph,
   ppos: BooleanGlobalRelation,
-  idl: IDLOcChecker<E>,
+  checker: IOcChecker<E>,
 ): List<RaceCandidate> {
   val pairsByUnits = linkedMapOf<Pair<Int, Int>, MutableList<Pair<E, E>>>()
   for ((decl, byPid) in eg.events) {
@@ -57,6 +57,6 @@ internal fun raceCandidates(
   }
   return pairsByUnits.values.map { pairs ->
     val (e1, e2) = pairs.first()
-    RaceCandidate(pairs, idl.adjacent(e1, e2))
+    RaceCandidate(pairs, checker.raceCondition(e1, e2))
   }
 }

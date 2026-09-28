@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.analysis.algorithm.oc
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 
@@ -53,6 +55,12 @@ interface IOcChecker<E : Event> {
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus?
+
+  /**
+   * Returns the condition when the two events are racing.
+   */
+  fun raceCondition(e1: E, e2: E): Expr<BoolType> =
+    throw UnsupportedOperationException("Data race checking is not supported by this OC checker.")
 
   /**
    * Get the discovered relations represented by their reasons between the events (or more exactly

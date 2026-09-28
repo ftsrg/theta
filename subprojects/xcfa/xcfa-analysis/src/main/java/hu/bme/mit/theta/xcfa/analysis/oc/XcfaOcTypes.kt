@@ -23,16 +23,30 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(
-  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>
+  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>,
+  internal val supportsProperty: (ErrorDetection, XcfaOcMemoryConsistencyModel) -> Boolean,
 ) {
 
-  IDL({ solver, mcm -> IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC) }),
-  BASIC({ solver, _ -> BasicOcChecker(solver) }),
-  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }),
+  IDL(
+    { solver, mcm -> IDLOcChecker(solver, mcm == SC) },
+    { property, mcm -> property == ERROR_LOCATION || (property == DATA_RACE && mcm == SC) },
+  ),
+  BASIC(
+    { solver, _ -> BasicOcChecker(solver) },
+    { property, _ -> property == ERROR_LOCATION },
+  ),
+  PROPAGATOR(
+    { _, _ -> UserPropagatorOcChecker() },
+    { property, _ -> property == ERROR_LOCATION },
+  ),
 }
 
 internal class XcfaEvent(
@@ -76,7 +90,7 @@ internal class XcfaEvent(
     internal fun resetIds() {
       idCnt = 0
       clkCnt = 0
-      Event.resetClkSize()
+      resetClkSize()
     }
 
     /** The unconstrained initial write of each memory partition (see `XcfaToEventGraph`). */
