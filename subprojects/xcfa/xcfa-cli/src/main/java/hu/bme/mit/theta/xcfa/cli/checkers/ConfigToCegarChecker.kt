@@ -118,11 +118,20 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
         as ExprTraceChecker<Refutation>
     )
+  val domain = cegarConfig.abstractorConfig.domain
   val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
-    cegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      cegarConfig.refinerConfig.exprSplitter.exprSplitter,
-      xcfa,
-    ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
+    if (cegarConfig.refinerConfig.refinement == Refinement.UNSAT_CORE) {
+      val varsPrecRefiner =
+        domain.varsPrecRefiner
+          ?: throw UnsupportedOperationException(
+            "UNSAT_CORE refinement is not supported with the $domain domain, use one of " +
+              Domain.entries.filter { it.varsPrecRefiner != null }
+          )
+      varsPrecRefiner()
+    } else {
+      domain.itpPrecRefiner(cegarConfig.refinerConfig.exprSplitter.exprSplitter, xcfa)
+    }
+      as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
   val refiner: ArgRefiner<ExprState, ExprAction, Prec> =

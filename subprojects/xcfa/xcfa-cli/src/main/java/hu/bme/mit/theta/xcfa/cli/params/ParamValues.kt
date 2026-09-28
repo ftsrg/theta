@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSe
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
+import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
@@ -166,6 +167,10 @@ enum class Domain(
         out Prec,
         out Refutation,
       >,
+  /** Precision refiner for [Refinement.UNSAT_CORE], or null if the domain does not support it. */
+  val varsPrecRefiner:
+    (() -> PrecRefiner<out ExprState, out ExprAction, out Prec, VarsRefutation>)? =
+    null,
   val initPrec: (XCFA, InitPrec) -> XcfaPrec<out PtrPrec<*>>,
   val partialOrd: (Solver) -> PartialOrd<out PtrState<out ExprState>>,
   val nodePruner: NodePruner<out ExprState, out ExprAction>,
@@ -211,6 +216,11 @@ enum class Domain(
     itpPrecRefiner = { _, _ ->
       XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
         ItpRefToPtrPrec(ItpRefToExplPrec())
+      )
+    },
+    varsPrecRefiner = {
+      XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, VarsRefutation>(
+        VarsRefToPtrPrec(VarsRefToExplPrec())
       )
     },
     initPrec = { x, ip -> ip.explPrec(x) },
@@ -582,6 +592,7 @@ enum class Refinement(
   UNSAT_CORE(
     refiner = { s, _ ->
       ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
+        .withTracePositionIndices()
     },
     stopCriterion = StopCriterions.firstCex(),
   ),
