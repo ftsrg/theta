@@ -297,15 +297,16 @@ constructor(
       if (!it.isKnown()) {
         // we do not know which mutex to release: this case is rather complicated...
         // ideas:
-        // - the LTS could non-deterministically return all possible outcomes
-        //   (drawback: POR is only proved to be correct if the state space is action-deterministic)
+        // - use an SMT array as part of the expression state to track mutex lock sets
+        //   (drawback: we need a two-dimensional array as some mutexes may be locked by several
+        //   threads, and SMT solver reasoning power might not be very strong on these with unknown
+        //   indices)
         // - release all mutexes of the current thread that is possibly the released one, and store
         //   the ambiguously released mutexes in the successor states: later mutex locks should
-        // check
-        //   and add an assume label to ensure that only allowed lock is performed (either it was
-        // the
-        //   actually unlocked mutex in the ambiguous case, or it was not locked at all) that the
-        //   refiner also sees when checking the counterexample
+        //   check and add an assume label to ensure that only allowed lock is performed (either it
+        //   was the actually unlocked mutex in the ambiguous case, or it was not locked at all)
+        //   that the refiner also sees when checking the counterexample
+        //   (drawback: these assumptions get increasingly more complicated as a trace gets longer)
         // currently, we have AmbiguousMutexPass to account for many cases
         throw UnsupportedOperationException("Ambiguous mutex release is not supported.")
       }

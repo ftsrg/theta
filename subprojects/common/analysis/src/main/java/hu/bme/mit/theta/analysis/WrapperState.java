@@ -16,6 +16,15 @@
 
 package hu.bme.mit.theta.analysis;
 
+/**
+ * A state that wraps another state. In some cases, we are interested in a specific type of state
+ * in the state containment hierarchy which can be conveniently retrieved this way (for example,
+ * without implementing a separate case in a switch for all potential wrapper states).
+ */
 public interface WrapperState extends State {
+
+    /**
+     * Returns the wrapped state of the state.
+     */
     State getWrappedState();
 }
