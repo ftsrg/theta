@@ -43,11 +43,12 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
         super(logger);
 
         versions = new ArrayList<>();
+        // 5.6.12 dropped the -msvc suffix of the Windows archive; 5.6.11 still has it
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.12"))
                         .addString(LINUX, X64, "linux-x86_64")
                         .addString(MAC, X64, "macos")
-                        .addString(WINDOWS, X64, "win64-msvc")
+                        .addString(WINDOWS, X64, "win64")
                         .build());
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.7"))
@@ -114,29 +115,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
     @Override
     protected void installSolver(Path installDir, String version)
             throws SmtLibSolverInstallerException {
-        final var semVer = SemVer.of(version);
-        String archStr = null;
-
-        for (final var versionDecoder : versions) {
-            if (semVer.compareTo(versionDecoder.getVersion()) >= 0) {
-                archStr = versionDecoder.getOsArchString(OsHelper.getOs(), OsHelper.getArch());
-                break;
-            }
-        }
-        if (archStr == null) {
-            throw new SmtLibSolverInstallerException(
-                    String.format(
-                            "MathSAT on operating system %s and architecture %s is not supported",
-                            OsHelper.getOs(), OsHelper.getArch()));
-        }
-
-        final var downloadUrl =
-                URI.create(
-                        String.format(
-                                "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
-                                version,
-                                archStr,
-                                OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
+        final var downloadUrl = getDownloadUrl(version);
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
 
@@ -156,6 +135,29 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
         }
 
         logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+    }
+
+    URI getDownloadUrl(final String version) throws SmtLibSolverInstallerException {
+        final var semVer = SemVer.of(version);
+        String archStr = null;
+
+        for (final var versionDecoder : versions) {
+            if (semVer.compareTo(versionDecoder.getVersion()) >= 0) {
+                archStr = versionDecoder.getOsArchString(OsHelper.getOs(), OsHelper.getArch());
+                break;
+            }
+        }
+        if (archStr == null) {
+            throw new SmtLibSolverInstallerException(
+                    String.format(
+                            "MathSAT on operating system %s and architecture %s is not supported",
+                            OsHelper.getOs(), OsHelper.getArch()));
+        }
+
+        return URI.create(
+                String.format(
+                        "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
+                        version, archStr, OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
     }
 
     @Override
