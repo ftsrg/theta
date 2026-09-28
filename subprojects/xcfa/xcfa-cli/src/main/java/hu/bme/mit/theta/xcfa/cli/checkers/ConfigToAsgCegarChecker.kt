@@ -77,7 +77,7 @@ fun getAsgCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val random = Random(config.backendConfig.randomSeed)
+  val random = Random.Default
   val lts =
     ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
 

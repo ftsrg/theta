@@ -49,7 +49,7 @@ fun getTracegenChecker(
   val tracegenConfig = config.backendConfig.specConfig as TracegenConfig
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val random = Random(config.backendConfig.randomSeed)
+  val random = Random.Default
   val (coi, lts) =
     ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
   val abstractionSolverFactory: SolverFactory =

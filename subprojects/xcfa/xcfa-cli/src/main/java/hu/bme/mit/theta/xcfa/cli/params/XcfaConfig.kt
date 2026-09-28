@@ -290,8 +290,6 @@ data class BackendConfig<T : SpecBackendConfig>(
   )
   var memlimit: Long = 0L,
   override var specConfig: T? = null,
-  @Parameter(names = ["--random-seed"], description = "Random seed used for testing purposes")
-  var randomSeed: Int = -1,
 ) : SpecializableConfig<T> {
 
   override fun createSpecConfig() {

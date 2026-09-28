@@ -75,7 +75,7 @@ fun getPathEnumerationChecker(
       pathEnumerationConfig.validateAbstractionSolver,
     )
 
-  val random = Random(config.backendConfig.randomSeed)
+  val random = Random.Default
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
   val lts =
     pathEnumerationConfig.coi.getLts(
